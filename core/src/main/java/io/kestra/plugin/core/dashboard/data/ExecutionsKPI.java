@@ -15,6 +15,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Set;
+
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -58,5 +60,10 @@ public class ExecutionsKPI<C extends ColumnDescriptor<ExecutionsKPI.Fields>> ext
     @Override
     public Class<? extends QueryBuilderInterface<ExecutionsKPI.Fields>> repositoryClass() {
         return ExecutionRepositoryInterface.class;
+    }
+
+    @Override
+    public Set<Fields> aggregationForbiddenFields() {
+        return Set.of(Fields.LABELS);
     }
 }

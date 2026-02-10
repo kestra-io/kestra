@@ -57,7 +57,7 @@
         inheritAttrs: false,
     });
 
-    const modelValue = defineModel<string>();
+    const modelValue = defineModel<string | Record<string, any>>();
 
     const pluginsStore = usePluginsStore();
     const playgroundStore = usePlaygroundStore();
@@ -77,7 +77,7 @@
     const isTask = computed(() => ["task", "tasks"].includes(parentPath.split(".").pop() ?? ""));
 
     const isPluginDefaults = computed(() => {
-        return parentPath.startsWith("pluginDefaults")
+        return parentPath === "pluginDefaults" || /^pluginDefaults\[\d+\]$/.test(parentPath);
     });
 
     const isPlugin = computed(() => {
@@ -125,7 +125,16 @@
 
 
     const properties = computed(() => {
-        const updatedProperties = resolvedProperties.value ?? {};
+        if(!resolvedProperties.value){
+            return undefined;
+        }
+
+        const updatedProperties = {...resolvedProperties.value};
+
+        if (isTaskDefinitionBasedOnType.value) {
+            delete updatedProperties["type"];
+        }
+
         if(isPluginDefaults.value){
             updatedProperties["id"] = undefined
             updatedProperties["forced"] = {
@@ -149,11 +158,18 @@
     });
 
     function setup() {
-        const parsed = YAML_UTILS.parse<PartialNoCodeElement>(modelValue.value);
+        let parsed: PartialNoCodeElement;
+        if (typeof modelValue.value === "string") {
+            parsed = YAML_UTILS.parse<PartialNoCodeElement>(modelValue.value) ?? {};
+        } else {
+            parsed = (modelValue.value ?? {}) as PartialNoCodeElement;
+        }
+
         if(isPluginDefaults.value){
-            const {forced, type, values} = parsed as any;
+            const item = Array.isArray(parsed) ? parsed[0] : parsed;
+            const {forced, type, values} = item as any;
             taskModel.value = {...values, forced, type};
-        }else{
+        } else {
             taskModel.value = parsed;
         }
         selectedTaskType.value = taskModel.value?.type;
@@ -162,7 +178,7 @@
     // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
-            pluginsStore.updateDocumentation({type: selectedTaskType.value, ...taskModel.value});
+            pluginsStore.updateDocumentation({cls: selectedTaskType.value, ...taskModel.value});
         }
     });
 
@@ -365,7 +381,7 @@
                 type,
                 id: _,
                 ...rest
-            } = val as any;
+            } = (val ?? {}) as any;
 
             if(Object.keys(rest).length){
                 val = {
@@ -375,7 +391,13 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)));
+
+        const cleanedValue = removeNullAndUndefined(toRaw(val));
+        if (typeof modelValue.value === "string") {
+            modelValue.value = YAML_UTILS.stringify(cleanedValue);
+        } else {
+            modelValue.value = cleanedValue;
+        }
     }
 
     function onTaskTypeSelect() {
@@ -393,7 +415,7 @@
         if(isPlugin.value && elt?.type){
             pluginsStore.updateDocumentation({cls: elt.type, version: elt.version, hash: hash.value});
         }else{
-            pluginsStore.updateDocumentation(); 
+            pluginsStore.updateDocumentation();
         }
     });
 </script>

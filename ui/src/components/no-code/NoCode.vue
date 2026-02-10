@@ -17,7 +17,7 @@
 
                 <hr class="my-4">
 
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="LIST_FIELDS.includes(v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
@@ -59,7 +59,7 @@
         SCHEMA_DEFINITIONS_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys";
-    import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
+    import {useFlowFields} from "./utils/useFlowFields";
     import debounce from "lodash/debounce";
     import {NoCodeProps} from "../flows/noCodeTypes";
     import {useFlowStore} from "../../stores/flow";
@@ -68,6 +68,7 @@
     import {deepEqual} from "../../utils/utils";
     import {useScrollMemory} from "../../composables/useScrollMemory";
     import {defaultNamespace} from "../../composables/useNamespaces";
+    import {LIST_FIELDS} from "./components/tasks/getTaskComponent";
 
 
     const props = defineProps<NoCodeProps>();

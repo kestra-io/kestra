@@ -26,7 +26,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to have at least one condition validated."
+    title = "Pass when any condition is true.",
+    description = """
+        Evaluates nested conditions and succeeds if at least one passes.
+
+        Useful for schedule scenarios like “weekends or holidays” without duplicating triggers."""
 )
 @Plugin(
     examples = {

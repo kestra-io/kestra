@@ -404,6 +404,17 @@ public record QueryFilter(
                     Field.CREATED
                 );
             }
+        },
+        CREDENTIALS {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.ID,
+                    Field.NAMESPACE,
+                    Field.TYPE
+                );
+            }
         };
 
         public abstract List<Field> supportedField();

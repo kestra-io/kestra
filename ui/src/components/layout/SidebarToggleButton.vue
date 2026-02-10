@@ -1,7 +1,8 @@
 <template>
-    <el-button
+    <IconButton
         class="collapseButton sidebar-toggle"
         @click="$emit('toggle')"
+        aria-label="Toggle menu"
     >
         <svg 
             width="12" 
@@ -17,10 +18,12 @@
                 fill="currentColor" 
             />
         </svg>
-    </el-button>
+    </IconButton>
 </template>
 
 <script setup lang="ts">
+    import IconButton from "../IconButton.vue";
+
     defineEmits<{
         (e: "toggle"): void;
     }>();
@@ -31,10 +34,6 @@
     .sidebar-toggle {
         border: none;
         color: var(--ks-text-secondary);
-
-        &:hover {
-            color: var(--ks-content-link);
-        }
 
         html.dark & {
             color: var(--ks-text-secondary);

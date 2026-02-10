@@ -23,7 +23,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on weekend."
+    title = "Allow events on weekends.",
+    description = """
+        Renders a date (defaults to the trigger timestamp) and passes only if it falls on Saturday or Sunday.
+
+        Accepts ISO-8601 date/time strings; uses the rendered timezone to determine the day."""
 )
 @Plugin(
     examples = {

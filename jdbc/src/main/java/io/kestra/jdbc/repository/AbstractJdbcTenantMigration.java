@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
@@ -30,7 +31,12 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
     public void migrate(boolean dryRun) {
         List<Table<?>> tables = dslContextWrapper.transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
-            return context.meta().getTables();
+            return context.meta()
+                .getSchemas(context.fetchValue(DSL.currentSchema()))
+                .stream()
+                .findFirst()
+                .map(Schema::getTables)
+                .orElseGet(List::of);
         });
 
         log.info("📦 Found {} tables.\n", tables.size());

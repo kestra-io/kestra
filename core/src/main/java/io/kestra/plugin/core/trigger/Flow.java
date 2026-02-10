@@ -54,13 +54,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Trigger a flow in response to a state change in one or more other flows.",
+    title = "Trigger a Flow based on other Flows’ executions.",
     description = """
-        You can trigger a flow as soon as another flow ends. This allows you to add implicit dependencies between multiple flows, which can often be managed by different teams.
+        Fires when upstream Flow executions meet `preconditions` (required) and optional trigger `conditions` (no Pebble templating). Lets you chain Flows owned by different teams.
 
-        A flow trigger must have `preconditions` which filter on other flow executions.
-        It can also have standard trigger `conditions`. Neither condition type can use Pebble templating expressions; they must be declaratively defined.
-        Upstream execution outputs will be available in a `trigger.outputs` variable."""
+        Upstream execution outputs are exposed under `trigger.outputs`; you can also pass `inputs` to the downstream Flow."""
 )
 @Plugin(
     examples = {

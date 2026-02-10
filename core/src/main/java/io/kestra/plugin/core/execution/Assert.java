@@ -33,8 +33,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Assert some conditions to control task output data.",
-    description = "Used to control outputs data emitted from previous task on this execution."
+    title = "Assert boolean expressions against execution data.",
+    description = """
+        Renders each string in `conditions` and coerces the result to boolean (empty string/0 is false, everything else true). Any falsy assertion logs an error, emits `failed`/`success` metrics, and stops the flow with an exception.
+
+        Use `errorMessage` to append extra context to the thrown error."""
 )
 @Plugin(
     examples = {

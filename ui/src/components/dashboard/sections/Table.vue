@@ -13,11 +13,10 @@
                 :width="value.field === 'STATE' ? 140 : null"
             >
                 <template #default="scope">
-                    <component :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)">
-                        <template v-if="!resolvedComponent(value.field)">
-                            {{ scope.row[key] }}
-                        </template>
-                    </component>
+                    <template v-if="resolvedComponent(value.field) === undefined">
+                        {{ scope.row[key] }}
+                    </template>
+                    <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                 </template>
             </el-table-column>
         </el-table>
@@ -71,7 +70,7 @@
         case "DURATION":
             return Duration;
         default:
-            if (field.toLowerCase().includes("date")) return Date;
+            if (field?.toLowerCase().includes("date")) return Date;
             return undefined;
         }
     };

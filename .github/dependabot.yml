@@ -43,7 +43,7 @@ updates:
     groups:
       build:
         applies-to: version-updates
-        patterns: ["@esbuild/*", "@rollup/*", "@swc/*"]
+        patterns: ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*"]
 
       types:
         applies-to: version-updates

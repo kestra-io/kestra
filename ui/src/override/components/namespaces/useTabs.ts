@@ -48,7 +48,7 @@ export function useTabs() {
         {
             ...lockedProps("plugin-defaults"),
             name: "plugin-defaults",
-            title: t("pluginDefaults"),
+            title: t("pluginDefaults.title"),
         },
         {
             name: "kv",

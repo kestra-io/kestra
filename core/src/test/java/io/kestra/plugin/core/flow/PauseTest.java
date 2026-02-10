@@ -297,15 +297,16 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
 
             CompletedPart part1 = new NettyCompletedAttribute(new MemoryAttribute("asked", "restarted"));
+            CompletedPart part2 = new NettyCompletedAttribute(new MemoryAttribute("secret_pause", "secret_value"));
             byte[] data = executionId.getBytes();
             HttpDataFactory httpDataFactory = new MicronautHttpData.Factory(new HttpServerConfiguration.MultipartConfiguration(), null);
             FileUpload fileUpload = httpDataFactory.createFileUpload(null, "files", "data", MediaType.TEXT_PLAIN, null, Charset.defaultCharset(), data.length);
             fileUpload.addContent(Unpooled.copiedBuffer(data), true);
-            CompletedPart part2 = new NettyCompletedFileUpload(fileUpload);
+            CompletedPart part3 = new NettyCompletedFileUpload(fileUpload);
             Map<String, Object> resumeOutputs = executionService.readInputs(
                 execution,
                 flow,
-                Flux.just(part1, part2)
+                Flux.just(part1, part2, part3)
             ).block();
             Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, resumeOutputs, Pause.Resumed.now());
 

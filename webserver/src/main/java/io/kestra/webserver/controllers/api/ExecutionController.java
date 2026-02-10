@@ -1041,8 +1041,8 @@ public class ExecutionController {
         this.controlRevision(execution.get(), revision);
 
         if (!(execution.get().getState().isFailed())) {
-            throw new IllegalArgumentException("Execution must be failed to be restarted, " +
-                "current state is '" + execution.get().getState().getCurrent() + "' !"
+            throw new IllegalStateException("Execution must be terminated or paused and not killed to be restarted, current state is '" +
+                execution.get().getState().getCurrent() + "' !"
             );
         }
 

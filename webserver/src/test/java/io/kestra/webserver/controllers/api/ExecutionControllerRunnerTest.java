@@ -29,7 +29,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.models.api.ApiAsyncEvent;
 import io.kestra.webserver.responses.BulkErrorResponse;
@@ -94,9 +93,6 @@ class ExecutionControllerRunnerTest {
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
 
     @Inject
-    protected DispatchQueueInterface<Execution> executionQueue;
-
-    @Inject
     protected BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
 
     @Inject
@@ -118,9 +114,6 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     private FlowInputOutput flowIO;
-
-    @Inject
-    private JdbcTestUtils jdbcTestUtils;
 
     @Inject
     protected TestRunnerUtils runnerUtils;
@@ -1216,8 +1209,9 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(changeStatus.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)),
+            it -> it.getResults().stream().allMatch(e -> ((Execution)e).getState().getCurrent().equals(State.Type.WARNING))
         );
         assertThat(executions.getResults().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(executions.getResults().get(1).getState().getCurrent()).isEqualTo(State.Type.WARNING);
@@ -1246,8 +1240,9 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(changeStatus.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)),
+            it -> it.getResults().stream().allMatch(e -> ((Execution)e).getState().getCurrent().equals(State.Type.WARNING))
         );
         assertThat(executions.getResults().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(executions.getResults().get(1).getState().getCurrent()).isEqualTo(State.Type.WARNING);;
@@ -1363,8 +1358,9 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(replayResponse.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), PagedResults.class
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), PagedResults.class),
+            it -> it.getTotal() == 4L
         );
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
@@ -1391,8 +1387,9 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(resumeResponse.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), PagedResults.class
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)),
+            it -> it.getTotal() == 4L
         );
         assertThat(executions.getTotal()).isEqualTo(4L);
         assertThat(executions.getResults().stream().filter(e -> e.getLabels().contains(new Label(Label.REPLAY, "true"))).count()).isEqualTo(2);
@@ -1630,9 +1627,10 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getCount()).isEqualTo(3);
 
         // load one of the executions to check that labels have been correctly updated
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + result1.getId()),
-            Execution.class);
+        Execution execution = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + result1.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label("key", "value"))
+        );
         assertThat(execution.getLabels()).hasSize(3);
         assertThat(execution.getLabels()).contains(new Label("key", "value"));
     }

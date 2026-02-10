@@ -11,8 +11,7 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -52,17 +51,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ExecutionControllerTest {
 
     @Inject
-    ExecutionController executionController;
+    private ExecutionController executionController;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Inject
     @Client("/")
-    ReactorHttpClient client;
-
-    @Inject
-    private JdbcTestUtils jdbcTestUtils;
-
-    @Inject
-    protected LocalFlowRepositoryLoader repositoryLoader;
+    private ReactorHttpClient client;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
@@ -319,6 +315,7 @@ class ExecutionControllerTest {
                 ),
             Execution.class
         );
+        executionRepository.save(execution);
 
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/" + execution.getId() + "/flow"),

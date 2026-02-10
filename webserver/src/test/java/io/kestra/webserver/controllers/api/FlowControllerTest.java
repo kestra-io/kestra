@@ -1188,7 +1188,7 @@ class FlowControllerTest {
         List<ValidateConstraintViolation> violations = response.body();
         assertEquals(1, violations.size());
         assertEquals("warningsAndInfos.yaml", violations.getFirst().getFilename());
-        assertEquals(1, violations.getFirst().getDeprecationPaths().size());
+        assertEquals(2, violations.getFirst().getDeprecationPaths().size());
         assertEquals("tasks[0]", violations.getFirst().getDeprecationPaths().getFirst());
         assertEquals(1, violations.getFirst().getInfos().size());
         assertEquals("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log", violations.getFirst().getInfos().getFirst());

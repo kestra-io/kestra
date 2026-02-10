@@ -210,12 +210,14 @@
     }
 
     .docsMenuWrapper{
-        position: relative;
+        position: sticky;
+        top: 1rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
         padding-left: 27px;
         padding-right: 27px;
+        z-index: 3;
     }
 
     .menuOpener{

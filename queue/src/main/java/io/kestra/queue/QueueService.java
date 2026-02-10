@@ -19,7 +19,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
@@ -59,10 +58,6 @@ public class QueueService {
         try {
             byte[] serialize = MAPPER.writeValueAsBytes(message);
 
-            if (log.isDebugEnabled()) {
-                log.debug("[{}] produced message: {}", cls.getSimpleName(), new String(serialize));
-            }
-
             if (queueConfiguration.getMessageProtection() != null && queueConfiguration.getMessageProtection().getEnabled() && serialize.length >= queueConfiguration.getMessageProtection().getLimit()) {
                 metricRegistry
                     .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName()).increment();
@@ -76,11 +71,6 @@ public class QueueService {
             return serialize;
         } catch (JsonProcessingException e) {
             throw new QueueException("[" + cls.getSimpleName() + "] failed to produce: " + e.getMessage(), e);
-        } finally {
-            String[] tags = {MetricRegistry.TAG_QUEUE_TYPE, cls.getSimpleName()};
-            metricRegistry
-                .counter(MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT, MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION, tags)
-                .increment();
         }
     }
 
@@ -94,7 +84,7 @@ public class QueueService {
         } catch (IOException e) {
             return Either.right(new DeserializationException(e, Arrays.toString(record)));
         } finally {
-            String[] tags = {MetricRegistry.TAG_QUEUE_TYPE, cls.getSimpleName()};
+            String[] tags = {MetricRegistry.TAG_QUEUE_NAME, cls.getSimpleName()};
             metricRegistry
                 .counter(MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT, MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION, tags)
                 .increment();
@@ -111,7 +101,7 @@ public class QueueService {
         } catch (IOException e) {
             return Either.right(new DeserializationException(e, record));
         } finally {
-            String[] tags = {MetricRegistry.TAG_QUEUE_TYPE, cls.getSimpleName()};
+            String[] tags = {MetricRegistry.TAG_QUEUE_NAME, cls.getSimpleName()};
             metricRegistry
                 .counter(MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT, MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION, tags)
                 .increment();

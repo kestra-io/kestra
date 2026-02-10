@@ -1,24 +1,41 @@
 package io.kestra.queue;
 
 import com.google.common.base.CaseFormat;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.GenericQueueInterface;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.micrometer.core.instrument.Counter;
 import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
-public abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T> {
+abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T> {
+    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors();
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractQueue.class);
+
     protected final Class<T> cls;
     protected final QueueService queueService;
 
+    protected final ExecutorService asyncPoolExecutor;
+    protected final Counter emitCounter;
     private final List<Consumer<T>> listeners = new CopyOnWriteArrayList<>();
 
-    public AbstractQueue(Class<T> cls, QueueService queueService) {
+    AbstractQueue(Class<T> cls, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         this.cls = cls;
         this.queueService = queueService;
+        this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(MAX_ASYNC_THREADS, "queue-async-" + queueName());
+        this.emitCounter = metricRegistry.counter(MetricRegistry.METRIC_QUEUE_EMIT_COUNT, MetricRegistry.METRIC_QUEUE_EMIT_COUNT_DESCRIPTION, MetricRegistry.TAG_QUEUE_NAME, queueName());
+
+        if (LOG.isDebugEnabled()) {
+            this.listeners.add(message -> LOG.debug("[{}] emitted message with key: {}", cls.getSimpleName(), message.key()));
+        }
     }
 
     @Override

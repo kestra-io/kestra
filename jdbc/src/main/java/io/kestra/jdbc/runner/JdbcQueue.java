@@ -20,9 +20,6 @@ import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
@@ -159,10 +156,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             throw new QueueException("Unable to emit a message to the queue", e);
         }
 
-        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
-            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_NAME, queueType() } :
+            new String [] { MetricRegistry.TAG_QUEUE_NAME, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
         metricRegistry
-            .counter(MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT, MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION, tags)
+            .counter(MetricRegistry.METRIC_QUEUE_EMIT_COUNT, MetricRegistry.METRIC_QUEUE_EMIT_COUNT_DESCRIPTION, tags)
             .increment();
     }
 
@@ -278,8 +275,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
-        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
-            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_NAME, queueType() } :
+            new String [] { MetricRegistry.TAG_QUEUE_NAME, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
         AtomicInteger pollSize = new AtomicInteger();
         this.metricRegistry
             .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
@@ -371,8 +368,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         boolean forUpdate
     ) {
         String queueName = queueName(queueType);
-        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName } :
-            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName, MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_NAME, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName } :
+            new String [] { MetricRegistry.TAG_QUEUE_NAME, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName, MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
         AtomicInteger pollSize = new AtomicInteger();
         this.metricRegistry
             .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);

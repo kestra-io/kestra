@@ -1,5 +1,6 @@
 package io.kestra.queue.jdbc;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.LogEntry;
@@ -38,115 +39,118 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     @Inject
     private ExecutorsUtils executorsUtils;
 
+    @Inject
+    private MetricRegistry metricRegistry;
+
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<Execution> executionQueue() {
-        return new JdbcDispatchQueue<>(Execution.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(Execution.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<ExecutionCommand> executionCommandQueue() {
-        return new JdbcDispatchQueue<>(ExecutionCommand.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(ExecutionCommand.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<ExecutionEvent> executionEventQueue() {
-        return new JdbcDispatchQueue<>(ExecutionEvent.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(ExecutionEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public BroadcastQueueInterface<ExecutionKilled> killQueue() {
-        return new JdbcBroadcastQueue<>(ExecutionKilled.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcBroadcastQueue<>(ExecutionKilled.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue() {
-        return new JdbcDispatchQueue<>(SubflowExecutionResult.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(SubflowExecutionResult.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue() {
-        return new JdbcDispatchQueue<>(SubflowExecutionEnd.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(SubflowExecutionEnd.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue() {
-        return new JdbcDispatchQueue<>(MultipleConditionEvent.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(MultipleConditionEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<FlowInterface> flowQueue() {
-        return new JdbcDispatchQueue<>(FlowInterface.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(FlowInterface.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue() {
-        return new JdbcBroadcastQueue<>(SchedulerEvent.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcBroadcastQueue<>(SchedulerEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue() {
-        return new JdbcVNodeDispatchQueue<>(TriggerEvent.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcVNodeDispatchQueue<>(TriggerEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<MetricEntry> metricQueue() {
-        return new JdbcDispatchQueue<>(MetricEntry.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(MetricEntry.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue() {
-        return new JdbcBroadcastQueue<>(FollowExecutionEvent.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcBroadcastQueue<>(FollowExecutionEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<LogEntry> logEntryQueue() {
-        return new JdbcDispatchQueue<>(LogEntry.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(LogEntry.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public BroadcastQueueInterface<FollowLogEvent> followLogEventQueue() {
-        return new JdbcBroadcastQueue<>(FollowLogEvent.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcBroadcastQueue<>(FollowLogEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue() {
-        return new JdbcKeyedDispatchQueue<>(WorkerJobEvent.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcKeyedDispatchQueue<>(WorkerJobEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @Bean
     @Singleton
     @Override
     public DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue() {
-        return new JdbcDispatchQueue<>(WorkerTaskResult.class, queueService, jdbcQueueClient, executorsUtils);
+        return new JdbcDispatchQueue<>(WorkerTaskResult.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 }

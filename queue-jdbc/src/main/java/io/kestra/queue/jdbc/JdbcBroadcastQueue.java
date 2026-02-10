@@ -1,42 +1,27 @@
 package io.kestra.queue.jdbc;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.queue.AbstractBroadcastQueue;
+import io.kestra.queue.QueueRecord;
 import io.kestra.queue.QueueService;
 import io.kestra.queue.jdbc.client.JdbcBroadcastSubscriber;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.concurrent.CompletionStage;
 
 @Slf4j
-public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractJdbcQueue<T> implements BroadcastQueueInterface<T> {
-    public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils) {
-        super(cls, queueService, jdbcQueueClient, executorsUtils);
-    }
+public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadcastQueue<T> {
+    private final JdbcQueueClient jdbcQueueClient;
 
-    @Override
-    public void emit(T message) throws QueueException {
-        this.internalEmit(null, message);
-    }
+    public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+        super(cls, queueService, executorsUtils, metricRegistry);
 
-    @Override
-    public void emit(List<T> messages) throws QueueException {
-        this.internalEmit(null, messages);
-    }
-
-    @Override
-    public CompletionStage<Void> emitAsync(T message) {
-        return this.internalAsyncEmit(null, message);
-    }
-
-    @Override
-    public CompletionStage<Void> emitAsync(List<T> messages) {
-        return this.internalAsyncEmit(null, messages);
+        this.jdbcQueueClient = jdbcQueueClient;
     }
 
     @Override
@@ -48,4 +33,20 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractJdbcQu
             queueName()
         );
     }
+
+    @Override
+    protected void doEmit(byte[] message, String key) throws QueueException {
+        jdbcQueueClient.publish(this.queueName(), null, key, new String(message));
+    }
+
+    @Override
+    protected void doEmit(List<QueueRecord> messages) throws QueueException {
+        String queueName = this.queueName();
+        jdbcQueueClient.publish(messages
+            .stream()
+            .map(e -> new JdbcQueueClient.PublishedMessage(queueName, null, e.key(), new String(e.value())))
+            .toList()
+        );
+    }
+
 }

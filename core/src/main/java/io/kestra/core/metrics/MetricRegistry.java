@@ -142,16 +142,13 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT = "scheduler.assigned.vnodes.count";
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION = "The number of virtual nodes assigned to the scheduler";
 
-    public static final String METRIC_STREAMS_STATE_COUNT = "stream.state.count";
-    public static final String METRIC_STREAMS_STATE_COUNT_DESCRIPTION = "Number of Kafka Stream applications by state";
-
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
     public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries";
 
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT = "queue.big_message.count";
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION = "Total number of big messages";
-    public static final String METRIC_QUEUE_PRODUCE_COUNT = "queue.produce.count";
-    public static final String METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION = "Total number of produced messages";
+    public static final String METRIC_QUEUE_EMIT_COUNT = "queue.emit.count";
+    public static final String METRIC_QUEUE_EMIT_COUNT_DESCRIPTION = "Total number of emitted messages";
     public static final String METRIC_QUEUE_RECEIVE_COUNT = "queue.receive.count";
     public static final String METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION = "Total number of received messages";
     public static final String METRIC_QUEUE_RECEIVE_DURATION = "queue.receive.duration";
@@ -171,7 +168,7 @@ public class MetricRegistry {
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
     public static final String TAG_QUEUE_CONSUMER = "consumer";
     public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";
-    public static final String TAG_QUEUE_TYPE = "queue_type";
+    public static final String TAG_QUEUE_NAME = "queue_name";
     public static final String TAG_LABEL_PREFIX = "label";
     /**
      * Sentinel value representing logical absence of label.
@@ -434,7 +431,7 @@ public class MetricRegistry {
         var tenantTag = getTenantTag(execution.getTenantId());
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
-    
+
     /**
      * Return tags for current {@link TriggerId}
      *

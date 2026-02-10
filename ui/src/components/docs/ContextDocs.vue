@@ -162,7 +162,7 @@
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
         if(response === undefined){
-            response = await docStore.fetchResource(`docs${val ?? ""}`)
+            response = await docStore.fetchResource(val || "");
         }
 
         await setDocPageFromResponse(response);

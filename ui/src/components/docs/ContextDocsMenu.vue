@@ -12,7 +12,7 @@
                     <RecursiveToc :parent="{children: children ?? []}">
                         <template #default="{path, sidebarTitle, title, class: childClass}">
                             <ContextDocsLink
-                                :href="path.slice(5)"
+                                :href="path"
                                 useRaw
                                 :class="[{'active-page': isCurrentPage(path)}, childClass]"
                                 @click="menuOpen = false"

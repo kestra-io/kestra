@@ -208,8 +208,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return findCondition(query, Map.of());
     }
 
-    abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
-
     abstract public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {

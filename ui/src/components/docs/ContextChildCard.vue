@@ -1,5 +1,7 @@
 <template>
     <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
+        ContextChildCard.vue
+         
         <ContextDocsLink
             :href="item.path"
             class="col"
@@ -51,7 +53,7 @@
             return props.pageUrl.replace(/^\//, "").replace(/\/$/, "");
         } else {
             const p = docStore.docPath;
-            return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : "";
+            return p ? p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/") : "docs";
         }
     })
 

@@ -40,7 +40,7 @@
     });
 
     const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")));
-    const finalHref = computed(() => props.useRaw ? `/${props.href}` : href.value);
+    const finalHref = computed(() => props.useRaw ? props.href : href.value);
 
     const navigateInVuex = () => {
         docStore.docPath = finalHref.value;

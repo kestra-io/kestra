@@ -32,7 +32,7 @@
     const props = withDefaults(defineProps<{
         href?: string;
         useRaw?: boolean;
-        class?: string | Record<string, boolean> | Array<string | Record<string, boolean>>;
+        class?: string | Record<string, boolean> | Array<undefined | string | Record<string, boolean>>;
     }>(), {
         href: undefined,
         useRaw: false,
@@ -46,3 +46,17 @@
         docStore.docPath = finalHref.value;
     };
 </script>
+
+<style lang="scss" scoped>
+    .docsMenu {
+        .depth-0 {
+            padding-left: 20px;
+        }
+        .depth-1 {
+            padding-left: 20px;
+        }
+        .depth-2 {
+            padding-left: 30px;
+        }
+    }
+</style>

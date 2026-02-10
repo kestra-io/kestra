@@ -10,25 +10,25 @@
                 v-if="child.children"
             >
                 <template #title>
-                    <span v-if="disabledPages.includes(child.path) || !makeIndexNavigable">
-                        {{ child.sidebarTitle?.capitalize() }}
+                    <span v-if="disabledPages.includes(child.path) || !makeIndexNavigable" :class="`depth-${depth}`">
+                        {{ child.title.capitalize() }}
                     </span>
-                    <slot v-else v-bind="child">
-                        <RouterLink :to="{path: '/' + child.path}">
-                            {{ child.sidebarTitle?.capitalize() }}
+                    <slot v-else v-bind="child" :class="`depth-${depth}`">
+                        <RouterLink :to="{path: '/' + child.path}" :class="`depth-${depth}`">
+                            {{ child.title.capitalize() }}
                         </RouterLink>
                     </slot>
                 </template>
-                <RecursiveToc :parent="{children: child.children}" :makeIndexNavigable="makeIndexNavigable">
+                <RecursiveToc :parent="{children: child.children}" :makeIndexNavigable="makeIndexNavigable" :depth="depth + 1">
                     <template #default="subChild">
                         <slot v-bind="subChild" />
                     </template>
                 </RecursiveToc>
             </el-collapse-item>
             <div v-else>
-                <slot v-bind="child">
+                <slot v-bind="child" :class="`depth-${depth}`">
                     <RouterLink :to="{path: '/' + child.path}">
-                        {{ child.sidebarTitle?.capitalize() }}
+                        {{ child.title.capitalize() }}
                     </RouterLink>
                 </slot>
             </div>
@@ -44,7 +44,7 @@
     })
 
     defineSlots<{
-        default: (child: TocChild) => any
+        default: (child: TocChild & {class?: string}) => any
     }>()
 
     const disabledPages = [
@@ -56,8 +56,8 @@
 
     interface TocChild {
         path: string;
+        sidebarTitle?: string;
         title: string;
-        sidebarTitle: string;
         children?: TocChild[];
     }
 
@@ -65,13 +65,15 @@
         parent: {
             children: TocChild[]
         }
+        depth?: number
         makeIndexNavigable?: boolean
     }>(), {
-        makeIndexNavigable: true
+        makeIndexNavigable: true,
+        depth: 0
     })
 
     const filteredChildren = computed(() => {
-        return props.parent.children.filter(child => child.sidebarTitle);
+        return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})))
     })
 
     const openedDocs = ref<string[]>([]);
@@ -83,11 +85,13 @@
 
         > * {
             font-size: var(--el-collapse-header-font-size);
-            line-height: 30px;
         }
 
-        > .el-collapse-item {
-            > :deep(button) {
+        :deep(> .el-collapse-item) {
+            > .el-collapse-item__header{
+                padding: 0;
+            }
+            > button {
                 padding: 0;
             }
 
@@ -105,4 +109,15 @@
             padding-bottom: 0;
         }
     }
+
+    .depth-0 {
+        padding-left: 10px;
+    }
+    .depth-1 {
+        padding-left: 20px;
+    }
+    .depth-2 {
+        padding-left: 30px;
+    }
+    
 </style>

@@ -144,16 +144,20 @@
         if(!isOnline.value) return;
 
         try {
-            const response = await docStore.fetchDocId(docStore.docId!);
+            if(!docStore.docId) {
+                refreshPage()
+                return;
+            }
+            const response = await docStore.fetchDocId(docStore.docId);
             if (response) {
                 await setDocPageFromResponse(response);
                 // Add the default page to history
-                addToHistory("");
+                addToHistory("docs");
             } else {
-                refreshPage("");
+                refreshPage();
             }
         } catch {
-            refreshPage("");
+            refreshPage();
         }
     }
 
@@ -162,12 +166,12 @@
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
         if(response === undefined){
-            response = await docStore.fetchResource(`docs${val ?? ""}`)
+            response = await docStore.fetchResource(val || "docs");
         }
 
         await setDocPageFromResponse(response);
         // Always add to history, empty string for home/default page
-        addToHistory(val || "");
+        addToHistory(val || "docs");
     }
 
     const proseComponents = Object.fromEntries([

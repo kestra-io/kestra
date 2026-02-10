@@ -67,12 +67,7 @@
 
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
-
-    .docs-layout-container {
-        height: calc(100vh - 80px);
-        overflow: hidden;
-    }
-
+    
     .sidebar {
         background: var(--ks-background-card);
         padding: 2rem;
@@ -307,11 +302,7 @@
         display: none;
     }
 
-    @media (max-width: 991px) {
-        .docs-layout-container {
-            height: 100vh;
-        }
-        
+    @media (max-width: 991px) {        
         .secondary-header {
             border-bottom: 1px solid var(--ks-border-primary);
             

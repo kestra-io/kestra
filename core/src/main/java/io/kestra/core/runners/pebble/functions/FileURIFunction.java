@@ -68,7 +68,7 @@ public class FileURIFunction implements Function {
 
         try {
             Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
-            Path filePath = NamespaceFile.normalize(path, true);
+            Path filePath = NamespaceFile.normalize(Path.of(path), true);
 
             if (args.containsKey(VERSION)) {
                 Integer version;

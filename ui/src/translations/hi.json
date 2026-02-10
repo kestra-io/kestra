@@ -499,6 +499,10 @@
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
         }
       },
+      "kill_switches": {
+        "content": "किल स्विच फीचर एक UI आधारित तंत्र प्रदान करता है जो समस्याग्रस्त executions को रोकने के लिए है। यह केवल CLI <code>--skip-executions</code> और <code>--skip-flows</code> कमांड्स को एक व्यापक प्रशासनिक इंटरफेस के साथ बदलता है।",
+        "title": "आपके पास अभी तक कोई Kill Switches नहीं हैं!"
+      },
       "panels": {
         "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Namespace Context)।",
         "title": "कोई पैनल वर्तमान में खुला नहीं है।"
@@ -702,6 +706,10 @@
         "parent_description": "केवल शीर्ष-स्तरीय/मूल executions दिखाएं"
       },
       "key": "कुंजी",
+      "kill_switch_type": {
+        "description": "किल स्विच प्रकार द्वारा फ़िल्टर करें",
+        "label": "प्रकार"
+      },
       "kind": {
         "description": "प्रकार के अनुसार निष्पादन फ़िल्टर करें",
         "label": "प्रकार"

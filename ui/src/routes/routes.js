@@ -30,17 +30,6 @@ export default [
             // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
             // but both were more complex and fragile than this simple check.
             const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
-            if (!to.params.dashboard) {
-                next({
-                    ...to,
-                    params: {
-                        ...to.params,
-                        dashboard: "default",
-                    },
-                    query,
-                });
-                return;
-            }
             if(change) {
                 next({
                     ...to,
@@ -126,7 +115,7 @@ export default [
     {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
     {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
-    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants", component: DemoTenants},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
 ];

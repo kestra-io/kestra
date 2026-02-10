@@ -2,10 +2,13 @@ package io.kestra.jdbc.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.killswitch.EvaluationType;
+import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.Execution.FailedExecutionWithLog;
 import io.kestra.core.models.flows.*;
@@ -23,7 +26,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
@@ -78,6 +80,9 @@ import static io.kestra.core.utils.Rethrow.*;
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface {
     private static final ObjectMapper MAPPER = JdbcMapper.of();
+    private static final String IGNORING_EXECUTION_MSG = "Ignoring execution {} because there is a kill switch on it";
+    private static final String CANCELLING_EXECUTION_MSG = "Cancelling execution {} because there is a kill switch on it";
+    private static final String KILLING_EXECUTION_MSG = "Killing execution {} because there is a kill switch on it";
 
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> executionDelayFuture;
@@ -117,10 +122,6 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONEND_NAMED)
     private QueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
-    private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
 
     @Inject
     @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
@@ -174,7 +175,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private WorkerGroupService workerGroupService;
 
     @Inject
-    private SkipExecutionService skipExecutionService;
+    private KillSwitchService killSwitchService;
 
     @Inject
     private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
@@ -330,7 +331,17 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
         this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                JdbcExecutor.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                JdbcExecutor.this.exitMaintenance();
+            }
+        })::dispose);
 
         executionDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
@@ -449,20 +460,6 @@ public class JdbcExecutor implements ExecutorInterface {
             });
     }
 
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
-        }
-    }
-
     private void enterMaintenance() {
         this.executionQueue.pause();
         this.workerTaskResultQueue.pause();
@@ -494,9 +491,9 @@ public class JdbcExecutor implements ExecutorInterface {
             .forEach(workerJobRunning -> {
                 // WorkerTaskRunning
                 if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-                    if (skipExecutionService.skipExecution(workerTaskRunning.getTaskRun())) {
-                        // if the execution is skipped, we remove the workerTaskRunning and skip its resubmission
-                        log.warn("Skipping execution {}", workerTaskRunning.getTaskRun().getExecutionId());
+                    if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
+                        // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
+                        log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());
                         workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
                     } else {
                         try {
@@ -554,8 +551,10 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         Execution message = either.getLeft();
-        if (skipExecutionService.skipExecution(message)) {
-            log.warn("Skipping execution {}", message.getId());
+
+        EvaluationType evaluationType = killSwitchService.evaluate(message);
+        if (evaluationType.isKillSwitched(message)) {
+            handleKillSwitchedExecution(evaluationType, message);
             return;
         }
 
@@ -577,7 +576,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             ExecutionDelay executionDelay = ExecutionDelay.builder()
                                 .executionId(executor.getExecution().getId())
                                 .date(execution.getScheduleDate())
-                                .state(State.Type.RUNNING)
+                                .state(State.Type.CREATED)
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                             executionDelayStorage.save(executionDelay);
@@ -780,11 +779,11 @@ public class JdbcExecutor implements ExecutorInterface {
     private Execution fail(Execution message, Exception e) {
         var failedExecution = message.failedExecutionFromExecutor(e);
         try {
-            logQueue.emitAsync(failedExecution.getLogs());
+            logQueue.emitAsync(failedExecution.logs());
         } catch (QueueException ex) {
             // fail silently
         }
-        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() : failedExecution.getExecution().withState(State.Type.FAILED);
+        return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -794,8 +793,9 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         WorkerTaskResult message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getTaskRun())) {
-            log.warn("Skipping execution {}", message.getTaskRun().getExecutionId());
+        EvaluationType evaluationType = killSwitchService.evaluate(message.getTaskRun());
+        if (evaluationType != EvaluationType.PASS) {
+            handleKillSwitchedWorkerTaskResult(evaluationType, message);
             return;
         }
 
@@ -856,12 +856,15 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         SubflowExecutionResult message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getExecutionId())) {
-            log.warn("Skipping execution {}", message.getExecutionId());
+
+        // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
+        if (killSwitchService.evaluate(message.getExecutionId()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution result for child execution {} as there is a kill switch in it", message.getExecutionId());
             return;
         }
-        if (skipExecutionService.skipExecution(message.getParentTaskRun())) {
-            log.warn("Skipping execution {}", message.getParentTaskRun().getExecutionId());
+        // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
+        if (killSwitchService.evaluate(message.getParentTaskRun()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution result for parent execution {} as there is a kill switch in it", message.getParentTaskRun().getExecutionId());
             return;
         }
 
@@ -972,12 +975,15 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         SubflowExecutionEnd message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getParentExecutionId())) {
-            log.warn("Skipping execution {}", message.getParentExecutionId());
+
+        // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
+        if (killSwitchService.evaluate(message.getChildExecution()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution end for child execution {} as there is a kill switch in it", message.getChildExecution().getId());
             return;
         }
-        if (skipExecutionService.skipExecution(message.getChildExecution())) {
-            log.warn("Skipping execution {}", message.getChildExecution().getId());
+        // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
+        if (killSwitchService.evaluate(message.getParentExecutionId()) != EvaluationType.PASS) {
+            log.warn("Ignoring subflow execution end for parent execution {} as there is a kill switch in it", message.getParentExecutionId());
             return;
         }
 
@@ -1041,8 +1047,8 @@ public class JdbcExecutor implements ExecutorInterface {
             return;
         }
 
-        if (skipExecutionService.skipExecution(killedExecution.getExecutionId())) {
-            log.warn("Skipping execution {}", killedExecution.getExecutionId());
+        if (killSwitchService.evaluate(killedExecution.getExecutionId()) == EvaluationType.IGNORE) { // we process other types of evaluation
+            log.warn(IGNORING_EXECUTION_MSG, killedExecution.getExecutionId());
             return;
         }
 
@@ -1182,7 +1188,7 @@ public class JdbcExecutor implements ExecutorInterface {
             if (hasFailure) {
                 this.executionQueue.emit(executor.getExecution());
             } else {
-                ((JdbcQueue<Execution>) this.executionQueue).emitOnly(null, executor.getExecution());
+                this.executionQueue.emitOnly(null, executor.getExecution());
             }
 
             Execution execution = executor.getExecution();
@@ -1220,33 +1226,31 @@ public class JdbcExecutor implements ExecutorInterface {
                     // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
                     boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
                         && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitionned from KILLING to KILLED
+                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
                     if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
-                        int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
-
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                             var finalFlow = executor.getFlow();
 
-                            if (newLimit < finalFlow.getConcurrency().getLimit()) {
-                                executionQueuedStorage.pop(executor.getFlow().getTenantId(),
-                                    executor.getFlow().getNamespace(),
-                                    executor.getFlow().getId(),
-                                    throwBiConsumer((dslContext, queued) -> {
-                                        var newExecution = queued.withState(State.Type.RUNNING);
-                                        concurrencyLimitStorage.increment(dslContext, finalFlow);
-                                        executionQueue.emit(newExecution);
-                                        metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                            // Pop the next queued execution atomically with decrement/increment to avoid race conditions
+                            // that could leave executions stuck in the queue indefinitely (see issue #13785)
+                            concurrencyLimitStorage.decrementAndPop(
+                                finalFlow,
+                                executionQueuedStorage,
+                                throwBiConsumer((dslContext, queued) -> {
+                                    var newExecution = queued.withState(State.Type.RUNNING);
+                                    executionQueue.emit(newExecution);
+                                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
 
-                                        // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                                        processFlowTriggers(newExecution);
-                                    })
-                                );
-                            } else {
-                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. No new executions will be dequeued.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
+                                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                                    processFlowTriggers(newExecution);
+                                })
+                            );
+                        } else {
+                            int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
+                            if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
+                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
                             }
-                        } else if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
-                            log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
                         }
                     }
                 }
@@ -1530,12 +1534,63 @@ public class JdbcExecutor implements ExecutorInterface {
 
     private Executor handleFailedExecutionFromExecutor(Executor executor, FailedExecutionWithLog failedExecutionWithLog) {
         try {
-            logQueue.emitAsync(failedExecutionWithLog.getLogs());
+            logQueue.emitAsync(failedExecutionWithLog.logs());
         } catch (QueueException ex) {
             // fail silently
         }
 
-        return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
+        return executor.withExecution(failedExecutionWithLog.execution(), "exception");
+    }
+
+    private void handleKillSwitchedExecution(EvaluationType evaluationType, Execution message) {
+        handleKillSwitchedExecution(evaluationType, message.getTenantId(), message.getId());
+    }
+
+    private void handleKillSwitchedWorkerTaskResult(EvaluationType evaluationType, WorkerTaskResult message) {
+        handleKillSwitchedExecution(evaluationType, message.getTaskRun().getTenantId(), message.getTaskRun().getExecutionId());
+    }
+
+    private void handleKillSwitchedExecution(EvaluationType evaluationType, String tenantId, String executionId) {
+        switch (evaluationType) {
+            case IGNORE -> log.warn(IGNORING_EXECUTION_MSG, executionId);
+            case KILL -> {
+                log.warn(KILLING_EXECUTION_MSG, executionId);
+                killExecution(tenantId, executionId);
+            }
+            case CANCEL -> {
+                log.warn(CANCELLING_EXECUTION_MSG, executionId);
+                cancelExecution(tenantId, executionId);
+            }
+        }
+    }
+
+    private void killExecution(String tenantId, String executionId) {
+        // TODO we should use a lock to avoid potential concurrent update of the execution (2.0 task)
+        executionRepository.findById(tenantId, executionId).ifPresent(execution -> {
+            if (!execution.getState().isTerminated()) {
+                executionRepository.save(execution.withState(State.Type.KILLING).addLabel(new Label(Label.KILL_SWITCH, "killed")));
+            }
+        });
+
+        try {
+            killQueue.emit(ExecutionKilledExecution.builder()
+                .tenantId(tenantId)
+                .executionId(executionId)
+                .isOnKillCascade(true)
+                .state(ExecutionKilled.State.REQUESTED)
+                .build());
+        } catch (QueueException e) {
+            log.error("Unable to kill the execution {}", executionId, e);
+        }
+    }
+
+    private void cancelExecution(String tenantId, String executionId) {
+        // TODO we should use a lock to avoid potential concurrent update of the execution (2.0 task)
+        executionRepository.findById(tenantId, executionId).ifPresent(execution -> {
+            if (!execution.getState().isTerminated()) {
+                executionRepository.save(execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled")));
+            }
+        });
     }
 
     /**

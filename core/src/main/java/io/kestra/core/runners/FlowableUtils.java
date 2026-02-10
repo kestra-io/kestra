@@ -24,7 +24,7 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks);
+        List<ResolvedTask> currentTasks = execution.removeDisabled(tasks);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
     }
@@ -433,7 +433,9 @@ public class FlowableUtils {
             parentTaskRun
         );
 
-        boolean isTasks = tasks.equals(currentTasks);
+        List<ResolvedTask> resolvedTasks = execution.removeDisabled(tasks);
+
+        boolean isTasks = resolvedTasks.equals(currentTasks);
 
         // errors & finally must be run as sequential tasks
         if (!isTasks) {

@@ -378,6 +378,7 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
+                    Field.QUERY,
                     Field.ASSET_ID,
                     Field.NAMESPACE,
                     Field.FLOW_ID,
@@ -401,6 +402,17 @@ public record QueryFilter(
                     Field.TASK_ID,
                     Field.TASK_RUN_ID,
                     Field.CREATED
+                );
+            }
+        },
+        CREDENTIALS {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.ID,
+                    Field.NAMESPACE,
+                    Field.TYPE
                 );
             }
         };

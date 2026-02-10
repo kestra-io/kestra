@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "注意: 現時点では、AIプロバイダーとしてGeminiのみがサポートされています。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
+          "footer": "注意: 現時点では、オープンソース版のAIプロバイダーとしてGeminiのみがサポートされています。エンタープライズ版については、他のモデルプロバイダーの設定についてAI Copilotのドキュメントを参照してください。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
           "header": "<b>AI Copilotはまだ設定されていません。</b>\n\nAI Copilotを有効にするには、次のスニペットをKestraインスタンスの構成ファイル（例：<code>application.yml</code>）に追加し、<code>geminiApiKey</code>を実際のキーに置き換えてください。"
         },
         "generating": "フローのYAMLを生成しています...",
@@ -203,6 +203,7 @@
     "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
+    "create new revision": "新しいリビジョンを作成",
     "create_flow": "フローを作成",
     "created date": "作成日",
     "creation": "作成",
@@ -369,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a></strong>",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
           "intro": "新しいSecretを作成するには：",
           "second": "`<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>`という名前の環境変数を上記の値で追加してください。",
           "third": "Kestraインスタンスを再起動する"
@@ -498,9 +499,17 @@
           "title": "現在、依存関係はありません。"
         }
       },
+      "kill_switches": {
+        "content": "キルスイッチ機能は、問題のある実行を停止するためのUIベースのメカニズムを提供します。これは、CLI専用の<code>--skip-executions</code>および<code>--skip-flows</code>コマンドを包括的な管理インターフェースに置き換えます。",
+        "title": "まだKill Switchがありません！"
+      },
       "panels": {
         "content": "Flow CodeまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Namespace Context）を選択してください。",
         "title": "現在、パネルは開いていません。"
+      },
+      "pluginDefaults": {
+        "content": "プラグインデフォルトを使用すると、プラグインの設定を一元管理し、namespace内のすべてのflowと共有できます。",
+        "title": "プラグインのデフォルトがまだありません！"
       },
       "plugins": {
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
@@ -595,6 +604,7 @@
         "title": "ワークフローコンポーネント"
       }
     },
+    "execution_started": "実行が開始されました！",
     "execution_starts_progress": "実行が開始されると、ここに進行状況の更新が表示されます。",
     "execution_status": "実行は:",
     "executions": "実行",
@@ -619,6 +629,8 @@
     "export all templates": "すべてのテンプレートをエクスポート",
     "export_csv": "CSVとしてエクスポート",
     "exports": "エクスポート",
+    "failed to export plugin defaults": "プラグインのデフォルトのエクスポートに失敗しました",
+    "failed to import plugin defaults": "プラグインのデフォルトのインポートに失敗しました",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
     "feeds": {
@@ -694,6 +706,10 @@
         "parent_description": "トップレベル/ルートの実行のみを表示"
       },
       "key": "キー",
+      "kill_switch_type": {
+        "description": "キルスイッチタイプでフィルター",
+        "label": "タイプ"
+      },
       "kind": {
         "description": "実行種別でフィルター",
         "label": "種類"
@@ -798,6 +814,7 @@
           "labels": "実行ラベル (key:value 形式)",
           "namespace": "実行されたflowが属するnamespace",
           "outputs": "実行によって生成されたOutputs",
+          "parent-execution": "この実行をトリガーした親実行ID",
           "revision": "この実行に使用されたflowのバージョン",
           "start-date": "実行が開始されたとき",
           "state": "現在の実行状態",
@@ -987,6 +1004,7 @@
     "fix_with_ai": "AIで修正",
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
+    "flow already exists message": "namespace {namespace} に flow {id} はすでに存在します。新しいリビジョンを作成しますか？",
     "flow creation": "Flow作成",
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",
@@ -997,6 +1015,9 @@
     "flow must have id and namespace": "Flowにはidとnamespaceが必要です。",
     "flow must not be empty": "フローは空であってはなりません",
     "flow not imported": "一部のflowをインポートできませんでした",
+    "flow revision latest": "最新のflowリビジョン",
+    "flow revision original": "元のflowリビジョン",
+    "flow revision specific": "特定のflowリビジョン",
     "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
@@ -1111,6 +1132,7 @@
     "min": "Min",
     "minutes": "分",
     "missingSource": "ソースが見つかりません",
+    "modify inputs": "入力を変更",
     "modify_inputs": "入力を変更",
     "monogram": "モノグラム",
     "months": "月",
@@ -1145,7 +1167,9 @@
       "dialog": {
         "deletion": {
           "confirm": "確認",
+          "file_single": "ファイル <code>{name}</code> を削除してもよろしいですか？",
           "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
+          "folder_single": "フォルダー<code>{name}</code>とそのすべての内容を削除してもよろしいですか？",
           "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
           "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
           "title": "コンテンツの削除を確認"
@@ -1434,13 +1458,36 @@
       "toggle": "プレイグラウンド",
       "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
-    "pluginDefaults": "プラグインのデフォルト",
+    "plugin defaults exported": "プラグインのデフォルトがエクスポートされました",
+    "plugin defaults imported": "プラグインのデフォルトがインポートされました",
+    "plugin defaults not imported": "一部のプラグインデフォルトをインポートできませんでした",
+    "pluginDefaults": {
+      "add": "プラグインデフォルトを追加",
+      "add_subtitle": "新しいプラグインのデフォルトをそのプロパティで設定する",
+      "cancel": "キャンセル",
+      "custom": "カスタムプラグイン",
+      "custom_configure": "カスタムプラグインタイプ - YAMLを使用して構成",
+      "custom_placeholder": "プラグインタイプを入力",
+      "custom_type": "カスタムプラグインタイプ",
+      "edit": "プラグインデフォルトを編集",
+      "edit_subtitle": "既存のプラグインのデフォルト設定を変更する",
+      "form": "フォーム",
+      "predefined": "定義済みプラグイン",
+      "select_predefined": "定義済みプラグインを選択",
+      "show_yaml": "YAMLを表示",
+      "title": "プラグインのデフォルト",
+      "update": "プラグインデフォルトを更新",
+      "use_custom": "カスタムを使用",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML設定"
+    },
     "pluginPage": {
       "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
     },
+    "plugin_default_already_exists": "<code>{type}</code>のプラグインデフォルトはすでに存在します。",
     "plugins": {
       "name": "プラグイン",
       "names": "プラグイン",
@@ -1456,6 +1503,7 @@
       "label": "プレビュー",
       "view": "表示"
     },
+    "product_tour": "プロダクトツアー",
     "properties": {
       "hidden": "テーブルに隠す",
       "hint": "表示する列を選択",
@@ -1475,10 +1523,14 @@
     "remove_bookmark": "このブックマークを削除してもよろしいですか？",
     "replay": "リプレイ",
     "replay confirm": "この実行<code>{id}</code>をリプレイして新しいものを作成してもよろしいですか？",
+    "replay execution description": "これにより、選択された実行に基づいて新しい実行が作成されます。",
+    "replay execution title": "実行の再実行",
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay from task tooltip": "Task <code>{taskId}</code>から開始する同様の実行を作成",
+    "replay inputs": "入力",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
+    "replay using": "を使用してリプレイ",
     "replay with inputs": "入力を使用してリプレイ",
     "replayed": "実行がリプレイされました",
     "required field": "必須フィールド",
@@ -1500,6 +1552,7 @@
     "resumed confirm": "実行<code>{id}</code>を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
     "resumed title": "実行<code>{id}</code>を再開",
+    "reuse original inputs": "元のinputを再利用",
     "reuse_original_inputs": "元のinputを再利用",
     "revision": "リビジョン",
     "revision deleted": "リビジョン{revision}が正常に削除されました",

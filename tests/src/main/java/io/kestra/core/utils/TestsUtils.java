@@ -158,10 +158,14 @@ abstract public class TestsUtils {
     }
 
     private static Flow mockFlow(StackTraceElement caller) {
+        return mockFlow(MAIN_TENANT, caller);
+    }
+
+    private static Flow mockFlow(String tenant, StackTraceElement caller) {
         return Flow.builder()
             .namespace(caller.getClassName().toLowerCase())
             .id(caller.getMethodName().toLowerCase())
-            .tenantId(MAIN_TENANT)
+            .tenantId(tenant)
             .revision(1)
             .build();
     }
@@ -220,13 +224,21 @@ abstract public class TestsUtils {
     }
 
     public static RunContext mockRunContext(RunContextFactory runContextFactory, Task task, Map<String, Object> inputs) {
+        return mockRunContext(MAIN_TENANT, runContextFactory, task, inputs);
+    }
+
+    public static RunContext mockRunContext(String tenant, RunContextFactory runContextFactory, Task task, Map<String, Object> inputs) {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
 
-        Flow flow = TestsUtils.mockFlow(caller);
+        Flow flow = TestsUtils.mockFlow(tenant, caller);
         Execution execution = TestsUtils.mockExecution(flow, inputs, null);
         TaskRun taskRun = TestsUtils.mockTaskRun(execution, task);
 
-        return runContextFactory.of(flow, task, execution, taskRun);
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+
+        runContextFactory.initializer().forExecutor((DefaultRunContext) runContext);
+
+        return runContext;
     }
 
     public static <T> Flux<T> receive(QueueInterface<T> queue) {

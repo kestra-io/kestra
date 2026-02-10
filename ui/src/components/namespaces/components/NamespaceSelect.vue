@@ -11,7 +11,7 @@
         remote
         remoteShowSuffix
         :remoteMethod="onSearch"
-        :placeholder="$t('namespaces')"
+        :placeholder="placeholder ?? $t('namespaces')"
         :suffixIcon="readOnly ? Lock : undefined"
     >
         <template #tag>
@@ -47,10 +47,16 @@
         readOnly?: boolean,
         clearable?: boolean,
         taggable?: boolean
+        placeholder?: string | undefined
     }>(), {
         multiple: false,
-        clearable: true
+        clearable: true,
+        placeholder: undefined
     });
+
+    defineOptions({
+        inheritAttrs: false
+    })
 
     const modelValue = defineModel<string | string[]>();
 

@@ -81,7 +81,7 @@ public class PurgeKVTest {
 
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
-            .namespacePattern(Property.ofValue("*arent*"))
+            .namespacePattern(Property.ofValue("*arent*"))  // codespell:ignore
             .build();
         List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));
 
@@ -99,7 +99,7 @@ public class PurgeKVTest {
             .build();
         List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));
 
-        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE);
+        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE, "ns1", "ns2");
     }
 
     @Test
@@ -109,6 +109,20 @@ public class PurgeKVTest {
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
             .namespaces(Property.ofValue(List.of("ns1", "ns2", PARENT_NAMESPACE)))
+            .includeChildNamespaces(Property.ofValue(true))
+            .build();
+        List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));
+
+        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE, CHILD_NAMESPACE, "ns1", "ns2");
+    }
+
+    @Test
+    void should_find_parent_namespace_even_if_no_flows() throws IllegalVariableEvaluationException {
+        addNamespace(CHILD_NAMESPACE);
+
+        PurgeKV purgeKV = PurgeKV.builder()
+            .type(PurgeKV.class.getName())
+            .namespaces(Property.ofValue(List.of(PARENT_NAMESPACE)))
             .includeChildNamespaces(Property.ofValue(true))
             .build();
         List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));

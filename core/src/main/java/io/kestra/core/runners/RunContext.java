@@ -235,4 +235,9 @@ public abstract class RunContext implements PropertyContext {
      * @return an InputAndOutput that can be used to work with inputs and outputs.
      */
     public abstract InputAndOutput inputAndOutput();
+
+    /**
+     * Get access to the SDK handler which allows to interact easily with the Kestra API via the SDK.
+     */
+    public abstract SDK sdk();
 }

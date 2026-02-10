@@ -1,6 +1,6 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.jdbc.repository.AbstractJdbcNamespaceFileMetadataRepositoryTest;
+import io.kestra.core.repositories.AbstractNamespaceFileMetadataRepositoryTest;
 
-public class PostgresNamespaceFileMetadataRepositoryTest extends AbstractJdbcNamespaceFileMetadataRepositoryTest {
+public class PostgresNamespaceFileMetadataRepositoryTest extends AbstractNamespaceFileMetadataRepositoryTest {
 }

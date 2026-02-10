@@ -6,7 +6,7 @@
                     <el-button-group>
                         <el-tooltip
                             effect="light"
-                            :content="t('Fold content lines')"
+                            :content="$t('Fold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"
@@ -19,7 +19,7 @@
                         </el-tooltip>
                         <el-tooltip
                             effect="light"
-                            :content="t('Unfold content lines')"
+                            :content="$t('Unfold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"
@@ -96,9 +96,8 @@
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import {useScrollMemory} from "../../composables/useScrollMemory";
-
+    import {findDuplicateTaskIds} from "../../utils/yamlValidation.ts"
     const {t} = useI18n()
-
 
     const props = defineProps({
         modelValue: {type: String, default: ""},
@@ -188,6 +187,34 @@
         }
     );
 
+    watch(
+        () => props.modelValue,
+        (newValue) => {
+            if (!editor || !isCodeEditor(editor) || !monacoEditor.value) return;
+
+            const model = editor.getModel();
+            if (!model) return;
+
+            // Only run for YAML files
+            if (props.lang !== "yaml") return;
+
+            const duplicateMarkers = findDuplicateTaskIds(newValue);
+
+            monacoEditor.value.monaco.editor.setModelMarkers(
+                model,
+                "duplicate-task-ids",
+                duplicateMarkers.map((m) => ({
+                    startLineNumber: m.startLineNumber,
+                    startColumn: m.startColumn,
+                    endLineNumber: m.endLineNumber,
+                    endColumn: m.endColumn,
+                    message: m.message,
+                    severity: monacoEditor.value!.monaco.MarkerSeverity.Error,
+                }))
+            );
+        },
+        {immediate: true}
+    );
 
     const themeComputed = computed(() => {
         return useMiscStore().theme;
@@ -277,7 +304,7 @@
         const settingsEditorFontSize = localStorage.getItem("editorFontSize")
 
         return {
-            
+
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily")
                 ? localStorage.getItem("editorFontFamily")
@@ -336,25 +363,25 @@
         }
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
-        
-        
+
+
         if (props.scrollKey && scrollMemory) {
             const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
             if (savedState) {
                 codeEditor.restoreViewState(savedState);
                 codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
             }
-            
+
             const top = scrollMemory.loadData<number>("scrollTop", 0);
             if (typeof top === "number") {
                 codeEditor.setScrollTop(top);
             }
-            
+
             const throttledSave = useThrottleFn(() => {
                 scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
                 scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop");
             }, 100);
-            
+
             codeEditor.onDidScrollChange?.(throttledSave);
         }
 

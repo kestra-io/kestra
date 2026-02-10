@@ -91,15 +91,18 @@
         if (!props.isFlow && !props.isNamespace) {
             // Preserve timeRange filter when switching dashboards
             const preservedQuery = Object.fromEntries(
-                Object.entries(route.query).filter(([key]) => 
+                Object.entries(route.query).filter(([key]) =>
                     key.includes("timeRange")
                 )
             );
 
-            router.replace({
-                params: {...route.params, dashboard: id},
-                query: route.params.dashboard !== id ? preservedQuery : {...route.query},
-            });
+            if (route.params.dashboard !== id) {
+                await router.replace({
+                    params: {...route.params, dashboard: id},
+                    query: preservedQuery,
+                });
+                return;
+            }
         }
 
         dashboard.value = id === "default" ? {id, charts: [], ...parse(defaultYAML)} : await dashboardStore.load(id);
@@ -113,6 +116,8 @@
             load(ID, processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         } else if (props.isNamespace) {
             load(ID, YAML_NAMESPACE);
+        } else {
+            load(ID, YAML_MAIN);
         }
     });
 

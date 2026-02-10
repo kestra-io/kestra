@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Nota: En este momento, solo se admite Gemini como proveedor de AI.\n\nReinicia tu instancia de Kestra después de guardar la configuración.",
+          "footer": "Nota: En este momento, solo se admite Gemini como proveedor de AI para la Edición de Código Abierto. Para la Edición Empresarial, consulte la documentación de AI Copilot para la configuración de otros proveedores de modelos.\n\nReinicie su instancia de Kestra después de guardar la configuración.",
           "header": "<b>AI Copilot aún no ha sido configurado.</b>\n\nPara habilitar AI Copilot, añade el siguiente fragmento a tu archivo de configuración de la instancia de Kestra (por ejemplo, <code>application.yml</code>), reemplazando <code>geminiApiKey</code> con tu key real:"
         },
         "generating": "Generando YAML de Flow para ti...",
@@ -203,6 +203,7 @@
     "copy_to_clipboard": "Copiar al portapapeles",
     "create": "Crear",
     "create first task": "Crea tu primera task",
+    "create new revision": "Crear nueva revisión",
     "create_flow": "Crear Flow",
     "created date": "Fecha de creación",
     "creation": "Creación",
@@ -369,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Codifica el <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a></strong>",
+          "first": "Codifica el <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a>",
           "intro": "Para crear un nuevo Secret:",
           "second": "Agrega una variable de entorno llamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' con el valor anterior",
           "third": "Reinicia tu instancia de Kestra"
@@ -498,9 +499,17 @@
           "title": "Actualmente no hay dependencias."
         }
       },
+      "kill_switches": {
+        "content": "La función Kill Switch proporciona un mecanismo basado en la UI para detener ejecuciones problemáticas. Reemplaza los comandos de solo CLI <code>--skip-executions</code> y <code>--skip-flows</code> con una interfaz de administración integral.",
+        "title": "¡Aún no tienes Kill Switches!"
+      },
       "panels": {
         "content": "Abre Flow Code o No-Code para comenzar a editar tus flows, o selecciona otro panel (Topology, Documentation, Files, Blueprints, Namespace Context) para funciones relacionadas.",
         "title": "Actualmente no hay paneles abiertos."
+      },
+      "pluginDefaults": {
+        "content": "Los valores predeterminados del plugin te permiten gobernar centralmente la configuración de tu plugin y compartirla con todos los flows en tu namespace.",
+        "title": "¡Aún no tienes valores predeterminados de plugin!"
       },
       "plugins": {
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> en nuestra documentación.",
@@ -595,6 +604,7 @@
         "title": "Componentes del Workflow"
       }
     },
+    "execution_started": "¡La ejecución ha comenzado!",
     "execution_starts_progress": "Una vez que la ejecución comience, verás actualizaciones de progreso aquí.",
     "execution_status": "La ejecución es:",
     "executions": "Ejecuciones",
@@ -619,6 +629,8 @@
     "export all templates": "Exportar todas las plantillas",
     "export_csv": "Exportar como CSV",
     "exports": "Exportaciones",
+    "failed to export plugin defaults": "Error al exportar los valores predeterminados del plugin",
+    "failed to import plugin defaults": "Error al importar los valores predeterminados del plugin",
     "failed to render pdf": "Error al renderizar la vista previa del PDF",
     "false": "Falso",
     "feeds": {
@@ -694,6 +706,10 @@
         "parent_description": "Mostrar solo ejecuciones de nivel superior/raíz"
       },
       "key": "Clave",
+      "kill_switch_type": {
+        "description": "Filtrar por tipo de kill switch",
+        "label": "Tipo"
+      },
       "kind": {
         "description": "Filtrar por tipo de ejecución",
         "label": "Tipo"
@@ -798,6 +814,7 @@
           "labels": "Etiquetas de ejecución (formato key:value)",
           "namespace": "Namespace al que pertenece el flow ejecutado",
           "outputs": "Salidas emitidas por la ejecución",
+          "parent-execution": "ID de ejecución principal que desencadenó esta ejecución",
           "revision": "Versión del flow utilizada para esta ejecución",
           "start-date": "Cuando la ejecución comenzó",
           "state": "Estado actual de ejecución",
@@ -987,6 +1004,7 @@
     "fix_with_ai": "Solucionar con IA",
     "flow": "Flujo",
     "flow already exists": "Flow ya existe",
+    "flow already exists message": "El flow {id} ya existe en el namespace {namespace}. ¿Deseas crear una nueva revisión?",
     "flow creation": "Creación de flujo",
     "flow creation denied in namespace": "No tienes permiso para crear flows en el namespace `{namespace}`.",
     "flow delete": "¿Estás seguro de que quieres eliminar <code>{flowCount}</code> flow(s)?",
@@ -997,6 +1015,9 @@
     "flow must have id and namespace": "El flow debe tener un id y un namespace.",
     "flow must not be empty": "El flow no debe estar vacío",
     "flow not imported": "Algunos flow no pudieron ser importados",
+    "flow revision latest": "Última revisión del flow",
+    "flow revision original": "Revisión original del flow",
+    "flow revision specific": "Revisión específica del flow",
     "flow source not found": "Fuente de flow no encontrada",
     "flow-dependencies": "dependencias",
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
@@ -1111,6 +1132,7 @@
     "min": "Min",
     "minutes": "Minutos",
     "missingSource": "Fuente faltante",
+    "modify inputs": "Modificar inputs",
     "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
     "months": "Meses",
@@ -1145,7 +1167,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Confirmar",
+          "file_single": "¿Está seguro de que desea eliminar el archivo <code>{name}</code>?",
           "files": "¿Está seguro de que desea eliminar <code>{count}</code> archivo(s)?",
+          "folder_single": "¿Está seguro de que desea eliminar la carpeta <code>{name}</code> y todo su contenido?",
           "folders": "¿Está seguro de que desea eliminar <code>{count}</code> carpeta(s) y todo su contenido?",
           "mixed": "¿Está seguro de que desea eliminar la(s) carpeta(s) <code>{folders}</code> y el/los archivo(s) <code>{files}</code>?",
           "title": "Confirmar eliminación de contenido"
@@ -1434,13 +1458,36 @@
       "toggle": "Área de pruebas",
       "tooltip_persistence": "Si desactivas y vuelves a activar el Playground, la información permanece mientras te mantengas en la página."
     },
-    "pluginDefaults": "Valores predeterminados del plugin",
+    "plugin defaults exported": "Valores predeterminados del plugin exportados",
+    "plugin defaults imported": "Valores predeterminados del plugin importados",
+    "plugin defaults not imported": "Algunos valores predeterminados del plugin no se pudieron importar",
+    "pluginDefaults": {
+      "add": "Agregar Plugin Predeterminado",
+      "add_subtitle": "Configurar un nuevo plugin predeterminado con sus propiedades",
+      "cancel": "Cancelar",
+      "custom": "Plugin Personalizado",
+      "custom_configure": "Tipo de plugin personalizado - configurar usando YAML",
+      "custom_placeholder": "Ingrese el tipo de plugin",
+      "custom_type": "Tipo de plugin personalizado",
+      "edit": "Editar Plugin Default",
+      "edit_subtitle": "Modificar la configuración predeterminada del plugin existente",
+      "form": "Formulario",
+      "predefined": "Plugin Predefinido",
+      "select_predefined": "Seleccionar Plugin Predefinido",
+      "show_yaml": "Mostrar YAML",
+      "title": "Valores Predeterminados del Plugin",
+      "update": "Actualizar Plugin Default",
+      "use_custom": "Usar Personalizado",
+      "yaml": "YAML",
+      "yaml_configuration": "Configuración YAML"
+    },
     "pluginPage": {
       "alt": "Icono de Plugins",
       "search": "Buscar en más de {count} plugins",
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
       "title2": "Busca tasks y triggers para construir tu flow."
     },
+    "plugin_default_already_exists": "El plugin predeterminado para <code>{type}</code> ya existe.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
@@ -1456,6 +1503,7 @@
       "label": "Vista previa",
       "view": "Ver"
     },
+    "product_tour": "Recorrido del Producto",
     "properties": {
       "hidden": "Oculto en la Tabla",
       "hint": "Elegir Columnas Visibles",
@@ -1475,10 +1523,14 @@
     "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?",
     "replay": "Repetir",
     "replay confirm": "¿Estás seguro de repetir esta ejecución <code>{id}</code> y crear una nueva?",
+    "replay execution description": "Esto creará una nueva ejecución basada en la ejecución seleccionada.",
+    "replay execution title": "Repetir ejecución",
     "replay from beginning tooltip": "Crear una ejecución similar comenzando desde el principio",
     "replay from task tooltip": "Crear una ejecución similar comenzando desde la tarea <code>{taskId}</code>",
+    "replay inputs": "Entradas",
     "replay latest revision": "Repetir usando la última revisión",
     "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
+    "replay using": "Repetir usando",
     "replay with inputs": "Repetir con inputs",
     "replayed": "La ejecución se ha repetido",
     "required field": "Campo requerido",
@@ -1500,6 +1552,7 @@
     "resumed confirm": "¿Estás seguro de reanudar la ejecución <code>{id}</code>?",
     "resumed done": "La ejecución se ha reanudado",
     "resumed title": "Reanudar ejecución <code>{id}</code>",
+    "reuse original inputs": "Reutilizar inputs originales",
     "reuse_original_inputs": "Reutilizar inputs originales",
     "revision": "Revisión",
     "revision deleted": "La revisión {revision} ha sido eliminada con éxito",

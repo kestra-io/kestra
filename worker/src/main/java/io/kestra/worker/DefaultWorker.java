@@ -10,6 +10,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
@@ -111,10 +112,6 @@ public class DefaultWorker implements Worker {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
-    private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -301,7 +298,18 @@ public class DefaultWorker implements Worker {
             }
         ));
 
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                DefaultWorker.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                DefaultWorker.this.exitMaintenance();
+            }
+        })::dispose);
+
         if (this.maintenanceService.isInMaintenanceMode()) {
             enterMaintenance();
         } else {
@@ -310,23 +318,8 @@ public class DefaultWorker implements Worker {
 
         if (workerGroupKey != null) {
             log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
-        }
-        else {
+        } else {
             log.info("Worker started with {} thread(s)", numThreads);
-        }
-    }
-
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
         }
     }
 
@@ -662,7 +655,7 @@ public class DefaultWorker implements Worker {
                 ));
         }
 
-        if (! Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+        if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
@@ -781,7 +774,7 @@ public class DefaultWorker implements Worker {
                     archive.write(JacksonMapper.ofIon().writeValueAsBytes(workerTask.getTaskRun().getOutputs()));
                     archive.closeEntry();
                     archive.finish();
-                    Path archiveFile = runContext.workingDir().createTempFile( ".zip");
+                    Path archiveFile = runContext.workingDir().createTempFile(".zip");
                     Files.write(archiveFile, bos.toByteArray());
                     URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), workerTask.getTaskRun().getValue());
                     runContext.logger().debug("Caching entry uploaded in URI {}", uri);
@@ -959,12 +952,20 @@ public class DefaultWorker implements Worker {
             Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
             taskRun = taskRun.withOutputs(variables);
             if (workerTask.getTask().getAssets() != null) {
-                List<Asset> outputAssets = runContext.assets().outputs();
-                Optional<AssetsDeclaration> renderedAssetsDeclaration = runContext.render(workerTask.getTask().getAssets()).as(AssetsDeclaration.class);
-                renderedAssetsDeclaration.map(AssetsDeclaration::getOutputs).ifPresent(outputAssets::addAll);
+                // We need to have the task outputs injected before rendering the assets
+                Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun);
+
+                List<AssetEmit> assetEmits = runContext.assets().emitted();
+                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
                 taskRun = taskRun.withAssets(new AssetsInOut(
-                    renderedAssetsDeclaration.map(AssetsDeclaration::getInputs).orElse(null),
-                    outputAssets
+                    Stream.concat(
+                        runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap).stream(),
+                        assetEmits.stream().map(AssetEmit::inputs).flatMap(Collection::stream)
+                    ).toList(),
+                    Stream.concat(
+                        runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap).stream(),
+                        assetEmits.stream().map(AssetEmit::outputs).flatMap(Collection::stream)
+                    ).toList()
                 ));
             }
         } catch (Exception e) {

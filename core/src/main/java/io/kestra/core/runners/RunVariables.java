@@ -355,6 +355,10 @@ public final class RunVariables {
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
+            } else if (flow != null) {
+                // if the execution is null, we should add flow labels
+                // this is useful for triggers that don't have an execution
+                builder.put("labels", Label.toNestedMap(flow.getLabels()));
             }
 
             // variables

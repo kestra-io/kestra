@@ -99,8 +99,6 @@ export const barLegend = defineChartPlugin<"bar" | "pie" | "doughnut">({
                 ? "line-through"
                 : "";
 
-            if (!options.uppercase) item.text = item.text.toLowerCase();
-
             const text = document.createTextNode(item.text);
             textContainer.appendChild(text);
 
@@ -266,7 +264,7 @@ const generateTotalsLegend = (isDuration: boolean) => (defineChartPlugin<"bar" |
 
             const labelText = document.createElement("p");
             labelText.style.margin = "0";
-            labelText.textContent = item.text.toLowerCase();
+            labelText.textContent = item.text;
 
             textContainer.appendChild(executionsText);
             textContainer.appendChild(labelText);

@@ -80,13 +80,14 @@
 
 <script setup>
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 </script>
 
 <script>
     import moment from "moment-timezone";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useApiStore} from "../../stores/api";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
@@ -111,7 +112,7 @@
             replaySubmit: {type: Function, default: null},
             selectedTrigger: {type: Object, default: undefined},
             buttonText: {type: String, default: "launch execution"},
-            buttonIcon: {type: [Object, Function], default: () => LightningBolt},
+            buttonIcon: {type: [Object, Function], default: () => Play},
             buttonTestId: {type: String, default: "execute-dialog-button"},
         },
         data() {
@@ -130,7 +131,7 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
+            ...mapStores(useApiStore, useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
             flow() {
                 return this.executionsStore.flow
             },
@@ -190,6 +191,10 @@
             },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
+                    this.apiStore.posthogEvents({
+                        type: "FLOW_EXECUTION",
+                        action: "submit",
+                    });
                     this.checks = [];
                     this.executeClicked = false;
                     this.coreStore.message = null;

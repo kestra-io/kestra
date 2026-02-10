@@ -45,7 +45,7 @@ public class FileURIFunction extends AbstractFileFunction {
             throw new IllegalArgumentException("Path must not contain '../'");
         }
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
-        Path filePath = NamespaceFile.normalize(Path.of(pathStr), true);
+       Path filePath = NamespaceFile.normalize(Path.of(pathStr));
 
         if (args.containsKey(VERSION)) {
             Integer version;

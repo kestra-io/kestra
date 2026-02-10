@@ -11,7 +11,7 @@
                 <div class="card-body d-flex align-items-center">
                     <span class="card-icon">
                         <img
-                            :src="docStore.resourceUrl(item.icon)"
+                            :src="docStore.resourceUrl(item.icon.replace(/^\/src\/contents\//, ''))"
                             :alt="item.title"
                             width="50px"
                             height="50px"

@@ -39,7 +39,9 @@
     });
 
     const rawDocUrl = computed(() => docStore.resourceUrl(props.src)!);
-    const finalUrl = computed(() => docStore.docPath ? rawDocUrl.value.replace("/./", "/" + docStore.docPath + "/") : rawDocUrl.value);
+    const finalUrl = computed(() => docStore.docPath 
+        ? rawDocUrl.value.replace("/./", "/docs" + docStore.docPath + "/") 
+        : rawDocUrl.value);
 </script>
 
 <style scoped lang="scss">

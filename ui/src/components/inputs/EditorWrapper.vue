@@ -60,6 +60,7 @@
                 :flow="editorContent"
                 :conversationId="conversationId"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
+                :generationType="aiGenerationTypes.FLOW"
             />
         </Transition>
         <AcceptDecline
@@ -97,6 +98,7 @@
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+    import {aiGenerationTypes} from "../../utils/constants";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
@@ -314,7 +316,7 @@
         const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position);
         pluginsStore.updateDocumentation({cls, version, hash: hash.value});
-    };
+    }
 
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value);

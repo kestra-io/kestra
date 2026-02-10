@@ -1,8 +1,8 @@
 <template>
     <el-collapse accordion v-model="openedDocs" :key="openedDocs">
         <template
-            :key="child.sidebarTitle"
-            v-for="child in parent.children"
+            :key="child.title"
+            v-for="child in filteredChildren"
         >
             <el-collapse-item
                 class="mt-1"
@@ -11,25 +11,25 @@
             >
                 <template #title>
                     <span v-if="disabledPages.includes(child.path) || !makeIndexNavigable">
-                        {{ child.sidebarTitle.capitalize() }}
+                        {{ child.sidebarTitle?.capitalize() }}
                     </span>
                     <slot v-else v-bind="child">
-                        <router-link :to="{path: '/' + child.path}">
-                            {{ child.sidebarTitle.capitalize() }}
-                        </router-link>
+                        <RouterLink :to="{path: '/' + child.path}">
+                            {{ child.sidebarTitle?.capitalize() }}
+                        </RouterLink>
                     </slot>
                 </template>
-                <recursive-toc :parent="child" :makeIndexNavigable="makeIndexNavigable">
+                <RecursiveToc :parent="{children: child.children}" :makeIndexNavigable="makeIndexNavigable">
                     <template #default="subChild">
                         <slot v-bind="subChild" />
                     </template>
-                </recursive-toc>
+                </RecursiveToc>
             </el-collapse-item>
             <div v-else>
                 <slot v-bind="child">
-                    <router-link :to="{path: '/' + child.path}">
-                        {{ child.sidebarTitle.capitalize() }}
-                    </router-link>
+                    <RouterLink :to="{path: '/' + child.path}">
+                        {{ child.sidebarTitle?.capitalize() }}
+                    </RouterLink>
                 </slot>
             </div>
         </template>
@@ -37,7 +37,15 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {computed, ref} from "vue";
+
+    defineOptions({
+        name: "RecursiveToc"
+    })
+
+    defineSlots<{
+        default: (child: TocChild) => any
+    }>()
 
     const disabledPages = [
         "docs/api-reference",
@@ -46,19 +54,27 @@
         "docs/terraform/resources"
     ]
 
-    defineProps({
+    interface TocChild {
+        path: string;
+        title: string;
+        sidebarTitle: string;
+        children?: TocChild[];
+    }
+
+    const props = withDefaults(defineProps<{
         parent: {
-            type: Object as () => {children?: {path: string, sidebarTitle: string, children?: any[]}[]},
-            required: true
-        },
-        makeIndexNavigable: {
-            type: Boolean,
-            default: true
+            children: TocChild[]
         }
+        makeIndexNavigable?: boolean
+    }>(), {
+        makeIndexNavigable: true
+    })
+
+    const filteredChildren = computed(() => {
+        return props.parent.children.filter(child => child.sidebarTitle);
     })
 
     const openedDocs = ref<string[]>([]);
-
 </script>
 
 <style scoped lang="scss">
@@ -78,7 +94,7 @@
             a {
                 color: var(--ks-content-primary);
 
-                &.router-link-exact-active {
+                &.RouterLink-exact-active {
                     font-weight: 700;
                 }
             }

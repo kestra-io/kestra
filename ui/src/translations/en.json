@@ -895,10 +895,10 @@
         "detected_env": "Here are secret-type environment variables identified at instance start-time:",
         "empty_env": "You don't have any Secrets in your environment yet.",
         "add_env": {
-          "intro": "To create a new Secret:",
-          "first": "Encode the <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a></strong>",
-          "second": "Add an environment variable named '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' with the above value",
-          "third": "Restart your Kestra instance"
+          "intro": "Create a New Secret",
+          "first": "Encode the <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a>",
+          "second": "Set an environment variable named <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> with the encoded value.",
+          "third": "Restart your Kestra instance so the secret is loaded."
         }
       },
       "apps": {

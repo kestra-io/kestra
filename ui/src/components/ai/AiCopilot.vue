@@ -83,13 +83,12 @@
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
+    import {useApiStore} from "../../stores/api";
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
-    import {useApiStore} from "../../stores/api";
 
     const aiStore = useAiStore();
-
-
+    const apiStore = useApiStore();
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
@@ -137,8 +136,6 @@
     function onProviderChange(value: string) {
         selectedProvider.value = value;
     }
-
-    const apiStore = useApiStore();
 
     async function submitPrompt() {
         error.value = undefined;

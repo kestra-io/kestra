@@ -101,6 +101,23 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value];
     };
 
+    function removeMDXImports(content: string): string {
+        // we want to only remove lines that are not in a code block 
+        // so we isolate code blocks first
+        const contentArray = content.split("```");
+        for(let i = 0; i < contentArray.length; i++){
+            // if the index is even, it's outside a code block
+            if(i % 2 === 0){
+                // remove lines that start with `import` 
+                // to keep compatibility with mdx files
+                // without splitting and rejoining since it would 
+                // create huge arrays just to destroy them right after
+                contentArray[i] = contentArray[i].replaceAll(/import [\s\S]+? from ['"][\s\S]+?['"];?/g, "");
+            }
+        }
+        return contentArray.join("```");
+    }
+
     async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
         docStore.pageMetadata = response.metadata;
         let content = response.content;
@@ -108,6 +125,9 @@
             content = content.replaceAll(/\s*web-share\s*/g, "");
         }
 
+        content = removeMDXImports(content);
+
+        
         const parse = await getMDCParser();
         // this hack alleviates a little the parsing load of the first render on big docs
         // by only rendering the first 50 lines of the doc on opening

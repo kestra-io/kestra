@@ -227,7 +227,7 @@ export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     }
 
     hex = getSchemeValue(result as any, "logs");
-    if (hex) {
+    if (hex && hex !== "transparent") {
         return hex;
     }
 

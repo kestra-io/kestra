@@ -15,10 +15,10 @@ tasks:
 
 triggers:
   - id: webhook1
-    type: io.kestra.webserver.controllers.api.WebhookPluginTest$WebhookTestPlugin
+    type: io.kestra.plugin.core.trigger.WebhookTestPlugin
     key: case1
 
   - id: webhook2
-    type: io.kestra.webserver.controllers.api.WebhookPluginTest$WebhookTestPlugin
+    type: io.kestra.plugin.core.trigger.WebhookTestPlugin
     key: case2
 

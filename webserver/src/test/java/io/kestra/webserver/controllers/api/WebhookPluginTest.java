@@ -100,56 +100,5 @@ public class WebhookPluginTest {
         assertThat(Objects.requireNonNull(receive.blockLast()).getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
-    @SuperBuilder
-    @ToString
-    @EqualsAndHashCode(callSuper = true)
-    @Getter
-    @NoArgsConstructor
-    @Plugin
-    public static class WebhookTestPlugin extends AbstractWebhookTrigger implements TriggerOutput<WebhookTestOutput> {
-        @Builder.Default
-        private Boolean failed = false;
 
-        @Override
-        public HttpResponse<?> evaluate(WebhookContext context) throws Exception {
-            if (context.getPath() != null && context.getPath().equals("failed")) {
-                throw new Exception("Failed as requested");
-            }
-
-            Optional<Execution> maybeExecution = context.getWebhookService().newExecution(
-                context,
-                context.getFlow(),
-                this,
-                WebhookTestOutput.builder()
-                    .body(JacksonMapper.toMap((String) context.getRequest().getBody().getContent()))
-                    .encryptedString(EncryptedString.from("super-secret", context.getWebhookService().runContext(context.getFlow(), context.getTrigger())))
-                    .build()
-            );
-
-            if (maybeExecution.isEmpty()) {
-                return HttpResponse.of(HttpResponse.Status.CONFLICT);
-            }
-
-            Execution execution = maybeExecution.get();
-
-            try {
-                context.getWebhookService().startExecution(execution);
-            } catch (QueueException e) {
-                return HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            return HttpResponse.of(HttpStatus.OK);
-        }
-    }
-
-    @Builder
-    @ToString
-    @EqualsAndHashCode
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class WebhookTestOutput implements io.kestra.core.models.tasks.Output {
-        private Object body;
-        private EncryptedString encryptedString;
-    }
 }

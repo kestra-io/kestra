@@ -1,8 +1,6 @@
-package io.kestra.controller;
+package io.kestra.core.worker;
 
 import io.kestra.core.server.Service;
-
-import java.io.IOException;
 
 /**
  * Interface representing a controller service in the system.

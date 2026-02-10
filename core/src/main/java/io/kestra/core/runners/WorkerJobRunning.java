@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.HasUID;
@@ -17,6 +18,7 @@ import jakarta.validation.constraints.NotNull;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class WorkerJobRunning implements HasUID {
     @NotNull
     private WorkerInstance workerInstance;

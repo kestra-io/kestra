@@ -44,3 +44,9 @@ kestra:
   worker:
     liveness:
       enabled: false
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: 9096

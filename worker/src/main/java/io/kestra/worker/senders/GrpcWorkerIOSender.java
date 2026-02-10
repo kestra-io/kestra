@@ -28,6 +28,7 @@ import java.util.function.BiConsumer;
 public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender {
 
     private static final int MAX_BATCH_SIZE = 100; // TODO to test and fine-tune
+    private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
 
     private final WorkerQueueRegistry workerQueueRegistry;
     private final Class<T> eventType;
@@ -81,7 +82,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      */
     @Override
     protected void doOnLoop() throws Exception {
-        send(queue.poll(MAX_BATCH_SIZE, Duration.ofMillis(Long.MAX_VALUE)));
+        send(queue.poll(MAX_BATCH_SIZE, POLL_TIMEOUT));
     }
 
     /**
@@ -89,11 +90,21 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      */
     @Override
     protected void cleanup() throws Exception {
-        List<T> results;
-        do {
-            results = queue.poll(MAX_BATCH_SIZE, Duration.ZERO);
-            send(results);
-        } while (!results.isEmpty());
+        // Clear the interrupt flag so we can drain the queue without
+        // LinkedBlockingQueue.poll() throwing InterruptedException
+        // from lockInterruptibly(). We restore it afterwards.
+        boolean interrupted = Thread.interrupted();
+        try {
+            List<T> results;
+            do {
+                results = queue.poll(MAX_BATCH_SIZE, Duration.ZERO);
+                send(results);
+            } while (!results.isEmpty());
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /**
@@ -110,7 +121,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      * @param results the results to send.
      */
     void send(final List<T> results) {
-        if (results.isEmpty()) return;
+        if (results== null || results.isEmpty()) return;
 
         switch (sendStrategy) {
             case PER_ITEM -> results.forEach(result -> sendOpaqueData(BatchMessage.of(List.of(result))));

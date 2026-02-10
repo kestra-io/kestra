@@ -30,6 +30,13 @@ jackson:
     FAIL_ON_UNKNOWN_PROPERTIES: false
 
 kestra:
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: 9096
   ai:
     type: gemini
     gemini:

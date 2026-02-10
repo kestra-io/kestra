@@ -99,3 +99,13 @@ kestra:
             lists:
               - val:
                   key: test
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: 9096
+    grpc:
+      channel:
+        shutdownTimeout: 1s

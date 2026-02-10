@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.server.Service;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.Controller;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
@@ -52,6 +53,10 @@ public class TestRunner implements Runnable, AutoCloseable {
         poolExecutor.execute(executor);
 
         if (workerEnabled) {
+            Controller controller = applicationContext.getBean(Controller.class);
+            poolExecutor.execute(controller::start);
+            servers.add(controller);
+            
             Worker worker = applicationContext.getBean(Worker.class);
             poolExecutor.execute(() -> worker.start(workerThread, null));
             servers.add(worker);

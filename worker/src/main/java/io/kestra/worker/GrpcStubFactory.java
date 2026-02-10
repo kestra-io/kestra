@@ -8,6 +8,8 @@ import io.kestra.controller.grpc.LivenessControllerServiceGrpc.LivenessControlle
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceBlockingStub;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
+import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc;
+import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceBlockingStub;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
@@ -44,5 +46,11 @@ public class GrpcStubFactory {
     @Singleton
     public ConnectControllerServiceBlockingStub connectControllerServiceBlockingStub() {
         return ConnectControllerServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
+    }
+    
+    @Bean
+    @Singleton
+    public WorkerFlowMetaStoreServiceBlockingStub workerFlowMetaStoreServiceBlockingStub() {
+        return WorkerFlowMetaStoreServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
     }
 }

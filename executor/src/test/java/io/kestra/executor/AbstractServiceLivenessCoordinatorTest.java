@@ -83,7 +83,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
         // create first worker
-        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class);
+        Worker worker = applicationContext.createBean(Worker.class);
         worker.start(1, null);
 
         var taskResults = new ArrayList<WorkerTaskResult>();
@@ -98,7 +98,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         worker.close(); // stop processing task
 
         // create second worker (this will revoke previously one).
-        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class);
+        Worker newWorker = applicationContext.createBean(Worker.class);
         newWorker.start(1, null);
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait).isTrue();
@@ -116,8 +116,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
         // create first worker
-        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
-        worker.start(1, null);
+        Worker worker = applicationContext.createBean(Worker.class);
+        worker.start(1, "workerGroupKey");
 
         var taskResults = new ArrayList<WorkerTaskResult>();
         workerTaskResultQueue.addListener(item -> {
@@ -131,8 +131,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         worker.close(); // stop processing task
 
         // create second worker (this will revoke previously one).
-        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
-        newWorker.start(1, null);
+        Worker newWorker = applicationContext.createBean(Worker.class);
+        newWorker.start(1, "workerGroupKey");
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait)
             .withFailMessage(() -> "shouldReEmitTasksToTheSameWorkerGroup: resubmitLatchAwait was not OK, workerTaskResultQueue content: " + TestsUtils.stringify(taskResults))
@@ -148,7 +148,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     void taskResubmitSkipExecution() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
 
-        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null);
+        Worker worker = applicationContext.createBean(Worker.class);
         worker.start(1, null);
 
         WorkerTask workerTask = workerTask(Duration.ofSeconds(5));
@@ -172,7 +172,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertThat(runningLatchAwait).isTrue();
         worker.close();
 
-        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
+        Worker newWorker = applicationContext.createBean(Worker.class);
         newWorker.start(1, null);
 
         // wait a little to be sure there is no resubmit
@@ -184,7 +184,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     @FlakyTest
     @Test
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
-        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
+        Worker worker = applicationContext.createBean(Worker.class);
         worker.start(1, null);
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
@@ -202,7 +202,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertTrue(receivedLatch.await(10, TimeUnit.SECONDS));
 
         worker.close();
-        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
+        Worker newWorker = applicationContext.createBean(Worker.class);
         newWorker.start(1, null);
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
         
@@ -211,7 +211,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     @Test
     void shouldReEmitTriggerToTheSameWorkerGroup() throws Exception {
-        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker worker =  applicationContext.createBean(Worker.class);
         worker.start(1, null);
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), "workerGroupKey");
@@ -229,7 +229,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertTrue(receivedLatch.await(10, TimeUnit.SECONDS));
         worker.close();
 
-        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker newWorker = applicationContext.createBean(Worker.class);
         newWorker.start(1, null);
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
 

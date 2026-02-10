@@ -179,7 +179,7 @@ class WorkerTest {
     @Test
     void shouldCreateInstanceGivenApplicationContext() {
         Assertions.assertDoesNotThrow(() -> {
-            try (var worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)) {
+            try (var worker = applicationContext.getBean(Worker.class)) {
                 // do nothing
             }
         });

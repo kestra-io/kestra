@@ -4,10 +4,8 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.Scheduler;
-import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
-import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -40,7 +38,7 @@ class TriggerTest {
 
         // scheduler
         try (
-            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null);
+            Worker worker = applicationContext.createBean(Worker.class);
         ) {
             // wait for execution
             executionQueue.addListener(execution -> {
@@ -64,7 +62,7 @@ class TriggerTest {
 
         // scheduler
         try (
-            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
+            Worker worker = applicationContext.createBean(Worker.class)
         ) {
             // wait for execution
             executionQueue.addListener(execution -> {

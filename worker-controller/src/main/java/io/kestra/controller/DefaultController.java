@@ -11,6 +11,7 @@ import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
+import io.kestra.core.worker.Controller;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
@@ -29,7 +30,6 @@ import java.util.concurrent.TimeUnit;
  * @see <a href="https://github.com/grpc/grpc-java/blob/master/examples/src/main/java/io/grpc/examples/healthservice/HealthServiceServer.java">.HealthServiceServer</a>
  */
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
 public class DefaultController extends AbstractService implements Controller {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultController.class);

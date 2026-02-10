@@ -1,10 +1,10 @@
 package io.kestra.cli;
 
-import io.kestra.controller.Controller;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.Service;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.Controller;
 import io.kestra.executor.DefaultExecutor;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
@@ -53,7 +53,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
 
         if (workerEnabled) {
             Controller controller = applicationContext.getBean(Controller.class);
-            poolExecutor.execute(() -> controller.start());
+            poolExecutor.execute(controller::start);
             servers.add(controller);
             
             Worker worker = applicationContext.getBean(Worker.class);

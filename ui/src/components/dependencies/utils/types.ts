@@ -6,6 +6,8 @@ export const EXECUTION = "EXECUTION" as const;
 export const NAMESPACE = "NAMESPACE" as const;
 export const ASSET = "ASSET" as const;
 
+export type Types = typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET;
+
 type Flow = {
     subtype: typeof FLOW;
 };

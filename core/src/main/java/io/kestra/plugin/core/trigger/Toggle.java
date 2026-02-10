@@ -30,8 +30,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Toggle a trigger: enable or disable it.",
-    description = "**This task is deprecated**, please use the `io.kestra.plugin.kestra.triggers.Toggle` task instead."
+    title = "Enable or disable a trigger (deprecated).",
+    description = """
+        Deprecated; use `io.kestra.plugin.kestra.triggers.Toggle`.
+
+        Renders target Flow/Namespace/trigger id (defaults to current Flow) and flips its `disabled` flag via the trigger repository. Fails if the Flow/trigger isn’t found or not authorized."""
 )
 @Plugin(
     examples = {

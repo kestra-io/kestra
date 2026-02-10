@@ -29,7 +29,9 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Trigger a flow based on an HTTP response"
+    title = "Poll an HTTP endpoint and trigger when a condition matches.",
+    description = """
+        Periodically calls `uri` (default GET every 60s), evaluates `responseCondition` against status/body/headers, and launches the flow when true. Supports request customization (method, params, headers, auth via options) and `stopAfter` states to disable once satisfied."""
 )
 @Plugin(
     examples = {
@@ -42,7 +44,7 @@ import java.util.Optional;
 
                 tasks:
                   - id: send_slack_alert
-                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                    type: io.kestra.plugin.slack.SlackIncomingWebhook
                     url: "{{ secret('SLACK_WEBHOOK') }}"
                     payload: |
                       {

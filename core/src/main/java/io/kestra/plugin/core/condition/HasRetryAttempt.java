@@ -26,7 +26,11 @@ import jakarta.validation.Valid;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition that matches if any taskRun has retry attempts."
+    title = "Match executions where a task was retried.",
+    description = """
+        Passes if any task run has more than one attempt and its state satisfies `in` / `notIn` filters.
+
+        Provide `in` states to avoid matching nothing (an empty `in` list fails all attempts). Use with Flow triggers to react when retries occur."""
 )
 @Plugin(
     examples = {

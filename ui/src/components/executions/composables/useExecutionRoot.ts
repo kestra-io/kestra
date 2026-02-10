@@ -111,7 +111,8 @@ export function useExecutionRoot() {
                 name: "dependencies",
                 component: Dependencies,
                 title: t("dependencies"),
-                count: dependenciesCount.value,
+                count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
+                disabled: !dependenciesCount.value,
                 maximized: true,
                 props: {
                     isReadOnly: true,

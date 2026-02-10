@@ -43,11 +43,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks conditionally based on a given value.",
-    description = "This task runs a set of tasks based on a given value.\n" +
-        "The value is evaluated at runtime and compared to the list of cases.\n" +
-        "If the value matches a case, the corresponding tasks are executed.\n" +
-        "If the value does not match any case, the default tasks are executed."
+    title = "Route to task groups based on a value.",
+    description = """
+        Renders `value` and matches it against `cases` keys; executes the corresponding task list or `defaults` if no match. Supports `errors` and `finally` blocks.
+
+        Useful for branching on categorical inputs without nesting multiple Ifs."""
 )
 @Plugin(
     examples = {

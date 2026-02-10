@@ -121,7 +121,7 @@
         minimap: {type: Boolean, default: false},
         creating: {type: Boolean, default: false},
         label: {type: String, default: undefined},
-        shouldFocus: {type: Boolean, default: true},
+        shouldFocus: {type: Boolean, default: false},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
         scrollKey: {type: String, default: undefined},

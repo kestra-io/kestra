@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpSseEvent;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
@@ -33,17 +34,22 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -270,6 +276,135 @@ public class HttpClient implements Closeable {
 
             return HttpResponse.from(response, body, request, httpClientContext);
         });
+    }
+
+    /**
+     * Send an SSE (Server-Sent Events) request and consume events with typed data.
+     *
+     * @param request the HTTP request
+     * @param cls the class type for deserializing event data
+     * @param eventConsumer consumer that processes each SSE event with typed data
+     * @param <T> the type of data in the SSE events
+     * @return the HTTP response without the body, as events are consumed through the eventConsumer
+     */
+    public <T> HttpResponse<Void> sseRequest(
+        HttpRequest request,
+        Class<T> cls,
+        Consumer<HttpSseEvent<T>> eventConsumer
+    ) throws HttpClientException, IllegalVariableEvaluationException {
+        HttpClientContext httpClientContext = this.clientContext(request);
+
+        HttpClientResponseHandler<HttpResponse<Void>> responseHandler = response -> {
+
+            parseSse(response.getEntity().getContent(), cls, eventConsumer);
+
+            return HttpResponse.from(response, null, request, httpClientContext);
+        };
+
+        return this.request(request, httpClientContext, responseHandler);
+    }
+
+    private <T> void  parseSse(InputStream inputStream, Class<T> cls, Consumer<HttpSseEvent<T>> eventConsumer) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            String line;
+            StringBuilder dataBuffer = new StringBuilder();
+            String eventId = null;
+            String eventName = null;
+            String comment = null;
+            Duration retry = null;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("data:")) {
+                    String data = line.substring("data:".length()).trim();
+                    if (data.startsWith(":")) {
+                        data = data.substring(1).trim();
+                    }
+                    if (!dataBuffer.isEmpty()) {
+                        dataBuffer.append("\n");
+                    }
+                    dataBuffer.append(data);
+                } else if (line.startsWith("id:")) {
+                    eventId = line.substring("id:".length()).trim();
+                    if (eventId.startsWith(":")) {
+                        eventId = eventId.substring(1).trim();
+                    }
+                } else if (line.startsWith("event:")) {
+                    eventName = line.substring("event:".length()).trim();
+                    if (eventName.startsWith(":")) {
+                        eventName = eventName.substring(1).trim();
+                    }
+                } else if (line.startsWith("retry:")) {
+                    String retryStr = line.substring("retry:".length()).trim();
+                    if (retryStr.startsWith(":")) {
+                        retryStr = retryStr.substring(1).trim();
+                    }
+                    try {
+                        retry = Duration.ofMillis(Long.parseLong(retryStr));
+                    } catch (NumberFormatException e) {
+                        // Invalid retry value, ignore
+                    }
+                } else if (line.startsWith(":")) {
+                    // Comment line
+                    comment = line.substring(1).trim();
+                } else if (line.isEmpty() && !dataBuffer.isEmpty()) {
+                    // End of event - parse data and create event
+                    sendSseData(cls, eventConsumer, dataBuffer, eventId, eventName, comment, retry);
+
+                    // Reset for next event
+                    dataBuffer.setLength(0);
+                    eventId = null;
+                    eventName = null;
+                    comment = null;
+                    retry = null;
+                }
+            }
+
+            // Handle last event if stream ends without empty line
+            if (!dataBuffer.isEmpty()) {
+                sendSseData(cls, eventConsumer, dataBuffer, eventId, eventName, comment, retry);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void sendSseData(
+        Class<T> cls,
+        Consumer<HttpSseEvent<T>> eventConsumer,
+        StringBuilder dataBuffer,
+        String eventId,
+        String eventName,
+        String comment,
+        Duration retry
+    ) {
+        String dataStr = dataBuffer.toString();
+        T parsedData = null;
+
+        if (!dataStr.isEmpty()) {
+            try {
+                StringEntity tempEntity = new StringEntity(dataStr, ContentType.APPLICATION_JSON);
+
+                parsedData = bodyHandler(cls, tempEntity);
+            } catch (Exception e) {
+                if (String.class.isAssignableFrom(cls)) {
+                    parsedData = (T) dataStr;
+                } else {
+                    runContext.logger().warn("Failed to parse SSE event data: {}", dataStr, e);
+                }
+            }
+        }
+
+        HttpSseEvent<T> event = HttpSseEvent.<T>builder()
+            .data(parsedData)
+            .id(eventId)
+            .name(eventName)
+            .comment(comment)
+            .retry(retry)
+            .build();
+
+
+        if (eventConsumer != null) {
+            eventConsumer.accept(event);
+        }
     }
 
     private HttpClientContext clientContext(HttpRequest request) throws IllegalVariableEvaluationException {

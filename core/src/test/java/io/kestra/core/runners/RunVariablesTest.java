@@ -202,4 +202,33 @@ class RunVariablesTest {
 
         assertThat(variables.get("inputs")).isEqualTo(Map.of("input", "value"));
     }
+
+    @Test
+    void shouldBuildVariablesGivenFlowWithLabelsAndNoExecution() {
+        FlowInterface flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
+            id: opossum_534817
+            namespace: company.team
+
+            labels:
+              some: label
+
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "* * * * *"
+                inputs:
+                  fromLabel: "{{labels.some}}"
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hello World! 🚀
+            """);
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables.get("labels")).isEqualTo(Map.of("some", "label"));
+    }
 }

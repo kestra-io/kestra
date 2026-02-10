@@ -33,8 +33,11 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Upload one or multiple files to a specific namespace.",
-    description = "Use a regex glob pattern or a file path to upload files as Namespace Files. When using a map with the desired file name as key and file path as value, you can also rename or relocate files."
+    title = "Upload files into a Namespace.",
+    description = """
+        Sends files to Namespace storage via glob patterns (`files`) or explicit maps (`filesMap`). `destination` controls the target folder (leading slash required); `conflict` sets overwrite/skip/error behavior.
+
+        Accepts WorkingDirectory outputs or other task file maps so you can rename or relocate files while uploading."""
 )
 @Plugin(
     examples = {

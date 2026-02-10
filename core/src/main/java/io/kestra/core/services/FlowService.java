@@ -97,6 +97,8 @@ public class FlowService {
         if (message.startsWith("Illegal flow source:")) {
             // Already formatted by YamlParser, return as-is
             return message;
+        } else if (message.startsWith(":")) {
+            message = message.substring(1);
         }
         // For other validation errors, provide context
         return "Validation error: " + message;

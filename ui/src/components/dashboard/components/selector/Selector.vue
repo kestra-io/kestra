@@ -166,7 +166,10 @@
     }, {immediate: true});
 
     watch(() => route.params?.dashboard, (val) => {
-        if(route.name === "home" && STORAGE_KEY) {
+        if (!val || !STORAGE_KEY) {
+            return;
+        }
+        if(route.name === "home") {
             localStorage.setItem(STORAGE_KEY, val as string);
         }
     }, {immediate: true});

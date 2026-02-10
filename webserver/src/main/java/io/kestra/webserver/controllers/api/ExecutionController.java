@@ -631,28 +631,6 @@ public class ExecutionController {
         }
     }
 
-    /**
-     * Build webhook response with optional custom content type.
-     * When responseContentType is set, the response will use that content type instead of the default application/json.
-     */
-    private HttpResponse<?> buildWebhookResponse(Object body, String responseContentType) {
-        if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
-            String responseBody;
-            if (body instanceof String s) {
-                responseBody = s;
-            } else {
-                try {
-                    responseBody = objectMapper.writeValueAsString(body);
-                } catch (Exception e) {
-                    responseBody = String.valueOf(body);
-                }
-            }
-            return HttpResponse.ok(responseBody).contentType(MediaType.TEXT_PLAIN_TYPE);
-        }
-        // Default: application/json (or no responseContentType set)
-        return HttpResponse.ok(body);
-    }
-
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/trigger/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution for a flow")

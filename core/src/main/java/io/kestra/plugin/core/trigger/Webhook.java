@@ -8,8 +8,10 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.WebhookValidation;
 import io.micronaut.http.MediaType;
@@ -149,6 +151,17 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     )
     private String responseContentType;
 
+    @PluginProperty
+    @Schema(
+        title = "Custom response code.",
+        description = """
+            If set, the webhook response code will use this response code instead of the default `200`.
+            Requires `wait` and `returnOutputs` to be `true`.
+            """
+    )
+    @Builder.Default
+    private Property<Integer> responseCode = Property.ofValue(200);
+
     @Override
     public HttpResponse<?> evaluate(WebhookContext context) throws Exception {
         // Reject path since not expected
@@ -157,6 +170,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
 
         String body = context.getRequest().getBody() != null ? (String) context.getRequest().getBody().getContent() : null;
+
+
 
         Optional<Execution> maybeExecution = context.getWebhookService().newExecution(
             context,
@@ -193,17 +208,19 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             .followExecution(execution, context.getFlow())
             .last()
             .map(throwFunction(event -> {
-                if (this.getReturnOutputs()) {
-                    return buildOutputResponse(event.getData().getOutputs(), responseContentType);
+                RunContext runContext = context.getWebhookService().runContext(context.getFlow(), event.getData());
+                int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(200);
 
+                if (this.getReturnOutputs()) {
+                    return buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode));
                 } else {
-                    return HttpResponse.of(context.getWebhookService().executionResponse(event.getData()));
+                    return HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.getWebhookService().executionResponse(event.getData()));
                 }
             }))
             .block();
     }
 
-    private HttpResponse<?> buildOutputResponse(Object body, String responseContentType) {
+    private HttpResponse<?> buildOutputResponse(Object body, String responseContentType, HttpResponse.Status responseCode) {
         if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
             String responseBody;
             if (body instanceof String s) {
@@ -216,11 +233,11 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                 }
             }
 
-            return HttpResponse.of(HttpResponse.Status.OK, responseBody, MediaType.TEXT_PLAIN_TYPE.toString());
+            return HttpResponse.of(responseCode, responseBody, MediaType.TEXT_PLAIN_TYPE.toString());
         }
 
         // Default: application/json (or no responseContentType set)
-        return HttpResponse.of(HttpResponse.Status.OK, body, responseContentType);
+        return HttpResponse.of(responseCode, body, responseContentType);
     }
 
     private static Optional<Object> tryMap(String body) {

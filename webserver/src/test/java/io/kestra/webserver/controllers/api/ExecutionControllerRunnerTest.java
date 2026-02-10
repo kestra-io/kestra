@@ -2545,13 +2545,15 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows("flows/valids/webhook-outputs.yaml")
     void webhookWithOutputs() {
-        Map<String, Object> outputs = client.toBlocking().retrieve(
+        HttpResponse<Map<String, Object>> response = client.toBlocking().exchange(
             GET(
                 "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-outputs/webhook-outputs"
             ),
             Argument.mapOf(String.class, Object.class)
         );
 
+        assertThat(response.getStatus().getCode()).isEqualTo(202);
+        Map<String, Object> outputs = response.getBody().orElseThrow();
         assertThat(outputs).hasFieldOrPropertyWithValue("status", "ok");
         assertThat(outputs).containsKey("executionId");
     }

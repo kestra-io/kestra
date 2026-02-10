@@ -11,7 +11,7 @@ import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVPurgeScheduler;
+import io.kestra.core.storages.kv.KVPurgeCleaner;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.test.annotation.MockBean;
@@ -23,10 +23,10 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 @MicronautTest
-public class KVPurgeSchedulerTest {
+public class KVPurgeCleanerTest {
 
     @Inject
-    private KVPurgeScheduler kvPurgeScheduler;
+    private KVPurgeCleaner kvPurgeCleaner;
 
     @Inject
     private StorageInterface storageInterface;
@@ -67,7 +67,7 @@ public class KVPurgeSchedulerTest {
 
         when(flowRepository.findDistinctNamespace(MAIN_TENANT)).thenReturn(List.of(namespace1, namespace2, namespace3));
 
-        kvPurgeScheduler.purgeExpired();
+        kvPurgeCleaner.purgeExpired();
 
         List<KVEntry> kvEntries1 = kvStore1.listAll();
         assertThat(kvEntries1).hasSize(1);

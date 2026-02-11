@@ -499,6 +499,10 @@
           "title": "Obecnie nie ma zależności."
         }
       },
+      "kill_switches": {
+        "content": "Funkcja Kill Switch zapewnia mechanizm w interfejsie użytkownika do zatrzymywania problematycznych wykonania. Zastępuje polecenia CLI <code>--skip-executions</code> i <code>--skip-flows</code> kompleksowym interfejsem administracyjnym.",
+        "title": "Nie masz jeszcze Kill Switches!"
+      },
       "panels": {
         "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Files, Blueprints, Namespace Context) dla powiązanych funkcji.",
         "title": "Obecnie żadne panele nie są otwarte."
@@ -702,6 +706,10 @@
         "parent_description": "Pokaż tylko wykonania najwyższego poziomu/główne"
       },
       "key": "Klucz",
+      "kill_switch_type": {
+        "description": "Filtruj według typu kill switch",
+        "label": "Typ"
+      },
       "kind": {
         "description": "Filtruj według rodzaju wykonania",
         "label": "Rodzaj"

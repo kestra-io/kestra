@@ -5,11 +5,11 @@
                 <span class="d-inline-flex title align-items-center">
                     <AiIcon /><span>{{ $t("ai.flow.title") }}</span>
                 </span>
-                <el-button 
-                    class="border-0 ai-close-button" 
-                    size="small" 
-                    :icon="Close" 
-                    @click.stop="emit('close')" 
+                <el-button
+                    class="border-0 ai-close-button"
+                    size="small"
+                    :icon="Close"
+                    @click.stop="emit('close')"
                 />
             </div>
         </template>
@@ -32,26 +32,44 @@
             <el-text class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
         </template>
         <template #footer>
+            <div v-if="error !== undefined" class="mb-3">
+                <el-text type="danger" size="default" class="me-auto">
+                    {{ error }}
+                </el-text>
+            </div>
             <div class="d-flex justify-content-between">
                 <el-text class="text-tertiary" size="small">
                     (⌘) Ctrl + Alt (⌥) + Shift + K {{ $t("to toggle") }}
                 </el-text>
+
+                <el-select
+                    v-if="providers.length > 1"
+                    class="w-50 mx-3"
+                    :modelValue="selectedProvider"
+                    @update:model-value="onProviderChange"
+                    :placeholder="$t('ai.flow.select_provider')"
+                >
+                    <el-option
+                        v-for="p in providers"
+                        :key="p.id"
+                        :label="p.displayName"
+                        :value="p.id"
+                    />
+                </el-select>
+
                 <div v-if="configured" class="d-flex flex-column align-items-end gap-3">
-                    <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">
-                        {{ error }}
-                    </el-text>
                     <div v-if="waitingForReply" class="d-flex loading-text">
                         <div v-loading="true" />
-                        <span>{{ $t('ai.flow.generating') }}</span>
+                        <span>{{ $t("ai.flow.generating") }}</span>
                     </div>
+
                     <el-button
-                        v-else
                         type="primary"
                         :icon="KeyboardReturn"
                         :disabled="prompt.length === 0"
                         @click="submitPrompt"
                     >
-                        {{ $t('submit') }}
+                        {{ $t("submit") }}
                     </el-button>
                 </div>
             </div>
@@ -80,11 +98,11 @@
 
     onMounted(() => {
         promptInput.value?.focus();
-    })
+    });
 
     onUnmounted(() => {
         sessionStorage.removeItem("kestra-ai-prompt");
-    })
+    });
 
     const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
     const waitingForReply = ref(false);
@@ -100,6 +118,25 @@
 
     const error = ref<string | undefined>(undefined);
 
+    const providers = ref<{id: string, displayName: string}[]>([]);
+    const selectedProvider = ref<string | undefined>(undefined);
+
+    async function fetchProviders() {
+        try {
+            const list = await aiStore.fetchProviders();
+            providers.value = list ?? [];
+            if (providers.value.length > 0) {
+                selectedProvider.value = providers.value[0].id;
+            }
+        } catch (e: any) {
+            error.value = e.response?.data?.message as string ?? e;
+        }
+    }
+
+    function onProviderChange(value: string) {
+        selectedProvider.value = value;
+    }
+
     async function submitPrompt() {
         error.value = undefined;
         waitingForReply.value = true;
@@ -114,7 +151,8 @@
             aiResponse = await aiStore.generateFlow({
                 userPrompt: prompt.value,
                 flowYaml: props.flow,
-                conversationId: props.conversationId
+                conversationId: props.conversationId,
+                providerId: selectedProvider.value
             }) as string;
             emit("generatedYaml", aiResponse);
         } catch (e: any) {
@@ -130,6 +168,8 @@
     const configured = computed(() => miscStore.configs?.isAiEnabled);
 
     onMounted(async () => {
+        await fetchProviders();
+
         if (!configured.value) {
             const {
                 createHighlighterCore,
@@ -142,13 +182,16 @@
                 langs: [langs.yaml],
                 themes: [githubDark, githubLight],
                 engine: onigurumaEngine
-            })
+            });
             highlightedAiConfiguration.value = highlighter.codeToHtml(`kestra:
   ai:
     type: "gemini"
     gemini:
       api-key: "geminiApiKey"
-      model-name: gemini-2.5-flash`, {lang: "yaml", theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"})
+      model-name: gemini-2.5-flash`, {
+                lang: "yaml",
+                theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"
+            });
         }
     });
 </script>
@@ -188,12 +231,12 @@
     // Enhanced close button animation
     .ai-close-button {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        
+
         &:hover {
             transform: translateY(-2px);
             opacity: 0.8;
         }
-        
+
         &:active {
             transform: translateY(0);
             opacity: 0.6;

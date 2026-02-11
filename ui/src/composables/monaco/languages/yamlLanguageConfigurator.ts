@@ -206,6 +206,8 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 const indent = lineContent.match(/^\s*/)?.[0] ?? "";
                 const snippet = requiredProperties.map((k, i) => `${i > 0 ? indent : ""}${k}: `).join("\n");
 
+                const column = indent.length + requiredProperties[0].length + 2 + 1;
+
                 return {
                     items: [
                         {
@@ -217,6 +219,10 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                 position.lineNumber,
                                 position.column,
                             ),
+                            command: {
+                                id: "moveCursor",
+                                arguments: [{lineNumber: position.lineNumber, column}],
+                            },
                         },
                     ],
                     enableForwardStability: true,

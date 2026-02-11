@@ -9,4 +9,6 @@ import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 @WebServerEnabled
 public interface AiServiceInterface {
     String generateFlow(String ip, FlowGenerationPrompt flowGenerationPrompt);
+
+    String displayName();
 }

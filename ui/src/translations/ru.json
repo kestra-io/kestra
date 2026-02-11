@@ -499,6 +499,10 @@
           "title": "В настоящее время зависимости отсутствуют."
         }
       },
+      "kill_switches": {
+        "content": "Функция Kill Switch предоставляет механизм на основе UI для остановки проблемных выполнений. Она заменяет команды CLI <code>--skip-executions</code> и <code>--skip-flows</code> на комплексный административный интерфейс.",
+        "title": "У вас еще нет Kill Switches!"
+      },
       "panels": {
         "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Namespace Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
@@ -702,6 +706,10 @@
         "parent_description": "Показать только верхнеуровневые/корневые выполнения"
       },
       "key": "Ключ",
+      "kill_switch_type": {
+        "description": "Фильтр по типу kill switch",
+        "label": "Тип"
+      },
       "kind": {
         "description": "Фильтр по виду выполнения",
         "label": "Тип"

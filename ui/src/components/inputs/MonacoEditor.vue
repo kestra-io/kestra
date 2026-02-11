@@ -566,6 +566,8 @@
 
     const disposeCompletions = ref<() => void>();
 
+    let moveCursorCmdDisposable: monaco.IDisposable | undefined;
+
     const pluginsStore = usePluginsStore();
     const flowStore = useFlowStore();
 
@@ -812,6 +814,21 @@
                     ...options,
                     fixedOverflowWidgets: true // Helps suggestion widget render above other elements
                 });
+
+                if (!moveCursorCmdDisposable) {
+                    moveCursorCmdDisposable = monaco.editor.registerCommand(
+                        "moveCursor",
+                        (_accessor, args?: { lineNumber: number; column: number }) => {
+                            const ed = localEditor.value;
+                            if (!ed || !args?.lineNumber || !args?.column) return;
+
+                            ed.setPosition({lineNumber: args.lineNumber, column: args.column});
+                            ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
+                            ed.focus();
+                        }
+                    );
+                }
+
                 let localBackspaceTimeout: number | null = null;
                 let suggestController: {
                     model: { state: 0 | 1 | 2 },
@@ -1022,6 +1039,9 @@
             localEditor.value?.dispose();
             localEditor.value?.getModel()?.dispose();
             localEditor.value = undefined
+
+            moveCursorCmdDisposable?.dispose();
+            moveCursorCmdDisposable = undefined;
         }
     }
 

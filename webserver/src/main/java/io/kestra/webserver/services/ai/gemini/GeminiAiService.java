@@ -40,7 +40,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .logRequests(getAiConfiguration().logRequests())
             .logResponses(getAiConfiguration().logResponses())
             .thinkingConfig(GeminiThinkingConfig.builder().includeThoughts(false).build())
-            .returnThinking(false);
+            .returnThinking(false)
+            .timeout(getAiConfiguration().timeout());
 
         if (getAiConfiguration().clientPem() != null) {
             try (ByteArrayInputStream is = new ByteArrayInputStream(getAiConfiguration().clientPem().getBytes(StandardCharsets.UTF_8));

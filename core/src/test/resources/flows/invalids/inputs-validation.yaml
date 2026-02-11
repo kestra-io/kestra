@@ -29,7 +29,7 @@ inputs:
 
   - id: multiselect1
     type: MULTISELECT
-    itemType: MULTISELECT
+    itemType: ARRAY
 
   - id: multiselect2
     type: MULTISELECT
@@ -37,7 +37,7 @@ inputs:
 
   - id: multiselect3
     type: MULTISELECT
-    itemType: ARRAY
+    itemType: MULTISELECT
 
   - id: multiselect4
     type: MULTISELECT

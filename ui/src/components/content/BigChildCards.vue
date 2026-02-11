@@ -34,7 +34,7 @@
         return Object.entries(navigation ?? {})
             .filter(a => a[1] && a[1].title && a[1].description && a[0] !== props.directory.slice(1))
             .map(a => ({
-                path: a[0].slice(5),
+                path: a[0],
                 title: a[1].title,
                 description: a[1].description,
             }))

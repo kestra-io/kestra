@@ -62,6 +62,16 @@
                 rgba(colorPalette.$base-blue-700, 0) 100%
             );
         }
+
+        .playgroundMode & {
+            background-image: linear-gradient(
+                to right,
+                colorPalette.$base-blue-500 0%,
+                colorPalette.$base-blue-500 35%,
+                rgba(colorPalette.$base-blue-500, .1) 55%,
+                rgba(colorPalette.$base-blue-500, 0) 100%
+            );
+        }
     }
     
     .tabs {
@@ -89,6 +99,10 @@
             &:hover {
                 background-color: var(--ks-background-body);
                 opacity: 1;
+                .playgroundMode & {
+                    background-color: transparent;
+                    background-color: color-mix(in srgb, var(--ks-background-body) 20%, transparent);
+                }
             }
 
             &.active {
@@ -96,6 +110,11 @@
                 border-color: var(--ks-border-primary);
                 color: var(--ks-color-text-primary);
                 opacity: 1;
+                .playgroundMode & {
+                    background-color: transparent;
+                    border-color: color-mix(in srgb, var(--ks-border-primary) 60%, transparent);
+                    background-color: color-mix(in srgb, var(--ks-background-body) 30%, transparent);
+                }
             }
         }
     }

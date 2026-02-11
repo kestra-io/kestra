@@ -499,6 +499,10 @@
           "title": "当前没有依赖项。"
         }
       },
+      "kill_switches": {
+        "content": "Kill Switch 功能提供了一种基于UI的机制来停止有问题的执行。它用一个全面的管理界面替代了仅限CLI的<code>--skip-executions</code>和<code>--skip-flows</code>命令。",
+        "title": "您还没有 Kill Switches！"
+      },
       "panels": {
         "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
         "title": "当前没有打开的面板。"
@@ -702,6 +706,10 @@
         "parent_description": "仅显示顶级/根执行"
       },
       "key": "键",
+      "kill_switch_type": {
+        "description": "按关闭开关类型筛选",
+        "label": "类型"
+      },
       "kind": {
         "description": "按执行类型筛选",
         "label": "种类"

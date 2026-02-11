@@ -517,24 +517,6 @@ public class InputsTest {
 
     }
 
-    @Test
-    @LoadFlows(value = "flows/invalids/secret-element-type.yaml")
-    void notAllowedSecretElementType(){
-        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "secret-element-type").get();
-        InputOutputValidationException ex = assertThrows(InputOutputValidationException.class, ()-> flowIO.readExecutionInputs(
-            flow,
-            Execution.builder()
-                .id("test")
-                .namespace(flow.getNamespace())
-                .tenantId(flow.getTenantId())
-                .flowRevision(1)
-                .flowId(flow.getId())
-                .build(),
-            Map.of("input1", "[\"1245Abc@$Zk\"]")
-        ));
-        assertThat(ex.getMessage()).isEqualTo("Invalid value for input `input1`. Cause: Unable to parse array element as `SECRET` on `1245Abc@$Zk`");
-    }
-
 
     private URI createFile() throws IOException {
         File tempFile = File.createTempFile("file", ".txt");

@@ -13,6 +13,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.multipart.CompletedPart;
@@ -158,6 +159,9 @@ public class PauseTest {
 
         @Inject
         StorageInterface storageInterface;
+
+        @Inject
+        TaskOutputService taskOutputService;
 
         public void run(TestRunnerUtils runnerUtils) throws Exception {
             Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test", null, null, Duration.ofSeconds(30));
@@ -317,7 +321,7 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
+            Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("last").getFirst()).get("values");
             assertThat(outputs.get("asked")).isEqualTo("restarted");
             assertThat(outputs.get("secret_pause")).isEqualTo("secret_value");
             assertThat((String) outputs.get("data")).startsWith("kestra://");
@@ -355,7 +359,7 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
+            Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("last").getFirst()).get("values");
             assertThat(outputs.get("asked")).isEqualTo("MISSING");
         }
 

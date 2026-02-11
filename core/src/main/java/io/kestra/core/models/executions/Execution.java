@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.SoftDeletable;
@@ -27,7 +26,6 @@ import io.kestra.core.services.LabelService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
@@ -975,106 +973,6 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return loggingEvent;
     }
 
-    public Map<String, Object> outputs() {
-        if (this.taskRunList == null) {
-            return ImmutableMap.of();
-        }
-
-        // we pre-compute the map of taskrun by id to avoid traversing the list of all taskrun for each taskrun
-        Map<String, TaskRun> byIds = this.taskRunList.stream().collect(Collectors.toMap(
-            taskRun -> taskRun.getId(),
-            taskRun -> taskRun
-        ));
-
-        Map<String, Object> result = new HashMap<>();
-        this.taskRunList.stream()
-            .filter(taskRun -> taskRun.getOutputs() != null)
-            .collect(Collectors.groupingBy(taskRun -> taskRun.getTaskId()))
-            .forEach((taskId, taskRuns) -> {
-                Map<String, Object> taskOutputs = new HashMap<>();
-                for (TaskRun current : taskRuns) {
-                    if (!MapUtils.isEmpty(current.getOutputs())) {
-                        if (current.getIteration() != null) {
-                            Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, byIds));
-                            // If one of two of the map is null in the merge() method, we just return the other
-                            // And if the not null map is a Variables (= read only), we cast it back to a simple
-                            // hashmap to avoid taskOutputs becoming read-only
-                            // i.e this happen in nested loopUntil tasks
-                            if (merged instanceof Variables) {
-                                merged = new HashMap<>(merged);
-                            }
-                            taskOutputs = merged;
-                        } else {
-                            taskOutputs.putAll(outputs(current, byIds));
-                        }
-                    }
-                }
-                result.put(taskId, taskOutputs);
-            });
-
-        return result;
-    }
-
-    private Map<String, Object> outputs(TaskRun taskRun, Map<String, TaskRun> byIds) {
-        List<TaskRun> parents = findParents(taskRun, byIds)
-            .stream()
-            .filter(r -> r.getValue() != null)
-            .toList();
-
-        if (parents.isEmpty()) {
-            if (taskRun.getValue() == null) {
-                return taskRun.getOutputs();
-            } else {
-                return Map.of(taskRun.getValue(), taskRun.getOutputs());
-            }
-        }
-
-        Map<String, Object> result = HashMap.newHashMap(1);
-        Map<String, Object> current = result;
-
-        for (TaskRun t : parents) {
-            HashMap<String, Object> item = HashMap.newHashMap(1);
-            current.put(t.getValue(), item);
-            current = item;
-        }
-
-        if (taskRun.getOutputs() != null) {
-            if (taskRun.getValue() != null) {
-                current.put(taskRun.getValue(), taskRun.getOutputs());
-            } else {
-                current.putAll(taskRun.getOutputs());
-            }
-        }
-
-        return result;
-    }
-
-
-    public List<Map<String, Object>> parents(TaskRun taskRun) {
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        List<TaskRun> parents = findParents(taskRun);
-        Collections.reverse(parents);
-
-        for (TaskRun childTaskRun : parents) {
-            Map<String, Object> current = HashMap.newHashMap(2);
-
-            if (childTaskRun.getValue() != null) {
-                current.put("taskrun", Map.of("value", childTaskRun.getValue()));
-            }
-
-            if (childTaskRun.getOutputs() != null && !childTaskRun.getOutputs().isEmpty()) {
-                current.put("outputs", childTaskRun.getOutputs());
-            }
-
-            if (!current.isEmpty()) {
-                result.add(current);
-            }
-        }
-
-        return result;
-    }
-
     /**
      * Find all parents from this {@link TaskRun}. The list is starting from deeper parent and end
      * on the closest parent, so the first element is the task that starts first. This method
@@ -1100,35 +998,6 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             if (find.isPresent()) {
                 result.add(find.get());
                 taskRun = find.get();
-            } else {
-                ended = true;
-            }
-        }
-
-        Collections.reverse(result);
-
-        return result;
-    }
-
-    /**
-     * Find all parents from this {@link TaskRun}. This method does the same as #findParents(TaskRun
-     * taskRun) but for performance reason, as it's called a lot, we pre-compute the map of taskrun
-     * by ID and use it here.
-     */
-    private List<TaskRun> findParents(TaskRun taskRun, Map<String, TaskRun> taskRunById) {
-        if (taskRun.getParentTaskRunId() == null || taskRunById.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<TaskRun> result = new ArrayList<>();
-        boolean ended = false;
-        while (!ended) {
-            final TaskRun finalTaskRun = taskRun;
-            TaskRun find = taskRunById.get(finalTaskRun.getParentTaskRunId());
-
-            if (find != null) {
-                result.add(find);
-                taskRun = find;
             } else {
                 ended = true;
             }

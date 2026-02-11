@@ -8,6 +8,7 @@ import io.kestra.core.queues.*;
 import io.kestra.core.runners.AbstractRunnerTest;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.InputsTest;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -32,6 +33,9 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
 
     @Inject
     protected DispatchQueueInterface<ExecutionEvent> executionEventQueue;
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     public static final String NAMESPACE = "io.kestra.tests";
 
@@ -152,7 +156,8 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE,
             "execution-start-date", null, null, Duration.ofSeconds(60));
 
-        assertThat((String) execution.getTaskRunList().getFirst().getOutputs().get("value")).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z");
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().getFirst());
+        assertThat((String) outputs.get("value")).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z");
     }
 
     @RetryingTest(5)

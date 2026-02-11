@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -8,6 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
@@ -25,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
@@ -43,9 +46,12 @@ class TestSuiteTest {
     @Inject
     protected ApplicationContext applicationContext;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @LoadFlows({"flows/valids/return.yaml"})
-    void withoutAnyTaskFixture() throws QueueException, TimeoutException {
+    void withoutAnyTaskFixture() throws QueueException, TimeoutException, InternalException {
         var fixtures = List.<TaskFixture>of();
 
         var executionResult = runReturnFlow(fixtures, MAIN_TENANT);
@@ -64,7 +70,7 @@ class TestSuiteTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant1")
-    void taskFixture() throws TimeoutException, QueueException {
+    void taskFixture() throws TimeoutException, QueueException, InternalException {
         var fixtures = List.of(
             TaskFixture.builder()
                 .id("date")
@@ -84,7 +90,7 @@ class TestSuiteTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant2")
-    void twoTaskFixturesOverridingOutput() throws QueueException, TimeoutException {
+    void twoTaskFixturesOverridingOutput() throws QueueException, TimeoutException, InternalException {
         var fixtures = List.of(
             TaskFixture.builder()
                 .id("date")
@@ -147,9 +153,9 @@ class TestSuiteTest {
         return runnerUtils.runOne(execution, flow, Duration.ofSeconds(10));
     }
 
-    private static AbstractObjectAssert<?, Object> assertOutputForTask(Execution executionResult, String taskId) {
+    private AbstractObjectAssert<?, Object> assertOutputForTask(Execution executionResult, String taskId) throws InternalException {
         return assertTask(executionResult, taskId)
-            .extracting(TaskRun::getOutputs).extracting(x -> x.get("value"));
+            .extracting(throwFunction(taskRun -> taskOutputService.getOutputs(taskRun))).extracting(x -> x.get("value"));
     }
 
     private static ObjectAssert<TaskRun> assertTask(Execution executionResult, String taskId) {

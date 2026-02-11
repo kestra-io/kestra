@@ -27,6 +27,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
@@ -63,12 +64,12 @@ public class FlowInputOutput {
 
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
-    private final RunContextFactory runContextFactory;
+    private final Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
 
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
-        RunContextFactory runContextFactory,
+        Provider<RunContextFactory> runContextFactory,
         @Nullable @Value("${kestra.encryption.secret-key}") String secretKey
     ) {
         this.storageInterface = storageInterface;
@@ -134,7 +135,7 @@ public class FlowInputOutput {
                         oldStyleInput = inputs.stream().anyMatch(i -> i.getId().equals(fileUpload.getFilename()));
                     }
                     if (oldStyleInput) {
-                        var runContext = runContextFactory.of(null, execution);
+                        var runContext = runContextFactory.get().of(null, execution);
                         runContext.logger().warn("Using a deprecated way to upload a FILE input. You must set the input 'id' as part name and set the name of the file using the regular 'filename' part attribute.");
                     }
                     String inputId = oldStyleInput ? fileUpload.getFilename() : fileUpload.getName();
@@ -213,7 +214,7 @@ public class FlowInputOutput {
             })
             .collect(HashMap::new, (m,v)-> m.put(v.getKey(), v.getValue()), HashMap::putAll);
         if (resolved.size() < data.size()) {
-            RunContext runContext = runContextFactory.of(flow, execution);
+            RunContext runContext = runContextFactory.get().of(flow, execution);
             for (var inputKey : data.keySet()) {
                 if (!resolved.containsKey(inputKey)) {
                     runContext.logger().warn(
@@ -393,7 +394,7 @@ public class FlowInputOutput {
                 flattenInputs.put(input.getId(), null);
             }
         }
-        return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs), decryptSecrets);
+        return runContextFactory.get().of(flow, execution, vars -> vars.withInputs(flattenInputs), decryptSecrets);
     }
 
     private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs, final boolean decryptSecrets) {

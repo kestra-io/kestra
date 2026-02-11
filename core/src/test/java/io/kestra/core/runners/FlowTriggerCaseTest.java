@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.services.TaskOutputService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -23,7 +24,10 @@ public class FlowTriggerCaseTest {
     @Inject
     protected TestRunnerUtils runnerUtils;
 
-    public void trigger(String tenantId) throws InterruptedException, TimeoutException, QueueException {
+    @Inject
+    private TaskOutputService taskOutputService;
+
+    public void trigger(String tenantId) throws InterruptedException, TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
         Execution execution = runnerUtils.runOne(tenantId, NAMESPACE, "trigger-flow");
 
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
@@ -42,7 +46,7 @@ public class FlowTriggerCaseTest {
 
         assertThat(flowListener.getTaskRunList().size()).isEqualTo(1);
         assertThat(flowListener.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(flowListener.getTaskRunList().getFirst().getOutputs().get("value")).isEqualTo("childs: from parents: " + execution.getId());
+        assertThat(taskOutputService.getOutputs(flowListener.getTaskRunList().getFirst()).get("value")).isEqualTo("childs: from parents: " + execution.getId());
         assertThat(flowListener.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
         assertThat(flowListener.getTrigger().getVariables().get("namespace")).isEqualTo(NAMESPACE);
         assertThat(flowListener.getTrigger().getVariables().get("flowId")).isEqualTo("trigger-flow");

@@ -4,12 +4,11 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.TaskOutputService;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -21,6 +20,9 @@ public class FlowCaseTest {
 
     @Inject
     protected TestRunnerUtils runnerUtils;
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     public void waitSuccess(String tenantId) throws Exception {
         this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", true, tenantId);
@@ -51,7 +53,7 @@ public class FlowCaseTest {
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId")).isEqualTo(triggered.getId());
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("executionId")).isEqualTo(triggered.getId());
         assertThat(triggered.getTrigger().getType()).isEqualTo("io.kestra.core.tasks.flows.Subflow");
         assertThat(triggered.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
         assertThat(triggered.getTrigger().getVariables().get("flowId")).isEqualTo(execution.getFlowId());
@@ -79,13 +81,13 @@ public class FlowCaseTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(fromState);
 
         if (outputs != null) {
-            assertThat(((Map<String, String>) execution.getTaskRunList().getFirst().getOutputs().get("outputs")).get("extracted")).contains(outputs);
+            assertThat(((Map<String, String>) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("outputs")).get("extracted")).contains(outputs);
         }
 
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId")).isEqualTo(triggered.getId());
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("executionId")).isEqualTo(triggered.getId());
 
         if (outputs != null) {
-            assertThat(execution.getTaskRunList().getFirst().getOutputs().get("state")).isEqualTo(triggered.getState().getCurrent().name());
+            assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("state")).isEqualTo(triggered.getState().getCurrent().name());
         }
 
         assertThat(triggered.getTrigger().getType()).isEqualTo("io.kestra.plugin.core.flow.Subflow");

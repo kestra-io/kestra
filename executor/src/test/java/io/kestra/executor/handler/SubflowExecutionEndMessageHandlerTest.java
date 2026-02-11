@@ -2,7 +2,6 @@ package io.kestra.executor.handler;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -38,7 +37,7 @@ class SubflowExecutionEndMessageHandlerTest {
             "task",
             "taskRun",
             State.Type.SUCCESS,
-            Variables.EMPTY
+            Collections.emptyMap()
         );
 
         subflowExecutionEndMessageHandler.handle(subflowExecutionEnd);

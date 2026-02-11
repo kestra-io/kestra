@@ -6,6 +6,7 @@ import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
@@ -137,6 +138,12 @@ public class JdbcTableConfigsFactory {
     @Named("locks")
     public InstantiableJdbcTableConfig locks() {
         return new InstantiableJdbcTableConfig("locks", Lock.class, "locks");
+    }
+
+    @Bean
+    @Named("taskoutputs")
+    public InstantiableJdbcTableConfig outputs() {
+        return new InstantiableJdbcTableConfig("taskoutputs", TaskOutput.class, "task_outputs");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

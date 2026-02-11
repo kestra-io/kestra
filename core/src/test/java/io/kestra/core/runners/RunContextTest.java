@@ -26,6 +26,7 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
@@ -91,6 +92,9 @@ class RunContextTest {
     @Inject
     protected LocalFlowRepositoryLoader repositoryLoader;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @LoadFlows({"flows/valids/logs.yaml"})
     void logs() throws TimeoutException, QueueException {
@@ -153,14 +157,14 @@ class RunContextTest {
 
     @Test
     @ExecuteFlow("flows/valids/return.yaml")
-    void variables(Execution execution) {
+    void variables(Execution execution) throws io.kestra.core.exceptions.InternalException {
         assertThat(execution.getTaskRunList()).hasSize(3);
 
-        assertThat(ZonedDateTime.parse((String) execution.getTaskRunList().getFirst().getOutputs().get("value")))
+        assertThat(ZonedDateTime.parse((String) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("value")))
             .isCloseTo(ZonedDateTime.now(), within(10, ChronoUnit.SECONDS));
 
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("value")).isEqualTo("task-id");
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value")).isEqualTo("return");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(1)).get("value")).isEqualTo("task-id");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(2)).get("value")).isEqualTo("return");
     }
 
     @Test
@@ -221,18 +225,18 @@ class RunContextTest {
     @SuppressWarnings("unchecked")
     @Test
     @ExecuteFlow("flows/valids/encrypted-string.yaml")
-    void encryptedStringOutput(Execution execution) {
+    void encryptedStringOutput(Execution execution) throws io.kestra.core.exceptions.InternalException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
         TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
-        Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
+        Map<String, String> valueOutput = (Map<String, String>) taskOutputService.getOutputs(hello).get("value");
         assertThat(valueOutput.size()).isEqualTo(2);
         assertThat(valueOutput.get("type")).isEqualTo(EncryptedString.TYPE);
         // the value is encrypted so it's not the plaintext value of the task property
         assertThat(valueOutput.get("value")).isNotEqualTo("Hello World");
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
-        assertThat(returnTask.getOutputs().get("value")).isEqualTo("Hello World");
+        assertThat(taskOutputService.getOutputs(returnTask).get("value")).isEqualTo("Hello World");
     }
 
     @Test
@@ -327,7 +331,7 @@ class RunContextTest {
             .findFirst()
             .orElseThrow(() -> new Exception("TaskRun not found"));
 
-        assertThat(taskRun.getOutputs().get("value").toString().contains("{\"state\":\"FAILED\",\"value\":\"2\",\"taskId\":\"switch\"}")).isEqualTo(true);
+        assertThat(taskOutputService.getOutputs(taskRun).get("value").toString().contains("{\"state\":\"FAILED\",\"value\":\"2\",\"taskId\":\"switch\"}")).isEqualTo(true);
 
     }
 

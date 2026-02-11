@@ -18,6 +18,7 @@ import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
@@ -524,13 +525,15 @@ public class DefaultRunContext implements RunContext {
     public TaskRunInfo taskRunInfo() {
         Optional<Map<String, Object>> maybeTaskRunMap = Optional.ofNullable(this.getVariables().get("taskrun"))
             .map(Map.class::cast);
+        Optional<Map<String, Object>> maybeTaskMap = Optional.ofNullable(this.getVariables().get("task"))
+            .map(Map.class::cast);
+        Optional<Map<String, Object>> maybeExecutionMap = Optional.ofNullable(this.getVariables().get("execution"))
+            .map(Map.class::cast);
         return new TaskRunInfo(
-            (String) this.getVariables().get("executionId"),
-            (String) this.getVariables().get("taskId"),
-            maybeTaskRunMap.map(m -> (String) m.get("id"))
-                .orElse(null),
-            maybeTaskRunMap.map(m -> (String) m.get("value"))
-                .orElse(null)
+            maybeExecutionMap.map(m -> (String) m.get("id")).orElse(null),
+            maybeTaskMap.map(m -> (String) m.get("id")).orElse(null),
+            maybeTaskRunMap.map(m -> (String) m.get("id")).orElse(null),
+            maybeTaskRunMap.map(m -> (String) m.get("value")).orElse(null)
         );
     }
 
@@ -612,6 +615,26 @@ public class DefaultRunContext implements RunContext {
     @Override
     public SDK sdk() {
         return this.sdk;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Map<String, Object> currentOutput() {
+        Map<?, ?> allOutputs = (Map<?, ?>) variables.get("outputs");
+        Map<?, ?> outputs = (Map<?, ?>) allOutputs.get(taskRunInfo().taskId());
+        List<Map<?, ?>> parents = (List<Map<?, ?>>) variables.get("parents");
+        if (!ListUtils.isEmpty(parents) && !MapUtils.isEmpty(outputs)) {
+            Collections.reverse(parents);
+            for (Map<?, ?> parent : parents) {
+                Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
+                if (taskrun != null) {
+                    outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
+                }
+            }
+        }
+        Map<?, ?> taskrun = (Map<?, ?>) variables.get("taskrun");
+
+        return taskrun.get("value") == null ?  (Map<String, Object>) outputs : (Map<String, Object>) outputs.get(taskrun.get("value"));
     }
 
     /**

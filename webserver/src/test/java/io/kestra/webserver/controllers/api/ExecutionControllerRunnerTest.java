@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -22,6 +23,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -137,6 +139,9 @@ class ExecutionControllerRunnerTest {
     public TenantValidationFilter getTenantValidationFilter(){
         return mock(TenantValidationFilter.class);
     }
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
@@ -397,7 +402,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/webhook-plugin.yaml"}, tenantId = "triggerencrypted")
-    void triggerEncrypted() throws InterruptedException {
+    void triggerEncrypted() throws InterruptedException, InternalException {
         String tenantId = "triggerencrypted";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
 
@@ -425,11 +430,13 @@ class ExecutionControllerRunnerTest {
 
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
-        assertThat(Objects.requireNonNull(returnTask.getOutputs()).get("value")).isEqualTo("Hello World");
+        Map<String, Object> outputs = taskOutputService.getOutputs(returnTask);
+        assertThat(Objects.requireNonNull(outputs).get("value")).isEqualTo("Hello World");
 
         // the output of a trigger is also decrypted automatically
         TaskRun outTask = execution.findTaskRunsByTaskId("out").getFirst();
-        assertThat(((Map<String, String>)Objects.requireNonNull(outTask.getOutputs()).get("values")).get("encrypted")).isEqualTo("super-secret");
+        outputs = taskOutputService.getOutputs(returnTask);
+        assertThat(((Map<String, String>)Objects.requireNonNull(outputs).get("values")).get("encrypted")).isEqualTo("super-secret");
     }
 
     @Test
@@ -1047,7 +1054,7 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
     @SuppressWarnings("unchecked")
-    void resumeExecutionPaused() throws TimeoutException, QueueException {
+    void resumeExecutionPaused() throws TimeoutException, QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -1059,13 +1066,14 @@ class ExecutionControllerRunnerTest {
 
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
-        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst());
+        assertThat((Map<String, Object>) outputs.get("resumed")).containsKey("on");
     }
 
     @Test
     @LoadFlows({"flows/valids/resume-validate.yaml"})
     @SuppressWarnings("unchecked")
-    void resumeValidateExecutionPaused() throws TimeoutException, QueueException {
+    void resumeValidateExecutionPaused() throws TimeoutException, QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "resume-validate");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -1082,13 +1090,14 @@ class ExecutionControllerRunnerTest {
 
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
-        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst());
+        assertThat((Map<String, Object>) outputs.get("resumed")).containsKey("on");
     }
 
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/pause_on_resume.yaml"})
-    void resumeExecutionPausedWithInputs() throws TimeoutException, QueueException {
+    void resumeExecutionPausedWithInputs() throws TimeoutException, QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -1113,7 +1122,8 @@ class ExecutionControllerRunnerTest {
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
-        Map<String, Object> inputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst());
+        Map<String, Object> inputs = (Map<String, Object>) outputs.get("onResume");
         Map<String, String> secretInputs = (Map<String, String>) inputs.get("secret_pause");
         assertThat(inputs.get("asked")).isEqualTo("myString");
         assertThat(secretInputs.get("type")).isEqualTo(EncryptedString.TYPE);

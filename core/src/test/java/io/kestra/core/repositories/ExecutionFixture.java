@@ -27,9 +27,6 @@ class ExecutionFixture {
                         TaskRunAttempt.builder()
                             .build()
                     ))
-                    .outputs(Variables.inMemory(ImmutableMap.of(
-                        "out", "value"
-                    )))
                     .build()
             ))
             .build();
@@ -54,9 +51,6 @@ class ExecutionFixture {
                         TaskRunAttempt.builder()
                             .build()
                     ))
-                    .outputs(Variables.inMemory(ImmutableMap.of(
-                        "out", 1
-                    )))
                     .build()
             ))
             .build();
@@ -82,9 +76,6 @@ class ExecutionFixture {
                         TaskRunAttempt.builder()
                             .build()
                     ))
-                    .outputs(Variables.inMemory(ImmutableMap.of(
-                        "out", 1
-                    )))
                     .build()
             ))
             .build();

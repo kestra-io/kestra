@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -267,7 +268,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         }
 
         // get back the original state of the Pause task
-        State.Type terminalState = findTerminalState(parentTaskRun);
+        State.Type terminalState = findTerminalState(runContext);
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),
@@ -279,8 +280,9 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     }
 
     @SuppressWarnings("unchecked")
-    private static State.Type findTerminalState(TaskRun parentTaskRun) {
-        Map<String, Object> resumed = (Map<String, Object>) parentTaskRun.getOutputs().get("resumed");
+    private static State.Type findTerminalState(RunContext runContext) {
+        Map<String, Object> outputs = runContext.currentOutput();
+        Map<String, Object> resumed = (Map<String, Object>) outputs.get("resumed");
         return resumed.isEmpty() || !resumed.containsKey("to") ? State.Type.SUCCESS : State.Type.valueOf((String) resumed.get("to"));
     }
 
@@ -297,7 +299,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         }
 
         // get back the original state of the Pause task
-        State.Type terminalState = findTerminalState(parentTaskRun);
+        State.Type terminalState = findTerminalState(runContext);
         return FlowableUtils.resolveState(
             execution,
             this.childTasks(runContext, parentTaskRun),

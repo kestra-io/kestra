@@ -12,7 +12,6 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.core.server.ServerConfig;
-import io.kestra.core.services.VariablesService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.worker.models.WorkerContext;
@@ -34,8 +33,6 @@ public class WorkerJobProcessorFactory {
     private RunContextInitializer runContextInitializer;
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
-    @Inject
-    private VariablesService variablesService;
     @Inject
     private ServerConfig serverConfig;
     // QUEUES
@@ -64,7 +61,6 @@ public class WorkerJobProcessorFactory {
                 metricRegistry,
                 workerSecurityService,
                 tracer,
-                variablesService,
                 runContextInitializer,
                 runContextLoggerFactory,
                 workerQueueRegistry.getOrCreate(context, WorkerTaskResult.class),

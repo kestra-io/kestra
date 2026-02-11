@@ -10589,9 +10589,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskRunAttempt"
-        outputs:
-          type: object
-          nullable: true
         assets:
           nullable: true
           allOf:

@@ -502,12 +502,12 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                     currentFlow,
                                     this,
                                     currentTaskRun
-                                        .withOutputs(Variables.inMemory(outputs.toMap()))
                                         .withIteration(iteration),
                                     inputs,
                                     labels,
                                     inheritLabels,
-                                    scheduleOn
+                                    scheduleOn,
+                                    outputs.toMap()
                                 );
                         }
                     ))
@@ -525,21 +525,21 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             RunContext runContext,
             TaskRun taskRun,
             FlowInterface flow,
-            Execution execution
-        ) {
+            Execution execution,
+            Map<String, Object> outputs) {
 
             // We only resolve subflow outputs for an execution result when the execution is terminated.
             if (taskRun.getState().isTerminated() && flow.getOutputs() != null && waitForExecution()) {
                 final ForEachItem.Output.OutputBuilder builder = Output
                     .builder()
-                    .iterations((Map<State.Type, Integer>) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_ITERATIONS))
-                    .numberOfBatches((Integer) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES));
+                    .iterations((Map<State.Type, Integer>) outputs.get(ExecutableUtils.TASK_VARIABLE_ITERATIONS))
+                    .numberOfBatches((Integer) outputs.get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES));
 
                 try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
                     FileSerde.write(bos, runContext.inputAndOutput().renderOutputs(flow.getOutputs()));
                     URI uri = runContext.storage().putFile(
                         new ByteArrayInputStream(bos.toByteArray()),
-                        URI.create((String) taskRun.getOutputs().get("uri"))
+                        URI.create((String) outputs.get("uri"))
                     );
                     builder.uri(uri);
                 } catch (Exception e) {
@@ -547,20 +547,20 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     var state = State.Type.fail(this);
                     taskRun = taskRun
                         .withState(state)
-                        .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                        .withOutputs(Variables.inMemory(builder.build().toMap()));
+                        .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()));
 
                     return Optional.of(SubflowExecutionResult.builder()
                         .executionId(execution.getId())
                         .state(State.Type.FAILED)
                         .parentTaskRun(taskRun)
+                        .outputs(builder.build().toMap())
                         .build());
                 }
-                taskRun = taskRun.withOutputs(Variables.inMemory(builder.build().toMap()));
+                return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, builder.build().toMap(), execution));
             }
 
             // ForEachItem is an iterative task, the terminal state will be computed in the executor while counting on the task run execution list
-            return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
+            return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, outputs, execution));
         }
 
         @Override

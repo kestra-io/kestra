@@ -83,7 +83,7 @@ public class ExecutionService {
     private PluginDefaultService pluginDefaultService;
 
     @Inject
-    private VariablesService variablesService;
+    private TaskOutputService taskOutputService;
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
         Execution execution = getExecution(tenant, executionId, withACL);
@@ -396,8 +396,8 @@ public class ExecutionService {
                 if (task instanceof Pause pauseTask) {
                     State.Type terminalState = newState == State.Type.RUNNING ? State.Type.SUCCESS : newState;
                     Pause.Resumed _resumed = resumed != null ? resumed : Pause.Resumed.now(terminalState);
-                    Variables variables = variablesService.of(StorageContext.forTask(originalTaskRun), pauseTask.generateOutputs(onResumeInputs, _resumed));
-                    newTaskRun = originalTaskRun.withOutputs(variables);
+                    Map<String, Object> outputs = pauseTask.generateOutputs(onResumeInputs, _resumed);
+                    taskOutputService.saveOutputs(originalTaskRun, outputs);
 
                     // if it's a Pause task with no subtask, we terminate the task
                     if (ListUtils.isEmpty(pauseTask.getTasks()) && ListUtils.isEmpty(pauseTask.getErrors()) && ListUtils.isEmpty(pauseTask.getFinally())) {
@@ -410,10 +410,8 @@ public class ExecutionService {
                         // we should set the state to RUNNING so that subtasks are executed
                         targetState = State.Type.RUNNING;
                     }
-                    newTaskRun =  newTaskRun.withState(targetState);
-                } else {
-                    newTaskRun = originalTaskRun.withState(targetState);
                 }
+                newTaskRun = originalTaskRun.withState(targetState);
 
 
                 if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {

@@ -71,8 +71,8 @@ class SubflowTest {
             runContext,
             taskRun,
             Flow.builder().build(),
-            Execution.builder().build()
-        );
+            Execution.builder().build(),
+            Collections.emptyMap());
 
         assertThat(result).isEmpty();
     }
@@ -94,8 +94,8 @@ class SubflowTest {
             runContext,
             TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
             Flow.builder().build(),
-            Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build()
-        );
+            Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build(),
+            outputs);
 
         // Then
         assertTrue(result.isPresent());
@@ -105,7 +105,7 @@ class SubflowTest {
             .outputs(Collections.emptyMap())
             .build()
             .toMap();
-        assertThat(result.get().getParentTaskRun().getOutputs()).containsAllEntriesOf(expected);
+        assertThat(result.get().getOutputs()).containsAllEntriesOf(expected);
 
         assertThat(result.get().getParentTaskRun().getAttempts().getFirst().getState().getHistories())
             .extracting(History::getState)
@@ -136,8 +136,8 @@ class SubflowTest {
             runContext,
             TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
             Flow.builder().build(),
-            Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build()
-        );
+            Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build(),
+            outputs);
 
         // Then
         assertTrue(result.isPresent());
@@ -147,7 +147,7 @@ class SubflowTest {
             .outputs(outputs)
             .build()
             .toMap();
-        assertThat(result.get().getParentTaskRun().getOutputs()).containsAllEntriesOf(expected);
+        assertThat(result.get().getOutputs()).containsAllEntriesOf(expected);
 
         assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories())
             .extracting(History::getState)
@@ -176,12 +176,12 @@ class SubflowTest {
             runContext,
             TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
             flow,
-            Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build()
-        );
+            Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build(),
+            Collections.emptyMap());
 
         // Then
         assertTrue(result.isPresent());
-        Map<String, Object> outputs = result.get().getParentTaskRun().getOutputs();
+        Map<String, Object> outputs = result.get().getOutputs();
 
         Map<String, Object> expected = Subflow.Output.builder()
             .executionId(EXECUTION_ID)

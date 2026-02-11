@@ -193,8 +193,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             inputs,
             labels,
             runContext.render(inheritLabels).as(Boolean.class).orElseThrow(),
-            scheduleDate
-        )
+            scheduleDate,
+    null)
             .<List<SubflowExecution<?>>>map(subflowExecution -> List.of(subflowExecution))
             .orElse(Collections.emptyList());
     }
@@ -204,8 +204,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         RunContext runContext,
         TaskRun taskRun,
         FlowInterface flow,
-        Execution execution
-    ) {
+        Execution execution,
+        Map<String, Object> outputs) {
         // we only create a worker task result when the execution is terminated
         if (!taskRun.getState().isTerminated()) {
             return Optional.empty();
@@ -261,9 +261,6 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             }
         }
 
-        Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
-        taskRun = taskRun.withOutputs(variables);
-
         State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure(), this.isAllowWarning());
         if (taskRun.getState().getCurrent() != finalState) {
             taskRun = taskRun.withState(finalState);
@@ -277,21 +274,21 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             runContext.logger().warn(log);
         }
 
-        return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
+        return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, builder.build().toMap(), execution));
     }
 
-    private Optional<SubflowExecutionResult> failSubflowDueToOutput(RunContext runContext, TaskRun taskRun, Execution execution, Exception e, Variables outputs) {
+    private Optional<SubflowExecutionResult> failSubflowDueToOutput(RunContext runContext, TaskRun taskRun, Execution execution, Exception e, Map<String, Object> outputs) {
         runContext.logger().error("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
         var state = State.Type.fail(this);
         taskRun = taskRun
             .withState(state)
-            .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-            .withOutputs(outputs);
+            .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()));
 
         return Optional.of(SubflowExecutionResult.builder()
             .executionId(execution.getId())
             .state(State.Type.FAILED)
             .parentTaskRun(taskRun)
+            .outputs(outputs)
             .build());
     }
 

@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -8,6 +9,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
@@ -82,12 +84,15 @@ public abstract class AbstractRunnerTest {
     @Inject
     private AfterExecutionTestCase afterExecutionTestCase;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @ExecuteFlow("flows/valids/full.yaml")
-    void full(Execution execution) {
+    void full(Execution execution) throws Exception {
         assertThat(execution.getTaskRunList()).hasSize(13);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat((String) execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value")).contains("value1");
+        assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("t2").getFirst()).get("value")).contains("value1");
     }
 
     @Test
@@ -538,19 +543,19 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @ExecuteFlow("flows/valids/after-execution.yaml")
-    public void shouldCallTasksAfterExecution(Execution execution) {
+    public void shouldCallTasksAfterExecution(Execution execution) throws InternalException {
         afterExecutionTestCase.shouldCallTasksAfterExecution(execution);
     }
 
     @Test
     @ExecuteFlow("flows/valids/after-execution-finally.yaml")
-    public void shouldCallTasksAfterFinally(Execution execution) {
+    public void shouldCallTasksAfterFinally(Execution execution) throws InternalException {
         afterExecutionTestCase.shouldCallTasksAfterFinally(execution);
     }
 
     @Test
     @ExecuteFlow("flows/valids/after-execution-error.yaml")
-    public void shouldCallTasksAfterError(Execution execution) {
+    public void shouldCallTasksAfterError(Execution execution) throws InternalException {
         afterExecutionTestCase.shouldCallTasksAfterError(execution);
     }
 }

@@ -11,6 +11,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -61,8 +62,11 @@ public class ForEachItemCaseTest {
     @Inject
     private FlowRepositoryInterface flowRepository;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @SuppressWarnings("unchecked")
-    public void forEachItem(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItem(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
         Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item", null,
@@ -86,7 +90,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -105,7 +109,7 @@ public class ForEachItemCaseTest {
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
-    public void forEachItemEmptyItems(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemEmptyItems(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = emptyItems(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
         Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item", null,
@@ -115,12 +119,12 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList()).hasSize(4);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs).isNull();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
+        assertThat(outputs).isEmpty();
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemNoWait(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemNoWait(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-no-wait", null,
@@ -138,7 +142,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -158,7 +162,7 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemFailed(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemFailed(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-failed", null,
@@ -174,7 +178,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(FAILED);
         assertThat(execution.getState().getCurrent()).isEqualTo(FAILED);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -190,7 +194,7 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemWithSubflowOutputs(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemWithSubflowOutputs(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-outputs", null,
@@ -206,7 +210,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
 
@@ -222,7 +226,7 @@ public class ForEachItemCaseTest {
         assertThat(triggered.getTaskRunList()).hasSize(1);
 
         // asserts for subflow merged outputs
-        Map<String, Object> mergeTaskOutputs = execution.getTaskRunList().get(3).getOutputs();
+        Map<String, Object> mergeTaskOutputs = taskOutputService.getOutputs(execution.getTaskRunList().get(3));
         assertThat(mergeTaskOutputs.get("subflowOutputs")).isNotNull();
         InputStream stream = storageInterface.get(tenantId, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
 
@@ -256,7 +260,7 @@ public class ForEachItemCaseTest {
         assertThat(triggeredExecs).extracting(e -> e.getState().getCurrent()).containsOnly(SUCCESS);
     }
 
-    public void forEachItemInIf(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemInIf(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
         Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-in-if", null,
@@ -270,7 +274,7 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(3).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(3));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -288,7 +292,7 @@ public class ForEachItemCaseTest {
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
-    public void forEachItemWithAfterExecution(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemWithAfterExecution(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
         Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-after-execution", null,
@@ -304,7 +308,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");

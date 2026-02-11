@@ -1,6 +1,5 @@
 package io.kestra.core.models.executions;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.flows.State;
@@ -8,7 +7,6 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -53,12 +51,6 @@ public class TaskRun implements TenantInterface {
     List<TaskRunAttempt> attempts;
 
     @With
-    @JsonInclude(JsonInclude.Include.ALWAYS)
-    @Nullable
-    @Schema(implementation = Object.class)
-    Variables outputs;
-
-    @With
     @Nullable
     AssetsInOut assets;
 
@@ -86,7 +78,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             this.attempts,
-            this.outputs,
             this.assets,
             this.state.withState(state),
             this.iteration,
@@ -114,7 +105,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.outputs,
             this.assets,
             this.state.withState(state),
             this.iteration,
@@ -138,7 +128,6 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.outputs,
             this.assets,
             this.state.withState(State.Type.FAILED),
             this.iteration,
@@ -158,7 +147,6 @@ public class TaskRun implements TenantInterface {
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.get(this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
-            .outputs(this.getOutputs())
             .assets(this.getAssets())
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
@@ -241,7 +229,6 @@ public class TaskRun implements TenantInterface {
             ", value=" + this.getValue() +
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
-            ", outputs=" + this.getOutputs() +
             ", assets=" + this.getAssets() +
             ", attempts=" + this.getAttempts() +
             ")";

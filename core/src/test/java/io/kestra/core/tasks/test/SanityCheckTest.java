@@ -6,12 +6,17 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.services.TaskOutputService;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class SanityCheckTest {
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @ExecuteFlow("sanity-checks/fail.yaml")
     void qaFail(Execution execution) {
@@ -71,12 +76,12 @@ class SanityCheckTest {
 
     @Test
     @ExecuteFlow("sanity-checks/return.yaml")
-    void qaReturn(Execution execution) {
+    void qaReturn(Execution execution) throws Exception {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         TaskRun taskRun = execution.findTaskRunsByTaskId("return_value").getFirst();
-        assertThat(taskRun.getOutputs().get("value")).isEqualTo("some string with pebble test");
+        assertThat(taskOutputService.getOutputs(taskRun).get("value")).isEqualTo("some string with pebble test");
     }
 
     @Test

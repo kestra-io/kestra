@@ -16,11 +16,11 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
@@ -85,9 +85,6 @@ public class ExecutorService {
     private Optional<OpenTelemetry> openTelemetry;
 
     @Inject
-    private VariablesService variablesService;
-
-    @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
@@ -98,6 +95,9 @@ public class ExecutorService {
 
     @Inject
     private RunContextInitializer runContextInitializer;
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     private FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
@@ -267,16 +267,19 @@ public class ExecutorService {
                 WorkerTaskResult workerTaskResult = endedTask.get();
                 // Compute outputs for the parent Flowable task if a terminated state was resolved
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
-                    Variables variables;
+                    var outputs = workerTaskResult.getOutputs();
                     try {
                         // as flowable tasks can save outputs during iterative execution, we must merge the maps here
-                        Output outputs = flowableParent.outputs(runContext);
-                        Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
-                        variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
+                        Output parentOutputs = flowableParent.outputs(runContext);
+                        if (parentOutputs != null) {
+                            outputs = MapUtils.merge(outputs, parentOutputs.toMap());
+                        }
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
-                        variables = Variables.empty();
+                        outputs = Collections.emptyMap();
                     }
+
+                    taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), outputs);
 
                     // flowable attempt state transition to terminated
                     List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
@@ -288,7 +291,6 @@ public class ExecutorService {
 
                     return Optional.of(new WorkerTaskResult(workerTaskResult
                         .getTaskRun()
-                        .withOutputs(variables)
                         .withAttempts(attempts)
                     ));
                 }
@@ -375,10 +377,9 @@ public class ExecutorService {
             .map(throwFunction(t -> {
                 TaskRun taskRun = t.getTaskRun();
 
-                if (!(t.getTask() instanceof FlowableTask)) {
+                if (!(t.getTask() instanceof FlowableTask<?> flowableTask)) {
                     return taskRun;
                 }
-                FlowableTask<?> flowableTask = (FlowableTask<?>) t.getTask();
                 RunContext runContext = runContextFactory.of(
                     executor.getFlow(),
                     t.getTask(),
@@ -388,8 +389,7 @@ public class ExecutorService {
 
                 try {
                     Output outputs = flowableTask.outputs(runContext);
-                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
-                    taskRun = taskRun.withOutputs(variables);
+                    taskOutputService.saveOutputs(taskRun, outputs);
 
                 } catch (Exception e) {
                     runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
@@ -564,8 +564,7 @@ public class ExecutorService {
                             executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRIED, true) :
                             executionService.markWithTaskRunAs(executor.getExecution(), taskRun.getId(), State.Type.RETRYING, false),
                         "handleRetryTask");
-                    // Prevent workerTaskResult of flowable to be sent
-                    // because one of its children is retrying
+                    // Prevent workerTaskResult from flowable tasks to be sent because one of its children is retrying
                     if (taskRun.getParentTaskRunId() != null) {
                         list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
                             .collect(Collectors.toCollection(ArrayList::new));
@@ -573,12 +572,12 @@ public class ExecutorService {
                 }
             } else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
-                    Output newOutput = waitFor.outputs(taskRun);
-                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
-                    TaskRun updatedTaskRun = taskRun.withOutputs(variables);
-                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
-                    Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
+                    Map<String, Object> previousOutput = taskOutputService.getOutputs(taskRun);
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(taskRun), taskRun);
+                    Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), taskRun);
                     if (nextDate != null) {
+                        Output newOutput = waitFor.outputs(previousOutput);
+                        taskOutputService.saveOutputs(taskRun, newOutput);
                         executionDelays.add(ExecutionDelay.builder()
                             .taskRunId(taskRun.getId())
                             .executionId(executor.getExecution().getId())
@@ -586,10 +585,10 @@ public class ExecutorService {
                             .state(State.Type.RUNNING)
                             .delayType(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)
                             .build());
-                        Execution execution = executionService.pauseFlowable(executor.getExecution(), updatedTaskRun);
+                        Execution execution = executionService.pauseFlowable(executor.getExecution(), taskRun);
                         executor.withExecution(execution, "pauseLoop");
                     } else {
-                        executor.withExecution(executor.getExecution().withTaskRun(updatedTaskRun), "handleWaitFor");
+                        executor.withExecution(executor.getExecution().withTaskRun(taskRun), "handleWaitFor");
                     }
                 }
             } else if (task instanceof Pause pause && pause.getOnPause() != null) {
@@ -899,10 +898,6 @@ public class ExecutorService {
                         return WorkerTaskResult.builder()
                             .taskRun(fixtureAndTaskRun.taskRun()
                                 .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                                .withOutputs(
-                                    variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun),
-                                        fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
-                                )
                                 .withAssets(new AssetsInOut(
                                     Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
                                         .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
@@ -915,6 +910,7 @@ public class ExecutorService {
                                         .toList()
                                 ))
                             )
+                            .outputs(fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
                             .build();
                     }
                 ))
@@ -1042,8 +1038,8 @@ public class ExecutorService {
                                     // if we didn't wait for the execution, we directly set the state to SUCCESS
                                     executableTask.waitForExecution() ? subflowExecution.getParentTaskRun() : subflowExecution.getParentTaskRun().withState(State.Type.SUCCESS),
                                     flow.get(),
-                                    subflowExecution.getExecution()
-                                );
+                                    subflowExecution.getExecution(),
+                                    subflowExecution.getOutputs());
                                 subflowExecutionResult.ifPresent(subflowExecutionResults::add);
                             }
                         } else {
@@ -1186,6 +1182,9 @@ public class ExecutorService {
                     metricRegistry.tags(workerTaskResult)
                 )
                 .record(taskRun.getState().getDurationOrComputeIt());
+
+            // outputs
+            taskOutputService.saveOutputs(taskRun, workerTaskResult.getOutputs());
 
             if (
                 taskRun.getAssets() != null &&

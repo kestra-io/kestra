@@ -1,6 +1,5 @@
 package io.kestra.queue.h2;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.queue.AbstractBroadcastQueueTest;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;

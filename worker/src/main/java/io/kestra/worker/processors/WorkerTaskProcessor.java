@@ -8,10 +8,7 @@ import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
-import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
-import io.kestra.core.models.executions.Variables;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -31,6 +28,7 @@ import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
@@ -65,7 +63,6 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private final String workerGroup;
 
     // SERVICES
-    private final VariablesService variablesService;
     private final ServerConfig serverConfig;
     private final RunContextInitializer runContextInitializer;
     private final RunContextLoggerFactory runContextLoggerFactory;
@@ -83,7 +80,6 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                                final MetricRegistry metricRegistry,
                                final WorkerSecurityService workerSecurityService,
                                final Tracer tracer,
-                               final VariablesService variablesService,
                                final RunContextInitializer runContextInitializer,
                                final RunContextLoggerFactory runContextLoggerFactory,
                                final WorkerQueue<WorkerTaskResult> workerTaskResultQueue,
@@ -94,7 +90,6 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.workerGroup = workerGroup;
         this.workerId = workerId;
-        this.variablesService = variablesService;
         this.serverConfig = serverConfig;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.workerMetricQueue = workerMetricQueue;
@@ -173,8 +168,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                 workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
             }
+            this.logTerminated(workerTask, workerTask.getTaskRun());
         } finally {
-            this.logTerminated(workerTask);
             runContext.cleanup();
         }
     }
@@ -229,15 +224,14 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                                 if (archive.getNextEntry() != null) {
                                     byte[] cache = archive.readAllBytes();
                                     Map<String, Object> outputMap = JacksonMapper.ofIon().readValue(cache, JacksonMapper.MAP_TYPE_REFERENCE);
-                                    Variables variables = variablesService.of(StorageContext.forTask(workerTask.getTaskRun()), outputMap);
 
                                     TaskRunAttempt attempt = TaskRunAttempt.builder()
                                         .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
                                         .workerId(this.workerId)
                                         .build();
                                     List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
-                                    TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withOutputs(variables).withState(SUCCESS);
-                                    WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun);
+                                    TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);
+                                    WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, outputMap);
                                     workerTaskResultQueue.put(workerTaskResult);
                                     return workerTaskResult;
                                 }
@@ -251,10 +245,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             }
 
             // run
-            workerTask = this.runAttempt(runContext, workerTask);
+            TaskRunWithOutput taskRunWithOutput = this.runAttempt(runContext, workerTask);
 
             // get last state
-            TaskRunAttempt lastAttempt = workerTask.getTaskRun().lastAttempt();
+            TaskRunAttempt lastAttempt = taskRunWithOutput.taskRun().lastAttempt();
             if (lastAttempt == null) {
                 throw new IllegalStateException("Can find lastAttempt on taskRun '" +
                     workerTask.getTaskRun().toString(true) + "'"
@@ -267,18 +261,18 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 // in this case; we return immediately without emitting any result as it would be resubmitted (except if WorkerTaskRestartStrategy is NEVER)
                 List<WorkerTaskResult> dynamicWorkerResults = workerTask.getRunContext().dynamicWorkerResults();
                 List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
-                return new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
+                return new WorkerTaskResult(taskRunWithOutput.taskRun(), dynamicTaskRuns, taskRunWithOutput.outputs());
             }
 
             if (workerTask.getTask().getRetry() != null &&
                 workerTask.getTask().getRetry().getWarningOnRetry() &&
-                workerTask.getTaskRun().attemptNumber() > 1 &&
+                taskRunWithOutput.taskRun().attemptNumber() > 1 &&
                 state == SUCCESS
             ) {
                 state = WARNING;
             }
 
-            if (workerTask.getTask().isAllowFailure() && !workerTask.getTaskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
+            if (workerTask.getTask().isAllowFailure() && !taskRunWithOutput.taskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
                 state = WARNING;
             }
 
@@ -290,9 +284,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             List<WorkerTaskResult> dynamicWorkerResults = workerTask.getRunContext().dynamicWorkerResults();
             List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
 
-            workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(state));
+            TaskRun taskRun = taskRunWithOutput.taskRun().withState(state);
 
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, dynamicTaskRuns, taskRunWithOutput.outputs());
             workerTaskResultQueue.put(workerTaskResult);
 
             // upload the cache file, hash may not be present if we didn't succeed in computing it
@@ -304,21 +298,22 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                      ZipOutputStream archive = new ZipOutputStream(bos)) {
                     var zipEntry = new ZipEntry("outputs.ion");
                     archive.putNextEntry(zipEntry);
-                    archive.write(JacksonMapper.ofIon().writeValueAsBytes(workerTask.getTaskRun().getOutputs()));
+                    archive.write(JacksonMapper.ofIon().writeValueAsBytes(taskRun));
                     archive.closeEntry();
                     archive.finish();
                     Path archiveFile = runContext.workingDir().createTempFile(".zip");
                     Files.write(archiveFile, bos.toByteArray());
-                    URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), workerTask.getTaskRun().getValue());
+                    URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), taskRun.getValue());
                     runContext.logger().debug("Caching entry uploaded in URI {}", uri);
                 } catch (IOException | RuntimeException e) {
                     // in case of any exception, log an error and continue
                     runContext.logger().error("Unexpected exception while uploading the cache entry for task '{}', the task not be cached.", workerTask.getTask().getId(), e);
                 }
             }
+
+            this.logTerminated(workerTask, taskRun);
             return workerTaskResult;
         } finally {
-            this.logTerminated(workerTask);
 
             // remove tmp directory
             if (cleanUp) {
@@ -327,7 +322,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         }
     }
 
-    private void logTerminated(WorkerTask workerTask) {
+    private void logTerminated(WorkerTask workerTask, TaskRun taskRun) {
         final String[] tags = metricRegistry.tags(workerTask, workerGroup);
 
         metricRegistry
@@ -339,16 +334,16 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             .record(workerTask.getTaskRun().getState().getDurationOrComputeIt());
 
         Logs.logTaskRun(
-            workerTask.getTaskRun(),
+            taskRun,
             Level.INFO,
             "Type {} with state {} completed in {}",
             workerTask.getTask().getClass().getSimpleName(),
-            workerTask.getTaskRun().getState().getCurrent(),
-            workerTask.getTaskRun().getState().humanDuration()
+            taskRun.getState().getCurrent(),
+            taskRun.getState().humanDuration()
         );
     }
 
-    private WorkerTask runAttempt(final RunContext runContext, final WorkerTask workerTask) {
+    private TaskRunWithOutput runAttempt(final RunContext runContext, final WorkerTask workerTask) {
         Logger logger = runContext.logger();
 
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
@@ -361,7 +356,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
             logger.error("Unable to execute the task '{}': only runnable tasks can be executed by the worker but the task is of type {}", workerTask.getTask().getId(), workerTask.getTask().getClass());
-            return workerTask.withTaskRun(taskRun);
+            return new TaskRunWithOutput(taskRun, null);
         }
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
@@ -402,12 +397,12 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         TaskRun taskRun = workerTask.getTaskRun()
             .withAttempts(attempts);
 
+        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
+
         try {
-            Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
-            taskRun = taskRun.withOutputs(variables);
             if (workerTask.getTask().getAssets() != null) {
                 // We need to have the task outputs injected before rendering the assets
-                Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun);
+                Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
 
                 List<AssetEmit> assetEmits = runContext.assets().emitted();
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
@@ -427,8 +422,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }
 
-        return workerTask
-            .withTaskRun(taskRun);
+        return new TaskRunWithOutput(taskRun, outputs);
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

@@ -48,7 +48,7 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
                     return null;
                 }
 
-                TaskRun taskRun = execution.findTaskRunByTaskRunId(message.taskRunId()).withState(message.state()).withOutputs(message.outputs());
+                TaskRun taskRun = execution.findTaskRunByTaskRunId(message.taskRunId()).withState(message.state());
                 FlowInterface childFlow = flowMetaStore.findByExecution(message.childExecution()).orElseThrow();
                 RunContext runContext = runContextFactory.of(
                     childFlow,
@@ -57,7 +57,7 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
                     taskRun
                 );
 
-                SubflowExecutionResult subflowExecutionResult = ExecutableUtils.subflowExecutionResultFromChildExecution(runContext, childFlow, message.childExecution(), executableTask, taskRun);
+                SubflowExecutionResult subflowExecutionResult = ExecutableUtils.subflowExecutionResultFromChildExecution(runContext, childFlow, message.childExecution(), executableTask, taskRun, message.outputs());
                 if (subflowExecutionResult != null) {
                     try {
                         this.subflowExecutionResultQueue.emit(subflowExecutionResult);

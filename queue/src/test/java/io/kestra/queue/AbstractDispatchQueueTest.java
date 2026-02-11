@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +22,7 @@ import java.util.stream.IntStream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 15;
@@ -98,14 +100,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     void errorProcessing() throws QueueException, InterruptedException {
         String prefix = this.keyPrefix();
 
-        dispatchQueue.emit(IntStream.range(1, 15)
-            .boxed()
-            .map(i -> new TestDispatch(prefix + "_" + IdUtils.create(), i))
-            .toList()
-        );
-
-        CountDownLatch countDownLatch = new CountDownLatch(15);
-        Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        List<Integer> list = Collections.synchronizedList(new ArrayList<>());
 
         var crashed = new AtomicBoolean(false);
 
@@ -118,15 +114,24 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
                 }
 
                 list.add(e.getLeft().id);
-                countDownLatch.countDown();
+                if (crashed.get()) {
+                    fail("The consumer should not process the message after an error");
+                }
             });
+
+        dispatchQueue.emit(IntStream.range(1, 15)
+            .boxed()
+            .map(i -> new TestDispatch(prefix + "_" + IdUtils.create(), i))
+            .toList()
+        );
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
 
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
-        assertThat(list).containsExactlyInAnyOrder(IntStream.range(1, 15).boxed().toArray(Integer[]::new));
+        assertThat(list).hasSize(1);
+        assertThat(list.getFirst()).isEqualTo(1);
     }
 
     @Test

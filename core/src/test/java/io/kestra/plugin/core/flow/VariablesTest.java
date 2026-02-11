@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import java.util.List;
@@ -29,15 +30,18 @@ class VariablesTest {
     @Inject
     private TestRunnerUtils runnerUtils;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @ExecuteFlow("flows/valids/variables.yaml")
     @EnabledIfEnvironmentVariable(named = "ENV_TEST1", matches = ".*")
     @EnabledIfEnvironmentVariable(named = "ENV_TEST2", matches = ".*")
-    void recursiveVars(Execution execution) {
+    void recursiveVars(Execution execution) throws io.kestra.core.exceptions.InternalException {
         assertThat(execution.getTaskRunList()).hasSize(3);
-        assertThat(execution.findTaskRunsByTaskId("variable").getFirst().getOutputs().get("value")).isEqualTo("1 > 2 > 3");
-        assertThat(execution.findTaskRunsByTaskId("env").getFirst().getOutputs().get("value")).isEqualTo("true Pass by env");
-        assertThat(execution.findTaskRunsByTaskId("global").getFirst().getOutputs().get("value")).isEqualTo("string 1 true 2");
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("variable").getFirst()).get("value")).isEqualTo("1 > 2 > 3");
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("env").getFirst()).get("value")).isEqualTo("true Pass by env");
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("global").getFirst()).get("value")).isEqualTo("string 1 true 2");
     }
 
     @Test

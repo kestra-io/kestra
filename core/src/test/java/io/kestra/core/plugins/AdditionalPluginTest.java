@@ -11,6 +11,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.TaskOutputService;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -27,14 +28,17 @@ class AdditionalPluginTest {
     @Inject
     private JsonSchemaGenerator jsonSchemaGenerator;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @ExecuteFlow("flows/valids/additional-plugin.yaml")
-    void additionalPlugin(Execution execution) {
+    void additionalPlugin(Execution execution) throws Exception {
         assertThat(execution).isNotNull();
         assertThat(execution.getState().isSuccess()).isTrue();
         assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("output")).isEqualTo("1 -> Hello");
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("output")).isEqualTo("Hello World!");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("output")).isEqualTo("1 -> Hello");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(1)).get("output")).isEqualTo("Hello World!");
     }
 
     @Test

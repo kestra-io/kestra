@@ -5,14 +5,12 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.VariablesService;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
@@ -36,8 +34,6 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
     @Inject
     private MetricRegistry metricRegistry;
     @Inject
-    private VariablesService variablesService;
-    @Inject
     private ExecutionService executionService;
 
     @Inject
@@ -45,6 +41,9 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
 
     @Inject
     private ExecutionStateStore executionStateStore;
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     @Override
     public Optional<ExecutorContext> handle(SubflowExecutionResult message) {
@@ -65,25 +64,33 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
                     if (task instanceof ForEachItem.ForEachItemExecutable forEachItem) {
                         // For iterative tasks, we need to get the taskRun from the execution,
                         // move it to the state of the child flow, and merge the outputs.
-                        // This is important to avoid races such as RUNNING that arrives after the first SUCCESS/FAILED.
+                        // This is important to avoid races such as RUNNING that arrive after the first SUCCESS/FAILED.
                         RunContext runContext = runContextFactory.of(flow, task, current.getExecution(), message.getParentTaskRun());
                         taskRun = execution.findTaskRunByTaskRunId(message.getParentTaskRun().getId());
                         if (taskRun.getState().getCurrent() != message.getState()) {
                             taskRun = taskRun.withState(message.getState());
                         }
-                        Map<String, Object> outputs = MapUtils.deepMerge(taskRun.getOutputs(), message.getParentTaskRun().getOutputs());
-                        Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
-                        taskRun = taskRun.withOutputs(variables);
-                        taskRun = ExecutableUtils.manageIterations(
+                        Map<String, Object> previousOutputs = taskOutputService.getOutputs(message.getParentTaskRun());
+                        Map<String, Object> outputs = MapUtils.deepMerge(previousOutputs, message.getOutputs());
+                        var previousTaskRun = execution.findTaskRunByTaskRunId(taskRun.getId());
+                        if (previousTaskRun == null) {
+                            throw new IllegalStateException("Should never happen");
+                        }
+                        var taskRunWithOutput = ExecutableUtils.manageIterations(
                             runContext.storage(),
                             taskRun,
-                            current.getExecution(),
+                            outputs,
+                            previousTaskRun,
+                            previousOutputs,
                             forEachItem.getTransmitFailed(),
                             forEachItem.isAllowFailure(),
                             forEachItem.isAllowWarning()
                         );
+                        taskRun = taskRunWithOutput.taskRun();
+                        taskOutputService.saveOutputs(taskRunWithOutput);
                     } else {
                         taskRun = message.getParentTaskRun();
+                        taskOutputService.saveOutputs(taskRun, message.getOutputs());
                     }
 
                     Execution newExecution = current.getExecution().withTaskRun(taskRun);

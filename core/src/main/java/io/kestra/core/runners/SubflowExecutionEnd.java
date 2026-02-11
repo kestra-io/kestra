@@ -1,10 +1,12 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.event.DispatchEvent;
+
+import java.util.Map;
 
 public record SubflowExecutionEnd(
     Execution childExecution,
@@ -12,7 +14,7 @@ public record SubflowExecutionEnd(
     String taskRunId,
     String taskId,
     State.Type state,
-    Variables outputs) implements HasUID, DispatchEvent {
+    @JsonInclude(JsonInclude.Include.ALWAYS) Map<String, Object> outputs) implements HasUID, DispatchEvent {
 
     public String toStringState() {
         return "SubflowExecutionEnd(" +

@@ -29,6 +29,7 @@ class HasRetryAttemptTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         execution = execution.withTaskRunList(List.of(TaskRun.builder()
+            .taskId("task")
             .attempts(List.of(
                 TaskRunAttempt.builder()
                     .state(new State().withState(State.Type.KILLED))
@@ -63,6 +64,7 @@ class HasRetryAttemptTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         execution = execution.withTaskRunList(List.of(TaskRun.builder()
+            .taskId("task")
             .attempts(List.of(
                 TaskRunAttempt.builder()
                     .state(new State().withState(State.Type.KILLED))

@@ -214,7 +214,14 @@ public interface RunContext extends PropertyContext {
     InputAndOutput inputAndOutput();
 
     /**
-     * Get access to the SDK handler which allows to interact easily with the Kestra API via the SDK.
+     * Get access to the SDK handler which allows interacting easily with the Kestra API via the SDK.
      */
     SDK sdk();
+
+    /**
+     * Retrieves the current task run output.
+     * WARNING: as the run context is created before running a task, this is not available for most task run.
+     * This is available only for flowable tasks as they are called multiple times, and for retried tasks (attempt > 1)
+     */
+    Map<String, Object> currentOutput();
 }

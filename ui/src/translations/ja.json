@@ -499,6 +499,10 @@
           "title": "現在、依存関係はありません。"
         }
       },
+      "kill_switches": {
+        "content": "キルスイッチ機能は、問題のある実行を停止するためのUIベースのメカニズムを提供します。これは、CLI専用の<code>--skip-executions</code>および<code>--skip-flows</code>コマンドを包括的な管理インターフェースに置き換えます。",
+        "title": "まだKill Switchがありません！"
+      },
       "panels": {
         "content": "Flow CodeまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Namespace Context）を選択してください。",
         "title": "現在、パネルは開いていません。"
@@ -702,6 +706,10 @@
         "parent_description": "トップレベル/ルートの実行のみを表示"
       },
       "key": "キー",
+      "kill_switch_type": {
+        "description": "キルスイッチタイプでフィルター",
+        "label": "タイプ"
+      },
       "kind": {
         "description": "実行種別でフィルター",
         "label": "種類"

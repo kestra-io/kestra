@@ -121,7 +121,7 @@
         minimap: {type: Boolean, default: false},
         creating: {type: Boolean, default: false},
         label: {type: String, default: undefined},
-        shouldFocus: {type: Boolean, default: true},
+        shouldFocus: {type: Boolean, default: false},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
         scrollKey: {type: String, default: undefined},
@@ -752,6 +752,10 @@
     flex-direction: column;
     height: 100%;
     z-index: 1001;
+}
+
+:not(.blueprint-container)  .ks-editor {
+    z-index: 1;
 }
 
 .el-form .ks-editor {

@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.validations.AbstractWebhookValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -26,6 +27,7 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @NoArgsConstructor
+@AbstractWebhookValidation
 public abstract class AbstractWebhookTrigger extends AbstractTrigger {
     @Size(max = 256)
     @NotNull

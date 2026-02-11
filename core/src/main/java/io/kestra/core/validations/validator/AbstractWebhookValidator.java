@@ -1,8 +1,8 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.plugin.core.trigger.Webhook;
-import io.kestra.core.validations.WebhookValidation;
+import io.kestra.core.validations.AbstractWebhookValidation;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -16,7 +16,7 @@ import java.util.Set;
 
 @Singleton
 @Introspected
-public class WebhookValidator implements ConstraintValidator<WebhookValidation, Webhook> {
+public class AbstractWebhookValidator implements ConstraintValidator<AbstractWebhookValidation, AbstractWebhookTrigger> {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
         MediaType.APPLICATION_JSON,
         MediaType.TEXT_PLAIN
@@ -24,18 +24,20 @@ public class WebhookValidator implements ConstraintValidator<WebhookValidation, 
 
     @Override
     public boolean isValid(
-        @Nullable Webhook value,
-        @NonNull AnnotationValue<WebhookValidation> annotationMetadata,
+        @Nullable AbstractWebhookTrigger value,
+        @NonNull AnnotationValue<AbstractWebhookValidation> annotationMetadata,
         @NonNull ConstraintValidatorContext context) {
         if (value == null) {
             return true;
         }
 
-        if (value.getResponseContentType() != null && !ALLOWED_CONTENT_TYPES.contains(value.getResponseContentType())) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("invalid webhook: responseContentType must be either 'application/json' or 'text/plain'")
-                .addConstraintViolation();
-            return false;
+        if (value.getConditions() != null) {
+            if (value.getConditions().stream().anyMatch(condition -> condition instanceof MultipleCondition)) {
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate("invalid webhook: conditions of type MultipleCondition are not supported")
+                    .addConstraintViolation();
+                return false;
+            }
         }
 
         return true;

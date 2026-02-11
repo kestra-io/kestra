@@ -88,6 +88,8 @@ export const useDocStore = defineStore("doc", {
                 metadata = JSON.parse(metadata);
             }
 
+            this.docPath = metadata.parsedUrl;
+
             return {
                 content: response.data,
                 metadata

@@ -148,7 +148,7 @@
                     startOfBlockLine = -1;
                     componentName = "";
                     currentBlockLines = [];
-                    continue
+                    continue;
                 }
 
                 currentBlockLines.push(i);

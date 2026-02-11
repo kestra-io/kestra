@@ -370,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Codifica el <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a></strong>",
+          "first": "Codifica el <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto en Base64</a>",
           "intro": "Para crear un nuevo Secret:",
           "second": "Agrega una variable de entorno llamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' con el valor anterior",
           "third": "Reinicia tu instancia de Kestra"
@@ -498,6 +498,10 @@
           "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> en nuestra documentación.",
           "title": "Actualmente no hay dependencias."
         }
+      },
+      "kill_switches": {
+        "content": "La función Kill Switch proporciona un mecanismo basado en la UI para detener ejecuciones problemáticas. Reemplaza los comandos de solo CLI <code>--skip-executions</code> y <code>--skip-flows</code> con una interfaz de administración integral.",
+        "title": "¡Aún no tienes Kill Switches!"
       },
       "panels": {
         "content": "Abre Flow Code o No-Code para comenzar a editar tus flows, o selecciona otro panel (Topology, Documentation, Files, Blueprints, Namespace Context) para funciones relacionadas.",
@@ -702,6 +706,10 @@
         "parent_description": "Mostrar solo ejecuciones de nivel superior/raíz"
       },
       "key": "Clave",
+      "kill_switch_type": {
+        "description": "Filtrar por tipo de kill switch",
+        "label": "Tipo"
+      },
       "kind": {
         "description": "Filtrar por tipo de ejecución",
         "label": "Tipo"

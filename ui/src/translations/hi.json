@@ -370,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">गुप्त value को Base64 में एन्कोड करें</a></strong>",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
           "intro": "नया Secret बनाने के लिए:",
           "second": "'<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' नामक एक environment variable जोड़ें उपरोक्त value के साथ",
           "third": "अपने Kestra instance को पुनः प्रारंभ करें"
@@ -498,6 +498,10 @@
           "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> के बारे में अधिक पढ़ें।",
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
         }
+      },
+      "kill_switches": {
+        "content": "किल स्विच फीचर एक UI आधारित तंत्र प्रदान करता है जो समस्याग्रस्त executions को रोकने के लिए है। यह केवल CLI <code>--skip-executions</code> और <code>--skip-flows</code> कमांड्स को एक व्यापक प्रशासनिक इंटरफेस के साथ बदलता है।",
+        "title": "आपके पास अभी तक कोई Kill Switches नहीं हैं!"
       },
       "panels": {
         "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Namespace Context)।",
@@ -702,6 +706,10 @@
         "parent_description": "केवल शीर्ष-स्तरीय/मूल executions दिखाएं"
       },
       "key": "कुंजी",
+      "kill_switch_type": {
+        "description": "किल स्विच प्रकार द्वारा फ़िल्टर करें",
+        "label": "प्रकार"
+      },
       "kind": {
         "description": "प्रकार के अनुसार निष्पादन फ़िल्टर करें",
         "label": "प्रकार"

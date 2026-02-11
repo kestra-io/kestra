@@ -15,7 +15,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.services.SkipExecutionService;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
@@ -76,7 +76,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     private JdbcServiceLivenessCoordinator jdbcServiceLivenessHandler;
 
     @Inject
-    private SkipExecutionService skipExecutionService;
+    private IgnoreExecutionService ignoreExecutionService;
 
     @Inject
     private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
@@ -185,7 +185,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.run();
 
         WorkerTask workerTask = workerTask(Duration.ofSeconds(5));
-        skipExecutionService.setSkipExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
+        ignoreExecutionService.setIgnoredExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
 
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
             if (either.getLeft().getTaskRun().getState().getCurrent() == Type.SUCCESS) {

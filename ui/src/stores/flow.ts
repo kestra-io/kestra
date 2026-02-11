@@ -366,7 +366,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
         const httpClient = options.httpClient ?? axios
-        const response: {data:Flow & {exception?: string}} = httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
+        const response: {data:Flow & {exception?: string}} = await httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
             {
                 params: {
                     revision: options.revision,

@@ -467,7 +467,6 @@ public class FlowInputOutput {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
-                    if(data != null){
                         SecretInput secretInput = (SecretInput) data;
                         if (secretInput.getValidator() != null && !Pattern.matches(secretInput.getValidator(), current.toString())) {
                             throw ManualConstraintViolation.toConstraintViolationException(
@@ -480,10 +479,6 @@ public class FlowInputOutput {
                         }
                         String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                         yield  EncryptedString.from(encrypted);
-                    }
-                   else {
-                        throw new IllegalArgumentException("Type " + type + " can't be used as an element type since no Data is available for this type");
-                    }
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
@@ -526,7 +521,7 @@ public class FlowInputOutput {
                         yield asList.stream()
                             .map(throwFunction(element -> {
                                 try {
-                                    return parseType(execution, elementType, id, null, element, null);
+                                    return parseType(execution, elementType, id, null, element, data);
                                 } catch (Throwable e) {
                                     throw new IllegalArgumentException("Unable to parse array element as `" + elementType + "` on `" + element + "`", e);
                                 }

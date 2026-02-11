@@ -141,7 +141,7 @@ class FlowTest {
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
         assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
-        assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be `ARRAY");
+        assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be ARRAY");
     }
 
     // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.

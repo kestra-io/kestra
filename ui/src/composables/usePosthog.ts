@@ -56,7 +56,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             autocapture: false,
         })
 
-        posthog.register_once(statsGlobalData(config, uid));
+        posthog.register_for_session(statsGlobalData(config, uid));
 
         if (!posthog.get_property("__alias")) {
             posthog.alias(apiConfig.id)

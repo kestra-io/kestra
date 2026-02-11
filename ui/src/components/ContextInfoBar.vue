@@ -263,6 +263,7 @@
             color: var(--ks-content-tertiary);
             background: none;
             border: none;
+            z-index: 5;
         }
 
         &.panelTabResizing {

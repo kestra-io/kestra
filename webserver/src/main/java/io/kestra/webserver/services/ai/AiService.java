@@ -25,6 +25,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final FlowAiCopilot flowAiCopilot;
     private final String instanceUid;
     private final String aiProvider;
+    private final String displayName;
     private final List<ChatModelListener> listeners;
 
     private final Map<String, ConversationMetadata> metadataByConversationId = new ConcurrentHashMap<>();
@@ -59,12 +60,14 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final InstanceService instanceService,
         final PosthogService postHogService,
         final String aiProvider,
+        final String displayName,
         final List<ChatModelListener> listeners,
         final T aiConfiguration
     ) {
         this.instanceUid = instanceService.fetch();
         this.postHogService = postHogService;
         this.aiProvider = aiProvider;
+        this.displayName = displayName;
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
 
@@ -106,6 +109,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             "$ai_output_state", Map.of("generatedFlow", generatedFlow)
         ));
         return generatedFlow;
+    }
+
+    public String displayName() {
+        return displayName;
     }
 
     public record ConversationMetadata(String conversationId, String ip, String parentSpanId) {

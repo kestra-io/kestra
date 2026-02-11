@@ -754,6 +754,10 @@
     z-index: 1001;
 }
 
+:not(.blueprint-container)  .ks-editor {
+    z-index: 1;
+}
+
 .el-form .ks-editor {
     display: flex;
     width: 100%;

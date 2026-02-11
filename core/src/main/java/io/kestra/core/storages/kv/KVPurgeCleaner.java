@@ -11,6 +11,8 @@ import io.kestra.core.tenant.TenantService;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.Sort.Order;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -47,33 +49,32 @@ public class KVPurgeCleaner {
 
     private void purgeKVEntriesForTenant(String tenant) {
         List<String> namespaces = findNamespaces(tenant);
+        Instant now = Instant.now();
         for (String namespace : namespaces) {
             try {
                 KVStore kvStore = kvStoreService.get(tenant, namespace, namespace);
-                int page = 1;
-                List<KVEntry> list;
+                List<KVEntry> expiredEntries;
                 do {
-                    list = kvMetadataRepository.find(
-                            Pageable.from(page++, batchSize),
+                    expiredEntries = kvMetadataRepository.find(
+                            //We always fetch the first page because we delete every KV entries that we find.
+                            Pageable.from(1, batchSize, Sort.of(Order.asc("name"))),
                             tenant,
-                            List.of(QueryFilter.builder().field(Field.NAMESPACE).value(namespace).operation(Op.EQUALS).build()),
+                            List.of(
+                                QueryFilter.builder().field(Field.NAMESPACE).value(namespace).operation(Op.EQUALS).build(),
+                                QueryFilter.builder().field(Field.EXPIRATION_DATE).value(now).operation(Op.LESS_THAN).build()
+                            ),
                             false,
                             true,
                             FetchVersion.ALL
                         ).stream()
                         .map(KVEntry::from)
                         .toList();
-//                    list = kvStore.list(Pageable.from(page++, batchSize));
-                    List<KVEntry> expiredEntries = list.stream()
-                        .filter(kv -> kv.expirationDate() != null &&
-                            kv.expirationDate().isBefore(Instant.now()))
-                        .toList();
                     if (!expiredEntries.isEmpty()){
                         kvStore.purge(expiredEntries);
                         log.info("{} KV store entries have been deleted on the namespace {} on tenant {}",
                             expiredEntries.size(), namespace, tenant);
                     }
-                } while (!list.isEmpty());
+                } while (!expiredEntries.isEmpty());
             } catch (IOException e) {
                 log.error("Unable to delete KV entries for the namespace {} on tenant {}", namespace, tenant, e);
             }

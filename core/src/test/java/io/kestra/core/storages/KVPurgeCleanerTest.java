@@ -14,6 +14,7 @@ import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVPurgeCleaner;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -43,11 +44,18 @@ public class KVPurgeCleanerTest {
     }
 
     @Test
+    @Property(name = "kestra.kv.purge-expired.batch-size", value = "2")
     void should_purge_expired_kv_entries() throws IOException, ResourceExpiredException {
         String namespace1 = "io.kestra." + IdUtils.create();
         InternalKVStore kvStore1 = new InternalKVStore(MAIN_TENANT, namespace1, storageInterface, kvMetadataRepository);
-        String expiredKey1 = IdUtils.create() + "_expired";
+        String expiredKey1 = "key1";
         kvStore1.put(expiredKey1, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minusSeconds(1)), "expired"));
+        String expiredKey12 = "key2";
+        kvStore1.put(expiredKey12, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minusSeconds(1)), "expired"));
+        String expiredKey13 = "key3";
+        kvStore1.put(expiredKey13, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minusSeconds(1)), "expired"));
+        String expiredKey14 = "key4";
+        kvStore1.put(expiredKey14, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minusSeconds(1)), "expired"));
         String key1 = IdUtils.create();
         kvStore1.put(key1, new KVValueAndMetadata(new KVMetadata(null), "present1"));
 
@@ -81,6 +89,5 @@ public class KVPurgeCleanerTest {
         assertThat(kvEntries3).hasSize(1);
         assertThat(kvStore3.getValue(kvEntries3.getFirst().key()).get().value()).isEqualTo("present3");
     }
-
 
 }

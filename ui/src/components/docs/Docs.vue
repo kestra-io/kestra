@@ -47,7 +47,7 @@
     watch(
         () => route.params.path,
         async () => {
-            const response = await docStore.fetchResource(`docs${path.value ? `/${path.value}` : ""}`);
+            const response = await docStore.fetchResource(path.value ? `/${path.value}` : "");
             docStore.pageMetadata = response.metadata;
             let content = response.content;
             if (!("canShare" in navigator)) {

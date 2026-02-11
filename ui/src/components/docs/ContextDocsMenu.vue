@@ -5,16 +5,16 @@
         </el-button>
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">
-                <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName" :class="{'active-section': isCurrentSection(sectionName)}">
+                <li v-for="{section, children} in sectionsWithChildren" :key="section" :class="{'active-section': isCurrentSection(section)}">
                     <span class="text-secondary">
-                        {{ sectionName.toUpperCase() }}
+                        {{ section.toUpperCase() }}
                     </span>
-                    <RecursiveToc :parent="{children}">
-                        <template #default="{path, sidebarTitle, title}">
+                    <RecursiveToc :parent="{children: children ?? []}">
+                        <template #default="{path, sidebarTitle, title, class: childClass}">
                             <ContextDocsLink
-                                :href="path.slice(5)"
+                                :href="path"
                                 useRaw
-                                :class="{'active-page': isCurrentPage(path)}"
+                                :class="[{'active-page': isCurrentPage(path)}, childClass]"
                                 @click="menuOpen = false"
                             >
                                 {{ (sidebarTitle ?? title).capitalize() }}
@@ -98,7 +98,7 @@
 
     const isCurrentSection = (sectionName: string) => {
         if (!currentDocPath.value) return false;
-        const sectionChildren = sectionsWithChildren.value?.find(([name]) => name === sectionName)?.[1] || [];
+        const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || [];
         return sectionChildren.some((child: { path: string }) => isCurrentPage(child.path));
     };
 
@@ -107,20 +107,23 @@
         rawStructure.value = await docStore.children();
     });
 
-    const toc = computed<{sidebarTitle: string, path: string}[]>(() => {
+    const toc = computed(() => {
         if (rawStructure.value === undefined) {
             return undefined;
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
+            .filter(([p]) => p.startsWith("docs/") && !p.endsWith(".png") && !p.endsWith(".svg"))
             .reduce((acc: Record<string, any>, [url, metadata]) => {
                 if(!metadata || metadata.hideSidebar){
                     return acc;
                 }
 
-                acc[url] = {
+                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "");
+
+                acc[cleanUrl] = {
                     ...metadata,
-                    path: url
+                    path: cleanUrl
                 };
 
                 return acc
@@ -136,21 +139,18 @@
             }
         }
 
-        return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
+        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[];
     })
 
-    const sectionsWithChildren = computed(() => {
-        if (toc.value === undefined) {
-            return undefined;
-        }
-
-        return Object.entries(SECTIONS)
-            .map(([section, childrenTitles]: [string, string[]]) => {
-                return [section, toc.value.filter(({sidebarTitle}) => {
-                    return childrenTitles.includes(sidebarTitle)
-                })] as const
-            });
-    });
+    const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
+        .map(([section, childrenTitles]) => 
+            ({
+                section, 
+                children: toc.value?.filter(({title, sidebarTitle}) => 
+                    childrenTitles.includes(sidebarTitle) || childrenTitles.includes(title))
+            })
+        )
+    )
 </script>
 
 <style scoped lang="scss">
@@ -210,12 +210,14 @@
     }
 
     .docsMenuWrapper{
-        position: relative;
+        position: sticky;
+        top: 1rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
         padding-left: 27px;
         padding-right: 27px;
+        z-index: 3;
     }
 
     .menuOpener{

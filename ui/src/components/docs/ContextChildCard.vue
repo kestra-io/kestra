@@ -1,5 +1,6 @@
 <template>
     <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
+         
         <ContextDocsLink
             :href="item.path"
             class="col"
@@ -11,7 +12,7 @@
                 <div class="card-body d-flex align-items-center">
                     <span class="card-icon">
                         <img
-                            :src="docStore.resourceUrl(item.icon)"
+                            :src="docStore.resourceUrl(item.icon.replace(/^\/src\/contents\//, ''))"
                             :alt="item.title"
                             width="50px"
                             height="50px"
@@ -51,7 +52,7 @@
             return props.pageUrl.replace(/^\//, "").replace(/\/$/, "");
         } else {
             const p = docStore.docPath;
-            return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : "";
+            return p ? p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/") : "docs";
         }
     })
 

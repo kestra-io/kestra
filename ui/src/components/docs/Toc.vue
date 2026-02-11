@@ -11,13 +11,13 @@
             <Magnify />
         </template>
         <template #default="{item}">
-            <router-link
+            <RouterLink
                 :to="{path: '/' + item.parsedUrl}"
                 class="d-flex gap-2"
             >
                 {{ item.title }}
                 <ArrowRight class="is-justify-end" />
-            </router-link>
+            </RouterLink>
         </template>
     </el-autocomplete>
     <ul class="list-unstyled d-flex flex-column gap-3">
@@ -39,6 +39,7 @@
 
     interface TocItem {
         title: string;
+        sidebarTitle?: string;
         path: string;
         hideSidebar?: boolean;
         children?: TocItem[];
@@ -105,7 +106,7 @@
                 }
             });
 
-        return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
+        return Object.values(childrenWithMetadata);
     });
 
     const sectionsWithChildren = computed((): [string, TocItem[]][] | undefined => {
@@ -115,7 +116,7 @@
 
         return Object.entries(sections).map(([section, childrenTitles]) => [
             section, 
-            toc.value!.filter(({title}) => childrenTitles.includes(title))
+            toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title))
         ]);
     });
 

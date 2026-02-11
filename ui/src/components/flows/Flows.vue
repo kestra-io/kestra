@@ -353,7 +353,7 @@
         topbar: true,
         namespace: undefined,
         id: undefined,
-        defaultScopeFilter: true,
+        defaultScopeFilter: false,
     });
 
     const flowStore = useFlowStore();

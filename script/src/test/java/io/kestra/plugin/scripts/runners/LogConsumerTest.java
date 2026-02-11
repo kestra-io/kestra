@@ -126,4 +126,62 @@ class LogConsumerTest {
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).filter(m -> m.getMessage().contains("Trace 2")).count()).isEqualTo(1L);
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).count()).isGreaterThanOrEqualTo(4L);
     }
+
+    @Test
+    void stderrLogsWithEmbeddedLevels() throws Exception {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
+        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
+            "/bin/sh", "-c",
+            """
+                # Simulate Python logger output that goes to stderr with embedded log levels
+                >&2 echo '[INFO] 2025-08-19 15:04:11,496 | Kestra | fn:_log(61) | message: This is an info message'
+                >&2 echo '[ERROR] 2025-08-19 15:04:11,497 | Kestra | fn:_log(62) | message: This is an error message'
+                >&2 echo '[WARNING] 2025-08-19 15:04:11,498 | Kestra | fn:_log(63) | message: This is a warning message'
+                >&2 echo '[DEBUG] 2025-08-19 15:04:11,499 | Kestra | fn:_log(64) | message: This is a debug message'
+                >&2 echo 'No level here - should be ERROR'
+            """
+        )));
+
+        Docker.from(DockerOptions.builder().image("alpine").build()).run(
+            runContext,
+            taskCommands,
+            Collections.emptyList()
+        );
+
+        Await.until(() -> logs.size() >= 5, null, Duration.ofSeconds(20));
+        receive.blockLast();
+
+        // Check that INFO level was properly extracted from stderr
+        assertThat(logs.stream()
+            .filter(m -> m.getLevel().equals(Level.INFO))
+            .filter(m -> m.getMessage().contains("This is an info message"))
+            .count()).isEqualTo(1L);
+
+        // Check that ERROR level was properly extracted from stderr
+        assertThat(logs.stream()
+            .filter(m -> m.getLevel().equals(Level.ERROR))
+            .filter(m -> m.getMessage().contains("This is an error message"))
+            .count()).isEqualTo(1L);
+
+        // Check that WARNING level was properly extracted from stderr
+        assertThat(logs.stream()
+            .filter(m -> m.getLevel().equals(Level.WARN))
+            .filter(m -> m.getMessage().contains("This is a warning message"))
+            .count()).isEqualTo(1L);
+
+        // Check that DEBUG level was properly extracted from stderr
+        assertThat(logs.stream()
+            .filter(m -> m.getLevel().equals(Level.DEBUG))
+            .filter(m -> m.getMessage().contains("This is a debug message"))
+            .count()).isEqualTo(1L);
+
+        // Check that stderr without level indicator defaults to ERROR
+        assertThat(logs.stream()
+            .filter(m -> m.getLevel().equals(Level.ERROR))
+            .filter(m -> m.getMessage().contains("No level here - should be ERROR"))
+            .count()).isEqualTo(1L);
+    }
 }

@@ -10,6 +10,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -31,12 +32,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
 
     private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
+
+    // Pattern to detect log levels in stderr output (e.g., [INFO], [ERROR], [WARNING], [DEBUG], [TRACE])
+    private static final Pattern LOG_LEVEL_PATTERN = Pattern.compile("\\[(TRACE|DEBUG|INFO|WARN|WARNING|ERROR)\\]");
 
     public static Map<String, String> createOutputFiles(
         Path tempDirectory,
@@ -168,6 +174,29 @@ abstract public class PluginUtilsService {
         }
     }
 
+    /**
+     * Attempts to extract the log level from a log line that may contain a level indicator like [INFO], [ERROR], etc.
+     * This is useful for handling logs from stderr that contain their own level information.
+     *
+     * @param line the log line to parse
+     * @return the detected log level, or empty if no level was detected
+     */
+    private static Optional<Level> extractLogLevel(String line) {
+        Matcher matcher = LOG_LEVEL_PATTERN.matcher(line);
+        if (matcher.find()) {
+            String levelStr = matcher.group(1);
+            return switch (levelStr) {
+                case "TRACE" -> Optional.of(Level.TRACE);
+                case "DEBUG" -> Optional.of(Level.DEBUG);
+                case "INFO" -> Optional.of(Level.INFO);
+                case "WARN", "WARNING" -> Optional.of(Level.WARN);
+                case "ERROR" -> Optional.of(Level.ERROR);
+                default -> Optional.empty();
+            };
+        }
+        return Optional.empty();
+    }
+
     public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
 
         TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).getApplicationContext().getBean(TaskLogLineMatcher.class);
@@ -179,7 +208,15 @@ abstract public class PluginUtilsService {
                 TaskLogMatch taskLogMatch = matches.get();
                 outputs.putAll(taskLogMatch.outputs());
             } else if (isStdErr) {
-                runContext.logger().error(line);
+                // Try to extract log level from the message itself (e.g., [INFO], [ERROR])
+                // This helps handle Python loggers and other tools that write to stderr with embedded level info
+                Optional<Level> detectedLevel = extractLogLevel(line);
+                if (detectedLevel.isPresent()) {
+                    runContext.logger().atLevel(detectedLevel.get()).log(line);
+                } else {
+                    // If no level detected, default to ERROR for stderr
+                    runContext.logger().error(line);
+                }
             } else {
                 runContext.logger().info(line);
             }

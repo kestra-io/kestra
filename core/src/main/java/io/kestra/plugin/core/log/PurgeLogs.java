@@ -106,7 +106,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        ExecutionLogService logService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionLogService.class);
+        ExecutionLogService logService = ((DefaultRunContext)runContext).services().additionalService(ExecutionLogService.class);
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();

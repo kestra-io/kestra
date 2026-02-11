@@ -6,7 +6,6 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
@@ -49,7 +48,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Default and mutable implementation of {@link RunContext}.
  */
 @Introspected
-public class DefaultRunContext extends RunContext {
+public class DefaultRunContext implements RunContext {
     // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
     private VariableRenderer variableRenderer;
@@ -129,16 +128,6 @@ public class DefaultRunContext extends RunContext {
     @Override
     public void setTraceParent(String traceParent) {
         this.traceParent = traceParent;
-    }
-
-    /**
-     * @deprecated Plugin should not use the ApplicationContext anymore, and neither should they cast to this implementation.
-     *             Plugin should instead rely on supported API only.
-     */
-    @JsonIgnore
-    @Deprecated(since = "1.2.0", forRemoval = true)
-    public ApplicationContext getApplicationContext() {
-        return applicationContext;
     }
 
     @JsonIgnore
@@ -630,6 +619,14 @@ public class DefaultRunContext extends RunContext {
     @Override
     public SDK sdk() {
         return this.sdk;
+    }
+
+    /**
+     * Get access to Kestra internal services.
+     * WARNING: this should only be used for very specific needs, plugins should try to avoid using an Kestra internal service.
+     */
+    public Services services() {
+        return new Services(this.applicationContext);
     }
 
     /**

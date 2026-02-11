@@ -1101,9 +1101,17 @@ public class ExecutorService {
                         .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()))
                         .withState(State.Type.RUNNING);
 
+                    var newExecution = executionUpdatingTask.update(executor.getExecution(), workerTask.getRunContext());
+                    if (newExecution.getState().getCurrent() == State.Type.KILLED) {
+                        killQueue.emit(ExecutionKilledExecution.builder()
+                            .state(ExecutionKilled.State.REQUESTED)
+                            .executionId(newExecution.getId())
+                            .isOnKillCascade(true)
+                            .tenantId(newExecution.getTenantId())
+                            .build());
+                    }
                     executor.withExecution(
-                        executionUpdatingTask.update(executor.getExecution(), workerTask.getRunContext())
-                            .withTaskRun(runningTaskRun),
+                        newExecution.withTaskRun(runningTaskRun),
                         "handleExecutionUpdatingTask.updateExecution"
                     );
 

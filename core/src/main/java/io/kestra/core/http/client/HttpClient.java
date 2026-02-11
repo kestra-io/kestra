@@ -66,7 +66,7 @@ public class HttpClient implements Closeable {
         this.runContext = runContext;
         this.configuration = configuration == null ? HttpConfiguration.builder().build() : configuration;
         if (runContext instanceof DefaultRunContext defaultRunContext) {
-            this.observationRegistry = defaultRunContext.getApplicationContext().findBean(ObservationRegistry.class).orElse(null);
+            this.observationRegistry = defaultRunContext.services().observationRegistry().orElse(null);
         }
 
         this.client = this.createClient();

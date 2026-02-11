@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.State.History;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.InputAndOutput;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.runners.Services;
 import io.kestra.core.services.VariablesService;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.slf4j.Logger;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -53,8 +53,11 @@ class SubflowTest {
     void beforeEach() {
         Mockito.when(applicationContext.getBean(VariablesService.class)).thenReturn(new VariablesService());
         Mockito.when(runContext.logger()).thenReturn(log);
-        Mockito.when(runContext.getApplicationContext()).thenReturn(applicationContext);
         Mockito.when(runContext.inputAndOutput()).thenReturn(inputAndOutput);
+
+        Services services = Mockito.mock(Services.class);
+        Mockito.when(services.variablesService()).thenReturn(new VariablesService());
+        Mockito.when(runContext.services()).thenReturn(services);
     }
 
     @Test

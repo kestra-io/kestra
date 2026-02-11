@@ -21,7 +21,7 @@ public final class ExecutionService {
     private ExecutionService() {}
 
     public static Execution findExecution(RunContext runContext, Property<String> executionId) throws IllegalVariableEvaluationException, NoSuchElementException {
-        ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
+        ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).services().additionalService(ExecutionRepositoryInterface.class);
 
         RetryUtils.Instance<Execution, NoSuchElementException> retryInstance = RetryUtils
             .of(Exponential.builder()
@@ -83,7 +83,7 @@ public final class ExecutionService {
 
     public static Map<String, Object> executionMap(RunContext runContext, ExecutionInterface executionInterface) throws IllegalVariableEvaluationException {
         Execution execution = findExecution(runContext, executionInterface.getExecutionId());
-        UriProvider uriProvider = ((DefaultRunContext) runContext).getApplicationContext().getBean(UriProvider.class);
+        UriProvider uriProvider = ((DefaultRunContext) runContext).services().uriProvider();
 
         Map<String, Object> templateRenderMap = new HashMap<>();
         templateRenderMap.put("duration", execution.getState().humanDuration());

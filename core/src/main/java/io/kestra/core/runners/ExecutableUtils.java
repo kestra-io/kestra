@@ -13,7 +13,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.Storage;
-import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
@@ -74,12 +73,12 @@ public final class ExecutableUtils {
     ) throws IllegalVariableEvaluationException {
 
         // extract a trace context for propagation
-        final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).getApplicationContext()
-            .findBean(OpenTelemetry.class)
+        final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).services().tracerFactory()
+            .getOpenTelemetry()
             .map(OpenTelemetry::getPropagators)
             .map(ContextPropagators::getTextMapPropagator);
 
-        var tracerFactory = ((DefaultRunContext) runContext).getApplicationContext().getBean(TracerFactory.class);
+        var tracerFactory = ((DefaultRunContext) runContext).services().tracerFactory();
         var tracer = tracerFactory.getTracer(currentTask.getClass(), "EXECUTOR");
 
         return tracer.inNewContext(
@@ -89,7 +88,7 @@ public final class ExecutableUtils {
             // If we are in a flow that is restarted, we search for existing run of the task to restart them
             if (currentExecution.getLabels() != null && currentExecution.getLabels().contains(new Label(Label.RESTARTED, "true"))
                 && currentTask.getRestartBehavior() == ExecutableTask.RestartBehavior.RETRY_FAILED) {
-                ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
+                ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).services().additionalService(ExecutionRepositoryInterface.class);
 
                 Optional<Execution> existingSubflowExecution = Optional.empty();
                 if (currentTaskRun.getOutputs() != null && currentTaskRun.getOutputs().containsKey("executionId")) {
@@ -117,7 +116,7 @@ public final class ExecutableUtils {
                         // don't restart it as it's terminated successfully
                         return Optional.empty();
                     }
-                    ExecutionService executionService = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionService.class);
+                    ExecutionService executionService = ((DefaultRunContext) runContext).services().additionalService(ExecutionService.class);
                     try {
                         Flow flow = flowMetaStore.findByExecutionThenInjectDefaults(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
                         Execution restarted = executionService.restart(subflowExecution, flow, null);

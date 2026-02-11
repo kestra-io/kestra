@@ -215,7 +215,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             .executionId(execution.getId())
             .state(execution.getState().getCurrent());
 
-        VariablesService variablesService = ((DefaultRunContext) runContext).getApplicationContext().getBean(VariablesService.class);
+        VariablesService variablesService = ((DefaultRunContext) runContext).services().variablesService();
         if (this.wait) { // we only compute outputs if we wait for the subflow
             List<io.kestra.core.models.flows.Output> subflowOutputs = flow.getOutputs();
 

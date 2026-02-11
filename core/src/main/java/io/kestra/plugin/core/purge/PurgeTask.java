@@ -7,7 +7,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,8 +25,7 @@ public interface PurgeTask<T> {
     @VisibleForTesting
     default List<String> findNamespaces(RunContext runContext) throws IllegalVariableEvaluationException {
         String tenantId = runContext.flowInfo().tenantId();
-        FlowRepositoryInterface flowRepositoryInterface = ((DefaultRunContext) runContext)
-            .getApplicationContext().getBean(FlowRepositoryInterface.class);
+        FlowRepositoryInterface flowRepositoryInterface = ((DefaultRunContext) runContext).services().additionalService(FlowRepositoryInterface.class);
         List<String> distinctNamespaces = flowRepositoryInterface.findDistinctNamespace(tenantId);
         List<String> renderedNamespaces = runContext.render(getNamespaces()).asList(String.class);
         String renderedNamespacePattern = runContext.render(getNamespacePattern()).as(String.class).orElse(null);

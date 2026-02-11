@@ -170,7 +170,7 @@ abstract public class PluginUtilsService {
 
     public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
 
-        TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).getApplicationContext().getBean(TaskLogLineMatcher.class);
+        TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).services().taskLogLineMatcher();
 
         Map<String, Object> outputs = new HashMap<>();
         try {

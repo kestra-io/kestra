@@ -939,7 +939,7 @@
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
         emit("editorDidMount", editorResolved.value);
 
-        /* Hhandle resizing. */
+        /* Handle resizing. */
         resizeObserver.value = new ResizeObserver(() => {
             if (localEditor.value) {
                 localEditor.value.layout();

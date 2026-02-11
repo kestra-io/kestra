@@ -125,11 +125,13 @@
     import Microphone from "vue-material-design-icons/Microphone.vue";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
+    import {useApiStore} from "../../stores/api";
     import type {InputInstance} from "element-plus";
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
 
     const aiStore = useAiStore();
+    const apiStore = useApiStore();
 
     const emit = defineEmits<{
         close: [];
@@ -272,6 +274,11 @@
         if (!prompt.value.trim()) return;
         error.value = undefined;
         waitingForReply.value = true;
+        apiStore.posthogEvents({
+            type: "AI_COPILOT",
+            action: "prompt_submit",
+            ai_copilot_configured: configured.value === true,
+        });
         try {
             const aiResponse = await aiStore.generateFlow({
                 userPrompt: prompt.value,
@@ -392,14 +399,9 @@
 </script>
 
 <style scoped lang="scss">
-$bg-card: #1c1e26;
-$border-color: rgba(255, 255, 255, 0.1);
-$text-dimmed: rgba(255, 255, 255, 0.4);
-$kestra-purple: #6b33ff;
-
 .ai-copilot-card {
-    background: $bg-card;
-    border: 1px solid $border-color;
+    background: var(--ks-background-panel);
+    border: 1px solid var(--ks-border-secondary);
 
     :deep(.el-card__header) {
         padding: 10px 16px;
@@ -450,7 +452,7 @@ $kestra-purple: #6b33ff;
         min-width: 1.5px;
         max-width: 2.5px;
         min-height: 2px;
-        background: rgba(255, 255, 255, 0.7);
+        background: var(--ks-content-secondary);
         border-radius: 1px;
     }
 }
@@ -467,13 +469,13 @@ $kestra-purple: #6b33ff;
 
 .ai-custom-textarea {
     :deep(.el-textarea__inner) {
-        color: #ffffff !important;
+        color: var(--ks-content-primary) !important;
         font-size: 14px;
         line-height: 1.6;
         resize: none;
 
         &::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+            color: var(--ks-content-tertiary);
             font-style: italic;
         }
     }
@@ -494,43 +496,43 @@ $kestra-purple: #6b33ff;
 .no-bg-btn {
     background: transparent !important;
     border: none !important;
-    color: $text-dimmed !important;
+    color: var(--ks-content-tertiary) !important;
     padding: 4px !important;
     font-size: 20px;
 
     &:hover {
-        color: #fff !important;
+        color: var(--ks-content-primary) !important;
     }
 }
 
 .ai-close-button {
     background: transparent !important;
     border: none !important;
-    color: $text-dimmed !important;
+    color: var(--ks-content-tertiary) !important;
     padding: 0;
 
     &:hover {
-        color: #fff !important;
+        color: var(--ks-content-primary) !important;
     }
 }
 
 .send-btn {
-    background: $kestra-purple !important;
+    background: var(--ks-button-background-primary) !important;
     border: none !important;
     width: 32px !important;
     height: 32px !important;
     border-radius: 6px !important;
-    color: #fff !important;
+    color: var(--ks-content-primary) !important;
     padding: 0 !important;
 
     &:disabled {
-        background: #3a3b46 !important;
-        color: #6a6a6a !important;
+        background: var(--ks-background-card) !important;
+        color: var(--ks-content-inactive) !important;
     }
 }
 
 .shortcut-hint {
     font-size: 11px;
-    color: $text-dimmed;
+    color: var(--ks-content-tertiary);
 }
 </style>

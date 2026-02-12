@@ -308,62 +308,94 @@ public class HttpClient implements Closeable {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;
             StringBuilder dataBuffer = new StringBuilder();
+            boolean hasData = false;
             String eventId = null;
             String eventName = null;
             String comment = null;
             Duration retry = null;
 
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith("data:")) {
-                    String data = line.substring("data:".length()).trim();
-                    if (data.startsWith(":")) {
-                        data = data.substring(1).trim();
+                if (line.isEmpty()) {
+                    // Empty line: dispatch event if data was provided
+                    if (hasData) {
+                        // Per spec: remove the trailing newline from the data buffer
+                        if (!dataBuffer.isEmpty() && dataBuffer.charAt(dataBuffer.length() - 1) == '\n') {
+                            dataBuffer.setLength(dataBuffer.length() - 1);
+                        }
+                        sendSseData(cls, eventConsumer, dataBuffer, eventId, eventName, comment, retry);
                     }
-                    if (!dataBuffer.isEmpty()) {
-                        dataBuffer.append("\n");
-                    }
-                    dataBuffer.append(data);
-                } else if (line.startsWith("id:")) {
-                    eventId = line.substring("id:".length()).trim();
-                    if (eventId.startsWith(":")) {
-                        eventId = eventId.substring(1).trim();
-                    }
-                } else if (line.startsWith("event:")) {
-                    eventName = line.substring("event:".length()).trim();
-                    if (eventName.startsWith(":")) {
-                        eventName = eventName.substring(1).trim();
-                    }
-                } else if (line.startsWith("retry:")) {
-                    String retryStr = line.substring("retry:".length()).trim();
-                    if (retryStr.startsWith(":")) {
-                        retryStr = retryStr.substring(1).trim();
-                    }
-                    try {
-                        retry = Duration.ofMillis(Long.parseLong(retryStr));
-                    } catch (NumberFormatException e) {
-                        // Invalid retry value, ignore
-                    }
-                } else if (line.startsWith(":")) {
-                    // Comment line
-                    comment = line.substring(1).trim();
-                } else if (line.isEmpty() && !dataBuffer.isEmpty()) {
-                    // End of event - parse data and create event
-                    sendSseData(cls, eventConsumer, dataBuffer, eventId, eventName, comment, retry);
 
-                    // Reset for next event
+                    // Reset for next event (even if no data was present)
                     dataBuffer.setLength(0);
+                    hasData = false;
                     eventId = null;
                     eventName = null;
                     comment = null;
                     retry = null;
+                    continue;
+                }
+
+                if (line.startsWith(":")) {
+                    // Comment line - entire line starts with colon
+                    comment = stripLeadingSpace(line.substring(1));
+                    continue;
+                }
+
+                // Parse field name and value
+                String fieldName;
+                String fieldValue;
+                int colonIndex = line.indexOf(':');
+                if (colonIndex >= 0) {
+                    fieldName = line.substring(0, colonIndex);
+                    // Per spec: strip only a single leading space after the colon
+                    fieldValue = stripLeadingSpace(line.substring(colonIndex + 1));
+                } else {
+                    // No colon: entire line is the field name, value is empty string
+                    fieldName = line;
+                    fieldValue = "";
+                }
+
+                switch (fieldName) {
+                    case "data" -> {
+                        hasData = true;
+                        // Per spec: append value + newline to data buffer
+                        dataBuffer.append(fieldValue).append('\n');
+                    }
+                    case "id" -> {
+                        // Per spec: ignore if value contains NULL character
+                        if (!fieldValue.contains("\0")) {
+                            eventId = fieldValue;
+                        }
+                    }
+                    case "event" -> eventName = fieldValue;
+                    case "retry" -> {
+                        // Per spec: only accept if value consists entirely of ASCII digits
+                        if (!fieldValue.isEmpty() && fieldValue.chars().allMatch(c -> c >= '0' && c <= '9')) {
+                            try {
+                                retry = Duration.ofMillis(Long.parseLong(fieldValue));
+                            } catch (NumberFormatException e) {
+                                // Value overflows, ignore
+                            }
+                        }
+                    }
+                    default -> {
+                        // Unknown field names are ignored per spec
+                    }
                 }
             }
 
-            // Handle last event if stream ends without empty line
-            if (!dataBuffer.isEmpty()) {
-                sendSseData(cls, eventConsumer, dataBuffer, eventId, eventName, comment, retry);
-            }
+            // Per spec: end of stream does NOT dispatch pending events
         }
+    }
+
+    /**
+     * Strip a single leading U+0020 SPACE character, per SSE spec.
+     */
+    private static String stripLeadingSpace(String value) {
+        if (!value.isEmpty() && value.charAt(0) == ' ') {
+            return value.substring(1);
+        }
+        return value;
     }
 
     @SuppressWarnings("unchecked")

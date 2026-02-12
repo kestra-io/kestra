@@ -47,7 +47,7 @@ class SseRequestTest {
             assertNotNull(output);
             assertThat(output.getSize()).isEqualTo(5);
             assertThat(output.getEvents()).hasSize(5);
-            assertThat((String) output.getEvents().getFirst().getData()).contains("event");
+            assertThat((String) output.getEvents().getFirst().data()).contains("event");
             assertThat(output.getResult()).isNull();
         }
     }
@@ -99,6 +99,7 @@ class SseRequestTest {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void sseWithHeaders() throws Exception {
         try (
@@ -118,7 +119,7 @@ class SseRequestTest {
 
             assertNotNull(output);
             assertThat(output.getSize()).isEqualTo(1);
-            assertThat(((Map<String, Object>) output.getEvents().getFirst().getData()).get("status")).isEqualTo("authorized");
+            assertThat(((Map<String, Object>) output.getEvents().getFirst().data()).get("status")).isEqualTo("authorized");
         }
     }
 
@@ -183,9 +184,9 @@ class SseRequestTest {
 
             assertNotNull(output);
             assertThat(output.getSize()).isEqualTo(1);
-            assertThat((String) output.getEvents().getFirst().getData()).contains("\n");
-            assertThat((String) output.getEvents().getFirst().getData()).contains("line1");
-            assertThat((String) output.getEvents().getFirst().getData()).contains("line2");
+            assertThat((String) output.getEvents().getFirst().data()).contains("\n");
+            assertThat((String) output.getEvents().getFirst().data()).contains("line1");
+            assertThat((String) output.getEvents().getFirst().data()).contains("line2");
         }
     }
 

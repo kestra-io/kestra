@@ -606,7 +606,6 @@ public class ExecutionController {
         // Call evaluate and create a failed execution if exception occurs
         try {
             return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
-                ;
         } catch (Exception e) {
             Execution failedExecution = Execution.builder()
                 .id(IdUtils.create())

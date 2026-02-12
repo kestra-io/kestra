@@ -1003,7 +1003,7 @@
     "fix_with_ai": "Correggi con AI",
     "flow": "Flow",
     "flow already exists": "Flow già esistente",
-    "flow already exists message": "Il flow {id} esiste già nel namespace {namespace}. Vuoi creare una nuova revisione?",
+    "flow already exists message": "Il flow <code>{id}</code> esiste già nel namespace <code>{namespace}</code>. Vuoi creare una nuova revisione?",
     "flow creation": "Creazione del flow",
     "flow creation denied in namespace": "Non hai il permesso di creare flow nel namespace `{namespace}`.",
     "flow delete": "Sei sicuro di voler eliminare <code>{flowCount}</code> flow?",

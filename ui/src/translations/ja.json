@@ -1003,7 +1003,7 @@
     "fix_with_ai": "AIで修正",
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
-    "flow already exists message": "namespace {namespace} に flow {id} はすでに存在します。新しいリビジョンを作成しますか？",
+    "flow already exists message": "namespace <code>{namespace}</code> に flow <code>{id}</code> が既に存在します。新しいリビジョンを作成しますか？",
     "flow creation": "Flow作成",
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",

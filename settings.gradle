@@ -18,7 +18,8 @@ develocity {
                     buildScanId: scan.buildScanId,
                     buildScanUri: scan.buildScanUri
                 ]
-                file("develocity-scan-output.ndjson") << groovy.json.JsonOutput.toJson(payload) + System.lineSeparator()
+                def f = file("develocity-scan-output.ndjson") << groovy.json.JsonOutput.toJson(payload) + System.lineSeparator()
+                logger.warn("develocity-scan-output.ndjson path: ${f.getAbsolutePath()}")
             }
         }
     }

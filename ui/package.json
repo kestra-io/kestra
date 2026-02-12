@@ -107,7 +107,7 @@
         "change-case": "5.4.4",
         "cross-env": "^10.1.0",
         "eslint": "^9.39.2",
-        "eslint-plugin-storybook": "^9.1.17",
+        "eslint-plugin-storybook": "^10.2.8",
         "eslint-plugin-vue": "^9.33.0",
         "globals": "^17.3.0",
         "husky": "^9.1.7",

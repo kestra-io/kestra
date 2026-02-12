@@ -38,7 +38,7 @@ public class KVPurgeCleaner {
     @Value("${kestra.kv.purge-expired.batch-size:1000}")
     private Integer batchSize;
 
-    @Scheduled(initialDelay = "${kestra.kv.purge-expired.initial-delay:PT6H}", fixedDelay = "${kestra.kv.purge-expired.fixed-delay:PT6H}")
+    @Scheduled(initialDelay = "${kestra.kv.purge-expired.initial-delay:PT1H}", fixedDelay = "${kestra.kv.purge-expired.fixed-delay:PT1H}")
     public  void purgeExpired(){
         log.info("Start cleaning expired KV store entries");
         List<String> tenants = findTenants();

@@ -13,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -197,15 +196,15 @@ abstract public class PluginUtilsService {
                 }
 
                 String filePath = workingDirectory + "/" + finalFileName;
-                String renderedFile;
+                String rFile;
                 if (render) {
-                    renderedFile = runContext.render(inputFiles.get(fileName), additionalVars);
+                    rFile = runContext.render(inputFiles.get(fileName), additionalVars);
                 } else {
-                    renderedFile = inputFiles.get(fileName);
+                    rFile = inputFiles.get(fileName);
                 }
 
-                if (URIFetcher.supports(renderedFile)) {
-                    var uri = URIFetcher.of(renderedFile);
+                if (URIFetcher.supports(rFile)) {
+                    var uri = URIFetcher.of(rFile);
                     try (
                         InputStream inputStream = new BufferedInputStream(uri.fetch(runContext));
                         OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath))
@@ -218,7 +217,7 @@ abstract public class PluginUtilsService {
                     }
                 } else {
                     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-                        writer.write(renderedFile);
+                        writer.write(rFile);
                     }
                 }
             }

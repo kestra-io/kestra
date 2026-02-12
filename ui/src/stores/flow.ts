@@ -36,9 +36,10 @@ interface Trigger {
     };
 }
 
-interface Task {
+export interface Task {
     id: string,
     type: string
+    tasks?: Task[]
 }
 
 export interface Input {

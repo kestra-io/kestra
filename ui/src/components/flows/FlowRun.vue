@@ -61,7 +61,7 @@
                         <el-button
                             :icon="buttonIcon"
                             :disabled="!flowCanBeExecuted || hasBlockingChecks()"
-                            :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
+                            class="flow-run-trigger-button"
                             type="primary"
                             nativeType="submit"
                             @click.prevent="onSubmit($refs.form); executeClicked = true;"

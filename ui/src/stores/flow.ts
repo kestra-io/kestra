@@ -71,6 +71,7 @@ export interface Flow {
         limit: number;
         behavior: string;
     };
+    tasks?: Task[];
 }
 
 export const useFlowStore = defineStore("flow", () => {

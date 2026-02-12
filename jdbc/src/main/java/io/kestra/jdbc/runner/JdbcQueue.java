@@ -215,30 +215,23 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.cls.getName();
     }
 
-
     @Override
-    public Map<String, Integer> queueLagByWorkerGroup(Class<?> queueType) {
-        Set<String> workerGroupKeys = new HashSet<>(workerGroupExecutor.listAllWorkerGroupKeys());
-        workerGroupKeys.add(null);
-
-        Map<String, Integer> result = dslContextWrapper.transactionResult(configuration -> {
+    public Integer queueLagForConsumerGroup(String consumerGroup, Class<?> queueType) {
+        return dslContextWrapper.transactionResult(configuration -> {
             DSLContext ctx = DSL.using(configuration);
 
-            return ctx.select(
-                    CONSUMER_GROUP_FIELD,
-                    DSL.count().as("count")
-                )
-                .from(this.table)
-                .where(buildTypeCondition(queueType()).and(buildConsumerCondition(queueType)))
-                .groupBy(CONSUMER_GROUP_FIELD)
-                .fetchMap(
-                    r -> r.get(CONSUMER_GROUP_FIELD, String.class),
-                    r -> r.get("count", Integer.class)
-                );
-        });
+            var condition = buildTypeCondition(queueType()).and(buildConsumerCondition(queueType));
+            if (consumerGroup != null) {
+                condition = condition.and(CONSUMER_GROUP_FIELD.eq(consumerGroup));
+            } else {
+                condition = condition.and(CONSUMER_GROUP_FIELD.isNull());
+            }
 
-        workerGroupKeys.forEach(k -> result.putIfAbsent(k, 0));
-        return result;
+            return ctx.selectCount()
+                .from(this.table)
+                .where(condition)
+                .fetchOneInto(Integer.class);
+        });
     }
 
     /**

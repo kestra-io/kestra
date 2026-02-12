@@ -39,18 +39,8 @@ public abstract class AbstractQueueLagTest {
     @Inject
     private RunContextFactory runContextFactory;
 
-    private static final String TEST_WORKER_GROUP_NAME = "test-group";
+    private static final String TEST_CONSUMER_GROUP_NAME = "test-group";
     private static final String NO_LAG_TEST_WORKER_GROUP_NAME = "no-lag-test-group";
-
-    @Test
-    void shouldReturnMapWithNullForDefaultWorkerGroups_whenQueryingLag() {
-        // When
-        Map<String, Integer> result = workerJobQueue.queueLagByWorkerGroup(Worker.class);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).containsKey(null);
-    }
 
     @Test
     void shouldReturnZeroLag_whenAllMessagesConsumed() throws Exception {
@@ -66,12 +56,11 @@ public abstract class AbstractQueueLagTest {
         closeConsumer.run();
 
         // When
-        Map<String, Integer> result = workerJobQueue.queueLagByWorkerGroup(Worker.class);
+        Integer lag = workerJobQueue.queueLagForConsumerGroup(null, Worker.class);
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result).containsKey(null);
-        assertThat(result.get(NO_LAG_TEST_WORKER_GROUP_NAME)).isEqualTo(0);
+        assertThat(lag).isNotNull();
+        assertThat(lag).isEqualTo(0);
     }
 
     @Test
@@ -91,37 +80,35 @@ public abstract class AbstractQueueLagTest {
         Thread.sleep(1000);
 
         // When
-        Map<String, Integer> result = workerJobQueue.queueLagByWorkerGroup(Worker.class);
+        Integer lag = workerJobQueue.queueLagForConsumerGroup(null, Worker.class);
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result).containsKey(null);
-        assertThat(result.get(null)).isEqualTo(1);
+        assertThat(lag).isNotNull();
+        assertThat(lag).isEqualTo(1);
     }
 
     @Test
     void shouldReturnCorrectLag_whenQueryingNamedWorkerGroup() throws Exception {
         // Given
         CountDownLatch consumedLatch = new CountDownLatch(1);
-        Runnable closeConsumer = workerJobQueue.receive(TEST_WORKER_GROUP_NAME, Worker.class, either -> {
+        Runnable closeConsumer = workerJobQueue.receive(TEST_CONSUMER_GROUP_NAME, Worker.class, either -> {
             consumedLatch.countDown();
         }, true);
 
-        workerJobQueue.emit(TEST_WORKER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test.named"));
+        workerJobQueue.emit(TEST_CONSUMER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test.named"));
         consumedLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         Thread.sleep(1000);
         closeConsumer.run();
 
-        workerJobQueue.emit(TEST_WORKER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test.named.new"));
+        workerJobQueue.emit(TEST_CONSUMER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test.named.new"));
         Thread.sleep(500);
 
         // When
-        Map<String, Integer> result = workerJobQueue.queueLagByWorkerGroup(Worker.class);
+        Integer lag = workerJobQueue.queueLagForConsumerGroup(TEST_CONSUMER_GROUP_NAME, Worker.class);
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result).containsKey(TEST_WORKER_GROUP_NAME);
-        assertThat(result.get(TEST_WORKER_GROUP_NAME)).isEqualTo(1);
+        assertThat(lag).isNotNull();
+        assertThat(lag).isEqualTo(1);
     }
 
     private WorkerJob buildWorkerJob(String namespace) {
@@ -153,7 +140,7 @@ public abstract class AbstractQueueLagTest {
     WorkerGroupExecutorInterface workerGroupExecutorInterface() {
         WorkerGroupExecutorInterface workerGroupExecutorInterface = Mockito.mock(WorkerGroupExecutorInterface.class);
         Mockito.when(workerGroupExecutorInterface.listAllWorkerGroupKeys()).thenReturn(
-            Set.of(TEST_WORKER_GROUP_NAME, NO_LAG_TEST_WORKER_GROUP_NAME)
+            Set.of(TEST_CONSUMER_GROUP_NAME, NO_LAG_TEST_WORKER_GROUP_NAME)
         );
 
         return workerGroupExecutorInterface;

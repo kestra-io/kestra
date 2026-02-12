@@ -89,8 +89,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION = "The total number of executions popped by the Executor";
-    public static final String WORKER_MESSAGES_UNCONSUMMATED_COUNT = "queue.worker.messages.unconsummated.count";
-    public static final String WORKER_MESSAGES_UNCONSUMMATED_COUNT_DESCRIPTION = "Total number of worker jobs in the queue that are not yet consumed by a worker";
+    public static final String QUEUE_MESSAGE_LAG_COUNT = "queue.message.lag.count";
+    public static final String QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION = "Total number of messages in the queue that are not yet consumed";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
@@ -146,6 +146,7 @@ public class MetricRegistry {
     public static final String TAG_STATE = "state";
     public static final String TAG_ATTEMPT_COUNT = "attempt_count";
     public static final String TAG_WORKER_GROUP = "worker_group";
+    public static final String TAG_QUEUE_NAME = "queue_name";
     public static final String SERVICE_ID = "service_id";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";

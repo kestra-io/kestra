@@ -7,6 +7,8 @@ import io.kestra.core.utils.Either;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public interface QueueInterface<T> extends Closeable, Pauseable {
@@ -43,7 +45,7 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
         delete(null, message);
     }
 
-    Map<String, Integer> queueLagByWorkerGroup(Class<?> queueType);
+    Integer queueLagForConsumerGroup(String consumerGroup, Class<?> queueType);
 
     void delete(String consumerGroup, T message) throws QueueException;
 

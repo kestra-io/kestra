@@ -3,6 +3,7 @@ package io.kestra.core.models.tasks.runners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
@@ -203,9 +204,10 @@ abstract public class PluginUtilsService {
                     renderedFile = inputFiles.get(fileName);
                 }
 
-                if (renderedFile.startsWith("kestra://")) {
+                if (URIFetcher.supports(renderedFile)) {
+                    var uri = URIFetcher.of(renderedFile);
                     try (
-                        InputStream inputStream = runContext.storage().getFile(new URI(renderedFile));
+                        InputStream inputStream = new BufferedInputStream(uri.fetch(runContext));
                         OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath))
                     ) {
                         int byteRead;

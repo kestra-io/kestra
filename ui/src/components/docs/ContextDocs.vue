@@ -126,16 +126,43 @@
         const removedComponents: Record<number, string> = {};
         let startOfBlockLine = -1;
         let componentName = "";
+        let insideCodeBlock = false;
+        let currentBlockLines: number[] = [];
 
         for(let i = 0; i < lines.length; i++){
+            if(insideCodeBlock){
+                if(lines[i].match(/^```/)){
+                    insideCodeBlock = false;
+                }
+                continue;
+            } else {
+                if(lines[i].match(/^```/)){
+                    insideCodeBlock = true;
+                    continue;
+                }
+            }
+            
             if(startOfBlockLine > -1){
+                // if an empty line appears, MDX will consider it a stop in the JSX
+                if(lines[i].trim() === ""){
+                    startOfBlockLine = -1;
+                    componentName = "";
+                    currentBlockLines = [];
+                    continue;
+                }
+
+                currentBlockLines.push(i);
+
                 // if we have started a block, let's check if this line is the end of it.
                 // if so, we remove it and stop the next iterations until we find a new block
-                linesToRemove.push(i);
                 if(lines[i].match(/^\/>/)){
                     removedComponents[startOfBlockLine] = lines.slice(startOfBlockLine, i).join("\n") + `\n></${componentName}>`;
                     startOfBlockLine = -1;
                     componentName = "";
+                    // and only once we are sure the block is closed, 
+                    // do we add the lines to remove
+                    linesToRemove.push(...currentBlockLines);
+                    currentBlockLines = [];
                 }
             }
 

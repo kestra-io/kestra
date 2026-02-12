@@ -463,9 +463,9 @@ class HttpClientTest {
             assertThat(response.getStatus().getCode()).isEqualTo(200);
             assertThat(response.contentType()).isEqualTo("text/event-stream");
             assertThat(consumedEvents).hasSize(3);
-            assertThat(consumedEvents.get(0).getData()).isEqualTo("Event 1");
-            assertThat(consumedEvents.get(1).getData()).isEqualTo("Event 2");
-            assertThat(consumedEvents.get(2).getData()).isEqualTo("Event 3");
+            assertThat(consumedEvents.get(0).data()).isEqualTo("Event 1");
+            assertThat(consumedEvents.get(1).data()).isEqualTo("Event 2");
+            assertThat(consumedEvents.get(2).data()).isEqualTo("Event 3");
         }
     }
 
@@ -483,10 +483,10 @@ class HttpClientTest {
             assertThat(response.getStatus().getCode()).isEqualTo(200);
             assertThat(response.contentType()).isEqualTo("text/event-stream");
             assertThat(consumedEvents).hasSize(2);
-            assertThat(consumedEvents.get(0).getData().id()).isEqualTo("1");
-            assertThat(consumedEvents.get(0).getData().name()).isEqualTo("Hello");
-            assertThat(consumedEvents.get(1).getData().id()).isEqualTo("2");
-            assertThat(consumedEvents.get(1).getData().name()).isEqualTo("World");
+            assertThat(consumedEvents.get(0).data().id()).isEqualTo("1");
+            assertThat(consumedEvents.get(0).data().name()).isEqualTo("Hello");
+            assertThat(consumedEvents.get(1).data().id()).isEqualTo("2");
+            assertThat(consumedEvents.get(1).data().name()).isEqualTo("World");
         }
     }
 

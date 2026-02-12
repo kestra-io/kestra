@@ -70,39 +70,6 @@ public class HttpRequest {
             .build();
     }
 
-    public static HttpRequest from(io.micronaut.http.HttpRequest<?> request) {
-        RequestBody body = null;
-        if (request.getBody().isPresent()) {
-            Object bodyContent = request.getBody().get();
-
-            if (bodyContent instanceof InputStream inputStream) {
-                body = InputStreamRequestBody.builder()
-                    .content(inputStream)
-                    .build();
-            } else if (bodyContent instanceof byte[] bytes) {
-                body = ByteArrayRequestBody.builder()
-                    .content(bytes)
-                    .build();
-            } else if (bodyContent instanceof String str) {
-                body = StringRequestBody.builder()
-                    .content(str)
-                    .build();
-            } else {
-                body = JsonRequestBody.builder()
-                    .content(bodyContent)
-                    .build();
-            }
-        }
-
-        return HttpRequest.builder()
-            .uri(request.getUri())
-            .method(request.getMethod().name())
-            .body(body)
-            .headers(HttpHeaders.of(request.getHeaders().asMap(), (a, b) -> true))
-            .remoteAddress(request.getRemoteAddress())
-            .build();
-    }
-
     public static HttpRequest of(URI uri) {
         return HttpRequest.builder()
             .uri(uri)

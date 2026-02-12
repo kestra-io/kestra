@@ -8,20 +8,12 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Builder
-@AllArgsConstructor
-public class WebhookContext {
-    @Getter
-    HttpRequest request;
+public record WebhookContext(
+    HttpRequest request,
+    String path,
+    Flow flow,
+    AbstractWebhookTrigger trigger,
+    WebhookService webhookService
+) {
 
-    @Getter
-    String path;
-
-    @Getter
-    Flow flow;
-
-    @Getter
-    AbstractWebhookTrigger trigger;
-
-    @Getter
-    WebhookService webhookService;
 }

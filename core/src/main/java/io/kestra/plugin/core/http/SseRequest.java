@@ -143,7 +143,7 @@ public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.
                 counter.getAndSet(counter.get() + 1);
 
                 try {
-                    events.add(event.clone(JacksonMapper.toObject(event.getData())));
+                    events.add(event.clone(JacksonMapper.toObject(event.data())));
                 } catch (JsonProcessingException e) {
                     events.add(event);
                 }

@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -163,61 +164,58 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     private Property<Integer> responseCode = Property.ofValue(200);
 
     @Override
-    public HttpResponse<?> evaluate(WebhookContext context) throws Exception {
+    public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
         // Reject path since not expected
-        if (context.getPath() != null || context.getRequest().getUri().getPath().endsWith("/")) {
-            return HttpResponse.of(HttpResponse.Status.NOT_FOUND);
+        if (context.path() != null || context.request().getUri().getPath().endsWith("/")) {
+            return Mono.just(HttpResponse.of(HttpResponse.Status.NOT_FOUND));
         }
 
-        String body = context.getRequest().getBody() != null ? (String) context.getRequest().getBody().getContent() : null;
+        String body = context.request().getBody() != null ? (String) context.request().getBody().getContent() : null;
 
-
-
-        Optional<Execution> maybeExecution = context.getWebhookService().newExecution(
+        Optional<Execution> maybeExecution = context.webhookService().newExecution(
             context,
-            context.getFlow(),
+            context.flow(),
             this,
             Webhook.Output.builder()
                 .body(tryMap(body)
                     .or(() -> tryArray(body))
                     .orElse(body)
                 )
-                .headers(context.getRequest().getHeaders() != null ? context.getRequest().getHeaders().map() : null)
-                .parameters(context.getWebhookService().parseParameters(context))
+                .headers(context.request().getHeaders() != null ? context.request().getHeaders().map() : null)
+                .parameters(context.webhookService().parseParameters(context))
                 .build()
         );
 
         if (maybeExecution.isEmpty()) {
-            return HttpResponse.of(HttpResponse.Status.CONFLICT);
+            return Mono.just(HttpResponse.of(HttpResponse.Status.CONFLICT));
         }
 
         Execution execution = maybeExecution.get();
 
         try {
-            context.getWebhookService().startExecution(execution);
+            context.webhookService().startExecution(execution);
         } catch (QueueException e) {
-            return HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR);
+            return Mono.just(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
         }
 
         if (!this.wait) {
-            return HttpResponse.of(context.getWebhookService().executionResponse(execution));
+            return Mono.just(HttpResponse.of(context.webhookService().executionResponse(execution)));
         }
 
         return context
-            .getWebhookService()
-            .followExecution(execution, context.getFlow())
+            .webhookService()
+            .followExecution(execution, context.flow())
             .last()
             .map(throwFunction(event -> {
-                RunContext runContext = context.getWebhookService().runContext(context.getFlow(), event.getData());
+                RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
                 int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(200);
 
                 if (this.getReturnOutputs()) {
                     return buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode));
                 } else {
-                    return HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.getWebhookService().executionResponse(event.getData()));
+                    return HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
                 }
-            }))
-            .block();
+            }));
     }
 
     private HttpResponse<?> buildOutputResponse(Object body, String responseContentType, HttpResponse.Status responseCode) {

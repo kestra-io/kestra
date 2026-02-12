@@ -304,7 +304,7 @@ public class HttpClient implements Closeable {
         return this.request(request, httpClientContext, responseHandler);
     }
 
-    private <T> void  parseSse(InputStream inputStream, Class<T> cls, Consumer<HttpSseEvent<T>> eventConsumer) throws IOException {
+    private <T> void parseSse(InputStream inputStream, Class<T> cls, Consumer<HttpSseEvent<T>> eventConsumer) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;
             StringBuilder dataBuffer = new StringBuilder();

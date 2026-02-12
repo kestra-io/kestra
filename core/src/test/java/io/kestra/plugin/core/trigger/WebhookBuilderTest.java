@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,6 +58,6 @@ public class WebhookBuilderTest {
         var evaluate = webhook.evaluate(webhookContext);
 
         assertThat(evaluate).isNotNull();
-        assertThat(evaluate.getStatus().getCode()).isEqualTo(200);
+        assertThat(Objects.requireNonNull(evaluate.block()).getStatus().getCode()).isEqualTo(200);
     }
 }

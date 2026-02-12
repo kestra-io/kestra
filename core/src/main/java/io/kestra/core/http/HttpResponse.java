@@ -1,6 +1,5 @@
 package io.kestra.core.http;
 
-import io.micronaut.http.HttpStatus;
 import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +11,6 @@ import org.apache.hc.core5.http.EndpointDetails;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.SocketAddress;
 import java.net.http.HttpHeaders;
 import java.util.List;
@@ -83,32 +81,6 @@ public class HttpResponse<T> {
                 null
             )
             .build();
-    }
-
-    public io.micronaut.http.HttpResponse<?> toMicronaut() {
-        var response = io.micronaut.http.HttpResponse
-            .status(HttpStatus.valueOf(this.getStatus().getCode()))
-            .headers(headers -> {
-                if (this.getHeaders() != null) {
-                    this.getHeaders().map().forEach((key, values) -> {
-                        for (String value : values) {
-                            headers.add(key, value);
-                        }
-                    });
-                }
-            });
-
-        if (this.getBody() instanceof byte[] bytes) {
-            return response.body(bytes);
-        } else if (this.getBody() instanceof String str) {
-            return response.body(str);
-        } else if (this.getBody() instanceof InputStream inputStream) {
-            return response.body(inputStream);
-        } else if (this.getBody() != null) {
-            return response.body(this.getBody());
-        } else {
-            return response;
-        }
     }
 
     public static HttpResponse<?> of(Status status) {

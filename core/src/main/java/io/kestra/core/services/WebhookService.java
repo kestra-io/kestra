@@ -74,7 +74,7 @@ public class WebhookService {
      * @return A map of query parameter names to their list of values
      */
     public Map<String, List<String>> parseParameters(WebhookContext context) {
-        URIBuilder uriBuilder = new URIBuilder(context.getRequest().getUri());
+        URIBuilder uriBuilder = new URIBuilder(context.request().getUri());
 
         return uriBuilder.getQueryParams()
             .stream()
@@ -95,12 +95,12 @@ public class WebhookService {
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
-            .tenantId(context.getFlow().getTenantId())
-            .namespace(context.getFlow().getNamespace())
-            .flowId(context.getFlow().getId())
-            .flowRevision(context.getFlow().getRevision())
+            .tenantId(context.flow().getTenantId())
+            .namespace(context.flow().getNamespace())
+            .flowId(context.flow().getId())
+            .flowRevision(context.flow().getRevision())
             .inputs(trigger.getInputs())
-            .variables(context.getFlow().getVariables())
+            .variables(context.flow().getVariables())
             .state(new State())
             .trigger(ExecutionTrigger.of(trigger, output))
             .build();

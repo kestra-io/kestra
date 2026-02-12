@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -54,5 +55,5 @@ public abstract class AbstractWebhookTrigger extends AbstractTrigger {
      * @param context The webhook context containing request, path, flow, and services
      * @return WebbookEvaluation the evaluation result containing the execution and response
      */
-    public abstract HttpResponse<?> evaluate(WebhookContext context) throws Exception;
+    public abstract Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception;
 }

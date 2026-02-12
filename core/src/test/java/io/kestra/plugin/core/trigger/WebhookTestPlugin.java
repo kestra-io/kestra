@@ -10,6 +10,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.http.HttpStatus;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -24,34 +25,34 @@ public class WebhookTestPlugin extends AbstractWebhookTrigger implements Trigger
     private Boolean failed = false;
 
     @Override
-    public HttpResponse<?> evaluate(WebhookContext context) throws Exception {
-        if (context.getPath() != null && context.getPath().equals("failed")) {
+    public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
+        if (context.path() != null && context.path().equals("failed")) {
             throw new Exception("Failed as requested");
         }
 
-        Optional<Execution> maybeExecution = context.getWebhookService().newExecution(
+        Optional<Execution> maybeExecution = context.webhookService().newExecution(
             context,
-            context.getFlow(),
+            context.flow(),
             this,
             WebhookTestOutput.builder()
-                .body(JacksonMapper.toMap((String) context.getRequest().getBody().getContent()))
-                .encryptedString(EncryptedString.from("super-secret", context.getWebhookService().runContext(context.getFlow(), context.getTrigger())))
+                .body(JacksonMapper.toMap((String) context.request().getBody().getContent()))
+                .encryptedString(EncryptedString.from("super-secret", context.webhookService().runContext(context.flow(), context.trigger())))
                 .build()
         );
 
         if (maybeExecution.isEmpty()) {
-            return HttpResponse.of(HttpResponse.Status.CONFLICT);
+            return Mono.just(HttpResponse.of(HttpResponse.Status.CONFLICT));
         }
 
         Execution execution = maybeExecution.get();
 
         try {
-            context.getWebhookService().startExecution(execution);
+            context.webhookService().startExecution(execution);
         } catch (QueueException e) {
-            return HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR);
+            return Mono.just(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
         }
 
-        return HttpResponse.of(HttpStatus.OK);
+        return Mono.just(HttpResponse.of(HttpStatus.OK));
     }
 
     @Builder

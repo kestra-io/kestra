@@ -47,6 +47,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.core.services.ExecutionStreamingService;
+import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -73,7 +74,6 @@ import io.micronaut.validation.Validated;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -114,7 +114,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -502,7 +501,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public HttpResponse<?> triggerExecutionByPostWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -517,7 +516,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public HttpResponse<?> triggerExecutionByGetWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -532,7 +531,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public HttpResponse<?> triggerExecutionByPutWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -542,7 +541,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, path, request);
     }
 
-    private HttpResponse<?> webhook(
+    private Mono<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
@@ -553,7 +552,7 @@ public class ExecutionController {
         return webhook(find, key, path, request);
     }
 
-    protected HttpResponse<?> webhook(
+    protected Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         String path,
@@ -597,7 +596,7 @@ public class ExecutionController {
 
         // Webhook context
         var webhookContext = new WebhookContext(
-            io.kestra.core.http.HttpRequest.from(request),
+            MicronautHttpService.from(request),
             path,
             flow,
             webhook,
@@ -606,7 +605,8 @@ public class ExecutionController {
 
         // Call evaluate and create a failed execution if exception occurs
         try {
-            return webhook.evaluate(webhookContext).toMicronaut();
+            return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
+                ;
         } catch (Exception e) {
             Execution failedExecution = Execution.builder()
                 .id(IdUtils.create())
@@ -618,8 +618,8 @@ public class ExecutionController {
                 .state(new State().withState(State.Type.FAILED))
                 .build();
 
-            Logger logger = webhookContext.getWebhookService().runContext(flow, failedExecution).logger();
-            logger.error("[trigger: {}] Webhook evaluate Failed with error '{}'" , webhookContext.getTrigger(), e.getMessage());
+            Logger logger = webhookContext.webhookService().runContext(flow, failedExecution).logger();
+            logger.error("[trigger: {}] Webhook evaluate Failed with error '{}'" , webhookContext.trigger(), e.getMessage());
 
             try {
                 this.executionQueue.emit(failedExecution);
@@ -627,7 +627,7 @@ public class ExecutionController {
                 log.error("Unable to emit the execution", ex);
             }
 
-            return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR);
+            return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 

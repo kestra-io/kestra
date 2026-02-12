@@ -56,7 +56,7 @@ public class UriProvider {
     public URI webhookUrl(FlowInterface flow, AbstractWebhookTrigger trigger) {
         return this.build("/api/v1/" +
             (flow.getTenantId() != null ? flow.getTenantId() + "/" : "") +
-            "executions/webhook" +
+            "executions/webhook/" +
             flow.getNamespace() + "/" +
             flow.getId() + "/" +
             trigger.getKey()

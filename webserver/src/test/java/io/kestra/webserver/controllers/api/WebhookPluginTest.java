@@ -1,34 +1,23 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.core.http.HttpResponse;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
-import io.kestra.plugin.core.trigger.WebhookContext;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

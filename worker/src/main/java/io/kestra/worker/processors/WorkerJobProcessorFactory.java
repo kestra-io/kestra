@@ -16,6 +16,7 @@ import io.kestra.core.services.VariablesService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import jakarta.annotation.PostConstruct;
@@ -42,6 +43,9 @@ public class WorkerJobProcessorFactory {
     private WorkerQueueRegistry workerQueueRegistry;
 
     @Inject
+    private ExecutionKilledManager executionKilledManager;
+
+    @Inject
     private TracerFactory tracerFactory;
     private Tracer tracer;
 
@@ -64,7 +68,8 @@ public class WorkerJobProcessorFactory {
                 runContextInitializer,
                 runContextLoggerFactory,
                 workerQueueRegistry.getOrCreate(context, WorkerTaskResult.class),
-                workerQueueRegistry.getOrCreate(context, MetricEntry.class)
+                workerQueueRegistry.getOrCreate(context, MetricEntry.class),
+                executionKilledManager
             );
         } else if (job instanceof WorkerTrigger) {
             return (WorkerJobProcessor<T>) new WorkerTriggerProcessor(
@@ -74,7 +79,8 @@ public class WorkerJobProcessorFactory {
                 tracer,
                 runContextInitializer,
                 workerQueueRegistry.getOrCreate(context, LogEntry.class),
-                workerQueueRegistry.getOrCreate(context, WorkerTriggerResult.class)
+                workerQueueRegistry.getOrCreate(context, WorkerTriggerResult.class),
+                executionKilledManager
             );
         }
 

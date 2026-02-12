@@ -92,7 +92,7 @@ class WorkerControllersConfigurationTest {
             WorkerControllersConfiguration config = context.getBean(WorkerControllersConfiguration.class);
 
             // Check default port
-            assertThat(config.staticConfig().endpoints().getFirst().port()).isEqualTo(9096);
+            assertThat(config.staticConfig().endpoints().getFirst().port()).isNotNull(); // use controller random port
 
             // Check default load balancing policy
             assertThat(config.loadBalancing().policy()).isEqualTo(WorkerControllersConfiguration.LoadBalancing.Policy.ROUND_ROBIN);

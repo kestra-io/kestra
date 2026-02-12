@@ -54,9 +54,12 @@ message WorkerConnectionInfo {
 // Controller -> Worker: Jobs to be executed
 message WorkerJobResponse {
   RequestOrResponseHeader header = 1;
-  
+
   // List of jobs to execute (may be empty if no jobs available)
   repeated WorkerJobPayload jobs = 2;
+
+  // Serialized ExecutionKilled commands (JSON format) to be processed by the worker
+  repeated bytes killCommands = 3;
 }
 
 // Individual job payload

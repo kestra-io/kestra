@@ -4,12 +4,17 @@ import io.grpc.stub.StreamObserver;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerJobEvent;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.Either;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,16 +49,29 @@ class WorkerJobDispatcherTest {
 
     private KeyedDispatchQueueInterface<WorkerJobEvent> mockQueue;
     private WorkerJobRunningStateStore mockStateStore;
+    @SuppressWarnings("unchecked")
+    private BroadcastQueueInterface<ExecutionKilled> mockKillQueue = mock(BroadcastQueueInterface.class);
+    @SuppressWarnings("unchecked")
+    private DispatchQueueInterface<WorkerTaskResult> mockResultQueue = mock(DispatchQueueInterface.class);
     private WorkerJobDispatcher dispatcher;
 
     // Captures for verifying interactions
     private List<MockQueueSubscriber> createdSubscribers;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
         mockQueue = mock(KeyedDispatchQueueInterface.class);
         mockStateStore = mock(WorkerJobRunningStateStore.class);
+        mockKillQueue = mock(BroadcastQueueInterface.class);
+        mockResultQueue = mock(DispatchQueueInterface.class);
         createdSubscribers = new ArrayList<>();
+
+        // Mock kill queue subscriber
+        @SuppressWarnings("unchecked")
+        QueueSubscriber<ExecutionKilled> killSubscriber = mock(QueueSubscriber.class);
+        when(killSubscriber.subscribe(any())).thenReturn(killSubscriber);
+        when(mockKillQueue.subscriber()).thenReturn(killSubscriber);
 
         // Create mock subscribers for each group
         when(mockQueue.subscriber(anyString())).thenAnswer(invocation -> {
@@ -63,7 +81,7 @@ class WorkerJobDispatcherTest {
             return subscriber;
         });
 
-        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore);
+        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockResultQueue);
     }
 
     @AfterEach
@@ -80,9 +98,13 @@ class WorkerJobDispatcherTest {
     }
 
     private WorkerJobEvent createJobEvent(String jobId, String workerGroup) {
+        TaskRun taskRun = mock(TaskRun.class);
+        when(taskRun.getExecutionId()).thenReturn("exec-" + jobId);
+
         WorkerTask mockTask = mock(WorkerTask.class);
         when(mockTask.uid()).thenReturn(jobId);
         when(mockTask.getType()).thenReturn("task");
+        when(mockTask.getTaskRun()).thenReturn(taskRun);
         return new WorkerJobEvent(workerGroup, mockTask);
     }
 
@@ -641,4 +663,5 @@ class WorkerJobDispatcherTest {
             }
         }
     }
+
 }

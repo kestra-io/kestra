@@ -33,6 +33,7 @@ import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
@@ -97,8 +98,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                                final RunContextInitializer runContextInitializer,
                                final RunContextLoggerFactory runContextLoggerFactory,
                                final WorkerQueue<WorkerTaskResult> workerTaskResultQueue,
-                               final WorkerQueue<MetricEntry> workerMetricQueue) {
-        super(workerGroup, metricRegistry, workerSecurityService, tracer);
+                               final WorkerQueue<MetricEntry> workerMetricQueue,
+                               final ExecutionKilledManager executionKilledManager) {
+        super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.workerGroup = workerGroup;
@@ -204,17 +206,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         }
 
         try {
-            // TODO
-            /**
-             if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
-             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
-             workerTaskResultQueue.produce(workerTaskResult);
-
-             // We cannot remove the execution ID from the killedExecution in case the worker is processing multiple tasks of the execution
-             // which can happens due to parallel processing.
-             return workerTaskResult;
-             }
-             **/
+            // Check if the execution has been killed before starting the task
+            if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution())
+                && executionKilledManager.isExecutionKilled(workerTask.getTaskRun().getExecutionId())) {
+                WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.KILLED));
+                workerTaskResultQueue.put(workerTaskResult);
+                // We cannot remove the execution ID from the killed cache in case the worker is processing
+                // multiple tasks of the execution which can happen due to parallel processing.
+                return workerTaskResult;
+            }
 
             Logs.logTaskRun(
                 workerTask.getTaskRun(),

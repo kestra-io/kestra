@@ -17,6 +17,7 @@ import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.utils.Logs;
+import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTriggerCallable;
 import io.kestra.worker.processors.internals.WorkerTriggerRealtimeCallable;
@@ -52,8 +53,9 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                                   Tracer tracer,
                                   RunContextInitializer runContextInitializer,
                                   WorkerQueue<LogEntry> workerLogQueue,
-                                  WorkerQueue<WorkerTriggerResult> workerTriggerResultQueue) {
-        super(workerGroup, metricRegistry, workerSecurityService, tracer);
+                                  WorkerQueue<WorkerTriggerResult> workerTriggerResultQueue,
+                                  ExecutionKilledManager executionKilledManager) {
+        super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.workerLogQueue = workerLogQueue;
         this.workerTriggerResultQueue = workerTriggerResultQueue;
         this.runContextInitializer = runContextInitializer;

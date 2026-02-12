@@ -5,6 +5,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
+import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.AbstractWorkerCallable;
 import io.opentelemetry.api.common.Attributes;
@@ -18,6 +19,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     protected final String workerGroup;
     protected final MetricRegistry metricRegistry;
+    protected final ExecutionKilledManager executionKilledManager;
 
     private final WorkerSecurityService workerSecurityService;
     private final Tracer tracer;
@@ -30,11 +32,13 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     public AbstractWorkerJobProcessor(String workerGroup,
                                       MetricRegistry metricRegistry,
                                       WorkerSecurityService workerSecurityService,
-                                      Tracer tracer) {
+                                      Tracer tracer,
+                                      ExecutionKilledManager executionKilledManager) {
         this.workerGroup = workerGroup;
         this.tracer = tracer;
         this.metricRegistry = metricRegistry;
         this.workerSecurityService = workerSecurityService;
+        this.executionKilledManager = executionKilledManager;
     }
 
     /**
@@ -43,9 +47,11 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     @Override
     public void process(final T job) {
         if (currentWorkerJob.compareAndSet(null, job)) {
+            executionKilledManager.register(job.uid(), job, this::kill);
             try {
                 doProcess(job);
             } finally {
+                executionKilledManager.unregister(job.uid());
                 currentWorkerJob.set(null);
             }
         } else {
@@ -80,6 +86,11 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
         if (this.stopped.compareAndSet(false, true)) {
             Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::signalStop);
         }
+    }
+
+    @Override
+    public void kill() {
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::kill);
     }
 
     protected boolean isStopped() {

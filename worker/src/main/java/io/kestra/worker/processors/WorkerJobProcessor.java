@@ -27,4 +27,14 @@ public interface WorkerJobProcessor<T extends WorkerJob> {
      * If no job is currently running, the method returns immediately without any side effects.
      */
     void stop();
+
+    /**
+     * Signals the currently running job to be killed (execution killed event).
+     * <p>
+     * Unlike {@link #stop()}, which is used for graceful shutdown, this method is invoked
+     * when an execution kill event is received and the running task must be terminated.
+     * <p>
+     * If no job is currently running, the method returns immediately without any side effects.
+     */
+    void kill();
 }

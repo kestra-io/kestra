@@ -1,12 +1,20 @@
 package io.kestra.controller.grpc.services;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.protobuf.ByteString;
 import io.kestra.controller.grpc.WorkerJobPayload;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
@@ -15,6 +23,7 @@ import io.kestra.core.runners.WorkerInstance;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTaskRunning;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerRunning;
@@ -25,6 +34,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -64,8 +74,13 @@ import java.util.stream.Stream;
 @Slf4j
 public class WorkerJobDispatcher {
     
+    // TTL for killed execution IDs in the local cache to prevent unbounded growth
+    // This cache is used for pre-dispatch filtering of tasks belonging to killed executions avoiding unnecessary dispatch and allowing for faster kill response times.
+    private static final Duration KILLED_CACHE_TTL = Duration.ofHours(24);
+
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
+    private final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     /**
      * Global closed flag to prevent operations after shutdown.
@@ -89,12 +104,68 @@ public class WorkerJobDispatcher {
      */
     private final ConcurrentHashMap<String, GroupState> groupStates = new ConcurrentHashMap<>();
 
+    /**
+     * Cache of killed execution IDs for pre-dispatch filtering.
+     */
+    private final Cache<String, Boolean> killedExecutionIds = Caffeine.newBuilder()
+        .expireAfterWrite(KILLED_CACHE_TTL)
+        .build();
+
+    /**
+     * Subscription to the execution killed broadcast queue.
+     */
+    private volatile QueueSubscriber<ExecutionKilled> killQueueSubscriber;
+
     @Inject
     public WorkerJobDispatcher(
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
-        WorkerJobRunningStateStore workerJobRunningStateStore) {
+        WorkerJobRunningStateStore workerJobRunningStateStore,
+        BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
+        DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue) {
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
+        this.workerTaskResultQueue = workerTaskResultQueue;
+
+        // Subscribe to execution killed events
+        this.killQueueSubscriber = executionKilledQueue.subscriber();
+        this.killQueueSubscriber.subscribe(either -> {
+            if (either.isRight()) {
+                log.error("Deserialization error for ExecutionKilled: {}", either.getRight().getMessage());
+                return;
+            }
+            ExecutionKilled killed = either.getLeft();
+            if (killed.getState() == ExecutionKilled.State.EXECUTED) {
+                onExecutionKilled(killed);
+            }
+        });
+    }
+
+    /**
+     * Handles an execution killed event from the broadcast queue.
+     * Adds to the local cache and broadcasts to all connected workers.
+     */
+    private void onExecutionKilled(ExecutionKilled killed) {
+        if (killed instanceof ExecutionKilledExecution killedExecution) {
+            killedExecutionIds.put(killedExecution.getExecutionId(), Boolean.TRUE);
+            log.info("Received execution killed event for execution '{}'", killedExecution.getExecutionId());
+        }
+
+        // Serialize the kill command
+        ByteString killData = MessageFormats.JSON.toByteString(killed);
+
+        // Broadcast to all connected workers
+        activeStreams.forEach((workerId, context) -> {
+            try {
+                WorkerJobResponse response = WorkerJobResponse.newBuilder()
+                    .setHeader(RequestOrResponseHeaderFactory.create(workerId))
+                    .addKillCommands(killData)
+                    .build();
+                context.sendResponse(response);
+                log.debug("Broadcast kill command to worker {}", workerId);
+            } catch (Exception e) {
+                log.warn("Failed to send kill command to worker {}: {}", workerId, e.getMessage());
+            }
+        });
     }
 
     /**
@@ -280,6 +351,21 @@ public class WorkerJobDispatcher {
         WorkerJobEvent event = either.getLeft();
         WorkerJob job = event.job();
 
+        // Pre-dispatch killed check: if the execution is already killed, produce a KILLED result directly
+        if (job instanceof WorkerTask workerTask) {
+            String executionId = workerTask.getTaskRun().getExecutionId();
+            if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution())
+                && killedExecutionIds.getIfPresent(executionId) != null) {
+                log.info("Skipping dispatch of task '{}' for killed execution '{}'", job.uid(), executionId);
+                try {
+                    workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.KILLED)));
+                } catch (QueueException e) {
+                    log.error("Failed to emit KILLED result for task '{}': {}", job.uid(), e.getMessage(), e);
+                }
+                return;
+            }
+        }
+
         GroupState state = groupStates.get(workerGroup);
         if (state == null) {
             log.error("No state for worker group '{}', re-queuing job {}", WorkerGroup.forLog(workerGroup), job.uid());
@@ -458,6 +544,15 @@ public class WorkerJobDispatcher {
         }
 
         log.info("Closing WorkerJobDispatcher with {} active workers", activeStreams.size());
+
+        // Close kill queue subscription
+        if (killQueueSubscriber != null) {
+            try {
+                killQueueSubscriber.close();
+            } catch (Exception e) {
+                log.warn("Error closing kill queue subscription: {}", e.getMessage());
+            }
+        }
 
         // Close all queue subscriptions
         groupStates.forEach((group, state) -> {

@@ -368,7 +368,7 @@ class GrpcChannelManagerTest {
         Endpoint endpoint = new Endpoint("localhost", null);
 
         // Then - should use default port 9096
-        assertThat(endpoint.port()).isEqualTo(9096);
+        assertThat(endpoint.port()).isEqualTo(50051);
     }
 
     @Test

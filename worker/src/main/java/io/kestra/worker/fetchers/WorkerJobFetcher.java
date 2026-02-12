@@ -1,5 +1,6 @@
 package io.kestra.worker.fetchers;
 
+import com.google.protobuf.ByteString;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.kestra.controller.grpc.WorkerConnectionInfo;
@@ -9,9 +10,11 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
@@ -50,6 +53,7 @@ public class WorkerJobFetcher extends WorkerLoop {
 
     private final WorkerControllerServiceStub workerControllerServiceStub;
     private final WorkerQueueRegistry workerQueueRegistry;
+    private final ExecutionKilledManager executionKilledManager;
 
     private WorkerQueue<WorkerJob> workerJobQueue;
     private WorkerContext workerContext;
@@ -88,10 +92,12 @@ public class WorkerJobFetcher extends WorkerLoop {
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
-                            final WorkerQueueRegistry workerQueueRegistry) {
+                            final WorkerQueueRegistry workerQueueRegistry,
+                            final ExecutionKilledManager executionKilledManager) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
+        this.executionKilledManager = executionKilledManager;
     }
 
     /**
@@ -210,6 +216,16 @@ public class WorkerJobFetcher extends WorkerLoop {
             return;
         }
 
+        // Process kill commands
+        for (ByteString killData : response.getKillCommandsList()) {
+            try {
+                ExecutionKilled killed = MessageFormats.JSON.fromByteString(killData, ExecutionKilled.class);
+                executionKilledManager.onKillReceived(killed);
+            } catch (Exception e) {
+                log.error("Error processing kill command: {}", e.getMessage(), e);
+            }
+        }
+
         List<String> acks = new ArrayList<>();
         for (WorkerJobPayload payload : response.getJobsList()) {
             try {
@@ -230,7 +246,10 @@ public class WorkerJobFetcher extends WorkerLoop {
         }
 
         // Send ACKs and request more permits based on remaining capacity
-        sendPermitsAndAcks(observer, calculatePermits(), acks);
+        // Only send if there were jobs (kill-only responses don't need permit updates)
+        if (!acks.isEmpty()) {
+            sendPermitsAndAcks(observer, calculatePermits(), acks);
+        }
     }
 
     /**

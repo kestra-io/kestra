@@ -47,7 +47,7 @@ public class WorkerQueueSizePoller {
             MetricRegistry.WORKER_MESSAGES_UNCONSUMMATED_COUNT,
             MetricRegistry.WORKER_MESSAGES_UNCONSUMMATED_COUNT_DESCRIPTION,
             new AtomicInteger(),
-            MetricRegistry.TAG_WORKER_GROUP, workerGroup == null ? "default" : workerGroup
+            metricRegistry.workerGroupTags(workerGroup)
         ));
     }
 }

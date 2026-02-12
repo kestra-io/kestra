@@ -1,6 +1,7 @@
 package io.kestra.webserver.services;
 
 import io.kestra.core.metrics.MetricConfig;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.Service;
@@ -14,6 +15,8 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 @Slf4j
 @Singleton
@@ -25,30 +28,27 @@ public class SharedServiceInstanceMetricService {
 
     private final ServiceInstanceRepositoryInterface serviceInstanceRepository;
 
-    private final Map<String, Map<MetricKey, Metric>> sharedMetrics = new HashMap<>();
+    private final Map<MetricKey, AtomicReference<Number>> sharedMetricsValues = new HashMap<>();
+
+    private final Map<MetricKey, io.micrometer.core.instrument.Gauge> sharedMetricsGauges = new HashMap<>();
+
+    private final MetricRegistry metricRegistry;
 
     public SharedServiceInstanceMetricService(
         @Value("${kestra.server-type}")
         ServiceType serverType,
         MetricConfig metricConfig,
-        ServiceInstanceRepositoryInterface serviceInstanceRepository
+        ServiceInstanceRepositoryInterface serviceInstanceRepository, MetricRegistry metricRegistry
     ) {
         this.serverType = serverType;
         this.metricConfig = metricConfig;
         this.serviceInstanceRepository = serviceInstanceRepository;
-    }
-
-    public Set<String> getMetricNames() {
-        return sharedMetrics.keySet();
-    }
-
-    public List<Metric> getMetric(String name) {
-        return sharedMetrics.getOrDefault(name, Map.of()).values().stream().toList();
+        this.metricRegistry = metricRegistry;
     }
 
     @Scheduled(fixedDelay = "30s")
     void populateSharedServiceInstanceMetrics() {
-        ArrayList<ServiceInstance> serviceInstances = serviceInstanceRepository.find(
+        List<ServiceInstance> serviceInstances = serviceInstanceRepository.find(
             Pageable.unpaged(),
             Service.ServiceState.allRunningStates(),
             metricConfig.getSharedServiceInstanceMetrics().keySet()
@@ -56,23 +56,61 @@ public class SharedServiceInstanceMetricService {
 
         serviceInstances.stream()
         .filter(serviceInstance -> !(serviceInstance.type() == serverType))
+        .filter(serviceInstance -> metricConfig.getSharedServiceInstanceMetrics().containsKey(serviceInstance.type()))
         .forEach(serviceInstance -> serviceInstance.metrics()
             .stream()
-            .filter(metric -> metricConfig.getSharedServiceInstanceMetrics().get(serviceInstance.type()) != null)
             .filter(metric -> metricConfig.getSharedServiceInstanceMetrics().get(serviceInstance.type()).contains(metric.name()))
-            .forEach(metric ->
-                sharedMetrics.computeIfAbsent(metric.name(), k -> new HashMap<>()).put(
-                    MetricKey.of(metric), metric
-                )
-            )
+            .forEach(metric -> {
+                    List<Metric.Tag> metricTags = new ArrayList<>(metric.tags());
+                    List<String> tags = new ArrayList<>(metric.tags().stream().map(
+                        (tag) -> List.of(tag.key(), tag.value())
+                    ).flatMap(List::stream).toList());
+
+                    if (metric.tags().stream().map(Metric.Tag::key).noneMatch(key -> key.equals("instance_id"))) {
+                        tags.add(MetricRegistry.SERVICE_ID);
+                        tags.add(serviceInstance.uid());
+                        metricTags.add(new Metric.Tag(MetricRegistry.SERVICE_ID, serviceInstance.uid()));
+                    }
+
+                    MetricKey metricKey = new MetricKey(metric.name(), List.copyOf(metricTags));
+
+                    sharedMetricsValues.computeIfAbsent(
+                        metricKey, k -> new AtomicReference<>()
+                    ).set(metric.value());
+
+                sharedMetricsGauges.computeIfAbsent(metricKey, (mk) -> metricRegistry.gauge(
+                    metric.name(),
+                    metric.description(),
+                    (Supplier<Number>) () -> sharedMetricsValues.get(metricKey).get(),
+                    tags.toArray(new String[0])
+                ));
+            })
         );
+        cleanUp(serviceInstances);
+    }
+
+    private void cleanUp(List<ServiceInstance> serviceInstances) {
+        List<String> serviceInstanceIds = serviceInstances.stream().map(ServiceInstance::uid).toList();
+        List<MetricKey> toRemove = sharedMetricsValues.keySet().stream()
+            .filter(metricKey -> metricKey.tags().stream()
+                .filter(tag -> tag.key().equals(MetricRegistry.SERVICE_ID))
+                .findFirst()
+                .map(tag -> !serviceInstanceIds.contains(tag.value()))
+                .orElse(false))
+            .toList();
+
+        toRemove.forEach(metricKey -> {
+            log.debug("Removing metric {} from shared metrics, as the associated service instance is no longer active", metricKey);
+            metricRegistry.removeMeter(sharedMetricsGauges.remove(metricKey));
+            sharedMetricsValues.remove(metricKey);
+        });
     }
 
     private record MetricKey (
         String name, List<Metric.Tag> tags
     ) {
         public static MetricKey of(Metric metric) {
-            return new MetricKey(metric.name(), metric.tags());
+            return new MetricKey(metric.name(), List.copyOf(metric.tags()));
         }
     }
 }

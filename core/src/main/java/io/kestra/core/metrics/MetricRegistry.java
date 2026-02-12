@@ -17,6 +17,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 @Singleton
 @Slf4j
@@ -186,6 +187,15 @@ public class MetricRegistry {
             .register(this.meterRegistry);
     }
 
+
+
+    public <T extends Number> Gauge gauge(String name, String description, Supplier<T> supplier, String... tags) {
+        return Gauge.builder(metricName(name), supplier)
+            .description(description)
+            .tags(tags)
+            .register(this.meterRegistry);
+    }
+
     /**
      * Register a gauge that reports the value of the {@link Number}.
      *
@@ -198,10 +208,7 @@ public class MetricRegistry {
      * statement.
      */
     public <T extends Number> T gauge(String name, String description, T number, String... tags) {
-        Gauge.builder(metricName(name), () -> number)
-            .description(description)
-            .tags(tags)
-            .register(this.meterRegistry);
+        gauge(name, description, (Supplier<T>) () -> number, tags);
         return number;
     }
 
@@ -276,6 +283,14 @@ public class MetricRegistry {
     }
 
     /**
+     * Remove existing Meter in the meter registry
+     * @param meter The meter to remove
+     */
+    public void removeMeter(Meter meter) {
+        meterRegistry.remove(meter);
+    }
+
+    /**
      * Return the tag with prefix from configuration
      *
      * @param name the metric to prefix
@@ -317,14 +332,22 @@ public class MetricRegistry {
     public String[] tags(WorkerTrigger workerTrigger, String workerGroup, String... tags) {
         var baseTags = ArrayUtils.addAll(
             ArrayUtils.addAll(
-                this.tags(workerTrigger.getTrigger()),
-                tags
+                ArrayUtils.addAll(
+                    this.tags(workerTrigger.getTrigger()),
+                    tags
+                ),
+                workerGroupTags(workerGroup, tags)
             ),
             TAG_NAMESPACE_ID, workerTrigger.getTriggerContext().getNamespace(),
             TAG_FLOW_ID, workerTrigger.getTriggerContext().getFlowId()
         );
-        baseTags = workerGroup == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_WORKER_GROUP, workerGroup);
+
+
         return workerTrigger.getTriggerContext().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, workerTrigger.getTriggerContext().getTenantId());
+    }
+
+    public String[] workerGroupTags(String workerGroup, String... tags) {
+        return ArrayUtils.addAll(tags, TAG_WORKER_GROUP, workerGroup != null ? workerGroup : "default");
     }
 
 

@@ -68,7 +68,7 @@
         "vue-gtag": "^3.7.0",
         "vue-i18n": "^11.2.8",
         "vue-material-design-icons": "^5.3.1",
-        "vue-router": "^4.6.4",
+        "vue-router": "^5.0.2",
         "vue-sidebar-menu": "^5.9.1",
         "vue-virtual-scroller": "^2.0.0-beta.8",
         "vue3-popper": "^1.5.0",
@@ -79,7 +79,7 @@
     "devDependencies": {
         "@codecov/vite-plugin": "^1.9.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
-        "@eslint/js": "^9.39.2",
+        "@eslint/js": "^10.0.1",
         "@playwright/test": "^1.58.2",
         "@rushstack/eslint-patch": "^1.14.1",
         "@shikijs/markdown-it": "^3.22.0",

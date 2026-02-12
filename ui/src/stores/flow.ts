@@ -366,7 +366,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
         const httpClient = options.httpClient ?? axios
-        const response: {data:Flow & {exception?: string}} = httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
+        const response: {data:Flow & {exception?: string}} = await httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
             {
                 params: {
                     revision: options.revision,
@@ -393,6 +393,10 @@ export const useFlowStore = defineStore("flow", () => {
             };
             delete response.data.exception;
         }
+
+        validateFlow({
+            flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`
+        });
 
         if (options.store === false) {
             return response.data;
@@ -694,13 +698,22 @@ function deleteFlowAndDependencies() {
                 flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
             }
         }
+        
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
-                const constraintsArray = [response?.data[0]?.constraints, flowValidationIssues.constraints].filter(Boolean)
-                flowValidation.value = constraintsArray.length === 0 ? {} : {
-                    constraints: constraintsArray.join(", ")
-                };
-                return flowValidation.value
+                const validResults = response.data[0] ?? {};
+
+                const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
+
+                if (constraintsArray.length) {
+                    validResults.constraints = constraintsArray.join(", ");
+                } else {
+                    delete validResults.constraints;
+                }
+
+                flowValidation.value = validResults;
+                
+                return validResults
             })
     }
 

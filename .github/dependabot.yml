@@ -109,6 +109,10 @@ updates:
           ]
 
     ignore:
+      # Ignore ESLint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
       # Ignore updates to monaco-yaml; version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
         versions: [">=5.3.2"]

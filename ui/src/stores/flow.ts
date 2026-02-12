@@ -18,6 +18,7 @@ import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
+import Markdown from "../components/layout/Markdown.vue"
 
 const textYamlHeader = {
     headers: {
@@ -260,16 +261,19 @@ export const useFlowStore = defineStore("flow", () => {
                 isCreating.value = false;
             } catch (error: any) {
                 if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
-                    return toast.confirm(
-                        t("flow already exists message", flowParsed.value),
-                        async () => {
-                            const response = await saveFlow({flow: flowSource});
-                            toast.saved(response.id);
-                            isCreating.value = false;
-                            return "redirect_to_update";
-                        },
-                        "warning"
-                    )
+                    const shouldRedirect = await ElMessageBox({
+                        title: t("confirmation"),
+                        message: () => h(Markdown, {source: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
+                        type: "warning",
+                        showCancelButton: true,
+                    }).then(async () => {
+                        const response = await saveFlow({flow: flowSource});
+                        toast.saved(response.id);
+                        isCreating.value = false;
+                        return true;
+                    })
+
+                    return shouldRedirect ? "redirect_to_update" : null;
                 }
 
                 if (error.response?.data) {

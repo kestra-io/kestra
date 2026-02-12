@@ -263,7 +263,7 @@
 <script lang="ts">
     import {ElMessage} from "element-plus";
     import ValidationError from "../flows/ValidationError.vue";
-    import {markRaw, toRaw} from "vue";
+    import {markRaw, toRaw, defineComponent} from "vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
@@ -271,6 +271,7 @@
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
+    // @ts-expect-error no types for it yet
     import {inputsToFormData} from "../../utils/submitTask";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -280,7 +281,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
 
-    export default {
+    export default defineComponent({
         computed: {
             ...mapStores(useExecutionsStore),
             inputErrors() {
@@ -679,7 +680,7 @@
                 this.validateInputs();
             }
         }
-    };
+    });
 </script>
 
 <style scoped lang="scss">

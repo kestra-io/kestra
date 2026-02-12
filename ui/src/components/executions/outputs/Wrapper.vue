@@ -175,7 +175,6 @@
 
     const editorValue = ref<string>("");
     const debugCollapse = ref<string>("");
-    const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref<string>("");
 
     const computedDebugValue = computed(() => {

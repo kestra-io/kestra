@@ -113,6 +113,10 @@ updates:
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
 
+      # Ignore vue-router major updates (v5 conflicts with @kestra-io/ui-libs peer requirement ^4.5.0)
+      - dependency-name: "vue-router"
+        update-types: ["version-update:semver-major"]
+
       # Ignore updates to monaco-yaml; version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
         versions: [">=5.3.2"]

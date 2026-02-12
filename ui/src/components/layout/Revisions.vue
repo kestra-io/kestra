@@ -147,7 +147,7 @@
     const props = withDefaults(defineProps<{
         lang: string,
         revisions: Revision[],
-        revisionSource: (revisionNumber: number) => Promise<string>,
+        revisionSource: (revisionNumber: number) => Promise<string | undefined>,
         editRouteQuery?: boolean
     }>(), {editRouteQuery: true});
 

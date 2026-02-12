@@ -98,7 +98,6 @@
     });
 
     const panelWidth = ref(640)
-    const panelWrapper = ref<HTMLDivElement | null>(null)
 
     const {startResizing, resizing} = useResizablePanel(activeTab)
 

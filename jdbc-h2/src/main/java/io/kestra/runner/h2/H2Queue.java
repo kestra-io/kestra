@@ -24,6 +24,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
     @Override
     protected Condition buildConsumerCondition(Class<?> queueType) {
         return DSL.or(List.of(
+            AbstractJdbcRepository.field("consumers").isNull(),
             DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", queueName(queueType))
         ))  ;
     }

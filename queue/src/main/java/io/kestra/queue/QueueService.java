@@ -75,31 +75,10 @@ public class QueueService {
     }
 
     public <T extends Event> Either<T, DeserializationException> deserialize(Class<T> cls, byte[] record) {
-        if (log.isDebugEnabled()) {
-            log.debug("[{}] received message: {}", cls.getSimpleName(), new String(record));
-        }
-
         try {
             return Either.left(MAPPER.readValue(record, cls));
         } catch (IOException e) {
             return Either.right(new DeserializationException(e, Arrays.toString(record)));
-        } finally {
-            String[] tags = {MetricRegistry.TAG_QUEUE_NAME, cls.getSimpleName()};
-            metricRegistry
-                .counter(MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT, MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION, tags)
-                .increment();
-        }
-    }
-
-    public <T extends Event> Either<T, DeserializationException> deserialize(Class<T> cls, String record) {
-        if (log.isDebugEnabled()) {
-            log.debug("[{}] received message: {}", cls.getSimpleName(), record);
-        }
-
-        try {
-            return Either.left(MAPPER.readValue(record, cls));
-        } catch (IOException e) {
-            return Either.right(new DeserializationException(e, record));
         } finally {
             String[] tags = {MetricRegistry.TAG_QUEUE_NAME, cls.getSimpleName()};
             metricRegistry

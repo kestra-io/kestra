@@ -32,10 +32,6 @@ import java.util.function.Supplier;
 @Singleton
 @Slf4j
 public class MetricRegistry {
-    public static final String METRIC_WORKER_JOB_PENDING_COUNT = "worker.job.pending";
-    public static final String METRIC_WORKER_JOB_PENDING_COUNT_DESCRIPTION = "The number of jobs (tasks or triggers) pending to be run by the Worker";
-    public static final String METRIC_WORKER_JOB_RUNNING_COUNT = "worker.job.running";
-    public static final String METRIC_WORKER_JOB_RUNNING_COUNT_DESCRIPTION = "The number of jobs (tasks or triggers) currently running inside the Worker";
     public static final String METRIC_WORKER_JOB_THREAD_COUNT = "worker.job.thread";
     public static final String METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION = "The number of worker threads";
     public static final String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
@@ -104,12 +100,6 @@ public class MetricRegistry {
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
     public static final String METRIC_INDEXER_REQUEST_DURATION = "indexer.request.duration";
     public static final String METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION = "Batch of records duration inside the Indexer";
-    public static final String METRIC_INDEXER_REQUEST_RETRY_COUNT = "indexer.request.retry.count";
-    public static final String METRIC_INDEXER_REQUEST_RETRY_COUNT_DESCRIPTION = "Total number of batches of records retried by the Indexer";
-    public static final String METRIC_INDEXER_SERVER_DURATION = "indexer.server.duration";
-    public static final String METRIC_INDEXER_SERVER_DURATION_DESCRIPTION = "Batch of records indexation duration";
-    public static final String METRIC_INDEXER_MESSAGE_FAILED_COUNT = "indexer.message.failed.count";
-    public static final String METRIC_INDEXER_MESSAGE_FAILED_COUNT_DESCRIPTION = "Total number of records which failed to be indexed by the Indexer";
     public static final String METRIC_INDEXER_MESSAGE_IN_COUNT = "indexer.message.in.count";
     public static final String METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION = "Total number of records received by the Indexer";
     public static final String METRIC_INDEXER_MESSAGE_OUT_COUNT = "indexer.message.out.count";
@@ -149,6 +139,10 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION = "Total number of big messages";
     public static final String METRIC_QUEUE_EMIT_COUNT = "queue.emit.count";
     public static final String METRIC_QUEUE_EMIT_COUNT_DESCRIPTION = "Total number of emitted messages";
+    public static final String METRIC_QUEUE_CONSUME_DURATION = "queue.consume.duration";
+    public static final String METRIC_QUEUE_CONSUME_DURATION_DESCRIPTION = "Queue message consumer duration for each message";
+    public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION = "queue.consume.batch.duration";
+    public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION_DESCRIPTION = "Queue message consumer duration for a batch of messages";
     public static final String METRIC_QUEUE_RECEIVE_COUNT = "queue.receive.count";
     public static final String METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION = "Total number of received messages";
     public static final String METRIC_QUEUE_RECEIVE_DURATION = "queue.receive.duration";
@@ -215,7 +209,7 @@ public class MetricRegistry {
         gauge(name, description, (Supplier<T>)() -> number, tags);
         return number;
     }
-    
+
     /**
      * Register a gauge that reports the value of the {@link Number}.
      *

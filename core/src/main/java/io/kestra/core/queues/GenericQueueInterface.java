@@ -13,4 +13,9 @@ public interface GenericQueueInterface<T extends Event> {
      *  specific usage in low-volume queues.
      */
     void addListener(Consumer<T> listener);
+
+    /**
+     * Get the name of the queue
+     */
+    String queueName();
 }

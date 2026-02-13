@@ -49,4 +49,9 @@ public class JdbcTestQueueFactory {
     public VNodeDispatchQueueInterface<AbstractVNodeDispatchQueueTest.TestVNodeDispatchDispatch> vNodeDispatchQueue() {
         return new JdbcVNodeDispatchQueue<>(AbstractVNodeDispatchQueueTest.TestVNodeDispatchDispatch.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
+
+    @Bean
+    public BroadcastQueueInterface<AbstractQueueCacheTest.DeletableBroadcastTestEvent> deletableBroadcastTestEventDispatchQueue() {
+        return new JdbcBroadcastQueue<>(AbstractQueueCacheTest.DeletableBroadcastTestEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
+    }
 }

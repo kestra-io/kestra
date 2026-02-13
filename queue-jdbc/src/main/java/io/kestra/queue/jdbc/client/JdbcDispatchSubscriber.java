@@ -1,10 +1,12 @@
 package io.kestra.queue.jdbc.client;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.event.Event;
 import io.kestra.queue.QueueService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @Slf4j
 public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
@@ -15,20 +17,21 @@ public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
         QueueService queueService,
         JdbcQueueClient jdbcQueueClient,
         String queueName,
-        List<String> routingKeys
+        List<String> routingKeys,
+        MetricRegistry metricRegistry
     ) {
-        super(cls, queueService, jdbcQueueClient, queueName);
+        super(cls, queueService, jdbcQueueClient, queueName, metricRegistry);
 
         this.routingKeys = routingKeys;
     }
 
     @Override
-    protected Integer poll(JdbcQueueClient.MessageConsumer<String, Exception> messageConsumer) {
+    protected Integer poll(Consumer<String> messageConsumer) {
         return this.jdbcQueueClient.subscribeDispatch(this.queueName, this.routingKeys, messageConsumer);
     }
 
     @Override
-    protected Integer pollBatch(JdbcQueueClient.MessageConsumer<List<String>, Exception> messageConsumer) {
+    protected Integer pollBatch(Consumer<List<String>> messageConsumer) {
         return this.jdbcQueueClient.subscribeDispatchBatch(this.queueName, this.routingKeys, messageConsumer);
     }
 

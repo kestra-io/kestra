@@ -18,10 +18,13 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends AbstractVNodeDispatchQueue<T> {
     private final JdbcQueueClient jdbcQueueClient;
+    private final MetricRegistry metricRegistry;
 
     public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         super(cls, queueService, executorsUtils, metricRegistry);
+
         this.jdbcQueueClient = jdbcQueueClient;
+        this.metricRegistry = metricRegistry;
     }
 
     @Override
@@ -58,7 +61,8 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
             vNodes
                 .stream()
                 .map(this::vNodeRoutingKey)
-                .toList()
+                .toList(),
+            metricRegistry
         );
     }
 }

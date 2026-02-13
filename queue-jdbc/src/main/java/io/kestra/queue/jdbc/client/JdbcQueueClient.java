@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.zip.CRC32;
 
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
@@ -124,7 +125,7 @@ public class JdbcQueueClient {
         }
     }
 
-    public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, MessageConsumer<String, Exception> consumer) {
+    public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, Consumer<String> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
 
@@ -149,8 +150,8 @@ public class JdbcQueueClient {
                 List<Long> processedItems = queueItems
                     .stream()
                     .map(queueItem -> {
-                        Exception exception = consumer.apply(queueItem.value());
-                        return exception == null ? queueItem.offset() : null;
+                        consumer.accept(queueItem.value());
+                        return queueItem.offset();
                     })
                     .filter(Objects::nonNull)
                     .toList();
@@ -167,7 +168,7 @@ public class JdbcQueueClient {
         });
     }
 
-    public Integer subscribeDispatchBatch(String queue, List<String> routingKeys, MessageConsumer<List<String>, Exception> consumer) {
+    public Integer subscribeDispatchBatch(String queue, List<String> routingKeys, Consumer<List<String>> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
 
@@ -189,18 +190,16 @@ public class JdbcQueueClient {
                 .fetchInto(JdbcQueueItem.class);
 
             if (!queueItems.isEmpty()) {
-                Exception applied = consumer.apply(queueItems.stream().map(JdbcQueueItem::value).toList());
+                consumer.accept(queueItems.stream().map(JdbcQueueItem::value).toList());
 
-                if (applied == null) { // FIXME do we really need to do that? This is not done for dispatch... better to fail fast right?
-                    List<Long> processedItems = queueItems
-                        .stream()
-                        .map(queueItem -> queueItem.offset())
-                        .toList();
+                List<Long> processedItems = queueItems
+                    .stream()
+                    .map(queueItem -> queueItem.offset())
+                    .toList();
 
-                    DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
-                        .where(field("offset", Long.class).in(processedItems));
-                    delete.execute();
-                }
+                DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
+                    .where(field("offset", Long.class).in(processedItems));
+                delete.execute();
             }
 
             return queueItems.size();
@@ -220,7 +219,7 @@ public class JdbcQueueClient {
         return initialOffset != null ? initialOffset : 0L;
     }
 
-    protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, MessageConsumer<String, Exception> consumer) {
+    protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, Consumer<String> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
@@ -241,7 +240,7 @@ public class JdbcQueueClient {
             if (!queueItems.isEmpty()) {
                 queueItems
                     .forEach(queueItem -> {
-                        consumer.apply(queueItem.value());
+                        consumer.accept(queueItem.value());
                     });
 
                 maxOffsetResult = queueItems
@@ -255,7 +254,7 @@ public class JdbcQueueClient {
         });
     }
 
-    public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, MessageConsumer<List<String>, Exception> consumer) {
+    public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, Consumer<List<String>> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
@@ -274,7 +273,7 @@ public class JdbcQueueClient {
                 .fetchInto(JdbcQueueItem.class);
 
             if (!queueItems.isEmpty()) {
-                consumer.apply(queueItems.stream().map(JdbcQueueItem::value).toList());
+                consumer.accept(queueItems.stream().map(JdbcQueueItem::value).toList());
 
                 maxOffsetResult = queueItems
                     .stream()
@@ -285,10 +284,5 @@ public class JdbcQueueClient {
 
             return Pair.of(queueItems.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
         });
-    }
-
-    @FunctionalInterface
-    public interface MessageConsumer <T, E extends Exception> {
-         @Nullable E apply(T t);
     }
 }

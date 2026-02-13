@@ -17,11 +17,13 @@ import java.util.List;
 @Slf4j
 public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadcastQueue<T> {
     private final JdbcQueueClient jdbcQueueClient;
+    private final MetricRegistry metricRegistry;
 
     public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
+        this.metricRegistry = metricRegistry;
     }
 
     @Override
@@ -30,7 +32,8 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
             cls,
             queueService,
             jdbcQueueClient,
-            queueName()
+            queueName(),
+            metricRegistry
         );
     }
 

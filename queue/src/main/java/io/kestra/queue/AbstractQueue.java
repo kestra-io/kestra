@@ -47,7 +47,8 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
         return "__";
     }
 
-    protected String queueName() {
+    @Override
+    public String queueName() {
         String result = "";
 
         if (queueService.getQueueConfiguration().getPrefix() != null) {

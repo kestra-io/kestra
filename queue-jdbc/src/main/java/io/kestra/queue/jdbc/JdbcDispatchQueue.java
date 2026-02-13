@@ -17,11 +17,13 @@ import java.util.List;
 @Slf4j
 public class JdbcDispatchQueue<T extends DispatchEvent> extends AbstractDispatchQueue<T> {
     private final JdbcQueueClient jdbcQueueClient;
+    private final MetricRegistry metricRegistry;
 
     public JdbcDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
+        this.metricRegistry = metricRegistry;
     }
 
     @Override
@@ -31,7 +33,8 @@ public class JdbcDispatchQueue<T extends DispatchEvent> extends AbstractDispatch
             queueService,
             jdbcQueueClient,
             queueName(),
-            null
+            null,
+            metricRegistry
         );
     }
 

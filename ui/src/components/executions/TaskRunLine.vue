@@ -270,9 +270,12 @@
                 return Object.fromEntries(this.currentTaskRuns.map(taskRun => [taskRun.id, taskRun]));
             },
             logsWithIndexByAttemptUid() {
-                const indexedLogs = this?.logs
+                let indexedLogs = this?.logs
                     .filter(logLine => (logLine?.message ?? "").toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
                     .map((logLine, index) => ({...logLine, index}));
+            
+                // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
+                indexedLogs = Array.from(new Set(indexedLogs))
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
             },

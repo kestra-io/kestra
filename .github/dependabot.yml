@@ -109,8 +109,16 @@ updates:
           ]
 
     ignore:
-      # Ignore ESLint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
+      # Ignore eslint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
       - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
+      # Ignore @eslint/js major updates (v10 requires eslint ^10 but project is on eslint ^9)
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+
+      # Ignore vue-router major updates (v5 conflicts with @kestra-io/ui-libs peer requirement ^4.5.0)
+      - dependency-name: "vue-router"
         update-types: ["version-update:semver-major"]
 
       # Ignore updates to monaco-yaml; version is pinned to 5.3.1 due to patch-package script additions

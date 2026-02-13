@@ -1,6 +1,7 @@
 import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
-import {Router, useRouter} from "vue-router"
+import {inject} from "vue"
+import {Router, routerKey} from "vue-router"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
@@ -293,7 +294,8 @@ export default (
 let axiosInstance: AxiosInstance | null = null;
 
 export const useAxios = () => {
-    const router = useRouter();
+    // for storybook tests we need to allow router to be undefined
+    const router = inject(routerKey, undefined as any) as Router | undefined;
 
     const miscStore = useMiscStore();
     const {edition} = miscStore.configs || {};

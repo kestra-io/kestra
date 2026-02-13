@@ -35,6 +35,7 @@
                     v-if="configured"
                     v-model="prompt"
                     type="textarea"
+                    :disabled="waitingForReply"
                     :autosize="{minRows: 2, maxRows: 6}"
                     :placeholder="$t('ai.flow.prompt_placeholder')"
                     @keydown.exact.enter.prevent="submitPrompt"

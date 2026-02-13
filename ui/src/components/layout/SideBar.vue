@@ -46,7 +46,7 @@
 
     const props = withDefaults(defineProps<{
         menu: MenuItem[],
-        showLink: boolean
+        showLink?: boolean
     }>(), {
         showLink: true
     })

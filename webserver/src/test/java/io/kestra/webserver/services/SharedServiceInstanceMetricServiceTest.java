@@ -11,6 +11,7 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
+import io.micrometer.core.instrument.Tag;
 import io.micronaut.data.model.Pageable;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,7 +66,7 @@ class SharedServiceInstanceMetricServiceTest {
 
 
         // Then
-        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutMetricNameTag = getGaugeWithoutTag("metric-name", "tag-key");
+        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutMetricNameTag = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
         Optional<io.micrometer.core.instrument.Gauge> gaugeWithMetricNameTags = getGaugeWithTags("metric-name", Map.of("tag-key", "tag-value"));
 
         assertThat(gaugeWithoutMetricNameTag).isPresent();
@@ -155,11 +156,11 @@ class SharedServiceInstanceMetricServiceTest {
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
         // When
-        Optional<io.micrometer.core.instrument.Gauge> gaugeBeforeServiceInstaceDeactivate = getGaugeWithoutTag("metric-name", "tag-key");
+        Optional<io.micrometer.core.instrument.Gauge> gaugeBeforeServiceInstaceDeactivate = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
 
         mockServiceInstance(List.of());
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
-        Optional<io.micrometer.core.instrument.Gauge> gaugeAfterServiceInstanceDeactivate = getGaugeWithoutTag("metric-name", "tag-key");
+        Optional<io.micrometer.core.instrument.Gauge> gaugeAfterServiceInstanceDeactivate = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
 
         // Then
         assertThat(gaugeBeforeServiceInstaceDeactivate).isPresent();
@@ -188,6 +189,7 @@ class SharedServiceInstanceMetricServiceTest {
     }
 
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithoutTag(String metricName, String tagKey) {
+        System.out.println("Look at me " + metricRegistry.find(metricName).gauges());
         return this.metricRegistry.find(metricName).gauges().stream()
             .filter(gauge -> gauge.getId().getTag(tagKey) == null)
             .findFirst();
@@ -197,6 +199,13 @@ class SharedServiceInstanceMetricServiceTest {
         return this.metricRegistry.find(metricName).gauges().stream()
             .filter(gauge ->
                 tags.entrySet().stream().allMatch(entry -> Objects.equals(gauge.getId().getTag(entry.getKey()), entry.getValue()))
+            ).findFirst();
+    }
+
+    private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithTagKeys(String metricName, List<String> tagKeys) {
+        return this.metricRegistry.find(metricName).gauges().stream()
+            .filter(gauge ->
+                gauge.getId().getTags().stream().map(Tag::getKey).toList().equals(tagKeys)
             ).findFirst();
     }
 

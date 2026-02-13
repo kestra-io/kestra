@@ -10,11 +10,13 @@ import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.runtime.event.annotation.EventListener;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
-import jakarta.annotation.PostConstruct;
+import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static io.kestra.core.queues.QueueFactoryInterface.WORKERJOB_NAMED;
@@ -31,6 +33,8 @@ public class QueueLagPoller {
         .expireAfterWrite(Duration.ofSeconds(30))
         .build();
 
+    private final Set<String> availableWorkerGroups = new HashSet<>();
+
     public QueueLagPoller(
         MetricRegistry metricRegistry,
         WorkerGroupExecutorInterface workerGroupExecutor,
@@ -39,6 +43,22 @@ public class QueueLagPoller {
         this.metricRegistry = metricRegistry;
         this.workerJobQueueProvider = workerJobQueueProvider;
         this.workerGroupExecutor = workerGroupExecutor;
+    }
+
+
+    @Scheduled(fixedDelay = "30000s", initialDelay = "30s")
+    public void refreshWorkerGroups() {
+        QueueInterface<WorkerJob> workerJobQueue = workerJobQueueProvider.get();
+        workerGroupExecutor.listAllWorkerGroupKeys().stream()
+            .filter((workerGroups -> !availableWorkerGroups.contains(workerGroups)))
+            .forEach(workerGroup -> {
+                availableWorkerGroups.add(workerGroup);
+                this.register(
+                    getQueueLagForConsumerGroup(WORKERJOB_NAMED, workerGroup, Worker.class, workerJobQueue),
+                    MetricRegistry.TAG_WORKER_GROUP, workerGroup,
+                    MetricRegistry.TAG_QUEUE_NAME, WORKERJOB_NAMED
+                );
+            });
     }
 
     @EventListener
@@ -50,7 +70,8 @@ public class QueueLagPoller {
             MetricRegistry.TAG_QUEUE_NAME, WORKERJOB_NAMED
         );
 
-        workerGroupExecutor.listAllWorkerGroupKeys().forEach(workerGroupKey -> {
+        availableWorkerGroups.addAll(workerGroupExecutor.listAllWorkerGroupKeys());
+        availableWorkerGroups.forEach(workerGroupKey -> {
             this.register(
                 getQueueLagForConsumerGroup(WORKERJOB_NAMED, workerGroupKey, Worker.class, workerJobQueue),
                 MetricRegistry.TAG_WORKER_GROUP, workerGroupKey,

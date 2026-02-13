@@ -96,7 +96,7 @@
     });
 
     const addSecretModalVisible = ref(false);
-    const hasData = ref(undefined);
+    const hasData = ref<boolean>();
 
     const {t} = useI18n({useScope: "global"});
     const routeInfo = computed(() => ({title: t("secret.names")}));

@@ -60,9 +60,9 @@
                                 @click="activeFlow = flowIndex"
                             >
                                 <p class="title mb-2">
-                                    {{ flow.labels?.find(l => l.key === 'name')?.value ?? flow.id }}
+                                    {{ flow.labels?.name ?? flow.id }}
                                 </p>
-                                <div>
+                                <div v-if="flow.tasks">
                                     <div
                                         v-for="(task, taskIndex) in allTasks(flow.tasks)"
                                         :key="`flow__${flowIndex}__icon__${taskIndex}`"
@@ -172,7 +172,7 @@
     const {t} = useI18n({useScope: "global"});
 
     const updateStatus = () => localStorage.setItem("tourDoneOrSkip", "true");
-    const dispatchEvent = (step, action) =>
+    const dispatchEvent = (step: number, action: string) =>
         apiStore.events({
             type: "ONBOARDING",
             onboarding: {
@@ -216,12 +216,12 @@
     const activeFlow = ref(0);
     const flows = computed(() => coreStore.tutorialFlows);
 
-    const allTasks = (tasks) => {
-        const uniqueTypes = new Set();
+    const allTasks = (tasks: any[]): string[] => {
+        const uniqueTypes = new Set<string>();
         const dockerBuild = "io.kestra.plugin.docker.Build";
         const dockerRun = "io.kestra.plugin.docker.Run";
 
-        const collectTypes = (task) => {
+        const collectTypes = (task: any) => {
             if (task && typeof task === "object") {
                 const {type} = task;
                 if (type) {
@@ -264,7 +264,7 @@
         };
     });
 
-    const properties = (step, c = true, p = true, s = false) => ({
+    const properties = (step: number, c = true, p = true, s = false) => ({
         title: t(`onboarding.steps.${step}.title`),
         ...(c ? {content: t(`onboarding.steps.${step}.content`)} : {}),
         ...(p ? {primary: t(`onboarding.steps.${step}.primary`)} : {}),
@@ -399,8 +399,8 @@
         },
     ];
 
-    const currentStep = (tour) => tour.steps[tour.currentStep];
-    const nextStep = (tour) => {
+    const currentStep = (tour: any) => tour.steps[tour.currentStep];
+    const nextStep = (tour: any) => {
         dispatchEvent(tour.currentStep, "next");
 
         const nextStep = currentStep(tour).nextStep;
@@ -410,11 +410,11 @@
             TOURS[TOUR_NAME].nextStep()
         }
     };
-    const previousStep = (current) => {
+    const previousStep = (current: number) => {
         dispatchEvent(current, "previous");
         TOURS[TOUR_NAME].previousStep();
     };
-    const skipTour = (current) => {
+    const skipTour = (current: number) => {
         toggleScroll();
 
         updateStatus();
@@ -429,7 +429,7 @@
         TOURS[TOUR_NAME].stop();
         router.push({name: "flows/create"});
     };
-    const finishTour = (current, push = true) => {
+    const finishTour = (current: number, push = true) => {
         toggleScroll();
 
         updateStatus();
@@ -445,7 +445,7 @@
 
         if (push) router.push({name: "flows/create"});
     };
-    const exploreOther = (current) => {
+    const exploreOther = (current: number) => {
         finishTour(current);
         dispatchEvent(current, "explore");
         router.push({name: "flows/list", query: {namespace: TUTORIAL_NAMESPACE}});

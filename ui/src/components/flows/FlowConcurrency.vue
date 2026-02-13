@@ -105,7 +105,7 @@
 
 
     watch(
-        () => [flowStore.flow?.tenantId, flowStore.flow?.namespace, flowStore.flow?.id],
+        () => [flowStore.flow?.namespace, flowStore.flow?.id],
         loadConcurrencyLimit,
         {immediate: true}
     );

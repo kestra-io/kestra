@@ -31,7 +31,7 @@ class AppTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"standalone", "executor", "indexer", "scheduler", "webserver", "worker", "local"})
+    @ValueSource(strings = {"standalone", "executor", "indexer", "scheduler", "webserver", "worker", "controller", "local"})
     void testServerCommandHelp(String serverType) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));

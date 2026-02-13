@@ -17,6 +17,7 @@ import picocli.CommandLine;
         StandAloneCommand.class,
         WebServerCommand.class,
         WorkerCommand.class,
+        ControllerCommand.class,
         LocalCommand.class
     }
 )

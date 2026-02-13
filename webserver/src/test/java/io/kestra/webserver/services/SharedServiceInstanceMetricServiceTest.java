@@ -67,7 +67,7 @@ class SharedServiceInstanceMetricServiceTest {
 
         // Then
         Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutMetricNameTag = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
-        Optional<io.micrometer.core.instrument.Gauge> gaugeWithMetricNameTags = getGaugeWithTags("metric-name", Map.of("tag-key", "tag-value"));
+        Optional<io.micrometer.core.instrument.Gauge> gaugeWithMetricNameTags = getGaugeWithTagKeys("metric-name", List.of("tag-key", MetricRegistry.SERVICE_ID));
 
         assertThat(gaugeWithoutMetricNameTag).isPresent();
         assertThat(gaugeWithMetricNameTags).isPresent();
@@ -96,7 +96,7 @@ class SharedServiceInstanceMetricServiceTest {
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
         // Then
-        Optional<io.micrometer.core.instrument.Gauge> gauge = getGaugeWithoutTag("metric-name", "tag-key");
+        Optional<io.micrometer.core.instrument.Gauge> gauge = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
 
         assertThat(gauge).isPresent();
         assertThat(gauge.get().value()).isEqualTo(2);
@@ -204,8 +204,10 @@ class SharedServiceInstanceMetricServiceTest {
 
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithTagKeys(String metricName, List<String> tagKeys) {
         return this.metricRegistry.find(metricName).gauges().stream()
-            .filter(gauge ->
-                gauge.getId().getTags().stream().map(Tag::getKey).toList().equals(tagKeys)
+            .filter(gauge -> {
+                    List<String> gaugeTagKeys = gauge.getId().getTags().stream().map(Tag::getKey).toList();
+                    return gaugeTagKeys.containsAll(tagKeys) && tagKeys.containsAll(gaugeTagKeys);
+                }
             ).findFirst();
     }
 

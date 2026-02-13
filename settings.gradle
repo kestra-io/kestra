@@ -10,6 +10,17 @@ develocity {
         publishing.onlyIf {
             it.authenticated
         }
+        buildScanPublished { scan ->
+            if (isCI) {
+                def payload = [
+                    timestamp: new Date().toString(),
+                    taskNames: gradle.startParameter.taskNames,
+                    buildScanId: scan.buildScanId,
+                    buildScanUri: scan.buildScanUri.toString()
+                ]
+                file("develocity-scan-output.ndjson") << groovy.json.JsonOutput.toJson(payload) + System.lineSeparator()
+            }
+        }
     }
 }
 

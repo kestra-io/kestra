@@ -364,7 +364,6 @@
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
 
-
         if (props.scrollKey && scrollMemory) {
             const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
             if (savedState) {
@@ -418,6 +417,17 @@
                 editor.getAction("editor.action.formatDocument")?.run();
             }
         }
+
+        editor.addAction({
+            id: "moveCursor",
+            label: "Move cursor",
+            run: (ed, args?: { lineNumber: number; column: number }) => {
+                if (!args?.lineNumber || !args?.column) return;
+                ed.setPosition({lineNumber: args.lineNumber, column: args.column});
+                ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
+                ed.focus();
+            },
+        });
 
         editor.addAction({
             id: "kestra-execute",

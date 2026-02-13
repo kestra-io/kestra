@@ -174,6 +174,65 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             }
         }));
 
+        autoCompletionProviders.push(monaco.languages.registerInlineCompletionsProvider("yaml", {
+            provideInlineCompletions: async (model, position) => {
+                const isFlowModel = model.uri.path.includes("flow-") || model.uri.path.includes("testsuites-");
+                if (!isFlowModel) return {items: []};
+
+                const lineContent = model.getLineContent(position.lineNumber);
+                const linePrefix = lineContent.slice(0, Math.max(position.column - 1, 0));
+                if (!/^\s*$/.test(linePrefix)) return {items: []};
+
+                const previousLine = position.lineNumber > 1 ? model.getLineContent(position.lineNumber - 1) : "";
+
+                // Extract type value from previous line
+                const previous = previousLine.match(/^\s*(?:-\s*)?type\s*:\s*(.+?)\s*$/);
+                if (!previous) return {items: []};
+
+                // Remove optional quotes: type: "..."
+                const cls = previous[1].replace(/^["']|["']$/g, "");
+                if (!cls) return {items: []};
+
+                const pluginsStore = usePluginsStore();
+
+                if (typeof pluginsStore.updateDocumentation === "function") {
+                    await pluginsStore.updateDocumentation({cls});
+                }
+
+                const allProperties = pluginsStore.editorPlugin?.schema?.properties?.properties ?? {};
+                const requiredProperties = Object.keys(allProperties).filter((p) => allProperties[p]?.$required === true);
+                if (!requiredProperties.length) return {items: []};
+
+                const indent = lineContent.match(/^\s*/)?.[0] ?? "";
+                const snippet = requiredProperties.map((k, i) => `${i > 0 ? indent : ""}${k}: `).join("\n");
+
+                const column = indent.length + requiredProperties[0].length + 2 + 1;
+
+                return {
+                    items: [
+                        {
+                            insertText: snippet,
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            range: new monaco.Range(
+                                position.lineNumber,
+                                position.column,
+                                position.lineNumber,
+                                position.column,
+                            ),
+                            command: {
+                                id: "moveCursor",
+                                arguments: [{lineNumber: position.lineNumber, column}],
+                            },
+                        },
+                    ],
+                    enableForwardStability: true,
+                };
+            },
+            handleItemDidShow() {},
+            handlePartialAccept() {},
+            freeInlineCompletions() {}
+        }));
+
         registerPebbleAutocompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 
         registerFunctionParametersAutoCompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);

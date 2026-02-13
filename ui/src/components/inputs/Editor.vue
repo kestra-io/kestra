@@ -121,7 +121,7 @@
         minimap: {type: Boolean, default: false},
         creating: {type: Boolean, default: false},
         label: {type: String, default: undefined},
-        shouldFocus: {type: Boolean, default: true},
+        shouldFocus: {type: Boolean, default: false},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
         scrollKey: {type: String, default: undefined},
@@ -364,7 +364,6 @@
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
 
-
         if (props.scrollKey && scrollMemory) {
             const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
             if (savedState) {
@@ -418,6 +417,17 @@
                 editor.getAction("editor.action.formatDocument")?.run();
             }
         }
+
+        editor.addAction({
+            id: "moveCursor",
+            label: "Move cursor",
+            run: (ed, args?: { lineNumber: number; column: number }) => {
+                if (!args?.lineNumber || !args?.column) return;
+                ed.setPosition({lineNumber: args.lineNumber, column: args.column});
+                ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
+                ed.focus();
+            },
+        });
 
         editor.addAction({
             id: "kestra-execute",
@@ -752,6 +762,10 @@
     flex-direction: column;
     height: 100%;
     z-index: 1001;
+}
+
+:not(.blueprint-container)  .ks-editor {
+    z-index: 1;
 }
 
 .el-form .ks-editor {

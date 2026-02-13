@@ -60,5 +60,5 @@ dependencies {
 
     //test
     testImplementation project(':tests')
-    testImplementation "org.wiremock:wiremock-jetty12"
+    testImplementation "org.wiremock:wiremock-standalone"
 }

@@ -11,7 +11,7 @@ const generateHash = (str: string) => {
 };
 
 export default defineConfig({
-  input: "../webserver/build/classes/java/main/META-INF/swagger/kestra.yml",
+  input: "../openapi.yml",
   output: {
     path: "./src/generated/kestra-api",
     postProcess: ["eslint"],

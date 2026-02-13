@@ -31,15 +31,6 @@ public class WebhookValidator implements ConstraintValidator<WebhookValidation, 
             return true;
         }
 
-        if (value.getConditions() != null) {
-            if (value.getConditions().stream().anyMatch(condition -> condition instanceof MultipleCondition)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate("invalid webhook: conditions of type MultipleCondition are not supported")
-                    .addConstraintViolation();
-                return false;
-            }
-        }
-
         if (value.getResponseContentType() != null && !ALLOWED_CONTENT_TYPES.contains(value.getResponseContentType())) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("invalid webhook: responseContentType must be either 'application/json' or 'text/plain'")

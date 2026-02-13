@@ -1,41 +1,61 @@
 package io.kestra.core.repositories;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 @MicronautTest
 public abstract class AbstractKvMetadataRepositoryTest {
     @Inject
     protected KvMetadataRepositoryInterface kvMetadataRepositoryInterface;
 
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_find_all_with_source(QueryFilter filter) {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        PersistedKvMetadata metadata = buildTestKvDescription(tenant, "namespace", "key");
+        kvMetadataRepositoryInterface.save(metadata);
+
+        ArrayListTotal<PersistedKvMetadata> persistedMetadata = kvMetadataRepositoryInterface.find(
+            Pageable.UNPAGED, tenant, List.of(filter), false, true);
+
+        assertThat(persistedMetadata).hasSize(1);
+        assertThat(persistedMetadata.getFirst().getName()).isEqualTo(metadata.getName());
+    }
+
+    static Stream<QueryFilter> filterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.QUERY).value("key").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("namespace").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.UPDATED).value(Instant.now().plusSeconds(10)).operation(Op.LESS_THAN_OR_EQUAL_TO).build(),
+            QueryFilter.builder().field(Field.EXPIRATION_DATE).value(Instant.now()).operation(Op.GREATER_THAN_OR_EQUAL_TO).build()
+        );
+    }
+
     @Test
     void findKvMetadataByName() throws IOException {
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
         String key = "test-kv";
-        PersistedKvMetadata metadata = PersistedKvMetadata.builder()
-            .tenantId(tenantId)
-            .namespace(namespace)
-            .name(key)
-            .description("Test kv description")
-            .version(1)
-            .expirationDate(Instant.now().plus(5, ChronoUnit.MINUTES))
-            .build();
+        PersistedKvMetadata metadata = buildTestKvDescription(tenantId, namespace, key);
 
         kvMetadataRepositoryInterface.save(metadata);
 
@@ -235,5 +255,17 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(purgedAmount).isEqualTo(2);
 
         assertThat(kvMetadataRepositoryInterface.findByName(tenantId, namespace, key).isPresent()).isFalse();
+    }
+
+
+    protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {
+        return PersistedKvMetadata.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .name(key)
+            .description("Test kv description")
+            .version(1)
+            .expirationDate(Instant.now().plus(5, ChronoUnit.MINUTES))
+            .build();
     }
 }

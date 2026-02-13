@@ -22,7 +22,8 @@ public interface DashboardYamlBuilder {
         - Do not use any types not present in the schema in a given section.
         - Use only double curly brackets surrounded expressions available in the provided examples and schema. Those are pebble expressions.
         - Use provided examples to guide property usage and structure. Adapt them as needed; do not copy them verbatim.
-        - Always preserve root-level `id`, `namespace`, and `title` if provided.
+        - Always preserve root-level `id`, and `title` if provided, but ensure they are set.
+        - If no root-level `id` is set, generate a random one or use the title but with the RFC1035 applied on it (lowercase, hyphens instead of spaces, max length of 63 characters).
         - Unless specified by the user, do not assume any external services or ports.
         - Except for error scenarios, output only the raw YAML, with no explanation or additional text.
         - A property key is unique within each type.

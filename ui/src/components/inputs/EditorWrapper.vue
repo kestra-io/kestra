@@ -41,6 +41,9 @@
             <template v-if="playgroundStore.enabled" #widget-content>
                 <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
             </template>
+            <template #buttons>
+                <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
+            </template>
         </Editor>
         <!-- Backdrop overlay -->
         <Transition name="backdrop-fade">
@@ -63,11 +66,6 @@
                 :generationType="aiGenerationTypes.FLOW"
             />
         </Transition>
-        <AcceptDecline
-            v-if="hasDraft"
-            @accept="acceptDraft"
-            @reject="declineDraft"
-        />
     </div>
 </template>
 
@@ -106,12 +104,12 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
-    import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import Utils from "../../utils/utils";
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
     import permission from "../../models/permission"
     import action from "../../models/action"
+    import AcceptDecline from "./AcceptDecline.vue";
 
     const route = useRoute();
     const router = useRouter();

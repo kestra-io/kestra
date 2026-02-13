@@ -78,7 +78,7 @@
                     <template v-if="waitingForReply">
                         <span class="generating-label">
                             <el-icon class="is-loading"><Loading /></el-icon>
-                            {{ $t("ai.flow.generating") }}
+                            {{ $t(`ai.flow.generating.${generationType}`) }}
                         </span>
                     </template>
                     <template v-else-if="isListening">

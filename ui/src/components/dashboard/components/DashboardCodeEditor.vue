@@ -26,13 +26,10 @@
                 @click="openAi"
             />
         </template>
+        <template #footer-row>
+            <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
+        </template>
     </Editor>
-
-    <AcceptDecline
-        v-if="hasDraft"
-        @accept="acceptDraft"
-        @reject="declineDraft"
-    />
 </template>
 
 <script lang="ts" setup>

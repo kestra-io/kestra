@@ -4,14 +4,14 @@
     >
         <div>
             <component
-                :is="chartOptions.graphStyle === 'PIE' ? Pie : Doughnut"
+                :is="chartOptions?.graphStyle === 'PIE' ? Pie : Doughnut"
                 v-if="generated !== undefined"
                 :data="parsedData"
                 :options="options"
                 :plugins="
                     chartOptions?.legend?.enabled
-                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin]
-                        : [centerPlugin, thicknessPlugin]
+                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin] as const
+                        : [centerPlugin, thicknessPlugin] as const
                 "
                 class="chart"
             />

@@ -661,37 +661,63 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate", consumes = MediaType.APPLICATION_YAML)
-    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
-    public List<ValidateConstraintViolation> validateFlows(
-        @RequestBody(description = "A list of flows source code in a single string") @Body String flows
-    ) {
-        List<FlowSource> flowSources = Arrays.stream(flows.split("\\n+---\\n*?"))
-            .map(flow -> new FlowSource(null, flow))
-            .toList();
-
-        return flowService.validate(tenantService.resolveTenant(), flowSources);
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
-    public List<ValidateConstraintViolation> validateFlows(
-        @RequestBody(description = "A list of flow files") @Part("flows") Publisher<CompletedFileUpload> flowsPublisher
-    ) throws IOException {
-        List<CompletedFileUpload> flowFiles = Flux.from(flowsPublisher)
-            .collectList()
-            .blockOptional()
-            .orElse(Collections.emptyList());
-
-        List<FlowSource> flowSources = new ArrayList<>();
-        for (CompletedFileUpload flowFile : flowFiles) {
-            String source = new String(flowFile.getBytes()).trim();
-
-            flowSources.add(new FlowSource(flowFile.getFilename(), source));
+    @Post(uri = "validate", consumes = {
+        MediaType.APPLICATION_YAML,
+        MediaType.MULTIPART_FORM_DATA
+    })
+    @Operation(
+        tags = {"Flows"},
+        summary = "Validate a list of flows"
+    )
+    @RequestBody(
+        description = "Flows as YAML string or multipart files",
+        required = true,
+        content = {
+            @Content(
+                mediaType = "application/x-yaml",
+                schema = @Schema(type = "string")
+            ),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    requiredProperties = {"flows"}
+                )
+            )
         }
+    )
+    public List<ValidateConstraintViolation> validateFlows(
+        @Parameter(hidden = true) @Body @Nullable String body,
+        @Parameter(hidden = true) @Part("flows") @Nullable Publisher<CompletedFileUpload> flowsPublisher,
+        HttpRequest<?> request
+    ) throws IOException {
+        String tenantId = tenantService.resolveTenant();
 
-        return flowService.validate(tenantService.resolveTenant(), flowSources);
+        MediaType contentType = request.getHeaders().contentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+
+        // If multipart parts are provided, process files
+        if (contentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
+            List<CompletedFileUpload> flowFiles = (flowsPublisher == null ? Flux.<CompletedFileUpload>empty() : Flux.from(flowsPublisher))
+                .collectList()
+                .blockOptional()
+                .orElse(Collections.emptyList());
+
+            List<FlowSource> flowSources = new ArrayList<>();
+            for (CompletedFileUpload flowFile : flowFiles) {
+                String source = new String(flowFile.getBytes()).trim();
+                flowSources.add(new FlowSource(flowFile.getFilename(), source));
+            }
+
+            return flowService.validate(tenantId, flowSources);
+        } else {
+            // Fallback to YAML body
+            String content = (body == null ? "" : body).trim();
+            List<FlowSource> flowSources = Arrays.stream(content.split("\\n+---\\n*?"))
+                .map(flow -> new FlowSource(null, flow))
+                .toList();
+
+            return flowService.validate(tenantId, flowSources);
+        }
     }
 
     // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience

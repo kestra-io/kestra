@@ -8,18 +8,10 @@ import lombok.Value;
 import lombok.With;
 
 import java.net.URI;
-import java.util.List;
 
 @Value
 @Builder
 public class TaskRunAttempt {
-    /**
-     * @deprecated Should always be null, we need to keep it for backward compatibility or the deserialization of old attempt will no longer work.
-     */
-    @Deprecated
-    public void setMetrics(List<AbstractMetricEntry<?>> metrics) {
-    }
-
     @NotNull
     State state;
 

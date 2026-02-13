@@ -75,11 +75,6 @@ public class TaskRun implements TenantInterface {
     @With
     Boolean forceExecution;
 
-    @Deprecated
-    public void setItems(String items) {
-        // no-op for backward compatibility
-    }
-
     public TaskRun withState(State.Type state) {
         return new TaskRun(
             this.tenantId,

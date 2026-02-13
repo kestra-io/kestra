@@ -140,7 +140,7 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
      * This class must only be used for testing purpose or for handling backward-compatibility.
      */
     class SourceGenerator {
-        private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson()
+        private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson(true)
             .copy()
             .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
 

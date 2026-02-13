@@ -492,7 +492,7 @@ public class FlowableUtils {
     }
 
     private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
-    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {

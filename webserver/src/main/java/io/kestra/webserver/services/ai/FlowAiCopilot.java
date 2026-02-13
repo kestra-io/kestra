@@ -63,7 +63,7 @@ public class FlowAiCopilot {
             );
         String serializedPlugins;
         try {
-            serializedPlugins = JacksonMapper.ofJson().writeValueAsString(descriptionByType.entrySet().stream().map(e ->
+            serializedPlugins = JacksonMapper.ofJson(true).writeValueAsString(descriptionByType.entrySet().stream().map(e ->
                 Map.of("type", e.getKey(), "description", e.getValue())
             ).toList());
         } catch (JsonProcessingException e) {
@@ -124,7 +124,7 @@ public class FlowAiCopilot {
             ```yaml
             %s
             ```
-            
+
             User's prompt:
             ```
             %s

@@ -901,7 +901,7 @@ public class FlowController {
 
     protected <T> T parseTaskTrigger(String input, Class<T> cls) throws ConstraintViolationException {
         try {
-            return JacksonMapper.ofJson().readValue(input, cls);
+            return JacksonMapper.ofJson(true).readValue(input, cls);
         } catch (JsonProcessingException e) {
             throw YamlParser.toConstraintViolationException(input, cls.getSimpleName(), e);
         }

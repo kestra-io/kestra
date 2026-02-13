@@ -78,7 +78,7 @@ public final class JacksonMapper {
                 .configure(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID, false)
                 .configure(YAMLGenerator.Feature.SPLIT_LINES, false)
                 .build()
-        )
+        ).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     );
 
     public static ObjectMapper ofYaml() {
@@ -154,6 +154,7 @@ public final class JacksonMapper {
     private static ObjectMapper createIonObjectMapper() {
         return configure(new IonObjectMapper(new IonFactory(createIonSystem())))
             .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .registerModule(new IonModule());
     }
 

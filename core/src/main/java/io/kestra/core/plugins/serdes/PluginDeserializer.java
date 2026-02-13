@@ -110,7 +110,7 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
                 final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data"), pluginRegistry.isVersioningSupported()));
                 ParameterizedType genericDataFilterClass = (ParameterizedType) dataFilterClass.getGenericSuperclass();
                 Type dataFieldsEnum = genericDataFilterClass.getActualTypeArguments()[0];
-                TypeFactory typeFactory = JacksonMapper.ofJson().getTypeFactory();
+                TypeFactory typeFactory = JacksonMapper.ofJson(true).getTypeFactory();
                 Type chartAwareColumnDescriptorClass = ((ParameterizedType) ((WildcardType) ((ParameterizedType) ((TypeVariable<?>)
                     // DataChart generic class
                     ((ParameterizedType) pluginType.getGenericSuperclass())
@@ -119,7 +119,7 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
                     // ColumnDescriptor implementation class
                 ).getActualTypeArguments()[1]).getUpperBounds()[0]).getRawType();
 
-                return JacksonMapper.ofJson().convertValue(node, typeFactory.constructParametricType(
+                return JacksonMapper.ofJson(true).convertValue(node, typeFactory.constructParametricType(
                     pluginType,
                     typeFactory.constructType(dataFieldsEnum),
                     typeFactory.constructParametricType(dataFilterClass,

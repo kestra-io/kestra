@@ -104,10 +104,6 @@ public interface RunContext extends PropertyContext {
      */
     URI logFileURI();
 
-    // for serialization backward-compatibility
-    @JsonIgnore
-    URI getStorageOutputPrefix();
-
     /**
      * Gets access to the Kestra's internal storage.
      *

@@ -399,13 +399,6 @@ public class DefaultRunContext implements RunContext {
         return null;
     }
 
-    // for serialization backward-compatibility
-    @Override
-    @JsonIgnore
-    public URI getStorageOutputPrefix() {
-        return storage.getContextBaseURI();
-    }
-
     /**
      * {@inheritDoc}
      */

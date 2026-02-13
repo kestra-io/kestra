@@ -492,7 +492,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                             var outputs = Output.builder()
                                 .numberOfBatches(splits.size())
                                 // the passed URI may be used by the subflow to write execution outputs.
-                                .uri(URI.create(runContext.getStorageOutputPrefix().toString() + "/" + iteration + "/outputs.ion"))
+                                .uri(URI.create(runContext.storage().getContextBaseURI().toString() + "/" + iteration + "/outputs.ion"))
                                 .build();
 
                                 return ExecutableUtils.subflowExecution(

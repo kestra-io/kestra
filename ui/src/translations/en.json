@@ -575,8 +575,7 @@
     "task id": "Task ID",
     "taskid column details": "Last task being executed and its number of attempts.",
     "flow already exists": "Flow already exists",
-    "flow already exists message": "Flow {id} already exists in namespace {namespace}. Do you want to create a new revision?",
-    "create new revision": "Create new revision",
+    "flow already exists message": "Flow <code>{id}</code> already exists in namespace <code>{namespace}</code>. Do you want to create a new revision?",
     "plugin_default_already_exists": "Plugin default for <code>{type}</code> already exists.",
     "namespace not allowed": "Namespace not allowed",
     "switch-view": "Switch view",
@@ -1413,6 +1412,10 @@
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
       },
+       "kill_switches": {
+        "title": "You have no Kill Switches yet!",
+        "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
+      },
       "apps": {
         "title": "You have no apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
@@ -1740,6 +1743,10 @@
         "namespace": {
             "label": "Namespace",
             "description": "Filter by namespace"
+        },
+        "kill_switch_type": {
+            "label": "Type",
+            "description": "Filter by kill switch type"
         },
         "flowId": {
             "label": "Flow ID",

@@ -203,7 +203,6 @@
     "copy_to_clipboard": "Copiar para a área de transferência",
     "create": "Criar",
     "create first task": "Crie sua primeira task",
-    "create new revision": "Criar nova revisão",
     "create_flow": "Criar Flow",
     "created date": "Data de criação",
     "creation": "Criação",
@@ -499,6 +498,10 @@
           "title": "Atualmente, não há dependências."
         }
       },
+      "kill_switches": {
+        "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente.",
+        "title": "Você ainda não tem Kill Switches!"
+      },
       "panels": {
         "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Files, Blueprints, Namespace Context) para recursos relacionados.",
         "title": "Atualmente, nenhum painel está aberto."
@@ -702,6 +705,10 @@
         "parent_description": "Mostrar apenas execuções de nível superior/raiz"
       },
       "key": "Chave",
+      "kill_switch_type": {
+        "description": "Filtrar por tipo de kill switch",
+        "label": "Tipo"
+      },
       "kind": {
         "description": "Filtrar por tipo de execução",
         "label": "Tipo"
@@ -996,7 +1003,7 @@
     "fix_with_ai": "Corrigir com AI",
     "flow": "Flow",
     "flow already exists": "Flow já existe",
-    "flow already exists message": "O flow {id} já existe no namespace {namespace}. Deseja criar uma nova revisão?",
+    "flow already exists message": "O flow <code>{id}</code> já existe no namespace <code>{namespace}</code>. Deseja criar uma nova revisão?",
     "flow creation": "Criação de flow",
     "flow creation denied in namespace": "Você não tem permissão para criar flows no namespace `{namespace}`.",
     "flow delete": "Tem certeza de que deseja deletar <code>{flowCount}</code> flow(s)?",

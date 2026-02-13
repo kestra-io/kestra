@@ -203,7 +203,6 @@
     "copy_to_clipboard": "Copia negli appunti",
     "create": "Crea",
     "create first task": "Crea il tuo primo task",
-    "create new revision": "Crea nuova revisione",
     "create_flow": "Crea Flow",
     "created date": "Data di creazione",
     "creation": "Creazione",
@@ -499,6 +498,10 @@
           "title": "Attualmente non ci sono dipendenze."
         }
       },
+      "kill_switches": {
+        "content": "La funzione Kill Switch fornisce un meccanismo basato su UI per interrompere esecuzioni problematiche. Sostituisce i comandi <code>--skip-executions</code> e <code>--skip-flows</code> disponibili solo su CLI con un'interfaccia di amministrazione completa.",
+        "title": "Non hai ancora Kill Switch!"
+      },
       "panels": {
         "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Files, Blueprints, Namespace Context) per funzionalità correlate.",
         "title": "Nessun pannello è attualmente aperto."
@@ -702,6 +705,10 @@
         "parent_description": "Mostra solo esecuzioni di livello superiore/radice"
       },
       "key": "Chiave",
+      "kill_switch_type": {
+        "description": "Filtra per tipo di kill switch",
+        "label": "Tipo"
+      },
       "kind": {
         "description": "Filtra per tipo di esecuzione",
         "label": "Tipo"
@@ -996,7 +1003,7 @@
     "fix_with_ai": "Correggi con AI",
     "flow": "Flow",
     "flow already exists": "Flow già esistente",
-    "flow already exists message": "Il flow {id} esiste già nel namespace {namespace}. Vuoi creare una nuova revisione?",
+    "flow already exists message": "Il flow <code>{id}</code> esiste già nel namespace <code>{namespace}</code>. Vuoi creare una nuova revisione?",
     "flow creation": "Creazione del flow",
     "flow creation denied in namespace": "Non hai il permesso di creare flow nel namespace `{namespace}`.",
     "flow delete": "Sei sicuro di voler eliminare <code>{flowCount}</code> flow?",

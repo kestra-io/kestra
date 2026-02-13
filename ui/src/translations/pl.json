@@ -203,7 +203,6 @@
     "copy_to_clipboard": "Kopiuj do schowka",
     "create": "Utwórz",
     "create first task": "Stwórz swój pierwszy task",
-    "create new revision": "Utwórz nową wersję",
     "create_flow": "Utwórz Flow",
     "created date": "Data utworzenia",
     "creation": "Utworzenie",
@@ -499,6 +498,10 @@
           "title": "Obecnie nie ma zależności."
         }
       },
+      "kill_switches": {
+        "content": "Funkcja Kill Switch zapewnia mechanizm w interfejsie użytkownika do zatrzymywania problematycznych wykonania. Zastępuje polecenia CLI <code>--skip-executions</code> i <code>--skip-flows</code> kompleksowym interfejsem administracyjnym.",
+        "title": "Nie masz jeszcze Kill Switches!"
+      },
       "panels": {
         "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Files, Blueprints, Namespace Context) dla powiązanych funkcji.",
         "title": "Obecnie żadne panele nie są otwarte."
@@ -702,6 +705,10 @@
         "parent_description": "Pokaż tylko wykonania najwyższego poziomu/główne"
       },
       "key": "Klucz",
+      "kill_switch_type": {
+        "description": "Filtruj według typu kill switch",
+        "label": "Typ"
+      },
       "kind": {
         "description": "Filtruj według rodzaju wykonania",
         "label": "Rodzaj"
@@ -996,7 +1003,7 @@
     "fix_with_ai": "Napraw za pomocą AI",
     "flow": "Flow",
     "flow already exists": "Flow już istnieje",
-    "flow already exists message": "Flow {id} już istnieje w namespace {namespace}. Czy chcesz utworzyć nową wersję?",
+    "flow already exists message": "Flow <code>{id}</code> już istnieje w namespace <code>{namespace}</code>. Czy chcesz utworzyć nową wersję?",
     "flow creation": "Utworzenie flow",
     "flow creation denied in namespace": "Nie masz uprawnień do tworzenia flow w namespace `{namespace}`.",
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> flow(s)?",

@@ -203,7 +203,6 @@
     "copy_to_clipboard": "复制到剪贴板",
     "create": "创建",
     "create first task": "创建你的第一个任务",
-    "create new revision": "创建新版本",
     "create_flow": "创建Flow",
     "created date": "创建日期",
     "creation": "创建",
@@ -499,6 +498,10 @@
           "title": "当前没有依赖项。"
         }
       },
+      "kill_switches": {
+        "content": "Kill Switch 功能提供了一种基于UI的机制来停止有问题的执行。它用一个全面的管理界面替代了仅限CLI的<code>--skip-executions</code>和<code>--skip-flows</code>命令。",
+        "title": "您还没有 Kill Switches！"
+      },
       "panels": {
         "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
         "title": "当前没有打开的面板。"
@@ -702,6 +705,10 @@
         "parent_description": "仅显示顶级/根执行"
       },
       "key": "键",
+      "kill_switch_type": {
+        "description": "按关闭开关类型筛选",
+        "label": "类型"
+      },
       "kind": {
         "description": "按执行类型筛选",
         "label": "种类"
@@ -996,7 +1003,7 @@
     "fix_with_ai": "使用 AI 修复",
     "flow": "流程",
     "flow already exists": "流程已存在",
-    "flow already exists message": "flow {id} 已经存在于 namespace {namespace} 中。您想创建一个新的修订版本吗？",
+    "flow already exists message": "flow <code>{id}</code> 已存在于 namespace <code>{namespace}</code>。您要创建一个新的修订版本吗？",
     "flow creation": "流程创建",
     "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",

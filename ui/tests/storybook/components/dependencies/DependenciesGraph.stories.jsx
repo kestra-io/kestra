@@ -28,7 +28,7 @@ export default {
 const GraphWrapper = defineComponent({
     name: "DependenciesGraphStoryWrapper",
     props: {
-        subtype: {type: Number, default: FLOW},
+        subtype: {type: String, default: FLOW},
     },
     setup(props) {
         const app = getCurrentInstance()?.appContext.app;

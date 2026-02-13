@@ -139,19 +139,20 @@
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
                 <NamespaceSelect
                     v-model="kv.namespace"
-                    :readonly="kv.update"
+                    :readOnly="kv.update"
                     :includeSystemNamespace="true"
                     all
                 />
             </el-form-item>
 
             <el-form-item :label="$t('key')" prop="key" required>
-                <el-input v-model="kv.key" :readonly="kv.update" />
+                <el-input v-model="kv.key" :disabled="kv.update" />
             </el-form-item>
 
             <el-form-item :label="$t('kv.type')" prop="type" required>
                 <el-select
                     v-model="kv.type"
+                    :disabled="kv.update"
                     @change="kv.value = undefined"
                 >
                     <el-option value="STRING" />
@@ -321,7 +322,7 @@
             }
 
             kvs.value = allKvs;
-            total.value = allKvs.length;
+            total.value = kvsResponse.total ?? 0;
         } finally {
             if (callback) callback();
         }

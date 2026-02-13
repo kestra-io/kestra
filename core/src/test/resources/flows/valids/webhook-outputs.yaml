@@ -11,6 +11,7 @@ tasks:
     type: io.kestra.plugin.core.output.OutputValues
     values:
       executionId: "{{ execution.id }}"
+      code: 202
 
 outputs:
   - id: status
@@ -26,3 +27,4 @@ triggers:
     key: "{{ flow.id }}"
     wait: true
     returnOutputs: true
+    responseCode: "{{ outputs.second.values.code }}"

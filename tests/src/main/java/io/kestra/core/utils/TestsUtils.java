@@ -234,7 +234,11 @@ abstract public class TestsUtils {
         Execution execution = TestsUtils.mockExecution(flow, inputs, null);
         TaskRun taskRun = TestsUtils.mockTaskRun(execution, task);
 
-        return runContextFactory.of(flow, task, execution, taskRun);
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+
+        runContextFactory.initializer().forExecutor((DefaultRunContext) runContext);
+
+        return runContext;
     }
 
     public static <T> Flux<T> receive(QueueInterface<T> queue) {

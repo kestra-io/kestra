@@ -7,10 +7,12 @@ import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerGroupExecutorInterface;
 import io.kestra.core.runners.WorkerJob;
 import io.micronaut.context.BeanProvider;
+import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.runtime.event.annotation.EventListener;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
 import io.micronaut.scheduling.annotation.Scheduled;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +25,8 @@ import static io.kestra.core.queues.QueueFactoryInterface.WORKERJOB_NAMED;
 
 @Slf4j
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)", defaultValue = "STANDALONE")
+@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "metric.queue.lag.enabled", value = "true")
 public class QueueLagPoller {
     private final MetricRegistry metricRegistry;
     private final WorkerGroupExecutorInterface workerGroupExecutor;
@@ -61,8 +64,8 @@ public class QueueLagPoller {
             });
     }
 
-    @EventListener
-    void initQueueMetrics(ServerStartupEvent event) {
+    @PostConstruct
+    void initQueueMetrics() {
         QueueInterface<WorkerJob> workerJobQueue = workerJobQueueProvider.get();
         this.register(
             getQueueLagForConsumerGroup(WORKERJOB_NAMED, null, Worker.class, workerJobQueue),

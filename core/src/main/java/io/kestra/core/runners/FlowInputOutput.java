@@ -468,15 +468,7 @@ public class FlowInputOutput {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
                         SecretInput secretInput = (SecretInput) data;
-                        if (secretInput.getValidator() != null && !Pattern.matches(secretInput.getValidator(), current.toString())) {
-                            throw ManualConstraintViolation.toConstraintViolationException(
-                                "it must match the pattern `" + secretInput.getValidator() + "`",
-                                secretInput,
-                                SecretInput.class,
-                                secretInput.getId(),
-                                current.toString()
-                            );
-                        }
+                        secretInput.validate(current.toString());
                         String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                         yield  EncryptedString.from(encrypted);
                 }

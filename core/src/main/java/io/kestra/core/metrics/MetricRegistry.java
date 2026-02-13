@@ -16,6 +16,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -265,6 +266,14 @@ public class MetricRegistry {
      */
     public Gauge findGauge(String name) {
         return this.meterRegistry.find(metricName(name)).gauge();
+    }
+
+    /**
+     * Search for an existing Gauges in the meter registry
+     * @param name The base metric name
+     */
+    public Collection<Gauge> findGauges(String name) {
+        return this.meterRegistry.find(metricName(name)).gauges();
     }
 
     /**

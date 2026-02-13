@@ -203,10 +203,8 @@ public class DefaultWorker implements Worker {
         // the method is called twice due to how we create the bean, see https://github.com/micronaut-projects/micronaut-core/issues/11656
         if (this.init.compareAndSet(false, true)) {
             List<String> tagList = new ArrayList<>();
-            if (this.workerGroupKey != null) {
-                tagList.add(MetricRegistry.TAG_WORKER_GROUP);
-                tagList.add(this.workerGroupKey);
-            }
+            tagList.add(MetricRegistry.TAG_WORKER_GROUP);
+            tagList.add(this.workerGroupKey != null ? this.workerGroupKey : "default");
 
             if (this.id != null) {
                 tagList.add(MetricRegistry.SERVICE_ID);

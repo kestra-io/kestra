@@ -166,6 +166,27 @@ class SharedServiceInstanceMetricServiceTest {
         assertThat(gaugeAfterServiceInstanceDeactivate).isNotPresent();
     }
 
+    @Test
+    void shouldRegisterBaseMetricWithoutServiceId_givenBaseMetricWithoutServiceIdDoesNotExist_whenPolled() {
+        // Given
+        Metric metric = buildMetric("metric-name", 1);
+        String serviceInstanceId = IdUtils.create();
+        ServiceInstance activeServiceInstance = buildServiceInstanceWithMetric(serviceInstanceId, metric);
+
+
+
+        mockServiceInstance(List.of(activeServiceInstance));
+
+        // When
+        sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
+
+
+        // Then
+        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutServiceId = getGaugeWithoutTag("metric-name", MetricRegistry.SERVICE_ID);
+        assertThat(gaugeWithoutServiceId).isPresent();
+        assertThat(gaugeWithoutServiceId.get().value()).isEqualTo(0);
+    }
+
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithoutTag(String metricName, String tagKey) {
         return this.metricRegistry.find(metricName).gauges().stream()
             .filter(gauge -> gauge.getId().getTag(tagKey) == null)

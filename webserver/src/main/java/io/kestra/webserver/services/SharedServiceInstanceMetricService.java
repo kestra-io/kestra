@@ -7,6 +7,7 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
+import io.micrometer.core.instrument.Tag;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.data.model.Pageable;
@@ -72,18 +73,41 @@ public class SharedServiceInstanceMetricService {
                         metricTags.add(new Metric.Tag(MetricRegistry.SERVICE_ID, serviceInstance.uid()));
                     }
 
-                    MetricKey metricKey = new MetricKey(metric.name(), List.copyOf(metricTags));
+                    MetricKey metricKey = new MetricKey(
+                        metric.name(),
+                        List.copyOf(metricTags.stream().map(Metric.Tag::key).toList()),
+                        serviceInstance.uid()
+                    );
 
                     sharedMetricsValues.computeIfAbsent(
                         metricKey, k -> new AtomicReference<>()
                     ).set(metric.value());
 
-                sharedMetricsGauges.computeIfAbsent(metricKey, (mk) -> metricRegistry.gauge(
-                    metric.name(),
-                    metric.description(),
-                    (Supplier<Number>) () -> sharedMetricsValues.get(metricKey).get(),
-                    tags.toArray(new String[0])
-                ));
+                    String filteredName = metric.name().replaceAll("^kestra\\.", "");
+                    sharedMetricsGauges.computeIfAbsent(metricKey, (mk) -> metricRegistry.gauge(
+                            filteredName,
+                        metric.description(),
+                        (Supplier<Number>) () -> sharedMetricsValues.get(metricKey).get(),
+                        tags.toArray(new String[0])
+                    ))  ;
+
+
+                    // If a gauge without the service instance tag does not exist for the given metric, then we need to register one so that we have a fallback base fallback metric when the service is removed.
+                    List<String> filteredTags = metric.tags().stream().filter(key -> !key.key().equals(MetricRegistry.SERVICE_ID)).map(
+                        (tag) -> List.of(tag.key(), tag.value())
+                    ).flatMap(List::stream).toList();
+                    boolean baseMetricRegistered = metricRegistry.findGauges(filteredName).stream()
+                        .allMatch(gauge -> gauge.getId().getTags().stream().map(Tag::getKey).toList().contains(serviceInstance.uid()));
+
+                    if (!baseMetricRegistered) {
+                        metricRegistry.gauge(
+                            filteredName,
+                            metric.description(),
+                            (Supplier<Number>) () -> 0,
+                            filteredTags.toArray(new String[0])
+                        );
+                    }
+
             })
         );
         cleanUp(serviceInstances);
@@ -92,12 +116,8 @@ public class SharedServiceInstanceMetricService {
     private void cleanUp(List<ServiceInstance> serviceInstances) {
         List<String> serviceInstanceIds = serviceInstances.stream().map(ServiceInstance::uid).toList();
         List<MetricKey> toRemove = sharedMetricsValues.keySet().stream()
-            .filter(metricKey -> metricKey.tags().stream()
-                .filter(tag -> tag.key().equals(MetricRegistry.SERVICE_ID))
-                .findFirst()
-                .map(tag -> !serviceInstanceIds.contains(tag.value()))
-                .orElse(false))
-            .toList();
+            .filter(metricKey -> !serviceInstanceIds.contains(metricKey.serviceInstanceId()))
+                .toList();
 
         toRemove.forEach(metricKey -> {
             log.debug("Removing metric {} from shared metrics, as the associated service instance is no longer active", metricKey);
@@ -107,10 +127,7 @@ public class SharedServiceInstanceMetricService {
     }
 
     private record MetricKey (
-        String name, List<Metric.Tag> tags
+        String name, List<String> tagKeys, String serviceInstanceId
     ) {
-        public static MetricKey of(Metric metric) {
-            return new MetricKey(metric.name(), List.copyOf(metric.tags()));
-        }
     }
 }

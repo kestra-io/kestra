@@ -39,7 +39,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button-group class="ks-b-group">
-                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="forwardEvent('follow', $event)" />
                     <IconButton :tooltip="$t('download logs')" @click="downloadContent()">
                         <Download />
                     </IconButton>

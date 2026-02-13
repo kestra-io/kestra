@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpSseEvent;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
@@ -33,17 +34,22 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -270,6 +276,167 @@ public class HttpClient implements Closeable {
 
             return HttpResponse.from(response, body, request, httpClientContext);
         });
+    }
+
+    /**
+     * Send an SSE (Server-Sent Events) request and consume events with typed data.
+     *
+     * @param request the HTTP request
+     * @param cls the class type for deserializing event data
+     * @param eventConsumer consumer that processes each SSE event with typed data
+     * @param <T> the type of data in the SSE events
+     * @return the HTTP response without the body, as events are consumed through the eventConsumer
+     */
+    public <T> HttpResponse<Void> sseRequest(
+        HttpRequest request,
+        Class<T> cls,
+        Consumer<HttpSseEvent<T>> eventConsumer
+    ) throws HttpClientException, IllegalVariableEvaluationException {
+        HttpClientContext httpClientContext = this.clientContext(request);
+
+        HttpClientResponseHandler<HttpResponse<Void>> responseHandler = response -> {
+
+            parseSse(response.getEntity().getContent(), cls, eventConsumer);
+
+            return HttpResponse.from(response, null, request, httpClientContext);
+        };
+
+        return this.request(request, httpClientContext, responseHandler);
+    }
+
+    private <T> void parseSse(InputStream inputStream, Class<T> cls, Consumer<HttpSseEvent<T>> eventConsumer) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            String line;
+            StringBuilder dataBuffer = new StringBuilder();
+            boolean hasData = false;
+            String eventId = null;
+            String eventName = null;
+            String comment = null;
+            Duration retry = null;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.isEmpty()) {
+                    // Empty line: dispatch event if data was provided
+                    if (hasData) {
+                        // Per spec: remove the trailing newline from the data buffer
+                        if (!dataBuffer.isEmpty() && dataBuffer.charAt(dataBuffer.length() - 1) == '\n') {
+                            dataBuffer.setLength(dataBuffer.length() - 1);
+                        }
+                        sendSseData(cls, eventConsumer, dataBuffer, eventId, eventName, comment, retry);
+                    }
+
+                    // Reset for next event (even if no data was present)
+                    dataBuffer.setLength(0);
+                    hasData = false;
+                    eventId = null;
+                    eventName = null;
+                    comment = null;
+                    retry = null;
+                    continue;
+                }
+
+                if (line.startsWith(":")) {
+                    // Comment line - entire line starts with colon
+                    comment = stripLeadingSpace(line.substring(1));
+                    continue;
+                }
+
+                // Parse field name and value
+                String fieldName;
+                String fieldValue;
+                int colonIndex = line.indexOf(':');
+                if (colonIndex >= 0) {
+                    fieldName = line.substring(0, colonIndex);
+                    // Per spec: strip only a single leading space after the colon
+                    fieldValue = stripLeadingSpace(line.substring(colonIndex + 1));
+                } else {
+                    // No colon: entire line is the field name, value is empty string
+                    fieldName = line;
+                    fieldValue = "";
+                }
+
+                switch (fieldName) {
+                    case "data" -> {
+                        hasData = true;
+                        // Per spec: append value + newline to data buffer
+                        dataBuffer.append(fieldValue).append('\n');
+                    }
+                    case "id" -> {
+                        // Per spec: ignore if value contains NULL character
+                        if (!fieldValue.contains("\0")) {
+                            eventId = fieldValue;
+                        }
+                    }
+                    case "event" -> eventName = fieldValue;
+                    case "retry" -> {
+                        // Per spec: only accept if value consists entirely of ASCII digits
+                        if (!fieldValue.isEmpty() && fieldValue.chars().allMatch(c -> c >= '0' && c <= '9')) {
+                            try {
+                                retry = Duration.ofMillis(Long.parseLong(fieldValue));
+                            } catch (NumberFormatException e) {
+                                // Value overflows, ignore
+                            }
+                        }
+                    }
+                    default -> {
+                        // Unknown field names are ignored per spec
+                    }
+                }
+            }
+
+            // Per spec: end of stream does NOT dispatch pending events
+        }
+    }
+
+    /**
+     * Strip a single leading U+0020 SPACE character, per SSE spec.
+     */
+    private static String stripLeadingSpace(String value) {
+        if (!value.isEmpty() && value.charAt(0) == ' ') {
+            return value.substring(1);
+        }
+        return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void sendSseData(
+        Class<T> cls,
+        Consumer<HttpSseEvent<T>> eventConsumer,
+        StringBuilder dataBuffer,
+        String eventId,
+        String eventName,
+        String comment,
+        Duration retry
+    ) {
+        String dataStr = dataBuffer.toString();
+        T parsedData = null;
+
+        if (!dataStr.isEmpty()) {
+            try {
+                StringEntity tempEntity = new StringEntity(dataStr, ContentType.APPLICATION_JSON);
+
+                parsedData = bodyHandler(cls, tempEntity);
+            } catch (Exception e) {
+                if (String.class.isAssignableFrom(cls)) {
+                    parsedData = (T) dataStr;
+                } else {
+                    runContext.logger().warn("Failed to parse SSE event data: {}", dataStr, e);
+                }
+            }
+        }
+
+        HttpSseEvent<T> event = HttpSseEvent.<T>builder()
+            .data(parsedData)
+            .id(eventId)
+            .name(eventName)
+            .comment(comment)
+            .retry(retry)
+            .build();
+
+
+        if (eventConsumer != null) {
+            eventConsumer.accept(event);
+        }
     }
 
     private HttpClientContext clientContext(HttpRequest request) throws IllegalVariableEvaluationException {

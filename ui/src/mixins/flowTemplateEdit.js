@@ -16,6 +16,7 @@ import {useCoreStore} from "../stores/core";
 import {useTemplateStore} from "../stores/template";
 import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
+import {useAxios} from "../utils/axios";
 
 export default {
     mixins: [RouteContext],
@@ -96,6 +97,12 @@ export default {
                 )
             );
         },
+    },
+    setup(){
+        const $http = useAxios();
+        return {
+            $http
+        }
     },
     methods: {
         loadFile() {

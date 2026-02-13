@@ -86,7 +86,6 @@ export default defineConfig({
             "debug",
             "@braintree/sanitize-url",
             "monaco-yaml/yaml.worker",
-            "vue-axios",
             "lodash-es",
             "nprogress"
         ],

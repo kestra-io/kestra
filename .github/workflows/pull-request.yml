@@ -97,6 +97,42 @@ jobs:
     with:
       java-version: 25
 
+  check-openapi-spec-up-to-date:
+    name: Check Openapi generated spec is up to date
+    needs: file-changes
+    if: "needs.file-changes.outputs.backend == 'true'"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        name: Checkout - Current ref
+        with:
+          fetch-depth: 0
+
+      # Setup build
+      - uses: kestra-io/actions/composite/setup-build@main
+        name: Setup - Build
+        id: build
+        with:
+          java-enabled: true
+          java-version: 25
+
+      - name: Generate the openapi spec
+        run: ./gradlew generateOpenapiSpec
+        shell: bash
+
+      - name: Check Openapi spec up to date
+        run: |
+          if [ -n "$(git diff --name-only -- openapi.yml)" ]; then
+            git diff -- openapi.yml
+            echo ""
+            echo ""
+            echo "❌❌❌ generated openapi.yml is not up to date"
+            echo ""
+            echo "We do now ship openapi.yml spec with our code. It is mandatory to commit the updated spec generated with ./gradlew generateOpenapiSpec"
+            exit 1
+          fi
+        shell: bash
+
   e2e-tests:
     name: E2E - Tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main

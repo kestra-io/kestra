@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, useTemplateRef, watch, nextTick} from "vue";
+    import {computed, ref, watch, nextTick} from "vue";
     import {useI18n} from "vue-i18n";
     import {DeleteOutline} from "../../utils/icons";
 
@@ -86,8 +86,6 @@
     defineOptions({
         inheritAttrs: false,
     });
-
-    const valueComponent = useTemplateRef<any[]>("valueComponent");
 
     const props = withDefaults(defineProps<{
         modelValue?: Record<string, any>;

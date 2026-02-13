@@ -28,8 +28,10 @@ function statsGlobalData(config: Config, uid: string): any {
         from: "APP",
         iid: config.uuid,
         uid: uid,
-        app_version: config.version,
-        app_type: config.edition
+        app: {
+            version: config.version,
+            type: config.edition
+        }
     }
 }
 

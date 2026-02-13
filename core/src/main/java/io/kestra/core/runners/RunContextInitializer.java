@@ -161,6 +161,10 @@ public class RunContextInitializer {
             new HashMap<>((Map<String, Object>) variables.get("outputs")) :
             new HashMap<>();
 
+        Map<String, Object> triggerOutputs = variables.containsKey("trigger") ?
+            new HashMap<>((Map<String, Object>) variables.get("trigger")) :
+            new HashMap<>();
+
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> current = result;
 
@@ -186,6 +190,7 @@ public class RunContextInitializer {
 
         outputs.put(workerTaskResult.getTaskRun().getTaskId(), result);
         variables.put("outputs", new Secret(secretKey, runContext::logger).decrypt(outputs));
+        variables.put("trigger", new Secret(secretKey, runContext::logger).decrypt(triggerOutputs));
 
         runContext.setVariables(variables);
         return runContext;

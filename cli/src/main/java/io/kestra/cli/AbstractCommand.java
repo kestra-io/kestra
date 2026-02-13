@@ -16,7 +16,6 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.utils.Rethrow;
-import picocli.CommandLine;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,7 +23,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.MessageFormat;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
@@ -33,14 +31,9 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(
-    versionProvider = VersionProvider.class,
-    mixinStandardHelpOptions = true,
-    showDefaultValues = true
-)
 @Slf4j
 @Introspected
-public abstract class AbstractCommand implements Callable<Integer> {
+public abstract class AbstractCommand extends BaseCommand implements Callable<Integer> {
     @Inject
     protected ApplicationContext applicationContext;
 
@@ -59,14 +52,8 @@ public abstract class AbstractCommand implements Callable<Integer> {
     @Inject
     protected Provider<PluginManager> pluginManagerProvider;
 
-    private PluginRegistry pluginRegistry;
-
-    @Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
-    private boolean[] verbose = new boolean[0];
-
-    @Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
-    private LogLevel logLevel = LogLevel.INFO;
-
+    protected PluginRegistry pluginRegistry;
+    
     @Option(names = {"--internal-log"}, description = "Change also log level for internal log")
     private boolean internalLog = false;
 
@@ -75,14 +62,6 @@ public abstract class AbstractCommand implements Callable<Integer> {
 
     @Option(names = {"-p", "--plugins"}, description = "Path to plugins directory")
     protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
-
-    public enum LogLevel {
-        TRACE,
-        DEBUG,
-        INFO,
-        WARN,
-        ERROR
-    }
 
     @Override
     public Integer call() throws Exception {
@@ -93,19 +72,25 @@ public abstract class AbstractCommand implements Callable<Integer> {
             this.startupHook.start(this);
         }
 
+        maybeInitPlugins();
+        maybeStartWebserver();
+        return 0;
+    }
+
+    /**
+     * Initializes the plugin registry.
+     */
+    protected void maybeInitPlugins() {
         if (pluginRegistryProvider != null && this.pluginsPath != null && loadExternalPlugins()) {
             pluginRegistry = pluginRegistryProvider.get();
             pluginRegistry.registerIfAbsent(pluginsPath);
 
-            // PluginManager mus only be initialized if a registry is also instantiated
+            // PluginManager must only be initialized if a registry is also instantiated
             if (isPluginManagerEnabled()) {
                 PluginManager manager = pluginManagerProvider.get();
                 manager.start();
             }
         }
-
-        startWebserver();
-        return 0;
     }
 
     /**
@@ -127,20 +112,6 @@ public abstract class AbstractCommand implements Callable<Integer> {
      */
     protected boolean isPluginManagerEnabled() {
         return true;
-    }
-
-    private static String message(String message, Object... format) {
-        return CommandLine.Help.Ansi.AUTO.string(
-            format.length == 0 ? message : MessageFormat.format(message, format)
-        );
-    }
-
-    protected static void stdOut(String message, Object... format) {
-        System.out.println(message(message, format));
-    }
-
-    protected static void stdErr(String message, Object... format) {
-        System.err.println(message(message, format));
     }
 
     private void startLogger() {
@@ -192,7 +163,7 @@ public abstract class AbstractCommand implements Callable<Integer> {
         }
     }
 
-    private void startWebserver() {
+    private void maybeStartWebserver() {
         if (!(this instanceof ServerCommandInterface)) {
             return;
         }

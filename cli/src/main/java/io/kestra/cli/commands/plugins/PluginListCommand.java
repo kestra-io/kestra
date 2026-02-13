@@ -5,6 +5,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -16,16 +17,14 @@ import java.util.List;
     name = "list",
     description = "List all plugins already installed"
 )
+@Singleton
 public class PluginListCommand extends AbstractCommand {
     @Spec
     CommandLine.Model.CommandSpec spec;
 
     @Option(names = {"--core"}, description = "Also write core tasks plugins")
     private boolean core = false;
-
-    @Inject
-    private PluginRegistry registry;
-
+    
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -36,8 +35,7 @@ public class PluginListCommand extends AbstractCommand {
             );
         }
 
-        List<RegisteredPlugin> plugins = core ? registry.plugins() : registry.externalPlugins();
-
+        List<RegisteredPlugin> plugins = core ? pluginRegistry.plugins() : pluginRegistry.externalPlugins();
         plugins.forEach(registeredPlugin -> stdOut(registeredPlugin.toString()));
 
         return 0;

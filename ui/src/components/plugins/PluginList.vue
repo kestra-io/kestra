@@ -177,7 +177,11 @@
         return basePlugins.value.filter(plugin =>
             (getPluginDisplayName(plugin) ?? "").toLowerCase().includes(query) ||
             (plugin.title ?? "").toLowerCase().includes(query) ||
-            getPluginElements(plugin).some(element => element.toLowerCase().includes(query))
+            getPluginElements(plugin).some(element => element.toLowerCase().includes(query)) ||
+            (plugin.name ?? "").toLowerCase().includes(query) ||
+            (plugin.group ?? "").toLowerCase().includes(query) ||
+            (plugin.artifactId ?? "").toLowerCase().includes(query) ||
+            (plugin.manifest?.["X-Kestra-Title"] ?? "").toLowerCase().includes(query)
         );
     });
 

@@ -163,6 +163,12 @@ public record QueryFilter(
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
         },
+        EXPIRATION_DATE("expirationDate") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
         STATE("state") {
             @Override
             public List<Op> supportedOp() {
@@ -344,7 +350,8 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY,
                     Field.NAMESPACE,
-                    Field.UPDATED
+                    Field.UPDATED,
+                    Field.EXPIRATION_DATE
                 );
             }
         },

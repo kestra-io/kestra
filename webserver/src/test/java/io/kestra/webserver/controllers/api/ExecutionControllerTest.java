@@ -212,16 +212,18 @@ class ExecutionControllerTest {
         assertThat(execution).isNotNull();
         assertThat(execution.getId()).isNotNull();
 
-        HttpResponse<Execution> response = client.toBlocking().exchange(
-            HttpRequest
-                .POST(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
-                    new Hello("webhook")
-                ),
-            Execution.class
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest
+                    .POST(
+                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                        new Hello("webhook")
+                    ),
+                Execution.class
+            )
         );
-        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        assertThat(response.body()).isNull();
+        assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getResponse().body()).isNull();
     }
 
     @Test

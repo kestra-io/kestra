@@ -315,7 +315,7 @@
             }
 
             kvs.value = allKvs;
-            total.value = allKvs.length;
+            total.value = kvsResponse.total ?? 0;
         } finally {
             if (callback) callback();
         }

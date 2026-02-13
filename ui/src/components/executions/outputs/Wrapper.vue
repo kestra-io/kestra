@@ -84,7 +84,7 @@
                                         :navbar="false"
                                         :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
-                                        @confirm="onDebugExpression($event)"
+                                        @confirm="if($event)onDebugExpression($event)"
                                         class="w-100"
                                     />
 
@@ -138,7 +138,7 @@
 
                         <VarValue
                             v-if="displayVarValue()"
-                            :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
+                            :value="typeof selectedValue === 'object' && selectedValue?.uri ? selectedValue?.uri : selectedValue"
                             :execution="execution"
                         />
                         <SubFlowLink
@@ -262,7 +262,7 @@
 
     const execution = computed(() => executionsStore.execution);
 
-    function isValidURL(url) {
+    function isValidURL(url: string) {
         try {
             new URL(url);
             return true;
@@ -271,13 +271,13 @@
         }
     }
 
-    const processedValue = (data) => {
+    const processedValue = (data: TransformedTask) => {
         const regular = false;
 
         if (!data.value && !data.children?.length) {
             return {label: data.value, regular};
         } else if (data?.children?.length) {
-            const message = (length) => ({label: `${length} items`, regular});
+            const message = (length: number) => ({label: `${length} items`, regular});
             const length = data.children.length;
 
             return data.children[0].isFirstPass
@@ -296,7 +296,7 @@
     };
 
     const expandedValue = ref("");
-    const selected = ref<string[]>([]);
+    const selected = ref<(string | {uri: string})[]>([]);
 
     onMounted(() => {
         const task = outputs.value?.[1];
@@ -306,12 +306,12 @@
         expandedValue.value = task.value;
 
         const child = task.children?.[1];
-        if (child) {
+        if (child?.path) {
             selected.value.push(child.value);
             expandedValue.value = child.path;
 
             const grandChild = child.children?.[1];
-            if (grandChild) {
+            if (grandChild?.path) {
                 selected.value.push(grandChild.value);
                 expandedValue.value = grandChild.path;
             }
@@ -341,8 +341,18 @@
         return {label, value};
     };
 
-    const transform = (o, isFirstPass, path = "") => {
-        const result = Object.keys(o).map((key) => {
+    interface TransformedTask {
+        label: string;
+        heading?: boolean;
+        component?: any;
+        isFirstPass?: boolean;
+        value?: any;
+        children?: TransformedTask[];
+        path?: string;
+    }
+
+    const transform = (o: any, isFirstPass: boolean, path = "") => {
+        const result: TransformedTask[] = Object.keys(o).map((key) => {
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
 
@@ -367,7 +377,7 @@
         });
 
         if (isFirstPass) {
-            const OUTPUTS = {
+            const OUTPUTS: TransformedTask = {
                 label: t("outputs"),
                 heading: true,
                 component: shallowRef(TextBoxSearchOutline),
@@ -397,7 +407,7 @@
             label: t("tasks"),
             heading: true,
             component: shallowRef(TimelineTextOutline),
-        };
+        } as any;
         tasks?.unshift(HEADING);
 
         return tasks;
@@ -407,7 +417,11 @@
 
     const icons = computed(() => {
         // TODO: https://github.com/kestra-io/kestra/issues/5643
-        const getTaskIcons = (tasks, mapped) => {
+        const getTaskIcons = (tasks: {
+            id: string;
+            type: string;
+            tasks?: any[];
+        }[], mapped: Record<string, string>) => {
             tasks.forEach((task) => {
                 mapped[task.id] = task.type;
                 if (task.tasks && task.tasks.length > 0) {
@@ -416,7 +430,7 @@
             });
         };
 
-        const mapped = {};
+        const mapped:Record<string, string> = {};
 
         getTaskIcons(executionsStore?.flow?.tasks || [], mapped);
         getTaskIcons(executionsStore?.flow?.errors || [], mapped);
@@ -425,11 +439,11 @@
         return mapped;
     });
 
-    const trim = (value) =>
+    const trim = (value: any) =>
         typeof value !== "string" || value.length < 16
             ? value
             : `${value.substring(0, 16)}...`;
-    const isFile = (value) =>
+    const isFile = (value: any) =>
         typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
     const displayVarValue = () =>
         isFile(selectedValue.value) ||

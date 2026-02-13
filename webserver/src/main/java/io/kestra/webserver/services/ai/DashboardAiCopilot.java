@@ -12,14 +12,22 @@ import static io.kestra.core.plugins.RegisteredPlugin.*;
 
 @Slf4j
 public class DashboardAiCopilot extends AbstractAiCopilot {
-    public static final String ALREADY_VALID_MESSAGE = "This dashboard already performs the requested action. Please provide additional instructions if you would like to request modifications.";
-    public static final String NON_REQUEST_ERROR = "I can only assist with creating Kestra dashboards.";
-    public static final String UNABLE_TO_GENERATE_ERROR = "The prompt did not provide enough information to generate a valid dashboard. Please clarify your request.";
+    private static final String ALREADY_VALID_MESSAGE = "This dashboard already performs the requested action. Please provide additional instructions if you would like to request modifications.";
+    private static final String NON_REQUEST_ERROR = "I can only assist with creating Kestra dashboards.";
+    private static final String UNABLE_TO_GENERATE_ERROR = "The prompt did not provide enough information to generate a valid dashboard. Please clarify your request.";
     private static final List<String> POSSIBLE_ERROR_MESSAGES = List.of(ALREADY_VALID_MESSAGE, NON_REQUEST_ERROR, UNABLE_TO_GENERATE_ERROR);
 
     private static final List<String> EXCLUDED_PLUGIN_TYPES = List.of(
         STORAGES_GROUP_NAME,
-        SECRETS_GROUP_NAME
+        SECRETS_GROUP_NAME,
+        APPS_GROUP_NAME,
+        APP_BLOCKS_GROUP_NAME,
+        TASKS_GROUP_NAME,
+        TRIGGERS_GROUP_NAME,
+        CONDITIONS_GROUP_NAME,
+        ASSETS_GROUP_NAME,
+        ASSETS_EXPORTERS_GROUP_NAME,
+        LOG_EXPORTERS_GROUP_NAME
     );
 
     public DashboardAiCopilot(JsonSchemaGenerator jsonSchemaGenerator, PluginRegistry pluginRegistry, String fallbackPluginVersion) {

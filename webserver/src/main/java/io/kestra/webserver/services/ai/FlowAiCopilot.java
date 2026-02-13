@@ -12,9 +12,9 @@ import static io.kestra.core.plugins.RegisteredPlugin.*;
 
 @Slf4j
 public class FlowAiCopilot extends AbstractAiCopilot {
-    public static final String ALREADY_VALID_MESSAGE = "This flow already performs the requested action. Please provide additional instructions if you would like to request modifications.";
-    public static final String NON_REQUEST_ERROR = "I can only assist with creating Kestra flows.";
-    public static final String UNABLE_TO_GENERATE_ERROR = "The prompt did not provide enough information to generate a valid flow. Please clarify your request.";
+    private static final String ALREADY_VALID_MESSAGE = "This flow already performs the requested action. Please provide additional instructions if you would like to request modifications.";
+    private static final String NON_REQUEST_ERROR = "I can only assist with creating Kestra flows.";
+    private static final String UNABLE_TO_GENERATE_ERROR = "The prompt did not provide enough information to generate a valid flow. Please clarify your request.";
     private static final List<String> POSSIBLE_ERROR_MESSAGES = List.of(ALREADY_VALID_MESSAGE, NON_REQUEST_ERROR, UNABLE_TO_GENERATE_ERROR);
 
     private static final List<String> EXCLUDED_PLUGIN_TYPES = List.of(

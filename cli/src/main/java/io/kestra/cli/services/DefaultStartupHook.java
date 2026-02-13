@@ -5,6 +5,7 @@ import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.services.VersionService;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -25,16 +26,6 @@ public class DefaultStartupHook implements StartupHookInterface {
    }
 
    private void saveKestraVersion() {
-      applicationContext.findBean(SettingRepositoryInterface.class).ifPresent(repository -> {
-         Optional<Setting> versionSetting = repository.findByKey(Setting.INSTANCE_VERSION);
-         final String version = KestraContext.getContext().getVersion();
-         if (versionSetting.isEmpty() || !versionSetting.get().getValue().equals(version)) {
-            repository.save(Setting.builder()
-                .key(Setting.INSTANCE_VERSION)
-                .value(version)
-                .build()
-            );
-         }
-      });
+      applicationContext.findBean(VersionService.class).ifPresent(VersionService::maybeSaveOrUpdateInstanceVersion);
    }
 }

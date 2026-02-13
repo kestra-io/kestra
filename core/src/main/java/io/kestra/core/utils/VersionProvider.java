@@ -28,7 +28,7 @@ public class VersionProvider {
 
     @Inject
     private Environment environment;
-    
+
     @PostConstruct
     public void start() {
         final Optional<PropertySource> gitProperties = new PropertiesPropertySourceLoader()
@@ -41,7 +41,7 @@ public class VersionProvider {
         this.date = loadTime(gitProperties);
         this.version = loadVersion(buildProperties, gitProperties);
     }
-    
+
     private String loadVersion(final Optional<PropertySource> buildProperties,
                                final Optional<PropertySource> gitProperties) {
         return Stream

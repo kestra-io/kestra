@@ -1,6 +1,5 @@
 package io.kestra.cli;
 
-import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
@@ -53,9 +52,6 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     protected Provider<PluginManager> pluginManagerProvider;
 
     protected PluginRegistry pluginRegistry;
-    
-    @Option(names = {"--internal-log"}, description = "Change also log level for internal log")
-    private boolean internalLog = false;
 
     @Option(names = {"-c", "--config"}, description = "Path to a configuration file")
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
@@ -66,7 +62,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     @Override
     public Integer call() throws Exception {
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(Command.class).name());
-        startLogger();
+        initLogger();
         sendServerLog();
         if (this.startupHook != null) {
             this.startupHook.start(this);
@@ -114,14 +110,8 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
         return true;
     }
 
-    private void startLogger() {
-        if (this.verbose.length == 1) {
-            this.logLevel = LogLevel.DEBUG;
-        } else if (this.verbose.length > 1) {
-            this.logLevel = LogLevel.TRACE;
-        }
-
-
+    @Override
+    protected void initLogger() {
         if (this instanceof ServerCommandInterface) {
             String buildInfo = "";
             if (versionProvider.getRevision() != null) {
@@ -141,20 +131,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                 buildInfo
             );
         }
-
-        ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
-            .getLoggerList()
-            .stream()
-            .filter(logger ->
-                (
-                    this.internalLog && (
-                        logger.getName().startsWith("io.kestra") &&
-                            !logger.getName().startsWith("io.kestra.ee.runner.kafka.services"))
-                )
-            )
-            .forEach(
-                logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))
-            );
+        super.initLogger();
     }
 
     private void sendServerLog() {

@@ -1,5 +1,6 @@
 package io.kestra.cli;
 
+import ch.qos.logback.classic.LoggerContext;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -17,13 +18,36 @@ public abstract class BaseCommand {
 
     @Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
     protected LogLevel logLevel = LogLevel.INFO;
-    
+
+    @Option(names = {"--internal-log"}, description = "Change also log level for internal log")
+    private boolean internalLog = false;
+
     public enum LogLevel {
         TRACE,
         DEBUG,
         INFO,
         WARN,
         ERROR
+    }
+
+    protected void initLogger() {
+        if (this.verbose.length == 1) {
+            this.logLevel = LogLevel.DEBUG;
+        } else if (this.verbose.length > 1) {
+            this.logLevel = LogLevel.TRACE;
+        }
+
+        ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
+            .getLoggerList()
+            .stream()
+            .filter(logger -> (
+                this.internalLog && (
+                    logger.getName().startsWith("io.kestra") &&
+                        !logger.getName().startsWith("io.kestra.ee.runner.kafka.services"))
+            ))
+            .forEach(
+                logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))
+            );
     }
 
     public static String message(String message, Object... format) {

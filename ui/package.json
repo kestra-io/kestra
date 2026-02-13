@@ -86,6 +86,7 @@
         "@storybook/addon-themes": "^10.2.8",
         "@storybook/addon-vitest": "^10.2.8",
         "@storybook/vue3-vite": "^10.2.8",
+        "@types/bootstrap": "^5.2.10",
         "@types/humanize-duration": "^3.27.4",
         "@types/js-yaml": "^4.0.9",
         "@types/moment": "^2.13.0",

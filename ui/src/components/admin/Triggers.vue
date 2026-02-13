@@ -377,7 +377,6 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    //@ts-expect-error No declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import KSFilter from "../filter/components/KSFilter.vue";

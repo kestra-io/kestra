@@ -36,9 +36,10 @@ interface Trigger {
     };
 }
 
-interface Task {
+export interface Task {
     id: string,
     type: string
+    tasks?: Task[]
 }
 
 export interface Input {
@@ -71,6 +72,7 @@ export interface Flow {
         limit: number;
         behavior: string;
     };
+    tasks?: Task[];
 }
 
 export const useFlowStore = defineStore("flow", () => {

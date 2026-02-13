@@ -69,16 +69,16 @@
     function disabledCurrentRoute(items: MenuItem[]) {
         return items
             .map(r => {
-                if (r.href?.path === $route.path) {
+                if (typeof r.href === "object" && r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 
                 // route hack is still needed for blueprints
-                if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
+                if (typeof r.href === "string" && r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
                     r.class = "vsm--link_active";
                 }
 
-                if (r.child && r.child.some(c => $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
+                if (typeof r.href === "string" && r.child && r.child.some(c => typeof c.href === "string" && $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
                     r.class = "vsm--link_active";
                     r.child = disabledCurrentRoute(r.child);
                 }

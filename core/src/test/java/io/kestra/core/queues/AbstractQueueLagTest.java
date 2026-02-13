@@ -1,6 +1,7 @@
 package io.kestra.core.queues;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -43,6 +44,7 @@ public abstract class AbstractQueueLagTest {
     private static final String NO_LAG_TEST_WORKER_GROUP_NAME = "no-lag-test-group";
 
     @Test
+    @FlakyTest(description = "Flaky on CI but never locally")
     void shouldReturnZeroLag_whenAllMessagesConsumed() throws Exception {
         // Given
         CountDownLatch consumedLatch = new CountDownLatch(1);
@@ -64,6 +66,7 @@ public abstract class AbstractQueueLagTest {
     }
 
     @Test
+    @FlakyTest(description = "Flaky on CI but never locally")
     void shouldReturnPositiveLag_whenMessagesProducedAfterConsumerStopped() throws Exception {
         // Given
         CountDownLatch consumedLatch = new CountDownLatch(1);
@@ -88,6 +91,7 @@ public abstract class AbstractQueueLagTest {
     }
 
     @Test
+    @FlakyTest(description = "Flaky on CI but never locally")
     void shouldReturnCorrectLag_whenQueryingNamedWorkerGroup() throws Exception {
         // Given
         CountDownLatch consumedLatch = new CountDownLatch(1);

@@ -74,9 +74,6 @@ dependencies {
         // issue with the Docker lib having a too old version for the k8s extension
         api("org.apache.commons:commons-compress:1.28.0")
 
-        // kubernetes
-        api 'io.kubernetes:client-java:22.0.0'
-
         // Kafka
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"

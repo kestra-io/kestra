@@ -84,7 +84,7 @@
                                         :navbar="false"
                                         :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
-                                        @confirm="if($event)onDebugExpression($event)"
+                                        @confirm="onDebugExpression($event)"
                                         class="w-100"
                                     />
 
@@ -214,7 +214,7 @@
     };
 
     const axios = useAxios();
-    const onDebugExpression = (expression: string) => {
+    const onDebugExpression = (expression?: string) => {
         const taskRun = selectedTask();
 
         if (!taskRun) return;

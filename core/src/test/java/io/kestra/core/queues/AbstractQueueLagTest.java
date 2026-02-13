@@ -1,7 +1,6 @@
 package io.kestra.core.queues;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +42,6 @@ public abstract class AbstractQueueLagTest {
     private static final String NO_LAG_TEST_WORKER_GROUP_NAME = "no-lag-test-group";
 
     @Test
-    @FlakyTest(description = "Flaky on CI but never locally")
     void shouldReturnZeroLag_whenAllMessagesConsumed() throws Exception {
         // Given
         CountDownLatch consumedLatch = new CountDownLatch(1);
@@ -58,7 +55,7 @@ public abstract class AbstractQueueLagTest {
         closeConsumer.run();
 
         // When
-        Integer lag = workerJobQueue.queueLagForConsumerGroup(null, Worker.class);
+        Integer lag = workerJobQueue.queueLagForConsumerGroup(NO_LAG_TEST_WORKER_GROUP_NAME, Worker.class);
 
         // Then
         assertThat(lag).isNotNull();
@@ -66,49 +63,24 @@ public abstract class AbstractQueueLagTest {
     }
 
     @Test
-    @FlakyTest(description = "Flaky on CI but never locally")
     void shouldReturnPositiveLag_whenMessagesProducedAfterConsumerStopped() throws Exception {
         // Given
+        String consumerGroup = IdUtils.create();
         CountDownLatch consumedLatch = new CountDownLatch(1);
-        Runnable closeConsumer = workerJobQueue.receive(null, Worker.class, either -> {
+        Runnable closeConsumer = workerJobQueue.receive(consumerGroup, Worker.class, either -> {
             consumedLatch.countDown();
         }, true);
 
-        workerJobQueue.emit(buildWorkerJob("io.kestra.lag.test"));
+        workerJobQueue.emit(consumerGroup, buildWorkerJob("io.kestra.lag.test"));
         consumedLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         Thread.sleep(1000);
         closeConsumer.run();
 
-        workerJobQueue.emit(buildWorkerJob("io.kestra.lag.test.new"));
+        workerJobQueue.emit(consumerGroup, buildWorkerJob("io.kestra.lag.test.new"));
         Thread.sleep(1000);
 
         // When
-        Integer lag = workerJobQueue.queueLagForConsumerGroup(null, Worker.class);
-
-        // Then
-        assertThat(lag).isNotNull();
-        assertThat(lag).isEqualTo(1);
-    }
-
-    @Test
-    @FlakyTest(description = "Flaky on CI but never locally")
-    void shouldReturnCorrectLag_whenQueryingNamedWorkerGroup() throws Exception {
-        // Given
-        CountDownLatch consumedLatch = new CountDownLatch(1);
-        Runnable closeConsumer = workerJobQueue.receive(TEST_CONSUMER_GROUP_NAME, Worker.class, either -> {
-            consumedLatch.countDown();
-        }, true);
-
-        workerJobQueue.emit(TEST_CONSUMER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test.named"));
-        consumedLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        Thread.sleep(1000);
-        closeConsumer.run();
-
-        workerJobQueue.emit(TEST_CONSUMER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test.named.new"));
-        Thread.sleep(500);
-
-        // When
-        Integer lag = workerJobQueue.queueLagForConsumerGroup(TEST_CONSUMER_GROUP_NAME, Worker.class);
+        Integer lag = workerJobQueue.queueLagForConsumerGroup(consumerGroup, Worker.class);
 
         // Then
         assertThat(lag).isNotNull();

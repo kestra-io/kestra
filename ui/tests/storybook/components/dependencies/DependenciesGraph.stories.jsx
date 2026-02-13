@@ -1,7 +1,6 @@
 /* eslint-disable vue/one-component-per-file */
-import {defineComponent, getCurrentInstance, onMounted, ref} from "vue";
+import {defineComponent, onMounted, ref} from "vue";
 import {vueRouter} from "storybook-vue3-router";
-import {createPinia} from "pinia";
 
 import {
     FLOW,
@@ -10,6 +9,12 @@ import {
 } from "../../../../src/components/dependencies/utils/types";
 import {useDependencies} from "../../../../src/components/dependencies/composables/useDependencies";
 import Table from "../../../../src/components/dependencies/components/Table.vue";
+
+import cytoscape from "cytoscape";
+
+cytoscape.warnings(false)
+
+
 
 export default {
     title: "Dependencies/Graph",
@@ -28,12 +33,9 @@ export default {
 const GraphWrapper = defineComponent({
     name: "DependenciesGraphStoryWrapper",
     props: {
-        subtype: {type: Number, default: FLOW},
+        subtype: {type: String, default: FLOW},
     },
     setup(props) {
-        const app = getCurrentInstance()?.appContext.app;
-        if (app) app.use(createPinia());
-
         onMounted(async () => {
             if (props.subtype === EXECUTION) {
                 const {useExecutionsStore} = await import(
@@ -113,25 +115,19 @@ const GraphWrapper = defineComponent({
 });
 
 export const FlowGraph = () => ({
-    components: {GraphWrapper},
-    template: "<GraphWrapper :subtype=\"FLOW\" />",
     setup() {
-        return {FLOW};
+        return () => <GraphWrapper subtype={FLOW} />
     },
 });
 
 export const ExecutionGraph = () => ({
-    components: {GraphWrapper},
-    template: "<GraphWrapper :subtype=\"EXECUTION\" />",
     setup() {
-        return {EXECUTION};
+        return () => <GraphWrapper subtype={EXECUTION} />
     },
 });
 
 export const NamespaceGraph = () => ({
-    components: {GraphWrapper},
-    template: "<GraphWrapper :subtype=\"NAMESPACE\" />",
     setup() {
-        return {NAMESPACE};
+        return () => <GraphWrapper subtype={NAMESPACE} />;
     },
 });

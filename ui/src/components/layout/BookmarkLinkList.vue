@@ -1,5 +1,5 @@
 <template>
-    <BookmarkLink v-for="p in pages" :key="p.path" :href="p.path" :title="p.label" />
+    <BookmarkLink v-for="p in pages" :key="p.path" :href="p.path" :title="p.label ?? p.path" />
 </template>
 
 <script setup lang="ts">

@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 
 import io.kestra.core.exceptions.InputOutputValidationException;
@@ -10,10 +11,12 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -334,13 +337,13 @@ public class FlowInputOutput {
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
-                  Set<InputOutputValidationException> exceptions =  e.getConstraintViolations().stream()
+                    Set<InputOutputValidationException> exceptions =  e.getConstraintViolations().stream()
                       .map(c-> InputOutputValidationException.of(c.getMessage(), finalInput))
                       .collect(Collectors.toSet());
                     resolvable.resolveWithError(exceptions);
                 }
             }
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException | ConstraintViolationException e){
             resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage(), input));
         }
         catch (Exception e) {
@@ -424,7 +427,7 @@ public class FlowInputOutput {
                     }
                     return parseData(execution, output, current);
                 }
-                catch (IllegalArgumentException e){
+                catch (IllegalArgumentException | ConstraintViolationException e){
                     throw InputOutputValidationException.of(e.getMessage(), output);
                 }
                 catch (Exception e) {
@@ -452,11 +455,11 @@ public class FlowInputOutput {
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
             data.getId(),
-            parseType(execution, data.getType(), data.getId(), elementType, current)
+            parseType(execution, data.getType(), data.getId(), elementType, current, data)
         ));
     }
 
-    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
+    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current, Data data) throws Exception {
         try {
             return switch (type) {
                 case SELECT, ENUM, STRING, EMAIL -> current.toString();
@@ -464,8 +467,10 @@ public class FlowInputOutput {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
-                    String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
-                    yield  EncryptedString.from(encrypted);
+                        SecretInput secretInput = (SecretInput) data;
+                        secretInput.validate(current.toString());
+                        String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
+                        yield  EncryptedString.from(encrypted);
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
@@ -508,7 +513,7 @@ public class FlowInputOutput {
                         yield asList.stream()
                             .map(throwFunction(element -> {
                                 try {
-                                    return parseType(execution, elementType, id, null, element);
+                                    return parseType(execution, elementType, id, null, element, data);
                                 } catch (Throwable e) {
                                     throw new IllegalArgumentException("Unable to parse array element as `" + elementType + "` on `" + element + "`", e);
                                 }
@@ -519,7 +524,7 @@ public class FlowInputOutput {
                     }
                 }
             };
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | ConstraintViolationException e) {
             throw e;
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");

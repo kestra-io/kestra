@@ -140,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, getCurrentInstance} from "vue"
+    import {ref, computed, watch} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
@@ -155,6 +155,7 @@
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import Id from "../../../../Id.vue"
+    import {useAxios} from "../../../../../utils/axios"
 
     const props = defineProps({
         component: {type: String, default: "el-button"},
@@ -173,9 +174,8 @@
     const router = useRouter()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
-    const instance = getCurrentInstance()
     const executionsStore = useExecutionsStore()
-    const $http = instance ? (instance.proxy as any).$http : null
+    const $http = useAxios()
 
     const isOpen = ref(false)
     const isReplayWithInputsOpen = ref(false)
@@ -290,7 +290,7 @@
         })
 
         const execution =
-            response.data.id === props.execution.id && $http
+            response.data.id === props.execution.id
                 ? await ExecutionUtils.waitForState($http, response.data)
                 : response.data
 

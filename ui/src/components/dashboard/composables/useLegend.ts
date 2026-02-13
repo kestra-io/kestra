@@ -46,7 +46,7 @@ export const barLegend = defineChartPlugin<"bar" | "pie" | "doughnut">({
             ul.firstChild.remove();
         }
 
-        const items = chart.options.plugins?.legend?.labels?.generateLabels?.(chart) ?? [];
+        const items = chart.options.plugins?.legend?.labels?.generateLabels?.(chart as any) ?? [];
 
         items.forEach((item) => {
             const dataset = chart.data.datasets[item.datasetIndex ?? -1];

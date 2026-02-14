@@ -611,7 +611,14 @@ public class ExecutionController {
                         );
                     })
                     .last()
-                    .map(event -> (HttpResponse<WebhookResponse>) HttpResponse.ok(WebhookResponse.fromExecution(event.getData(), executionUrl(event.getData()))))
+                    .map(event -> {
+                        var responseCode = event.getData().getState().isFailed() ? 500 : 200;
+
+                        return (HttpResponse<WebhookResponse>) HttpResponse.status(HttpStatus.valueOf(responseCode)).body(WebhookResponse.fromExecution(
+                            event.getData(),
+                            executionUrl(event.getData())
+                        ));
+                    })
                     .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
             } else {
                 return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));

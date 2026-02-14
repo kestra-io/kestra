@@ -629,11 +629,13 @@ public class ExecutionController {
                     })
                     .last()
                     .map(event -> {
+                        var responseCode = event.getData().getState().isFailed() ? 500 : 200;
+
                         if (webhook.getReturnOutputs()) {
-                            return HttpResponse.ok(event.getData().getOutputs());
+                            return HttpResponse.status(HttpStatus.valueOf(responseCode)).body(event.getData().getOutputs());
 
                         } else {
-                            return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
+                            return (HttpResponse<?>) HttpResponse.status(HttpStatus.valueOf(responseCode)).body(WebhookResponse.fromExecution(
                                 event.getData(),
                                 executionUrl(event.getData())
                             ));

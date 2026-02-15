@@ -214,10 +214,6 @@ div.line {
             align-items: center;
             gap: .5rem;
         }
-
-        .header > * + * {
-            margin-left: 1rem;
-        }
     }
 
     .el-tag {

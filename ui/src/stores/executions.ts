@@ -33,6 +33,7 @@ export interface Execution{
         taskId: string,
         value?: string
         executionId?: string
+        outputs?: Record<string, any>
     }[]
     state: {
         current: string;

@@ -55,6 +55,8 @@ export type MenuItem = {
         locked?: boolean;
     };
     hidden?: boolean;
+    disabled?: boolean;
+    "class"?: string;
 };
 
 export function useLeftMenu() {

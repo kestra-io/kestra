@@ -90,7 +90,7 @@
 
             for (const plugin of pluginsStore.plugins || []) {
                 for (const curSection of pluginKeySection) {
-                    const entries = plugin[curSection];
+                    const entries = plugin[curSection] as {cls: string, title?: string, deprecated?: boolean}[] | undefined;
                     if (entries) {
                         for (const {cls, title} of entries.filter(({deprecated}) => !deprecated)) {
                             if (cls) {

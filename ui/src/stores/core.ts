@@ -4,6 +4,7 @@ import {ref} from "vue";
 import {useAxios} from "../utils/axios";
 import {Message} from "../components/ErrorToast.vue";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
+import {Flow} from "./flow";
 
 interface GuidedProperties {
     tourStarted: boolean;
@@ -22,7 +23,7 @@ export const useCoreStore = defineStore("core", () => {
         template: undefined,
     })
     const monacoYamlConfigured = ref(false)
-    const tutorialFlows = ref<any[]>([])
+    const tutorialFlows = ref<Flow[]>([])
 
     const axios = useAxios();
 

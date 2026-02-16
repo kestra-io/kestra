@@ -144,9 +144,8 @@
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
     const aiCopilotAllowed = computed(() => {
-        return authStore.user?.isAllowedGlobal(permission.AI_COPILOT, action.READ);
-    }
-    )
+        return authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
+    });
 
     async function loadFile() {
         if (props.dirty || props.flow) return;

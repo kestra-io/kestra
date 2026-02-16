@@ -109,7 +109,6 @@
             action: "start_guided_clicked",
             mode: "guided",
         });
-        onboardingStore.startGuided();
         router.push({name: "flows/create", query: {onboarding: "guided"}});
     };
 
@@ -198,6 +197,12 @@
         border: 1px solid color-mix(in srgb, var(--el-color-primary) 45%, transparent);
         vertical-align: middle;
         letter-spacing: 0.01em;
+
+        html.dark & {
+            color: color-mix(in srgb, var(--el-color-primary) 45%, white);
+            background: color-mix(in srgb, var(--el-color-primary) 32%, transparent);
+            border-color: color-mix(in srgb, var(--el-color-primary) 62%, transparent);
+        }
     }
 
     .action-card-content p {

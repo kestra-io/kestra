@@ -13,14 +13,6 @@
                 </div>
             </div>
             <p class="description" v-html="stepDescription" />
-            <div v-if="isFinishStep" class="finish-actions">
-                <el-button @click="goToBlueprints">
-                    {{ t("onboarding.finish_actions.explore_blueprints") }}
-                </el-button>
-                <el-button @click="goToCreateFlow">
-                    {{ t("onboarding.finish_actions.create_flow") }}
-                </el-button>
-            </div>
             <div v-if="snippetMarkdown" class="snippet-wrap">
                 <Markdown
                     :source="snippetMarkdown"
@@ -30,16 +22,19 @@
             </div>
             <el-alert
                 v-if="externalActionNote"
-                :title="externalActionNote"
                 type="info"
                 :closable="false"
                 showIcon
                 class="feedback"
-            />
+            >
+                <template #title>
+                    <span class="feedback-note-title" v-html="externalActionNote" />
+                </template>
+            </el-alert>
             <el-alert
                 v-if="feedback.message"
                 :title="feedback.message"
-                :type="feedback.level === 'error' ? 'error' : 'warning'"
+                :type="feedback.level === 'error' ? 'error' : feedback.level === 'info' ? 'info' : 'warning'"
                 :closable="false"
                 showIcon
                 class="feedback"
@@ -49,7 +44,7 @@
                     {{ t("onboarding.actions.cancel_tutorial") }}
                 </el-button>
                 <div class="actions-right">
-                    <span v-if="isStepComplete && !isFinishStep" class="step-complete">
+                    <span v-if="showStepCompleteBadge && isStepComplete && !isFinishStep" class="step-complete">
                         <CheckCircle :size="16" />
                         {{ t("onboarding.actions.complete") }}
                     </span>
@@ -60,8 +55,11 @@
             </div>
             <div v-else class="actions finish-footer">
                 <div class="actions-right">
-                    <el-button type="primary" @click="completeGuide">
-                        {{ t("onboarding.actions.finish_tutorial") }}
+                    <el-button @click="goToBlueprints">
+                        {{ t("onboarding.finish_actions.explore_blueprints") }}
+                    </el-button>
+                    <el-button type="primary" :icon="Plus" @click="goToCreateFlow">
+                        {{ t("onboarding.finish_actions.create_flow") }}
                     </el-button>
                 </div>
             </div>
@@ -80,6 +78,7 @@
     import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics";
     import Markdown from "../layout/Markdown.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
 
     const route = useRoute();
     const router = useRouter();
@@ -193,7 +192,7 @@
         const startOffset = {...dragOffset.value};
         let moved = false;
         const startRect = guideCardEl.value?.getBoundingClientRect();
-        const viewportMargin = 12;
+        const viewportMargin = 20;
 
         const onMouseMove = (moveEvent: MouseEvent) => {
             if (!startRect) {
@@ -231,24 +230,25 @@
     const applyHighlight = () => {
         clearHighlight();
         const selector = currentStep.value?.targetSelector;
-        if (!selector) {
-            return;
-        }
-        const target = document.querySelector(selector) as HTMLElement | null;
-        if (!target) {
-            if (highlightRetryCount.value < maxHighlightRetries) {
-                highlightRetryCount.value += 1;
-                highlightRetryTimer = window.setTimeout(() => {
-                    applyHighlight();
-                }, 120);
+        if (selector) {
+            const target = document.querySelector(selector) as HTMLElement | null;
+            if (!target) {
+                if (highlightRetryCount.value < maxHighlightRetries) {
+                    highlightRetryCount.value += 1;
+                    highlightRetryTimer = window.setTimeout(() => {
+                        applyHighlight();
+                    }, 120);
+                }
+                return;
             }
-            return;
-        }
-        highlightRetryCount.value = 0;
-        highlightedElement.value = target;
-        highlightedElement.value.classList.add("onboarding-v2-highlight");
-        if (isActionStep.value) {
-            highlightedElement.value.classList.add("onboarding-v2-highlight-pulse");
+            highlightRetryCount.value = 0;
+            highlightedElement.value = target;
+            highlightedElement.value.classList.add("onboarding-v2-highlight");
+            if (isActionStep.value) {
+                highlightedElement.value.classList.add("onboarding-v2-highlight-pulse");
+            }
+        } else {
+            highlightRetryCount.value = 0;
         }
 
         if (userHasDraggedCard.value) {
@@ -257,14 +257,15 @@
 
         if (currentStep.value?.overlayPosition) {
             const cardWidth = Math.min(475, window.innerWidth - 96);
-            const minMargin = 24;
+            const minMargin = 32;
+            const rightEdgeMargin = minMargin * 3;
             const estimatedCardHeight = 320;
 
             let left = minMargin;
             if (currentStep.value.overlayPosition.horizontal === "center") {
                 left = (window.innerWidth - cardWidth) / 2;
             } else if (currentStep.value.overlayPosition.horizontal === "right") {
-                left = window.innerWidth - cardWidth - minMargin;
+                left = window.innerWidth - cardWidth - rightEdgeMargin;
             }
             left = Math.max(minMargin, Math.min(left, window.innerWidth - cardWidth - minMargin));
 
@@ -292,7 +293,7 @@
                 const rect = dialog.getBoundingClientRect();
                 const cardWidth = Math.min(475, window.innerWidth - 96);
                 const gap = 24;
-                const minMargin = 24;
+                const minMargin = 32;
                 const left = Math.max(
                     minMargin,
                     Math.min(rect.left + (rect.width - cardWidth) / 2, window.innerWidth - cardWidth - minMargin),
@@ -308,11 +309,17 @@
             }
         }
 
-        const top = Math.max(84, Math.min(160, window.innerHeight - 320));
+        const estimatedCardHeight = 320;
+        const minMargin = 32;
+        const rightEdgeMargin = minMargin * 3;
+        const top = Math.max(
+            minMargin,
+            Math.min((window.innerHeight - estimatedCardHeight) / 2, window.innerHeight - estimatedCardHeight - minMargin),
+        );
         cardStyle.value = {
             top: `${top}px`,
             left: "auto",
-            right: "10rem",
+            right: `${rightEdgeMargin}px`,
             bottom: "auto",
         };
     };
@@ -331,6 +338,7 @@
         }
         return validationResult.value.level === "warn" && Boolean(currentStep.value?.allowNextOnWarning);
     });
+    const showStepCompleteBadge = computed(() => currentStep.value?.showCompletionBadge !== false);
     const isStepComplete = computed(() => canProceed.value);
     const validationVisibility = computed(() => {
         if (!currentStep.value) {
@@ -352,12 +360,18 @@
 
         return true;
     });
-    const feedback = computed<{level?: "warn" | "error"; message: string}>(() => {
+    const feedback = computed<{level?: "info" | "warn" | "error"; message: string}>(() => {
         if (!attemptedNext.value || !validationResult.value || canProceed.value || !canShowValidation.value) {
             return {message: ""};
         }
+        const level =
+            validationResult.value.level === "warn"
+                ? "warn"
+                : validationResult.value.level === "info"
+                    ? "info"
+                    : "error";
         return {
-            level: validationResult.value.level === "warn" ? "warn" : "error",
+            level,
             message: translateMaybe(validationResult.value.message) || t("onboarding.validation.complete_step"),
         };
     });
@@ -438,11 +452,13 @@
 
     const goToBlueprints = () => {
         trackCurrentStepAction("finish_explore_blueprints_clicked");
+        completeGuide();
         void router.push({name: "blueprints", params: {kind: "flow", tab: "all"}});
     };
 
     const goToCreateFlow = () => {
         trackCurrentStepAction("finish_create_flow_clicked");
+        completeGuide();
         void router.push({name: "flows/create"});
     };
 
@@ -641,6 +657,14 @@
         margin-bottom: 0.75rem;
     }
 
+    .onboarding-overlay .feedback :deep(.el-alert__title) {
+        white-space: pre-line;
+    }
+
+    .onboarding-overlay .feedback :deep(.feedback-note-title) {
+        white-space: pre-line;
+    }
+
     .onboarding-overlay .actions {
         display: flex;
         justify-content: space-between;
@@ -655,20 +679,17 @@
     }
 
 
-    .onboarding-overlay .finish-actions {
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
-        margin-bottom: 1rem;
-    }
-
     .onboarding-overlay .finish-footer {
         justify-content: flex-end;
     }
 
     .onboarding-overlay .finish-footer .actions-right {
         justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .onboarding-overlay .finish-footer .actions-right :deep(.el-button + .el-button) {
+        margin-left: 0;
     }
 
     .onboarding-v2-highlight {

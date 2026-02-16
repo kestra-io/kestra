@@ -22,7 +22,7 @@ describe("firstFlowGuide validations", () => {
         expect(result.message).toBe("onboarding.validation.add_id");
     });
 
-    it("accepts a valid first log task with inputs usage", () => {
+    it("accepts a valid first python task with inputs usage", () => {
         const result = findStep("add_log_task").validate({
             flowYaml: `id: my_flow
 namespace: company.team
@@ -31,8 +31,9 @@ inputs:
     type: STRING
 tasks:
   - id: greet
-    type: io.kestra.plugin.core.log.Log
-    message: "Hello {{ inputs.name }}"`,
+    type: io.kestra.plugin.scripts.python.Script
+    script: |
+      print("Hello {{ inputs.name }}")`,
             routeName: "flows/create",
             saveCount: 0,
             executionCount: 0,

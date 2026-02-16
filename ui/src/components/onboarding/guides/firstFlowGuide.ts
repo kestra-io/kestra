@@ -31,6 +31,7 @@ export interface OnboardingGuideStep {
     stepType: OnboardingStepType;
     title: string;
     description: string;
+    showCompletionBadge?: boolean;
     targetSelector?: string;
     overlayPosition?: OnboardingOverlayPosition;
     snippet?: string;
@@ -57,6 +58,7 @@ export const FIRST_FLOW_GUIDE_STEPS: OnboardingGuideStep[] = [
         stepType: "inspection",
         title: "onboarding.steps.flow_basics.title",
         description: "onboarding.steps.flow_basics.description",
+        showCompletionBadge: false,
         targetSelector: "#editorWrapper",
         snippet: `id: my_flow
 namespace: company.team
@@ -67,8 +69,9 @@ inputs:
 
 tasks:
   - id: greet
-    type: io.kestra.plugin.core.log.Log
-    message: "Hello {{ inputs.name }}"`,
+    type: io.kestra.plugin.scripts.python.Script
+    script: |
+      print("Hello {{ inputs.name }}")`,
         snippetCopyEnabled: false,
         validate: () => ({ok: true}),
     },
@@ -82,10 +85,10 @@ tasks:
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml);
             if (error) {
-                return {ok: false, level: "error", message: error};
+                return {ok: false, level: "info", message: "Please fix the YAML formatting, then continue."};
             }
             if (!parsed?.id) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_id"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_id"};
             }
             return {ok: true};
         },
@@ -100,10 +103,10 @@ tasks:
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml);
             if (error) {
-                return {ok: false, level: "error", message: error};
+                return {ok: false, level: "info", message: "Please fix the YAML formatting, then continue."};
             }
             if (!parsed?.namespace) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_namespace"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_namespace"};
             }
             return {ok: true};
         },
@@ -120,17 +123,17 @@ tasks:
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml);
             if (error) {
-                return {ok: false, level: "error", message: error};
+                return {ok: false, level: "info", message: "Please fix the YAML formatting, then continue."};
             }
             if (!Array.isArray(parsed?.inputs) || parsed.inputs.length === 0) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_input_section"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_input_section"};
             }
             const nameInput = parsed.inputs.find((input: any) => input?.id === "name");
             if (!nameInput) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_input_id"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_input_id"};
             }
             if (nameInput?.type !== "STRING") {
-                return {ok: false, level: "error", message: "onboarding.validation.add_input_type"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_input_type"};
             }
             return {ok: true};
         },
@@ -143,28 +146,29 @@ tasks:
         targetSelector: "#editorWrapper",
         snippet: `tasks:
   - id: greet
-    type: io.kestra.plugin.core.log.Log
-    message: "Hello {{ inputs.name }}"`,
+    type: io.kestra.plugin.scripts.python.Script
+    script: |
+      print("Hello {{ inputs.name }}")`,
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml);
             if (error) {
-                return {ok: false, level: "error", message: error};
+                return {ok: false, level: "info", message: "Please fix the YAML formatting, then continue."};
             }
             const firstTask = parsed?.tasks?.[0];
             if (!Array.isArray(parsed?.tasks) || !parsed.tasks[0]) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_log_task_section"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_log_task_section"};
             }
             if (!firstTask?.id) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_log_task_id"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_log_task_id"};
             }
-            if (firstTask?.type !== "io.kestra.plugin.core.log.Log") {
-                return {ok: false, level: "error", message: "onboarding.validation.add_log_task_type"};
+            if (firstTask?.type !== "io.kestra.plugin.scripts.python.Script") {
+                return {ok: false, level: "info", message: "onboarding.validation.add_log_task_type"};
             }
-            if (!firstTask?.message || typeof firstTask.message !== "string") {
-                return {ok: false, level: "error", message: "onboarding.validation.add_log_task_message"};
+            if (!firstTask?.script || typeof firstTask.script !== "string") {
+                return {ok: false, level: "info", message: "onboarding.validation.add_log_task_message"};
             }
-            if (!/\{\{\s*inputs\.name\s*}}/.test(firstTask.message)) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_log_task_pebble"};
+            if (!/\{\{\s*inputs\.name\s*}}/.test(firstTask.script)) {
+                return {ok: false, level: "info", message: "onboarding.validation.add_log_task_pebble"};
             }
             return {ok: true};
         },
@@ -179,7 +183,7 @@ tasks:
         shouldAutoAdvance: ({saveCount}) => saveCount > 0,
         validate: ({saveCount}) => {
             if (saveCount < 1) {
-                return {ok: false, level: "error", message: "onboarding.validation.save_flow"};
+                return {ok: false, level: "info", message: "onboarding.validation.save_flow"};
             }
             return {ok: true};
         },
@@ -189,12 +193,13 @@ tasks:
         stepType: "action_execute",
         title: "onboarding.steps.execute_flow.title",
         description: "onboarding.steps.execute_flow.description",
+        overlayPosition: {vertical: "bottom", horizontal: "right"},
         targetSelector: "#execute-button",
         actionNote: "onboarding.actions.execute_to_continue",
         shouldAutoAdvance: ({executionCount}) => executionCount > 0,
         validate: ({executionCount}) => {
             if (executionCount < 1) {
-                return {ok: false, level: "error", message: "onboarding.validation.execute_flow"};
+                return {ok: false, level: "info", message: "onboarding.validation.execute_flow"};
             }
             return {ok: true};
         },
@@ -204,10 +209,12 @@ tasks:
         stepType: "inspection",
         title: "onboarding.steps.view_logs_status.title",
         description: "onboarding.steps.view_logs_status.description",
+        showCompletionBadge: false,
+        overlayPosition: {vertical: "bottom", horizontal: "right"},
         targetSelector: "#gantt",
         validate: ({routeName}) => {
             if (routeName !== "executions/update") {
-                return {ok: false, level: "warn", message: "onboarding.validation.view_logs_status"};
+                return {ok: false, level: "info", message: "onboarding.validation.view_logs_status"};
             }
             return {ok: true};
         },
@@ -217,12 +224,13 @@ tasks:
         stepType: "action_navigate",
         title: "onboarding.steps.edit_flow_from_execution.title",
         description: "onboarding.steps.edit_flow_from_execution.description",
+        overlayPosition: {vertical: "bottom", horizontal: "right"},
         targetSelector: ".execution-edit-flow-button",
         actionNote: "onboarding.actions.edit_flow_to_continue",
         shouldAutoAdvance: ({routeName}) => routeName === "flows/update",
         validate: ({routeName}) => {
             if (routeName !== "flows/update") {
-                return {ok: false, level: "error", message: "onboarding.validation.edit_flow_from_execution"};
+                return {ok: false, level: "info", message: "onboarding.validation.edit_flow_from_execution"};
             }
             return {ok: true};
         },
@@ -232,6 +240,7 @@ tasks:
         stepType: "code_edit",
         title: "onboarding.steps.add_cron_trigger.title",
         description: "onboarding.steps.add_cron_trigger.description",
+        overlayPosition: {vertical: "middle", horizontal: "right"},
         targetSelector: "#editorWrapper",
         snippet: `triggers:
   - id: every_5_minutes
@@ -240,19 +249,19 @@ tasks:
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml);
             if (error) {
-                return {ok: false, level: "error", message: error};
+                return {ok: false, level: "info", message: "Please fix the YAML formatting, then continue."};
             }
             if (!Array.isArray(parsed?.triggers) || parsed.triggers.length === 0) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_cron_trigger_section"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_cron_trigger_section"};
             }
             const scheduleTrigger = parsed.triggers.find(
                 (trigger: any) => trigger?.type === "io.kestra.plugin.core.trigger.Schedule",
             );
             if (!scheduleTrigger) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_cron_trigger_type"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_cron_trigger_type"};
             }
             if (!scheduleTrigger?.cron || typeof scheduleTrigger.cron !== "string") {
-                return {ok: false, level: "error", message: "onboarding.validation.add_cron_trigger_cron"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_cron_trigger_cron"};
             }
             return {ok: true};
         },
@@ -262,6 +271,7 @@ tasks:
         stepType: "code_edit",
         title: "onboarding.steps.add_input_default.title",
         description: "onboarding.steps.add_input_default.description",
+        overlayPosition: {vertical: "middle", horizontal: "right"},
         targetSelector: "#editorWrapper",
         snippet: `inputs:
   - id: name
@@ -270,17 +280,17 @@ tasks:
         validate: ({flowYaml}) => {
             const {parsed, error} = parseFlow(flowYaml);
             if (error) {
-                return {ok: false, level: "error", message: error};
+                return {ok: false, level: "info", message: "Please fix the YAML formatting, then continue."};
             }
             if (!Array.isArray(parsed?.inputs) || parsed.inputs.length === 0) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_input_default_section"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_input_default_section"};
             }
             const nameInput = parsed.inputs.find((input: any) => input?.id === "name");
             if (!nameInput) {
-                return {ok: false, level: "error", message: "onboarding.validation.add_input_default_id"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_input_default_id"};
             }
             if (nameInput.defaults === undefined || nameInput.defaults === null || nameInput.defaults === "") {
-                return {ok: false, level: "error", message: "onboarding.validation.add_input_default_defaults"};
+                return {ok: false, level: "info", message: "onboarding.validation.add_input_default_defaults"};
             }
             return {ok: true};
         },
@@ -290,12 +300,13 @@ tasks:
         stepType: "action_save",
         title: "onboarding.steps.save_flow_again.title",
         description: "onboarding.steps.save_flow_again.description",
+        overlayPosition: {vertical: "middle", horizontal: "right"},
         targetSelector: ".edit-flow-save-button",
         actionNote: "onboarding.actions.save_to_continue",
         shouldAutoAdvance: ({saveCount}) => saveCount > 1,
         validate: ({saveCount}) => {
             if (saveCount < 2) {
-                return {ok: false, level: "error", message: "onboarding.validation.save_flow_again"};
+                return {ok: false, level: "info", message: "onboarding.validation.save_flow_again"};
             }
             return {ok: true};
         },
@@ -305,6 +316,8 @@ tasks:
         stepType: "inspection",
         title: "onboarding.steps.background_runs_info.title",
         description: "onboarding.steps.background_runs_info.description",
+        showCompletionBadge: false,
+        overlayPosition: {vertical: "middle", horizontal: "right"},
         validate: () => ({ok: true}),
     },
     {
@@ -312,6 +325,7 @@ tasks:
         stepType: "finish",
         title: "onboarding.steps.finish.title",
         description: "onboarding.steps.finish.description",
+        overlayPosition: {vertical: "middle", horizontal: "right"},
         validate: () => ({ok: true}),
     },
 ];

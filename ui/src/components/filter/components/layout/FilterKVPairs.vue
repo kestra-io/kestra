@@ -1,10 +1,13 @@
 <template>
     <div class="filter-details">
-        <div v-if="detailPairs.length" class="active-pairs">
+        <div class="active-pairs">
             <div class="section-title">
                 {{ $t('filter.active key value pairs') }}
             </div>
-            <div class="pairs-container">
+            <div v-if="detailPairs.length === 0" class="empty-state">
+                {{ $t('none') }}
+            </div>
+            <div v-else class="pairs-container">
                 <el-tag
                     v-for="(pair, index) in detailPairs"
                     :key="index"
@@ -37,15 +40,19 @@
             </div>
 
             <el-button
-                v-if="newKey || newValue"
                 type="default"
                 size="small"
                 :icon="Plus"
                 class="add-btn"
+                :disabled="!newKey.trim() || !newValue.trim()"
                 @click="addPair"
             >
-                {{ $t('filter.add key value pair') }}
+                {{ $t('add') }}
             </el-button>
+        </div>
+
+        <div class="filter-counter">
+            {{ detailPairs.length }} {{ detailPairs.length === 1 ? $t('label') : $t('labels') }}
         </div>
     </div>
 </template>
@@ -112,6 +119,12 @@
         font-size: 12px;
         font-weight: 500;
         margin-bottom: 8px;
+    }
+
+    .empty-state {
+        color: var(--ks-content-tertiary);
+        font-size: 14px;
+        font-style: italic;
     }
 
     .pairs-container {
@@ -183,6 +196,15 @@
         width: 100%;
         margin-top: 12px;
     }
+}
+
+.filter-counter {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--ks-border-primary);
+    color: var(--ks-content-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
 }
 
 :deep(.el-input__inner) {

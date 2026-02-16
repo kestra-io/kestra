@@ -1685,9 +1685,10 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getCount()).isEqualTo(3);
 
         // check that the existing have been correctly updated
-        Execution execution1 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()),
-            Execution.class);
+        Execution execution1 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution1.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution1.getId()),
             new Label("existing", "label"),
@@ -1695,9 +1696,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added
-        Execution execution2 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()),
-            Execution.class);
+        Execution execution2 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution2.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution2.getId()),
             new Label("existing", "label"),
@@ -1705,9 +1707,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added and the existing label kept as it was
-        Execution execution3 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()),
-            Execution.class);
+        Execution execution3 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution3.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution3.getId()),
             new Label("existing", "label"),
@@ -1744,9 +1747,10 @@ class ExecutionControllerRunnerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
 
         // check that the existing have been correctly updated
-        Execution execution1 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()),
-            Execution.class);
+        Execution execution1 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution1.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution1.getId()),
             new Label("existing", "label"),
@@ -1754,9 +1758,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added
-        Execution execution2 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()),
-            Execution.class);
+        Execution execution2 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution2.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution2.getId()),
             new Label("existing", "label"),
@@ -1764,9 +1769,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added and the existing label kept as it was
-        Execution execution3 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()),
-            Execution.class);
+        Execution execution3 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution3.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution3.getId()),
             new Label("existing", "label"),

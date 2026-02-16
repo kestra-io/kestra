@@ -20,12 +20,13 @@ import java.util.Map;
 import java.util.Set;
 
 public final class YamlParser {
-    private static final ObjectMapper STRICT_MAPPER = JacksonMapper.ofYaml()
+    private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
 
-    private static final ObjectMapper NON_STRICT_MAPPER = STRICT_MAPPER.copy()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final ObjectMapper STRICT_MAPPER = NON_STRICT_MAPPER.copy()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");

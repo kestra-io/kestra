@@ -477,7 +477,7 @@
         }
       },
       "panels": {
-        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
+        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace Files、Blueprints、Namespace Context）以获取相关功能。",
         "title": "当前没有打开的面板。"
       },
       "plugins": {
@@ -604,7 +604,7 @@
     },
     "file preview truncated": "显示的内容已被截断",
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
-    "files": "文件",
+    "files": "Namespace Files",
     "filter": {
       "active key value pairs": "活动的key/value对",
       "add key value pair": "添加key/value对",

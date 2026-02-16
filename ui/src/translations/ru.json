@@ -477,7 +477,7 @@
         }
       },
       "panels": {
-        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Namespace Context) для связанных функций.",
+        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Namespace Files, Blueprints, Namespace Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
       },
       "plugins": {
@@ -604,7 +604,7 @@
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
-    "files": "Файлы",
+    "files": "Namespace Files",
     "filter": {
       "active key value pairs": "Активные пары ключ/значение",
       "add key value pair": "Добавить пару key/value",

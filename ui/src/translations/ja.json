@@ -477,7 +477,7 @@
         }
       },
       "panels": {
-        "content": "Flow CodeまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Namespace Context）を選択してください。",
+        "content": "Flow CodeまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Namespace Files、Blueprints、Namespace Context）を選択してください。",
         "title": "現在、パネルは開いていません。"
       },
       "plugins": {
@@ -604,7 +604,7 @@
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
-    "files": "ファイル",
+    "files": "Namespace Files",
     "filter": {
       "active key value pairs": "アクティブなkey/valueペア",
       "add key value pair": "キー/バリュー ペアを追加",

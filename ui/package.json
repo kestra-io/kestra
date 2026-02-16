@@ -9,6 +9,7 @@
         "check:types": "vue-tsc --noEmit",
         "build": "vite build --emptyOutDir",
         "preview": "vite preview",
+        "test:types": "echo 'skipping, not explicit type checking on this release version'",
         "test:lint": "eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",

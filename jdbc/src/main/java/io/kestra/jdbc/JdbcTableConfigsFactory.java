@@ -6,7 +6,6 @@ import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
@@ -29,13 +28,7 @@ public class JdbcTableConfigsFactory {
     @Bean
     @Named("queues")
     public InstantiableJdbcTableConfig queues() {
-        return new InstantiableJdbcTableConfig("queues", null, "queues");
-    }
-
-    @Bean
-    @Named("queue")
-    public InstantiableJdbcTableConfig queue() {
-        return new InstantiableJdbcTableConfig("queue", JdbcQueueItem.class, "queue");
+        return new InstantiableJdbcTableConfig("queues", JdbcQueueItem.class, "queues");
     }
 
     @Bean

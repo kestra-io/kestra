@@ -47,7 +47,7 @@ public class JdbcQueueClient {
     private final JdbcQueueConfiguration configuration;
 
     @Inject
-    public JdbcQueueClient(@Named("queue") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration) {
+    public JdbcQueueClient(@Named("queues") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration) {
         this.jdbcRepository = jdbcRepository;
         this.dslContextWrapper = dslContextWrapper;
         this.configuration = configuration;

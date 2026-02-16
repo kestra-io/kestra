@@ -35,7 +35,7 @@ public class JdbcQueueCleaner {
     private final Duration retention;
 
     @Inject
-    public JdbcQueueCleaner(@Named("queue") JdbcTableConfig jdbcTableConfig,
+    public JdbcQueueCleaner(@Named("queues") JdbcTableConfig jdbcTableConfig,
                             JooqDSLContextWrapper dslContextWrapper,
                             List<BroadcastQueueInterface<?>> broadcastQueues,
                             @Property(name = "kestra.jdbc.queue.cleaner.retention", defaultValue = "1h") Duration retention

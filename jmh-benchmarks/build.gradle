@@ -19,5 +19,4 @@ processResources.dependsOn copyGradleProperties
 
 dependencies {
     jmh project(':core')
-    jmh project(':jdbc')
 }

@@ -8,7 +8,6 @@
                 refresh: {shown: true, callback: loadLogs}
             }"
             @search="filter = $event"
-            @filter="onFilterChange"
         />
         <Collapse>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
@@ -60,7 +59,7 @@
         <TaskRunDetails
             v-if="!raw_view"
             ref="logs"
-            :level="level"
+            :level="effectiveLevel"
             :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             :levelToHighlight="cursorLogLevel"
@@ -95,7 +94,7 @@
                             :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
                             :cursor="item.index.toString() === logCursor"
                             :excludeMetas="['namespace', 'flowId', 'executionId']"
-                            :level="level"
+                            :level="effectiveLevel"
                             :filter="filter"
                             :log="item"
                         />
@@ -106,12 +105,9 @@
     </div>
 </template>
 
-<script setup>
-    import {useLogExecutionsFilter} from "../filter/configurations";
-
-    const logExecutionsFilter = useLogExecutionsFilter();
-</script>
 <script>
+    import {computed} from "vue";
+    import {useLogExecutionsFilter} from "../filter/configurations";
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -134,6 +130,12 @@
     import {useExecutionsStore} from "../../stores/executions";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {storageKeys} from "../../utils/constants";
+    import {
+        hasUnsupportedRouteLevelComparator,
+        normalizeRouteLevelFilter,
+        readRouteLevelFilter
+    } from "../filter/utils/logLevelQuery";
+    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
 
     export default {
         components: {
@@ -150,10 +152,33 @@
             Refresh,
             KSFilter
         },
+        setup() {
+            const logExecutionsFilter = useLogExecutionsFilter();
+            const defaultLogLevel = computed(
+                () => localStorage.getItem("defaultLogLevel") || "INFO"
+            );
+
+            const {
+                routeValue: routeLevel,
+                effectiveValue: effectiveLevel,
+            } = useRouteFilterPolicy({
+                defaultValue: () => defaultLogLevel.value,
+                applyDefaultIfMissing: () => true,
+                fallbackValue: () => "TRACE",
+                readFromRoute: readRouteLevelFilter,
+                writeToRoute: normalizeRouteLevelFilter,
+                hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
+            });
+
+            return {
+                logExecutionsFilter,
+                routeLevel,
+                effectiveLevel
+            };
+        },
         data() {
             return {
                 fullscreen: false,
-                level: undefined,
                 filter: undefined,
                 openedTaskrunsCount: 0,
                 raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
@@ -162,11 +187,10 @@
             };
         },
         created() {
-            this.level = (this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO");
             this.filter = (this.$route.query.q || undefined);
         },
         watch:{
-            level: {
+            routeLevel: {
                 handler() {
                     if (this.raw_view) {
                         this.loadLogs();
@@ -215,7 +239,7 @@
                 return this.raw_view ? ViewGrid : ViewList;
             },
             currentLevelOrLower() {
-                return LogUtils.levelOrLower(this.level);
+                return LogUtils.levelOrLower(this.routeLevel);
             },
             countByLogLevel() {
                 return Object.fromEntries(Object.entries(this.viewTypeAwareLogIndicesByLevel).map(([level, indices]) => [level, indices.length]));
@@ -251,7 +275,7 @@
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.level
+                        minLevel: this.effectiveLevel
                     }
                 })
             },
@@ -259,7 +283,7 @@
                 this.executionsStore.downloadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.level
+                        minLevel: this.effectiveLevel
                     }
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
@@ -269,7 +293,7 @@
                 this.executionsStore.downloadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.level,
+                        minLevel: this.effectiveLevel,
                     }
                 }).then((response) => {
                     Utils.copy(response);
@@ -280,14 +304,6 @@
             },
             prevent(event) {
                 event.preventDefault();
-            },
-            onFilterChange(filters) {
-                const levelFilter = filters.find(f => f.key === "level");
-                if (levelFilter) {
-                    this.level = Array.isArray(levelFilter.value) ? levelFilter.value[0] : levelFilter.value;
-                } else {
-                    this.level = undefined;
-                }
             },
             expandCollapseAll() {
                 if (this.$refs.logs && this.$refs.logs.toggleExpandCollapseAll) {

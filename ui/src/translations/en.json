@@ -1824,7 +1824,7 @@
         },
         "level": {
             "label": "Level",
-            "description": "Filter by log severity"
+            "description": "Show logs at or above this severity"
         },
         "level_log_executions": {
             "label": "Log Level"

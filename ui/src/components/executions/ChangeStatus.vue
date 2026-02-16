@@ -70,7 +70,7 @@
     import action from "../../models/action";
     import {State, Status} from "@kestra-io/ui-libs"
     import * as ExecutionUtils from "../../utils/executionUtils";
-    import {shallowRef, ref, defineEmits} from "vue";
+    import {shallowRef, ref} from "vue";
     import {useAuthStore} from "override/stores/auth"
     import {useAxios} from "../../utils/axios";
     import {useRoute, useRouter} from "vue-router";
@@ -100,7 +100,7 @@
             }
         },
         emits: ["follow"],
-        setup() {
+        setup(_props, {emit}) {
             const visible = ref(false);
 
             const {t} = useI18n();
@@ -110,8 +110,6 @@
             const router = useRouter();
             const route = useRoute();
             const toast = useToast();
-
-            const emit = defineEmits(["follow"]);
 
             function changeStatus() {
                 visible.value = false;

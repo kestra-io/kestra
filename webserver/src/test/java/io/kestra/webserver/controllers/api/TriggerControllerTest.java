@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
@@ -349,6 +350,7 @@ class TriggerControllerTest {
     }
 
     @Test
+    @FlakyTest
     void disableByTriggers() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);

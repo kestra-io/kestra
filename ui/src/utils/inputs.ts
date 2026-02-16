@@ -1,7 +1,26 @@
 import moment from "moment/moment";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-export type InputType = "STRING" | "NUMBER" | "BOOLEAN" | "BOOL" | "DATE" | "DATETIME" | "TIME" | "ARRAY" | "MULTISELECT" | "JSON" | "YAML" | "SECRET" | "FILE";
+export type InputType = "STRING" 
+    | "NUMBER" 
+    | "BOOLEAN" 
+    | "BOOL" 
+    | "DATE" 
+    | "DATETIME"
+    | "TIME" 
+    | "ARRAY" 
+    | "MULTISELECT" 
+    | "JSON" 
+    | "YAML" 
+    | "SECRET" 
+    | "FILE" 
+    | "DURATION"
+    | "INT"
+    | "FLOAT"
+    | "ENUM"
+    | "SELECT"
+    | "URI"
+    | "EMAIL";
 
 export default class Inputs {
     static normalize(type: InputType | undefined, value: any) {

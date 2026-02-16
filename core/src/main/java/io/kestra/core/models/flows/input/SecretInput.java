@@ -24,13 +24,17 @@ public class SecretInput extends Input<EncryptedString> {
 
     @Override
     public void validate(EncryptedString input) throws ConstraintViolationException {
-        if (validator != null && !Pattern.matches(validator, input.getValue())) {
+       // validation should be done before encryption
+    }
+
+    public void validate(String current){
+        if (this.getValidator() != null && !Pattern.matches(this.getValidator(), current)) {
             throw ManualConstraintViolation.toConstraintViolationException(
-                "it must match the pattern `" + validator + "`",
+                "it must match the pattern `" + this.getValidator() + "`",
                 this,
                 SecretInput.class,
-                getId(),
-                input
+                this.getId(),
+                current
             );
         }
     }

@@ -104,7 +104,7 @@
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const isRequired = computed(() => {
-        return !props.disabled && props.required?. includes(props.fieldKey);// && props.schema.$required;
+        return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
     });
 
 

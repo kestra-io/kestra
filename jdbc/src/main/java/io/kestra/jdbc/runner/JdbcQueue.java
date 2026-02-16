@@ -56,7 +56,6 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     private final ExecutorService poolExecutor;
     private final ExecutorService asyncPoolExecutor;
-    private final WorkerGroupExecutorInterface workerGroupExecutor;
 
     protected final QueueService queueService;
 
@@ -92,7 +91,6 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.configuration = applicationContext.getBean(Configuration.class);
         this.messageProtectionConfiguration = applicationContext.getBean(MessageProtectionConfiguration.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
-        this.workerGroupExecutor = applicationContext.getBean(WorkerGroupExecutorInterface.class);
 
         JdbcTableConfigs jdbcTableConfigs = applicationContext.getBean(JdbcTableConfigs.class);
 

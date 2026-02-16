@@ -1,7 +1,11 @@
 package io.kestra.core.models.tasks.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.AssetEmit;
+import io.kestra.core.runners.AssetEmitter;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import jakarta.inject.Singleton;
@@ -18,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 /**
  * Service for matching and capturing structured data from task execution logs.
@@ -27,6 +32,7 @@ import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
  * ::{"outputs":{"key":"value"}}::
  * }</pre>
  */
+@Singleton
 public class TaskLogLineMatcher {
 
     protected static final Pattern LOG_DATA_SYNTAX = Pattern.compile("^::(\\{.*})::$");
@@ -76,6 +82,18 @@ public class TaskLogLineMatcher {
                 }
             });
         }
+
+        if (match.assets() != null) {
+            try {
+                AssetEmitter assetEmitter = runContext.assets();
+                assetEmitter.emit(match.assets());
+            } catch (IllegalVariableEvaluationException e) {
+                logger.warn("Unable to get asset emitter for log '{}'", data, e);
+            } catch (QueueException e) {
+                logger.warn("Unable to emit asset for log '{}'", data, e);
+            }
+        }
+
         return match;
     }
 
@@ -90,12 +108,14 @@ public class TaskLogLineMatcher {
      * @param outputs a map of extracted output key-value pairs
      * @param metrics a list of captured metric entries, typically used for reporting or monitoring
      * @param logs    additional log lines derived from the matched line, if any
+     * @param assets    assets emitted through the matched line, if any
      */
     public record TaskLogMatch(
         Map<String, Object> outputs,
         List<AbstractMetricEntry<?>> metrics,
-        List<LogLine> logs
-    ) {
+        List<LogLine> logs,
+        AssetEmit assets
+        ) {
         @Override
         public Map<String, Object> outputs() {
             return Optional.ofNullable(outputs).orElse(Map.of());

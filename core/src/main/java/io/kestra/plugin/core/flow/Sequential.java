@@ -33,8 +33,8 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks sequentially in the order they are defined.",
-    description = "Used to visually group tasks."
+    title = "Run child tasks sequentially.",
+    description = "Executes the listed tasks one after another, with optional `errors` and `finally` hooks. Useful for grouping steps when mixing with parallel constructs."
 )
 @Plugin(
     examples = {

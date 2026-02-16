@@ -1,18 +1,17 @@
 package io.kestra.core.topologies;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.test.TestSuiteUid;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.core.execution.AssertTest;
+import io.kestra.core.utils.TestsUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.AssertTrue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public class FlowTopologyTest {
     @Inject
     private FlowService flowService;
@@ -32,14 +31,15 @@ public class FlowTopologyTest {
     @Test
     void should_findDependencies_simpleCase() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var child = flowService.importFlow(tenantId,
             """
                 id: child
                 namespace: io.kestra.unittest
                 tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
+                  - id: debug
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "child"
                 """);
         var parent = flowService.importFlow(tenantId, """
             id: parent
@@ -54,8 +54,9 @@ public class FlowTopologyTest {
             id: unrelated_flow
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "unrelated"
             """);
 
         // When
@@ -73,14 +74,15 @@ public class FlowTopologyTest {
     @Test
     void should_findDependencies_subchildAndSuperParent() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var subChild = flowService.importFlow(tenantId,
             """
                 id: sub_child
                 namespace: io.kestra.unittest
                 tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
+                  - id: debug
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "debug"
                 """);
         var child = flowService.importFlow(tenantId,
             """
@@ -114,8 +116,9 @@ public class FlowTopologyTest {
             id: unrelated_flow
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "debug"
             """);
 
         // When
@@ -135,14 +138,15 @@ public class FlowTopologyTest {
     @Test
     void should_findDependencies_cyclicTriggers() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var triggeredFlowOne = flowService.importFlow(tenantId,
             """
                 id: triggered_flow_one
                 namespace: io.kestra.unittest
                 tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
+                    - id: debug
+                      type: io.kestra.plugin.core.debug.Return
+                      format: "debug"
                 triggers:
                   - id: listen
                     type: io.kestra.plugin.core.trigger.Flow
@@ -155,8 +159,9 @@ public class FlowTopologyTest {
             id: triggered_flow_two
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "debug"
             triggers:
               - id: listen
                 type: io.kestra.plugin.core.trigger.Flow
@@ -183,7 +188,7 @@ public class FlowTopologyTest {
     @Test
     void flowTriggerWithTargetFlow() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var parent = flowService.importFlow(tenantId,
             """
                 id: parent
@@ -226,8 +231,9 @@ public class FlowTopologyTest {
             id: unrelated_flow
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "debug"
             """);
 
         // When
@@ -244,7 +250,7 @@ public class FlowTopologyTest {
 
     @Test
     void testNamespaceGraph() throws FlowProcessingException {
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
 
         var subChild = flowService.importFlow(tenantId,
             """
@@ -313,9 +319,6 @@ public class FlowTopologyTest {
             );
     }
 
-    private static String randomTenantId() {
-        return FlowTopologyTest.class + IdUtils.create();
-    }
 
 
     record FlowTopologyTestData(String sourceUid, String destinationUid) {

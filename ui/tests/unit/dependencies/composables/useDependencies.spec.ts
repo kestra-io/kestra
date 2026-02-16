@@ -13,6 +13,7 @@ import {useMiscStore} from "override/stores/misc";
 vi.mock("vue-router", () => ({
   useRouter: () => ({push: vi.fn(), replace: vi.fn(), currentRoute: {value: {path: "/"}}, beforeEach: vi.fn(), afterEach: vi.fn()}),
   useRoute: () => ({params: {}, query: {}, path: "/"}),
+  routerKey: Symbol("router"),
 }));
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}));

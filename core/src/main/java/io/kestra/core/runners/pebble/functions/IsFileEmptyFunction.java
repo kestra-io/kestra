@@ -35,7 +35,7 @@ public class IsFileEmptyFunction extends AbstractFileFunction {
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 FileAttributes fileAttributes = namespaceFactory
                     .of(tenantId, namespace, storageInterface)
-                    .getFileMetadata(NamespaceFile.normalize(Path.of(path.getPath()), true));
+                    .getFileMetadata(NamespaceFile.normalize(Path.of(path.getPath())));
                 yield fileAttributes.getSize() <= 0;
             }
             default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));

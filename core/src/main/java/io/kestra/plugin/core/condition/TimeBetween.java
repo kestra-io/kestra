@@ -24,7 +24,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events between two specific times."
+    title = "Allow events between two times of day.",
+    description = """
+        Compares the rendered date/time (defaults to the trigger timestamp) against optional `after` and `before` offsets (ISO-8601 times).
+
+        Supports ranges that cross midnight (e.g., 22:00→02:00). At least one bound is required; missing both raises an evaluation error."""
 )
 @Plugin(
     examples = {

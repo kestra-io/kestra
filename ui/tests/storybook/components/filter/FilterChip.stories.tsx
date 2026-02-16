@@ -60,7 +60,7 @@ const mockFilterKeys = {
         description: "Filter by key-value pairs",
         comparators: [Comparators.IN],
         valueType: "details",
-    } as FilterKeyConfig,
+    } as any,
     radio: {
         key: "child",
         label: "Child",

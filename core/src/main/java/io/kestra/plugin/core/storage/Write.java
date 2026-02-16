@@ -24,8 +24,11 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Write data to a file in Kestra’s internal storage.",
-    description = "Use the Write task to store outputs as files internally and then reference the stored file for processing further down your flow."
+    title = "Write data to a file in Kestra internal storage.",
+    description = """
+        Renders `content`, writes it to a temp file (optionally with `extension`), and uploads it to internal storage, returning the `kestra://` URI.
+
+        Handy for generating small artifacts that downstream tasks can consume via URI."""
 )
 @Plugin(
     examples = {
@@ -33,14 +36,15 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
             title = "Write data to a file in the internal storage.",
             full = true,
             code = """
-                id: write
+                id: write_file
                 namespace: company.team
 
                 tasks:
-                - id: write
-                  type: io.kestra.plugin.core.storage.Write
-                  content: Hello World
-                  extension: .txt"""
+                  - id: write
+                    type: io.kestra.plugin.core.storage.Write
+                    content: Hello World
+                    extension: .txt
+                """
         )
     }
 )

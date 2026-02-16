@@ -43,7 +43,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        UPDATE_TASK_FUNCTION_INJECTION_KEY
+        UPDATE_YAML_FUNCTION_INJECTION_KEY
     } from "../../no-code/injectionKeys";
     import {NoCodeProps} from "../../flows/noCodeTypes";
     import {deepEqual} from "../../../utils/utils";
@@ -68,7 +68,7 @@
         dashboardStore.sourceCode = YAML_UTILS.stringify(app);
     }
 
-    provide(UPDATE_TASK_FUNCTION_INJECTION_KEY, (yaml) => {
+    provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
         editorUpdate(yaml)
     })
 
@@ -116,7 +116,7 @@
         const type = elt?.type;
         dashboardStore.loadChart(elt);
         if(type){
-            pluginsStore.updateDocumentation({type});
+            pluginsStore.updateDocumentation({cls: type});
         }else{
             pluginsStore.updateDocumentation(); 
         }

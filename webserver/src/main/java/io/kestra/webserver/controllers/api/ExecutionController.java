@@ -34,16 +34,20 @@ import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.flow.Pause;
-import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
+import io.kestra.plugin.core.trigger.WebhookContext;
+import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
-import io.kestra.webserver.services.ExecutionStreamingService;
+import io.kestra.core.services.ExecutionStreamingService;
+import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -70,7 +74,6 @@ import io.micronaut.validation.Validated;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -93,6 +96,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -210,6 +214,9 @@ public class ExecutionController {
 
     @Inject
     private ObjectMapper objectMapper;
+
+    @Inject
+    private WebhookService webhookService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -490,62 +497,67 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/webhook/{namespace}/{id}/{key}")
+    @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = {MediaType.ALL})
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public Publisher<HttpResponse<?>> triggerExecutionByPostWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
         HttpRequest<String> request
-    ) {
-        return this.webhook(namespace, id, key, request);
+    ) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/webhook/{namespace}/{id}/{key}")
+    @Get(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = {MediaType.ALL})
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public Publisher<HttpResponse<?>> triggerExecutionByGetWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
         HttpRequest<String> request
-    ) {
-        return this.webhook(namespace, id, key, request);
+    ) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "/webhook/{namespace}/{id}/{key}")
+    @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = {MediaType.ALL})
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public Publisher<HttpResponse<?>> triggerExecutionByPutWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
         HttpRequest<String> request
-    ) {
-        return this.webhook(namespace, id, key, request);
+    ) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
-    private Publisher<HttpResponse<?>> webhook(
+    private Mono<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
+        String path,
         HttpRequest<String> request
-    ) {
+    ) throws IllegalVariableEvaluationException {
         Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
-        return webhook(find, key, request);
+        return webhook(find, key, path, request);
     }
 
-    protected Publisher<HttpResponse<?>> webhook(
+    protected Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
+        String path,
         HttpRequest<String> request
-    ) {
+    ) throws IllegalVariableEvaluationException {
         if (maybeFlow.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
         }
@@ -554,16 +566,15 @@ public class ExecutionController {
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute a disabled flow");
         }
-
         if (flow instanceof FlowWithException fwe) {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
-        Optional<Webhook> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
+        Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
             .getTriggers())
             .stream()
-            .filter(o -> o instanceof Webhook)
-            .map(o -> (Webhook) o)
+            .filter(o -> o instanceof AbstractWebhookTrigger)
+            .map(o -> (AbstractWebhookTrigger) o)
             .filter(w -> {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
@@ -581,88 +592,41 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
         }
 
-        final Webhook webhook = maybeWebhook.get();
-        Optional<Execution> execution = webhook.evaluate(request, flow);
+        final AbstractWebhookTrigger webhook = maybeWebhook.get();
 
-        if (execution.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
-        }
+        // Webhook context
+        var webhookContext = new WebhookContext(
+            MicronautHttpService.from(request),
+            path,
+            flow,
+            webhook,
+            webhookService
+        );
 
-        var result = execution.get();
-        if (flow.getLabels() != null) {
-            result = result.withLabels(LabelService.labelsExcludingSystem(flow));
-        }
-
-        // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
-        var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
-        if (!conditionService.isValid(flow, webhook, conditionContext)) {
-            return Mono.just(HttpResponse.noContent());
-        }
-
-        // inject trigger inputs
-        if (webhook.getInputs() != null) {
-            RunContext runContext = runContextFactory.of(flow, result);
-            try {
-                Map<String, Object> inputs = runContext.render(webhook.getInputs());
-                inputs = flowInputOutput.readExecutionInputs(flow, result, inputs);
-                result = result.withInputs(inputs);
-            } catch (Exception e) {
-                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
-            }
-        }
-
+        // Call evaluate and create a failed execution if exception occurs
         try {
-            // inject the traceparent into the execution
-            Optional<TextMapPropagator> propagator = openTelemetry
-                .map(OpenTelemetry::getPropagators)
-                .map(ContextPropagators::getTextMapPropagator);
+            return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
+        } catch (Exception e) {
+            Execution failedExecution = Execution.builder()
+                .id(IdUtils.create())
+                .tenantId(flow.getTenantId())
+                .namespace(flow.getNamespace())
+                .flowId(flow.getId())
+                .flowRevision(flow.getRevision())
+                .labels(LabelService.labelsExcludingSystem(flow))
+                .state(new State().withState(State.Type.FAILED))
+                .build();
 
-            if (propagator.isPresent()) {
-                propagator.get().inject(Context.current(), result, ExecutionTextMapSetter.INSTANCE);
+            Logger logger = webhookContext.webhookService().runContext(flow, failedExecution).logger();
+            logger.error("[trigger: {}] Webhook evaluate Failed with error '{}'" , webhookContext.trigger(), e.getMessage());
+
+            try {
+                this.executionQueue.emit(failedExecution);
+            } catch (QueueException ex) {
+                log.error("Unable to emit the execution", ex);
             }
 
-            executionQueue.emit(result);
-            eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
-
-            if (webhook.getWait()) {
-                var subscriberId = UUID.randomUUID().toString();
-                var executionId = result.getId();
-                return Flux.<Event<Execution>>create(emitter -> {
-                        streamingService.registerSubscriber(
-                            executionId,
-                            subscriberId,
-                            emitter,
-                            flow
-                        );
-                    })
-                    .last()
-                    .map(event -> {
-                        if (webhook.getReturnOutputs()) {
-                            return HttpResponse.ok(event.getData().getOutputs());
-
-                        } else {
-                            return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
-                                event.getData(),
-                                executionUrl(event.getData())
-                            ));
-                        }
-                    })
-                    .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
-            } else {
-                return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
-            }
-        } catch (QueueException e) {
-            log.error(e.getMessage(), e);
-            return Mono.just(HttpResponse.serverError());
-        }
-    }
-
-    public record WebhookResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision,
-                                  ExecutionTrigger trigger, Map<String, Object> outputs, List<Label> labels,
-                                  State state, URI url) {
-        public static WebhookResponse fromExecution(Execution execution, URI url) {
-            return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
+            return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -742,11 +706,13 @@ public class ExecutionController {
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs -> {
-                Check.Behavior behavior = Check.resolveBehavior(flowService.getFailedChecks(flow, executionInputs));
+                List<Check> failed = flowService.getFailedChecks(flow, executionInputs);
+                Check.Behavior behavior = Check.resolveBehavior(failed);
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
                     return Mono.error(new IllegalArgumentException(
                         "Flow execution blocked: one or more condition checks evaluated to false."
-                    ));
+                        + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
+                    )));
                 }
 
                 final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
@@ -851,15 +817,22 @@ public class ExecutionController {
     }
 
     protected List<Label> parseLabels(List<String> labels) {
-        List<Label> parsedLabels = labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
+        List<Label> parsedLabels = labels == null ? new ArrayList<>() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
-            .toList();
+            .collect(Collectors.toList());
 
-        // check for system labels: none can be passed at execution creation time except system.correlationId
-        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        // check for system labels: none can be passed at execution creation time except system.correlationId and system.from
+        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && !label.key().equals(Label.FROM) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
+
+        // from can be passed by the UI so we only add it if it didn't exist anymore
+        // if we want to be more restrictive, we may want to restrict it to only have the `ui` value
+        if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
+            parsedLabels.add(new Label(Label.FROM, "api"));
+        }
+
         return parsedLabels;
     }
 
@@ -1024,9 +997,9 @@ public class ExecutionController {
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
-            if (execution.isPresent() && !execution.get().getState().isFailed()) {
+            if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in state FAILED",
+                    "execution not in state PAUSED or terminated, or is KILLED",
                     executionId,
                     String.class,
                     "execution",
@@ -1217,7 +1190,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.taskRunId(), stateRequest.state());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -1229,10 +1202,9 @@ public class ExecutionController {
         return replay;
     }
 
-    @lombok.Value
-    public static class StateRequest {
-        String taskRunId;
-        State.Type state;
+    public record StateRequest(
+        String taskRunId,
+        State.Type state) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1251,8 +1223,8 @@ public class ExecutionController {
             return null;
         }
 
-        if (!execution.get().getState().isTerminated()) {
-            throw new IllegalArgumentException("You can only change the state of a terminated execution.");
+        if (!execution.get().getState().canChangeStatus()) {
+            throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
         }
 
         Execution updated = execution.get().withState(status);
@@ -1281,9 +1253,9 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
+            if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in a terminated state",
+                    "execution not in a terminated state or is killed",
                     executionId,
                     String.class,
                     "execution",
@@ -1377,7 +1349,7 @@ public class ExecutionController {
     public HttpResponse<?> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
-    ) throws InternalException, QueueException {
+    ) throws QueueException {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
@@ -2438,7 +2410,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow informations") String executionId
+        @Parameter(description = "The execution that you want flow information") String executionId
     ) {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
@@ -2658,7 +2630,12 @@ public class ExecutionController {
         ) {
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<Check> checks, List<InputAndValue> inputs) {
+        public static ApiValidateExecutionInputsResponse of(
+            String id,
+            String namespace,
+            List<Check> checks,
+            List<InputAndValue> inputs
+        ) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2667,14 +2644,21 @@ public class ExecutionController {
                     it.value(),
                     it.enabled(),
                     it.isDefault(),
-                    Optional.ofNullable(it.exception()).map(exception ->
-                        exception.getConstraintViolations()
-                            .stream()
-                            .map(cv -> new ApiInputError(cv.getMessage()))
+                    // Map the Set<InputOutputValidationException> to ApiInputError
+                    Optional.ofNullable(it.exceptions())
+                        .map(exSet -> exSet.stream()
+                            .map(e -> new ApiInputError(e.getMessage()))
                             .toList()
-                    ).orElse(List.of())
+                        )
+                        .orElse(List.of())
                 )).toList(),
-                checks.stream().map(check -> new ApiCheckFailure(check.getMessage(), check.getStyle(), check.getBehavior())).toList()
+                checks.stream()
+                    .map(check -> new ApiCheckFailure(
+                        check.getMessage(),
+                        check.getStyle(),
+                        check.getBehavior()
+                    ))
+                    .toList()
             );
         }
     }

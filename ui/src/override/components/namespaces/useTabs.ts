@@ -36,6 +36,11 @@ export function useTabs() {
             title: t("secret.names"),
         },
         {
+            ...lockedProps("assets"),
+            name: "assets",
+            title: t("assets"),
+        },
+        {
             ...lockedProps("variables"),
             name: "variables",
             title: t("variables"),
@@ -43,7 +48,7 @@ export function useTabs() {
         {
             ...lockedProps("plugin-defaults"),
             name: "plugin-defaults",
-            title: t("pluginDefaults"),
+            title: t("pluginDefaults.title"),
         },
         {
             name: "kv",

@@ -10,7 +10,7 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.state.Set;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +26,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 @Execution(ExecutionMode.SAME_THREAD)
 class DocumentationGeneratorTest {
     @Inject
@@ -104,7 +104,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render).contains("Return a value for debugging purposes.");
-        assertThat(render).contains("This task is mostly useful for troubleshooting.");
+        assertThat(render).contains("Render a templated string and return it so you can quickly inspect or reuse values during a flow.");
         assertThat(render).contains("## Metrics");
         assertThat(render).contains("### `length`\n" + "* **Type:** ==counter== ");
         assertThat(render).contains("### `duration`\n" + "* **Type:** ==timer== ");
@@ -193,6 +193,6 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render).contains("title: Process");
-        assertThat(render).contains("Task runner that executes a task as a subprocess on the Kestra host.");
+        assertThat(render).contains("Run tasks as local subprocesses on the worker.");
     }
 }

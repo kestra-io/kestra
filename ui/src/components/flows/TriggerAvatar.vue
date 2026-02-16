@@ -13,9 +13,7 @@
                     @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <el-button class="trigger-icon" @click="copyLink(trigger)" size="small">
-                            <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
-                        </el-button>
+                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
@@ -34,16 +32,12 @@
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
+    import {Execution} from "../../stores/executions";
 
     interface Flow {
         namespace: string;
         id: string;
         triggers?: Trigger[];
-    }
-
-    interface Execution {
-        id: string;
-        trigger?: Trigger;
     }
 
     interface Trigger {

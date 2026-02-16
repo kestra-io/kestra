@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Nota: Neste momento, apenas a Gemini é suportada como provedor de IA.\n\nReinicie sua instância do Kestra após salvar a configuração.",
+          "footer": "Nota: Neste momento, apenas o Gemini é suportado como provedor de IA para a Open Source Edition. Para a Enterprise Edition, consulte a documentação do AI Copilot para a configuração de outros provedores de modelo.\n\nReinicie sua instância do Kestra após salvar a configuração.",
           "header": "<b>AI Copilot ainda não foi configurado.</b>\n\nPara habilitar o AI Copilot, adicione o seguinte trecho ao arquivo de configuração da sua instância Kestra (por exemplo, <code>application.yml</code>), substituindo <code>geminiApiKey</code> pela sua chave real:"
         },
         "generating": "Gerando Flow YAML para você...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Blocos do App",
     "apps": "Aplicativos",
+    "assets": "Ativos",
     "attempt": "Tentativa",
     "attempts": "Tentativa(s)",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta execução ainda está RUNNING, deletá-la não irá pará-la.<br />Você precisa matar a execução para pará-la.</div>",
     "delete logs": "Excluir logs",
     "delete ok": "está deletado",
+    "delete revision confirm": "Tem certeza de que deseja excluir a revisão {revision}?",
+    "delete revision error": "Erro ao excluir a revisão {revision} com erro {error}",
     "delete task confirm": "Deseja Excluir a task <code>{taskId}</code>?",
     "delete trigger": "Excluir trigger",
     "delete trigger confirmation": "Tem certeza de que deseja excluir o trigger {id}? WARNING: excluir um trigger pode levar a execuções duplicadas se o trigger ainda estiver ativo em um flow.",
@@ -314,6 +317,12 @@
         "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação.",
         "title": "Crie Apps personalizadas com Kestra"
       },
+      "assets": {
+        "header": "Metadados e Observabilidade de Assets",
+        "label": "Ativos",
+        "message": "Ativos conectam metadados de observabilidade, linhagem e propriedade para que as equipes da plataforma possam solucionar problemas mais rapidamente e implantar com confiança.",
+        "title": "Traga todos os datasets, serviços e dependências para a visualização."
+      },
       "audit-logs": {
         "message": "A Kestra Enterprise Edition registra todas as atividades com registros robustos e imutáveis, facilitando o acompanhamento de alterações, a manutenção da conformidade e a resolução de problemas.",
         "title": "Acompanhe Alterações com Audit Logs"
@@ -329,6 +338,10 @@
         "title": "Gerencie a Infraestrutura em Toda a Sua Instância"
       },
       "namespace": {
+        "assets": {
+          "message": "Na Kestra Enterprise Edition, Assets mantém um inventário ao vivo de recursos com os quais seus workflows interagem. Esses recursos podem ser tabelas de banco de dados, máquinas virtuais, arquivos ou qualquer sistema externo com o qual você trabalhe.",
+          "title": "Centralizar Gerenciamento de Ativos"
+        },
         "audit-logs": {
           "message": "Na Kestra Enterprise Edition, você pode visualizar logs de auditoria no nível do namespace com diferenças detalhadas, fornecendo um histórico claro de quem alterou o quê e quando em todos os recursos.",
           "title": "Acompanhe Todas as Alterações em Um Só Lugar"
@@ -356,7 +369,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Codifique o <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a></strong>",
+          "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
           "intro": "Para criar um novo Secret:",
           "second": "Adicione uma variável de ambiente chamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' com o valor acima",
           "third": "Reinicie sua instância do Kestra"
@@ -389,6 +402,7 @@
         "zoom_out": "Reduzir zoom"
       },
       "search": {
+        "asset_placeholder": "Pesquisar por asset, flow ou namespace...",
         "no_results": "Nenhum resultado encontrado para {term}",
         "placeholder": "Pesquisar por flow ou namespace..."
       }
@@ -454,6 +468,10 @@
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo.",
         "title": "Você ainda não tem apps!"
       },
+      "assets": {
+        "content": "Adicione assets para rastrear e gerenciar seus assets de dados, serviços e infraestrutura.",
+        "title": "Você ainda não tem Assets!"
+      },
       "concurrency_executions": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execuções</a></strong> em nossa documentação.",
         "title": "Nenhuma Execução em andamento para este Flow."
@@ -463,6 +481,10 @@
         "title": "Nenhum limite está definido para este Flow."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Este ativo não possui dependências upstream ou downstream com flows ou outros ativos.",
+          "title": "Atualmente, não há dependências."
+        },
         "EXECUTION": {
           "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dependências de Execução</a> na nossa documentação.",
           "title": "Atualmente, não há dependências."
@@ -476,9 +498,17 @@
           "title": "Atualmente, não há dependências."
         }
       },
+      "kill_switches": {
+        "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente.",
+        "title": "Você ainda não tem Kill Switches!"
+      },
       "panels": {
         "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Arquivos do Namespace, Blueprints, Namespace Context) para recursos relacionados.",
         "title": "Atualmente, nenhum painel está aberto."
+      },
+      "pluginDefaults": {
+        "content": "Os Padrões de Plugin permitem que você governe centralmente a configuração do seu plugin e a compartilhe com todos os flows no seu namespace.",
+        "title": "Você ainda não tem padrões de plugin!"
       },
       "plugins": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
@@ -573,6 +603,7 @@
         "title": "Componentes do Workflow"
       }
     },
+    "execution_started": "A execução foi iniciada!",
     "execution_starts_progress": "Assim que a execução começar, você verá atualizações de progresso aqui.",
     "execution_status": "A execução é:",
     "executions": "Execuções",
@@ -597,6 +628,8 @@
     "export all templates": "Exportar todos os templates",
     "export_csv": "Exportar como CSV",
     "exports": "Exportações",
+    "failed to export plugin defaults": "Falha ao exportar padrões do plugin",
+    "failed to import plugin defaults": "Falha ao importar padrões do plugin",
     "failed to render pdf": "Falha ao renderizar a pré-visualização do PDF",
     "false": "Falso",
     "feeds": {
@@ -653,6 +686,7 @@
       "end_date": "Data de Término",
       "enter description": "Insira a descrição do filtro",
       "enter label": "Insira o filtro de label",
+      "enter name": "Insira o nome do filtro",
       "execution_kind": {
         "playground": "Playground",
         "playground_description": "Execuções acionadas a partir do modo Playground",
@@ -671,6 +705,10 @@
         "parent_description": "Mostrar apenas execuções de nível superior/raiz"
       },
       "key": "Chave",
+      "kill_switch_type": {
+        "description": "Filtrar por tipo de kill switch",
+        "label": "Tipo"
+      },
       "kind": {
         "description": "Filtrar por tipo de execução",
         "label": "Tipo"
@@ -699,6 +737,7 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": "Nome",
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -774,6 +813,7 @@
           "labels": "Rótulos de execução (formato key:value)",
           "namespace": "Namespace ao qual o flow executado pertence",
           "outputs": "Saídas emitidas pela execução",
+          "parent-execution": "ID da execução pai que acionou esta execução",
           "revision": "Versão do flow usada para esta execução",
           "start-date": "Quando a execução começou",
           "state": "Estado atual da execução",
@@ -883,6 +923,12 @@
         "description": "Filtrar por trigger ID",
         "label": "ID do Trigger"
       },
+      "triggerState": {
+        "description": "Filtrar por estado do trigger",
+        "disabled": "Desativado",
+        "enabled": "Habilitado",
+        "label": "Estado do Trigger"
+      },
       "update": "Atualizar",
       "value": "Valor",
       "workerId": {
@@ -957,7 +1003,9 @@
     "fix_with_ai": "Corrigir com AI",
     "flow": "Flow",
     "flow already exists": "Flow já existe",
+    "flow already exists message": "Flow <code>{id}</code> já existe no namespace <code>{namespace}</code>. Deseja criar uma nova revisão?",
     "flow creation": "Criação de flow",
+    "flow creation denied in namespace": "Você não tem permissão para criar flows no namespace `{namespace}`.",
     "flow delete": "Tem certeza de que deseja excluir <code>{flowCount}</code> flow(s)?",
     "flow deleted, you can restore it": "O flow foi deletado e esta é uma visualização somente leitura. Você ainda pode restaurá-lo.",
     "flow disable": "Tem certeza de que deseja desativar <code>{flowCount}</code> flow(s)?",
@@ -966,6 +1014,9 @@
     "flow must have id and namespace": "Flow deve ter um id e um namespace.",
     "flow must not be empty": "O flow não deve estar vazio",
     "flow not imported": "Algum flow não pôde ser importado",
+    "flow revision latest": "Última revisão do flow",
+    "flow revision original": "Revisão original do flow",
+    "flow revision specific": "Revisão específica do flow",
     "flow source not found": "Fonte do flow não encontrada",
     "flow-dependencies": "dependências",
     "flow-no-dependencies": "Seu flow não possui dependências",
@@ -1026,8 +1077,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "Matar",
-    "kill only parents": "Matar apenas pais",
-    "kill parents and subflow": "Matar pais e subflows",
+    "kill only parents": "Matar apenas o atual",
+    "kill parents and subflow": "Matar o flow atual e subflows",
     "killed confirm": "Tem certeza de que deseja matar a execução <code>{id}</code>?",
     "killed done": "Execução está na fila para ser morta",
     "kv": {
@@ -1080,6 +1131,8 @@
     "min": "Min",
     "minutes": "Minutos",
     "missingSource": "Fonte ausente",
+    "modify inputs": "Modificar inputs",
+    "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
     "months": "Meses",
     "more_actions": "Mais Ações",
@@ -1113,7 +1166,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Confirmar",
+          "file_single": "Tem certeza de que deseja excluir o arquivo <code>{name}</code>?",
           "files": "Tem certeza de que deseja excluir <code>{count}</code> arquivo(s)?",
+          "folder_single": "Tem certeza de que deseja excluir a pasta <code>{name}</code> e todo o seu conteúdo?",
           "folders": "Tem certeza de que deseja excluir <code>{count}</code> pasta(s) e todo o seu conteúdo?",
           "mixed": "Tem certeza de que deseja excluir a(s) pasta(s) <code>{folders}</code> e o(s) arquivo(s) <code>{files}</code>?",
           "title": "Confirmar exclusão de conteúdo"
@@ -1219,6 +1274,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Verificações",
           "concurrency": "Concorrência",
           "disabled": "Desativado",
           "labels": "Etiquetas",
@@ -1287,6 +1343,7 @@
     "no_logs_data_description": "Nenhum log encontrado para os filtros selecionados. <br> Tente ajustar seus filtros, alterar o intervalo de tempo ou verificar se o flow foi executado recentemente.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
     "no_results": {
+      "assets": "Nenhum Asset Encontrado",
       "executions": "Nenhuma Execução Encontrada",
       "flows": "Nenhum Flow Encontrado",
       "kv_pairs": "Nenhum par de Key-Value encontrado",
@@ -1306,7 +1363,7 @@
       "next": "Próximo",
       "no_flows": "Não há flows disponíveis no namespace do tutorial.",
       "previous": "Anterior",
-      "skip": "Pular Tutorial",
+      "skip": "Pular Tour do Produto",
       "steps": {
         "0": {
           "content": "Estamos entusiasmados em tê-lo aqui.<br />Vamos criar seu primeiro flow.",
@@ -1400,13 +1457,36 @@
       "toggle": "Playground",
       "tooltip_persistence": "Se você desligar e ligar o Playground novamente, as informações permanecem enquanto você estiver na página."
     },
-    "pluginDefaults": "Padrões do plugin",
+    "plugin defaults exported": "Padrões do plugin exportados",
+    "plugin defaults imported": "Padrões de plugin importados",
+    "plugin defaults not imported": "Alguns padrões de plugin não puderam ser importados",
+    "pluginDefaults": {
+      "add": "Adicionar Plugin Padrão",
+      "add_subtitle": "Configurar um novo plugin padrão com suas propriedades",
+      "cancel": "Cancelar",
+      "custom": "Plugin Personalizado",
+      "custom_configure": "Tipo de plugin personalizado - configure usando YAML",
+      "custom_placeholder": "Insira o tipo de plugin",
+      "custom_type": "Tipo de plugin personalizado",
+      "edit": "Editar Padrão do Plugin",
+      "edit_subtitle": "Modificar a configuração padrão do plugin existente",
+      "form": "Formulário",
+      "predefined": "Plugin Predefinido",
+      "select_predefined": "Selecionar Plugin Predefinido",
+      "show_yaml": "Mostrar YAML",
+      "title": "Padrões do Plugin",
+      "update": "Atualizar Plugin Padrão",
+      "use_custom": "Usar Personalizado",
+      "yaml": "YAML",
+      "yaml_configuration": "Configuração YAML"
+    },
     "pluginPage": {
       "alt": "Ícone de Plugins",
       "search": "Pesquisar em mais de {count} plugins",
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow."
     },
+    "plugin_default_already_exists": "O padrão do plugin para <code>{type}</code> já existe.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
@@ -1422,6 +1502,7 @@
       "label": "Visualizar",
       "view": "Visualizar"
     },
+    "product_tour": "Tour do Produto",
     "properties": {
       "hidden": "Oculto na Tabela",
       "hint": "Escolher Colunas Visíveis",
@@ -1441,10 +1522,14 @@
     "remove_bookmark": "Tem certeza de que deseja remover este marcador?",
     "replay": "Repetir",
     "replay confirm": "Tem certeza de que deseja repetir esta execução <code>{id}</code> e criar uma nova?",
+    "replay execution description": "Isso criará uma nova execução com base na execução selecionada.",
+    "replay execution title": "Reexecutar execução",
     "replay from beginning tooltip": "Criar uma execução similar começando do início",
     "replay from task tooltip": "Criar uma execução similar começando da task <code>{taskId}</code>",
+    "replay inputs": "Entradas",
     "replay latest revision": "Repetir usando a última revisão",
     "replay the execution": "Reproduzir a execução <code>{executionId}</code> para o flow <code>{flowId}</code>",
+    "replay using": "Repetir usando",
     "replay with inputs": "Repetir com inputs",
     "replayed": "Execução foi repetida",
     "required field": "Campo obrigatório",
@@ -1466,7 +1551,10 @@
     "resumed confirm": "Tem certeza de que deseja retomar a execução <code>{id}</code>?",
     "resumed done": "Execução foi retomada",
     "resumed title": "Retomar execução <code>{id}</code>",
+    "reuse original inputs": "Reutilizar inputs originais",
+    "reuse_original_inputs": "Reutilizar inputs originais",
     "revision": "Revisão",
+    "revision deleted": "A revisão {revision} foi excluída com sucesso",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
     "run task in playground": "Executar task no playground",
@@ -1819,6 +1907,7 @@
     "update aborted": "atualização abortada",
     "update ok": "está atualizado",
     "updated date": "Data de atualização",
+    "usage": "Uso",
     "use": "Usar",
     "use_dark_background": "Use esta versão ao trabalhar em um fundo escuro para garantir que nosso nome permaneça legível.",
     "validate": "Validar",
@@ -1854,7 +1943,7 @@
     },
     "welcome aboard": "🚀 Bem-vindo ao Kestra!",
     "welcome aboard content": "Use nosso Tour Guiado para criar seu primeiro flow e confira os Blueprints para encontrar mais exemplos.",
-    "welcome button create": "Criar meu primeiro flow",
+    "welcome button create": "Iniciar Tour do Produto",
     "welcome display require": "Execute seu <strong>primeiro flow</strong> para começar",
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?",
@@ -1870,7 +1959,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
-    "years": "Anos",
-    "your usage": "Seu uso"
+    "years": "Anos"
   }
 }

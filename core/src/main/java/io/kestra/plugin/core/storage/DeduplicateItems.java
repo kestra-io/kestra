@@ -28,25 +28,45 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Schema(
-    title = "Deduplicate a file by retaining only the latest item for each extracted key.",
+    title = "Deduplicate a line-oriented file by key.",
     description = """
-        The `Deduplicate` task involves reading the input file twice, rather than loading the entire file into memory.
-        The first iteration is used to build a deduplication map in memory containing the last lines observed for each key.
-        The second iteration is used to rewrite the file without the duplicates. The task must be used with this in mind.
-        """
+        Reads the file twice: first to map each key (from `expr`) to its last occurrence offset, then to write only those last occurrences to a new file. Avoids loading the full file in memory.
+
+        Use for ordered “keep-last” semantics; expression can reference columns directly."""
 )
 @Plugin(
     examples = {
         @Example(
-            code = {
-                """
+            title = "Remove duplicate customer emails from a CSV file.",
+            full = true,
+            code = """
+                id: deduplicate_items
+                namespace: company.team
+
                 tasks:
-                   - id: deduplicate
-                     type: io.kestra.plugin.core.storage.DeduplicateItems
-                     from: "{{ inputs.uri }}"
-                     expr: "{{ key }}"
-                """
-            }
+                  - id: generate_files
+                    type: io.kestra.plugin.scripts.shell.Script
+                    script: |
+                      cat <<EOF > my_data.csv
+                      order_id,customer_name,customer_email,product_id,price
+                      1,Kelly Olsen,kelly@example.com,20,166.89
+                      2,Miguel Moore,mccarthylee@example.net,14,171.63
+                      3,Kelly Olsen,kelly@example.com,20,166.89
+                      4,Jessica White,jessica@example.com,12,50.62
+                      5,Jessica White,jessica@example.com,12,50.62
+                      EOF
+                    outputFiles:
+                      - "my_data.csv"
+                    
+                  - id: csv_to_ion
+                    type: io.kestra.plugin.serdes.csv.CsvToIon
+                    from: "{{ outputs.generate_files.outputFiles['my_data.csv'] }}"
+
+                  - id: dedup
+                    type: io.kestra.plugin.core.storage.DeduplicateItems
+                    from: "{{ outputs.csv_to_ion.uri }}"
+                    expr: "{{ customer_email }}"
+            """
         )
     },
     aliases = "io.kestra.core.tasks.storages.DeduplicateItems"
@@ -67,7 +87,7 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
 
     @Schema(
         title = "The Pebble expression to extract the deduplication key from each item",
-        description = "The 'pebble' expression can be used for constructing a composite key."
+        description = "Headers from the file can be referenced directly e.g. `{{ customer_email }}`"
     )
     @PluginProperty
     @NotNull

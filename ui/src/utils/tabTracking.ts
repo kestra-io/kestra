@@ -115,7 +115,7 @@ function sendTrackingEvent(eventData: any) {
         delete backendData.tab_type;
         delete backendData.metadata;
 
-        apiStore.events(backendData);
+        apiStore.events(backendData, {posthog: false});
 
         // Send to PostHog via API store (handles PostHog initialization internally)
         const posthogData = {

@@ -45,7 +45,7 @@ section {
         align-items: center;
         margin-bottom: calc($spacer * 2);
         justify-content: space-between;
-        font-size: calc($font-size-base * 1.5);
+        font-size: $font-size-xl;
         font-weight: 600;
 
         & .content {

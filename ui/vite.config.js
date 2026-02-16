@@ -10,10 +10,6 @@ export default defineConfig({
     build: {
         outDir: "../webserver/src/main/resources/ui",
         rollupOptions: {
-            external: [
-                "https://fonts.googleapis.com",
-                "https://fonts.gstatic.com"
-            ],
             output: {
                 advancedChunks: {
                     groups: [
@@ -76,7 +72,7 @@ export default defineConfig({
         devSourcemap: true,
         preprocessorOptions: {
             scss: {
-                silenceDeprecations: ["color-functions", "global-builtin", "import"]
+                silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
             },
         }
     },
@@ -90,7 +86,6 @@ export default defineConfig({
             "debug",
             "@braintree/sanitize-url",
             "monaco-yaml/yaml.worker",
-            "vue-axios",
             "lodash-es",
             "nprogress"
         ],

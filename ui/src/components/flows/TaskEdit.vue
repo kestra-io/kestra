@@ -205,11 +205,12 @@
         }
     };
 
-    const onInput = (value?: string) => {
+    const onInput = (value?: string | Record<string, any>) => {
         if (timer.value) {
             clearTimeout(timer.value);
         }
-        taskYaml.value = value ?? "";
+
+        taskYaml.value = typeof value === "string" ? value : YAML_UTILS.stringify(value ?? "");
 
         timer.value = setTimeout(() => {
             if (lastValidatedValue.value !== taskYaml.value) {

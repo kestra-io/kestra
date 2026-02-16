@@ -10,15 +10,15 @@
             </el-alert>
         </div>
         <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm 
-                :initialInputs="flow.inputs" 
-                :selectedTrigger="selectedTrigger" 
-                :flow="flow" 
+            <InputsForm
+                :initialInputs="flow.inputs"
+                :selectedTrigger="selectedTrigger"
+                :flow="flow"
                 v-model="inputs"
                 :executeClicked="executeClicked"
                 @confirm="onSubmit($refs.form)"
-                @update:model-value-no-default="values => inputsNoDefaults=values" 
-                @update:checks="values => checks=values" 
+                @update:model-value-no-default="values => inputsNoDefaults=values"
+                @update:checks="values => checks=values"
             />
 
             <el-collapse v-model="collapseName">
@@ -80,13 +80,14 @@
 
 <script setup>
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Flash from "vue-material-design-icons/Flash.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 </script>
 
 <script>
     import moment from "moment-timezone";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useApiStore} from "../../stores/api";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
@@ -111,7 +112,7 @@
             replaySubmit: {type: Function, default: null},
             selectedTrigger: {type: Object, default: undefined},
             buttonText: {type: String, default: "launch execution"},
-            buttonIcon: {type: [Object, Function], default: () => Flash},
+            buttonIcon: {type: [Object, Function], default: () => Play},
             buttonTestId: {type: String, default: "execute-dialog-button"},
         },
         data() {
@@ -130,7 +131,7 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
+            ...mapStores(useApiStore, useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
             flow() {
                 return this.executionsStore.flow
             },
@@ -190,8 +191,13 @@
             },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
+                    this.apiStore.posthogEvents({
+                        type: "FLOW_EXECUTION",
+                        action: "submit",
+                    });
                     this.checks = [];
                     this.executeClicked = false;
+                    this.coreStore.message = null;
                     formRef.validate((valid) => {
                         if (!valid) {
                             return false;
@@ -207,7 +213,7 @@
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],
+                                ), "system.from:ui"],
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
@@ -220,7 +226,7 @@
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],
+                                ), "system.from:ui"],
                                 scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                                 nextStep: true,
                             });

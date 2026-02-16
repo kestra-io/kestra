@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "注意：目前，仅支持 Gemini 作为 AI 提供商。\n\n保存配置后重启您的 Kestra 实例。",
+          "footer": "注意：目前，开源版仅支持Gemini作为AI提供商。对于企业版，请参阅AI Copilot文档以获取其他模型提供商的配置。\n\n保存配置后，重新启动您的Kestra实例。",
           "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件中（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
         },
         "generating": "正在为您生成Flow YAML...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "应用模块",
     "apps": "应用程序",
+    "assets": "资产",
     "attempt": "尝试",
     "attempts": "尝试",
     "auditlogs": "审计日志",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
     "delete logs": "删除日志",
     "delete ok": "已删除",
+    "delete revision confirm": "您确定要删除修订版 {revision} 吗？",
+    "delete revision error": "删除修订版 {revision} 时出错，错误信息 {error}",
     "delete task confirm": "确定要删除任务 <code>{taskId}</code> 吗？",
     "delete trigger": "删除 trigger",
     "delete trigger confirmation": "您确定要删除trigger {id}吗？WARNING: 如果trigger仍在flow中激活，删除trigger可能会导致重复执行。",
@@ -314,6 +317,12 @@
         "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
         "title": "使用 Kestra 构建自定义应用程序"
       },
+      "assets": {
+        "header": "资产元数据和可观测性",
+        "label": "资产",
+        "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。",
+        "title": "将每个数据集、服务和依赖项展示出来。"
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition记录每个活动，提供强大且不可更改的记录，使得跟踪更改、保持合规性和解决问题变得容易。",
         "title": "使用审计日志跟踪更改"
@@ -329,6 +338,10 @@
         "title": "管理您的实例中的基础设施"
       },
       "namespace": {
+        "assets": {
+          "message": "在 Kestra 企业版中，Assets 保持着与您的工作流交互的资源的实时清单。这些资源可以是数据库表、虚拟机、文件或您使用的任何外部系统。",
+          "title": "集中资产管理"
+        },
         "audit-logs": {
           "message": "在 Kestra 企业版中，您可以查看 namespace 级别的审计日志，包含详细的差异，提供所有资源的更改历史，清晰地显示是谁在何时更改了什么。",
           "title": "在一个地方跟踪所有更改"
@@ -356,7 +369,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "将<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value 编码为 Base64</a></strong>",
+          "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
           "intro": "创建新Secret：",
           "second": "添加一个名为 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' 的环境变量，并使用上述值",
           "third": "重新启动您的Kestra实例"
@@ -389,6 +402,7 @@
         "zoom_out": "缩小视图"
       },
       "search": {
+        "asset_placeholder": "按资产、flow或namespace搜索...",
         "no_results": "未找到与 {term} 相关的结果",
         "placeholder": "按flow或namespace搜索..."
       }
@@ -454,6 +468,10 @@
         "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",
         "title": "您还没有应用程序！"
       },
+      "assets": {
+        "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。",
+        "title": "您还没有资产！"
+      },
       "concurrency_executions": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
         "title": "此 Flow 没有正在进行的 Executions。"
@@ -463,6 +481,10 @@
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "此资产与flow或其他资产没有上游或下游依赖关系。",
+          "title": "当前没有依赖项。"
+        },
         "EXECUTION": {
           "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
@@ -476,9 +498,17 @@
           "title": "当前没有依赖项。"
         }
       },
+      "kill_switches": {
+        "content": "Kill Switch 功能提供了一种基于UI的机制来停止有问题的执行。它用一个全面的管理界面替代了仅限CLI的<code>--skip-executions</code>和<code>--skip-flows</code>命令。",
+        "title": "您还没有 Kill Switches！"
+      },
       "panels": {
         "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace 文件、Blueprints、Namespace Context）以获取相关功能。",
         "title": "当前没有打开的面板。"
+      },
+      "pluginDefaults": {
+        "content": "插件默认设置允许您集中管理插件配置，并与namespace中的所有flow共享。",
+        "title": "您还没有插件默认值！"
       },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
@@ -573,6 +603,7 @@
         "title": "工作流组件"
       }
     },
+    "execution_started": "执行已开始！",
     "execution_starts_progress": "一旦执行开始，您将在此处看到进度更新。",
     "execution_status": "执行状态是：",
     "executions": "执行",
@@ -597,6 +628,8 @@
     "export all templates": "导出所有模板",
     "export_csv": "导出为CSV",
     "exports": "导出",
+    "failed to export plugin defaults": "无法导出插件默认值",
+    "failed to import plugin defaults": "无法导入插件默认值",
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
     "feeds": {
@@ -653,6 +686,7 @@
       "end_date": "结束日期",
       "enter description": "输入筛选器描述",
       "enter label": "输入过滤器标签",
+      "enter name": "输入过滤器名称",
       "execution_kind": {
         "playground": "游乐场",
         "playground_description": "从Playground模式触发的执行",
@@ -671,6 +705,10 @@
         "parent_description": "仅显示顶级/根执行"
       },
       "key": "键",
+      "kill_switch_type": {
+        "description": "按关闭开关类型筛选",
+        "label": "类型"
+      },
       "kind": {
         "description": "按执行类型筛选",
         "label": "种类"
@@ -699,6 +737,7 @@
         "description": "按指标类型筛选",
         "label": "指标"
       },
+      "name": "名称",
       "namespace": {
         "description": "按namespace筛选",
         "label": "命名空间"
@@ -774,6 +813,7 @@
           "labels": "执行标签 (key:value 格式)",
           "namespace": "执行的flow所属的namespace",
           "outputs": "执行产生的输出",
+          "parent-execution": "触发此执行的父执行ID",
           "revision": "用于此次执行的flow版本",
           "start-date": "执行开始时",
           "state": "当前执行状态",
@@ -883,6 +923,12 @@
         "description": "按 trigger ID 筛选",
         "label": "触发器 ID"
       },
+      "triggerState": {
+        "description": "按触发器状态筛选",
+        "disabled": "禁用",
+        "enabled": "启用",
+        "label": "触发状态"
+      },
       "update": "更新",
       "value": "值",
       "workerId": {
@@ -957,7 +1003,9 @@
     "fix_with_ai": "使用 AI 修复",
     "flow": "流程",
     "flow already exists": "流程已存在",
+    "flow already exists message": "flow <code>{id}</code> 已存在于 namespace <code>{namespace}</code>。您要创建一个新的修订版本吗？",
     "flow creation": "流程创建",
+    "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
     "flow deleted, you can restore it": "流程已删除，这是只读视图。你仍然可以恢复它。",
     "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",
@@ -966,6 +1014,9 @@
     "flow must have id and namespace": "流程必须有ID和命名空间。",
     "flow must not be empty": "flow不能为空",
     "flow not imported": "某些flow无法导入",
+    "flow revision latest": "最新的flow修订版",
+    "flow revision original": "原始flow修订版",
+    "flow revision specific": "特定flow修订版",
     "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
@@ -1026,8 +1077,8 @@
     "kestra": "Kestra",
     "key": "键",
     "kill": "终止",
-    "kill only parents": "仅终止父流程",
-    "kill parents and subflow": "终止父流程和子流程",
+    "kill only parents": "仅终止当前",
+    "kill parents and subflow": "终止当前和subflows",
     "killed confirm": "确定要终止执行 <code>{id}</code> 吗？",
     "killed done": "执行已排队终止",
     "kv": {
@@ -1080,6 +1131,8 @@
     "min": "最小",
     "minutes": "分钟",
     "missingSource": "缺少源",
+    "modify inputs": "修改inputs",
+    "modify_inputs": "修改输入",
     "monogram": "字母组合",
     "months": "月份",
     "more_actions": "更多操作",
@@ -1113,7 +1166,9 @@
       "dialog": {
         "deletion": {
           "confirm": "确认",
+          "file_single": "您确定要删除文件<code>{name}</code>吗？",
           "files": "您确定要删除 <code>{count}</code> 个文件吗？",
+          "folder_single": "您确定要删除文件夹<code>{name}</code>及其所有内容吗？",
           "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
           "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
           "title": "确认删除内容"
@@ -1219,6 +1274,7 @@
       },
       "fields": {
         "general": {
+          "checks": "检查",
           "concurrency": "并发性",
           "disabled": "禁用",
           "labels": "标签",
@@ -1287,6 +1343,7 @@
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
+      "assets": "未找到资产",
       "executions": "未找到执行",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
@@ -1306,7 +1363,7 @@
       "next": "下一步",
       "no_flows": "教程命名空间下没有可用的流程。",
       "previous": "上一步",
-      "skip": "跳过教程",
+      "skip": "跳过产品指南",
       "steps": {
         "0": {
           "content": "我们很高兴你在这里。<br />让我们创建你的第一个流程。",
@@ -1400,13 +1457,36 @@
       "toggle": "游乐场",
       "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
-    "pluginDefaults": "插件默认值",
+    "plugin defaults exported": "插件默认值已导出",
+    "plugin defaults imported": "插件默认值已导入",
+    "plugin defaults not imported": "某些插件默认设置无法导入",
+    "pluginDefaults": {
+      "add": "添加插件默认值",
+      "add_subtitle": "配置新插件默认值及其属性",
+      "cancel": "取消",
+      "custom": "自定义插件",
+      "custom_configure": "自定义插件类型 - 使用 YAML 配置",
+      "custom_placeholder": "输入插件类型",
+      "custom_type": "自定义插件类型",
+      "edit": "编辑插件默认值",
+      "edit_subtitle": "修改现有插件默认配置",
+      "form": "表单",
+      "predefined": "预定义插件",
+      "select_predefined": "选择预定义插件",
+      "show_yaml": "显示 YAML",
+      "title": "插件默认值",
+      "update": "更新插件默认值",
+      "use_custom": "使用自定义",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML 配置"
+    },
     "pluginPage": {
       "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"
     },
+    "plugin_default_already_exists": "<code>{type}</code>的插件默认值已存在。",
     "plugins": {
       "name": "插件",
       "names": "插件",
@@ -1422,6 +1502,7 @@
       "label": "预览",
       "view": "查看"
     },
+    "product_tour": "产品导览",
     "properties": {
       "hidden": "隐藏在表格中",
       "hint": "选择可见列",
@@ -1441,10 +1522,14 @@
     "remove_bookmark": "您确定要删除此书签吗？",
     "replay": "重放",
     "replay confirm": "确定要重放此执行 <code>{id}</code> 并创建一个新的吗？",
+    "replay execution description": "这将基于所选的执行创建一个新的执行。",
+    "replay execution title": "重放执行",
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
+    "replay inputs": "输入",
     "replay latest revision": "使用最新修订版重放",
     "replay the execution": "重放 flow <code>{flowId}</code> 的执行 <code>{executionId}</code>",
+    "replay using": "使用重播",
     "replay with inputs": "使用输入重放",
     "replayed": "执行已重放",
     "required field": "必填字段",
@@ -1466,7 +1551,10 @@
     "resumed confirm": "确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
     "resumed title": "恢复执行 <code>{id}</code>",
+    "reuse original inputs": "重用原始input",
+    "reuse_original_inputs": "重用原始input",
     "revision": "修订版",
+    "revision deleted": "修订版 {revision} 已成功删除",
     "revisions": "修订版",
     "row count": "行数",
     "run task in playground": "在playground中运行task",
@@ -1819,6 +1907,7 @@
     "update aborted": "更新中止",
     "update ok": "已更新",
     "updated date": "更新日期",
+    "usage": "使用情况",
     "use": "使用",
     "use_dark_background": "在深色背景上工作时使用此版本，以确保我们的名称保持可读。",
     "validate": "验证",
@@ -1854,7 +1943,7 @@
     },
     "welcome aboard": "🚀 欢迎使用 Kestra!",
     "welcome aboard content": "使用我们的引导游览来创建你的第一个流程，并查看蓝图以找到更多示例。",
-    "welcome button create": "创建我的第一个流程",
+    "welcome button create": "开始产品导览",
     "welcome display require": "运行你的 <strong>第一个流程</strong> 以开始",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",
@@ -1870,7 +1959,6 @@
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",
-    "years": "年",
-    "your usage": "你的使用情况"
+    "years": "年"
   }
 }

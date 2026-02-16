@@ -196,6 +196,8 @@
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
     "replay with inputs": "Replay with inputs",
+    "reuse_original_inputs": "Reuse original inputs",
+    "modify_inputs": "Modify inputs",
     "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",
@@ -225,14 +227,23 @@
         "All blocked tasks will be executed."
       ]
     },
+    "replay execution title": "Replay execution",
+    "replay execution description": "This will create a new execution based on the selected execution.",
+    "replay using": "Replay using",
+    "flow revision original": "Original flow revision",
+    "flow revision latest": "Latest flow revision",
+    "flow revision specific": "Specific flow revision",
+    "replay inputs": "Inputs",
+    "reuse original inputs": "Reuse original inputs",
+    "modify inputs": "Modify inputs",
     "change state tooltip": "Change the execution state",
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
     "mark as": "Mark as <code>{status}</code>",
     "unqueue as": "Unqueue as <code>{status}</code>",
     "kill": "Kill",
-    "kill parents and subflow": "Kill parents and subflows",
-    "kill only parents": "Kill parents only",
+    "kill parents and subflow": "Kill current and subflows",
+    "kill only parents": "Kill current only",
     "killed confirm": "Are you sure you want to kill execution <code>{id}</code>?",
     "killed done": "Execution is queued for killing",
     "resume": "Resume",
@@ -301,7 +312,7 @@
     "stats": "Stats",
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
-    "your usage": "Your usage",
+    "usage": "Usage",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Total executions duration (in minutes)",
@@ -473,6 +484,7 @@
       "start": "Let's get your first workflow up and running.",
       "guide": "Need guidance to execute your first flow?"
     },
+    "product_tour": "Product Tour",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
@@ -538,7 +550,7 @@
     "welcome aboard": "\uD83D\uDE80 Welcome to Kestra!",
     "welcome aboard content": "Use our Guided Tour to create your first flow and check Blueprints to find more examples.",
     "welcome display require": "Run your <strong>first flow</strong> to get started",
-    "welcome button create": "Create my first flow",
+    "welcome button create": "Start Product Tour",
     "live help": "Live help",
     "show task documentation": "Show task documentation",
     "hide task documentation": "Hide task documentation",
@@ -563,6 +575,8 @@
     "task id": "Task ID",
     "taskid column details": "Last task being executed and its number of attempts.",
     "flow already exists": "Flow already exists",
+    "flow already exists message": "Flow <code>{id}</code> already exists in namespace <code>{namespace}</code>. Do you want to create a new revision?",
+    "plugin_default_already_exists": "Plugin default for <code>{type}</code> already exists.",
     "namespace not allowed": "Namespace not allowed",
     "switch-view": "Switch view",
     "source and topology": "Source and topology",
@@ -574,6 +588,7 @@
     "can not save": "Can not save",
     "flow must not be empty": "Flow must not be empty",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
+    "flow creation denied in namespace": "You don't have permission to create flows in the namespace `{namespace}`.",
     "readonly property": "Read-only property",
     "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
     "avg": "Average",
@@ -732,7 +747,9 @@
           "title": "Confirm deletion of content",
           "files": "Are you sure you want to delete <code>{count}</code> file(s)?",
           "folders": "Are you sure you want to delete <code>{count}</code> folder(s) and all of its contents?",
-          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?"
+          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?",
+          "file_single": "Are you sure you want to delete the file <code>{name}</code>?",
+          "folder_single": "Are you sure you want to delete the folder <code>{name}</code> and all of its contents?"
         }
       },
       "revisions": {
@@ -877,10 +894,10 @@
         "detected_env": "Here are secret-type environment variables identified at instance start-time:",
         "empty_env": "You don't have any Secrets in your environment yet.",
         "add_env": {
-          "intro": "To create a new Secret:",
-          "first": "Encode the <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a></strong>",
-          "second": "Add an environment variable named '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' with the above value",
-          "third": "Restart your Kestra instance"
+          "intro": "Create a New Secret",
+          "first": "Encode the <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a>",
+          "second": "Set an environment variable named <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> with the encoded value.",
+          "third": "Restart your Kestra instance so the secret is loaded."
         }
       },
       "apps": {
@@ -892,6 +909,12 @@
         "header": "Unit Tests for Flows",
         "title": "Ensure Reliability with Every Change",
         "message": "Verify the logic of your flows in isolation, detect regressions early, and maintain confidence in your automations as they change and grow."
+      },
+      "assets": {
+        "label": "Assets",
+        "header": "Assets Metadata and Observability",
+        "title": "Bring every dataset, service, and dependency into view.",
+        "message": "Assets connect observability, lineage, and ownership metadata so platform teams can troubleshoot faster and deploy with confidence."
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
@@ -922,6 +945,10 @@
           "title": "Manage Secrets in a Secure Way",
           "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace, and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
         },
+        "assets": {
+          "title": "Centralize Asset Management",
+          "message": "In Kestra Enterprise Edition, Assets keeps a live inventory of resources that your workflows interact with. These resources can be database tables, virtual machines, files, or any external system you work with."
+        },
         "variables": {
           "title": "Centrally Govern Your Variables",
           "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
@@ -940,11 +967,12 @@
         }
       }
     },
+    "assets": "Assets",
     "onboarding": {
       "next": "Next",
       "previous": "Previous",
       "finish": "Finish",
-      "skip": "Skip Tutorial",
+      "skip": "Skip Product Tour",
       "no_flows": "No flows available under tutorial namespace.",
       "steps": {
         "0": {
@@ -1015,7 +1043,26 @@
     "no_namespaces": "Zero namespaces match the search criteria.",
     "system_namespace": "Keep your platform in check with system flows.",
     "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
-    "pluginDefaults": "Plugin defaults",
+    "pluginDefaults": {
+      "title": "Plugin Defaults",
+      "add": "Add Plugin Default",
+      "edit": "Edit Plugin Default",
+      "add_subtitle": "Configure a new plugin default with its properties",
+      "edit_subtitle": "Modify the existing plugin default configuration",
+      "predefined": "Predefined Plugin",
+      "custom": "Custom Plugin",
+      "form": "Form",
+      "yaml": "YAML",
+      "select_predefined": "Select Predefined Plugin",
+      "cancel": "Cancel",
+      "update": "Update Plugin Default",
+      "custom_type": "Custom plugin type",
+      "custom_placeholder": "Enter plugin type",
+      "use_custom": "Use Custom",
+      "custom_configure": "Custom plugin type - configure using YAML",
+      "yaml_configuration": "YAML Configuration",
+      "show_yaml": "Show YAML"
+    },
     "secret": {
       "add": "New secret",
       "update": "Update secret '{name}'",
@@ -1132,6 +1179,7 @@
     "item": "item",
     "items": "items",
     "cron": "Cron",
+    "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!\nLast error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
     "execution replay": "This execution is a replay of",
@@ -1140,6 +1188,11 @@
     "active": "Active",
     "flows imported": "Flows imported",
     "flow not imported": "Some flow could not be imported",
+    "plugin defaults exported": "Plugin defaults exported",
+    "failed to export plugin defaults": "Failed to export plugin defaults",
+    "plugin defaults imported": "Plugin defaults imported",
+    "plugin defaults not imported": "Some plugin defaults could not be imported",
+    "failed to import plugin defaults": "Failed to import plugin defaults",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
@@ -1249,7 +1302,8 @@
           "disabled": "Disabled",
           "listeners": "Listeners",
           "taskDefaults": "Task Defaults",
-          "workerGroup": "Worker Group"
+          "workerGroup": "Worker Group",
+          "checks": "Checks"
         }
       },
       "select": {
@@ -1358,6 +1412,10 @@
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
       },
+       "kill_switches": {
+        "title": "You have no Kill Switches yet!",
+        "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
+      },
       "apps": {
         "title": "You have no apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
@@ -1366,6 +1424,10 @@
         "title": "You have no Tests yet!",
         "content": "Add tests to validate quality and avoid regressions in your flows."
       },
+      "assets": {
+        "title": "You have no Assets yet!",
+        "content": "Add assets to track and manage your data assets, services, and infrastructure."
+      },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> in our documentation."
@@ -1373,6 +1435,10 @@
       "concurrency_limit": {
         "title": "No limits are set for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
+      },
+      "pluginDefaults": {
+        "title": "You have no plugin defaults yet!",
+        "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
       },
       "dependencies": {
         "FLOW": {
@@ -1386,6 +1452,10 @@
         "NAMESPACE": {
           "title": "There are currently no dependencies.",
           "content": "Read more about <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in our documentation."
+        },
+        "ASSET": {
+          "title": "There are currently no dependencies.",
+          "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
       "plugins": {
@@ -1426,7 +1496,8 @@
       "flows": "No Flows Found",
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
-      "templates": "No Templates Found"
+      "templates": "No Templates Found",
+      "assets": "No Assets Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
@@ -1531,7 +1602,7 @@
         "generating": "Generating Flow YAML for you...",
         "enable_instructions": {
             "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
-            "footer": "Note: At this time, only Gemini is supported as the AI provider.\n\nRestart your Kestra instance after saving the configuration."
+            "footer": "Note: At this time, only Gemini is supported as the AI provider for Open Source Edition. For Enterprise Edition, please refer to the AI Copilot documentation for other model provider configuration.\n\nRestart your Kestra instance after saving the configuration."
         }
       }
     },
@@ -1571,6 +1642,7 @@
       },
       "search": {
         "placeholder": "Search by flow or namespace...",
+        "asset_placeholder": "Search by asset or flow or namespace...",
         "no_results": "No results found for {term}"
       }
     },
@@ -1586,6 +1658,7 @@
         "footer_apply": "Apply",
         "cancel": "Cancel",
         "label": "Label",
+        "name": "Name",
         "description": "Description",
         "columns": "Columns",
         "apply": "Apply filters",
@@ -1610,6 +1683,7 @@
         "select filter": "Select a filter to add",
         "enter description": "Enter filter description",
         "enter label": "Enter filter label",
+        "enter name": "Enter filter name",
         "reset": "Clear all",
         "reset_all": "Reset all filters",
         "reset_tooltip": "Reset to default",
@@ -1670,6 +1744,10 @@
             "label": "Namespace",
             "description": "Filter by namespace"
         },
+        "kill_switch_type": {
+            "label": "Type",
+            "description": "Filter by kill switch type"
+        },
         "flowId": {
             "label": "Flow ID",
             "description": "Filter by flow ID"
@@ -1725,6 +1803,12 @@
         "triggerExecutionId": {
             "label": "Trigger Execution ID",
             "description": "Filter by trigger execution ID"
+        },
+        "triggerState":{
+          "label": " Trigger State",
+          "description": "Filter by trigger state",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
         },
         "scope_flow": {
             "label": "Scope",
@@ -1794,7 +1878,8 @@
                 "inputs": "Input values provided to the execution",
                 "outputs": "Outputs emitted by the execution",
                 "task-id": "ID of the last task in the execution",
-                "trigger": "Trigger that started the execution"
+                "trigger": "Trigger that started the execution",
+                "parent-execution": "Parent execution ID that triggered this execution"
             },
             "kv": {
                 "namespace": "Logical grouping where the key-value pair is stored",
@@ -1871,6 +1956,9 @@
     "bulk success delete triggers": "{count} triggers have been deleted successfully",
     "delete trigger confirmation": "Are you sure you want to delete trigger {id}? WARNING: deleting a trigger may lead to duplicate executions if the trigger is still active in a flow",
     "delete trigger success": "Trigger {id} has been deleted successfully",
-    "delete trigger error": "Error deleting trigger {id}"
+    "delete trigger error": "Error deleting trigger {id}",
+    "revision deleted": "Revision {revision} has been deleted successfully",
+    "delete revision confirm": "Are you sure you want to delete revision {revision}?",
+    "delete revision error": "Error deleting revision {revision} with error {error}"
   }
 }

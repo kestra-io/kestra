@@ -14,7 +14,6 @@ import {
     COMPARATOR_LABELS,
     Comparators,
     TEXT_COMPARATORS,
-    KV_COMPARATORS
 } from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
 import {useDefaultFilter} from "./useDefaultFilter";
@@ -67,11 +66,11 @@ export function useFilters(
     };
 
     const clearLegacyParams = (query: Record<string, any>) => {
-        configuration.keys?.forEach(({key}) => {
+        configuration.keys?.forEach(({key, valueType}) => {
             delete query[key];
-            if (key === "details") {
+            if (valueType === "key-value") {
                 Object.keys(query).forEach(queryKey => {
-                    if (queryKey.startsWith("details.")) delete query[queryKey];
+                    if (queryKey.startsWith(`${key}.`)) delete query[queryKey];
                 });
             }
         });
@@ -85,10 +84,10 @@ export function useFilters(
      */
     const buildLegacyQuery = (query: Record<string, any>) => {
         getUniqueFilters(appliedFilters.value.filter(isValidFilter)).forEach(filter => {
-            if (filter.key === "details") {
+            if (configuration.keys?.find(k => k.key === filter.key)?.valueType === "key-value") {
                 (filter.value as string[]).forEach(item => {
                     const [k, v] = item.split(":");
-                    query[`details.${k}`] = v;
+                    query[`${filter.key}.${k}`] = v;
                 });
             } else if (Array.isArray(filter.value)) {
                 filter.value.forEach(item =>
@@ -104,11 +103,14 @@ export function useFilters(
         });
     };
 
-    const updateRoute = () => {
+    const hasValue = (filter: AppliedFilter): boolean => {
+        return (Array.isArray(filter.value) && filter.value.length > 0) ||
+            (!Array.isArray(filter.value) && filter.value !== "" && filter.value !== null && filter.value !== undefined);
+    };
+
+    const updateRoute = (shouldResetPage = false) => {
         const query = {...route.query};
         clearFilterQueryParams(query);
-
-        delete query.page;
 
         if (legacyQuery) {
             clearLegacyParams(query);
@@ -119,6 +121,11 @@ export function useFilters(
         }
 
         updateSearchQuery(query);
+
+        if (shouldResetPage && parseInt(String(query.page ?? "1")) > 1) {
+            delete query.page;
+        }
+
         router.push({query});
     };
 
@@ -145,14 +152,13 @@ export function useFilters(
         value: string | string[]
     ): AppliedFilter => {
         const comparator = (config?.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
-        const valueLabel = Array.isArray(value)
-            ? key === "details" && value.length > 1
-                ? `${value[0]} +${value.length - 1}`
+        return createAppliedFilter(key, config, comparator, value, 
+            config?.valueType === "key-value" && Array.isArray(value)
+                ? value.length > 1 ? `${value[0]} +${value.length - 1}` : value[0] ?? ""
                 : Array.isArray(value)
                     ? value.join(", ")
-                    : value[0]
-            : (value as string);
-        return createAppliedFilter(key, config, comparator, value, valueLabel, "EQUALS");
+                    : value as string
+        , "EQUALS");
     };
 
     const createTimeRangeFilter = (
@@ -161,14 +167,13 @@ export function useFilters(
         endDate: Date,
         comparator = Comparators.EQUALS
     ): AppliedFilter => {
-        const valueLabel = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
         return {
             ...createAppliedFilter(
                 "timeRange",
                 config,
                 comparator,
                 {startDate, endDate},
-                valueLabel,
+                `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                 keyOfComparator(comparator)
             ),
             comparatorLabel: "Is Between"
@@ -181,34 +186,36 @@ export function useFilters(
      */
     const parseLegacyFilters = (): AppliedFilter[] => {
         const filtersMap = new Map<string, AppliedFilter>();
-        const details: string[] = [];
+        const keyValueFilters: Record<string, string[]> = {};
 
         Object.entries(route.query).forEach(([key, value]) => {
             if (["q", "search", "filters[q][EQUALS]"].includes(key)) return;
 
-            if (key.startsWith("details.")) {
-                details.push(`${key.split(".")[1]}:${value}`);
+            const kvConfig = configuration.keys?.find(k => key.startsWith(`${k.key}.`) && k.valueType === "key-value");
+            if (kvConfig) {
+                if (!keyValueFilters[kvConfig.key]) keyValueFilters[kvConfig.key] = [];
+                keyValueFilters[kvConfig.key].push(`${key.split(".")[1]}:${value}`);
                 return;
             }
 
             const config = configuration.keys?.find(k => k.key === key);
             if (!config) return;
 
-            const processedValue = Array.isArray(value)
-                ? (value as string[]).filter(v => v !== null)
-                : config?.valueType === "multi-select"
-                    ? ((value as string) ?? "").split(",")
-                    : ((value as string) ?? "");
-
-            filtersMap.set(key, createFilter(key, config, processedValue));
+            filtersMap.set(key, createFilter(key, config, 
+                Array.isArray(value)
+                    ? (value as string[]).filter(v => v !== null)
+                    : config?.valueType === "multi-select"
+                        ? ((value as string) ?? "").split(",")
+                        : ((value as string) ?? "")
+            ));
         });
 
-        if (details.length > 0) {
-            const config = configuration.keys?.find(k => k.key === "details");
+        Object.entries(keyValueFilters).forEach(([key, values]) => {
+            const config = configuration.keys?.find(k => k.key === key);
             if (config) {
-                filtersMap.set("details", createFilter("details", config, details));
+                filtersMap.set(key, createFilter(key, config, values));
             }
-        }
+        });
 
         if (route.query.startDate && route.query.endDate) {
             const timeRangeConfig = configuration.keys?.find(k => k.key === "timeRange");
@@ -227,13 +234,10 @@ export function useFilters(
         return Array.from(filtersMap.values());
     };
 
-    const isKVFilter = (field: string, comparator: Comparators) =>
-        field === "details" || (field === "labels" && KV_COMPARATORS.includes(comparator));
-
-    const processFieldValue = (config: any, params: any[], field: string, comparator: Comparators) => {
+    const processFieldValue = (config: any, params: any[], _field: string, comparator: Comparators) => {
         const isTextOp = TEXT_COMPARATORS.includes(comparator);
 
-        if (isKVFilter(field, comparator)) {
+        if (config?.valueType === "key-value") {
             const combinedValue = params.map(p => p?.value as string);
             return {
                 value: combinedValue,
@@ -253,10 +257,9 @@ export function useFilters(
             };
         }
 
-        const param = params[0];
-        let value = Array.isArray(param?.value)
-            ? param.value[0]
-            : (param?.value as string);
+        let value = Array.isArray(params[0]?.value)
+            ? params[0].value[0]
+            : (params[0]?.value as string);
 
         if (config?.valueType === "date" && typeof value === "string") {
             value = new Date(value);
@@ -369,14 +372,14 @@ export function useFilters(
         appliedFilters.value = index === -1
             ? [...appliedFilters.value, filter]
             : appliedFilters.value.map((f, i) => (i === index ? filter : f));
-        updateRoute();
+        updateRoute(hasValue(filter));
     };
 
     const removeFilter = (filterId: string) => {
         const filter = appliedFilters.value.find(f => f?.id === filterId);
         if (filter) {
             appliedFilters.value = appliedFilters.value.filter(f => f?.key !== filter?.key);
-            updateRoute();
+            updateRoute(false);
         }
     };
 
@@ -385,7 +388,7 @@ export function useFilters(
             ...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key),
             updatedFilter
         ];
-        updateRoute();
+        updateRoute(hasValue(updatedFilter));
     };
 
     /**
@@ -394,11 +397,12 @@ export function useFilters(
     const clearFilters = () => {
         appliedFilters.value = [];
         searchQuery.value = "";
-        updateRoute();
+        updateRoute(true);
     };
 
     const {resetDefaultFilter} = useDefaultFilter({
         legacyQuery,
+        namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
     });
@@ -415,7 +419,7 @@ export function useFilters(
     };
     
     watch(searchQuery, () => {
-        updateRoute();
+        updateRoute(searchQuery.value.trim() !== "");
     });
 
     return {

@@ -26,21 +26,6 @@
                 </div>
 
                 <el-divider />
-                <div class="labels">
-                    <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
-                        <template #action>
-                            <SetLabels :execution />
-                        </template>
-                    </Row>
-                    <Labels :labels="execution.labels || []" />
-                </div>
-
-                <el-divider />
-                <div class="metadata">
-                    <Row :rows="metadata" />
-                </div>
-
-                <el-divider />
                 <div class="actions">
                     <Row
                         :rows="[{icon: SortVariant, label: $t('actions')}]"
@@ -59,6 +44,21 @@
                             />
                         </el-col>
                     </el-row>
+                </div>
+
+                <el-divider />
+                <div class="metadata">
+                    <Row :rows="metadata" />
+                </div>
+
+                <el-divider />
+                <div class="labels">
+                    <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
+                        <template #action>
+                            <SetLabels :execution />
+                        </template>
+                    </Row>
+                    <Labels :labels="execution.labels || []" />
                 </div>
             </div>
         </el-splitter-panel>
@@ -124,7 +124,7 @@
                     <div>
                         <section>
                             <div class="heading">
-                                <TimelineClockOutline />
+                                <PlayOutline />
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
@@ -164,6 +164,7 @@
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
+    import {watchDebounced} from "@vueuse/core";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -192,7 +193,7 @@
 
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
-    import Cascader from "./components/main/cascaders/Cascader.vue";
+    import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";
 
@@ -216,7 +217,7 @@
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
@@ -227,7 +228,7 @@
     import TimerSand from "vue-material-design-icons/TimerSand.vue";
     import History from "vue-material-design-icons/History.vue";
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
-    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 
     const emits = defineEmits(["follow"]);
 
@@ -237,7 +238,7 @@
 
         return [
             {
-                icon: DotsSquare,
+                icon: FolderOpenOutline,
                 label: t("namespace"),
                 value: execution.value.namespace,
                 to: createLink("namespaces", execution.value),
@@ -406,7 +407,7 @@
         );
     };
 
-    const cascaders = [
+    const cascaders: Element[] = [
         {
             title: t("variables"),
             empty: t("no_variables"),
@@ -472,13 +473,22 @@
         loadExecution(route.params.id as string);
     });
 
+    // Refresh the chart when execution ID or timerange changes.
+    // Debounce to avoid flooding the dashboard generator on rapid SSE updates.
+    watchDebounced(
+        () => [execution.value?.id, timerange.value],
+        () => {
+            if (!chartRef.value || !execution.value) return;
+            chartRef.value?.refresh(filters.value as any);
+        },
+        {debounce: 500, maxWait: 1000}
+    );
+
     defineOptions({inheritAttrs: false});
 </script>
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
-
-$font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
 
 #overview {
     :deep(.el-splitter-panel:has(> .sidebar:first-child)) {

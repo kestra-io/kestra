@@ -1,7 +1,6 @@
 package io.kestra.core.repositories;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
@@ -14,9 +13,10 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.dashboard.data.Logs;
+import io.kestra.plugin.core.dashboard.data.LogsKPI;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,7 +37,7 @@ import static io.kestra.core.models.flows.FlowScope.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest(transactional = false)
 public abstract class AbstractLogRepositoryTest {
     @Inject
     protected LogRepositoryInterface logRepository;
@@ -349,6 +349,9 @@ public abstract class AbstractLogRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO).build());
 
+        // test log should not be included in the results
+        logRepository.save(logEntry(tenant, Level.INFO).executionKind(ExecutionKind.TEST).build());
+
         var results = logRepository.fetchData(tenant,
             Logs.builder()
                 .type(Logs.class.getName())
@@ -361,6 +364,27 @@ public abstract class AbstractLogRepositoryTest {
             null);
 
         assertThat(results).hasSize(1);
+        assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
+    }
+
+    @Test
+    void fetchValue() throws IOException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        logRepository.save(logEntry(tenant, Level.INFO).build());
+
+        // test log should not be included in the results
+        logRepository.save(logEntry(tenant, Level.INFO).executionKind(ExecutionKind.TEST).build());
+
+        var results = logRepository.fetchValue(tenant,
+            LogsKPI.builder()
+                .type(LogsKPI.class.getName())
+                .columns(ColumnDescriptor.<Logs.Fields>builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build())
+                .build(),
+            ZonedDateTime.now().minusHours(3),
+            ZonedDateTime.now(),
+            false);
+
+        assertThat(results).isEqualTo(1.0);
     }
 
     @Test

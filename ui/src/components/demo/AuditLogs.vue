@@ -1,14 +1,14 @@
 <template>
     <TopNavBar :title="routeInfo.title" v-if="!isFullScreen() && !embed" />
     <Layout
-        :title="t('demos.audit-logs.title')"
-        :image="{source: sourceImg, alt: t('demos.audit-logs.title')}"
+        :title="$t('demos.audit-logs.title')"
+        :image="{source: sourceImg, alt: $t('demos.audit-logs.title')}"
         :video="{
             source: 'https://www.youtube.com/embed/Qz24gBPGZHs',
         }"
     >
         <template #message>
-            {{ t('demos.audit-logs.message') }}
+            {{ $t('demos.audit-logs.message') }}
         </template>
     </Layout>
 </template>

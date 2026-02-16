@@ -44,7 +44,6 @@
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
-    import {useFlowStore} from "../../../../stores/flow";
     import Creation from "./taskList/buttons/Creation.vue";
     import Element from "./taskList/Element.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -53,7 +52,7 @@
 
     import {
         CREATING_TASK_INJECTION_KEY, FULL_SCHEMA_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY, UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
     import {getValueAtJsonPath} from "../../../../utils/utils";
@@ -82,8 +81,6 @@
     defineOptions({
         inheritAttrs: false
     });
-
-    const flowStore = useFlowStore();
 
     interface Task {
         id:string,
@@ -150,6 +147,8 @@
 
     const movedIndex = ref(-1);
 
+    const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {});
+
     const moveElement = (
         items: Record<string, any>[] | undefined,
         elementID: string,
@@ -171,7 +170,7 @@
             movedIndex.value = -1;
         }, 200);
 
-        flowStore.flowYaml =
+        updateYaml(
             YAML_UTILS.swapBlocks({
                 source:flow.value,
                 section: SECTIONS_MAP[section.value.toLowerCase() as keyof typeof SECTIONS_MAP],
@@ -179,6 +178,7 @@
                 key2:items[newIndex][keyName],
                 keyName,
             })
+        );
     };
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));

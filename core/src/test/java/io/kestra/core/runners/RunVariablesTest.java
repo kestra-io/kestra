@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
@@ -24,6 +23,7 @@ import io.kestra.core.utils.IdUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -36,7 +36,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class RunVariablesTest {
 
     @Inject
@@ -201,5 +201,34 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
         assertThat(variables.get("inputs")).isEqualTo(Map.of("input", "value"));
+    }
+
+    @Test
+    void shouldBuildVariablesGivenFlowWithLabelsAndNoExecution() {
+        FlowInterface flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
+            id: opossum_534817
+            namespace: company.team
+
+            labels:
+              some: label
+
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "* * * * *"
+                inputs:
+                  fromLabel: "{{labels.some}}"
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hello World! 🚀
+            """);
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables.get("labels")).isEqualTo(Map.of("some", "label"));
     }
 }

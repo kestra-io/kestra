@@ -1,7 +1,7 @@
 <template>
     <div class="h-100 d-flex flex-column">
-        <img 
-            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)" 
+        <img
+            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
             :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
             class="image-preview"
         >
@@ -31,9 +31,10 @@
         >
             <template #absolute>
                 <AITriggerButton
+                    v-if="aiCopilotAllowed"
                     :show="flow"
                     :opened="aiCopilotOpened"
-                    @click="draftSource = undefined; aiCopilotOpened = true"
+                    @click="onAiCopilotButtonClick"
                 />
                 <ContentSave v-if="!flow" @click="saveFileContent" />
             </template>
@@ -43,13 +44,13 @@
         </Editor>
         <!-- Backdrop overlay -->
         <Transition name="backdrop-fade">
-            <div 
-                v-if="aiCopilotOpened" 
+            <div
+                v-if="aiCopilotOpened"
                 class="ai-copilot-backdrop"
                 @click="closeAiCopilot"
             />
         </Transition>
-        
+
         <!-- AI Copilot with enhanced animations -->
         <Transition name="copilot-slide">
             <AiCopilot
@@ -86,10 +87,13 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {apiUrl} from "override/utils/route";
+    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {useFlowStore} from "../../stores/flow";
+    import {useApiStore} from "../../stores/api";
+    import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
@@ -103,11 +107,15 @@
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import Utils from "../../utils/utils";
+    import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
+    import permission from "../../models/permission"
+    import action from "../../models/action"
 
     const route = useRoute();
     const router = useRouter();
 
     const flowStore = useFlowStore();
+    const authStore = useAuthStore();
 
     const cursor = ref();
 
@@ -135,14 +143,42 @@
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value);
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
+    const aiCopilotAllowed = computed(() => {
+        return authStore.user?.isAllowedGlobal(permission.AI_COPILOT, action.READ);
+    }
+    )
+
     async function loadFile() {
         if (props.dirty || props.flow) return;
 
         const fileNamespace = namespace.value ?? route.params?.namespace;
         if (!fileNamespace) return;
-        sourceNS.value = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
+        const result = await namespacesStore.readFile({
+            namespace: fileNamespace.toString(),
+            path: props.path ?? ""
+        });
 
-        savedSourceNS.value = source.value;
+        if(result.notFound) {
+            console.error(result.error);
+            closeCurrentTab();
+            return
+        }
+
+        if(result.error){
+            console.error(result.error);
+            return
+        }
+
+        if (result.content) {
+            sourceNS.value = result.content;
+            savedSourceNS.value = result.content;
+        }
+    }
+
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {});
+
+    function closeCurrentTab() {
+        closeTab(props);
     }
 
     const isDirty = computed(() => source.value !== savedSource.value);
@@ -165,7 +201,6 @@
             pluginsStore.lazyLoadSchemaType({type: "flow"});
         }
         loadFile();
-        loadPluginsHash();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
         if(route.query.ai === "open") {
@@ -215,7 +250,6 @@
     const isCreating = computed(() => flowStore.isCreating);
 
     const timeout = ref<any>(null);
-    const hash = ref<any>(null);
 
     const editorContent = computed(() => {
         return draftSource.value ?? source.value;
@@ -224,6 +258,8 @@
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
+    const apiStore = useApiStore();
+    const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0);
 
     const editorScrollKey = computed(() => {
         if (props.flow) {
@@ -238,11 +274,6 @@
         return undefined;
     });
 
-    function loadPluginsHash() {
-        miscStore.loadConfigs().then(config => {
-            hash.value = config.pluginsHash;
-        });
-    }
 
     const updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY);
 
@@ -264,6 +295,7 @@
 
         // only validate and update graph for flow files
         if(!props.flow) return
+
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
@@ -279,34 +311,10 @@
         clearTimeout(timeout.value);
     });
 
-
-    function updatePluginDocumentation(event: any) {
-        const source = event.model.getValue();
-        const cursorOffset = event.model.getOffsetAt(event.position);
-
-        const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
-        const isInRange = (range: [number, number, number]) =>
-            cursorOffset >= range[0] && cursorOffset <= range[2];
-        const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
-
-        const getElementFromRange = (typeElement: any) => {
-            const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
-            return wrapper?.value?.type && isPlugin(wrapper.value.type)
-                ? wrapper.value
-                : {type: typeElement.type};
-        };
-
-        const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
-            .filter(el => el.range && isInRange(el.range))
-            .reduce((closest, current) =>
-                        !closest || getRangeSize(current.range) < getRangeSize(closest.range)
-                            ? current
-                            : closest
-                    , null as any);
-
-        let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
-        result = {...result, hash: hash.value, forceRefresh: true};
-        pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
+    function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
+        const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
+        const version = YAML_UTILS.getVersionAtPosition(source.value, event.position);
+        pluginsStore.updateDocumentation({cls, version, hash: hash.value});
     };
 
     const saveFlowYaml = async () => {
@@ -360,7 +368,22 @@
 
     const conversationId = ref<string>(Utils.uid());
 
+    function trackAiCopilotAction(action: string) {
+        apiStore.posthogEvents({
+            type: "AI_COPILOT",
+            action,
+            ai_copilot_configured: miscStore.configs?.isAiEnabled === true,
+        });
+    }
+
+    function onAiCopilotButtonClick() {
+        trackAiCopilotAction("open_click");
+        draftSource.value = undefined;
+        aiCopilotOpened.value = true;
+    }
+
     function acceptDraft() {
+        trackAiCopilotAction("changes_apply");
         const accepted = draftSource.value;
         draftSource.value = undefined;
         conversationId.value = Utils.uid();
@@ -368,6 +391,7 @@
     }
 
     function declineDraft() {
+        trackAiCopilotAction("changes_reject");
         draftSource.value = undefined;
         aiCopilotOpened.value = true;
     }

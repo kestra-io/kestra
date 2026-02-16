@@ -94,8 +94,8 @@ export const Default: Story = {
 
         let simplifiedOptions = getSimplifiedOptions(revisionSelectorsOptions);
 
-        await expect(simplifiedOptions[0]).toEqual([{selected: false, content: "1"}, {selected: true, content: "3"}]);
-        await expect(simplifiedOptions[1]).toEqual([{selected: false, content: "1"}, {selected: true, content: "4 (current)"}]);
+        await expect(simplifiedOptions[0]).toEqual([{selected: false, content: "Revision 1"}, {selected: true, content: "Revision 3"}]);
+        await expect(simplifiedOptions[1]).toEqual([{selected: false, content: "Revision 1"}, {selected: true, content: "Revision 4 (current)"}]);
 
         await expect(canvas.getByText(crudText(3))).not.toBeNull();
         await expect(canvas.getByText(crudText(4))).not.toBeNull();
@@ -119,7 +119,7 @@ export const Default: Story = {
             confirmButton.click();
         });
         await waitFor(() => expect(revisions[revisions.length - 1].revision).toEqual(5));
-        await expect(revisions[revisions.length - 1].source).toContain('"revision": 1');
+        await expect(revisions[revisions.length - 1].source).toContain("\"revision\": 1");
         await expect(revisionSourceMock).not.toHaveBeenCalledWith(5);
     }
 };

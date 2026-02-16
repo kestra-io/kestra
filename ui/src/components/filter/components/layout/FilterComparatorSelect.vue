@@ -1,6 +1,6 @@
 <template>
     <div v-if="shouldShowComparator" class="comp-container">
-        <label class="label">{{ t("filter.operator") }}</label>
+        <label class="label">{{ $t("filter.operator") }}</label>
         <el-select
             v-model="comparatorModel"
             class="select"

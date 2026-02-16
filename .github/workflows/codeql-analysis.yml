@@ -54,7 +54,7 @@ jobs:
       if: ${{ matrix.language == 'java' }}
       with:
         distribution: 'temurin'
-        java-version: 21
+        java-version: 25
 
     - name: Setup gradle
       if: ${{ matrix.language == 'java' }}

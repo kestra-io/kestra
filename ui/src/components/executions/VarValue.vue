@@ -71,8 +71,8 @@
         execution?: Execution;
         restrictUri?: boolean;
     }>(), {
-        value: undefined,
-        execution: undefined,
+        value: "",
+        execution: () => ({id: ""}),
         restrictUri: false,
     });
 

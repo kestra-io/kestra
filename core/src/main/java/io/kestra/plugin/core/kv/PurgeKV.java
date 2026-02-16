@@ -1,19 +1,14 @@
 package io.kestra.plugin.core.kv;
 
-import com.cronutils.utils.VisibleForTesting;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVEntry;
-import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.purge.PurgeTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -22,10 +17,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -115,10 +108,14 @@ public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<Pu
         } else {
             renderedBehavior = runContext.render(behavior).as(KvPurgeBehavior.class).orElseThrow();
         }
-        for (String ns : kvNamespaces) {
-            KVStore kvStore = runContext.namespaceKv(ns);
-            List<KVEntry> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(kvStore));
-            count.addAndGet(kvStore.purge(toPurge));
+
+        String tenantId = runContext.flowInfo().tenantId();
+        String namespace = runContext.flowInfo().namespace();
+        for (String targetNamespace : kvNamespaces) {
+            KVStoreService kvStoreService = ((DefaultRunContext) runContext).services().additionalService(KVStoreService.class);
+            kvStoreService.checkAccessNamespaceIsAllowed(tenantId, targetNamespace, namespace);
+            List<KVEntry> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(tenantId, targetNamespace, kvStoreService));
+            count.addAndGet(kvStoreService.purge(tenantId, targetNamespace, toPurge));
         }
         runContext.logger().info("purged {} keys", count.get());
 

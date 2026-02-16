@@ -5,6 +5,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.utils.TestsUtils;
@@ -62,6 +63,9 @@ class KVControllerTest {
     @Inject
     private KvMetadataRepositoryInterface kvMetadataRepository;
 
+    @Inject
+    private KVMetadataStateStore kvMetadataStateStore;
+
     @BeforeEach
     public void init() throws IOException {
         storageInterface.delete(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, null));
@@ -73,9 +77,9 @@ class KVControllerTest {
     @Test
     void listAllKeys() throws IOException {
         String namespace = TestsUtils.randomNamespace();
-        KVStore kvStore = new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataRepository);
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataStateStore);
         String secondNamespace = TestsUtils.randomNamespace();
-        KVStore secondKvStore = new InternalKVStore(MAIN_TENANT, secondNamespace, storageInterface, kvMetadataRepository);
+        KVStore secondKvStore = new InternalKVStore(MAIN_TENANT, secondNamespace, storageInterface, kvMetadataStateStore);
 
         // Should come first in key:desc order
         String namespaceKey = "namespace-key";
@@ -256,7 +260,7 @@ class KVControllerTest {
     }
 
     private InternalKVStore kvStore(String namespace) {
-        return new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataRepository);
+        return new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataStateStore);
     }
 
     @Test

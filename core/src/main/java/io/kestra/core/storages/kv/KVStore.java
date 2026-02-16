@@ -1,16 +1,11 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.models.FetchVersion;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.storages.StorageContext;
-import io.micronaut.data.model.Pageable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -18,6 +13,9 @@ import java.util.regex.Pattern;
 
 /**
  * Service interface for accessing the files attached to a namespace Key-Value store.
+ * <p>
+ * This interface exposes only worker-safe operations. For server-only operations
+ * (paginated listing, listing all entries, purging), see {@link io.kestra.core.kv.services.KVService}.
  */
 public interface KVStore {
 
@@ -33,10 +31,10 @@ public interface KVStore {
     }
 
     default URI storageUri(String key, int version) {
-        return this.storageUri(key, namespace(), version);
+        return KVStore.storageUri(key, namespace(), version);
     }
 
-    default URI storageUri(String key, String namespace, int version) {
+    static URI storageUri(String key, String namespace, int version) {
         String fileName = kvFileName(key, version);
         return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + (fileName.isEmpty() ? fileName : ("/" + fileName)));
     }
@@ -85,37 +83,12 @@ public interface KVStore {
     boolean delete(String key) throws IOException;
 
     /**
-     * Purge the provided KV entries.
-     */
-    Integer purge(List<KVEntry> kvToDelete) throws IOException;
-
-    default ArrayListTotal<KVEntry> list() throws IOException {
-        return this.list(Pageable.UNPAGED);
-    }
-
-    default ArrayListTotal<KVEntry> list(Pageable pageable) throws IOException {
-        return this.list(pageable, Collections.emptyList());
-    }
-
-    default ArrayListTotal<KVEntry> list(Pageable pageable, List<QueryFilter> queryFilters) throws IOException {
-        return this.list(pageable, queryFilters, false, false, FetchVersion.LATEST);
-    }
-
-    /**
-     * Lists all the K/V store entries.
+     * Lists all non-expired, non-deleted K/V store entries.
      *
-     * @return  The list of {@link KVEntry}.
+     * @return The list of {@link KVEntry}.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
-    ArrayListTotal<KVEntry> list(Pageable pageable, List<QueryFilter> queryFilters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior) throws IOException;
-
-    /**
-     * Lists all the K/V store entries, expired or not.
-     *
-     * @return  The list of all {@link KVEntry}.
-     * @throws IOException if an error occurred while executing the operation on the K/V store.
-     */
-    List<KVEntry> listAll() throws IOException;
+    List<KVEntry> list() throws IOException;
 
     /**
      * Finds the K/V store entry for the given key.

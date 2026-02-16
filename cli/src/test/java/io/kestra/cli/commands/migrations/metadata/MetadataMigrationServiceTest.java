@@ -53,6 +53,6 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
             public String resolveTenant() {
                 return TENANT_ID;
             }
-        }, null, null, null, kestraConfig));
+        }, null, null, null, null, kestraConfig));
     }
 }

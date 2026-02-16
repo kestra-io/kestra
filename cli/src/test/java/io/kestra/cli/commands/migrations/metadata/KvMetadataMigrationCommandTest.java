@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -67,6 +68,7 @@ public class KvMetadataMigrationCommandTest {
             assertThat(storage.exists(tenantId, null, getKvStorageUri(namespace, expiredKey))).isTrue();
 
             KvMetadataRepositoryInterface kvMetadataRepository = ctx.getBean(KvMetadataRepositoryInterface.class);
+            KVMetadataStateStore kvMetadataStateStore = ctx.getBean(KVMetadataStateStore.class);
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
 
             /* Expected outcome from the migration command:
@@ -105,7 +107,7 @@ public class KvMetadataMigrationCommandTest {
 
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
 
-            KVStore kvStore = new InternalKVStore(tenantId, namespace, storage, kvMetadataRepository);
+            KVStore kvStore = new InternalKVStore(tenantId, namespace, storage, kvMetadataStateStore);
             Optional<KVEntry> actualKv = kvStore.get(key);
             assertThat(actualKv.isPresent()).isTrue();
             assertThat(actualKv.get().description()).isEqualTo(description);

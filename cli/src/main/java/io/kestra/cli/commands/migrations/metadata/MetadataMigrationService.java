@@ -8,6 +8,7 @@ import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -34,6 +35,7 @@ public class MetadataMigrationService {
     protected FlowRepositoryInterface flowRepository;
     protected TenantService tenantService;
     protected KvMetadataRepositoryInterface kvMetadataRepository;
+    protected KVMetadataStateStore kvMetadataStateStore;
     protected NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository;
     protected StorageInterface storageInterface;
     protected KestraConfig kestraConfig;
@@ -41,13 +43,15 @@ public class MetadataMigrationService {
     @Singleton
     public MetadataMigrationService(FlowRepositoryInterface flowRepository, 
                                     TenantService tenantService,
-                                    KvMetadataRepositoryInterface kvMetadataRepository, 
+                                    KvMetadataRepositoryInterface kvMetadataRepository,
+                                    KVMetadataStateStore kvMetadataStateStore,
                                     NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository, 
                                     StorageInterface storageInterface, 
                                     KestraConfig kestraConfig) {
         this.flowRepository = flowRepository;
         this.tenantService = tenantService;
         this.kvMetadataRepository = kvMetadataRepository;
+        this.kvMetadataStateStore = kvMetadataStateStore;
         this.namespaceFileMetadataRepository = namespaceFileMetadataRepository;
         this.storageInterface = storageInterface;
         this.kestraConfig = kestraConfig;
@@ -66,7 +70,7 @@ public class MetadataMigrationService {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant -> {
-                InternalKVStore kvStore = new InternalKVStore(namespaceForTenant.getKey(), namespaceForTenant.getValue(), storageInterface, kvMetadataRepository);
+                InternalKVStore kvStore = new InternalKVStore(namespaceForTenant.getKey(), namespaceForTenant.getValue(), storageInterface, kvMetadataStateStore);
                 List<FileAttributes> list = listAllFromStorage(storageInterface, StorageContext::kvPrefix, namespaceForTenant.getKey(), namespaceForTenant.getValue()).stream()
                     .map(PathAndAttributes::attributes)
                     .toList();

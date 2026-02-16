@@ -3,6 +3,8 @@ package io.kestra.worker;
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc.ConnectControllerServiceBlockingStub;
+import io.kestra.controller.grpc.KVMetadataServiceGrpc;
+import io.kestra.controller.grpc.KVMetadataServiceGrpc.KVMetadataServiceBlockingStub;
 import io.kestra.controller.grpc.LivenessControllerServiceGrpc;
 import io.kestra.controller.grpc.LivenessControllerServiceGrpc.LivenessControllerServiceBlockingStub;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc;
@@ -52,5 +54,11 @@ public class GrpcStubFactory {
     @Singleton
     public WorkerFlowMetaStoreServiceBlockingStub workerFlowMetaStoreServiceBlockingStub() {
         return WorkerFlowMetaStoreServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public KVMetadataServiceBlockingStub kvMetadataServiceBlockingStub() {
+        return KVMetadataServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
     }
 }

@@ -1,32 +1,22 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.models.FetchVersion;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.PersistedKvMetadata;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.KvMetadataRepositoryInterface;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
-import io.kestra.core.utils.ListUtils;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -42,20 +32,24 @@ public class InternalKVStore implements KVStore {
     private final String namespace;
     private final String tenant;
     private final StorageInterface storage;
-    private final KvMetadataRepositoryInterface kvMetadataRepository;
+    private final KVMetadataStateStore kvMetadataStateStore;
 
     /**
      * Creates a new {@link InternalKVStore} instance.
      *
-     * @param namespace The namespace
-     * @param tenant    The tenant.
-     * @param storage   The storage.
+     * @param tenant               The tenant.
+     * @param namespace            The namespace.
+     * @param storage              The storage.
+     * @param kvMetadataStateStore The KV metadata state store (used for worker-safe operations).
      */
-    public InternalKVStore(@Nullable final String tenant, @Nullable final String namespace, final StorageInterface storage, final KvMetadataRepositoryInterface kvMetadataRepository) {
+    public InternalKVStore(@Nullable final String tenant,
+                           @Nullable final String namespace,
+                           final StorageInterface storage,
+                           final KVMetadataStateStore kvMetadataStateStore) {
         this.namespace = namespace;
         this.storage = Objects.requireNonNull(storage, "storage cannot be null");
         this.tenant = tenant;
-        this.kvMetadataRepository = kvMetadataRepository;
+        this.kvMetadataStateStore = kvMetadataStateStore;
     }
 
     /**
@@ -81,7 +75,7 @@ public class InternalKVStore implements KVStore {
         Object actualValue = value.value();
         byte[] serialized = actualValue instanceof Duration ? actualValue.toString().getBytes(StandardCharsets.UTF_8) : JacksonMapper.ofIon().writeValueAsBytes(actualValue);
 
-        PersistedKvMetadata saved = this.kvMetadataRepository.save(PersistedKvMetadata.builder()
+        PersistedKvMetadata saved = this.kvMetadataStateStore.save(PersistedKvMetadata.builder()
             .tenantId(this.tenant)
             .namespace(this.namespace)
             .name(key)
@@ -112,7 +106,7 @@ public class InternalKVStore implements KVStore {
     public Optional<String> getRawValue(String key) throws IOException, ResourceExpiredException {
         KVStore.validateKey(key);
 
-        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataRepository.findByName(this.tenant, this.namespace, key);
+        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
 
         int version = maybeMetadata.map(PersistedKvMetadata::getVersion).orElse(1);
         if (maybeMetadata.isPresent()) {
@@ -144,41 +138,27 @@ public class InternalKVStore implements KVStore {
     @Override
     public boolean delete(String key) throws IOException {
         KVStore.validateKey(key);
-        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataRepository.findByName(this.tenant, this.namespace, key);
+        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
         if (maybeMetadata.map(PersistedKvMetadata::isDeleted).orElse(true)) {
             return false;
         }
 
-        this.kvMetadataRepository.delete(maybeMetadata.get());
+        this.kvMetadataStateStore.delete(maybeMetadata.get());
         return true;
 
     }
 
     /**
      * {@inheritDoc}
+     * <p>
+     * This implementation uses the {@link KVMetadataStateStore} and is safe to call from workers.
      */
     @Override
-    public List<KVEntry> listAll() throws IOException {
-        return this.list(Pageable.UNPAGED, Collections.emptyList(), true, true, FetchVersion.ALL);
-    }
-
-    @Override
-    public ArrayListTotal<KVEntry> list(Pageable pageable, List<QueryFilter> filters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior) throws IOException {
-        if (this.namespace != null) {
-            filters = Stream.concat(
-                filters.stream(),
-                Stream.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(this.namespace).build())
-            ).toList();
-        }
-
-        return this.kvMetadataRepository.find(
-            pageable,
-            this.tenant,
-            filters,
-            allowDeleted,
-            allowExpired,
-            fetchBehavior
-        ).map(throwFunction(KVEntry::from));
+    public List<KVEntry> list() throws IOException {
+        return this.kvMetadataStateStore.find(this.tenant, this.namespace)
+            .stream()
+            .map(throwFunction(KVEntry::from))
+            .toList();
     }
 
     /**
@@ -188,39 +168,11 @@ public class InternalKVStore implements KVStore {
     public Optional<KVEntry> get(final String key) throws IOException {
         KVStore.validateKey(key);
 
-        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataRepository.findByName(this.tenant, this.namespace, key);
+        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
         if (maybeMetadata.isEmpty() || maybeMetadata.get().isDeleted()) {
             return Optional.empty();
         }
 
         return Optional.of(KVEntry.from(maybeMetadata.get()));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Integer purge(List<KVEntry> kvEntries) throws IOException {
-        Integer purgedMetadataCount = this.kvMetadataRepository.purge(kvEntries.stream().map(kv -> PersistedKvMetadata.from(tenant, kv)).toList());
-
-        long actualDeletedEntries = kvEntries.stream()
-            .map(KVEntry::key)
-            .map(this::storageUri)
-            .map(throwFunction(uri -> {
-                boolean deleted = this.storage.delete(tenant, namespace, uri);
-                URI metadataURI = URI.create(uri.getPath() + ".metadata");
-                if (this.storage.exists(this.tenant, this.namespace, metadataURI)) {
-                    this.storage.delete(this.tenant, this.namespace, metadataURI);
-                }
-
-                return deleted;
-            })).filter(Boolean::booleanValue)
-            .count();
-
-        if (actualDeletedEntries != purgedMetadataCount) {
-            log.warn("KV Metadata purge reported {} deleted entries, but {} values were actually deleted from storage", purgedMetadataCount, actualDeletedEntries);
-        }
-
-        return purgedMetadataCount;
     }
 }

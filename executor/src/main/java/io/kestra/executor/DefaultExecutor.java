@@ -30,6 +30,7 @@ import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
@@ -598,8 +599,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
-                    TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
-                    triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
+                    sendTriggerExecutionTerminated(execution);
                 }
 
                 return;
@@ -685,8 +685,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
                 // purge the trigger: reset scheduler trigger at end
                 if (execution.getTrigger() != null) {
-                    TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
-                    triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
+                    sendTriggerExecutionTerminated(execution);
                 }
 
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED);
@@ -715,6 +714,14 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     return null;
                 });
             }
+        }
+    }
+
+    private void sendTriggerExecutionTerminated(Execution execution) {
+        // The scheduler didn't manage states for the WebHook and the Flow trigger
+        if (!execution.getTrigger().getType().equals(Webhook.class.getName()) && !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName())) {
+            TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
+            triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
         }
     }
 

@@ -9,7 +9,6 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;

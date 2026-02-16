@@ -477,7 +477,7 @@
         }
       },
       "panels": {
-        "content": "Flow Code 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace Files, Blueprints, Namespace Context)을 선택하세요.",
+        "content": "Flow Code 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace 파일, Blueprints, Namespace Context)을 선택하세요.",
         "title": "현재 열려 있는 패널이 없습니다."
       },
       "plugins": {
@@ -604,7 +604,7 @@
     },
     "file preview truncated": "표시된 내용이 잘렸습니다",
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
-    "files": "Namespace Files",
+    "files": "Namespace 파일",
     "filter": {
       "active key value pairs": "활성 key/value 쌍",
       "add key value pair": "key/value 쌍 추가",

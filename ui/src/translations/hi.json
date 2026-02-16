@@ -477,7 +477,7 @@
         }
       },
       "panels": {
-        "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Namespace Files, Blueprints, Namespace Context)।",
+        "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Namespace फ़ाइलें, Blueprints, Namespace Context)।",
         "title": "कोई पैनल वर्तमान में खुला नहीं है।"
       },
       "plugins": {
@@ -604,7 +604,7 @@
     },
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
     "fileTypeNotAllowed": "फ़ाइल प्रकार की अनुमति नहीं है। स्वीकृत प्रकार: {types}",
-    "files": "Namespace Files",
+    "files": "Namespace फ़ाइलें",
     "filter": {
       "active key value pairs": "सक्रिय key/value जोड़े",
       "add key value pair": "कुंजी/मान जोड़ी जोड़ें",

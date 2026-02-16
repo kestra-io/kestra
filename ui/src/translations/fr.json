@@ -477,7 +477,7 @@
         }
       },
       "panels": {
-        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Namespace Files, Blueprints, Namespace Context) pour des fonctionnalités associées.",
+        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Fichiers de Namespace, Blueprints, Namespace Context) pour des fonctionnalités associées.",
         "title": "Aucun panneau n'est actuellement ouvert."
       },
       "plugins": {
@@ -604,7 +604,7 @@
     },
     "file preview truncated": "Displayed content has been truncated",
     "fileTypeNotAllowed": "Type de fichier non autorisé. Types acceptés : {types}",
-    "files": "Namespace Files",
+    "files": "Fichiers de Namespace",
     "filter": {
       "active key value pairs": "Paires clé/valeur actives",
       "add key value pair": "Ajouter une paire clé/valeur",

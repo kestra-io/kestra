@@ -7,7 +7,6 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
-import io.micrometer.core.instrument.Tag;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.data.model.Pageable;
@@ -18,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -55,79 +55,48 @@ public class SharedServiceInstanceMetricService {
             metricConfig.getSharedServiceInstanceMetrics().keySet()
         );
 
-        serviceInstances.stream()
+       var sumedServiceInstanceMetrics =  serviceInstances.stream()
         .filter(serviceInstance -> !(serviceInstance.type() == serverType))
         .filter(serviceInstance -> metricConfig.getSharedServiceInstanceMetrics().containsKey(serviceInstance.type()))
-        .forEach(serviceInstance -> serviceInstance.metrics()
+        .flatMap(serviceInstance -> serviceInstance.metrics()
             .stream()
             .filter(metric -> metricConfig.getSharedServiceInstanceMetrics().get(serviceInstance.type()).contains(metric.name()))
-            .forEach(metric -> {
-                    List<Metric.Tag> metricTags = new ArrayList<>(metric.tags());
-                    List<String> tags = new ArrayList<>(metric.tags().stream().map(
+        ).collect(
+            Collectors.groupingBy(
+                (metric) -> new MetricKey(metric.name(), metric.description(), metric.tags()),
+                Collectors.summingDouble((metric) -> metric.value().doubleValue())
+            )
+       );
+
+        sumedServiceInstanceMetrics.forEach((metricKey, value) -> {
+            sharedMetricsValues.computeIfAbsent(metricKey, k -> new AtomicReference<>()).set(value);
+
+            List<String> tags = new ArrayList<>(metricKey.tags().stream().map(
                         (tag) -> List.of(tag.key(), tag.value())
                     ).flatMap(List::stream).toList());
 
-                    if (metric.tags().stream().map(Metric.Tag::key).noneMatch(key -> key.equals("instance_id"))) {
-                        tags.add(MetricRegistry.SERVICE_ID);
-                        tags.add(serviceInstance.uid());
-                        metricTags.add(new Metric.Tag(MetricRegistry.SERVICE_ID, serviceInstance.uid()));
-                    }
+            sharedMetricsGauges.computeIfAbsent(metricKey, (mk) -> metricRegistry.gauge(
+                metricKey.name(),
+                metricKey.description(),
+                (Supplier<Number>) () -> sharedMetricsValues.get(metricKey).get(),
+                tags.toArray(new String[0])
+            ));
+        });
 
-                    MetricKey metricKey = new MetricKey(
-                        metric.name(),
-                        List.copyOf(metricTags.stream().map(Metric.Tag::key).toList()),
-                        serviceInstance.uid()
-                    );
-
-                    sharedMetricsValues.computeIfAbsent(
-                        metricKey, k -> new AtomicReference<>()
-                    ).set(metric.value());
-
-                    String filteredName = metric.name().replaceAll("^kestra\\.", "");
-                    sharedMetricsGauges.computeIfAbsent(metricKey, (mk) -> metricRegistry.gauge(
-                            filteredName,
-                        metric.description(),
-                        (Supplier<Number>) () -> sharedMetricsValues.get(metricKey).get(),
-                        tags.toArray(new String[0])
-                    ))  ;
-
-
-                    // If a gauge without the service instance tag does not exist for the given metric, then we need to register one so that we have a fallback base fallback metric when the service is removed.
-                    List<String> filteredTags = metric.tags().stream().filter(key -> !key.key().equals(MetricRegistry.SERVICE_ID)).map(
-                        (tag) -> List.of(tag.key(), tag.value())
-                    ).flatMap(List::stream).toList();
-                    boolean baseMetricRegistered = metricRegistry.findGauges(filteredName).stream()
-                        .allMatch(gauge -> gauge.getId().getTags().stream().map(Tag::getKey).toList().contains(serviceInstance.uid()));
-
-                    if (!baseMetricRegistered) {
-                        metricRegistry.gauge(
-                            filteredName,
-                            metric.description(),
-                            (Supplier<Number>) () -> 0,
-                            filteredTags.toArray(new String[0])
-                        );
-                    }
-
-            })
-        );
-        cleanUp(serviceInstances);
+        cleanUp(sumedServiceInstanceMetrics.keySet());
     }
 
-    private void cleanUp(List<ServiceInstance> serviceInstances) {
-        List<String> serviceInstanceIds = serviceInstances.stream().map(ServiceInstance::uid).toList();
-        List<MetricKey> toRemove = sharedMetricsValues.keySet().stream()
-            .filter(metricKey -> !serviceInstanceIds.contains(metricKey.serviceInstanceId()))
-                .toList();
-
-        toRemove.forEach(metricKey -> {
+    private void cleanUp(Set<MetricKey> metricKeys) {
+        sharedMetricsValues.forEach((metricKey, value) -> {
             log.debug("Removing metric {} from shared metrics, as the associated service instance is no longer active", metricKey);
-            metricRegistry.removeMeter(sharedMetricsGauges.remove(metricKey));
-            sharedMetricsValues.remove(metricKey);
+            if (!metricKeys.contains(metricKey)) {
+                value.set(0);
+            }
         });
     }
 
     private record MetricKey (
-        String name, List<String> tagKeys, String serviceInstanceId
+        String name, String description, List<Metric.Tag> tags
     ) {
     }
 }

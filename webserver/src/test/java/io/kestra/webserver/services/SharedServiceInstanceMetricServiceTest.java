@@ -55,8 +55,8 @@ class SharedServiceInstanceMetricServiceTest {
     @Test
     void shouldRegisterSeparateGauges_givenMetricsWithDifferentTags_whenPolled() {
         //Given
-        Metric metricWithOutTags = buildMetric("metric-name", 1);
-        Metric metricWithTags = buildMetric("metric-name", 2, new Metric.Tag("tag-key", "tag-value"));
+        Metric metricWithOutTags = buildMetric("metric-name", 1, new Metric.Tag("tag-key", "tag-value-one"));
+        Metric metricWithTags = buildMetric("metric-name", 2, new Metric.Tag("tag-key", "tag-value-two"));
 
         ServiceInstance serviceInstance = buildServiceInstanceWithMetric(metricWithOutTags, metricWithTags);
         mockServiceInstance(List.of(serviceInstance));
@@ -66,8 +66,8 @@ class SharedServiceInstanceMetricServiceTest {
 
 
         // Then
-        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutMetricNameTag = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
-        Optional<io.micrometer.core.instrument.Gauge> gaugeWithMetricNameTags = getGaugeWithTagKeys("metric-name", List.of("tag-key", MetricRegistry.SERVICE_ID));
+        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutMetricNameTag = getGaugeWithTags("metric-name", Map.of("tag-key", "tag-value-one") );
+        Optional<io.micrometer.core.instrument.Gauge> gaugeWithMetricNameTags = getGaugeWithTags("metric-name", Map.of("tag-key", "tag-value-two"));
 
         assertThat(gaugeWithoutMetricNameTag).isPresent();
         assertThat(gaugeWithMetricNameTags).isPresent();
@@ -88,7 +88,6 @@ class SharedServiceInstanceMetricServiceTest {
 
 
         // When
-
         mockServiceInstance(List.of(serviceInstanceBeforeUpdate));
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
@@ -96,7 +95,7 @@ class SharedServiceInstanceMetricServiceTest {
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
         // Then
-        Optional<io.micrometer.core.instrument.Gauge> gauge = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
+        Optional<io.micrometer.core.instrument.Gauge> gauge = getGauge("metric-name");
 
         assertThat(gauge).isPresent();
         assertThat(gauge.get().value()).isEqualTo(2);
@@ -104,7 +103,7 @@ class SharedServiceInstanceMetricServiceTest {
 
 
     @Test
-    void shouldTrackMetricsSeparatelyByInstanceId_givenMultipleServiceInstances_whenReportingSameMetric() {
+    void shouldSumMetricValues_givenMultipleServiceInstances_whenReportingSameMetric() {
         // Given
         String workerOneId = IdUtils.create();
         String workerTwoId = IdUtils.create();
@@ -121,14 +120,11 @@ class SharedServiceInstanceMetricServiceTest {
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
         // Then
-        Optional<io.micrometer.core.instrument.Gauge> gaugeForWorkerOne = getGaugeWithTags("metric-name", Map.of(MetricRegistry.SERVICE_ID, workerOneId));
-        Optional<io.micrometer.core.instrument.Gauge> gaugeForWorkerTwo = getGaugeWithTags("metric-name", Map.of(MetricRegistry.SERVICE_ID, workerTwoId));
+        Optional<io.micrometer.core.instrument.Gauge> gauge = getGauge("metric-name");
 
-        assertThat(gaugeForWorkerOne).isPresent();
-        assertThat(gaugeForWorkerTwo).isPresent();
+        assertThat(gauge).isPresent();
 
-        assertThat(gaugeForWorkerOne.get().value()).isEqualTo(10);
-        assertThat(gaugeForWorkerTwo.get().value()).isEqualTo(20);
+        assertThat(gauge.get().value()).isEqualTo(30);
     }
 
     @Test
@@ -147,52 +143,32 @@ class SharedServiceInstanceMetricServiceTest {
     }
 
     @Test
-    void shouldRemoveGauge_givenServiceInstanceDeactivated_whenPolledAgain() {
+    void shouldSetGaugeValueToZero_givenServiceInstanceDeactivated_whenPolledAgain() {
         // Given
         Metric metric = buildMetric("metric-name", 1);
         ServiceInstance activeServiceInstance = buildServiceInstanceWithMetric(metric);
-
         mockServiceInstance(List.of(activeServiceInstance));
-        sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
         // When
-        Optional<io.micrometer.core.instrument.Gauge> gaugeBeforeServiceInstaceDeactivate = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
+        sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
         mockServiceInstance(List.of());
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
-        Optional<io.micrometer.core.instrument.Gauge> gaugeAfterServiceInstanceDeactivate = getGaugeWithTagKeys("metric-name", List.of(MetricRegistry.SERVICE_ID));
+        Optional<io.micrometer.core.instrument.Gauge> gaugeAfterServiceInstanceDeactivate = getGauge("metric-name");
 
         // Then
-        assertThat(gaugeBeforeServiceInstaceDeactivate).isPresent();
-        assertThat(gaugeAfterServiceInstanceDeactivate).isNotPresent();
-    }
-
-    @Test
-    void shouldRegisterBaseMetricWithoutServiceId_givenBaseMetricWithoutServiceIdDoesNotExist_whenPolled() {
-        // Given
-        Metric metric = buildMetric("metric-name", 1);
-        String serviceInstanceId = IdUtils.create();
-        ServiceInstance activeServiceInstance = buildServiceInstanceWithMetric(serviceInstanceId, metric);
-
-
-
-        mockServiceInstance(List.of(activeServiceInstance));
-
-        // When
-        sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
-
-
-        // Then
-        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutServiceId = getGaugeWithoutTag("metric-name", MetricRegistry.SERVICE_ID);
-        assertThat(gaugeWithoutServiceId).isPresent();
-        assertThat(gaugeWithoutServiceId.get().value()).isEqualTo(0);
+        assertThat(gaugeAfterServiceInstanceDeactivate).isPresent();
+        assertThat(gaugeAfterServiceInstanceDeactivate.get().value()).isEqualTo(0);
     }
 
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithoutTag(String metricName, String tagKey) {
-        System.out.println("Look at me " + metricRegistry.find(metricName).gauges());
         return this.metricRegistry.find(metricName).gauges().stream()
             .filter(gauge -> gauge.getId().getTag(tagKey) == null)
             .findFirst();
+    }
+
+    private Optional<io.micrometer.core.instrument.Gauge> getGauge(String metricName) {
+        return this.metricRegistry.find(metricName).gauges().stream().findFirst();
     }
 
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithTags(String metricName, Map<String, String> tags) {

@@ -148,7 +148,6 @@ public class MetricRegistry {
     public static final String TAG_ATTEMPT_COUNT = "attempt_count";
     public static final String TAG_WORKER_GROUP = "worker_group";
     public static final String TAG_QUEUE_NAME = "queue_name";
-    public static final String SERVICE_ID = "service_id";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";

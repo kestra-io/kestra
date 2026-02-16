@@ -24,7 +24,7 @@ public class JdbcBroadcastSubscriber<T extends Event> extends JdbcSubscriber<T> 
     }
 
     @Override
-    protected Integer poll(Consumer<String> messageConsumer) {
+    protected Integer poll(Consumer<byte[]> messageConsumer) {
         Pair<Integer, Long> result = this.jdbcQueueClient.subscribeBroadcast(this.queueName, maxOffset, messageConsumer);
         maxOffset = result.getRight();
 
@@ -32,7 +32,7 @@ public class JdbcBroadcastSubscriber<T extends Event> extends JdbcSubscriber<T> 
     }
 
     @Override
-    protected Integer pollBatch(Consumer<List<String>> messageConsumer) {
+    protected Integer pollBatch(Consumer<List<byte[]>> messageConsumer) {
         Pair<Integer, Long> result = this.jdbcQueueClient.subscribeBroadcastBatch(this.queueName, maxOffset, messageConsumer);
         maxOffset = result.getRight();
 

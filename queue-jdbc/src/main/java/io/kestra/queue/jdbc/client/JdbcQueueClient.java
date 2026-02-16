@@ -125,7 +125,7 @@ public class JdbcQueueClient {
         }
     }
 
-    public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, Consumer<String> consumer) {
+    public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, Consumer<byte[]> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
 
@@ -150,7 +150,7 @@ public class JdbcQueueClient {
                 List<Long> processedItems = queueItems
                     .stream()
                     .map(queueItem -> {
-                        consumer.accept(queueItem.value());
+                        consumer.accept(queueItem.value().getBytes());
                         return queueItem.offset();
                     })
                     .filter(Objects::nonNull)
@@ -168,7 +168,7 @@ public class JdbcQueueClient {
         });
     }
 
-    public Integer subscribeDispatchBatch(String queue, List<String> routingKeys, Consumer<List<String>> consumer) {
+    public Integer subscribeDispatchBatch(String queue, List<String> routingKeys, Consumer<List<byte[]>> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
 
@@ -190,7 +190,7 @@ public class JdbcQueueClient {
                 .fetchInto(JdbcQueueItem.class);
 
             if (!queueItems.isEmpty()) {
-                consumer.accept(queueItems.stream().map(JdbcQueueItem::value).toList());
+                consumer.accept(queueItems.stream().map(item -> item.value().getBytes()).toList());
 
                 List<Long> processedItems = queueItems
                     .stream()
@@ -219,7 +219,7 @@ public class JdbcQueueClient {
         return initialOffset != null ? initialOffset : 0L;
     }
 
-    protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, Consumer<String> consumer) {
+    protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, Consumer<byte[]> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
@@ -240,7 +240,7 @@ public class JdbcQueueClient {
             if (!queueItems.isEmpty()) {
                 queueItems
                     .forEach(queueItem -> {
-                        consumer.accept(queueItem.value());
+                        consumer.accept(queueItem.value().getBytes());
                     });
 
                 maxOffsetResult = queueItems
@@ -254,7 +254,7 @@ public class JdbcQueueClient {
         });
     }
 
-    public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, Consumer<List<String>> consumer) {
+    public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, Consumer<List<byte[]>> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
@@ -273,7 +273,7 @@ public class JdbcQueueClient {
                 .fetchInto(JdbcQueueItem.class);
 
             if (!queueItems.isEmpty()) {
-                consumer.accept(queueItems.stream().map(JdbcQueueItem::value).toList());
+                consumer.accept(queueItems.stream().map(item -> item.value().getBytes()).toList());
 
                 maxOffsetResult = queueItems
                     .stream()

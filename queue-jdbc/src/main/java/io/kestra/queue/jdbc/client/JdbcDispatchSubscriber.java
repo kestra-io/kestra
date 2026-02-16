@@ -26,12 +26,12 @@ public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
     }
 
     @Override
-    protected Integer poll(Consumer<String> messageConsumer) {
+    protected Integer poll(Consumer<byte[]> messageConsumer) {
         return this.jdbcQueueClient.subscribeDispatch(this.queueName, this.routingKeys, messageConsumer);
     }
 
     @Override
-    protected Integer pollBatch(Consumer<List<String>> messageConsumer) {
+    protected Integer pollBatch(Consumer<List<byte[]>> messageConsumer) {
         return this.jdbcQueueClient.subscribeDispatchBatch(this.queueName, this.routingKeys, messageConsumer);
     }
 

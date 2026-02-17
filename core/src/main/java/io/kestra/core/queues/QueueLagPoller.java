@@ -43,7 +43,7 @@ public class QueueLagPoller {
     }
 
 
-    @Scheduled(fixedDelay = "5s", initialDelay = "30s")
+    @Scheduled(fixedDelay = "300s", initialDelay = "30s")
     public void refreshWorkerGroups() {
         Set<String> availableWorkerGroups = workerGroupExecutor.listAllWorkerGroupKeys();
         QueueInterface<WorkerJob> workerJobQueue = workerJobQueueProvider.get();

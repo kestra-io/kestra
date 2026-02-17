@@ -9159,6 +9159,8 @@ components:
           type: string
         providerId:
           type: string
+        namespace:
+          type: string
     FlowGraph:
       type: object
       properties:

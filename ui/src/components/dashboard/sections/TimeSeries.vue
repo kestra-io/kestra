@@ -159,10 +159,14 @@
 
     const parseValue = (value) => {
         const date = moment(value, moment.ISO_8601, true);
+        const query = {
+            ...Object.fromEntries(props.filters.map(({field, value, operation}) => [`filters[${field}][${operation}]`, value])),
+            ...route.query
+        };
         return date.isValid() ? date.format(KestraUtils.getDateFormat(
-            route.query.startDate ?? route.query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] as string,
-            route.query.endDate ?? route.query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] as string,
-            route.query["filters[timeRange][EQUALS]"]
+            route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] as string,
+            route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] as string,
+            query["filters[timeRange][EQUALS]"]
         )) : value;
     };
 
@@ -305,23 +309,23 @@
 </script>
 
 <style lang="scss" scoped>
-.chart {
-    #{--chart-height}: 200px;
+    .chart {
+        #{--chart-height}: 200px;
 
-    &:not(.with-legend) {
-        #{--chart-height}: 231px;
+        &:not(.with-legend) {
+            #{--chart-height}: 231px;
+        }
+
+        min-height: var(--chart-height);
+        max-height: var(--chart-height);
     }
 
-    min-height: var(--chart-height);
-    max-height: var(--chart-height);
-}
+    .short-chart {
+        &:not(.with-legend) {
+            #{--chart-height}: 40px;
+        }
 
-.short-chart {
-    &:not(.with-legend) {
-        #{--chart-height}: 40px;
+        min-height: var(--chart-height);
+        max-height: var(--chart-height);
     }
-
-    min-height: var(--chart-height);
-    max-height: var(--chart-height);
-}
 </style>

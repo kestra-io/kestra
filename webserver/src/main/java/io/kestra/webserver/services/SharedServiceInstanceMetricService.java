@@ -62,7 +62,7 @@ public class SharedServiceInstanceMetricService {
         .flatMap(serviceInstance -> serviceInstance.metrics()
             .stream()
             .filter(metric ->
-                metricConfig.getSharedServiceInstanceMetrics().get(serviceInstance.type()).contains(removeMetricPrefix(metric.name()))
+                metricConfig.getSharedServiceInstanceMetrics().get(serviceInstance.type()).contains(metric.name())
             )
         ).collect(
             Collectors.groupingBy(

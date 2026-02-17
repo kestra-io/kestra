@@ -277,8 +277,8 @@ div.line {
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.15s ease-in-out;
-        top: 50%;
-        transform: translateY(-50%);
+        top: 0.5rem;
+        right: 0.5rem;
     }
 
     &:hover :deep(.clipboard) {

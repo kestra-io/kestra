@@ -13,6 +13,7 @@ import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
@@ -44,6 +45,11 @@ public class QueueService {
         this.queueConfiguration = queueConfiguration;
         this.metricRegistry = metricRegistry;
         this.vNodeCount = schedulerConfiguration.vnodes();
+    }
+
+    @PreDestroy
+    void close() {
+        this.executorService.shutdown();
     }
 
     public void execute(Runnable runnable) {

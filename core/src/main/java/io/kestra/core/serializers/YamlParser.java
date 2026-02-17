@@ -22,7 +22,6 @@ import java.util.Set;
 public final class YamlParser {
     private static final ObjectMapper NON_STRICT_MAPPER = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
 
     private static final ObjectMapper STRICT_MAPPER = NON_STRICT_MAPPER.copy()

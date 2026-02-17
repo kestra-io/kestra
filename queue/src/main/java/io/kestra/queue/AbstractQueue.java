@@ -83,4 +83,9 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
     protected List<Consumer<T>> listeners() {
         return listeners;
     }
+
+    @Override
+    public void close() {
+        this.asyncPoolExecutor.shutdown();
+    }
 }

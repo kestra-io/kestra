@@ -9,6 +9,8 @@ import java.io.PrintStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// FIXME: it didn't need any repository before but as now it have a dependency of it
+//  As we now move to a separate kestractl, maybe it's time to deprecate those commands?
 class FlowValidateCommandTest {
     @Test
     void run() {

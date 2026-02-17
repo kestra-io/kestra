@@ -1,7 +1,7 @@
 <template>
     <ExecutionPending
         v-if="!isExecutionStarted"
-        :execution="execution"
+        :execution="execution!"
     />
     <template v-else-if="execution && executionsStore.flow">
         <KSFilter
@@ -98,7 +98,7 @@
                                         :taskRunId="item.id"
                                         :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
                                         :level="effectiveSelectedLogLevel"
-                                        @follow="forwardEvent('follow', $event)"
+                                        @follow="emit('follow', $event)"
                                         :targetFlow="executionsStore.flow"
                                         :showLogs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                                         class="mh-100 mx-3"
@@ -112,23 +112,29 @@
         </el-card>
     </template>
 </template>
-<script lang="ts">
-    import {computed} from "vue";
+
+<script setup lang="ts">
+    import {ref, computed, watch, onUnmounted} from "vue";
+    import moment from "moment";
+    import {useI18n} from "vue-i18n";
+    // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {State} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/ui-libs";
+    // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
+    // @ts-expect-error no types yet
     import FlowUtils from "../../utils/flowUtils";
-    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
+    // @ts-expect-error no types yet
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
-
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
     import ExecutionPending from "./ExecutionPending.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
-    import {Comparators} from "../filter/utils/filterTypes";
+    import {Comparators, type AppliedFilter} from "../filter/utils/filterTypes";
     import {useGanttExecutionFilter} from "../filter/configurations";
     import {
         hasUnsupportedRouteLevelComparator,
@@ -136,362 +142,410 @@
         readRouteLevelFilter
     } from "../filter/utils/logLevelQuery";
     import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
-    import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useExecutionsStore, type Execution} from "../../stores/executions";
 
-    const ts = date => new Date(date).getTime();
+    interface TaskRun {
+        id: string;
+        taskId: string;
+        parentTaskRunId?: string;
+        value?: string;
+        flowId?: string;
+        namespace?: string;
+        outputs?: Record<string, unknown>;
+        attempts?: unknown[];
+        state: {
+            current: string;
+            histories: Array<{
+                state: string;
+                date: string;
+            }>;
+        };
+    }
+
+    interface TaskWrapper {
+        task: TaskRun;
+        depth: number | undefined;
+        children?: TaskWrapper[];
+    }
+
+    interface SeriesItem {
+        id: string;
+        name: string;
+        start: number;
+        width: number;
+        left: number;
+        tooltip: string;
+        color: string;
+        running: boolean;
+        task: TaskRun;
+        flowId?: string;
+        namespace?: string;
+        executionId?: string;
+        attempts: number;
+        depth: number | undefined;
+        parentEndPercent?: number;
+    }
+
+    // Props
+    withDefaults(defineProps<{
+        namespace?: string;
+        embed?: boolean;
+    }>(), {
+        namespace: undefined,
+        embed: true
+    });
+
+    // Emits
+    const emit = defineEmits<{
+        follow: [event: unknown];
+        "go-to-detail": [event: unknown];
+        goToDetail: [event: unknown];
+    }>();
+
+    // Composables
+    const {t} = useI18n();
+    const executionsStore = useExecutionsStore();
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+    const ganttExecutionFilter = useGanttExecutionFilter();
+
+    // Constants
     const TASKRUN_THRESHOLD = 50;
-    export default {
-        props: {
-            namespace: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-            embed: {
-                type: Boolean,
-                required: false,
-                default: true
+    const ts = (date: string | Date): number => new Date(date).getTime();
+    const colors = State.colorClass();
+    const taskTypesToExclude = [
+        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
+        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
+        "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
+        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
+        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
+        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+    ];
+
+    // Reactive state
+    const series = ref<SeriesItem[]>([]);
+    const dates = ref<string[]>([]);
+    const selectedTaskRuns = ref<string[]>([]);
+    const search = ref<string>("");
+    const selectedStates = ref<string[]>([]);
+    const selectedStatesComparator = ref<Comparators | undefined>(undefined);
+    const selectedTaskRunId = ref<string | undefined>(undefined);
+    const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined);
+
+    // Log level filter policy
+    const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO");
+    const {effectiveValue: effectiveSelectedLogLevel} = useRouteFilterPolicy<string>({
+        defaultValue: () => defaultLogLevel.value,
+        applyDefaultIfMissing: () => true,
+        fallbackValue: () => "TRACE",
+        readFromRoute: readRouteLevelFilter,
+        writeToRoute: normalizeRouteLevelFilter,
+        hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
+    });
+
+    // Computed properties
+    const execution = computed<Execution | undefined>(() => executionsStore.execution);
+
+    const taskRunsCount = computed<number>(() => {
+        return execution.value?.taskRunList ? execution.value.taskRunList.length : 0;
+    });
+
+    const start = computed<number>(() => {
+        return execution.value ? ts(execution.value.state.histories![0].date) : 0;
+    });
+
+    const tasks = computed<TaskWrapper[]>(() => {
+        const rootTasks: TaskWrapper[] = [];
+        const childTasks: TaskWrapper[] = [];
+        const sortedTasks: TaskWrapper[] = [];
+        const tasksById: Record<string, TaskWrapper> = {};
+
+        for (const task of (execution.value?.taskRunList || []) as TaskRun[]) {
+            const taskWrapper: TaskWrapper = {task, depth: task.parentTaskRunId ? undefined : 0};
+            if (task.parentTaskRunId) {
+                childTasks.push(taskWrapper);
+            } else {
+                rootTasks.push(taskWrapper);
             }
-        },
-        emits: ["follow", "go-to-detail", "goToDetail"],
-        components: {
-            DynamicScroller,
-            Warning,
-            DynamicScrollerItem,
-            TaskRunDetails,
-            Duration,
-            ChevronRight,
-            ChevronDown,
-            ExecutionPending,
-            KSFilter
-        },
-        setup() {
-            const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
-            const ganttExecutionFilter = useGanttExecutionFilter();
-            const defaultLogLevel = computed(
-                () => localStorage.getItem("defaultLogLevel") || "INFO"
-            );
-            const {
-                effectiveValue: effectiveSelectedLogLevel,
-            } = useRouteFilterPolicy<string>({
-                defaultValue: () => defaultLogLevel.value,
-                applyDefaultIfMissing: () => true,
-                fallbackValue: () => "TRACE",
-                readFromRoute: readRouteLevelFilter,
-                writeToRoute: normalizeRouteLevelFilter,
-                hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
-            });
-
-            return {
-                verticalLayout,
-                ganttExecutionFilter,
-                effectiveSelectedLogLevel,
-            };
-        },
-        data() {
-            return {
-                colors: State.colorClass(),
-                series: [],
-                dates: [],
-                duration: undefined,
-                selectedTaskRuns: [],
-                search: "",
-                selectedStates: [],
-                selectedStatesComparator: undefined,
-                selectedTaskRunId: undefined,
-                regularPaintingInterval: undefined,
-                taskTypesToExclude: [
-                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
-                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
-                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
-                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
-                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
-                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
-                ]
-            };
-        },
-        watch: {
-            execution: {
-                handler(newValue) {
-                    if (!State.isRunning(newValue.state?.current)) {
-                        clearInterval(this.regularPaintingInterval);
-                        this.regularPaintingInterval = undefined;
-                        this.compute();
-                    } else if (this.regularPaintingInterval === undefined) {
-                        this.regularPaintingInterval = setInterval(this.compute, this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500);
-                    }
-                },
-                immediate: true
-            },
-            forEachItemsTaskRunIds: {
-                handler(newValue, oldValue) {
-                    if (newValue.length > 0) {
-                        const newEntriesAmount = newValue.length - (oldValue?.length ?? 0);
-                        for (let i = newValue.length - newEntriesAmount; i < newValue.length; i++) {
-                            this.selectedTaskRuns.push(newValue[i].id);
-                        }
-                    }
-                },
-                immediate: true
-            }
-        },
-        computed: {
-            ...mapStores(useExecutionsStore),
-            execution(){
-                return this.executionsStore.execution
-            },
-            taskRunsCount() {
-                return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
-            },
-            taskTypeByTaskRun() {
-                return this.series.map(serie => [serie.task, this.taskType(serie.task)]);
-            },
-            taskTypeByTaskRunId() {
-                return Object.fromEntries(this.taskTypeByTaskRun.map(([taskRun, taskType]) => [taskRun.id, taskType]));
-            },
-            forEachItemsTaskRunIds() {
-                return this.taskTypeByTaskRun.filter(([, taskType]) => taskType === "io.kestra.plugin.core.flow.ForEachItem" || taskType === "io.kestra.core.tasks.flows.ForEachItem").map(([taskRunId]) => taskRunId);
-            },
-            filteredSeries() {
-                const normalizedSearch = this.search?.trim()?.toLowerCase();
-                return this.series
-                    .filter(serie =>
-                        !this.taskTypesToExclude.includes(this.taskTypeByTaskRunId[serie.task.id])
-                    )
-                    .filter((serie) => {
-                        if (normalizedSearch) {
-                            const searchText = [
-                                serie.name,
-                                serie.id,
-                                serie.task?.value,
-                            ]
-                                .filter(Boolean)
-                                .join(" ")
-                                .toLowerCase();
-
-                            if (!searchText.includes(normalizedSearch)) {
-                                return false;
-                            }
-                        }
-
-                        if (this.selectedTaskRunId && serie.id !== this.selectedTaskRunId) {
-                            return false;
-                        }
-
-                        if (this.selectedStates.length > 0) {
-                            const isInSelectedStates = this.selectedStates.includes(serie.task?.state?.current);
-                            if (this.selectedStatesComparator === Comparators.NOT_IN) {
-                                return !isInSelectedStates;
-                            }
-                            return isInSelectedStates;
-                        }
-
-                        return true;
-                    });
-            },
-            start() {
-                return this.execution ? ts(this.execution.state.histories[0].date) : 0;
-            },
-            tasks () {
-                const rootTasks = []
-                const childTasks = []
-                const sortedTasks = []
-                const tasksById = {}
-                for (let task of (this.execution.taskRunList || [])) {
-                    const taskWrapper = {task, depth: task.parentTaskRunId ? undefined : 0}
-                    if (task.parentTaskRunId) {
-                        childTasks.push(taskWrapper)
-                    } else {
-                        rootTasks.push(taskWrapper)
-                    }
-                    tasksById[task.id] = taskWrapper
-                }
-
-                for (let i = 0; i < childTasks.length; i++) {
-                    const taskWrapper = childTasks[i];
-                    const parentTask = tasksById[taskWrapper.task.parentTaskRunId]
-                    if (parentTask) {
-                        taskWrapper.depth = parentTask.depth + 1
-                        tasksById[taskWrapper.task.id] = taskWrapper
-                        if (!parentTask.children) {
-                            parentTask.children = []
-                        }
-                        parentTask.children.push(taskWrapper)
-                    }
-                }
-
-                const nodeStart = node => ts(node.task.state.histories[0].date)
-                const childrenSort = nodes => {
-                    nodes.sort((n1,n2) => {
-                        return nodeStart(n1) > nodeStart(n2) ? 1 : -1
-                    })
-                    for (let node of nodes) {
-                        sortedTasks.push(node)
-                        if (node.children) {
-                            childrenSort(node.children)
-                        }
-                    }
-                }
-                childrenSort(rootTasks)
-                return sortedTasks
-            },
-            isExecutionStarted() {
-                return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
-            },
-            hasValidDate() {
-                return isFinite(this.delta());
-            },
-            startTime() {
-                if (!this.execution) return "";
-                return this.$moment(this.execution.state.histories[0].date).format("HH:mm:ss");
-            },
-            endTime() {
-                if (!this.execution) return "";
-                const endDate = State.isRunning(this.execution.state.current) 
-                    ? new Date() 
-                    : new Date(this.stop());
-                return this.$moment(endDate).format("HH:mm:ss");
-            },
-        },
-        methods: {
-            forwardEvent(type, event) {
-                this.$emit(type, event);
-            },
-            compute() {
-                this.computeSeries();
-                this.computeDates();
-            },
-            delta() {
-                return this.stop() - this.start;
-            },
-            stop() {
-                if (!this.execution || State.isRunning(this.execution.state.current)) {
-                    return +new Date();
-                }
-
-                return Math.max(...(this.execution.taskRunList || []).map(r => {
-                    let lastIndex = r.state.histories.length - 1
-                    return ts(r.state.histories[lastIndex].date)
-                }));
-            },
-            computeSeries() {
-                if (!this.execution) {
-                    return;
-                }
-
-                const series = [];
-                const executionDelta = this.delta();
-                const taskMap = {};
-                
-                for (let taskWrapper of this.tasks) {
-                    let task = taskWrapper.task
-                    let stopTs;
-                    if (State.isRunning(task.state.current)) {
-                        stopTs = ts(new Date());
-                    } else {
-                        const lastIndex = task.state.histories.length - 1;
-                        stopTs = ts(task.state.histories[lastIndex].date);
-                    }
-
-                    const startTs = ts(task.state.histories[0].date);
-
-                    const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
-                    const left = runningState.length > 0 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100) : 0;
-
-                    const start = startTs - this.start;
-                    let stop = stopTs - this.start - start;
-
-                    const delta = stopTs - startTs;
-                    const duration = this.$moment.duration(delta);
-
-                    let tooltip = `${this.$t("duration")} : ${Utils.humanDuration(duration)}`
-
-                    if (runningState.length > 0) {
-                        tooltip += `\n${this.$t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
-                        tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
-                    }
-
-                    let width = (stop / executionDelta) * 100
-                    if (State.isRunning(task.state.current)) {
-                        width = ((this.stop() - startTs) / executionDelta) * 100
-                    }
-
-                    let startPercent = (start / executionDelta) * 100;
-                    let parentEndPercent = undefined;
-                    
-                    if (task.parentTaskRunId && taskMap[task.parentTaskRunId]) {
-                        const parent = taskMap[task.parentTaskRunId];
-                        parentEndPercent = parent.start + parent.width;
-                    }
-
-                    const seriesItem = {
-                        id: task.id,
-                        name: task.taskId,
-                        start: startPercent,
-                        width,
-                        left: left,
-                        tooltip,
-                        color: this.colors[task.state.current],
-                        running: State.isRunning(task.state.current),
-                        task,
-                        flowId: task.flowId,
-                        namespace: task.namespace,
-                        executionId: task.outputs && task.outputs.executionId,
-                        attempts: task.attempts ? task.attempts.length : 1,
-                        depth: taskWrapper.depth,
-                        parentEndPercent: parentEndPercent
-                    };
-                    
-                    taskMap[task.id] = seriesItem;
-                    series.push(seriesItem);
-                }
-                this.series = series;
-            },
-            computeDates() {
-                const ticks = 5;
-                const date = ts => this.$moment(ts).format("h:mm:ss");
-                const start = this.start;
-                const delta = this.delta() / ticks;
-                const dates = [];
-                for (let i = 0; i < ticks; i++) {
-                    dates.push(date(start + i * delta));
-                }
-                this.dates = dates;
-            },
-            onTaskSelect(taskRunId) {
-                if(this.selectedTaskRuns.includes(taskRunId)) {
-                    this.selectedTaskRuns = this.selectedTaskRuns.filter(id => id !== taskRunId);
-                    return
-                }
-
-                this.selectedTaskRuns.push(taskRunId);
-            },
-            onFilterChange(filters) {
-                const stateFilter = filters.find((filter) => filter.key === "state");
-                if (stateFilter) {
-                    this.selectedStatesComparator = stateFilter.comparator;
-                    this.selectedStates = (Array.isArray(stateFilter.value) ? stateFilter.value : [stateFilter.value])
-                        .filter(Boolean);
-                } else {
-                    this.selectedStatesComparator = undefined;
-                    this.selectedStates = [];
-                }
-
-                const taskFilter = filters.find((filter) => filter.key === "task");
-                this.selectedTaskRunId = taskFilter
-                    ? (Array.isArray(taskFilter.value) ? taskFilter.value[0] : taskFilter.value)
-                    : undefined;
-            },
-            taskType(taskRun) {
-                const task = FlowUtils.findTaskById(this.executionsStore.flow, taskRun.taskId);
-                return task?.type;
-            }
-        },
-        unmounted() {
-            clearInterval(this.regularPaintingInterval);
+            tasksById[task.id] = taskWrapper;
         }
-    };
+
+        for (let i = 0; i < childTasks.length; i++) {
+            const taskWrapper = childTasks[i];
+            const parentTask = tasksById[taskWrapper.task.parentTaskRunId!];
+            if (parentTask) {
+                taskWrapper.depth = parentTask.depth! + 1;
+                tasksById[taskWrapper.task.id] = taskWrapper;
+                if (!parentTask.children) {
+                    parentTask.children = [];
+                }
+                parentTask.children.push(taskWrapper);
+            }
+        }
+
+        const nodeStart = (node: TaskWrapper): number => ts(node.task.state.histories[0].date);
+        const childrenSort = (nodes: TaskWrapper[]): void => {
+            nodes.sort((n1, n2) => (nodeStart(n1) > nodeStart(n2) ? 1 : -1));
+            for (const node of nodes) {
+                sortedTasks.push(node);
+                if (node.children) {
+                    childrenSort(node.children);
+                }
+            }
+        };
+        childrenSort(rootTasks);
+        return sortedTasks;
+    });
+
+    const taskTypeByTaskRun = computed<Array<[TaskRun, string | undefined]>>(() => {
+        return series.value.map(serie => [serie.task, taskType(serie.task)]);
+    });
+
+    const taskTypeByTaskRunId = computed<Record<string, string | undefined>>(() => {
+        return Object.fromEntries(
+            taskTypeByTaskRun.value.map(([taskRun, taskTypeVal]) => [taskRun.id, taskTypeVal])
+        );
+    });
+
+    const forEachItemsTaskRunIds = computed<TaskRun[]>(() => {
+        return taskTypeByTaskRun.value
+            .filter(([, taskTypeVal]) =>
+                taskTypeVal === "io.kestra.plugin.core.flow.ForEachItem" ||
+                taskTypeVal === "io.kestra.core.tasks.flows.ForEachItem"
+            )
+            .map(([taskRun]) => taskRun);
+    });
+
+    const filteredSeries = computed<SeriesItem[]>(() => {
+        const normalizedSearch = search.value?.trim()?.toLowerCase();
+        return series.value
+            .filter(serie => !taskTypesToExclude.includes(taskTypeByTaskRunId.value[serie.task.id] ?? ""))
+            .filter((serie) => {
+                if (normalizedSearch) {
+                    const searchText = [
+                        serie.name,
+                        serie.id,
+                        serie.task?.value,
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                    if (!searchText.includes(normalizedSearch)) {
+                        return false;
+                    }
+                }
+
+                if (selectedTaskRunId.value && serie.id !== selectedTaskRunId.value) {
+                    return false;
+                }
+
+                if (selectedStates.value.length > 0) {
+                    const isInSelectedStates = selectedStates.value.includes(serie.task?.state?.current);
+                    if (selectedStatesComparator.value === Comparators.NOT_IN) {
+                        return !isInSelectedStates;
+                    }
+                    return isInSelectedStates;
+                }
+
+                return true;
+            });
+    });
+
+    const isExecutionStarted = computed<boolean>(() => {
+        return !!execution.value?.state?.current && !["CREATED", "QUEUED"].includes(execution.value.state.current);
+    });
+
+    const hasValidDate = computed<boolean>(() => isFinite(delta()));
+
+    const startTime = computed<string>(() => {
+        if (!execution.value) return "";
+        return moment(execution.value.state.histories![0].date).format("HH:mm:ss");
+    });
+
+    const endTime = computed<string>(() => {
+        if (!execution.value) return "";
+        const endDate = State.isRunning(execution.value.state.current)
+            ? new Date()
+            : new Date(stop());
+        return moment(endDate).format("HH:mm:ss");
+    });
+
+    // Methods
+    function delta(): number {
+        return stop() - start.value;
+    }
+
+    function stop(): number {
+        if (!execution.value || State.isRunning(execution.value.state.current)) {
+            return +new Date();
+        }
+
+        return Math.max(
+            ...(execution.value.taskRunList as TaskRun[] || []).map(r => {
+                const lastIndex = r.state.histories.length - 1;
+                return ts(r.state.histories[lastIndex].date);
+            })
+        );
+    }
+
+    function compute(): void {
+        computeSeries();
+        computeDates();
+    }
+
+    function computeSeries(): void {
+        if (!execution.value) {
+            return;
+        }
+
+        const newSeries: SeriesItem[] = [];
+        const executionDelta = delta();
+        const taskMap: Record<string, SeriesItem> = {};
+
+        for (const taskWrapper of tasks.value) {
+            const task = taskWrapper.task;
+            let stopTs: number;
+            if (State.isRunning(task.state.current)) {
+                stopTs = ts(new Date());
+            } else {
+                const lastIndex = task.state.histories.length - 1;
+                stopTs = ts(task.state.histories[lastIndex].date);
+            }
+
+            const startTs = ts(task.state.histories[0].date);
+
+            const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
+            const left = runningState.length > 0
+                ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100)
+                : 0;
+
+            const taskStart = startTs - start.value;
+            const taskStop = stopTs - start.value - taskStart;
+
+            const taskDelta = stopTs - startTs;
+
+            let tooltip = `${t("duration")} : ${Utils.humanDuration(taskDelta)}`;
+
+            if (runningState.length > 0) {
+                tooltip += `\n${t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
+                tooltip += `\n${t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
+            }
+
+            let width = (taskStop / executionDelta) * 100;
+            if (State.isRunning(task.state.current)) {
+                width = ((stop() - startTs) / executionDelta) * 100;
+            }
+
+            const startPercent = (taskStart / executionDelta) * 100;
+            let parentEndPercent: number | undefined = undefined;
+
+            if (task.parentTaskRunId && taskMap[task.parentTaskRunId]) {
+                const parent = taskMap[task.parentTaskRunId];
+                parentEndPercent = parent.start + parent.width;
+            }
+
+            const seriesItem: SeriesItem = {
+                id: task.id,
+                name: task.taskId,
+                start: startPercent,
+                width,
+                left,
+                tooltip,
+                color: colors[task.state.current],
+                running: State.isRunning(task.state.current),
+                task,
+                flowId: task.flowId,
+                namespace: task.namespace,
+                executionId: task.outputs?.executionId as string | undefined,
+                attempts: task.attempts ? task.attempts.length : 1,
+                depth: taskWrapper.depth,
+                parentEndPercent
+            };
+
+            taskMap[task.id] = seriesItem;
+            newSeries.push(seriesItem);
+        }
+        series.value = newSeries;
+    }
+
+    function computeDates(): void {
+        const ticks = 5;
+        const formatDate = (timestamp: number): string => moment(timestamp).format("h:mm:ss");
+        const startVal = start.value;
+        const deltaVal = delta() / ticks;
+        const newDates: string[] = [];
+        for (let i = 0; i < ticks; i++) {
+            newDates.push(formatDate(startVal + i * deltaVal));
+        }
+        dates.value = newDates;
+    }
+
+    function onTaskSelect(taskRunId: string): void {
+        if (selectedTaskRuns.value.includes(taskRunId)) {
+            selectedTaskRuns.value = selectedTaskRuns.value.filter(id => id !== taskRunId);
+            return;
+        }
+        selectedTaskRuns.value.push(taskRunId);
+    }
+
+    function onFilterChange(filters: AppliedFilter[]): void {
+        const stateFilter = filters.find((filter) => filter.key === "state");
+        if (stateFilter) {
+            selectedStatesComparator.value = stateFilter.comparator;
+            selectedStates.value = (
+                Array.isArray(stateFilter.value) ? stateFilter.value : [stateFilter.value]
+            ).filter(Boolean) as string[];
+        } else {
+            selectedStatesComparator.value = undefined;
+            selectedStates.value = [];
+        }
+
+        const taskFilter = filters.find((filter) => filter.key === "task");
+        selectedTaskRunId.value = taskFilter
+            ? (Array.isArray(taskFilter.value) ? taskFilter.value[0] : taskFilter.value) as string | undefined
+            : undefined;
+    }
+
+    function taskType(taskRun: TaskRun): string | undefined {
+        const task = FlowUtils.findTaskById(executionsStore.flow, taskRun.taskId);
+        return task?.type;
+    }
+
+    // Watchers
+    watch(
+        execution,
+        (newValue) => {
+            if (!newValue?.state?.current || !State.isRunning(newValue.state.current)) {
+                clearInterval(regularPaintingInterval.value);
+                regularPaintingInterval.value = undefined;
+                compute();
+            } else if (regularPaintingInterval.value === undefined) {
+                regularPaintingInterval.value = setInterval(
+                    compute,
+                    taskRunsCount.value < TASKRUN_THRESHOLD ? 40 : 500
+                );
+            }
+        },
+        {immediate: true}
+    );
+
+    watch(
+        forEachItemsTaskRunIds,
+        (newValue, oldValue) => {
+            if (newValue.length > 0) {
+                const newEntriesAmount = newValue.length - (oldValue?.length ?? 0);
+                for (let i = newValue.length - newEntriesAmount; i < newValue.length; i++) {
+                    selectedTaskRuns.value.push(newValue[i].id);
+                }
+            }
+        },
+        {immediate: true}
+    );
+
+    // Lifecycle
+    onUnmounted(() => {
+        clearInterval(regularPaintingInterval.value);
+    });
 </script>
 
 <style scoped lang="scss">

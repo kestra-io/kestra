@@ -1014,7 +1014,7 @@
         },
         "add_input_default": {
           "title": "Set a default input value",
-          "description": "When a flow is triggered automatically, inputs still need values at runtime.<br><br>Now add a <code>defaults</code> value to the <code>name</code> input."
+          "description": "When a flow is triggered automatically, inputs still need values at runtime.<br><br>The <code>name</code> input was already created in the previous step, so there’s no need to add it again. Just set a default value for the existing <code>name</code> input."
         },
         "save_flow_again": {
           "title": "Save flow",
@@ -1076,8 +1076,8 @@
         "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
         "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
         "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
-        "add_input_default_section": "Go back to `inputs` and keep one input named `name`.",
-        "add_input_default_id": "Make sure the input ID is `name`.",
+        "add_input_default_section": "Go back to `inputs` and keep one existing input named `name` (do not add a second input).",
+        "add_input_default_id": "Keep the existing input ID as `name`.",
         "add_input_default_defaults": "Add a default value for `name`, for example: `defaults: \"Kestra\"`.",
         "save_flow_again": "Click Save again to continue."
       }

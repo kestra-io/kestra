@@ -3,9 +3,17 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :icon="icon.Play" :type="type" :disabled="isDisabled()" @click="onClick()">
-            {{ $t("execute") }}
-        </el-button>
+        <span v-else data-onboarding-target="flow-execute-button">
+            <el-button
+                id="execute-button"
+                :icon="icon.Play"
+                :type="type"
+                :disabled="isDisabled()"
+                @click="onClick()"
+            >
+                {{ $t("execute") }}
+            </el-button>
+        </span>
         <el-dialog
             id="execute-flow-dialog"
             v-model="isOpen"

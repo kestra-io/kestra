@@ -98,8 +98,10 @@
     const highlightRetryCount = ref(0);
     const lastTrackedSaveCount = ref(onboardingStore.state.saveCount);
     const lastTrackedExecutionCount = ref(onboardingStore.state.executionCount);
-    const maxHighlightRetries = 10;
+    const maxHighlightRetries = 25;
+    const executeModalTriggerSelector = "#execute-flow-dialog [data-onboarding-target=\"flow-execute-confirm-button\"]";
     let highlightRetryTimer: number | null = null;
+    let executeStepRecheckTimer: number | null = null;
     const cardInlineStyle = computed(() => ({
         ...cardStyle.value,
         transform: `translate(${dragOffset.value.x}px, ${dragOffset.value.y}px)`,
@@ -166,7 +168,12 @@
             window.clearTimeout(highlightRetryTimer);
             highlightRetryTimer = null;
         }
+        if (executeStepRecheckTimer !== null) {
+            window.clearTimeout(executeStepRecheckTimer);
+            executeStepRecheckTimer = null;
+        }
         highlightedElement.value?.classList.remove("onboarding-v2-highlight");
+        highlightedElement.value?.classList.remove("onboarding-v2-highlight-static");
         highlightedElement.value?.classList.remove("onboarding-v2-highlight-pulse");
         highlightedElement.value = null;
         if (resetPosition) {
@@ -174,6 +181,40 @@
             dragOffset.value = {x: 0, y: 0};
         }
     };
+
+    function scheduleExecuteStepRecheck() {
+        if (executeStepRecheckTimer !== null) {
+            return;
+        }
+        executeStepRecheckTimer = window.setTimeout(() => {
+            executeStepRecheckTimer = null;
+            if (!isExecuteStep.value || onboardingStore.state.status !== "in_progress") {
+                return;
+            }
+            applyHighlight();
+        }, 180);
+    }
+
+    function queryTargetByPriority(selector: string): HTMLElement | null {
+        for (const candidate of selector.split(",").map((value) => value.trim()).filter(Boolean)) {
+            const targets = Array.from(document.querySelectorAll(candidate)) as HTMLElement[];
+            const visibleTarget = targets.find((target) => {
+                const style = window.getComputedStyle(target);
+                if (style.display === "none" || style.visibility === "hidden") {
+                    return false;
+                }
+
+                const rect = target.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0;
+            });
+
+            if (visibleTarget) {
+                return visibleTarget;
+            }
+        }
+
+        return null;
+    }
 
     const onCardMouseDown = (event: MouseEvent) => {
         if (event.button !== 0) {
@@ -227,11 +268,23 @@
         window.addEventListener("mouseup", onMouseUp);
     };
 
-    const applyHighlight = () => {
-        clearHighlight();
+    function applyHighlight() {
+        if (onboardingStore.state.status !== "in_progress") {
+            clearHighlight();
+            return;
+        }
         const selector = currentStep.value?.targetSelector;
         if (selector) {
-            const target = document.querySelector(selector) as HTMLElement | null;
+            let target: HTMLElement | null;
+            if (isExecuteStep.value) {
+                target = queryTargetByPriority(executeModalTriggerSelector);
+                if (!target) {
+                    target = queryTargetByPriority(selector);
+                    scheduleExecuteStepRecheck();
+                }
+            } else {
+                target = queryTargetByPriority(selector);
+            }
             if (!target) {
                 if (highlightRetryCount.value < maxHighlightRetries) {
                     highlightRetryCount.value += 1;
@@ -242,12 +295,35 @@
                 return;
             }
             highlightRetryCount.value = 0;
-            highlightedElement.value = target;
-            highlightedElement.value.classList.add("onboarding-v2-highlight");
-            if (isActionStep.value) {
-                highlightedElement.value.classList.add("onboarding-v2-highlight-pulse");
+            const isEditorWrapperTarget = target.id === "editorWrapper";
+            if (!isEditorWrapperTarget) {
+                if (highlightedElement.value !== target) {
+                    highlightedElement.value?.classList.remove("onboarding-v2-highlight");
+                    highlightedElement.value?.classList.remove("onboarding-v2-highlight-static");
+                    highlightedElement.value?.classList.remove("onboarding-v2-highlight-pulse");
+                    highlightedElement.value = target;
+                }
+                highlightedElement.value.classList.add("onboarding-v2-highlight");
+                if (isActionStep.value) {
+                    highlightedElement.value.classList.add("onboarding-v2-highlight-pulse");
+                    highlightedElement.value.classList.remove("onboarding-v2-highlight-static");
+                } else {
+                    highlightedElement.value.classList.add("onboarding-v2-highlight-static");
+                    highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse");
+                }
+            } else if (highlightedElement.value) {
+                highlightedElement.value.classList.remove("onboarding-v2-highlight");
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-static");
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse");
+                highlightedElement.value = null;
             }
         } else {
+            if (highlightedElement.value) {
+                highlightedElement.value.classList.remove("onboarding-v2-highlight");
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-static");
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse");
+                highlightedElement.value = null;
+            }
             highlightRetryCount.value = 0;
         }
 
@@ -322,7 +398,7 @@
             right: `${rightEdgeMargin}px`,
             bottom: "auto",
         };
-    };
+    }
 
     const validationContext = computed(() => ({
         flowYaml: flowStore.flowYaml,
@@ -470,6 +546,7 @@
         () => onboardingStore.state.currentStepId,
         (stepId, previousStepId) => {
             if (stepId && stepId !== previousStepId) {
+                clearHighlight();
                 cardStyle.value = {};
                 dragOffset.value = {x: 0, y: 0};
                 userHasDraggedCard.value = false;
@@ -500,6 +577,10 @@
 
     watch(isExecuteStep, (enabled) => {
         toggleExecuteFocusMode(enabled);
+        if (!enabled && executeStepRecheckTimer !== null) {
+            window.clearTimeout(executeStepRecheckTimer);
+            executeStepRecheckTimer = null;
+        }
     }, {immediate: true});
 
     watch(
@@ -578,6 +659,10 @@
         if (highlightRetryTimer !== null) {
             window.clearTimeout(highlightRetryTimer);
             highlightRetryTimer = null;
+        }
+        if (executeStepRecheckTimer !== null) {
+            window.clearTimeout(executeStepRecheckTimer);
+            executeStepRecheckTimer = null;
         }
     });
 </script>
@@ -692,39 +777,76 @@
         margin-left: 0;
     }
 
-    .onboarding-v2-highlight {
-        position: relative;
-        outline: 2px solid var(--el-color-primary);
-        outline-offset: 2px;
-        border-radius: 6px;
-        transition: outline-color 0.2s ease;
+    :global(.onboarding-v2-highlight-static) {
+        --onboarding-static-color: var(--el-color-primary);
+        box-shadow:
+            0 0 16px 2px color-mix(in srgb, var(--onboarding-static-color) 36%, transparent),
+            0 0 34px 10px color-mix(in srgb, var(--onboarding-static-color) 20%, transparent);
+        border-radius: 10px;
+        transition: box-shadow 0.2s ease;
     }
 
-    .onboarding-v2-highlight-pulse {
+    :global(html.dark .onboarding-v2-highlight-static) {
+        --onboarding-static-color: color-mix(in srgb, var(--el-color-primary) 70%, white 30%);
+        box-shadow:
+            0 0 18px 3px color-mix(in srgb, var(--onboarding-static-color) 48%, transparent),
+            0 0 40px 12px color-mix(in srgb, var(--onboarding-static-color) 24%, transparent);
+    }
+
+    :global(.onboarding-v2-highlight-pulse) {
+        --onboarding-pulse-color: var(--el-color-primary);
+        --onboarding-pulse-strong: 50%;
+        --onboarding-pulse-soft: 30%;
+        --onboarding-pulse-scale: 1.045;
+        --onboarding-pulse-ring-1: 8px;
+        --onboarding-pulse-ring-2: 18px;
+    }
+
+    :global(.onboarding-v2-highlight-pulse .el-button),
+    :global(.onboarding-v2-highlight-pulse.el-button) {
         animation: onboardingButtonPulse 1s ease-in-out infinite alternate;
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--el-color-primary) 35%, transparent),
-            0 0 20px color-mix(in srgb, var(--el-color-primary) 55%, transparent);
+        will-change: transform, box-shadow;
     }
 
-    body.onboarding-execute-focus .onboarding-overlay {
+    :global(html.dark .onboarding-v2-highlight-pulse) {
+        --onboarding-pulse-color: color-mix(in srgb, var(--el-color-primary) 70%, white 30%);
+        --onboarding-pulse-strong: 52%;
+        --onboarding-pulse-soft: 34%;
+        --onboarding-pulse-scale: 1.04;
+        --onboarding-pulse-ring-1: 10px;
+        --onboarding-pulse-ring-2: 24px;
+    }
+
+    :global(body.onboarding-execute-focus) .onboarding-overlay {
         z-index: 2147483646;
     }
 
-    body.onboarding-execute-focus .onboarding-overlay .guide-card {
+    :global(body.onboarding-execute-focus) .onboarding-overlay .guide-card {
         z-index: 2147483647;
     }
 
-    body.onboarding-execute-focus #execute-button {
+    :global(body.onboarding-execute-focus [data-onboarding-target="flow-execute-button"]) {
+        position: relative;
+        z-index: 6001;
+    }
+
+    :global(body.onboarding-execute-focus #execute-button) {
         position: relative;
         z-index: 6001;
     }
 
     @keyframes onboardingButtonPulse {
         from {
-            transform: translateZ(0);
+            transform: translateZ(0) scale(1);
+            box-shadow:
+                0 0 0 0 color-mix(in srgb, var(--onboarding-pulse-color) var(--onboarding-pulse-strong), transparent),
+                0 0 0 0 color-mix(in srgb, var(--onboarding-pulse-color) var(--onboarding-pulse-soft), transparent);
         }
         to {
-            transform: translateZ(0) scale(1.02);
+            transform: translateZ(0) scale(var(--onboarding-pulse-scale));
+            box-shadow:
+                0 0 0 var(--onboarding-pulse-ring-1) transparent,
+                0 0 0 var(--onboarding-pulse-ring-2) transparent;
         }
     }
 </style>

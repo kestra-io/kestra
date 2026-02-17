@@ -94,7 +94,7 @@ export async function render(markdown: string, options: RenderOptions = {}) {
 }
 
 function applyEnhancedRenderers(md: any, showCopyButtons: boolean) {
-    const defaultHeadingOpen = md.renderer.rules.heading_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    const defaultHeadingOpen = md.renderer.rules.heading_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, _env: any, self: any) => self.renderToken(tokens, idx, options));
     md.renderer.rules.heading_open = (tokens: any, idx: number, options: any, env: any, self: any) => {
         const token = tokens[idx];
         const level = typeof token.tag === "string" && /^h\d$/i.test(token.tag) ? Number(token.tag.substring(1)) : null;

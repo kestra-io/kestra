@@ -178,7 +178,7 @@ tasks:
         stepType: "action_save",
         title: "onboarding.steps.save_flow.title",
         description: "onboarding.steps.save_flow.description",
-        targetSelector: ".edit-flow-save-button",
+        targetSelector: "[data-onboarding-target=\"flow-save-button\"], .edit-flow-save-button",
         actionNote: "onboarding.actions.save_to_continue",
         shouldAutoAdvance: ({saveCount}) => saveCount > 0,
         validate: ({saveCount}) => {
@@ -194,7 +194,7 @@ tasks:
         title: "onboarding.steps.execute_flow.title",
         description: "onboarding.steps.execute_flow.description",
         overlayPosition: {vertical: "bottom", horizontal: "right"},
-        targetSelector: "#execute-button",
+        targetSelector: "[data-onboarding-target=\"flow-execute-button\"], #execute-button",
         actionNote: "onboarding.actions.execute_to_continue",
         shouldAutoAdvance: ({executionCount}) => executionCount > 0,
         validate: ({executionCount}) => {
@@ -211,7 +211,7 @@ tasks:
         description: "onboarding.steps.view_logs_status.description",
         showCompletionBadge: false,
         overlayPosition: {vertical: "bottom", horizontal: "right"},
-        targetSelector: "#gantt",
+        targetSelector: "[data-onboarding-target=\"execution-gantt\"], #gantt",
         validate: ({routeName}) => {
             if (routeName !== "executions/update") {
                 return {ok: false, level: "info", message: "onboarding.validation.view_logs_status"};
@@ -225,7 +225,7 @@ tasks:
         title: "onboarding.steps.edit_flow_from_execution.title",
         description: "onboarding.steps.edit_flow_from_execution.description",
         overlayPosition: {vertical: "bottom", horizontal: "right"},
-        targetSelector: ".execution-edit-flow-button",
+        targetSelector: "[data-onboarding-target=\"execution-edit-flow-button\"], .execution-edit-flow-button",
         actionNote: "onboarding.actions.edit_flow_to_continue",
         shouldAutoAdvance: ({routeName}) => routeName === "flows/update",
         validate: ({routeName}) => {
@@ -285,7 +285,11 @@ tasks:
             if (!Array.isArray(parsed?.inputs) || parsed.inputs.length === 0) {
                 return {ok: false, level: "info", message: "onboarding.validation.add_input_default_section"};
             }
-            const nameInput = parsed.inputs.find((input: any) => input?.id === "name");
+            const nameInputs = parsed.inputs.filter((input: any) => input?.id === "name");
+            if (nameInputs.length > 1) {
+                return {ok: false, level: "info", message: "onboarding.validation.add_input_default_section"};
+            }
+            const nameInput = nameInputs[0];
             if (!nameInput) {
                 return {ok: false, level: "info", message: "onboarding.validation.add_input_default_id"};
             }
@@ -301,7 +305,7 @@ tasks:
         title: "onboarding.steps.save_flow_again.title",
         description: "onboarding.steps.save_flow_again.description",
         overlayPosition: {vertical: "middle", horizontal: "right"},
-        targetSelector: ".edit-flow-save-button",
+        targetSelector: "[data-onboarding-target=\"flow-save-button\"], .edit-flow-save-button",
         actionNote: "onboarding.actions.save_to_continue",
         shouldAutoAdvance: ({saveCount}) => saveCount > 1,
         validate: ({saveCount}) => {

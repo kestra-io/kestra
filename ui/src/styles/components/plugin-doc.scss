@@ -68,6 +68,7 @@
             [id$="-body"]:not(#examples-body) span {
                 font-size: .9rem;
                 font-weight: 400;
+                padding-right: 0;
             }
 
             [id$="-body"] .type-box,

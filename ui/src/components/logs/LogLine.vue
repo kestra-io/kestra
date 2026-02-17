@@ -258,7 +258,7 @@ div.line {
 
     .message {
         line-height: 1.8;
-         display: inline-block;
+        display: inline-block;
         vertical-align: middle;
     }
 

@@ -1,0 +1,6 @@
+package io.kestra.repository.mysql;
+
+import io.kestra.core.namespace.AbstractDefaultNamespaceFileMetadataStateStoreTest;
+
+public class MysqlDefaultNamespaceFileMetadataStateStoreTest extends AbstractDefaultNamespaceFileMetadataStateStoreTest {
+}

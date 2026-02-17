@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(rebuildContext = true)
-@Property(name="kestra.server-type", value="WORKER")
+@Property(name="kestra.server-type", value="STANDALONE")
 @Execution(ExecutionMode.SAME_THREAD)
 class ReadFileFunctionTest {
     @Inject

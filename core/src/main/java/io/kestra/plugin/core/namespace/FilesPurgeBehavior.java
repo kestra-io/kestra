@@ -2,7 +2,7 @@ package io.kestra.plugin.core.namespace;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.kestra.core.storages.Namespace;
+import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.storages.NamespaceFile;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
@@ -23,5 +23,5 @@ import java.util.List;
 public abstract class FilesPurgeBehavior {
     abstract public String getType();
 
-    protected abstract List<NamespaceFile> entriesToPurge(String tenantId, Namespace namespaceStorage) throws IOException;
+    protected abstract List<NamespaceFile> entriesToPurge(String tenantId, String namespace, NamespaceFileService namespaceFileService) throws IOException;
 }

@@ -60,7 +60,9 @@ public class SharedServiceInstanceMetricService {
         .filter(serviceInstance -> metricConfig.getSharedServiceInstanceMetrics().containsKey(serviceInstance.type()))
         .flatMap(serviceInstance -> serviceInstance.metrics()
             .stream()
-            .filter(metric -> metricConfig.getSharedServiceInstanceMetrics().get(serviceInstance.type()).contains(metric.name()))
+            .filter(metric ->
+                metricConfig.getSharedServiceInstanceMetrics().get(serviceInstance.type()).contains(removeMetricPrefix(metric.name()))
+            )
         ).collect(
             Collectors.groupingBy(
                 (metric) -> new MetricKey(metric.name(), metric.description(), metric.tags()),
@@ -76,7 +78,7 @@ public class SharedServiceInstanceMetricService {
                     ).flatMap(List::stream).toList());
 
             sharedMetricsGauges.computeIfAbsent(metricKey, (mk) -> metricRegistry.gauge(
-                metricKey.name(),
+                removeMetricPrefix(metricKey.name()),
                 metricKey.description(),
                 (Supplier<Number>) () -> sharedMetricsValues.get(metricKey).get(),
                 tags.toArray(new String[0])
@@ -93,6 +95,11 @@ public class SharedServiceInstanceMetricService {
                 value.set(0);
             }
         });
+    }
+
+    private String removeMetricPrefix(String metricName) {
+        String prefix = metricConfig.getPrefix() + ".";
+        return metricName.startsWith(prefix) ? metricName.substring(prefix.length()) : metricName;
     }
 
     private record MetricKey (

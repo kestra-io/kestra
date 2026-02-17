@@ -161,6 +161,21 @@ class SharedServiceInstanceMetricServiceTest {
         assertThat(gaugeAfterServiceInstanceDeactivate.get().value()).isEqualTo(0);
     }
 
+    @Test
+    void shouldRemoveMetricPrefixBeforeRegisteringMetric_givenMetricFromSharedServiceInstances() {
+        // Given
+        Metric metric = buildMetric("kestra.metric-name", 1);
+        ServiceInstance serviceInstance = buildServiceInstanceWithMetric(metric);
+        mockServiceInstance(List.of(serviceInstance));
+
+        // When
+        sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
+
+        // Then
+        Optional<io.micrometer.core.instrument.Gauge> gauge = getGauge("metric-name");
+        assertThat(gauge).isPresent();
+    }
+
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithoutTag(String metricName, String tagKey) {
         return this.metricRegistry.find(metricName).gauges().stream()
             .filter(gauge -> gauge.getId().getTag(tagKey) == null)

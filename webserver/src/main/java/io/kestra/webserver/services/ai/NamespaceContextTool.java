@@ -49,36 +49,4 @@ public class NamespaceContextTool {
             return "{}";
         }
     }
-
-    @Tool("Retrieves plugin defaults configured for the namespace")
-    public String getPluginDefaults(
-        @P("The namespace to query") String namespace,
-        @P("The tenant ID (can be null for single-tenant)") String tenantId
-    ) {
-        return "{}";
-    }
-
-    @Tool("Retrieves namespace variables")
-    public String getNamespaceVariables(
-        @P("The namespace to query") String namespace,
-        @P("The tenant ID (can be null for single-tenant)") String tenantId
-    ) {
-        return "{}";
-    }
-
-    @Tool("Retrieves secret names configured in the namespace")
-    public String getSecretNames(
-        @P("The namespace to query") String namespace,
-        @P("The tenant ID (can be null for single-tenant)") String tenantId
-    ) {
-        return "[]";
-    }
-
-    @Tool("Retrieves complete namespace context")
-    public String getAllNamespaceContext(
-        @P("The namespace to query") String namespace,
-        @P("The tenant ID (can be null for single-tenant)") String tenantId
-    ) {
-        return "{}";
-    }
 }

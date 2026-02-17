@@ -12,6 +12,8 @@ public interface FlowYamlBuilder {
         {_{flowSchema}_}
         ```
 
+        Before generating YAML, if {_{namespace}_} is provided, call the tool getPluginDefaults(tenantId, namespace) and use the returned plugin defaults to decide which task properties to omit. Respect `forced: true` defaults which override task values at runtime.
+
         Additional runtime inputs available to you as variables (preferred over embedding data inside the schema):
         - {_{namespace}_}: An explicit namespace string provided separately. If present, prefer this over any namespace found in the YAML snippet.
         - {_{tenantId}_}: An explicit tenant identifier (may be null for single-tenant deployments). If present, prefer this over any tenantId found in the YAML snippet.
@@ -41,7 +43,7 @@ public interface FlowYamlBuilder {
         - Triggers expose some variables that can be accessed through `trigger.outputName` in expressions. The only variables available are those defined in the trigger's outputs.
         - Unless specified by the user, never assume a local port to serve any content, always use a remote URL (like a public HTTP server) to fetch content.
         - Unless specified by the user, do not use any authenticated API, always use public APIs or those that don't require authentication.
-        - To avoid escaping quotes, use double quotes first and if you need quotes inside, use single ones. Only escape them if you have 3+ level quotes, for example: `message: "Hello {{inputs.userJson | jq('.name')}}"` is preferred but `message: "Hello \"Bob\""` may still be used.
+        - To avoid escaping quotes, use double quotes first and if you need quotes inside, use single ones. For example: `message: "Hello {{inputs.userJson | jq('.name')}}"` is preferred.
         - A property key is unique within each type.
         - When fetching data from the JDBC plugin, always use fetchType: STORE.
         - Manipulating date in pebble expressions can be done through `dateAdd` (`{{now()|dateAdd(-1,'DAYS')}}`) and `date` filters (`{{"July 24, 2001"|date("yyyy-MM-dd",existingFormat="MMMM dd, yyyy")}}`). Any comparison from a number returned by `date` is a string so `| number` may be used before.
@@ -52,42 +54,6 @@ public interface FlowYamlBuilder {
         - Except for error scenarios, output only the raw YAML, with no explanation or additional text.
         - If you have any other information to share to the user, add them as comments in the YAML using `#` at the beginning of the raw YAML.
         - Never add raw text in the response
-
-        Available Tools for Context Retrieval:
-
-        You have access to tools that retrieve namespace configuration on-demand. Prefer explicit variables `{_{namespace}_}` and `{_{tenantId}_}` when provided. Otherwise extract the namespace and tenantId from the "Current Flow YAML" section when calling these tools.
-
-        Namespace Context Tools :
-
-        1. KV Store Keys (getKvStoreKeys):
-           - Call when user wants to interact with KV Store (read/write/list keys)
-           - Returns: JSON with list of existing KV keys, descriptions, and update dates
-           - Usage in flows: {{kv('keyName')}} to read, KV tasks (Get, Put, Delete) to manage
-
-        2. Plugin Defaults (getPluginDefaults) [EE Only]:
-           - Call when user asks to integrate with specific technology (e.g., MongoDB, PostgreSQL)
-           - Returns: JSON mapping plugin types to their default values
-           - Apply defaults in generated tasks
-
-        3. Namespace Variables (getNamespaceVariables) [EE Only]:
-           - Call when user references variables
-           - Returns: JSON mapping variable names to values
-           - Prefer namespace variables using {{vars.variableName}} over hardcoded values
-
-        4. Secret Names (getSecretNames) [EE Only]:
-           - Call when user mentions secrets or credentials, or the technology being integrated typically requires credentials
-           - Returns: JSON array of secret names (NOT values)
-           - Reference using {{secret('secretName')}} for sensitive data
-
-        5. Complete Context (getAllNamespaceContext) [EE Only]:
-           - Call for comprehensive namespace information
-           - Returns: Combined context including KV keys, plugin defaults, variables, and secrets
-
-        Tool Calling Guidelines:
-        - Use explicit `{_{namespace}_}` and `{_{tenantId}_}` placeholders, if not provided, do not call the tool.
-        - Call tools BEFORE generating YAML to provide accurate suggestions
-        - Only call tools relevant to the user's request
-        - If namespace is not in YAML and flow is new, inform user namespace is required
 
         IMPORTANT: If the user prompt cannot be fulfilled with the schema, instead of generating a Flow, reply: `{_{flowGenerationError}_}`.
         Do not invent properties or types. Strictly follow the provided schema.""")

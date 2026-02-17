@@ -176,8 +176,16 @@ public class WorkerJobFetcher extends WorkerLoop {
         // Start the bidirectional stream
         workerControllerServiceStub.streamWorkerJobs(responseObserver);
 
-        // Send initial connection request with connection info and initial permits
-        sendInitialRequest(requestObserverRef.get());
+        // Send initial connection request with connection info and initial permits.
+        // requestObserverRef is set by beforeStart() which is called synchronously
+        // during streamWorkerJobs(), but an onError() callback on another thread
+        // may have already nulled it if the stream failed immediately.
+        ClientCallStreamObserver<WorkerJobRequest> requestStream = requestObserverRef.get();
+        if (requestStream != null) {
+            sendInitialRequest(requestStream);
+        } else {
+            log.debug("Stream failed before initial request could be sent, will retry on next loop");
+        }
     }
 
     /**

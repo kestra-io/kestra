@@ -47,12 +47,20 @@
     "after": "이후",
     "aggregation": "집계",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "데이터에 대해 질문하세요. 예시 프롬프트: 지난 7일 동안 내 flows의 성공률을 보여줘."
+      },
       "flow": {
         "enable_instructions": {
           "footer": "참고: 현재 오픈 소스 에디션에서는 AI 제공자로 Gemini만 지원됩니다. 엔터프라이즈 에디션의 경우, 다른 모델 제공자 구성을 위해 AI Copilot 문서를 참조하십시오.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
           "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면, 다음 코드 조각을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:"
         },
-        "generating": "Flow YAML을 생성 중입니다...",
+        "generating": {
+          "app": "앱 YAML을 생성 중입니다...",
+          "dashboard": "대시보드 YAML을 생성 중입니다...",
+          "flow": "Flow YAML을 생성 중입니다...",
+          "test": "테스트 YAML을 생성 중입니다..."
+        },
         "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
         "title": "AI 에이전트"
       }

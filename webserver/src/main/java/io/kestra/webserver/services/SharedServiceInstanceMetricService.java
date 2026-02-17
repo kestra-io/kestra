@@ -15,6 +15,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -29,9 +30,9 @@ public class SharedServiceInstanceMetricService {
 
     private final ServiceInstanceRepositoryInterface serviceInstanceRepository;
 
-    private final Map<MetricKey, AtomicReference<Number>> sharedMetricsValues = new HashMap<>();
+    private final Map<MetricKey, AtomicReference<Number>> sharedMetricsValues = new ConcurrentHashMap<>();
 
-    private final Map<MetricKey, io.micrometer.core.instrument.Gauge> sharedMetricsGauges = new HashMap<>();
+    private final Map<MetricKey, io.micrometer.core.instrument.Gauge> sharedMetricsGauges = new ConcurrentHashMap<>();
 
     private final MetricRegistry metricRegistry;
 

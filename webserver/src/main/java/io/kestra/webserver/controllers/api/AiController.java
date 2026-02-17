@@ -1,9 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 import io.kestra.webserver.models.ai.DashboardGenerationPrompt;
+import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.core.tenant.TenantService;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Body;
@@ -34,6 +35,9 @@ public class AiController {
     @Inject
     protected HttpClientAddressResolver httpClientAddressResolver;
 
+    @Inject
+    protected TenantService tenantService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/generate/flow", produces = "application/yaml")
     @Operation(tags = {"AI"}, summary = "Generate or regenerate a flow based on a prompt")
@@ -43,7 +47,7 @@ public class AiController {
     ) {
         AiServiceInterface service = aiServiceManager.getAiService(flowGenerationPrompt.providerId());
 
-        return service.generateFlow(httpClientAddressResolver.resolve(httpRequest), flowGenerationPrompt);
+        return service.generateFlow(httpClientAddressResolver.resolve(httpRequest), flowGenerationPrompt, tenantService.resolveTenant());
     }
 
     @ExecuteOn(TaskExecutors.IO)

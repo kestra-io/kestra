@@ -153,7 +153,8 @@
     const props = defineProps<{
         flow: string,
         conversationId: string,
-        generationType?: AiGenerationType
+        generationType?: AiGenerationType,
+        namespace?: string
     }>();
 
     const error = ref<string | undefined>(undefined);
@@ -291,13 +292,24 @@
         let aiResponse;
         try {
             const type = props.generationType ?? aiGenerationTypes.FLOW;
-            aiResponse = await aiStore.generate({
-                userPrompt: prompt.value,
-                yaml: props.flow,
-                conversationId: props.conversationId,
-                providerId: selectedProvider.value,
-                type: type
-            }) as string;
+            if (type === aiGenerationTypes.FLOW) {
+                aiResponse = await aiStore.generateFlow({
+                    userPrompt: prompt.value,
+                    yaml: props.flow,
+                    conversationId: props.conversationId,
+                    providerId: selectedProvider.value,
+                    namespace: props.namespace,
+                    type: type
+                }) as string;
+            } else {
+                aiResponse = await aiStore.generate({
+                    userPrompt: prompt.value,
+                    yaml: props.flow,
+                    conversationId: props.conversationId,
+                    providerId: selectedProvider.value,
+                    type: type
+                }) as string;
+            }
             emit("generatedYaml", aiResponse);
         } catch (e: any) {
             error.value = e.response?.data?.message ?? e.message;

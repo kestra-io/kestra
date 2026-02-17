@@ -22,7 +22,6 @@
     import {useCoreStore} from "../../../stores/core"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../../stores/layout"
-    import {usePluginsStore} from "../../../stores/plugins"
 
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
@@ -49,10 +48,7 @@
         }
     }
 
-    const pluginsStore = usePluginsStore()
-
     onMounted(() => {
-        pluginsStore.fetchIcons()
         // ensure UI state is synchronized with store
         onMenuCollapse(Boolean(layoutStore.sideMenuCollapsed))
         checkForSurveyDialog()

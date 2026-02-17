@@ -41,7 +41,7 @@
                             size="small"
                             class="delete-button"
                             :icon="Delete"
-                            @click.stop="$emit('delete', savedFilter)"
+                            @click.stop="deleteFilter(savedFilter)"
                         />
                     </el-tooltip>
                 </div>
@@ -57,19 +57,33 @@
 </template>
 
 <script setup lang="ts">
+    import {useI18n} from "vue-i18n";
+    import {ElMessageBox} from "element-plus";
     import {SavedFilter} from "../utils/filterTypes";
     import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons";
+
+    const {t} = useI18n({useScope: "global"});
 
     defineProps<{
         savedFilters: SavedFilter[];
     }>();
 
-    defineEmits<{
+    const emit = defineEmits<{
         close: [];
         load: [savedFilter: SavedFilter];
         edit: [savedFilter: SavedFilter];
         delete: [savedFilter: SavedFilter];
     }>();
+
+    const deleteFilter = (savedFilter: SavedFilter) => {
+        ElMessageBox.confirm(t("filter.delete filter confirm"), t("confirmation"), {
+            type: "warning",
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("close"),
+        }).then(() => {
+            emit("delete", savedFilter)
+        }).catch(() => {});
+    };
 </script>
 
 <style lang="scss" scoped>

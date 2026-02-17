@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
@@ -8,14 +9,11 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -36,9 +34,6 @@ abstract public class JdbcQueueTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
-
-    @Inject
-    JdbcTestUtils jdbcTestUtils;
 
     @Test
     void noGroup() throws InterruptedException, QueueException {
@@ -132,11 +127,5 @@ abstract public class JdbcQueueTest {
             .namespace(namespace == null ? "kestra.test" : namespace)
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
             .build();
-    }
-
-    @BeforeEach
-    protected void init() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 }

@@ -24,8 +24,11 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Publish Kestra metrics within an execution.",
-    description = "This task is useful to easily publish metrics for a flow."
+    title = "Publish custom metrics from a Flow execution.",
+    description = """
+        Renders and emits the provided list of metrics (counters, timers, etc.) during the Flow. Tags can include Flow or Namespace metadata for later filtering.
+
+        Use when downstream monitoring/alerting depends on execution-time signals beyond built-in metrics."""
 )
 @Plugin(
     examples = {
@@ -78,6 +81,5 @@ public class Publish extends Task implements RunnableTask<VoidOutput> {
         return null;
     }
 }
-
 
 

@@ -6,10 +6,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -29,7 +26,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Retrieve a value of a KV pair by a key."
+    title = "Read a key-value entry.",
+    description = """
+        Renders `key`/`namespace` (defaults to flow namespace) and fetches the value. In the same namespace it walks dot-delimited parents to support hierarchical lookup. Set `errorOnMissing` to true to fail when absent.
+
+        Respects namespace ACLs when reading other namespaces."""
 )
 @Plugin(
     examples = {
@@ -82,8 +83,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         if (Objects.equals(renderedNamespace, flowNamespace)) {
             value = getValueWithInheritance(runContext, flowNamespace, renderedKey);
         } else {
-            FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-            flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
+            runContext.acl().allowNamespace(renderedNamespace).check();
             value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         }
 
@@ -99,10 +99,10 @@ public class Get extends Task implements RunnableTask<Get.Output> {
     private Optional<KVValue> getValueWithInheritance(RunContext runContext, String flowNamespace, String renderedKey)
             throws IOException, ResourceExpiredException {
         Optional<KVValue> value = Optional.empty();
-        KVStoreService kvStoreService = ((DefaultRunContext) runContext).getApplicationContext().getBean(KVStoreService.class);
         String inheritedNamespace = flowNamespace;
         while (value.isEmpty()) {
-            value = kvStoreService.get(runContext.flowInfo().tenantId(), inheritedNamespace, flowNamespace).getValue(renderedKey);
+
+            value = runContext.namespaceKv(inheritedNamespace).getValue(renderedKey);
             if (!inheritedNamespace.contains(".")){
                 return value;
             }

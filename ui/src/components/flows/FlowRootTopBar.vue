@@ -2,7 +2,7 @@
     <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title">
         <template #title>
             <template v-if="isDeleted">
-                <Alert class="text-warning me-2" />{{ t('deleted_label') }}:&nbsp;
+                <Alert class="text-warning me-2" />{{ $t('deleted_label') }}:&nbsp;
             </template>
             <Lock v-else-if="!isAllowedToEdit" class="me-2 gray-700" />
             <span :class="{'body-color': isDeleted}">
@@ -18,7 +18,6 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
     import Alert from "vue-material-design-icons/Alert.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
     import Badge from "../global/Badge.vue";
@@ -28,8 +27,6 @@
     import action from "../../models/action";
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
-
-    const {t} = useI18n();
 
     defineProps<{
         routeInfo: {

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import io.kestra.plugin.core.condition.ExecutionFlow;
@@ -23,7 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest(transactional = false)
 public abstract class AbstractMultipleConditionStorageTest {
     private static final String NAMESPACE = "io.kestra.unit";
 

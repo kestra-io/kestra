@@ -3,6 +3,7 @@ package io.kestra.core.serializers;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @KestraTest
 class YamlParserTest {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().copy();
 
     @Inject
     private ModelValidator modelValidator;
@@ -120,10 +122,10 @@ class YamlParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size()).isEqualTo(29);
-        assertThat(flow.getInputs().stream().filter(Input::getRequired).count()).isEqualTo(11L);
-        assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count()).isEqualTo(18L);
-        assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count()).isEqualTo(3L);
+        assertThat(flow.getInputs().size()).isEqualTo(31);
+        assertThat(flow.getInputs().stream().filter(Input::getRequired).count()).isEqualTo(12L);
+        assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count()).isEqualTo(19L);
+        assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count()).isEqualTo(4L);
         assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput stringInput && stringInput.getValidator() != null).count()).isEqualTo(1L);
     }
 
@@ -233,6 +235,29 @@ class YamlParserTest {
 
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
         assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate field 'variables.tf'");
+    }
+
+    @Test
+    void vaildLabelsParser() throws IOException {
+        Flow flow = parse("flows/valids/labels-deserialization.yaml");
+        // like change execution state api,Serialize flow to YAML/JSON string
+        String s = OBJECT_MAPPER.writeValueAsString(flow);
+        assertThat(s).isEqualTo("id: labels-deserialization\n" +
+            "namespace: io.kestra.tests\n" +
+            "disabled: false\n" +
+            "deleted: false\n" +
+            "labels:\n" +
+            "- key: key1\n" +
+            "  value: 123\n" +
+            "tasks:\n" +
+            "- id: t1\n" +
+            "  type: io.kestra.plugin.core.log.Log\n" +
+            "  message: \"{{ task.id }}\"\n");
+        Map<String, Object> mapFlow = OBJECT_MAPPER.readValue(s, JacksonMapper.MAP_TYPE_REFERENCE);
+        // Parse into FlowWithSource (simulates state update scenario)
+        FlowWithSource parse = YamlParser.parse(mapFlow, FlowWithSource.class, false);
+
+        assertThat(parse.getLabels().size()).isEqualTo(1);;
     }
 
     private Flow parse(String path) {

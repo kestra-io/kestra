@@ -24,7 +24,7 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks);
+        List<ResolvedTask> currentTasks = execution.removeDisabled(tasks);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
     }
@@ -248,7 +248,7 @@ public class FlowableUtils {
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
+            if (execution.hasFailedNoRetry(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
                 return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         }
@@ -433,7 +433,9 @@ public class FlowableUtils {
             parentTaskRun
         );
 
-        boolean isTasks = tasks.equals(currentTasks);
+        List<ResolvedTask> resolvedTasks = execution.removeDisabled(tasks);
+
+        boolean isTasks = resolvedTasks.equals(currentTasks);
 
         // errors & finally must be run as sequential tasks
         if (!isTasks) {

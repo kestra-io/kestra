@@ -11,7 +11,7 @@
         title?: string;
         message?: string;
         content?: {
-            message: string;
+            message?: string;
             _embedded?: {
                 errors?: any[];
             };
@@ -19,8 +19,8 @@
         response?: {
             status: number;
             config: {
-                url: string;
-                method: string;
+                url?: string;
+                method?: string;
             };
         };
         variant?: "success" | "warning" | "info" | "error" | "primary";
@@ -97,8 +97,8 @@
         if (props.message.response) {
             error.error.response = {};
             error.error.request = {
-                method: props.message.response.config.method,
-                url: props.message.response.config.url,
+                method: props.message.response.config.method ?? "GET",
+                url: props.message.response.config.url ?? "unknown url",
             };
 
             if (props.message.response.status) {
@@ -111,7 +111,11 @@
         notifications.value = ElNotification({
             title: title.value || "Error",
             message: h(ErrorToastContainer, {
-                message: props.message,
+                message: {
+                    content:{
+                        message: props.message?.content?.message ?? ""
+                    }
+                },
                 items: items.value,
                 onClose: () => close()
             }),

@@ -1,7 +1,7 @@
 <template>
     <div class="webhook-curl">
         <div v-if="webhookTriggers.length > 0">
-            <el-form-item :label="t('webhook.payload')" class="payload">
+            <el-form-item :label="$t('webhook.payload')" class="payload">
                 <Editor
                     :fullHeight="false"
                     :input="true"
@@ -19,12 +19,12 @@
             </div>
 
             <el-alert type="info" showIcon :closable="false">
-                {{ t('webhook.curl_note') }}
+                {{ $t('webhook.curl_note') }}
             </el-alert>
         </div>
         <div v-else>
             <el-alert type="warning" showIcon :closable="false">
-                {{ t('webhook.no_triggers') }}
+                {{ $t('webhook.no_triggers') }}
             </el-alert>
         </div>
     </div>
@@ -32,7 +32,6 @@
 
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
     import {baseUrl, basePath, apiUrl} from "../../override/utils/route";
@@ -55,7 +54,6 @@
         flow: Flow;
     }>();
 
-    const {t} = useI18n();
     const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}");
 
     const flowStore = useFlowStore();

@@ -1,0 +1,33 @@
+id: subflow-parent-retry
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: seq1
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+        - id: subflow1
+          type: io.kestra.plugin.core.flow.Subflow
+          flowId: subflow-to-retry
+          namespace: io.kestra.tests
+          inputs:
+            counter: "{{ taskrun.attemptsCount }}"
+          retry:
+            type: constant
+            maxAttempts: 3
+            interval: PT1S
+      - id: seq2
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+        - id: subflow2
+          type: io.kestra.plugin.core.flow.Subflow
+          flowId: subflow-to-retry
+          namespace: io.kestra.tests
+          inputs:
+            counter: "{{ taskrun.attemptsCount }}"
+          retry:
+            type: constant
+            maxAttempts: 3
+            interval: PT1S

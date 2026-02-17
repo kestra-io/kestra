@@ -1,7 +1,7 @@
 <template>
     <TopNavBar
         :title="routeInfo.title"
-        :breadcrumb="[{label: t('dashboards.labels.singular'), link: undefined}]"
+        :breadcrumb="[{label: $t('dashboards.labels.singular'), link: undefined}]"
         :description="props.dashboard?.description"
     >
         <template v-if="isAllowed" #additional-right>
@@ -21,14 +21,14 @@
                         :to="{name: 'dashboards/update', params: {id: props.dashboard?.id}}"
                     >
                         <el-button :icon="Pencil">
-                            {{ t("dashboards.edition.label") }}
+                            {{ $t("dashboards.edition.label") }}
                         </el-button>
                     </router-link>
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/create'}">
                         <el-button :icon="Plus" type="primary">
-                            {{ t("create_flow") }}
+                            {{ $t("create_flow") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -62,8 +62,7 @@
         load: {type: Function, default: undefined},
     });
 
-    const user = computed(() => authStore.user);
-    const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
+    const isAllowed = computed(() => authStore.user?.isAllowed(permission.FLOW, action.CREATE, "*"));
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 

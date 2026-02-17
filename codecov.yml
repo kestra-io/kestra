@@ -8,10 +8,6 @@ component_management:
       name: Core
       paths:
         - core/**
-    - component_id: e2e-tests
-      name: End to End
-      paths:
-        - e2e-tests/**
     - component_id: jdbc
       name: Jdbc
       paths:

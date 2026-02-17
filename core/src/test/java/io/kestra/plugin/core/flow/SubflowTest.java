@@ -8,9 +8,11 @@ import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.InputAndOutput;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.services.VariablesService;
 import io.micronaut.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -33,9 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@Slf4j
 class SubflowTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SubflowTest.class);
 
     private static final State DEFAULT_SUCCESS_STATE = State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now())));
     public static final String EXECUTION_ID = "executionId";
@@ -46,11 +46,15 @@ class SubflowTest {
     @Mock
     private ApplicationContext applicationContext;
 
+    @Mock
+    private InputAndOutput inputAndOutput;
+
     @BeforeEach
     void beforeEach() {
         Mockito.when(applicationContext.getBean(VariablesService.class)).thenReturn(new VariablesService());
-        Mockito.when(runContext.logger()).thenReturn(LOG);
+        Mockito.when(runContext.logger()).thenReturn(log);
         Mockito.when(runContext.getApplicationContext()).thenReturn(applicationContext);
+        Mockito.when(runContext.inputAndOutput()).thenReturn(inputAndOutput);
     }
 
     @Test
@@ -118,7 +122,7 @@ class SubflowTest {
 
         Map<String, Object> outputs = Map.of("key", "value");
         Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(outputs);
-
+        Mockito.when(inputAndOutput.renderOutputs(Mockito.anyList())).thenReturn(Map.of("key", "value"));
 
         Subflow subflow = Subflow.builder()
             .outputs(outputs)
@@ -159,6 +163,7 @@ class SubflowTest {
 
         Output output = Output.builder().id("key").value("value").build();
         Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(Map.of(output.getId(), output.getValue()));
+        Mockito.when(inputAndOutput.typedOutputs(Mockito.any(), Mockito.any(), Mockito.anyMap())).thenReturn(Map.of("key", "value"));
         Flow flow = Flow.builder()
             .outputs(List.of(output))
             .build();

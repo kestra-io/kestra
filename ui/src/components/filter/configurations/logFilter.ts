@@ -60,7 +60,8 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("logs");
                         return VALUES.LEVELS;
                     },
-                    showComparatorSelection: true
+                    showComparatorSelection: true,
+                    visibleByDefault: true
                 },
                 {
                     key: "timeRange",

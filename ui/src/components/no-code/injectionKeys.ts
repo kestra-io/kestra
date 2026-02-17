@@ -24,6 +24,7 @@ export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as Inject
  * NOTE: different from the `isCreating` flag coming from the store. `isCreating` refers to the Complete flow being in creation
  */
 export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<boolean>
+export const CREATING_FLOW_INJECTION_KEY = Symbol("creating-flow-injection-key") as InjectionKey<boolean>
 /**
  * When creating anew task, allows to specify a field where the new task should be injected.
  * @example
@@ -47,13 +48,19 @@ export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-inje
  */
 export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
 /**
+ * Indicates if the task editor is being rendered inline (e.g., within a list or as a nested object).
+ * When true, specialized inline components (like TaskObjectListInline or TaskObjectTaskInline) are used.
+ * Primarily used in the Namespace > PluginDefaults tab to show nested schemas directly in the form.
+ */
+export const INLINE_TASK_MODE_INJECTION_KEY = Symbol("inline-task-mode-injection-key") as InjectionKey<boolean>
+/**
  * Call this when closing a task, when the user clicks on the close button
  */
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
 /**
- * We call this function when a task is changed, as soon as the first click or type is done
+ * Call this function to update the full Yaml content
  */
-export const UPDATE_TASK_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
+export const UPDATE_YAML_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
 /**
  * Set this to override the contents of the no-code editor with a component of your choice
  * This is used to display the metadata edition inputs
@@ -93,3 +100,5 @@ export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injec
 export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>
 
 export const ON_TASK_EDITOR_CLICK_INJECTION_KEY = Symbol("on-task-editor-click-injection-key") as InjectionKey<(elt?: Partial<NoCodeElement>) => void>;
+
+export const DEFAULT_NAMESPACE_INJECTION_KEY = Symbol("default-namespace-injection-key") as InjectionKey<ComputedRef<string>>;

@@ -5,7 +5,7 @@
                 <template v-if="$route.name === 'executions/list'">
                     <li>
                         <el-button :icon="Download" @click="exportExecutionsAsStream()">
-                            {{ t('auditlog.export_csv') }}
+                            {{ $t('export_csv') }}
                         </el-button>
                     </li>
                     <li>
@@ -198,10 +198,7 @@
                                     <DateAgo :inverted="true" :date="scope.row?.state?.endDate" />
                                 </template>
                                 <template v-else-if="col.prop === 'state.duration'">
-                                    <span v-if="isRunning(scope.row)">{{
-                                        humanizeDuration(durationFrom(scope.row).toString())
-                                    }}</span>
-                                    <span v-else>{{ humanizeDuration(scope.row?.state?.duration) }}</span>
+                                    <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                                 </template>
                                 <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
                                     <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
@@ -253,6 +250,23 @@
                                 <template v-else-if="col.prop === 'trigger'">
                                     <TriggerAvatar :execution="scope.row" />
                                 </template>
+                                <template v-else-if="col.prop === 'trigger.variables.executionId'">
+                                    <RouterLink
+                                        v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
+                                        :to="{
+                                            name: 'executions/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                flowId: scope.row?.flowId,
+                                                id: scope.row?.trigger?.variables?.executionId
+                                            }
+                                        }"
+                                        class="execution-id"
+                                    >
+                                        <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                                    </RouterLink>
+                                    <span v-else>-</span>
+                                </template>
                             </template>
                             <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
                                 <el-tooltip :content="$t('taskid column details')" effect="light">
@@ -267,13 +281,12 @@
                             :label="$t('actions')"
                         >
                             <template #default="scope">
-                                <router-link
+                                <IconButton
+                                    :tooltip="$t('details')"
                                     :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
                                 >
-                                    <Kicon :tooltip="$t('details')" placement="left">
-                                        <TextSearch />
-                                    </Kicon>
-                                </router-link>
+                                    <TextSearch />
+                                </IconButton>
                             </template>
                         </el-table-column>
                     </template>
@@ -412,7 +425,7 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -430,8 +443,9 @@
     import {filterValidLabels} from "./utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
-    import {humanizeDuration, invisibleSpace} from "../../utils/filters";
+    import {invisibleSpace} from "../../utils/filters";
     import Utils from "../../utils/utils";
+    import Duration from "../../components/dashboard/sections/table/columns/Duration.vue";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -480,7 +494,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
-        defaultScopeFilter: undefined
+        defaultScopeFilter: false
     });
 
     const emit = defineEmits<{
@@ -575,10 +589,16 @@
             description: t("filter.table_column.executions.task-id")
         },
         {
-            label: t("triggers"), 
-            prop: "trigger", 
-            default: true, 
+            label: t("triggers"),
+            prop: "trigger",
+            default: true,
             description: t("filter.table_column.executions.trigger")
+        },
+        {
+            label: t("parent execution"),
+            prop: "trigger.variables.executionId",
+            default: false,
+            description: t("filter.table_column.executions.parent-execution")
         }
     ]);
 
@@ -600,7 +620,7 @@
     );
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger"].includes(prop);
+        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop);
     };
 
     const selectionMapper = (execution: any) => {
@@ -744,10 +764,6 @@
         load(onDataLoaded);
     };
 
-    const isRunning = (item: any) => {
-        return State.isRunning(item?.state?.current);
-    };
-
     const loadQuery = (base: any) => {
         let queryFilter = queryWithFilter();
 
@@ -765,10 +781,6 @@
         }
 
         return _merge(base, queryFilter);
-    };
-
-    const durationFrom = (item: any) => {
-        return (+new Date() - new Date(item?.state?.startDate).getTime()) / 1000;
     };
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {
@@ -816,6 +828,7 @@
             return action(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
+                    toggleAllUnselected();
                     loadData();
                 });
         } else {
@@ -829,6 +842,7 @@
             return action(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
+                    toggleAllUnselected();
                     loadData();
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
@@ -1008,6 +1022,7 @@
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
+                        toggleAllUnselected();
                         loadData();
                     });
             } else {
@@ -1018,6 +1033,7 @@
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
+                        toggleAllUnselected();
                         loadData();
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
                         return {message: t(exec.message, {executionId: exec.invalidValue})};

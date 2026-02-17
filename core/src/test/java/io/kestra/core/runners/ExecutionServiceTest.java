@@ -6,6 +6,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
@@ -465,5 +466,21 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(2);
         assertThat(restart.findTaskRunsByTaskId("make_error").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/each-pause.yaml"})
+    void killExecutionWithFlowableTask() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "each-pause");
+
+        TaskRun childTaskRun = execution.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("pause")).toList().getFirst();
+
+        Execution killed = executionService.killParentTaskruns(childTaskRun,execution);
+
+        TaskRun parentTaskRun = killed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
+
+        assertThat(parentTaskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(parentTaskRun.getAttempts().getLast().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+
     }
 }

@@ -16,7 +16,7 @@ public final class MysqlRepositoryUtils {
             case MONTH:
                 return DSL.field("DATE_FORMAT({0}, '%Y-%m')", Date.class, DSL.field(dateField));
             case WEEK:
-                return DSL.field("DATE_FORMAT({0}, '%x-%v')", Date.class, DSL.field(dateField));
+                return DSL.field("STR_TO_DATE(CONCAT(YEARWEEK({0}, 3), ' Monday'), '%X%V %W')", Date.class, DSL.field(dateField));
             case DAY:
                 return DSL.field("DATE({0})", Date.class, DSL.field(dateField));
             case HOUR:

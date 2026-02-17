@@ -28,7 +28,7 @@ public class QueryFilterTest {
         InvalidQueryFiltersException e = assertThrows(
             InvalidQueryFiltersException.class,
             () -> QueryFilter.validateQueryFilters(List.of(filter), resource));
-        assertThat(e.formatedInvalidObjects()).contains("Operation");
+        assertThat(e.getMessage()).contains("Operation");
     }
 
     static Stream<Arguments> validOperationFilters() {
@@ -61,6 +61,9 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.ENDS_WITH).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.CONTAINS).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.REGEX).build(), Resource.EXECUTION),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.IN).build(), Resource.EXECUTION),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.NOT_IN).build(), Resource.EXECUTION),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.PREFIX).build(), Resource.EXECUTION),
 
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.EQUALS).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.NOT_EQUALS).build(), Resource.EXECUTION),
@@ -120,7 +123,28 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.EXISTING_ONLY).operation(Op.NOT_EQUALS).build(), Resource.NAMESPACE),
 
             Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.EQUALS).build(), Resource.LOG),
-            Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.NOT_EQUALS).build(), Resource.LOG)
+            Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.NOT_EQUALS).build(), Resource.LOG),
+
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.GREATER_THAN).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.LESS_THAN).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.EQUALS).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.NOT_EQUALS).build(), Resource.ASSET_USAGE),
+
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.GREATER_THAN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.LESS_THAN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.EQUALS).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.NOT_EQUALS).build(), Resource.KV_METADATA),
+
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.GREATER_THAN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.LESS_THAN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.EQUALS).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.NOT_EQUALS).build(), Resource.KV_METADATA)
         );
     }
 
@@ -168,9 +192,6 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.LESS_THAN).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.EXECUTION),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.IN).build(), Resource.EXECUTION),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.NOT_IN).build(), Resource.EXECUTION),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.PREFIX).build(), Resource.EXECUTION),
 
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.IN).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.NOT_IN).build(), Resource.EXECUTION),
@@ -260,7 +281,31 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.ENDS_WITH).build(), Resource.LOG),
             Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.CONTAINS).build(), Resource.LOG),
             Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.REGEX).build(), Resource.LOG),
-            Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.PREFIX).build(), Resource.LOG)
+            Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).operation(Op.PREFIX).build(), Resource.LOG),
+
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.IN).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.NOT_IN).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.STARTS_WITH).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.ENDS_WITH).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.CONTAINS).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.REGEX).build(), Resource.ASSET_USAGE),
+            Arguments.of(QueryFilter.builder().field(Field.CREATED).operation(Op.PREFIX).build(), Resource.ASSET_USAGE),
+
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.IN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.NOT_IN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.STARTS_WITH).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.ENDS_WITH).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.CONTAINS).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.REGEX).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.UPDATED).operation(Op.PREFIX).build(), Resource.KV_METADATA),
+
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.IN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.NOT_IN).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.STARTS_WITH).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.ENDS_WITH).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.CONTAINS).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.REGEX).build(), Resource.KV_METADATA),
+            Arguments.of(QueryFilter.builder().field(Field.EXPIRATION_DATE).operation(Op.PREFIX).build(), Resource.KV_METADATA)
         );
     }
 

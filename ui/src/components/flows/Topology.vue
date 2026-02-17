@@ -13,18 +13,16 @@
                 @on-edit="(event) => emit('on-edit', event, true)"
             />
             <el-alert v-else type="warning" :closable="false">
-                {{ t("unable to generate graph") }}
+                {{ $t("unable to generate graph") }}
             </el-alert>
         </div>
     </el-card>
 </template>
 <script setup lang="ts">
     import {onBeforeUnmount} from "vue";
-    import {useI18n} from "vue-i18n";
     import {useFlowStore} from "../../stores/flow";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
 
-    const {t} = useI18n();
     defineProps<{
         isReadOnly?: boolean;
         expandedSubflows?: any[];

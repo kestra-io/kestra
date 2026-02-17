@@ -2,12 +2,15 @@ package io.kestra.core.services;
 
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,9 +20,42 @@ import java.util.stream.Stream;
  */
 @Singleton
 public class ExecutionLogService {
+   
+    private final LogRepositoryInterface logRepository;
+    
     @Inject
-    private LogRepositoryInterface logRepository;
+    public ExecutionLogService(LogRepositoryInterface logRepository) {
+        this.logRepository = logRepository;
+    }
 
+    /**
+     * Purges log entries matching the given criteria.
+     *
+     * @param tenantId    the tenant identifier
+     * @param namespace   the namespace of the flow
+     * @param flowId      the flow identifier
+     * @param executionId the execution identifier
+     * @param logLevels   the list of log levels to delete
+     * @param startDate   the start of the date range
+     * @param endDate     the end of the date range.
+     * @return the number of log entries deleted
+     */
+    public int purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate);
+    }
+
+
+    /**
+     * Fetches the error logs of an execution.
+     * <p>
+     * This method limits the results to the first 25 error logs, ordered by timestamp asc.
+     *
+     * @return the log entries
+     */
+    public List<LogEntry> errorLogs(String tenantId, String executionId) {
+        return logRepository.findByExecutionId(tenantId, executionId, Level.ERROR, Pageable.from(1, 25, Sort.of(Sort.Order.asc("timestamp"))));
+    }
+    
     public InputStream getExecutionLogsAsStream(String tenantId,
                                                 String executionId,
                                                 Level minLevel,

@@ -1,11 +1,14 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.utils.WindowsUtils;
 import jakarta.annotation.Nullable;
 
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents a NamespaceFile object.
@@ -13,15 +16,22 @@ import java.util.Objects;
  * @param path      The path of file relative to the namespace.
  * @param uri       The URI of the namespace file in the Kestra's internal storage.
  * @param namespace The namespace of the file.
+ * @param version The version of the file.
  */
 public record NamespaceFile(
     String path,
     URI uri,
-    String namespace
+    String namespace,
+    int version
 ) {
+    private static final Pattern capturePathWithoutVersion = Pattern.compile("(.*)(?:\\.v\\d+)?$");
 
     public NamespaceFile(Path path, URI uri, String namespace) {
-        this(path.toString(), uri, namespace);
+        this(path.toString(), uri, namespace, 1);
+    }
+
+    public NamespaceFile(String path, URI uri, String namespace) {
+        this(path, uri, namespace, 1);
     }
 
     /**
@@ -33,7 +43,19 @@ public record NamespaceFile(
      * @return a new {@link NamespaceFile} object
      */
     public static NamespaceFile of(final String namespace) {
-        return of(namespace, (Path) null);
+        return of(namespace, (Path) null, 1);
+    }
+
+    public static NamespaceFile of(final String namespace, final URI uri) {
+        return of(namespace, uri, 1);
+    }
+
+    public static NamespaceFile fromMetadata(final NamespaceFileMetadata metadata) {
+        return of(
+            metadata.getNamespace(),
+            metadata.getPath(),
+            metadata.getVersion()
+        );
     }
 
     /**
@@ -43,9 +65,9 @@ public record NamespaceFile(
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
-    public static NamespaceFile of(final String namespace, @Nullable final URI uri) {
+    public static NamespaceFile of(final String namespace, @Nullable final URI uri, int version) {
         if (uri == null || uri.equals(URI.create("/"))) {
-            return of(namespace, (Path) null);
+            return of(namespace, (Path) null, version);
         }
 
         Path path = Path.of(WindowsUtils.windowsToUnixPath(uri.getPath()));
@@ -61,9 +83,9 @@ public record NamespaceFile(
                     "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri)
                 );
             }
-            namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path));
+            namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path), version);
         } else {
-            namespaceFile = of(namespace, path);
+            namespaceFile = of(namespace, path, version);
         }
 
         boolean trailingSlash = uri.toString().endsWith("/");
@@ -75,8 +97,13 @@ public record NamespaceFile(
         return new NamespaceFile(
             namespaceFile.path,
             URI.create(namespaceFile.uri.toString() + "/"),
-            namespaceFile.namespace
+            namespaceFile.namespace,
+            version
         );
+    }
+
+    public static NamespaceFile of(final String namespace, final Path path) {
+        return of(namespace, path, 1);
     }
 
     /**
@@ -86,49 +113,64 @@ public record NamespaceFile(
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
-    public static NamespaceFile of(final String namespace, @Nullable final Path path) {
+    public static NamespaceFile of(final String namespace, @Nullable final Path path, int version) {
         Objects.requireNonNull(namespace, "namespace cannot be null");
         if (path == null || path.equals(Path.of("/"))) {
             return new NamespaceFile(
                 "",
                 URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.namespaceFilePrefix(namespace) + "/"),
-                namespace
+                namespace,
+                // Directory always has a single version
+                1
             );
         }
 
+        return of(namespace, path.toString(), version);
+    }
+
+    public static NamespaceFile of(String namespace, String path, int version) {
         Path namespacePrefixPath = Path.of(StorageContext.namespaceFilePrefix(namespace));
-        Path filePath = path.normalize();
-        if (filePath.isAbsolute()) {
-            filePath = filePath.getRoot().relativize(filePath);
-        }
         // Need to remove starting trailing slash for Windows
-        String pathWithoutTrailingSlash = path.toString().replaceFirst("^[.]*[\\\\|/]+", "");
+        String pathWithoutLeadingSlash = path.replaceFirst("^[.]*[\\\\|/]+", "");
+
+        version = NamespaceFile.isDirectory(pathWithoutLeadingSlash) ? 1 : version;
+
+        String storagePath = pathWithoutLeadingSlash;
+        if (!pathWithoutLeadingSlash.endsWith("/") && version > 1) {
+            storagePath += ".v" + version;
+        }
 
         return new NamespaceFile(
-            pathWithoutTrailingSlash,
-            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(pathWithoutTrailingSlash).toString().replace("\\","/")),
-            namespace
+            pathWithoutLeadingSlash,
+            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/") + (isDirectory(path) ? "/" : "")),
+            namespace,
+            version
         );
+    }
+
+    public static Path normalize(Path path) {
+        if(path == null){
+            return Path.of("/");
+        }
+        String compatiblePath = toLogicalPath(path);
+        if(!compatiblePath.startsWith("/")){
+            compatiblePath = "/" + compatiblePath;
+        }
+        return Path.of(compatiblePath);
     }
 
     /**
      * Returns the path of file relative to the namespace.
-     *
-     * @param withLeadingSlash specify whether to remove leading slash from the returned path.
      * @return The path.
      */
-    public Path path(boolean withLeadingSlash) {
-        final String strPath = path.toString();
-        if (!withLeadingSlash) {
-            if (strPath.startsWith("/")) {
-                return Path.of(strPath.substring(1));
-            }
-        } else {
-            if (!strPath.startsWith("/")) {
-                return Path.of("/").resolve(path);
-            }
+    public Path filePath() {
+        String strPath = path;
+        Matcher matcher = capturePathWithoutVersion.matcher(strPath);
+        if (matcher.matches()) {
+            strPath = matcher.group(1);
         }
-        return Path.of(path);
+
+        return normalize(Path.of(strPath));
     }
 
     /**
@@ -147,8 +189,12 @@ public record NamespaceFile(
      *
      * @return {@code true} if this namespace file is a directory.
      */
+    public static boolean isDirectory(String path) {
+        return path.endsWith("/");
+    }
+
     public boolean isDirectory() {
-        return uri.toString().endsWith("/");
+        return isDirectory(uri.toString());
     }
 
     /**
@@ -158,5 +204,30 @@ public record NamespaceFile(
      */
     public boolean isRootDirectory() {
         return equals(NamespaceFile.of(namespace));
+    }
+
+    /**
+     * Converts a {@link Path} to a canonical **logical path** string.
+     * <p>
+     * Logical paths use forward slashes ('/') as separators regardless of the OS.
+     * This is useful for namespace storage, URI construction, or any cross-platform
+     * path handling where OS-dependent separators should be avoided.
+     *
+     * @param path the {@link Path} to convert
+     * @return a String representing the logical path with forward slashes
+     */
+    public static String toLogicalPath(Path path){ return toLogicalPath(path.toString());}
+
+    /**
+     * Converts a path string to a canonical **logical path**.
+     * <p>
+     * Replaces all backslashes ('\') with forward slashes ('/') to ensure
+     * cross-platform consistency.
+     *
+     * @param path the path string to convert
+     * @return a String representing the logical path with forward slashes
+     */
+    public static String toLogicalPath(String path) {
+        return path.replace("\\", "/");
     }
 }

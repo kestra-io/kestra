@@ -45,12 +45,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks sequentially in the same working directory.",
-    description = "Tasks are stateless by default. Kestra will launch each task within a temporary working directory on a Worker. " +
-        "The `WorkingDirectory` task allows reusing the same file system's working directory across multiple tasks " +
-        "so that multiple sequential tasks can use output files from previous tasks without having to use the `outputs.taskId.outputName` syntax. " +
-        "Note that the `WorkingDirectory` only works with runnable tasks because those tasks are executed directly on the Worker. " +
-        "This means that using flowable tasks such as the `Parallel` task within the `WorkingDirectory` task will not work. "
+    title = "Reuse a single working directory across tasks.",
+    description = """
+        Runs child runnable tasks sequentially on the same worker filesystem so files persist between steps without wiring outputs. Flowable tasks (e.g., Parallel) are not supported inside.
+
+        Supports input/output files and optional caching of directory patterns to speed repeated runs."""
 )
 @Plugin(
     examples = {
@@ -141,12 +140,12 @@ import jakarta.validation.constraints.NotNull;
                       - id: first
                         type: io.kestra.plugin.scripts.shell.Commands
                         commands:
-                        - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
+                          - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
                       - id: second
                         type: io.kestra.plugin.scripts.shell.Commands
                         commands:
-                        - |
-                          echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
+                          - |
+                            echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
                 """
         ),
         @Example(
@@ -260,8 +259,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         }
 
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
-            NamespaceFilesUtils namespaceFilesUtils = ((DefaultRunContext) runContext).getApplicationContext().getBean(NamespaceFilesUtils.class);
-            namespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
+            NamespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         if (this.inputFiles != null) {

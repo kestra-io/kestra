@@ -5,7 +5,7 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.services.SkipExecutionService;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ public class WebServerCommand extends AbstractServerCommand {
     private ExecutorsUtils executorsUtils;
 
     @Inject
-    private SkipExecutionService skipExecutionService;
+    private IgnoreExecutionService ignoreExecutionService;
 
     @Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
     private boolean tutorialsDisabled = false;
@@ -40,8 +40,12 @@ public class WebServerCommand extends AbstractServerCommand {
     @Option(names = {"--no-indexer"}, description = "Flag to disable starting an embedded indexer.")
     private boolean indexerDisabled = false;
 
-    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "a list of indexer record keys, separated by a coma; for troubleshooting only")
-    private List<String> skipIndexerRecords = Collections.emptyList();
+    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "deprecated - use '--ignore-indexer-record' instead")
+    @Deprecated
+    private List<String> skipIndexerRecords;
+
+    @CommandLine.Option(names = {"--ignore-indexer-records"}, split=",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreIndexerRecords = Collections.emptyList();
 
     @Override
     public boolean isFlowAutoLoadEnabled() {
@@ -57,7 +61,7 @@ public class WebServerCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.skipExecutionService.setSkipIndexerRecords(skipIndexerRecords);
+        this.ignoreExecutionService.setIgnoredIndexerRecords(skipIndexerRecords != null ? skipIndexerRecords : ignoreIndexerRecords);
 
         super.call();
 

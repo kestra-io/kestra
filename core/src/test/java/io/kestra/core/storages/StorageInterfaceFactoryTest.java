@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.storage.local.LocalStorage;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-@KestraTest
+@MicronautTest
 class StorageInterfaceFactoryTest {
 
     @Inject

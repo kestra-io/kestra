@@ -1,5 +1,5 @@
 <template>
-    <section v-if="data" id="table">
+    <section v-if="data?.results?.length" id="table">
         <el-table
             :id="containerID"
             :data="data.results"
@@ -13,11 +13,10 @@
                 :width="value.field === 'STATE' ? 140 : null"
             >
                 <template #default="scope">
-                    <component :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)">
-                        <template v-if="!resolvedComponent(value.field)">
-                            {{ scope.row[key] }}
-                        </template>
-                    </component>
+                    <template v-if="resolvedComponent(value.field) === undefined">
+                        {{ scope.row[key] }}
+                    </template>
+                    <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                 </template>
             </el-table-column>
         </el-table>
@@ -39,7 +38,7 @@
 
     import type {RouteLocation} from "vue-router";
 
-    import type {Chart} from "../composables/useDashboards";
+    import type {Chart} from "../types.ts";
     import {getDashboard, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
 
     import Date from "./table/columns/Date.vue";
@@ -71,7 +70,7 @@
         case "DURATION":
             return Duration;
         default:
-            if (field.toLowerCase().includes("date")) return Date;
+            if (field?.toLowerCase().includes("date")) return Date;
             return undefined;
         }
     };
@@ -88,11 +87,11 @@
             return {field: row[key]};
         case "STATE":
             return {
-                size: "small", 
+                size: "small",
                 status: row[key].toString(),
             };
         case "DURATION":
-            return {field: row[key]};
+            return {field: row[key], startDate: row["start_date"]};
         default:
             if (field.toLowerCase().includes("date")) {
                 return {field: row[key]};

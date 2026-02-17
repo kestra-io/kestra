@@ -1,10 +1,10 @@
 package io.kestra.core.reporter.reports;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.plugin.core.http.Trigger;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class PluginMetricReportTest {
     
     @Inject

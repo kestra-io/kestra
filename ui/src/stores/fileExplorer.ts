@@ -206,7 +206,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 toast.error(t("namespace files.create.file_already_exists"));
                 return {};
             }
-            await namespacesStore.createFile({
+            await namespacesStore.saveOrCreateFile({
                 namespace: namespaceId.value,
                 path,
                 content,
@@ -329,7 +329,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             if (fullPath === path) {
                 return item;
             }
-            if (isDirectory(item) && item.children.length > 0) {
+            if (isDirectory(item) && item.children && item.children.length > 0) {
                 const foundNode = findNodeByPath(path, item.children, `${fullPath}/`);
                 if (foundNode) {
                     return foundNode;

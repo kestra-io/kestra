@@ -20,7 +20,7 @@
     import {useMiscStore} from "override/stores/misc";
     import Utils from "./utils/utils";
     import * as BasicAuth from "./utils/basicAuth";
-    import {initPostHogForSetup} from "./composables/usePosthog";
+    import {initPosthogIfEnabled} from "./utils/posthog";
     import ErrorToast from "./components/ErrorToast.vue";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
@@ -29,6 +29,7 @@
     import "./styles/vendor.scss"
     import "@kestra-io/ui-libs/style.css";
     import "./styles/app.scss"
+    import {usePluginsStore} from "./stores/plugins";
 
     const loaded = ref(false);
 
@@ -49,6 +50,8 @@
         document.title = document.title.replace(/( - .+)?$/, envSuffix);
     }
 
+    const pluginsStore = usePluginsStore();
+
     async function loadGeneralResources() {
         const config = await miscStore.loadConfigs();
         const uid = localStorage.getItem("uid") || (() => {
@@ -61,6 +64,8 @@
             return null;
         }
 
+        pluginsStore.fetchIcons();
+
         await docStore.initResourceUrlTemplate(config.version);
 
         apiStore.loadFeeds({
@@ -69,7 +74,7 @@
             uid: uid,
         });
 
-        await initPostHogForSetup(config);
+        void initPosthogIfEnabled(config);
 
         return config;
     }
@@ -83,19 +88,18 @@
         if (appContainer) appContainer.style.display = "block";
         loaded.value = true;
     }
-
-    onMounted(async () => {
-        setTitleEnvSuffix();
-
-        if (!route?.meta?.anonymous && BasicAuth.isLoggedIn()) {
+    watch(() => route?.meta?.anonymous, async (anonymous) => {
+        if (!anonymous && BasicAuth.isLoggedIn()) {
             try {
                 await loadGeneralResources();
             } catch (error) {
-
                 console.warn("Failed to load general resources:", error);
             }
         }
+    }, {immediate: true});
 
+    onMounted(async () => {
+        setTitleEnvSuffix();
         displayApp();
     });
 

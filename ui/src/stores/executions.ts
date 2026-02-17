@@ -18,24 +18,49 @@ export interface Label{
     value: string;
 }
 
+export type Histories = {
+    state: string;
+    date: string;
+}
+
 export interface Execution{
     id: string;
-    flowId?: string;
+    namespace: string;
+    flowId: string;
+    tenantId?: string;
     taskRunList:  {
         id: string,
         taskId: string,
         value?: string
         executionId?: string
+        outputs?: Record<string, any>
     }[]
     state: {
         current: string;
         history: string;
         startDate: string;
         duration: string;
+        endDate?: string;
+        histories?: Histories[];
     }
+    trigger?: {
+        id: any;
+        type: string;
+        variables: {
+            executionId: string;
+        }
+    },
+    metadata: {
+        originalCreatedDate: string;
+        attemptNumber: number;
+    },
     inputs?: Record<string, any>;
-    labels?: any[];
-    namespace: string;
+    labels?: Label[];
+    variables?: Record<string, any>;
+    outputs?: Record<string, any>;
+    originalId?: string;
+    flowRevision?: number;
+    scheduleDate?: string;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {
@@ -55,7 +80,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     const flowGraph = ref<any | undefined>(undefined);
     const namespaces = ref<string[]>([]);
     const flowsExecutable = ref<any[]>([]);
-
 
     // clear flow graph when execution is reset
     // since it is supposed to represent the current execution's flow

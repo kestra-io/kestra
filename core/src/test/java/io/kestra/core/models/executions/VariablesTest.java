@@ -2,6 +2,7 @@ package io.kestra.core.models.executions;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -18,6 +19,9 @@ class VariablesTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private NamespaceFactory namespaceFactory;
 
     @Test
     @SuppressWarnings("unchecked")
@@ -39,7 +43,7 @@ class VariablesTest {
     @SuppressWarnings("unchecked")
     void inStorage() {
         var storageContext = StorageContext.forTask(MAIN_TENANT, "namespace", "flow", "execution", "task", "taskRun", null);
-        var internalStorage = new InternalStorage(storageContext, storageInterface);
+        var internalStorage = new InternalStorage(storageContext, storageInterface, namespaceFactory);
         Variables.StorageContext variablesContext = new Variables.StorageContext(MAIN_TENANT, "namespace");
 
         // simple

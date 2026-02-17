@@ -28,11 +28,15 @@ export class Me {
     hasAnyRole() {
         return true;
     }
+
+    getNamespacesForAction(_permission: any, _action: any): string[] {
+        return [];
+    }
 }
 
 export const useAuthStore = defineStore("auth", {
     state: () => ({
-        user: new Me(),
+        user: new Me() as Me | undefined,
         isLogged: true,
     }),
     actions: {

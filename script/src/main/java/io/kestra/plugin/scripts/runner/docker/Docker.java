@@ -508,7 +508,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                         logger.debug("Volume found with name {} for resumed container {}", filesVolumeName, containerId);
                     }
                 }
-                
+
             }
 
             final String runContainerId = containerId;
@@ -915,7 +915,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
         // and prevent errors with Podman trying to pull "image:tag:tag"
         try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
-            new RetryUtils().<Boolean, InternalServerErrorException>of(
+            RetryUtils.<Boolean, InternalServerErrorException>of(
                 Exponential.builder()
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(5))

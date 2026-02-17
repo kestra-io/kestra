@@ -33,7 +33,11 @@ import java.util.TreeSet;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete one or multiple files from your namespace files."
+    title = "Delete files from Namespace storage.",
+    description = """
+        Removes files in a Namespace matching provided paths or glob patterns. Optional `deleteParentFolder` cleans up now-empty parent directories.
+
+        Accepts string or list for `files`; Namespace authoritzation applies when deleting outside the current Flow Namespace."""
 )
 @Plugin(
     examples = {
@@ -119,7 +123,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
         long count = matched
             .stream()
             .map(Rethrow.throwFunction(file -> {
-                if (namespace.delete(NamespaceFile.of(renderedNamespace, Path.of(file.path().replace("\\","/"))).storagePath())) {
+                if (!namespace.delete(Path.of(file.path().replace("\\", "/"))).isEmpty()) {
                     logger.debug(String.format("Deleted %s", (file.path())));
 
                     if (Boolean.TRUE.equals(deleteParent)) {
@@ -147,13 +151,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
             .forEach(folderPath -> {
                 try {
                     if (namespace.isDirectoryEmpty(folderPath)) {
-                        // Create proper NamespaceFile for folder with trailing slash
-                        NamespaceFile folder = NamespaceFile.of(
-                            namespace.namespace(),
-                            URI.create(folderPath + "/")
-                        );
-
-                        if (namespace.deleteDirectory(folder)) {
+                        if (!namespace.delete(Path.of(folderPath + "/")).isEmpty()) {
                             logger.debug("Deleted empty folder: {}", folderPath);
                         }
                     }

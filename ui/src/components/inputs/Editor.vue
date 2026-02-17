@@ -6,7 +6,7 @@
                     <el-button-group>
                         <el-tooltip
                             effect="light"
-                            :content="t('Fold content lines')"
+                            :content="$t('Fold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"
@@ -19,7 +19,7 @@
                         </el-tooltip>
                         <el-tooltip
                             effect="light"
-                            :content="t('Unfold content lines')"
+                            :content="$t('Unfold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"
@@ -96,9 +96,8 @@
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import {useScrollMemory} from "../../composables/useScrollMemory";
-
+    import {findDuplicateTaskIds} from "../../utils/yamlValidation.ts"
     const {t} = useI18n()
-
 
     const props = defineProps({
         modelValue: {type: String, default: ""},
@@ -122,7 +121,7 @@
         minimap: {type: Boolean, default: false},
         creating: {type: Boolean, default: false},
         label: {type: String, default: undefined},
-        shouldFocus: {type: Boolean, default: true},
+        shouldFocus: {type: Boolean, default: false},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
         scrollKey: {type: String, default: undefined},
@@ -161,13 +160,61 @@
         useDocStore().docId = "flowEditor";
     })
 
-    watch(() => props.modelValue, (value) => {
-        if (isCodeEditor(editor) && editor?.getValue?.() !== value) {
-            preventCursorChange.value = true;
-        } else {
-            preventCursorChange.value = false;
+    watch(
+        () => [props.modelValue, props.lang],
+        ([value, newLang], [, oldLang]) => {
+            preventCursorChange.value = isCodeEditor(editor) && editor?.getValue?.() !== value;
+            if (newLang === oldLang) return;
+            if (isDiff.value || !editor || !isCodeEditor(editor)) return;
+
+            const monacoRef = monacoEditor.value?.monaco;
+            const model = editor.getModel?.();
+            if (!monacoRef || !model) return;
+
+            let lang = "plaintext";
+            if (newLang && typeof newLang === "string" && newLang.trim()) {
+                lang = newLang.includes("json")
+                    ? "json"
+                    : newLang.includes("-")
+                        ? newLang.split("-")[0]
+                        : newLang;
+            }
+            try {
+                monacoRef.editor.setModelLanguage(model, lang);
+            } catch (e) {
+                console.warn("Failed to set model language", e);
+            }
         }
-    })
+    );
+
+    watch(
+        () => props.modelValue,
+        (newValue) => {
+            if (!editor || !isCodeEditor(editor) || !monacoEditor.value) return;
+
+            const model = editor.getModel();
+            if (!model) return;
+
+            // Only run for YAML files
+            if (props.lang !== "yaml") return;
+
+            const duplicateMarkers = findDuplicateTaskIds(newValue);
+
+            monacoEditor.value.monaco.editor.setModelMarkers(
+                model,
+                "duplicate-task-ids",
+                duplicateMarkers.map((m) => ({
+                    startLineNumber: m.startLineNumber,
+                    startColumn: m.startColumn,
+                    endLineNumber: m.endLineNumber,
+                    endColumn: m.endColumn,
+                    message: m.message,
+                    severity: monacoEditor.value!.monaco.MarkerSeverity.Error,
+                }))
+            );
+        },
+        {immediate: true}
+    );
 
     const themeComputed = computed(() => {
         return useMiscStore().theme;
@@ -257,7 +304,7 @@
         const settingsEditorFontSize = localStorage.getItem("editorFontSize")
 
         return {
-            
+
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily")
                 ? localStorage.getItem("editorFontFamily")
@@ -316,25 +363,24 @@
         }
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
-        
-        
+
         if (props.scrollKey && scrollMemory) {
             const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
             if (savedState) {
                 codeEditor.restoreViewState(savedState);
                 codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
             }
-            
+
             const top = scrollMemory.loadData<number>("scrollTop", 0);
             if (typeof top === "number") {
                 codeEditor.setScrollTop(top);
             }
-            
+
             const throttledSave = useThrottleFn(() => {
                 scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
                 scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop");
             }, 100);
-            
+
             codeEditor.onDidScrollChange?.(throttledSave);
         }
 
@@ -371,6 +417,17 @@
                 editor.getAction("editor.action.formatDocument")?.run();
             }
         }
+
+        editor.addAction({
+            id: "moveCursor",
+            label: "Move cursor",
+            run: (ed, args?: { lineNumber: number; column: number }) => {
+                if (!args?.lineNumber || !args?.column) return;
+                ed.setPosition({lineNumber: args.lineNumber, column: args.column});
+                ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
+                ed.focus();
+            },
+        });
 
         editor.addAction({
             id: "kestra-execute",
@@ -707,6 +764,10 @@
     z-index: 1001;
 }
 
+:not(.blueprint-container)  .ks-editor {
+    z-index: 1;
+}
+
 .el-form .ks-editor {
     display: flex;
     width: 100%;
@@ -714,7 +775,7 @@
 
 .ks-editor {
     display: flex;
-
+    overflow: hidden;
     .top-nav {
         background-color: var(--ks-background-card);
         padding: 0.5rem;

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.kestra.core.services.SkipExecutionService;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -52,7 +52,7 @@ public class JdbcIndexer implements Indexer {
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    private final SkipExecutionService skipExecutionService;
+    private final IgnoreExecutionService ignoreExecutionService;
     private final QueueService queueService;
 
     @Inject
@@ -63,7 +63,7 @@ public class JdbcIndexer implements Indexer {
         @Named(QueueFactoryInterface.METRIC_QUEUE) QueueInterface<MetricEntry> metricQueue,
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-        SkipExecutionService skipExecutionService,
+        IgnoreExecutionService ignoreExecutionService,
         QueueService queueService
     ) {
         this.logRepository = logRepository;
@@ -72,7 +72,7 @@ public class JdbcIndexer implements Indexer {
         this.metricQueue = (JdbcQueue<MetricEntry>) metricQueue;
         this.metricRegistry = metricRegistry;
         this.eventPublisher = eventPublisher;
-        this.skipExecutionService = skipExecutionService;
+        this.ignoreExecutionService = ignoreExecutionService;
         this.queueService = queueService;
 
         setState(ServiceState.CREATED);
@@ -101,7 +101,7 @@ public class JdbcIndexer implements Indexer {
                 .filter(either -> either.isLeft())
                 .map(either -> either.getLeft())
                 .filter(it -> {
-                    if (skipExecutionService.skipIndexerRecord(queueService.key(it))) {
+                    if (ignoreExecutionService.ignoreIndexerRecord(queueService.key(it))) {
                         log.warn("Skipping indexer record for key: {}", queueService.key(it));
                         return false;
                     }

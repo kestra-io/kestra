@@ -1,11 +1,11 @@
 package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.runners.VariableRenderer;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 @Property(name = "kestra.server-type", value = "WORKER")
 @Execution(ExecutionMode.SAME_THREAD)
 class ErrorLogsFunctionTest {

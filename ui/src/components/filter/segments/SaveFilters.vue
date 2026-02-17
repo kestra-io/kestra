@@ -24,10 +24,10 @@
                 </template>
             </el-alert>
             <div>
-                <label>{{ $t("filter.label") }}</label>
+                <label>{{ $t("filter.name") }}</label>
                 <el-input
                     v-model="filterName"
-                    :placeholder="$t('filter.enter label')"
+                    :placeholder="$t('filter.enter name')"
                     clearable
                 />
             </div>
@@ -195,7 +195,7 @@
 }
 
 .no-bg-border {
-    margin: 0;
+    margin: 0 !important;
     padding: 0.5rem;
     border-radius: 0.25rem;
     font-size: 1rem;

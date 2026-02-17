@@ -18,7 +18,6 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.ExecutableUtils;
-import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
@@ -38,7 +37,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -53,8 +51,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create a subflow execution.",
-    description = "Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language. Restarting a parent flow will restart any subflows that has previously been executed."
+    title = "Call another flow as a subflow.",
+    description = """
+        Starts a separate execution of `namespace`/`flowId` (optionally a specific revision), passing inputs and labels, and optionally waits for completion. If the parent restarts, previously started subflows are restarted too.
+
+        Use `wait`/`transmitFailed` to control propagation of the subflow result back to the parent."""
 )
 @Plugin(
     examples = {
@@ -246,11 +247,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
             if (subflowOutputs != null && !subflowOutputs.isEmpty()) {
                 try {
-                    Map<String, Object> rOutputs = FlowInputOutput.renderFlowOutputs(subflowOutputs, runContext);
+                    var inputAndOutput = runContext.inputAndOutput();
+                    Map<String, Object> rOutputs = inputAndOutput.renderOutputs(subflowOutputs);
 
-                    FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
-                    if (flow.getOutputs() != null && flowInputOutput != null) {
-                        rOutputs = flowInputOutput.typedOutputs(flow, execution, rOutputs);
+                    if (flow.getOutputs() != null) {
+                        rOutputs = inputAndOutput.typedOutputs(flow, execution, rOutputs);
                     }
                     builder.outputs(rOutputs);
                 } catch (Exception e) {
@@ -319,7 +320,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         private final State.Type state;
 
         @Schema(
-            title = "The outputs returned by the subflow exectution"
+            title = "The outputs returned by the subflow execution"
         )
         private final Map<String, Object> outputs;
     }

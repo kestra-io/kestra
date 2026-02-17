@@ -17,12 +17,13 @@ import io.kestra.core.utils.IdUtils;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@Slf4j
 abstract public class FlowListenersTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;
@@ -42,8 +43,6 @@ abstract public class FlowListenersTest {
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(FlowListenersTest.class);
-
     public void suite(FlowListenersInterface flowListenersService) throws TimeoutException {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         flowListenersService.run();
@@ -53,19 +52,19 @@ abstract public class FlowListenersTest {
         flowListenersService.listen(flows -> count.set(getFlowsForTenant(flowListenersService, tenant).size()));
 
         // initial state
-        LOG.info("-----------> wait for zero");
+        log.info("-----------> wait for zero");
         Await.until(() -> count.get() == 0, Duration.ofMillis(10), Duration.ofSeconds(5));
         assertThat(getFlowsForTenant(flowListenersService, tenant).size()).isZero();
 
         // resend on startup done for kafka
-        LOG.info("-----------> wait for zero kafka");
+        log.info("-----------> wait for zero kafka");
         if (flowListenersService.getClass().getName().equals("io.kestra.ee.runner.kafka.KafkaFlowListeners")) {
             Await.until(() -> count.get() == 0, Duration.ofMillis(10), Duration.ofSeconds(5));
             assertThat(getFlowsForTenant(flowListenersService, tenant).size()).isZero();
         }
 
         // create first
-        LOG.info("-----------> create fist flow");
+        log.info("-----------> create fist flow");
         FlowWithSource first = create(tenant, "first_" + IdUtils.create(), "test");
         FlowWithSource firstUpdated = create(tenant, first.getId(), "test2");
 

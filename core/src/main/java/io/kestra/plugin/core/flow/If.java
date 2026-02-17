@@ -36,8 +36,11 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process tasks conditionally depending on a contextual value.",
-    description = "Allow some workflow based on context variables, for example, branch a flow based on a previous task."
+    title = "Branch tasks based on a rendered condition.",
+    description = """
+        Renders `condition` and coerces it to boolean (empty string/0/null is false, everything else true). Executes `then` when true, `_else` when false, with optional `errors`/`finally` blocks.
+
+        Frequently used after previous task results to drive control flow."""
 )
 @Plugin(
     examples = {

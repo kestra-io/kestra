@@ -16,7 +16,7 @@ public final class H2RepositoryUtils {
             case MONTH:
                 return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'yyyy-MM')", Date.class);
             case WEEK:
-                return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'YYYY-ww')", Date.class);
+                return DSL.field("DATE_TRUNC('WEEK', \"" + dateField + "\")", Date.class);
             case DAY:
                 return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'yyyy-MM-dd')", Date.class);
             case HOUR:

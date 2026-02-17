@@ -1,0 +1,12 @@
+id: webhook-routing-test
+namespace: io.kestra.tests
+
+tasks:
+  - id: log_request
+    type: io.kestra.plugin.core.log.Log
+    message: "Webhook triggered: {{ trigger.body }}"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: testkey

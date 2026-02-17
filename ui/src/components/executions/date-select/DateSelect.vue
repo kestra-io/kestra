@@ -1,7 +1,6 @@
 <template>
     <el-tooltip :disabled="tooltip === undefined" :content="tooltip" effect="light">
         <el-select
-            data-test-id="time-selector"
             :modelValue="value"
             :placeholder="placeholder"
             @change="emit('change', $event)"
@@ -24,7 +23,7 @@
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue";
 
     interface Option {
-        value: string;
+        value?: string;
         label: string;
     }
 
@@ -37,6 +36,6 @@
     }>();
 
     const emit = defineEmits<{
-        (e: "change", value: string): void
+        (e: "change", value: string | undefined): void
     }>();
 </script>

@@ -30,21 +30,36 @@ import java.nio.file.Path;
 import java.util.Map;
 
 @Schema(
-    title = "Filter a file by retaining only the items that match a given expression."
+    title = "Filter line-oriented files with a Pebble expression.",
+    description = """
+        Reads a line-delimited file from internal storage, evaluates `filterCondition` per item, and writes matched lines to a new file. `filterType` controls include vs exclude; `errorOrNullBehavior` handles expression errors or nulls.
+
+        Expressions can reference columns directly (rendered as strings unless cast) and must return a boolean."""
 )
 @Plugin(
     examples = {
         @Example(
+            title = "Filter a CSV file and retain rows with a product ID equal to 20.",
             full = true,
             code = {
                 """
+                id: filter_items
+                namespace: company.team
+
                 tasks:
-                   - id: filter
-                     type: io.kestra.plugin.core.storage.FilterItems
-                     from: "{{ inputs.file }}"
-                     filterCondition: " {{ value == null }}"
-                     filterType: EXCLUDE
-                     errorOrNullBehavior: EXCLUDE
+                  - id: download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                  - id: csv_to_ion
+                    type: io.kestra.plugin.serdes.csv.CsvToIon
+                    from: "{{ outputs.download.uri }}"
+                  
+                  - id: filter
+                    type: io.kestra.plugin.core.storage.FilterItems
+                    from: "{{ outputs.download.uri }}"
+                    filterCondition: "{{ (product_id | number) == 20 }}"
+                    filterType: INCLUDE
                 """
             }
         )
@@ -66,8 +81,8 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
     private Property<String> from;
 
     @Schema(
-        title = "The 'pebble' expression used to match items to be included or excluded",
-        description = "The 'pebble' expression should return a BOOLEAN value (i.e. `true` or `false`). Values `0`, `-0`, and `\"\"` are interpreted as `false`. " +
+        title = "The expression used to match items to be included or excluded",
+        description = "Headers from the file can be referenced directly, e.g., `{{ product_id }}`, but will be rendered as a string unless combined with a filter, e.g., `product_id | number`. The Pebble expression should return a BOOLEAN value (i.e., `true` or `false`). Values `0`, `-0`, and `\"\"` are interpreted as `false`. " +
             "Otherwise, any non empty value will be interpreted as `true`."
     )
     @PluginProperty

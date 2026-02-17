@@ -111,13 +111,12 @@
 
                             <el-table-column columnKey="action" className="row-action">
                                 <template #default="scope">
-                                    <router-link
+                                    <IconButton
+                                        :tooltip="$t('details')"
                                         :to="{name: 'templates/update', params : {namespace: scope.row.namespace, id: scope.row.id}}"
                                     >
-                                        <Kicon :tooltip="$t('details')" placement="left">
-                                            <TextSearch />
-                                        </Kicon>
-                                    </router-link>
+                                        <TextSearch />
+                                    </IconButton>
                                 </template>
                             </el-table-column>
                         </template>
@@ -149,7 +148,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
-    import Kicon from "../Kicon.vue"
+    import IconButton from "../IconButton.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import _merge from "lodash/merge";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
@@ -164,7 +163,7 @@
             DataTable,
             SearchField,
             NamespaceSelect,
-            Kicon,
+            IconButton,
             MarkdownTooltip,
             Upload,
             TopNavBar
@@ -281,4 +280,3 @@
         },
     };
 </script>
-

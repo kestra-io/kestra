@@ -69,7 +69,7 @@ public class QueueLagPoller {
         QueueInterface<WorkerJob> workerJobQueue = workerJobQueueProvider.get();
         this.register(
             getQueueLagForConsumerGroup(WORKERJOB_NAMED, null, Worker.class, workerJobQueue),
-            MetricRegistry.TAG_WORKER_GROUP, "default",
+            MetricRegistry.TAG_WORKER_GROUP, "__default__",
             MetricRegistry.TAG_QUEUE_NAME, WORKERJOB_NAMED
         );
 

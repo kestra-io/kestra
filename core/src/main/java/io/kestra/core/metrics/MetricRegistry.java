@@ -356,7 +356,7 @@ public class MetricRegistry {
     }
 
     public String[] workerGroupTags(String workerGroup, String... tags) {
-        return ArrayUtils.addAll(tags, TAG_WORKER_GROUP, workerGroup != null ? workerGroup : "default");
+        return ArrayUtils.addAll(tags, TAG_WORKER_GROUP, workerGroup != null ? workerGroup : "__default__");
     }
 
 

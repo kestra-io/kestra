@@ -1,6 +1,5 @@
 package io.kestra.worker.queues;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -18,11 +17,6 @@ public class InMemoryWorkerQueue<T> implements WorkerQueue<T> {
     private final int capacity;
     private final LinkedBlockingQueue<T> queue;
 
-    public InMemoryWorkerQueue() {
-        this.capacity = Integer.MAX_VALUE;
-        this.queue = new LinkedBlockingQueue<>(capacity);
-    }
-    
     public InMemoryWorkerQueue(int capacity) {
         this.capacity = capacity;
         this.queue = new LinkedBlockingQueue<>(capacity);
@@ -65,11 +59,22 @@ public class InMemoryWorkerQueue<T> implements WorkerQueue<T> {
      */
     @Override
     public void put(T event) {
-        try {
-            this.queue.put(event);
-        } catch (InterruptedException e) {
+        boolean interrupted = false;
+        boolean enqueued = false;
+        while (!enqueued) {
+            try {
+                this.queue.put(event);
+                enqueued = true;
+            } catch (InterruptedException e) {
+                // Preserve interrupt status and retry until the event is enqueued
+                // This is critical because worker threads may have their interrupt flag set
+                // after a task timeout/kill, but the result must still be enqueued.
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            // Restore interrupt status after successfully enqueuing the event
             Thread.currentThread().interrupt();
-            throw new KestraRuntimeException("Thread was interrupted while putting an event in the queue", e);
         }
     }
 

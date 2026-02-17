@@ -104,6 +104,7 @@ kestra:
     shutdownTimeout: 3s
   controller:
     port: ${random.port}
+    maxConnectionAgeGrace: 0s
   worker:
     controllers:
       type: STATIC

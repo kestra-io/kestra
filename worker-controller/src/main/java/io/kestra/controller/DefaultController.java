@@ -87,13 +87,12 @@ public class DefaultController extends AbstractService implements Controller {
 
         // Configure maxConnectionAge for load balancing across multiple controllers
         // This forces workers to periodically reconnect, redistributing them across available controllers
-        if (controllerConfiguration.maxConnectionAge() != null 
-                && !controllerConfiguration.maxConnectionAge().isZero()) {
+        if (controllerConfiguration.maxConnectionAge() != null && !controllerConfiguration.maxConnectionAge().isZero()) {
             long maxAgeMillis = controllerConfiguration.maxConnectionAge().toMillis();
             serverBuilder
                 .maxConnectionAge(maxAgeMillis, TimeUnit.MILLISECONDS)
                 // Grace period allows in-flight RPCs to complete before forcing disconnect
-                .maxConnectionAgeGrace(30, TimeUnit.SECONDS);
+                .maxConnectionAgeGrace(controllerConfiguration.maxConnectionAgeGrace().toMillis(), TimeUnit.MILLISECONDS);
             LOG.info("Controller configured with maxConnectionAge={}ms", maxAgeMillis);
         }
 

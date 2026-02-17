@@ -19,9 +19,10 @@ import java.time.Duration;
 public record ControllerConfiguration(
     @Bindable(defaultValue = DEFAULT_GRPC_PORT_STRING)
     int port,
-
     @Bindable(defaultValue = DEFAULT_MAX_CONNECTION_AGE_STRING)
-    Duration maxConnectionAge
+    Duration maxConnectionAge,
+    @Bindable(defaultValue = DEFAULT_MAX_CONNECTION_AGE_GRACE_STRING)
+    Duration maxConnectionAgeGrace
 ) {
     public static final int DEFAULT_GRPC_PORT = 50051;
     public static final String DEFAULT_GRPC_PORT_STRING = "50051";
@@ -31,4 +32,8 @@ public record ControllerConfiguration(
      * This provides a reasonable balance between connection stability and load redistribution.
      */
     public static final String DEFAULT_MAX_CONNECTION_AGE_STRING = "PT1H";
+    /**
+     * Default max connection age grace period: 30 seconds.
+     */
+    public static final String DEFAULT_MAX_CONNECTION_AGE_GRACE_STRING = "PT30S";
 }

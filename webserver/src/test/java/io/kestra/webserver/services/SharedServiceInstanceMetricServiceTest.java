@@ -30,7 +30,7 @@ class SharedServiceInstanceMetricServiceTest {
         List.of(),
         Map.of(
             ServiceType.WORKER,
-            Set.of("metric-name")
+            Set.of("metric-name", "kestra.metric-name")
         )
     );
     private ServiceInstanceRepositoryInterface serviceInstanceRepositoryInterface;

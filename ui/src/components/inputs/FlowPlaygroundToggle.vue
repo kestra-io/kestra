@@ -13,8 +13,11 @@
 <style scoped lang="scss">
 .toggle{
     margin-right: 1rem;
-    &.is-active ::v-deep(.el-switch__label){
-        color: white;
+    &.is-active{
+        --el-switch-border-color: #FFFFFF;
+        ::v-deep(.el-switch__label){
+            color: white;
+        }
     }
 }
 </style>

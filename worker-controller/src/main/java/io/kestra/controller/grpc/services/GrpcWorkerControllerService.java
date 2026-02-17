@@ -221,6 +221,14 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void close() {
+        workerJobDispatcher.close();
+    }
+
+    /**
      * TypeReferences for deserialization of BatchMessages with different record types.
      */
     interface TypeReferences {

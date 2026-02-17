@@ -565,6 +565,15 @@ public class WorkerJobDispatcher {
             closeSubscriberQuietly(state.subscriber, group);
         });
 
+        // Complete all active worker streams so gRPC can release them
+        activeStreams.forEach((workerId, context) -> {
+            try {
+                context.getResponseObserver().onCompleted();
+            } catch (Exception e) {
+                log.debug("Error completing stream for worker {}: {}", workerId, e.getMessage());
+            }
+        });
+
         groupStates.clear();
         workerIdsByGroup.clear();
         activeStreams.clear();

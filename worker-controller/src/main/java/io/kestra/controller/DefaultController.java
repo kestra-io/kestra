@@ -12,7 +12,6 @@ import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.worker.Controller;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,9 +39,9 @@ public class DefaultController extends AbstractService implements Controller {
     protected static final String HEALTH_SERVICE_NAME = "kestra.controller";
 
     private Server server;
-    
+
     private final List<WorkerControllerService> workerControllerServices;
-    
+
     protected final HealthStatusManager healthStatusManager;
 
     protected final ControllerConfiguration controllerConfiguration;
@@ -112,6 +111,16 @@ public class DefaultController extends AbstractService implements Controller {
         healthStatusManager.setStatus(HEALTH_SERVICE_NAME, ServingStatus.NOT_SERVING);
         healthStatusManager.setStatus("", ServingStatus.NOT_SERVING);
 
+        // Close all worker controller services to complete active worker streams,
+        // so gRPC has no more open RPCs to wait for.
+        for (WorkerControllerService service : workerControllerServices) {
+            try {
+                service.close();
+            } catch (Exception e) {
+                LOG.warn("Error closing worker controller service: {}", e.getMessage());
+            }
+        }
+
         if (server != null && !server.isTerminated()) {
             shutdownServerAndWait();
         }
@@ -119,6 +128,10 @@ public class DefaultController extends AbstractService implements Controller {
     }
 
     private void shutdownServerAndWait() throws InterruptedException {
-        server.shutdown().awaitTermination(30, TimeUnit.SECONDS);
+        server.shutdown();
+        if (!server.awaitTermination(controllerConfiguration.maxConnectionAgeGrace().toMillis(), TimeUnit.MILLISECONDS)) {
+            LOG.warn("gRPC server did not terminate within grace period, forcing shutdown");
+            server.shutdownNow();
+        }
     }
 }

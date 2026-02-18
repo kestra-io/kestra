@@ -1359,6 +1359,133 @@
     "now": "現在",
     "of": "の",
     "ok": "OK",
+    "onboarding": {
+      "actions": {
+        "cancel_tutorial": "チュートリアルをキャンセル",
+        "complete": "完了",
+        "edit_flow_to_continue": "右上の「Edit flow」をクリックしてください。",
+        "execute_to_continue": "1. 右上の「Execute」をクリックします。\n2. <strong>name</strong> に値を入力します。\n3. モーダルで再度「Execute」をクリックします。",
+        "finish_tutorial": "チュートリアルを終了",
+        "next": "次へ",
+        "save_to_continue": "右上の「Save」をクリックしてください。"
+      },
+      "cancel_modal": {
+        "confirm": "チュートリアルをキャンセル",
+        "description": "最初のフローチュートリアルをキャンセルしますか？",
+        "keep": "チュートリアルを続ける",
+        "title": "最初のフローチュートリアルをキャンセル"
+      },
+      "editor_hints": {
+        "build_intro": "ステップごとに最初のフローを作成しましょう。",
+        "step_1": "# 1) idを追加",
+        "step_2": "# 2) namespaceを追加",
+        "step_3": "# 3) 入力を追加",
+        "step_4": "# 4) タスクを追加し、最初のPythonタスクを作成",
+        "step_5": "# 5) cronトリガーを追加"
+      },
+      "finish_actions": {
+        "create_flow": "フローを作成",
+        "explore_blueprints": "ブループリントを見る"
+      },
+      "steps": {
+        "add_cron_trigger": {
+          "description": "Triggersはスケジュールや外部イベント（例：WebhookやMQTTメッセージ）に基づいて実行を開始できます。<br><br>このフローが5分ごとに実行されるように、cronスケジュールトリガーを追加してください。",
+          "title": "cronトリガーを追加"
+        },
+        "add_id": {
+          "description": "IDはフローの一意な名前です。検索、実行、一貫した参照のために使用されます。<br><br>ルートレベルに <code>id</code> を追加してください。",
+          "title": "フローIDを追加"
+        },
+        "add_input": {
+          "description": "Inputsはフローレベルのパラメータで、タスク内から参照し、実行時の動作を動的に制御できます。<br><br><code>name</code> という名前の入力を <code>STRING</code> 型で追加してください。",
+          "title": "入力を追加"
+        },
+        "add_input_default": {
+          "description": "フローが自動的にトリガーされる場合でも、入力には実行時の値が必要です。<br><br><code>name</code> 入力は前のステップで作成済みなので、再度追加する必要はありません。既存の <code>name</code> 入力にデフォルト値を設定してください。",
+          "title": "入力のデフォルト値を設定"
+        },
+        "add_log_task": {
+          "description": "Tasksはフローが実行する作業単位で、順序付けられたステップのリストとして定義されます。各タスクには一意の <code>id</code> と <code>type</code> が必要です。Kestraは外部システム向けに多くのタスクプラグインを提供していますが、ここではPython Scriptタスクを使用します。<br><br><code>&#123;&#123; ... &#125;&#125;</code> 構文はPebble式で、実行時に変数を動的に参照するために使用されます。例：<code>&#123;&#123; inputs.name &#125;&#125;</code>。<br><br><code>tasks</code> の下に、<code>id</code>、<code>type</code>、および挨拶を出力する <code>script</code> を含む最初のタスクを追加してください。",
+          "title": "最初のタスクを追加"
+        },
+        "add_namespace": {
+          "description": "Namespaceはチーム、プロジェクト、環境ごとにフローを整理するフォルダのようなグループです。<br><br>ルートレベルに <code>namespace</code> を追加してください。",
+          "title": "ネームスペースを追加"
+        },
+        "background_runs_info": {
+          "description": "このフローは5分ごとにバックグラウンドで実行されます。<br><br>左側メニューの「Executions」概要から、スケジュール実行を確認できます。",
+          "title": "スケジュール実行"
+        },
+        "edit_flow_from_execution": {
+          "description": "実行画面から直接フロー定義に戻り、素早く編集できます。",
+          "title": "フローエディタに戻る"
+        },
+        "execute_flow": {
+          "description": "実行すると、入力値を指定してフローの実行が開始されます。",
+          "title": "フローを実行"
+        },
+        "finish": {
+          "description": "素晴らしいスタートです。フローの作成、実行、パラメータ化、スケジュール設定を行いました。<br><br>次に何をしますか？",
+          "title": "最初のフローチュートリアルを完了しました"
+        },
+        "flow_basics": {
+          "description": "Kestraでは、<code>flow</code> は中核となるオーケストレーション単位です。メタデータと順序付けられたタスクを含むYAMLで定義します。<br><br>以下のサンプル構造を確認し、ステップごとに作成していきましょう。",
+          "title": "フローの基本"
+        },
+        "save_flow": {
+          "description": "保存すると、フロー定義が永続化され、実行できるようになります。",
+          "title": "フローを保存"
+        },
+        "save_flow_again": {
+          "description": "これでフローにはスケジュールと自動実行用のデフォルト入力値が設定されました。",
+          "title": "フローを保存"
+        },
+        "view_logs_status": {
+          "description": "実行の詳細には、ステータス、実行時間、タスクごとの出力ログが表示されます。<br><br>実行詳細を開き、ガントチャート内の <code>greet</code> をクリックしてログを確認してください。",
+          "title": "実行を確認"
+        }
+      },
+      "validation": {
+        "add_cron_trigger_cron": "cron式を追加してください。例：`\"*/5 * * * *\"`。",
+        "add_cron_trigger_section": "`triggers` セクションを作成し、スケジュールトリガーを追加してください。",
+        "add_cron_trigger_type": "トリガータイプを `io.kestra.plugin.core.trigger.Schedule` に設定してください。",
+        "add_id": "上部にフローIDを追加してください。例：`id: hello_flow`。",
+        "add_input_default_defaults": "`name` にデフォルト値を追加してください。例：`defaults: \"Kestra\"`。",
+        "add_input_default_id": "既存の入力IDを `name` のままにしてください。",
+        "add_input_default_section": "`inputs` に戻り、既存の `name` 入力をそのまま使用してください（2つ目の入力は追加しないでください）。",
+        "add_input_id": "`inputs` 内に `id: name` を追加してください。",
+        "add_input_section": "`inputs` セクションを作成し、1つの入力を追加してください。",
+        "add_input_type": "入力タイプを `STRING` に設定してください。",
+        "add_log_task_id": "タスクにIDを設定してください。例：`id: greet`。",
+        "add_log_task_message": "タスクに `script` フィールドを追加してください。",
+        "add_log_task_pebble": "スクリプト内でPebble式を使用し、入力値を参照してください（例：`inputs.name`）。",
+        "add_log_task_section": "`tasks` セクションを作成し、最初のタスクを追加してください。",
+        "add_log_task_type": "タスクタイプを `io.kestra.plugin.scripts.python.Script` に設定してください。",
+        "add_namespace": "上部にnamespaceを追加してください。例：`namespace: company.team`。",
+        "complete_step": "あと少しです。このステップを完了して続行してください。",
+        "edit_flow_from_execution": "上部バーの「Edit flow」をクリックして続行してください。",
+        "execute_flow": "続行するにはフローを一度実行してください。",
+        "fix_yaml": "YAMLの書式に小さな問題があります。修正してから続行してください。",
+        "save_flow": "続行するには「Save」をクリックしてください。",
+        "save_flow_again": "続行するには再度「Save」をクリックしてください。",
+        "view_logs_status": "実行詳細を開き、`greet` のログを確認してください。"
+      },
+      "welcome": {
+        "additional_help": "追加のヘルプ",
+        "badge": "チュートリアル",
+        "blueprints": "ブループリント",
+        "docs": "ドキュメント",
+        "guided_description": "ガイド付きステップで最初のフローを作成し、実行する方法を学びましょう。",
+        "guided_duration": "ほとんどのユーザーにおすすめ",
+        "guided_title": "最初のフローを作成",
+        "headline": "数分で最初のワークフローを作成して実行しましょう",
+        "self_serve_description": "エディタに直接移動して、自分のフローを作成します。",
+        "self_serve_note": "上級ユーザー向け",
+        "self_serve_title": "一からフローを作成",
+        "slack": "Slackコミュニティ",
+        "tutorial": "チュートリアル"
+      }
+    },
     "open": "開く",
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
@@ -1893,6 +2020,7 @@
         "text": "Slackコミュニティで質問してください。行き詰まった場合は、私たちがサポートします。✋",
         "title": "お困りですか？"
       },
+      "menu": "Welcome",
       "tour": {
         "text": "ユースケースを選択し、ステップバイステップガイドに従って、Kestraの機能と能力を学びましょう。❤️",
         "title": "製品ツアーを体験する"
@@ -1900,8 +2028,7 @@
       "tutorial": {
         "text": "----------\n\n * <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">ビデオチュートリアル</a> \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">ドキュメント</a> \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
         "title": "チュートリアル"
-      },
-      "menu": "Welcome"
+      }
     },
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
@@ -1915,133 +2042,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
-    "years": "年",
-    "onboarding": {
-      "welcome": {
-        "headline": "数分で最初のワークフローを作成して実行しましょう",
-        "guided_title": "最初のフローを作成",
-        "badge": "チュートリアル",
-        "guided_description": "ガイド付きステップで最初のフローを作成し、実行する方法を学びましょう。",
-        "guided_duration": "ほとんどのユーザーにおすすめ",
-        "self_serve_title": "一からフローを作成",
-        "self_serve_description": "エディタに直接移動して、自分のフローを作成します。",
-        "self_serve_note": "上級ユーザー向け",
-        "additional_help": "追加のヘルプ",
-        "docs": "ドキュメント",
-        "tutorial": "チュートリアル",
-        "blueprints": "ブループリント",
-        "slack": "Slackコミュニティ"
-      },
-      "steps": {
-        "flow_basics": {
-          "title": "フローの基本",
-          "description": "Kestraでは、<code>flow</code> は中核となるオーケストレーション単位です。メタデータと順序付けられたタスクを含むYAMLで定義します。<br><br>以下のサンプル構造を確認し、ステップごとに作成していきましょう。"
-        },
-        "add_id": {
-          "title": "フローIDを追加",
-          "description": "IDはフローの一意な名前です。検索、実行、一貫した参照のために使用されます。<br><br>ルートレベルに <code>id</code> を追加してください。"
-        },
-        "add_namespace": {
-          "title": "ネームスペースを追加",
-          "description": "Namespaceはチーム、プロジェクト、環境ごとにフローを整理するフォルダのようなグループです。<br><br>ルートレベルに <code>namespace</code> を追加してください。"
-        },
-        "add_input": {
-          "title": "入力を追加",
-          "description": "Inputsはフローレベルのパラメータで、タスク内から参照し、実行時の動作を動的に制御できます。<br><br><code>name</code> という名前の入力を <code>STRING</code> 型で追加してください。"
-        },
-        "add_log_task": {
-          "title": "最初のタスクを追加",
-          "description": "Tasksはフローが実行する作業単位で、順序付けられたステップのリストとして定義されます。各タスクには一意の <code>id</code> と <code>type</code> が必要です。Kestraは外部システム向けに多くのタスクプラグインを提供していますが、ここではPython Scriptタスクを使用します。<br><br><code>&#123;&#123; ... &#125;&#125;</code> 構文はPebble式で、実行時に変数を動的に参照するために使用されます。例：<code>&#123;&#123; inputs.name &#125;&#125;</code>。<br><br><code>tasks</code> の下に、<code>id</code>、<code>type</code>、および挨拶を出力する <code>script</code> を含む最初のタスクを追加してください。"
-        },
-        "save_flow": {
-          "title": "フローを保存",
-          "description": "保存すると、フロー定義が永続化され、実行できるようになります。"
-        },
-        "execute_flow": {
-          "title": "フローを実行",
-          "description": "実行すると、入力値を指定してフローの実行が開始されます。"
-        },
-        "view_logs_status": {
-          "title": "実行を確認",
-          "description": "実行の詳細には、ステータス、実行時間、タスクごとの出力ログが表示されます。<br><br>実行詳細を開き、ガントチャート内の <code>greet</code> をクリックしてログを確認してください。"
-        },
-        "edit_flow_from_execution": {
-          "title": "フローエディタに戻る",
-          "description": "実行画面から直接フロー定義に戻り、素早く編集できます。"
-        },
-        "add_cron_trigger": {
-          "title": "cronトリガーを追加",
-          "description": "Triggersはスケジュールや外部イベント（例：WebhookやMQTTメッセージ）に基づいて実行を開始できます。<br><br>このフローが5分ごとに実行されるように、cronスケジュールトリガーを追加してください。"
-        },
-        "add_input_default": {
-          "title": "入力のデフォルト値を設定",
-          "description": "フローが自動的にトリガーされる場合でも、入力には実行時の値が必要です。<br><br><code>name</code> 入力は前のステップで作成済みなので、再度追加する必要はありません。既存の <code>name</code> 入力にデフォルト値を設定してください。"
-        },
-        "save_flow_again": {
-          "title": "フローを保存",
-          "description": "これでフローにはスケジュールと自動実行用のデフォルト入力値が設定されました。"
-        },
-        "background_runs_info": {
-          "title": "スケジュール実行",
-          "description": "このフローは5分ごとにバックグラウンドで実行されます。<br><br>左側メニューの「Executions」概要から、スケジュール実行を確認できます。"
-        },
-        "finish": {
-          "title": "最初のフローチュートリアルを完了しました",
-          "description": "素晴らしいスタートです。フローの作成、実行、パラメータ化、スケジュール設定を行いました。<br><br>次に何をしますか？"
-        }
-      },
-      "actions": {
-        "next": "次へ",
-        "complete": "完了",
-        "save_to_continue": "右上の「Save」をクリックしてください。",
-        "execute_to_continue": "1. 右上の「Execute」をクリックします。\n2. <strong>name</strong> に値を入力します。\n3. モーダルで再度「Execute」をクリックします。",
-        "edit_flow_to_continue": "右上の「Edit flow」をクリックしてください。",
-        "cancel_tutorial": "チュートリアルをキャンセル",
-        "finish_tutorial": "チュートリアルを終了"
-      },
-      "finish_actions": {
-        "explore_blueprints": "ブループリントを見る",
-        "create_flow": "フローを作成"
-      },
-      "editor_hints": {
-        "build_intro": "ステップごとに最初のフローを作成しましょう。",
-        "step_1": "# 1) idを追加",
-        "step_2": "# 2) namespaceを追加",
-        "step_3": "# 3) 入力を追加",
-        "step_4": "# 4) タスクを追加し、最初のPythonタスクを作成",
-        "step_5": "# 5) cronトリガーを追加"
-      },
-      "cancel_modal": {
-        "title": "最初のフローチュートリアルをキャンセル",
-        "description": "最初のフローチュートリアルをキャンセルしますか？",
-        "confirm": "チュートリアルをキャンセル",
-        "keep": "チュートリアルを続ける"
-      },
-      "validation": {
-        "complete_step": "あと少しです。このステップを完了して続行してください。",
-        "fix_yaml": "YAMLの書式に小さな問題があります。修正してから続行してください。",
-        "add_id": "上部にフローIDを追加してください。例：`id: hello_flow`。",
-        "add_namespace": "上部にnamespaceを追加してください。例：`namespace: company.team`。",
-        "add_input_section": "`inputs` セクションを作成し、1つの入力を追加してください。",
-        "add_input_id": "`inputs` 内に `id: name` を追加してください。",
-        "add_input_type": "入力タイプを `STRING` に設定してください。",
-        "add_log_task_section": "`tasks` セクションを作成し、最初のタスクを追加してください。",
-        "add_log_task_id": "タスクにIDを設定してください。例：`id: greet`。",
-        "add_log_task_type": "タスクタイプを `io.kestra.plugin.scripts.python.Script` に設定してください。",
-        "add_log_task_message": "タスクに `script` フィールドを追加してください。",
-        "add_log_task_pebble": "スクリプト内でPebble式を使用し、入力値を参照してください（例：`inputs.name`）。",
-        "save_flow": "続行するには「Save」をクリックしてください。",
-        "execute_flow": "続行するにはフローを一度実行してください。",
-        "view_logs_status": "実行詳細を開き、`greet` のログを確認してください。",
-        "edit_flow_from_execution": "上部バーの「Edit flow」をクリックして続行してください。",
-        "add_cron_trigger_section": "`triggers` セクションを作成し、スケジュールトリガーを追加してください。",
-        "add_cron_trigger_type": "トリガータイプを `io.kestra.plugin.core.trigger.Schedule` に設定してください。",
-        "add_cron_trigger_cron": "cron式を追加してください。例：`\"*/5 * * * *\"`。",
-        "add_input_default_section": "`inputs` に戻り、既存の `name` 入力をそのまま使用してください（2つ目の入力は追加しないでください）。",
-        "add_input_default_id": "既存の入力IDを `name` のままにしてください。",
-        "add_input_default_defaults": "`name` にデフォルト値を追加してください。例：`defaults: \"Kestra\"`。",
-        "save_flow_again": "続行するには再度「Save」をクリックしてください。"
-      }
-    }
+    "years": "年"
   }
 }

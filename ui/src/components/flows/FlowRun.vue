@@ -93,7 +93,7 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
-    import Inputs from "../../utils/inputs";
+    import {normalize} from "../../utils/inputs";
     import Curl from "./Curl.vue";
     import WebhookCurl from "./WebhookCurl.vue";
     import InputsForm from "../../components/inputs/InputsForm.vue";
@@ -186,7 +186,7 @@
                     .filter(input => nonEmptyInputNames.includes(input.id))
                     .forEach(input => {
                         let value = this.execution.inputs[input.id];
-                        this.inputs[input.id] = Inputs.normalize(input.type, value);
+                        this.inputs[input.id] = normalize(input.type, value);
                     });
             },
             onSubmit(formRef) {

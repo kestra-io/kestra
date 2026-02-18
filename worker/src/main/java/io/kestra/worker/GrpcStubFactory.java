@@ -22,43 +22,40 @@ import jakarta.inject.Singleton;
  */
 @Factory
 public class GrpcStubFactory {
-
-    @Inject
-    GrpcChannelManager grpcChannelManager;
-
+    
     @Bean
     @Singleton
-    public WorkerControllerServiceBlockingStub blockingWorkerServiceStub() {
-        return WorkerControllerServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
+    public WorkerControllerServiceBlockingStub blockingWorkerServiceStub(GrpcChannelManager manager) {
+        return WorkerControllerServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
 
     @Bean
     @Singleton
-    public WorkerControllerServiceStub asyncWorkerServiceStub() {
-        return WorkerControllerServiceGrpc.newStub(grpcChannelManager.getDefaultChannel());
+    public WorkerControllerServiceStub asyncWorkerServiceStub(GrpcChannelManager manager) {
+        return WorkerControllerServiceGrpc.newStub(manager.getDefaultChannel());
     }
 
     @Bean
     @Singleton
-    public LivenessControllerServiceBlockingStub workerServiceStub() {
-        return LivenessControllerServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
+    public LivenessControllerServiceBlockingStub workerServiceStub(GrpcChannelManager manager) {
+        return LivenessControllerServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
 
     @Bean
     @Singleton
-    public ConnectControllerServiceBlockingStub connectControllerServiceBlockingStub() {
-        return ConnectControllerServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
+    public ConnectControllerServiceBlockingStub connectControllerServiceBlockingStub(GrpcChannelManager manager) {
+        return ConnectControllerServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
     
     @Bean
     @Singleton
-    public WorkerFlowMetaStoreServiceBlockingStub workerFlowMetaStoreServiceBlockingStub() {
-        return WorkerFlowMetaStoreServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
+    public WorkerFlowMetaStoreServiceBlockingStub workerFlowMetaStoreServiceBlockingStub(GrpcChannelManager manager) {
+        return WorkerFlowMetaStoreServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
 
     @Bean
     @Singleton
-    public KVMetadataServiceBlockingStub kvMetadataServiceBlockingStub() {
-        return KVMetadataServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
+    public KVMetadataServiceBlockingStub kvMetadataServiceBlockingStub(GrpcChannelManager manager) {
+        return KVMetadataServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
 }

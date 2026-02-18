@@ -18,8 +18,8 @@ import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
-import io.micronaut.context.annotation.Prototype;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * ACKs are "receipt ACKs" (not completion ACKs) - they signal that the job was received and
  * is queued locally, allowing the controller to clean up its in-memory tracking.
  */
-@Prototype
+@Singleton
 @Slf4j
 public class WorkerJobFetcher extends WorkerLoop {
 

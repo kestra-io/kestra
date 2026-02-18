@@ -2,8 +2,8 @@
     <MultiPanelGenericEditorView
         ref="editorView"
         :class="{playgroundMode}"
-        :editorElements="EDITOR_ELEMENTS"
-        :defaultActiveTabs="TABS"
+        :editorElements="editorElements"
+        :defaultActiveTabs="tabs"
         :saveKey
         :preSerializePanels="preSerializePanels"
         :bottomVisible="playgroundMode"
@@ -25,8 +25,8 @@
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
     import {useRoute} from "vue-router";
     import Utils from "../../utils/utils";
-    import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
 
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -51,7 +51,7 @@
 
     const RawNoCode = markRaw(NoCode)
 
-    const coreStore = useCoreStore()
+    const onboardingV2Store = useOnboardingV2Store()
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
 
@@ -95,9 +95,6 @@
 
     useInitialFilesTabs(EDITOR_ELEMENTS)
 
-    const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
-    const DEFAULT_TOUR_TABS = ["code", "topology"];
-
     function cleanupNoCodeTabKey(key: string): string {
         // remove the number for "nocode-1234-" prefix from the key
         return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key
@@ -122,7 +119,18 @@
         source: computed(() => flowStore.flowYaml),
     });
 
-    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
+    const isGuidedCodeOnly = computed(
+        () => onboardingV2Store.isGuidedActive && onboardingV2Store.state.editorMode === "code_only",
+    );
+    watch(isGuidedCodeOnly, (guided) => {
+        if (guided && playgroundStore.enabled) {
+            playgroundStore.enabled = false;
+        }
+    }, {immediate: true});
+    const editorElements = computed(() => (isGuidedCodeOnly.value
+        ? EDITOR_ELEMENTS.filter((element) => element.uid === "code")
+        : EDITOR_ELEMENTS));
+    const tabs = computed(() => (isGuidedCodeOnly.value ? ["code"] : DEFAULT_ACTIVE_TABS));
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
 

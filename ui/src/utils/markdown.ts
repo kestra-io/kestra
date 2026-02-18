@@ -93,7 +93,7 @@ export async function render(markdown: string, options: RenderOptions = {}) {
 }
 
 function applyEnhancedRenderers(md: any) {
-    const defaultHeadingOpen = md.renderer.rules.heading_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    const defaultHeadingOpen = md.renderer.rules.heading_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, _env: any, self: any) => self.renderToken(tokens, idx, options));
     md.renderer.rules.heading_open = (tokens: any, idx: number, options: any, env: any, self: any) => {
         const token = tokens[idx];
         const level = typeof token.tag === "string" && /^h\d$/i.test(token.tag) ? Number(token.tag.substring(1)) : null;
@@ -104,7 +104,7 @@ function applyEnhancedRenderers(md: any) {
         return defaultHeadingOpen(tokens, idx, options, env, self);
     };
 
-    const defaultTableOpen = md.renderer.rules.table_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    const defaultTableOpen = md.renderer.rules.table_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, _env: any, self: any) => self.renderToken(tokens, idx, options));
     md.renderer.rules.table_open = (tokens: any, idx: number, options: any, env: any, self: any) => {
         const token = tokens[idx];
         token.attrSet("class", "doc-table");
@@ -112,7 +112,7 @@ function applyEnhancedRenderers(md: any) {
         return defaultTableOpen(tokens, idx, options, env, self);
     };
 
-    const defaultFence = md.renderer.rules.fence?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    const defaultFence = md.renderer.rules.fence?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, _env: any, self: any) => self.renderToken(tokens, idx, options));
 
     md.renderer.rules.fence = (tokens: any, idx: number, options: any, env: any, self: any) => {
         const token = tokens[idx];

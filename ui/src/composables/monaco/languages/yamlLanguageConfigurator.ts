@@ -175,7 +175,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         }));
 
         autoCompletionProviders.push(monaco.languages.registerInlineCompletionsProvider("yaml", {
-            provideInlineCompletions: async (model, position) => {
+            provideInlineCompletions: async (model: any, position: any) => {
                 const isFlowModel = model.uri.path.includes("flow-") || model.uri.path.includes("testsuites-");
                 if (!isFlowModel) return {items: []};
 
@@ -231,7 +231,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             handleItemDidShow() {},
             handlePartialAccept() {},
             freeInlineCompletions() {}
-        }));
+        } as any));
 
         registerPebbleAutocompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 

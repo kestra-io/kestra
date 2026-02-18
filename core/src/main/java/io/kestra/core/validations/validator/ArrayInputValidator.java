@@ -20,9 +20,14 @@ public class ArrayInputValidator implements ConstraintValidator<ArrayInputValida
             return true; // nulls are allowed according to spec
         }
 
-        if (value.getItemType() == Type.ARRAY) {
+        if (value.getItemType() == Type.ARRAY
+            || value.getItemType() == Type.SECRET
+            || value.getItemType() == Type.MULTISELECT
+            || value.getItemType() == Type.ENUM
+            || value.getItemType() == Type.SELECT
+            ) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("`itemType` cannot be `ARRAY`")
+            context.buildConstraintViolationWithTemplate("`itemType` cannot be "+ value.getItemType())
                 .addConstraintViolation();
             return false;
         }

@@ -32,16 +32,12 @@
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
+    import {Execution} from "../../stores/executions";
 
     interface Flow {
         namespace: string;
         id: string;
         triggers?: Trigger[];
-    }
-
-    interface Execution {
-        id: string;
-        trigger?: Trigger;
     }
 
     interface Trigger {

@@ -1067,6 +1067,18 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-failed.yaml"})
+    void webhookFailed() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-failed/webhook-failed"), Execution.class)
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
+        assertThat(e.getResponse().getBody(Execution.class).get().getState().getCurrent()).isEqualTo(Type.FAILED);
+    }
+
+    @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
     @SuppressWarnings("unchecked")
     void resumeExecutionPaused() throws TimeoutException, QueueException {

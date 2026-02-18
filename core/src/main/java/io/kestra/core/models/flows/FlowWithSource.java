@@ -87,5 +87,4 @@ public class FlowWithSource extends Flow {
             .updated(flow.updated)
             .build();
     }
-    
 }

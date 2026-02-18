@@ -114,7 +114,6 @@
     import Restore from "vue-material-design-icons/Restore.vue";
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue";
     import Editor from "../../components/inputs/Editor.vue";
-    import Drawer from "../Drawer.vue";
     import moment from "moment";
 
     import {useToast} from "../../utils/toast";
@@ -230,15 +229,11 @@
         return moment(updatedDate).format("YYYY-MM-DD HH:mm");
     }
 
-    function formatRevisionText(revision: number, updatedDate?: string): string {
+    function formatRevisionText(revision: number): string {
         let text = revision.toString();
 
         if (currentRevisionWithSource.value.revision === revision) {
             text += ` (${t("current")})`;
-        }
-
-        if (updatedDate) {
-            text += ` - ${formatTimestamp(updatedDate)}`;
         }
 
         return text;
@@ -254,7 +249,7 @@
                     revision: revision,
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
-                    text: formatRevisionText(revision, updated)
+                    text: formatRevisionText(revision)
                 };
             });
     }

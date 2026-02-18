@@ -3,6 +3,7 @@ package io.kestra.plugin.scripts.runner.docker;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.InternalServerErrorException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
@@ -899,7 +900,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
     }
 
-    private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {
+    private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) throws Exception {
+        throwIfInterruptedOrKilled();
+
         var imageNameWithoutTag = getImageNameWithoutTag(image);
         var parsedTagFromImage = NameParser.parseRepositoryTag(image);
 
@@ -915,7 +918,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
         // and prevent errors with Podman trying to pull "image:tag:tag"
         try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
-            RetryUtils.<Boolean, InternalServerErrorException>of(
+            RetryUtils.<Boolean, Exception>of(
                 Exponential.builder()
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(5))
@@ -923,15 +926,25 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     .maxAttempts(5)
                     .build()
             ).run(
-                (bool, throwable) -> throwable instanceof InternalServerErrorException ||
-                    throwable.getCause() instanceof ConnectionClosedException,
+                (bool, throwable) -> !isInterruptedOrKilled() && shouldRetryPull(throwable),
                 () -> {
+                    throwIfInterruptedOrKilled();
+
                     var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
                     var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
-                    pull
-                        .withTag(tag)
-                        .exec(new PullImageResultCallback())
-                        .awaitCompletion();
+                    try {
+                        pull
+                            .withTag(tag)
+                            .exec(new PullImageResultCallback())
+                            .awaitCompletion();
+                    } catch (DockerClientException e) {
+                        if (isInterruptedOrKilled()) {
+                            InterruptedException interruptedException = new InterruptedException("Docker image pull interrupted");
+                            interruptedException.initCause(e);
+                            throw interruptedException;
+                        }
+                        throw e;
+                    }
 
                     if (logger.isTraceEnabled()) {
                         logger.trace("Image pulled [{}:{}]", repository, tag);
@@ -940,6 +953,26 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     return true;
                 }
             );
+        }
+    }
+
+    private boolean shouldRetryPull(Throwable throwable) {
+        if (throwable == null) {
+            return false;
+        }
+
+        return throwable instanceof InternalServerErrorException
+            || throwable.getCause() instanceof ConnectionClosedException;
+    }
+
+    private boolean isInterruptedOrKilled() {
+        return this.getIsKilled().get() || Thread.currentThread().isInterrupted();
+    }
+
+    private void throwIfInterruptedOrKilled() throws InterruptedException {
+        if (isInterruptedOrKilled()) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedException("Docker task runner interrupted");
         }
     }
 

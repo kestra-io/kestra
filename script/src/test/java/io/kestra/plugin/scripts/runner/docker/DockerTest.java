@@ -1,5 +1,8 @@
 package io.kestra.plugin.scripts.runner.docker;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.model.Container;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
@@ -18,14 +21,18 @@ import jakarta.inject.Named;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 import reactor.core.publisher.Flux;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.mockito.Mockito;
+import org.apache.hc.core5.http.ConnectionClosedException;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -94,6 +101,40 @@ class DockerTest extends AbstractTaskRunnerTest {
         Method method = TaskRunner.class.getDeclaredMethod("onKill", Runnable.class);
         method.setAccessible(true);
         method.invoke(taskRunner, runnable);
+    }
+
+    @Test
+    void shouldStopPullImageRetriesWhenThreadIsInterrupted() throws Exception {
+        Docker docker = Docker.builder().image("rockylinux:9.3-minimal").build();
+        DockerClient dockerClient = Mockito.mock(DockerClient.class);
+        PullImageCmd pullImageCmd = Mockito.mock(PullImageCmd.class);
+        Logger logger = Mockito.mock(Logger.class);
+        AtomicInteger attempts = new AtomicInteger(0);
+
+        Mockito.when(dockerClient.pullImageCmd("repository/image")).thenReturn(pullImageCmd);
+        Mockito.when(pullImageCmd.getRepository()).thenReturn("repository/image");
+        Mockito.when(pullImageCmd.withTag("latest")).thenReturn(pullImageCmd);
+        Mockito.when(pullImageCmd.exec(Mockito.any())).thenAnswer(invocation -> {
+            attempts.incrementAndGet();
+            Thread.currentThread().interrupt();
+            throw new DockerClientException("pull interrupted", new ConnectionClosedException("EOF"));
+        });
+
+        Method pullImageMethod = Docker.class.getDeclaredMethod("pullImage", DockerClient.class, String.class, PullPolicy.class, Logger.class);
+        pullImageMethod.setAccessible(true);
+
+        Throwable thrown;
+        try {
+            thrown = Assertions.catchThrowable(
+                () -> pullImageMethod.invoke(docker, dockerClient, "repository/image:latest", PullPolicy.ALWAYS, logger)
+            );
+        } finally {
+            Thread.interrupted();
+        }
+
+        assertThat(thrown).isInstanceOf(InvocationTargetException.class);
+        assertThat(((InvocationTargetException) thrown).getCause()).isInstanceOf(InterruptedException.class);
+        assertThat(attempts.get()).isEqualTo(1);
     }
 
     @Test

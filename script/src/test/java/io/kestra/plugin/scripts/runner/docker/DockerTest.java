@@ -197,8 +197,7 @@ class DockerTest extends AbstractTaskRunnerTest {
             // Assert that the container id is the same
             assertThat(resumeContainerId).isEqualTo(createContainerId);
 
-            // Kill the container and verify cleanup
-            resumeContainerThread.interrupt();
+            anotherTaskRunner.kill();
             resumeContainerThread.join();
 
             List<Container> existingContainers = client.listContainersCmd()

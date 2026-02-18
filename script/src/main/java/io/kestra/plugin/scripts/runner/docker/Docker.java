@@ -11,6 +11,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.sun.jna.LastErrorException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -420,7 +421,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
 
                 if (getIsKilled().get()) {
-                    throw new IllegalStateException("Task was killed during image pull");
+                    throw new KestraRuntimeException("Task was killed during image pull");
                 }
 
                 // create container
@@ -492,7 +493,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
 
                 if (getIsKilled().get()) {
-                    throw new IllegalStateException("Task was killed before container start");
+                    throw new KestraRuntimeException("Task was killed before container start");
                 }
 
                 // start container

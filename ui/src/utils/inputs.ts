@@ -60,7 +60,7 @@ export function normalizeForComponents(type: InputType | undefined, value: any) 
         res = moment().startOf("day").add(res, "seconds").toString()
     } else if (type === "ARRAY") {
         res = JSON.stringify(res).toString();
-    } else if (type === "BOOLEAN" && type === undefined) {
+    } else if (type === "BOOLEAN" && value === undefined) {
         res = "undefined";
     } else if (type === "BOOL" && value === undefined) {
         res = false

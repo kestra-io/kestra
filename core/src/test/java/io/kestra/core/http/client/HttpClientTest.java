@@ -76,11 +76,11 @@ class HttpClientTest {
 
     private URI embeddedServerUri;
 
-//    @SuppressWarnings("resource")
-//    @Container
-//    static GenericContainer<?> proxy = new GenericContainer<>("kalaksi/tinyproxy")
-//        .withExposedPorts(8888)
-//        .withEnv(Map.of("AUTH_USER", "pr0xy", "AUTH_PASSWORD", "p4ss"));
+    @SuppressWarnings("resource")
+    @Container
+    static GenericContainer<?> proxy = new GenericContainer<>("kalaksi/tinyproxy")
+        .withExposedPorts(8888)
+        .withEnv(Map.of("AUTH_USER", "pr0xy", "AUTH_PASSWORD", "p4ss"));
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -402,28 +402,28 @@ class HttpClientTest {
         }
     }
 
-//    @Test
-//    void getProxy() throws IllegalVariableEvaluationException, HttpClientException, IOException {
-//        try (HttpClient client = client(b -> b
-//            .configuration(HttpConfiguration.builder()
-//                .proxy(ProxyConfiguration.builder()
-//                    .type(Property.ofValue(Proxy.Type.HTTP))
-//                    .address(Property.ofValue(proxy.getHost()))
-//                    .username(Property.ofValue("pr0xy"))
-//                    .password(Property.ofValue("p4ss"))
-//                    .port(Property.ofValue(proxy.getFirstMappedPort()))
-//                    .build())
-//                .build()))
-//        ) {
-//            HttpResponse<String> response = client.request(
-//                HttpRequest.of(URI.create("https://www.google.com")),
-//                String.class
-//            );
-//
-//            assertThat(response.getStatus().getCode()).isEqualTo(200);
-//            assertThat(response.getBody()).contains("<html");
-//        }
-//    }
+    @Test
+    void getProxy() throws IllegalVariableEvaluationException, HttpClientException, IOException {
+        try (HttpClient client = client(b -> b
+            .configuration(HttpConfiguration.builder()
+                .proxy(ProxyConfiguration.builder()
+                    .type(Property.ofValue(Proxy.Type.HTTP))
+                    .address(Property.ofValue(proxy.getHost()))
+                    .username(Property.ofValue("pr0xy"))
+                    .password(Property.ofValue("p4ss"))
+                    .port(Property.ofValue(proxy.getFirstMappedPort()))
+                    .build())
+                .build()))
+        ) {
+            HttpResponse<String> response = client.request(
+                HttpRequest.of(URI.create("https://www.google.com")),
+                String.class
+            );
+
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).contains("<html");
+        }
+    }
 
     @Test
     void shouldReturnResponseForAllowedResponseCode() throws IOException, IllegalVariableEvaluationException, HttpClientException {

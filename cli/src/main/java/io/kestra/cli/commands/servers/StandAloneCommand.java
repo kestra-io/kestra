@@ -117,12 +117,9 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.ignoreExecutionService.setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
         this.ignoreExecutionService.setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
         this.ignoreExecutionService.setIgnoredIndexerRecords(skipIndexerRecords != null ? skipIndexerRecords : ignoreIndexerRecords);
-
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
-
-        super.call();
 
         if (flowPath != null) {
             try {
@@ -133,6 +130,8 @@ public class StandAloneCommand extends AbstractServerCommand {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
+
+        super.call();
 
         try (StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class)) {
 

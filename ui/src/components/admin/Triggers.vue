@@ -199,7 +199,7 @@
                         </el-table-column>
 
                         <el-table-column
-                            v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                            v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                             columnKey="action"
                             className="row-action"
                         >
@@ -241,7 +241,7 @@
 
                                     <el-button
                                         :icon="CalendarCollapseHorizontalOutline"
-                                        v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                        v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="setBackfillModal(scope.row, true)"
                                         size="small"
                                         type="primary"
@@ -377,7 +377,6 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    //@ts-expect-error No declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import KSFilter from "../filter/components/KSFilter.vue";

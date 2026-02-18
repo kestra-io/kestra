@@ -160,8 +160,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             Requires `wait` and `returnOutputs` to be `true`.
             """
     )
-    @Builder.Default
-    private Property<Integer> responseCode = Property.ofValue(200);
+    private Property<Integer> responseCode;
 
     @Override
     public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
@@ -208,7 +207,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             .last()
             .map(throwFunction(event -> {
                 RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
-                int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(200);
+                int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
 
                 if (this.getReturnOutputs()) {
                     return buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode));
@@ -238,7 +237,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         return HttpResponse.of(responseCode, body, responseContentType);
     }
 
-    private static Optional<Object> tryMap(String body) {
+    private static Optional<Object>  tryMap(String body) {
         try {
             return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {}));
         } catch (Exception ignored) {

@@ -7,7 +7,6 @@ import {useExecutionsStore} from "../../../stores/executions";
 
 //@ts-expect-error no declaration file
 import Logs from "../Logs.vue";
-//@ts-expect-error no declaration file
 import Gantt from "../Gantt.vue";
 //@ts-expect-error no declaration file
 import Topology from "../Topology.vue";

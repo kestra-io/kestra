@@ -154,6 +154,26 @@ class MapUtilsTest {
     }
 
     @Test
+    void mergeWithNullableValues_ShouldMergeValuesWhenPossible() {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> results = MapUtils.mergeWithNullableValues(
+            Map.of("k1", "v1", "k2", List.of("v1", "v2", "v3"), "k3", Map.of("k3-1", Map.of("v3-1-return", "v3-1-returned"), "k3-2", "v3-2-returned")),
+            Map.of("k1", "v2"),
+            Map.of("k2", List.of("v2", "v4")),
+            Map.of("k3", Map.of("k3-1", Map.of("v3-1-second-return", "v3-1-second-returned"), "k3-3", "v3-3-returned"))
+        );
+
+        Assertions.assertEquals(3, results.size());
+        Assertions.assertEquals("v2", results.get("k1"));
+        Assertions.assertEquals(List.of("v1", "v2", "v3", "v4"), results.get("k2"));
+        Assertions.assertEquals(Map.of(
+            "k3-1", Map.of("v3-1-return", "v3-1-returned", "v3-1-second-return", "v3-1-second-returned"),
+            "k3-2", "v3-2-returned",
+            "k3-3", "v3-3-returned"
+        ), results.get("k3"));
+    }
+
+    @Test
     void emptyOnNull() {
         var map = MapUtils.emptyOnNull(null);
         assertThat(map).isNotNull();

@@ -69,6 +69,7 @@
 
     const {
         appliedFilters,
+        hasDismissedDefaultVisibleKeys,
         searchQuery,
         addFilter,
         removeFilter,
@@ -120,6 +121,7 @@
         editingFilter,
         hasFilterKeys,
         hasAppliedFilters,
+        hasDismissedDefaultVisibleKeys,
         buttons: computed(() => props.buttons),
         readOnly: computed(() => props.readOnly),
         properties: computed(() => props.properties),

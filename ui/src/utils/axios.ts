@@ -1,4 +1,4 @@
-import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
+import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
 import {inject} from "vue"
 import {Router, routerKey} from "vue-router"
@@ -9,8 +9,6 @@ import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
-import {client} from "../generated/kestra-api/client.gen"
-import {Client} from "../generated/kestra-api/client"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -75,7 +73,7 @@ interface QueueItem {
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void
 }
 
-const createAxios = (
+export const createAxios = (
     router: Router | undefined,
     oss: boolean
 ) => {
@@ -282,24 +280,20 @@ const createAxios = (
         }
     })
 
-    client.setConfig({
-        axios: instance
-    })
-
-    return client;
+    return instance;
 };
 
 export default (
-    callback: (clientInstance: Client["instance"]) => void,
+    callback: (instance: AxiosInstance) => void,
     _store: any,
     ...args: Parameters<typeof createAxios>
 ) => {
-    callback(createAxios(...args).instance);
+    callback(createAxios(...args));
 }
 
-let axiosInstance: Client | null = null;
+let axiosInstance: AxiosInstance | null = null;
 
-export function useClient(){
+export const useAxios = () => {
     // for storybook tests we need to allow router to be undefined
     const router = inject(routerKey, undefined as any) as Router | undefined;
 
@@ -311,10 +305,4 @@ export function useClient(){
     }
 
     return axiosInstance;
-};
-
-export function useAxios(){
-    const axiosInstance = useClient();
-
-    return axiosInstance.instance;
 };

@@ -1918,129 +1918,129 @@
     "years": "Anos",
     "onboarding": {
       "welcome": {
-        "headline": "Build and run your first workflow in minutes",
-        "guided_title": "Build your first flow",
+        "headline": "Crie e execute o seu primeiro workflow em minutos",
+        "guided_title": "Crie o seu primeiro flow",
         "badge": "Tutorial",
-        "guided_description": "Learn how to create and run your first flow with guided steps.",
-        "guided_duration": "Recommended for most",
-        "self_serve_title": "Create flow from scratch",
-        "self_serve_description": "Go directly to the editor and build your own flow.",
-        "self_serve_note": "For experienced users",
-        "additional_help": "Additional help",
-        "docs": "Documentation",
+        "guided_description": "Aprenda como criar e executar o seu primeiro flow com passos guiados.",
+        "guided_duration": "Recomendado para a maioria",
+        "self_serve_title": "Criar flow do zero",
+        "self_serve_description": "Vá diretamente para o editor e crie o seu próprio flow.",
+        "self_serve_note": "Para utilizadores experientes",
+        "additional_help": "Ajuda adicional",
+        "docs": "Documentação",
         "tutorial": "Tutorial",
         "blueprints": "Blueprints",
-        "slack": "Slack community"
+        "slack": "Comunidade Slack"
       },
       "steps": {
         "flow_basics": {
-          "title": "Flow basics",
-          "description": "In Kestra, a <code>flow</code> is the core orchestration unit. You define it in YAML with metadata and ordered tasks.<br><br>Review the example structure below, then continue to build it step by step."
+          "title": "Noções básicas de flow",
+          "description": "No Kestra, um <code>flow</code> é a unidade central de orquestração. Você o define em YAML com metadados e tarefas ordenadas.<br><br>Revise a estrutura de exemplo abaixo e depois continue a construí-la passo a passo."
         },
         "add_id": {
-          "title": "Add flow id",
-          "description": "The ID is the unique name of your flow, so you can find it, run it, and reference it consistently.<br><br>Now add <code>id</code> at the root level."
+          "title": "Adicionar ID do flow",
+          "description": "O ID é o nome único do seu flow, para que você possa encontrá-lo, executá-lo e referenciá-lo de forma consistente.<br><br>Agora adicione <code>id</code> no nível raiz."
         },
         "add_namespace": {
-          "title": "Add namespace",
-          "description": "The Namespace is the folder-like grouping that organizes flows by team, project, or environment.<br><br>Now add <code>namespace</code> at the root level."
+          "title": "Adicionar namespace",
+          "description": "O Namespace é um agrupamento semelhante a uma pasta que organiza flows por equipa, projeto ou ambiente.<br><br>Agora adicione <code>namespace</code> no nível raiz."
         },
         "add_input": {
-          "title": "Add an input",
-          "description": "Inputs are flow-level parameters that can be referenced inside tasks to dynamically control behavior at runtime.<br><br>Now add an input named <code>name</code> with type <code>STRING</code>."
+          "title": "Adicionar um input",
+          "description": "Inputs são parâmetros a nível de flow que podem ser referenciados dentro das tarefas para controlar dinamicamente o comportamento em tempo de execução.<br><br>Agora adicione um input chamado <code>name</code> com o tipo <code>STRING</code>."
         },
         "add_log_task": {
-          "title": "Add first task",
-          "description": "Tasks are the units of work your flow executes, defined as an ordered list of steps. Each task needs a unique <code>id</code> and a <code>type</code>. Kestra provides many task plugins for external systems; here we use a Python Script task.<br><br>The <code>&#123;&#123; ... &#125;&#125;</code> syntax is a Pebble expression, used to reference variables dynamically at runtime, like <code>&#123;&#123; inputs.name &#125;&#125;</code> from your flow inputs.<br><br>Now add the first task under <code>tasks</code> with <code>id</code>, <code>type</code>, and a <code>script</code> that prints a greeting."
+          "title": "Adicionar a primeira tarefa",
+          "description": "Tasks são as unidades de trabalho que o seu flow executa, definidas como uma lista ordenada de passos. Cada task precisa de um <code>id</code> único e um <code>type</code>. O Kestra fornece muitos plugins de tasks para sistemas externos; aqui usamos uma task de Python Script.<br><br>A sintaxe <code>&#123;&#123; ... &#125;&#125;</code> é uma expressão Pebble, usada para referenciar variáveis dinamicamente em tempo de execução, como <code>&#123;&#123; inputs.name &#125;&#125;</code> a partir dos inputs do flow.<br><br>Agora adicione a primeira task em <code>tasks</code> com <code>id</code>, <code>type</code> e um <code>script</code> que imprima uma saudação."
         },
         "save_flow": {
-          "title": "Save flow",
-          "description": "Saving persists your flow definition so it can be executed."
+          "title": "Guardar flow",
+          "description": "Guardar preserva a definição do seu flow para que ele possa ser executado."
         },
         "execute_flow": {
-          "title": "Execute flow",
-          "description": "Executing starts a run of your flow with runtime input values."
+          "title": "Executar flow",
+          "description": "Executar inicia uma execução do seu flow com valores de input em tempo de execução."
         },
         "view_logs_status": {
-          "title": "Check execution",
-          "description": "Execution details show run status, timing, and task-level output logs.<br><br>Now open the execution details and click <code>greet</code> in the Gantt chart to see the logs."
+          "title": "Verificar execução",
+          "description": "Os detalhes de execução mostram o estado da execução, tempos e logs de saída ao nível das tasks.<br><br>Agora abra os detalhes da execução e clique em <code>greet</code> no gráfico de Gantt para ver os logs."
         },
         "edit_flow_from_execution": {
-          "title": "Return to Flow Editor",
-          "description": "You can jump directly from an execution back to the flow definition to iterate quickly."
+          "title": "Voltar ao Editor de Flow",
+          "description": "Você pode saltar diretamente de uma execução para a definição do flow para iterar rapidamente."
         },
         "add_cron_trigger": {
-          "title": "Add a cron trigger",
-          "description": "Triggers can start runs based on schedules or external events (for example webhooks or MQTT messages).<br><br>Now add a cron schedule trigger so this flow runs every 5 minutes."
+          "title": "Adicionar um trigger cron",
+          "description": "Triggers podem iniciar execuções com base em agendas ou eventos externos (por exemplo, webhooks ou mensagens MQTT).<br><br>Agora adicione um trigger de agenda cron para que este flow seja executado a cada 5 minutos."
         },
         "add_input_default": {
-          "title": "Set a default input value",
-          "description": "When a flow is triggered automatically, inputs still need values at runtime.<br><br>The <code>name</code> input was already created in the previous step, so there’s no need to add it again. Just set a default value for the existing <code>name</code> input."
+          "title": "Definir um valor padrão para o input",
+          "description": "Quando um flow é acionado automaticamente, os inputs ainda precisam de valores em tempo de execução.<br><br>O input <code>name</code> já foi criado no passo anterior, então não é necessário adicioná-lo novamente. Apenas defina um valor padrão para o input existente <code>name</code>."
         },
         "save_flow_again": {
-          "title": "Save flow",
-          "description": "Your flow now has a schedule and a default input value for automatic runs."
+          "title": "Guardar flow",
+          "description": "O seu flow agora tem uma agenda e um valor padrão de input para execuções automáticas."
         },
         "background_runs_info": {
-          "title": "Scheduled runs",
-          "description": "This flow will now execute in the background every 5 minutes.<br><br>You can navigate to the Executions overview from the left menu to monitor scheduled runs."
+          "title": "Execuções agendadas",
+          "description": "Este flow agora será executado em segundo plano a cada 5 minutos.<br><br>Você pode navegar para a visão geral de Execuções no menu à esquerda para monitorar execuções agendadas."
         },
         "finish": {
-          "title": "You completed the First Flow tutorial",
-          "description": "Great start. You created, executed, parameterized, and scheduled a flow.<br><br>Choose what to do next ..."
+          "title": "Você concluiu o tutorial do Primeiro Flow",
+          "description": "Ótimo começo. Você criou, executou, parametrizou e agendou um flow.<br><br>Escolha o que fazer a seguir ..."
         }
       },
       "actions": {
-        "next": "Next",
-        "complete": "Complete",
-        "save_to_continue": "Press Save in the top bar (right).",
-        "execute_to_continue": "1. Press Execute in the top bar (right).\n2. Provide a value for <strong>name</strong>.\n3. Press Execute again in the modal.",
-        "edit_flow_to_continue": "Press Edit flow in the top bar (right).",
-        "cancel_tutorial": "Cancel tutorial",
-        "finish_tutorial": "Finish tutorial"
+        "next": "Próximo",
+        "complete": "Concluir",
+        "save_to_continue": "Clique em Guardar na barra superior (à direita).",
+        "execute_to_continue": "1. Clique em Executar na barra superior (à direita).\n2. Forneça um valor para <strong>name</strong>.\n3. Clique em Executar novamente na janela modal.",
+        "edit_flow_to_continue": "Clique em Editar flow na barra superior (à direita).",
+        "cancel_tutorial": "Cancelar tutorial",
+        "finish_tutorial": "Finalizar tutorial"
       },
       "finish_actions": {
-        "explore_blueprints": "Explore Blueprints",
-        "create_flow": "Create Flow"
+        "explore_blueprints": "Explorar Blueprints",
+        "create_flow": "Criar flow"
       },
       "editor_hints": {
-        "build_intro": "Build your first flow step by step.",
-        "step_1": "# 1) Add id",
-        "step_2": "# 2) Add namespace",
-        "step_3": "# 3) Add an input",
-        "step_4": "# 4) Add tasks and your first Python task",
-        "step_5": "# 5) Add a cron trigger"
+        "build_intro": "Crie o seu primeiro flow passo a passo.",
+        "step_1": "# 1) Adicionar id",
+        "step_2": "# 2) Adicionar namespace",
+        "step_3": "# 3) Adicionar um input",
+        "step_4": "# 4) Adicionar tasks e a sua primeira task Python",
+        "step_5": "# 5) Adicionar um trigger cron"
       },
       "cancel_modal": {
-        "title": "Cancel First Flow tutorial",
-        "description": "Do you want to cancel the First Flow tutorial?",
-        "confirm": "Cancel tutorial",
-        "keep": "Keep tutorial"
+        "title": "Cancelar o tutorial do Primeiro Flow",
+        "description": "Você quer cancelar o tutorial do Primeiro Flow?",
+        "confirm": "Cancelar tutorial",
+        "keep": "Manter tutorial"
       },
       "validation": {
-        "complete_step": "You're close. Complete this step to continue.",
-        "fix_yaml": "There is a small YAML formatting issue. Fix it, then continue.",
-        "add_id": "Add a flow ID at the top. Example: `id: hello_flow`.",
-        "add_namespace": "Add a namespace at the top. Example: `namespace: company.team`.",
-        "add_input_section": "Create an `inputs` section with one input.",
-        "add_input_id": "Inside `inputs`, add `id: name`.",
-        "add_input_type": "Set the input type to `STRING`.",
-        "add_log_task_section": "Create a `tasks` section and add your first task.",
-        "add_log_task_id": "Give the task an ID, for example: `id: greet`.",
-        "add_log_task_type": "Set the task type to `io.kestra.plugin.scripts.python.Script`.",
-        "add_log_task_message": "Add a `script` field to the task.",
-        "add_log_task_pebble": "Use a Pebble expression in the script so it uses your input value (for example: `inputs.name`).",
-        "save_flow": "Click Save to continue.",
-        "execute_flow": "Run the flow once to continue.",
-        "view_logs_status": "Open the execution details and check the logs for `greet`.",
-        "edit_flow_from_execution": "Click `Edit flow` in the top bar to continue.",
-        "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
-        "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
-        "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
-        "add_input_default_section": "Go back to `inputs` and keep one existing input named `name` (do not add a second input).",
-        "add_input_default_id": "Keep the existing input ID as `name`.",
-        "add_input_default_defaults": "Add a default value for `name`, for example: `defaults: \"Kestra\"`.",
-        "save_flow_again": "Click Save again to continue."
+        "complete_step": "Você está quase lá. Conclua este passo para continuar.",
+        "fix_yaml": "Há um pequeno problema de formatação YAML. Corrija-o e depois continue.",
+        "add_id": "Adicione um ID de flow no topo. Exemplo: `id: hello_flow`.",
+        "add_namespace": "Adicione um namespace no topo. Exemplo: `namespace: company.team`.",
+        "add_input_section": "Crie uma seção `inputs` com um input.",
+        "add_input_id": "Dentro de `inputs`, adicione `id: name`.",
+        "add_input_type": "Defina o tipo do input como `STRING`.",
+        "add_log_task_section": "Crie uma seção `tasks` e adicione a sua primeira task.",
+        "add_log_task_id": "Dê um ID à task, por exemplo: `id: greet`.",
+        "add_log_task_type": "Defina o tipo da task como `io.kestra.plugin.scripts.python.Script`.",
+        "add_log_task_message": "Adicione um campo `script` à task.",
+        "add_log_task_pebble": "Use uma expressão Pebble no script para que ele use o valor do seu input (por exemplo: `inputs.name`).",
+        "save_flow": "Clique em Guardar para continuar.",
+        "execute_flow": "Execute o flow uma vez para continuar.",
+        "view_logs_status": "Abra os detalhes da execução e verifique os logs de `greet`.",
+        "edit_flow_from_execution": "Clique em `Editar flow` na barra superior para continuar.",
+        "add_cron_trigger_section": "Crie uma seção `triggers` com um trigger de agenda.",
+        "add_cron_trigger_type": "Defina o tipo do trigger como `io.kestra.plugin.core.trigger.Schedule`.",
+        "add_cron_trigger_cron": "Adicione uma expressão cron, por exemplo: `\"*/5 * * * *\"`.",
+        "add_input_default_section": "Volte para `inputs` e mantenha um input existente chamado `name` (não adicione um segundo input).",
+        "add_input_default_id": "Mantenha o ID do input existente como `name`.",
+        "add_input_default_defaults": "Adicione um valor padrão para `name`, por exemplo: `defaults: \"Kestra\"`.",
+        "save_flow_again": "Clique em Guardar novamente para continuar."
       }
     }
   }

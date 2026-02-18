@@ -6,6 +6,7 @@ import io.kestra.core.runners.Indexer;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.worker.Controller;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,9 @@ public class WebServerCommand extends AbstractServerCommand {
     @Option(names = {"--no-indexer"}, description = "Flag to disable starting an embedded indexer.")
     private boolean indexerDisabled = false;
 
+    @Option(names = {"--no-controller"}, description = "Flag to disable starting an embedded controller.")
+    private boolean controllerDisabled = false;
+
     @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "deprecated - use '--ignore-indexer-record' instead")
     @Deprecated
     private List<String> skipIndexerRecords;
@@ -65,12 +69,25 @@ public class WebServerCommand extends AbstractServerCommand {
 
         super.call();
 
+        if (!(indexerDisabled && controllerDisabled)) {
+            poolExecutor = executorsUtils.cachedThreadPool("embedded-services");
+        }
+
         // start the indexer
         if (!indexerDisabled) {
             log.info("Starting an embedded indexer, this can be disabled by using `--no-indexer`.");
-            poolExecutor = executorsUtils.cachedThreadPool("webserver-indexer");
             poolExecutor.execute(applicationContext.getBean(Indexer.class));
-            shutdownHook(false, () -> poolExecutor.shutdown());
+        }
+
+        // start the controller
+        if (!controllerDisabled) {
+            log.info("Starting an embedded controller, this can be disabled by using `--no-controller`.");
+            Controller controller = applicationContext.getBean(Controller.class);
+            poolExecutor.execute(controller::start);
+        }
+
+        if (poolExecutor != null) {
+            shutdownHook(true, () -> poolExecutor.shutdown());
         }
 
         log.info("Webserver started");

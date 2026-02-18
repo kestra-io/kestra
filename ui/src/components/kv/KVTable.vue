@@ -85,7 +85,11 @@
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('expiration date')"
-                    />
+                    >
+                        <template #default="scope">
+                            <DateAgo v-if="scope.row.expirationDate" :date="scope.row.expirationDate" />
+                        </template>
+                    </el-table-column>
                 </template>
 
                 <el-table-column columnKey="copy" className="row-action">
@@ -259,6 +263,7 @@
     import KSFilter from "../filter/components/KSFilter.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import DateAgo from "../layout/DateAgo.vue";
 
     import action from "../../models/action";
     import permission from "../../models/permission";

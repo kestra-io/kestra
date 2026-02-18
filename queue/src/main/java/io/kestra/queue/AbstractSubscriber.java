@@ -10,17 +10,21 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 @Slf4j
 public abstract class AbstractSubscriber<T extends Event> implements QueueSubscriber<T> {
+    private static final long CLOSE_TIMEOUT_SECONDS = 30;
+
     private final CountDownLatch stopped = new CountDownLatch(1);
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition unpaused = pauseLock.newCondition();
-    private final AtomicReference<State> state = new AtomicReference<>(State.STOPPED);
+    private final AtomicBoolean active = new AtomicBoolean(false);
+    private final AtomicBoolean paused = new AtomicBoolean(false);
 
     protected final Class<T> cls;
     protected final QueueService queueService;
@@ -115,20 +119,20 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
      * This method should be called by subclasses before processing each message
      * to honor the pause/resume contract. If the subscriber is not paused, this
      * method returns immediately. If paused, it blocks until {@link #resume()}
-     * is called.
+     * is called or the subscriber is closed.
      *
      * @throws InterruptedException if the thread is interrupted while waiting
      */
     protected void waitIfPaused() throws InterruptedException {
-        // return immediately if not paused.
-        if (!this.state.get().equals(State.PAUSED)) {
+        // return immediately if not paused
+        if (!this.paused.get()) {
             return;
         }
 
-        // lock and wait until resumed
+        // lock and wait until resumed or closed
         pauseLock.lock();
         try {
-            while (this.state.get().equals(State.PAUSED)) {
+            while (this.paused.get() && this.active.get()) {
                 if (log.isDebugEnabled()) {
                     log.debug("{} paused, waiting to resume", logPrefix);
                 }
@@ -144,64 +148,47 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         }
     }
 
-    protected boolean isRunning() {
-        return this.state.get() == State.RUNNING;
+    protected boolean isActive() {
+        return this.active.get();
     }
 
     protected boolean isPaused() {
-        return this.state.get() == State.PAUSED;
-    }
-
-    private boolean changeState(State expected, State newState) {
-        if (log.isDebugEnabled()) {
-            log.debug("{} change state requested {} to {}", logPrefix, expected, newState);
-        }
-
-        if (this.state.compareAndSet(expected, newState)) {
-            return true;
-        }
-
-        throw new IllegalStateException(logPrefix + " illegal state change to " + newState + " from " + expected + ", current state is " + this.state.get());
+        return this.paused.get();
     }
 
     protected void markReady() {
         if (log.isDebugEnabled()) {
-            log.debug("{} Mark ready received", logPrefix);
+            log.debug("{} mark ready received", logPrefix);
         }
 
-        this.changeState(State.STOPPED, State.RUNNING);
+        this.active.set(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void pause() {
         if (log.isDebugEnabled()) {
             log.debug("{} pause received", logPrefix);
         }
 
-        if (this.state.get() == State.PAUSED) {
-            return; // already paused
+        pauseLock.lock();
+        try {
+            this.paused.set(true);
+        } finally {
+            pauseLock.unlock();
         }
-
-        this.changeState(State.RUNNING, State.PAUSED);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void resume() {
-        if (this.state.get() == State.STOPPED) {
-            return;
-        }
-
         if (log.isDebugEnabled()) {
             log.debug("{} resume received", logPrefix);
         }
 
         pauseLock.lock();
         try {
-            if (this.state.get() == State.RUNNING) {
-                return; // already running
-            }
-
-            if (this.changeState(State.PAUSED, State.RUNNING)) {
+            if (this.paused.compareAndSet(true, false)) {
                 unpaused.signalAll();
             }
         } finally {
@@ -209,21 +196,21 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         }
     }
 
+    /**
+     * Marks the subscriber as stopped and unblocks any waiting threads.
+     */
     protected void markEnd() {
         if (log.isDebugEnabled()) {
             log.debug("{} mark end received", logPrefix);
         }
-
-        if (this.isRunning()) {
-            this.changeState(State.RUNNING, State.STOPPED);
-        }
-
+        this.active.set(false);
         this.stopped.countDown();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void close() {
-        if (this.state.get() == State.STOPPED) {
+        if (!this.active.compareAndSet(true, false)) {
             return;
         }
 
@@ -231,28 +218,17 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             log.debug("{} close received", logPrefix);
         }
 
-        // in case it's paused and blocked
+        // unblock waitIfPaused() if paused
         resume();
 
-        // already stopped
+        // wait for the subscriber loop to finish
         try {
-            this.changeState(State.RUNNING, State.STOPPED);
-        } catch (IllegalStateException ignored) {
-            return;
-        }
-
-        // wait for the queue to be stopped
-        try {
-            stopped.await();
+            if (!stopped.await(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                log.warn("{} timed out after {}s waiting for subscriber to stop", logPrefix, CLOSE_TIMEOUT_SECONDS);
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("{} interrupted while waiting to be stopped.", logPrefix);
         }
-    }
-
-    public enum State {
-        RUNNING,
-        PAUSED,
-        STOPPED
     }
 }

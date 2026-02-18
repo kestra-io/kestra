@@ -17,7 +17,7 @@ import static org.awaitility.Awaitility.await;
 
 /**
  * A subscriber that uses a polling mechanism.
- * It used the {@link QueuePoller} to periodically execute a poll query (wheter on a database or a message broker)
+ * It used the {@link QueuePoller} to periodically execute a poll query (whether on a database or a message broker)
  * with a polling sleep defined by a {@link QueuePollerConfiguration}.
  */
 @Slf4j
@@ -59,35 +59,37 @@ public abstract class AbstractPollingSubscriber<T extends Event> extends Abstrac
             List<QueuePollerConfiguration.Step> steps = configuration.computeSteps();
             ZonedDateTime lastPoll = ZonedDateTime.now();
 
-            while (this.isRunning() || this.isPaused()) {
-                try {
-                    this.waitIfPaused();
+            try {
+                while (this.isActive()) {
+                    try {
+                        this.waitIfPaused();
 
-                    // Check if the loop was stopped while being paused
-                    if (!this.isRunning()) {
-                        return;
-                    }
+                        // Check if the loop was stopped while being paused
+                        if (!this.isActive()) {
+                            return;
+                        }
 
-                    lastPoll = queuePoller.pollOnce(lastPoll, steps);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    log.error("Interrupted while waiting. Stopping.", e);
-                    this.markEnd();
-                } catch(Exception e) {
-                    if ("io.micronaut.transaction.exceptions.CannotCreateTransactionException".equals(e.getClass().getName())) {
-                        // we ignore a transaction creation error as it is either Kestra shutting down or some other place that will fail
-                        log.debug("Can't poll on receive", e);
-                    } else {
-                        log.error("Unexpected error while polling messages", e);
+                        lastPoll = queuePoller.pollOnce(lastPoll, steps);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        log.error("Interrupted while waiting. Stopping.", e);
                         this.markEnd();
+                    } catch (Exception e) {
+                        if ("io.micronaut.transaction.exceptions.CannotCreateTransactionException".equals(e.getClass().getName())) {
+                            // we ignore a transaction creation error as it is either Kestra shutting down or some other place that will fail
+                            log.debug("Can't poll on receive", e);
+                        } else {
+                            log.error("Unexpected error while polling messages. Stopping.", e);
+                            this.markEnd();
+                        }
                     }
                 }
+            } finally {
+                this.markEnd();
             }
-
-            this.markEnd();
         });
 
-        await().until(this::isRunning);
+        await().until(this::isActive);
 
         return this;
     }

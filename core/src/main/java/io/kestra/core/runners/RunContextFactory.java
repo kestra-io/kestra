@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -80,6 +81,9 @@ public class RunContextFactory {
     @Inject
     private NamespaceFactory namespaceFactory;
 
+    @Inject
+    private AssetManagerFactory assetManagerFactory;
+
     // hacky
     public RunContextInitializer initializer() {
         return applicationContext.getBean(RunContextInitializer.class);
@@ -146,7 +150,6 @@ public class RunContextFactory {
                 .withDecryptVariables(decryptVariables)
                 .withSecretInputs(secretInputsFromFlow(flow))
                 .build(runContextLogger, PropertyContext.create(variableRenderer)))
-            .withKvStoreService(kvStoreService)
             .withSecretInputs(secretInputsFromFlow(flow))
             .withTask(task)
             .withVariableRenderer(variableRenderer)
@@ -250,7 +253,8 @@ public class RunContextFactory {
             .withStorageInterface(storageInterface)
             .withSecretKey(secretKey)
             .withWorkingDir(workingDirFactory.createWorkingDirectory())
-            .withKvStoreService(kvStoreService);
+            .withKvStoreService(kvStoreService)
+            .withAssetManagerFactory(assetManagerFactory);
     }
 
     protected RunVariables.Builder newRunVariablesBuilder() {

@@ -41,6 +41,9 @@
             <template v-if="playgroundStore.enabled" #widget-content>
                 <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
             </template>
+            <template #buttons>
+                <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
+            </template>
         </Editor>
         <!-- Backdrop overlay -->
         <Transition name="backdrop-fade">
@@ -60,13 +63,9 @@
                 :flow="editorContent"
                 :conversationId="conversationId"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
+                :generationType="aiGenerationTypes.FLOW"
             />
         </Transition>
-        <AcceptDecline
-            v-if="hasDraft"
-            @accept="acceptDraft"
-            @reject="declineDraft"
-        />
     </div>
 </template>
 
@@ -97,6 +96,7 @@
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+    import {aiGenerationTypes} from "../../utils/constants";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
@@ -104,12 +104,12 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
-    import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import Utils from "../../utils/utils";
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
     import permission from "../../models/permission"
     import action from "../../models/action"
+    import AcceptDecline from "./AcceptDecline.vue";
 
     const route = useRoute();
     const router = useRouter();
@@ -144,9 +144,8 @@
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
     const aiCopilotAllowed = computed(() => {
-        return authStore.user?.isAllowedGlobal(permission.AI_COPILOT, action.READ);
-    }
-    )
+        return authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
+    });
 
     async function loadFile() {
         if (props.dirty || props.flow) return;
@@ -315,7 +314,7 @@
         const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position);
         pluginsStore.updateDocumentation({cls, version, hash: hash.value});
-    };
+    }
 
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value);

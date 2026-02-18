@@ -47,12 +47,20 @@
     "after": "之后",
     "aggregation": "聚合",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "询问有关您数据的问题。示例提示：显示我过去7天内的flow成功率。"
+      },
       "flow": {
         "enable_instructions": {
           "footer": "注意：目前，开源版仅支持Gemini作为AI提供商。对于企业版，请参阅AI Copilot文档以获取其他模型提供商的配置。\n\n保存配置后，重新启动您的Kestra实例。",
           "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件中（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
         },
-        "generating": "正在为您生成Flow YAML...",
+        "generating": {
+          "app": "正在为您生成应用程序 YAML...",
+          "dashboard": "正在为您生成Dashboard YAML...",
+          "flow": "正在为您生成Flow YAML...",
+          "test": "正在为您生成测试 YAML..."
+        },
         "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
         "title": "AI代理"
       }

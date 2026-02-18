@@ -47,12 +47,20 @@
     "after": "後",
     "aggregation": "集計",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "データについて質問してください。例: 過去7日間のflowの成功率を教えてください。"
+      },
       "flow": {
         "enable_instructions": {
           "footer": "注意: 現時点では、オープンソース版のAIプロバイダーとしてGeminiのみがサポートされています。エンタープライズ版については、他のモデルプロバイダーの設定についてAI Copilotのドキュメントを参照してください。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
           "header": "<b>AI Copilotはまだ設定されていません。</b>\n\nAI Copilotを有効にするには、次のスニペットをKestraインスタンスの構成ファイル（例：<code>application.yml</code>）に追加し、<code>geminiApiKey</code>を実際のキーに置き換えてください。"
         },
-        "generating": "フローのYAMLを生成しています...",
+        "generating": {
+          "app": "アプリのYAMLを生成しています...",
+          "dashboard": "ダッシュボードのYAMLを生成しています...",
+          "flow": "フローのYAMLを生成しています...",
+          "test": "テストYAMLを生成しています..."
+        },
         "prompt_placeholder": "指示を入力してKestra flowを作成してください。例: 毎週月曜日の午前9時に実行されるflowを作成してください。",
         "title": "AIエージェント"
       }

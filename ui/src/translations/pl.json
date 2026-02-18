@@ -47,12 +47,20 @@
     "after": "po",
     "aggregation": "Agregacja",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "Zadaj pytanie dotyczące swoich danych. Przykładowa podpowiedź: Pokaż mi wskaźnik sukcesu moich flows z ostatnich 7 dni."
+      },
       "flow": {
         "enable_instructions": {
           "footer": "Uwaga: Obecnie tylko Gemini jest obsługiwany jako dostawca AI dla Open Source Edition. W przypadku Enterprise Edition zapoznaj się z dokumentacją AI Copilot dotyczącą konfiguracji innych dostawców modeli.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
           "header": "<b>AI Copilot nie został jeszcze skonfigurowany.</b>\n\nAby włączyć AI Copilot, dodaj poniższy fragment do pliku konfiguracyjnego instancji Kestra (np. <code>application.yml</code>), zastępując <code>geminiApiKey</code> swoim rzeczywistym kluczem:"
         },
-        "generating": "Generowanie YAML dla flow...",
+        "generating": {
+          "app": "Generowanie pliku YAML aplikacji dla Ciebie...",
+          "dashboard": "Generowanie Dashboard YAML dla Ciebie...",
+          "flow": "Generowanie YAML dla flow...",
+          "test": "Generowanie Test YAML dla Ciebie..."
+        },
         "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra. Przykładowa podpowiedź: Utwórz flow, który uruchamia się w każdy poniedziałek o 9:00.",
         "title": "Agent AI"
       }

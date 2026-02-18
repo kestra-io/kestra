@@ -31,6 +31,7 @@ export interface FilterKeyConfig {
     valueProvider?: () => Promise<FilterValue[]>;
     valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
     visibleByDefault?: boolean;
+    defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
 }
 
 export interface FilterValue {

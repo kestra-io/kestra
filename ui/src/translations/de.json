@@ -47,12 +47,20 @@
     "after": "nach",
     "aggregation": "Aggregation",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "Stellen Sie eine Frage zu Ihren Daten. Beispielaufforderung: Zeigen Sie mir die Erfolgsrate meiner flows in den letzten 7 Tagen."
+      },
       "flow": {
         "enable_instructions": {
           "footer": "Hinweis: Derzeit wird nur Gemini als KI-Anbieter für die Open Source Edition unterstützt. Für die Enterprise Edition konsultieren Sie bitte die AI Copilot-Dokumentation für die Konfiguration anderer Modellanbieter.\n\nStarten Sie Ihre Kestra-Instanz neu, nachdem Sie die Konfiguration gespeichert haben.",
           "header": "<b>AI Copilot wurde noch nicht konfiguriert.</b>\n\nUm AI Copilot zu aktivieren, fügen Sie den folgenden Ausschnitt in die Konfigurationsdatei Ihrer Kestra-Instanz ein (z. B. <code>application.yml</code>) und ersetzen Sie <code>geminiApiKey</code> durch Ihren tatsächlichen Schlüssel:"
         },
-        "generating": "Erzeuge Flow YAML für Sie...",
+        "generating": {
+          "app": "Erzeuge App YAML für Sie...",
+          "dashboard": "Erzeuge Dashboard YAML für Sie...",
+          "flow": "Erzeuge Flow YAML für Sie...",
+          "test": "Erzeuge Test-YAML für Sie..."
+        },
         "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen. Beispielaufforderung: Erstellen Sie einen flow, der jeden Montag um 9 Uhr ausgeführt wird.",
         "title": "KI-Agent"
       }
@@ -503,7 +511,7 @@
         "title": "Sie haben noch keine Kill Switches!"
       },
       "panels": {
-        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Namespace-Kontext) für verwandte Funktionen aus.",
+        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Kontext) für verwandte Funktionen aus.",
         "title": "Derzeit sind keine Panels geöffnet."
       },
       "pluginDefaults": {

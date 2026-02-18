@@ -62,8 +62,7 @@
         load: {type: Function, default: undefined},
     });
 
-    const user = computed(() => authStore.user);
-    const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
+    const isAllowed = computed(() => authStore.user?.isAllowed(permission.FLOW, action.CREATE, "*"));
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 

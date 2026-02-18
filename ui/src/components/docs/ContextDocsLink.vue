@@ -4,7 +4,7 @@
     </a>
     <RouterLink
         v-else
-        :to="{name:'docs/view', params: {path: finalHref.replace(/^\//, '')}}"
+        :to="{name:'docs/view', params: {path: finalHref?.replace(/^\//, '')}}"
         custom
         v-slot="{href:linkHref}"
     >

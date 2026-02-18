@@ -165,16 +165,20 @@
 
     // Initial markdown render
     (async () => {
-        renderedMarkdown.value = await Markdown.render(message.value, {onlyLink: true, html: true});
+        renderedMarkdown.value = (await Markdown.render(message.value, {onlyLink: true, html: true})).trim();
     })();
 </script>
 <style scoped lang="scss">
 div.line {
     position: relative;
     cursor: text;
-    white-space: pre-wrap;
+    white-space: pre-line;
     word-break: break-all;
-    display: block;
+    display: flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    min-height: 2rem;
+
 
     border-left-width: 2px !important;
     border-left-style: solid;
@@ -254,6 +258,8 @@ div.line {
 
     .message {
         line-height: 1.8;
+        display: inline-block;
+        vertical-align: middle;
     }
 
     p, :deep(.log-content p) {
@@ -271,6 +277,8 @@ div.line {
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.15s ease-in-out;
+        top: 0.5rem;
+        right: 0.5rem;
     }
 
     &:hover :deep(.clipboard) {

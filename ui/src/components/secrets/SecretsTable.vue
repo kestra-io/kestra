@@ -309,7 +309,6 @@
 
     const form = ref<FormInstance>();
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
-    const selectTable = ref<InstanceType<typeof SelectTable>>();
 
     const total = ref(0);
     const hasData = ref<boolean>();

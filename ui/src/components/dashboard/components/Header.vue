@@ -4,10 +4,10 @@
         :breadcrumb="[{label: $t('dashboards.labels.singular'), link: undefined}]"
         :description="props.dashboard?.description"
     >
-        <template v-if="isAllowed" #additional-right>
+        <template v-if="isAllowedDashboard || isAllowedFlow" #additional-right>
             <ul>
                 <li
-                    v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name))"
+                    v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard"
                 >
                     <Dashboards
                         @dashboard="(value: any) => props.load?.(value)"
@@ -15,7 +15,7 @@
                     />
                 </li>
                 <li
-                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default'"
+                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
                 >
                     <router-link
                         :to="{name: 'dashboards/update', params: {id: props.dashboard?.id}}"
@@ -25,7 +25,9 @@
                         </el-button>
                     </router-link>
                 </li>
-                <li>
+                <li
+                    v-if="isAllowedFlow"
+                >
                     <router-link :to="{name: 'flows/create'}">
                         <el-button :icon="Plus" type="primary">
                             {{ $t("create_flow") }}
@@ -42,7 +44,7 @@
     import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import {useAuthStore} from "override/stores/auth";
-    
+
     const {t} = useI18n();
     const route = useRoute();
     const authStore = useAuthStore();
@@ -62,7 +64,9 @@
         load: {type: Function, default: undefined},
     });
 
-    const isAllowed = computed(() => authStore.user?.isAllowed(permission.FLOW, action.CREATE, "*"));
+    const isAllowedFlow = computed(() => authStore.user?.isAllowed(permission.FLOW, action.CREATE, "*"));
+
+    const isAllowedDashboard = computed(() => authStore.user?.isAllowed(permission.DASHBOARD, action.CREATE, "*"));
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 

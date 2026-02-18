@@ -1529,19 +1529,19 @@
       "logout": "Logout",
       "troubleshooting": "Forgot Password?",
       "steps": {
-        "user": "Create your account",
+        "user": "Create admin user",
         "config": "Validate Configuration",
         "survey": "Tell us more",
         "complete": "Start Kestra UI"
       },
       "titles": {
-        "user": "Create an account",
-        "survey": "Tell us more"
+        "user": "Create an admin user",
+        "survey": "Help us improve Kestra OSS"
       },
       "subtitles": {
-        "user": "Set up your instance by creating an account",
+        "user": "Secure your instance to get started.",
         "config": "Here are the details of your configuration",
-        "survey": "Help us improve Kestra Open Source Edition",
+        "survey": "",
         "complete": "Setup completed successfully!"
       },
       "form": {
@@ -1549,7 +1549,7 @@
         "firstName": "First Name",
         "lastName": "Last Name",
         "password": "Password",
-        "password_requirements": "Password must be at least 8 characters long and include at least 1 uppercase letter and 1 number."
+        "password_requirements": "At least 8 characters with 1 uppercase letter and 1 number."
       },
       "validation": {
         "email_required": "Email is required",
@@ -1568,26 +1568,28 @@
         "basicauth": "Basic authentication"
       },
       "confirm": {
-        "confirm": "Confirm",
+        "confirm": "Create admin user",
         "config_title": "Confirm the configuration is valid",
         "not_valid": "No, it's not valid",
         "valid": "Yes, it's valid"
       },
       "survey": {
         "skip": "Skip",
-        "company_size": "What’s you company size?",
-        "company_1_10": "1-10",
-        "company_11_50": "11-50",
-        "company_50_250": "50-250",
-        "company_250_plus": "250+",
-        "company_personal": "Personal use",
-        "use_case": "What’s your primary use case?",
+        "company_size": "What's your main goal with Kestra?",
+        "company_1_10": "Learning / exploring",
+        "company_11_50": "Personal project",
+        "company_50_250": "Evaluating for my team/company",
+        "company_250_plus": "Production deployment",
+        "company_personal": "Other",
+        "use_case": "What do you plan to use it for?",
         "use_case_infrastructure": "Infrastructure automation",
-        "use_case_business": "Business processes",
+        "use_case_business": "Business workflows",
         "use_case_data": "Data workflows",
-        "use_case_ml": "ML/AI pipelines",
+        "use_case_ml": "ML pipelines",
+        "use_case_scheduling": "Scheduling & recurring jobs",
         "use_case_other": "Other",
-        "newsletter": "Subscribe to the Kestra newsletter – stay up-to-date with the <br> latest features and changes.",
+        "newsletter_heading": "Stay informed",
+        "newsletter": "Get product updates by email.",
         "continue": "Continue"
       },
       "success": {

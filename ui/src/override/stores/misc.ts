@@ -40,8 +40,6 @@ export const useMiscStore = defineStore("misc", () => {
     }
 
     async function addBasicAuth(options: {
-        firstName: string;
-        lastName: string;
         username: string;
         password: string;
     }) {
@@ -49,8 +47,6 @@ export const useMiscStore = defineStore("misc", () => {
         const analyticsEnabled = configs.value?.isUiAnonymousUsageEnabled === true;
         const uid = ensureUid();
 
-        localStorage.setItem("firstName", options.firstName);
-        localStorage.setItem("lastName", options.lastName);
         if (analyticsEnabled) {
             void initPosthogIfEnabled(configs.value)
         }

@@ -1700,7 +1700,7 @@
       },
       "confirm": {
         "config_title": "Bestätigen Sie, dass die Konfiguration gültig ist",
-        "confirm": "Bestätigen",
+        "confirm": "Admin-Benutzer erstellen",
         "not_valid": "Nein, es ist nicht gültig.",
         "valid": "Ja, es ist gültig"
       },
@@ -1709,7 +1709,7 @@
         "firstName": "Vorname",
         "lastName": "Nachname",
         "password": "Passwort",
-        "password_requirements": "Das Passwort muss mindestens 8 Zeichen lang sein und mindestens 1 Großbuchstaben und 1 Zahl enthalten."
+        "password_requirements": "Mindestens 8 Zeichen mit 1 Großbuchstaben und 1 Zahl."
       },
       "login": "Anmelden",
       "logout": "Abmelden",
@@ -1717,38 +1717,40 @@
         "complete": "Kestra UI starten",
         "config": "Konfiguration validieren",
         "survey": "Erzählen Sie uns mehr",
-        "user": "Erstellen Sie Ihr Konto"
+        "user": "Admin-Benutzer erstellen"
       },
       "subtitles": {
         "complete": "Einrichtung erfolgreich abgeschlossen!",
         "config": "Hier sind die Details Ihrer Konfiguration",
-        "survey": "Helfen Sie uns, die Kestra Open Source Edition zu verbessern",
-        "user": "Richten Sie Ihre Instanz ein, indem Sie ein Konto erstellen"
+        "survey": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich ihn für Sie übersetzen kann.",
+        "user": "Sichern Sie Ihre Instanz, um zu beginnen."
       },
       "success": {
         "subtitle": "Alles bereit!",
         "title": "Herzlichen Glückwunsch!"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "Persönliche Nutzung",
-        "company_size": "Wie groß ist Ihr Unternehmen?",
+        "company_11_50": "Persönliches Projekt",
+        "company_1_10": "Lernen / Erkunden",
+        "company_250_plus": "Produktionsbereitstellung",
+        "company_50_250": "Bewertung für mein Team/Unternehmen",
+        "company_personal": "Andere",
+        "company_size": "Was ist Ihr Hauptziel mit Kestra?",
         "continue": "Fortfahren",
-        "newsletter": "Abonnieren Sie den Kestra-Newsletter – bleiben Sie auf dem Laufenden über die <br> neuesten Funktionen und Änderungen.",
+        "newsletter": "Erhalten Sie Produktaktualisierungen per E-Mail.",
+        "newsletter_heading": "Bleiben Sie informiert",
         "skip": "Überspringen",
-        "use_case": "Was ist Ihr primärer Anwendungsfall?",
-        "use_case_business": "Geschäftsprozesse",
+        "use_case": "Wofür planen Sie es zu verwenden?",
+        "use_case_business": "Geschäfts-Workflows",
         "use_case_data": "Daten-Workflows",
         "use_case_infrastructure": "Infrastrukturautomatisierung",
-        "use_case_ml": "ML/AI-Pipelines",
-        "use_case_other": "Andere"
+        "use_case_ml": "ML-Pipelines",
+        "use_case_other": "Andere",
+        "use_case_scheduling": "Planung & wiederkehrende Jobs"
       },
       "titles": {
-        "survey": "Erzählen Sie uns mehr",
-        "user": "Konto erstellen"
+        "survey": "Hilf uns, Kestra OSS zu verbessern",
+        "user": "Admin-Benutzer erstellen"
       },
       "troubleshooting": "Passwort vergessen?",
       "validation": {

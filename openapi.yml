@@ -55,6 +55,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MiscController.Configuration"
+  /api/v1/main/ai/generate/dashboard:
+    post:
+      tags:
+      - AI
+      summary: Generate or regenerate a dashboard based on a prompt
+      operationId: generateDashboard
+      requestBody:
+        description: Prompt and context required for dashboard generation
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardGenerationPrompt"
+        required: true
+      responses:
+        "200":
+          description: generateDashboard 200 response
+          content:
+            application/yaml:
+              schema:
+                type: string
   /api/v1/main/ai/generate/flow:
     post:
       tags:
@@ -8562,9 +8582,13 @@ components:
           format: int64
     Dashboard:
       required:
+      - id
       - title
       type: object
       properties:
+        id:
+          minLength: 1
+          type: string
         title:
           minLength: 1
           type: string
@@ -8588,6 +8612,20 @@ components:
           nullable: true
           allOf:
           - $ref: "#/components/schemas/ChartFiltersOverrides"
+    DashboardGenerationPrompt:
+      required:
+      - conversationId
+      - userPrompt
+      type: object
+      properties:
+        conversationId:
+          type: string
+        userPrompt:
+          type: string
+        yaml:
+          type: string
+        providerId:
+          type: string
     DependsOn:
       type: object
       properties:
@@ -9117,7 +9155,7 @@ components:
           type: string
         userPrompt:
           type: string
-        flowYaml:
+        yaml:
           type: string
         providerId:
           type: string

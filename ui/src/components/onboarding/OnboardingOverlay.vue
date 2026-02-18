@@ -130,9 +130,18 @@
     const stepDescription = computed(() => translateMaybe(currentStep.value?.description));
     const externalActionNote = computed(() => translateMaybe(currentStep.value?.actionNote));
     const showNextButton = computed(() => !externalActionNote.value);
-    const snippetMarkdown = computed(() =>
-        currentStep.value?.snippet ? `\`\`\`yaml\n${currentStep.value.snippet}\n\`\`\`` : "",
-    );
+    const snippetMarkdown = computed(() => {
+        const snippet = currentStep.value?.snippet;
+        if (!snippet) {
+            return "";
+        }
+
+        const flowId = flowStore.flow?.id;
+        const resolvedSnippet = snippet
+            .replace(/^id:\s*my_flow$/m, flowId ? `id: ${flowId}` : "id: my_flow");
+
+        return `\`\`\`yaml\n${resolvedSnippet}\n\`\`\``;
+    });
     const snippetCopyEnabled = computed(() => currentStep.value?.snippetCopyEnabled ?? true);
     const nextLabel = computed(() => {
         if (isFinishStep.value) {

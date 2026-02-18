@@ -1706,6 +1706,7 @@
     "to toggle": "to toggle",
     "accept": "Accept",
     "reject": "Reject",
+    "draft_available": "Draft change is available in the editor",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
     "task is running": "Task is running",

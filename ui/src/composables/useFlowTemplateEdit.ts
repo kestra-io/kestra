@@ -38,9 +38,9 @@ export function useFlowTemplateEdit(dataType: string, route: any, router: any, t
 
     const canSave = computed(() => canSaveFlowTemplate(true, authStore.user, item.value, dataType))
 
-    const canCreate = computed(() => dataType === "flow" && authStore.user.isAllowed(permission.FLOW, action.CREATE, item.value?.namespace))
+    const canCreate = computed(() => dataType === "flow" && authStore.user?.isAllowed(permission.FLOW, action.CREATE, item.value?.namespace))
 
-    const canExecute = computed(() => dataType === "flow" && authStore.user.isAllowed(permission.EXECUTION, action.CREATE, item.value?.namespace))
+    const canExecute = computed(() => dataType === "flow" && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, item.value?.namespace))
 
     const routeInfo = computed(() => {
         const routeInfo = {

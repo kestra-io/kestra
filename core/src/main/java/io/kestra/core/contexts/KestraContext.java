@@ -1,5 +1,6 @@
 package io.kestra.core.contexts;
 
+import com.google.common.base.Suppliers;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
@@ -10,7 +11,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertySource;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * Utility class for retrieving common information about a Kestra Server at runtime.
@@ -105,7 +106,7 @@ public abstract class KestraContext {
 
         private final ApplicationContext applicationContext;
         private final Environment environment;
-        private final String version;
+        private final Supplier<String> version;
 
         private final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
@@ -118,7 +119,11 @@ public abstract class KestraContext {
         public Initializer(ApplicationContext applicationContext,
                            Environment environment) {
             this.applicationContext = applicationContext;
-            this.version = Optional.ofNullable(applicationContext.getBean(VersionProvider.class)).map(VersionProvider::getVersion).orElse(null);
+            // Lazy init of the version
+            this.version = Suppliers.memoize(() ->
+                // VersionProvider is not always available, for example in unit tests, so we use Optional to avoid issues in those cases.
+                Optional.ofNullable(applicationContext.getBean(VersionProvider.class)).map(VersionProvider::getVersion).orElse(null)
+            );
             this.environment = environment;
             KestraContext.setContext(this);
         }
@@ -172,7 +177,7 @@ public abstract class KestraContext {
         /** {@inheritDoc} **/
         @Override
         public String getVersion() {
-            return version;
+            return version.get();
         }
 
         /** {@inheritDoc} **/

@@ -194,7 +194,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .kind(kind)
             .build();
 
-        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
+        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
         if (labels != null) {
             executionLabels.addAll(labels);
         }

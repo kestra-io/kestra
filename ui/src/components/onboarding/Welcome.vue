@@ -103,7 +103,7 @@
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const canCreate = computed(() => {
-        return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+        return authStore.user?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
     });
 
     useRouteContext(routeInfo);

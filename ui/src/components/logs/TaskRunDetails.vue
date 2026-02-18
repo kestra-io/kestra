@@ -345,7 +345,8 @@
             },
             level: function () {
                 this.rawLogs = [];
-                this.loadLogs(this.followedExecution.id);
+                if(this.followedExecution) 
+                    this.loadLogs(this.followedExecution.id);
             },
             currentTaskRuns: {
                 handler(taskRuns) {

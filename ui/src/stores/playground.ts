@@ -3,7 +3,7 @@ import {defineStore} from "pinia";
 import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
-import Inputs from "../utils/inputs";
+import {normalize} from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";
 import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
@@ -74,9 +74,13 @@ export const usePlaygroundStore = defineStore("playground", () => {
             const {type, defaults} = input;
             // for dates, no need to normalize the value
             // https://github.com/kestra-io/kestra/issues/10576
-            defaultInputValues[input.id] = type === "DATE"
+            const safeDef = type === "DATE"
                 ? defaults
-                : Inputs.normalize(type, defaults);
+                : normalize(type, defaults);
+
+            if(safeDef !== undefined) {
+                defaultInputValues[input.id] = safeDef;
+            }
         }
         
         return executionsStore.triggerExecution({
@@ -91,13 +95,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
     async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
         const lastExecution = executions.value.length ? executions.value[0] : undefined;
 
-        if(!lastExecution) {
-            return
-        }
-
         // check that the inputs and labels have not changed between the last execution and the current flow
         // if they have changed, we cannot replay the execution and must trigger a new one
-        if(lastExecution.flowRevision && flowStore.flow?.revision 
+        if(lastExecution && lastExecution.flowRevision && flowStore.flow?.revision 
             && lastExecution.flowRevision < flowStore.flow.revision){
             const lastExecutionFlow = await flowStore.loadFlow({
                 namespace: flowStore.flow.namespace || "",
@@ -115,7 +115,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // if all tasks prior to current task in the graph are identical
         // to the previous execution's revision,
         // we can skip them and start the execution at the current task using replayExecution()
-        if (taskId && graph
+        if (lastExecution && taskId && graph
             && lastExecution.graph
             && VueFlowUtils.areTasksIdenticalInGraphUntilTask(lastExecution.graph, graph, taskId)
             && taskIdToTaskRunIdMap.has(taskId)) {

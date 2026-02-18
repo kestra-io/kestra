@@ -8,8 +8,12 @@
             <slot name="additional-right" />
             <div class="d-flex align-items-center gap-2" v-if="(isAllowedEdit || isAllowedTrigger) && $route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
-                    <li v-if="isAllowedEdit">
-                        <el-button :icon="Pencil" @click="editFlow">
+                    <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
+                        <el-button
+                            class="execution-edit-flow-button"
+                            :icon="Pencil"
+                            @click="editFlow"
+                        >
                             {{ $t("edit flow") }}
                         </el-button>
                     </li>
@@ -98,7 +102,7 @@
         }
     };
 </script>
-<style>
+<style scoped>
 
 @media (max-width: 575.98px) {
   .sm-extra-padding {

@@ -9,7 +9,7 @@
         "check:types": "vue-tsc --noEmit",
         "build": "vite build --emptyOutDir",
         "preview": "vite preview",
-        "test:types": "openapi-ts && vue-tsc --noEmit",
+        "test:types": "vue-tsc --noEmit",
         "test:lint": "eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
@@ -21,8 +21,7 @@
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks",
-        "generate:openapi": "openapi-ts",
-        "postinstall": "patch-package && openapi-ts"
+        "postinstall": "patch-package"
     },
     "dependencies": {
         "@js-joda/core": "^5.7.0",
@@ -82,7 +81,6 @@
         "@codecov/vite-plugin": "^1.9.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@eslint/js": "^9.39.2",
-        "@hey-api/openapi-ts": "^0.92.3",
         "@playwright/test": "^1.58.2",
         "@rushstack/eslint-patch": "^1.14.1",
         "@shikijs/markdown-it": "^3.22.0",

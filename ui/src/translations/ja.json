@@ -7,23 +7,16 @@
     "Editor fontfamily": "エディターのフォントファミリー",
     "Editor fontsize": "エディターのフォントサイズ",
     "Editor theme": "エディターテーマ",
-    "Finish": "完了",
     "Fold auto": "エディター：複数行の自動折りたたみ",
     "Fold content lines": "複数行文字列を折りたたむ",
     "Hover description": "エディター: key または value にホバーするとフィールドの説明を表示",
     "Language": "言語",
-    "Next step": "次のステップ",
     "Per page": "ページごと",
-    "Previous step": "前のステップ",
-    "Reset guided tour": "ガイド付きツアーを再起動",
     "Set default page": "デフォルトページを設定",
     "Set labels": "ラベルを設定",
     "Set labels done": "実行のラベルが正常に設定されました",
     "Set labels to execution": "実行<code>{id}</code>のラベルを追加または更新",
     "Set labels tooltip": "実行にラベルを設定",
-    "Skip tour": "ツアーをスキップ",
-    "Skip tutorial": "チュートリアルをスキップ",
-    "Step": "ステップ",
     "Task Id already exist in the flow": "Task Id {taskId}はflow内ですでに存在します。",
     "Total": "合計",
     "Unfold content lines": "複数行文字列を展開する",
@@ -437,6 +430,7 @@
     "download": "ダウンロード",
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
+    "draft_available": "エディターでドラフト変更が利用可能です",
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "duration": "期間",
     "dynamic": "動的",
@@ -1119,7 +1113,6 @@
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line-by-line": "行ごと表示",
-    "live help": "ライブヘルプ",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
@@ -1366,48 +1359,6 @@
     "now": "現在",
     "of": "の",
     "ok": "OK",
-    "onboarding": {
-      "finish": "完了",
-      "next": "次へ",
-      "no_flows": "チュートリアルnamespaceに利用可能なflowはありません。",
-      "previous": "前へ",
-      "skip": "プロダクトツアーをスキップ",
-      "steps": {
-        "0": {
-          "content": "ここに来てくれてとても嬉しいです。<br />最初のflowを作成しましょう。",
-          "primary": "さあ、始めましょう！",
-          "title": "Kestraへようこそ！"
-        },
-        "1": {
-          "primary": "次へ",
-          "title": "ユースケースを選択<br />方法をお見せします！"
-        },
-        "2": {
-          "content": "あなたのflowは自動補完と構文検証を備えたYAMLで記述されています。とても簡単です！",
-          "primary": "次へ",
-          "title": "コードエディタ"
-        },
-        "3": {
-          "content": "依存関係ビューはリアルタイムで更新されます。新しいtaskを追加してみてください！",
-          "primary": "次へ",
-          "title": "トポロジービュー"
-        },
-        "4": {
-          "content": "フローを起動するには「Execute」をクリックしてください。",
-          "title": "実行する時が来ました。"
-        },
-        "5": {
-          "content": "「Execute」をクリックして、フローを実行してください。",
-          "title": "確認して起動！"
-        },
-        "6": {
-          "content": "実行の進行状況を追跡するには、LogsタブとOutputsタブを確認してください。<br /><br />その後、Flowsページに移動して他のユースケースを探索してください。",
-          "primary": "新しいフローを作成",
-          "secondary": "他のフローを探索",
-          "title": "準備完了です！"
-        }
-      }
-    },
     "open": "開く",
     "open in new tab": "新しいタブで",
     "open in same tab": "同じタブで",
@@ -1951,14 +1902,8 @@
         "title": "チュートリアル"
       }
     },
-    "welcome aboard": "🚀 Kestraへようこそ！",
-    "welcome aboard content": "ガイド付きツアーを利用して最初のflowを作成し、Blueprintsでさらに多くの例を見つけてください。",
-    "welcome button create": "プロダクトツアーを開始",
-    "welcome display require": "<strong>最初のflow</strong>を実行して始めましょう",
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
-      "start": "最初のworkflowを立ち上げましょう。",
-      "wel_text": "ようこそ！",
       "welcome": "Kestraへようこそ"
     },
     "wordmark_colors": "ワードマークの色は背景に応じて変化し、アイコンは暗い背景に配置された場合、背景なしで表示されます。",

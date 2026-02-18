@@ -7,23 +7,16 @@
     "Editor fontfamily": "Familia de fuentes del editor",
     "Editor fontsize": "Tamaño de fuente del editor",
     "Editor theme": "Tema del editor",
-    "Finish": "Finalizar",
     "Fold auto": "Editor: plegado automático de multilíneas",
     "Fold content lines": "Plegar cadenas multilínea",
     "Hover description": "Editor: Mostrar descripción del campo al pasar el cursor sobre key o value",
     "Language": "Idioma",
-    "Next step": "Siguiente paso",
     "Per page": "por página",
-    "Previous step": "Paso anterior",
-    "Reset guided tour": "Reiniciar Tour Guiado",
     "Set default page": "Establecer página predeterminada",
     "Set labels": "Establecer etiquetas",
     "Set labels done": "Etiquetas de la ejecución establecidas con éxito",
     "Set labels to execution": "Añadir o actualizar las etiquetas de la ejecución <code>{id}</code>",
     "Set labels tooltip": "Establecer etiquetas a la ejecución",
-    "Skip tour": "Saltar tour",
-    "Skip tutorial": "Saltar Tutorial",
-    "Step": "Paso",
     "Task Id already exist in the flow": "Task Id {taskId} ya existe en el flow.",
     "Total": "Total",
     "Unfold content lines": "Desplegar cadenas multilínea",
@@ -437,6 +430,7 @@
     "download": "Descargar",
     "download logs": "Descargar logs",
     "download_logos": "Descargar Paquete de Logos",
+    "draft_available": "El cambio en borrador está disponible en el editor",
     "duplicate-pair": "{label} \"{key}\" está duplicado, se ignora la primera clave.",
     "duration": "Duración",
     "dynamic": "Dinámico",
@@ -1119,7 +1113,6 @@
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
     "line-by-line": "línea por línea",
-    "live help": "Ayuda en vivo",
     "loaded x dependencies": "{count} dependencias cargadas",
     "log expand setting": "Visualización predeterminada del Log",
     "logExporters": "Exportadores de Logs",
@@ -1366,48 +1359,6 @@
     "now": "Ahora",
     "of": "de",
     "ok": "OK",
-    "onboarding": {
-      "finish": "Finalizar",
-      "next": "Siguiente",
-      "no_flows": "No hay flows disponibles bajo el namespace del tutorial.",
-      "previous": "Anterior",
-      "skip": "Omitir recorrido del producto",
-      "steps": {
-        "0": {
-          "content": "Estamos encantados de tenerte aquí.<br />Vamos a crear tu primer flow.",
-          "primary": "¡Vamos!",
-          "title": "¡Bienvenido a Kestra!"
-        },
-        "1": {
-          "primary": "Siguiente",
-          "title": "Elige un caso de uso<br />y te mostraremos cómo se hace."
-        },
-        "2": {
-          "content": "Tu flow está escrito en YAML con autocompletado y validación de sintaxis. ¡Así de simple!",
-          "primary": "Siguiente",
-          "title": "Editor de Código"
-        },
-        "3": {
-          "content": "La vista de dependencias se actualiza en tiempo real. ¡Intenta añadir una nueva task y verás!",
-          "primary": "Siguiente",
-          "title": "Vista de Topología"
-        },
-        "4": {
-          "content": "\"Ejecutar\" para lanzar tu flow.",
-          "title": "Es hora de ejecutarlo."
-        },
-        "5": {
-          "content": "\"Ejecutar\" y ver tu flow en acción.",
-          "title": "¡Confirma y lanza!"
-        },
-        "6": {
-          "content": "Revisa las pestañas de Logs y Outputs para seguir el progreso de tu ejecución.<br /><br />Luego, dirígete a la página de Flows para explorar otros casos de uso.",
-          "primary": "Crear un nuevo flow",
-          "secondary": "Explorar otros Flows",
-          "title": "¡Todo listo!"
-        }
-      }
-    },
     "open": "Abrir",
     "open in new tab": "En una nueva pestaña",
     "open in same tab": "En la misma pestaña",
@@ -1951,14 +1902,8 @@
         "title": "Tutorial"
       }
     },
-    "welcome aboard": "🚀 ¡Bienvenido a Kestra!",
-    "welcome aboard content": "Usa nuestro Tour Guiado para crear tu primer flow y revisa los Blueprints para encontrar más ejemplos.",
-    "welcome button create": "Iniciar Tour del Producto",
-    "welcome display require": "Ejecuta tu <strong>primer flow</strong> para comenzar",
     "welcome_page": {
       "guide": "¿Necesitas orientación para ejecutar tu primer flow?",
-      "start": "Pongamos en marcha tu primer workflow.",
-      "wel_text": "¡Bienvenido!",
       "welcome": "Bienvenido a Kestra"
     },
     "wordmark_colors": "Los colores del logotipo se adaptan según el fondo, mientras que el icono permanece sin fondo cuando se coloca sobre un fondo oscuro.",

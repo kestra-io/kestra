@@ -7,23 +7,16 @@
     "Editor fontfamily": "Rodzina czcionek edytora",
     "Editor fontsize": "Rozmiar czcionki edytora",
     "Editor theme": "Motyw edytora",
-    "Finish": "Zakończ",
     "Fold auto": "Edytor: automatyczne składanie wieloliniowych",
     "Fold content lines": "Złóż wieloliniowe ciągi",
     "Hover description": "Edytor: Pokaż opis pola po najechaniu na key lub value",
     "Language": "Język",
-    "Next step": "Następny krok",
     "Per page": "na stronę",
-    "Previous step": "Poprzedni krok",
-    "Reset guided tour": "Restartuj przewodnik",
     "Set default page": "Ustaw domyślną stronę",
     "Set labels": "Ustaw etykiety",
     "Set labels done": "Pomyślnie ustawiono etykiety wykonania",
     "Set labels to execution": "Dodaj lub zaktualizuj etykiety wykonania <code>{id}</code>",
     "Set labels tooltip": "Ustaw etykiety dla wykonania",
-    "Skip tour": "Pomiń przewodnik",
-    "Skip tutorial": "Pomiń samouczek",
-    "Step": "Krok",
     "Task Id already exist in the flow": "Task Id {taskId} już istnieje w flow.",
     "Total": "Całkowity",
     "Unfold content lines": "Rozwiń wieloliniowe ciągi",
@@ -437,6 +430,7 @@
     "download": "Pobierz",
     "download logs": "Pobierz logs",
     "download_logos": "Pobierz Pakiet Logo",
+    "draft_available": "Szkic zmiany jest dostępny w edytorze",
     "duplicate-pair": "{label} \"{key}\" jest zduplikowany, pierwszy klucz zignorowany.",
     "duration": "Czas trwania",
     "dynamic": "Dynamiczny",
@@ -1119,7 +1113,6 @@
     "light_background": "To jest preferowana opcja podczas pracy z jasnym tłem.",
     "light_version": "Wersja jasna",
     "line-by-line": "linia po linii",
-    "live help": "Pomoc na żywo",
     "loaded x dependencies": "{count} zależności załadowane",
     "log expand setting": "Domyślne wyświetlanie Logs",
     "logExporters": "Eksporterzy Logów",
@@ -1366,48 +1359,6 @@
     "now": "Teraz",
     "of": "z",
     "ok": "OK",
-    "onboarding": {
-      "finish": "Zakończ",
-      "next": "Następny",
-      "no_flows": "Brak flowów w namespace o nazwie tutorial.",
-      "previous": "Poprzedni",
-      "skip": "Pomiń Przewodnik po Produkcie",
-      "steps": {
-        "0": {
-          "content": "Jesteśmy zachwyceni, że jesteś tutaj.<br />Stwórzmy twój pierwszy flow.",
-          "primary": "Zaczynajmy!",
-          "title": "Witamy w Kestra!"
-        },
-        "1": {
-          "primary": "Następny",
-          "title": "Wybierz przypadek użycia<br />i pokażemy ci, jak to się robi!"
-        },
-        "2": {
-          "content": "Twój flow jest napisany w YAML z autouzupełnianiem i walidacją składni. Tak proste!",
-          "primary": "Następny",
-          "title": "Edytor Kodu"
-        },
-        "3": {
-          "content": "Widok zależności aktualizuje się w czasie rzeczywistym. Spróbuj dodać nowy task i zobacz!",
-          "primary": "Następny",
-          "title": "Widok Topologii"
-        },
-        "4": {
-          "content": "\"Wykonaj\", aby uruchomić swój flow.",
-          "title": "Czas na uruchomienie."
-        },
-        "5": {
-          "content": "\"Execute\" i zobacz swój flow w akcji.",
-          "title": "Potwierdź i uruchom!"
-        },
-        "6": {
-          "content": "Sprawdź zakładki Logs i Outputs, aby śledzić postęp wykonania.<br /><br />Następnie przejdź do strony Flows, aby odkryć inne przypadki użycia.",
-          "primary": "Utwórz nowy flow",
-          "secondary": "Odkryj inne Flows",
-          "title": "Wszystko gotowe!"
-        }
-      }
-    },
     "open": "Otwórz",
     "open in new tab": "W nowej zakładce",
     "open in same tab": "W tej samej zakładce",
@@ -1951,14 +1902,8 @@
         "title": "Samouczek"
       }
     },
-    "welcome aboard": "🚀 Witamy w Kestra!",
-    "welcome aboard content": "Skorzystaj z naszego Przewodnika, aby stworzyć swój pierwszy flow i sprawdź Blueprints, aby znaleźć więcej przykładów.",
-    "welcome button create": "Rozpocznij Przewodnik po Produkcie",
-    "welcome display require": "Uruchom swój <strong>pierwszy flow</strong>, aby rozpocząć",
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
-      "start": "Uruchommy Twój pierwszy workflow.",
-      "wel_text": "Witamy!",
       "welcome": "Witamy w Kestra"
     },
     "wordmark_colors": "Kolory znaku słownego dostosowują się w zależności od tła, podczas gdy ikona pozostaje bez tła, gdy jest umieszczona na ciemnym tle.",

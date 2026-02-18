@@ -201,7 +201,6 @@
 
     const activeStep = ref(0)
     const userForm: Ref<any> = ref(null)
-    const surveyForm: Ref<any> = ref(null)
 
     const userFormData = ref<UserFormData>({
         firstName: "",

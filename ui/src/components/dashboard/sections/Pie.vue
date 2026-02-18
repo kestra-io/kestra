@@ -4,14 +4,14 @@
     >
         <div>
             <component
-                :is="chartOptions.graphStyle === 'PIE' ? Pie : Doughnut"
+                :is="chartOptions?.graphStyle === 'PIE' ? Pie : Doughnut"
                 v-if="generated !== undefined"
                 :data="parsedData"
                 :options="options"
                 :plugins="
                     chartOptions?.legend?.enabled
-                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin]
-                        : [centerPlugin, thicknessPlugin]
+                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin] as const
+                        : [centerPlugin, thicknessPlugin] as const
                 "
                 class="chart"
             />
@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
     import {computed, PropType, watch} from "vue";
+    import type {TooltipItem, ChartEvent, ActiveElement, Chart as ChartJS} from "chart.js";
 
     import {Chart, getDashboard} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
@@ -39,6 +40,7 @@
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
+    import {FilterObject} from "../../../utils/filters";
 
     const route = useRoute();
     const router = useRouter();
@@ -46,7 +48,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     });
 
@@ -55,7 +57,8 @@
 
     const {chartOptions} = props.chart;
 
-    const isDuration = Object.values(props.chart.data.columns).find(c => c.agg !== undefined).field === "DURATION";
+    const columns = props.chart.data?.columns ?? {};
+    const isDuration = Object.values(columns).find((c: Record<string, any>) => c.agg !== undefined)?.field === "DURATION";
 
     const theme = useTheme();
 
@@ -72,15 +75,15 @@
                 tooltip: {
                     enabled: true,
                     intersect: true,
-                    filter: (value) => value.raw,
+                    filter: (value: TooltipItem<"pie" | "doughnut">) => value.raw,
                     callbacks: {
-                        label: (value) => {
-                            return `${isDuration ? Utils.humanDuration(value.raw) : value.raw}`;
+                        label: (value: TooltipItem<"pie" | "doughnut">) => {
+                            return `${isDuration ? Utils.humanDuration(value.raw as number) : value.raw}`;
                         },
                     }
                 },
             },
-            onClick: (e, elements) => {
+            onClick: (_e: ChartEvent, elements: ActiveElement[]) => {
                 chartClick(moment, router, route, {}, parsedData.value, elements, "dataset");
             },
         }, theme.value);
@@ -88,13 +91,13 @@
 
     const centerPlugin = computed(() => ({
         id: "centerPlugin",
-        beforeDraw(chart) {
+        beforeDraw(chart: ChartJS) {
             const darkTheme = theme.value === "dark";
 
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
 
-            let total = dataset.data.reduce((acc, val) => acc + val, 0);
+            let total: number | string = (dataset.data as number[]).reduce((acc: number, val: number) => acc + val, 0);
             if (isDuration) {
                 total = Utils.humanDuration(total);
             }
@@ -108,7 +111,7 @@
             ctx.textBaseline = "middle";
             ctx.fillStyle = darkTheme ? "#FFFFFF" : "#000000";
 
-            ctx.fillText(total, centerX, centerY);
+            ctx.fillText(String(total), centerX, centerY);
 
             ctx.restore();
         },
@@ -116,9 +119,9 @@
 
     const thicknessPlugin = {
         id: "thicknessPlugin",
-        beforeDatasetsDraw(chart) {
+        beforeDatasetsDraw(chart: ChartJS) {
             const {ctx} = chart;
-            const dataset = chart.data.datasets[0];
+            const dataset = chart.data.datasets[0] as any;
             const meta = chart.getDatasetMeta(0);
 
             //dynamically calculate thickness based on chart size
@@ -137,7 +140,7 @@
             })
                 : meta.data.map(() => 1);
             for (let i = 0; i < meta.data.length; i++) {
-                const arc = meta.data[i];
+                const arc = meta.data[i] as any;
                 const w = weights[i] ?? 1;
                 const thicknessPx = minThicknessPx + w * (maxThicknessPx - minThicknessPx);
 
@@ -151,15 +154,19 @@
     };
 
     const parsedData = computed(() => {
-        const parseValue = (value) => {
-            const date = moment(value, moment.ISO_8601, true);
-            return date.isValid() ? date.format("YYYY-MM-DD") : value;
+        const parseValue = (value: unknown): string => {
+            const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
+            return date.isValid() ? date.format("YYYY-MM-DD") : String(value);
         };
-        const aggregator = Object.entries(props.chart.data.columns).reduce(
+        const aggregator = Object.entries(columns).reduce<{
+            value?: { label: string; key: string };
+            field?: { label: string; key: string };
+        }>(
             (result, [key, column]) => {
-                const type = "agg" in column ? "value" : "field";
+                const col = column as Record<string, any>;
+                const type = "agg" in col ? "value" : "field";
                 result[type] = {
-                    label: column.displayName ?? column.agg,
+                    label: col.displayName ?? col.agg,
                     key,
                 };
                 return result;
@@ -167,11 +174,12 @@
             {},
         );
 
-        let results = Object.create(null);
+        const results: Record<string, number> = Object.create(null);
 
-        generated.value.results?.forEach((value) => {
-            const field = parseValue(value[aggregator.field.key]);
-            const aggregated = value[aggregator.value.key];
+        const rawData = generated.value.results as Record<string, any>[] | undefined;
+        rawData?.forEach((value: Record<string, any>) => {
+            const field = parseValue(value[aggregator.field?.key ?? ""]);
+            const aggregated = value[aggregator.value?.key ?? ""] as number;
 
             results[field] = (results[field] || 0) + aggregated;
         });

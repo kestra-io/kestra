@@ -36,9 +36,10 @@ interface Trigger {
     };
 }
 
-interface Task {
+export interface Task {
     id: string,
     type: string
+    tasks?: Task[]
 }
 
 export interface Input {
@@ -71,6 +72,7 @@ export interface Flow {
         limit: number;
         behavior: string;
     };
+    tasks?: Task[];
 }
 
 export const useFlowStore = defineStore("flow", () => {
@@ -694,7 +696,7 @@ function deleteFlowAndDependencies() {
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata(options.flow);
-            if(authStore.user && !authStore.user.isAllowed(
+            if(authStore.user && !authStore.user?.isAllowed(
                 permission.FLOW,
                 action.CREATE,
                 namespace,
@@ -820,8 +822,8 @@ function deleteFlowAndDependencies() {
             return false;
         }
 
-        return (isCreating.value && authStore.user.hasAnyAction(permission.FLOW, action.UPDATE))
-         || authStore.user.isAllowed(
+        return (isCreating.value && authStore.user?.hasAnyAction(permission.FLOW, action.UPDATE))
+         || authStore.user?.isAllowed(
             permission.FLOW,
             action.UPDATE,
             flow.value?.namespace,

@@ -99,6 +99,16 @@ const Template = (args) => ({
                     }
                 }
             }
+
+            if (uri.includes("/flows/search")) {
+                return {
+                    data: {
+                        results: [],
+                        total: 0,
+                    }
+                }
+            }
+
             if (uri.includes("/distinct-namespaces")) {
                 return {
                     data: [
@@ -109,6 +119,7 @@ const Template = (args) => ({
                     ]
                 }
             }
+
             console.log("get request", uri)
             return {data: {}}
         }

@@ -14,6 +14,7 @@
     import {PropType, computed, watch} from "vue";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
+    import type {TooltipItem, ChartEvent, ActiveElement, ChartData} from "chart.js";
 
     import NoData from "../../layout/NoData.vue";
     import {Chart, getDashboard} from "../composables/useDashboards";
@@ -58,7 +59,7 @@
 
     const theme = useTheme();
 
-    const options = computed<any>(() => {
+    const options = computed(() => {
         return defaultConfig({
             skipNull: true,
             barThickness: 12,
@@ -76,11 +77,11 @@
                     : {}),
                 tooltip: {
                     enabled: props.short ? false : true,
-                    filter: (value: any) => value.raw,
+                    filter: (value: TooltipItem<"bar">) => value.raw,
                     callbacks: {
-                        label: (value: any) => {
-                            if (!value.dataset.tooltip) return "";
-                            return `${value.dataset.tooltip}`;
+                        label: (value: TooltipItem<"bar">) => {
+                            if (!(value.dataset as any).tooltipText) return "";
+                            return `${(value.dataset as any).tooltipText}`;
                         },
                     },
                 },
@@ -106,11 +107,11 @@
                     display: verticalLayout.value ? false : (props.short ? false : true),
                     ticks: {
                         ...DEFAULTS.ticks,
-                        callback: value => isDurationAgg() ? Utils.humanDuration(value) : value
+                        callback: (value: string | number) => isDurationAgg() ? Utils.humanDuration(value) : value
                     }
                 },
             },
-            onClick: (e, elements) => {
+            onClick: (_e: ChartEvent, elements: ActiveElement[]) => {
                 chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value);
@@ -120,41 +121,42 @@
         return aggregator[0][1].field === "DURATION";
     }
 
-    const parsedData = computed(() => {
-        const column = chartOptions.column;
-        const {columns} = data;
+    const parsedData = computed((): ChartData<"bar"> => {
+        const column = chartOptions?.column ?? "";
+        const columns = data?.columns ?? {};
 
         // Ignore columns with `agg` and dynamically fetch valid ones
         const validColumns = Object.entries(columns)
-            .filter(([_, value]) => !value.agg)
+            .filter(([_, value]) => !(value as Record<string, any>).agg)
             .filter(c => c[0] !== column)// Exclude columns with `agg`
             .map(([key]) => key);
 
-        const grouped = {};
+        const grouped: Record<string, Record<string, number>> = {};
 
-        const rawData = generated.value.results;
-        rawData?.forEach((item) => {
+        const rawData = generated.value.results as Record<string, any>[] | undefined;
+        rawData?.forEach((item: Record<string, any>) => {
             const key = validColumns.map((col) => item[col]).join(", "); // Use '|' as a delimiter
+            const itemColumn = item[column] as string;
 
-            if (!grouped[item[column]]) {
-                grouped[item[column]] = {};
+            if (!grouped[itemColumn]) {
+                grouped[itemColumn] = {};
             }
-            if (!grouped[item[column]][key]) {
-                grouped[item[column]][key] = 0;
+            if (!grouped[itemColumn][key]) {
+                grouped[itemColumn][key] = 0;
             }
 
-            grouped[item[column]][key] += item[aggregator[0][0]];
+            grouped[itemColumn][key] += item[aggregator[0][0]];
         });
 
         const labels = Object.keys(grouped);
-        const xLabels = [...new Set(rawData?.map((item) => item[column]))];
+        const xLabels = [...new Set(rawData?.map((item: Record<string, any>) => item[column] as string))];
 
         const datasets = xLabels.flatMap((xLabel) => {
-            return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
+            return Object.entries(grouped[xLabel as string] ?? {}).map(subSectionsEntry => ({
                 label: subSectionsEntry[0],
-                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0) as any[],
+                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
                 backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
-                tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
+                tooltipText: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
         });
 

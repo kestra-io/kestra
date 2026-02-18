@@ -31,7 +31,6 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     private String tenantId;
 
-    @Hidden
     @NotNull
     @NotBlank
     private String id;

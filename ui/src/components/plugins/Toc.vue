@@ -13,7 +13,7 @@
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
                     :key="plugin.group"
-                    :ref="(el) => pluginRefs[plugin.group] = el"                
+                    :ref="(el: any) => pluginRefs[plugin.group] = el"                
                 >
                     <ul class="toc-h3">
                         <li v-for="(types, namespace) in group(plugin)" :key="namespace">
@@ -70,7 +70,7 @@
     const route = useRoute();
     const pluginsStore = usePluginsStore();
 
-    const pluginRefs = reactive({});
+    const pluginRefs = reactive<Record<string, any>>({});
     const activeNames = ref<string[]>([]);
     const searchInput = ref<string>("");
 

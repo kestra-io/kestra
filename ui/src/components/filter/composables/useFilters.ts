@@ -11,12 +11,13 @@ import {
 import {
     AppliedFilter,
     FilterConfiguration,
+    FilterKeyConfig,
     COMPARATOR_LABELS,
     Comparators,
     TEXT_COMPARATORS,
 } from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
-import {useDefaultFilter} from "./useDefaultFilter";
+import {applyDefaultFilters, useDefaultFilter} from "./useDefaultFilter";
 
 
 export function useFilters(
@@ -31,6 +32,7 @@ export function useFilters(
 
     const appliedFilters = ref<AppliedFilter[]>([]);
     const searchQuery = ref("");
+    const dismissedDefaultVisibleKeys = ref<Set<string>>(new Set());
 
     const {
         markAsPreApplied,
@@ -45,6 +47,45 @@ export function useFilters(
             query[key] = value;
         }
     };
+
+    const isDefaultVisibleKey = (key: string) =>
+        configuration.keys?.some((k) => k.key === key && k.visibleByDefault) ?? false;
+
+    const dismissDefaultVisibleKey = (key: string) => {
+        if (!isDefaultVisibleKey(key)) {
+            return;
+        }
+
+        const next = new Set(dismissedDefaultVisibleKeys.value);
+        next.add(key);
+        dismissedDefaultVisibleKeys.value = next;
+    };
+
+    const restoreDefaultVisibleKey = (key: string) => {
+        if (!dismissedDefaultVisibleKeys.value.has(key)) {
+            return;
+        }
+
+        const next = new Set(dismissedDefaultVisibleKeys.value);
+        next.delete(key);
+        dismissedDefaultVisibleKeys.value = next;
+    };
+
+    const dismissAllDefaultVisibleKeys = () => {
+        dismissedDefaultVisibleKeys.value = new Set(
+            configuration.keys
+                ?.filter((key) => key.visibleByDefault)
+                .map((key) => key.key) ?? []
+        );
+    };
+
+    const resetDismissedDefaultVisibleKeys = () => {
+        dismissedDefaultVisibleKeys.value = new Set();
+    };
+
+    const hasDismissedDefaultVisibleKeys = computed(
+        () => dismissedDefaultVisibleKeys.value.size > 0
+    );
 
     const isTimeRange = (filter: AppliedFilter) =>
         typeof filter.value === "object" &&
@@ -127,6 +168,36 @@ export function useFilters(
         }
 
         router.push({query});
+    };
+
+    const encodeAppliedFiltersToQuery = (filters: AppliedFilter[]) => {
+        const query: Record<string, any> = {};
+        const validUniqueFilters = getUniqueFilters(filters.filter(isValidFilter));
+
+        if (legacyQuery) {
+            validUniqueFilters.forEach(filter => {
+                if (configuration.keys?.find(k => k.key === filter.key)?.valueType === "key-value") {
+                    (filter.value as string[]).forEach(item => {
+                        const [k, v] = item.split(":");
+                        query[`${filter.key}.${k}`] = v;
+                    });
+                } else if (Array.isArray(filter.value)) {
+                    filter.value.forEach(item =>
+                        appendQueryParam(query, filter.key, item?.toString() ?? "")
+                    );
+                } else if (isTimeRange(filter)) {
+                    const {startDate, endDate} = filter.value as { startDate: Date; endDate: Date };
+                    query.startDate = startDate.toISOString();
+                    query.endDate = endDate.toISOString();
+                } else {
+                    query[filter.key] = filter.value?.toString() || "";
+                }
+            });
+        } else {
+            Object.assign(query, encodeFiltersToQuery(validUniqueFilters, keyOfComparator));
+        }
+
+        return query;
     };
 
     const createAppliedFilter = (
@@ -293,7 +364,10 @@ export function useFilters(
             const config = configuration.keys?.find(k => k?.key === field);
             if (!config) return;
 
-            const comparator = Comparators[params[0]?.operation as keyof typeof Comparators];
+            const parsedComparator = Comparators[params[0]?.operation as keyof typeof Comparators];
+            const comparator = config.comparators?.includes(parsedComparator)
+                ? parsedComparator
+                : undefined;
             if (!comparator) return;
 
             const {value, valueLabel} = processFieldValue(config, params, field, comparator);
@@ -331,13 +405,48 @@ export function useFilters(
         * are present to filter. Users can remove them, but they will reappear on page refresh.
         */
 
-    const createDefaultVisibleFilters = (excludedKeys = new Set<string>()) =>
+    const resolveDefaultVisibleValue = (key: FilterKeyConfig): AppliedFilter["value"] => {
+        const value = typeof key.defaultValue === "function"
+            ? key.defaultValue()
+            : key.defaultValue;
+
+        if (value !== undefined) {
+            return value;
+        }
+
+        return key.valueType === "multi-select" ? [] : "";
+    };
+
+    const defaultVisibleValueLabel = (value: AppliedFilter["value"]) => {
+        if (Array.isArray(value)) {
+            return value.join(", ");
+        }
+
+        if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
+            return `${value.startDate.toLocaleDateString()} - ${value.endDate.toLocaleDateString()}`;
+        }
+
+        if (value instanceof Date) {
+            return value.toLocaleDateString();
+        }
+
+        return value?.toString?.() ?? "";
+    };
+
+    const createDefaultVisibleFilters = (
+        excludedKeys = new Set<string>(),
+        hiddenDefaultVisibleKeys = dismissedDefaultVisibleKeys.value
+    ) =>
         configuration.keys
-            ?.filter(key => key.visibleByDefault && !excludedKeys.has(key.key))
+            ?.filter(key =>
+                key.visibleByDefault &&
+                !excludedKeys.has(key.key) &&
+                !hiddenDefaultVisibleKeys.has(key.key)
+            )
             .map(key => {
                 const comparator = (key.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
-                const value = key.valueType === "multi-select" ? [] : "";
-                const valueLabel = "";
+                const value = resolveDefaultVisibleValue(key);
+                const valueLabel = defaultVisibleValueLabel(value);
                 return {
                     ...createAppliedFilter(key.key, key, comparator, value, valueLabel, "default"),
                     isDefaultVisible: true
@@ -361,13 +470,23 @@ export function useFilters(
         }
 
         const parsedFilterKeys = new Set(parsedFilters.map(f => f.key));
-        appliedFilters.value = [...parsedFilters, ...createDefaultVisibleFilters(parsedFilterKeys)];
+        if (parsedFilterKeys.size > 0 && dismissedDefaultVisibleKeys.value.size > 0) {
+            const next = new Set(dismissedDefaultVisibleKeys.value);
+            parsedFilterKeys.forEach((key) => next.delete(key));
+            dismissedDefaultVisibleKeys.value = next;
+        }
+
+        appliedFilters.value = [
+            ...parsedFilters,
+            ...createDefaultVisibleFilters(parsedFilterKeys, dismissedDefaultVisibleKeys.value)
+        ];
     };
 
     watch(() => route.query, initializeFromRoute, {deep: true, immediate: false});
     initializeFromRoute();
 
     const addFilter = (filter: AppliedFilter) => {
+        restoreDefaultVisibleKey(filter.key);
         const index = appliedFilters.value.findIndex(f => f?.key === filter?.key);
         appliedFilters.value = index === -1
             ? [...appliedFilters.value, filter]
@@ -378,12 +497,14 @@ export function useFilters(
     const removeFilter = (filterId: string) => {
         const filter = appliedFilters.value.find(f => f?.id === filterId);
         if (filter) {
+            dismissDefaultVisibleKey(filter.key);
             appliedFilters.value = appliedFilters.value.filter(f => f?.key !== filter?.key);
             updateRoute(false);
         }
     };
 
     const updateFilter = (updatedFilter: AppliedFilter) => {
+        restoreDefaultVisibleKey(updatedFilter.key);
         appliedFilters.value = [
             ...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key),
             updatedFilter
@@ -395,27 +516,59 @@ export function useFilters(
      * Clears all applied filters and search query.
      */
     const clearFilters = () => {
+        dismissAllDefaultVisibleKeys();
         appliedFilters.value = [];
         searchQuery.value = "";
         updateRoute(true);
     };
 
-    const {resetDefaultFilter} = useDefaultFilter({
+    const defaultFilterOptions = {
         legacyQuery,
         namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
-    });
+    };
+    useDefaultFilter(defaultFilterOptions);
 
     const resetToPreApplied = () => {
         searchQuery.value = "";
+        resetDismissedDefaultVisibleKeys();
 
         const parsedFilters = legacyQuery ? parseLegacyFilters() : parseEncodedFilters();
 
         const parsedFilterKeys = new Set(parsedFilters.map((f: AppliedFilter) => f.key));
-        appliedFilters.value = [...parsedFilters, ...createDefaultVisibleFilters(parsedFilterKeys)];
+        const {query: defaultQuery} = applyDefaultFilters({}, defaultFilterOptions);
+        const resetFilters = [...parsedFilters, ...createDefaultVisibleFilters(parsedFilterKeys, dismissedDefaultVisibleKeys.value)];
 
-        resetDefaultFilter();
+        if (defaultFilterOptions.includeTimeRange && !resetFilters.some((f) => f.key === "timeRange")) {
+            const timeRangeConfig = configuration.keys?.find((k) => k.key === "timeRange");
+            const timeRangeQueryKey = legacyQuery ? "timeRange" : "filters[timeRange][EQUALS]";
+            const defaultTimeRange = defaultQuery[timeRangeQueryKey];
+            const timeRangeValue = Array.isArray(defaultTimeRange) ? defaultTimeRange[0] : defaultTimeRange;
+
+            if (timeRangeConfig && typeof timeRangeValue === "string" && timeRangeValue.length > 0) {
+                const comparator = (timeRangeConfig.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
+                resetFilters.push(
+                    createAppliedFilter(
+                        "timeRange",
+                        timeRangeConfig,
+                        comparator,
+                        timeRangeValue,
+                        timeRangeValue,
+                        "default"
+                    )
+                );
+            }
+        }
+
+        appliedFilters.value = resetFilters;
+
+        const query = {
+            ...defaultQuery,
+            ...encodeAppliedFiltersToQuery(resetFilters)
+        };
+
+        router.replace({query});
     };
     
     watch(searchQuery, () => {
@@ -424,6 +577,7 @@ export function useFilters(
 
     return {
         appliedFilters: computed(() => appliedFilters.value),
+        hasDismissedDefaultVisibleKeys,
         searchQuery,
         addFilter,
         removeFilter,

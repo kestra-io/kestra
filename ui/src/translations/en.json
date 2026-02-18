@@ -1472,7 +1472,7 @@
       },
       "panels": {
         "title": "No panels are currently open.",
-        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Files, Blueprints, Namespace Context) for related features."
+        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Files, Blueprints, Context) for related features."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
@@ -1599,11 +1599,19 @@
       "flow": {
         "title": "AI Copilot",
         "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
-        "generating": "Generating Flow YAML for you...",
+        "generating": {
+          "flow": "Generating Flow YAML for you...",
+          "dashboard": "Generating Dashboard YAML for you...",
+          "app": "Generating App YAML for you...",
+          "test": "Generating Test YAML for you..."
+        },
         "enable_instructions": {
             "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
             "footer": "Note: At this time, only Gemini is supported as the AI provider for Open Source Edition. For Enterprise Edition, please refer to the AI Copilot documentation for other model provider configuration.\n\nRestart your Kestra instance after saving the configuration."
         }
+      },
+      "dashboard": {
+        "prompt_placeholder": "Ask a question about your data. Example prompt: Show me the success rate of my flows in the last 7 days."
       }
     },
     "playground": {
@@ -1824,7 +1832,7 @@
         },
         "level": {
             "label": "Level",
-            "description": "Filter by log severity"
+            "description": "Show logs at or above this severity"
         },
         "level_log_executions": {
             "label": "Log Level"

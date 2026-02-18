@@ -157,6 +157,8 @@
     import Id from "../../../../Id.vue"
     import {useAxios} from "../../../../../utils/axios"
 
+    defineOptions({inheritAttrs: false})
+
     const props = defineProps({
         component: {type: String, default: "el-button"},
         isReplay: {type: Boolean, default: false},

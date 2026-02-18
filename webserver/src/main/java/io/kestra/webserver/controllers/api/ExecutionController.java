@@ -613,7 +613,7 @@ public class ExecutionController {
                 .namespace(flow.getNamespace())
                 .flowId(flow.getId())
                 .flowRevision(flow.getRevision())
-                .labels(LabelService.labelsExcludingSystem(flow))
+                .labels(LabelService.labelsExcludingSystem(flow.getLabels()))
                 .state(new State().withState(State.Type.FAILED))
                 .build();
 
@@ -711,8 +711,8 @@ public class ExecutionController {
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
                     return Mono.error(new IllegalArgumentException(
                         "Flow execution blocked: one or more condition checks evaluated to false."
-                        + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
-                    )));
+                            + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
+                        )));
                 }
 
                 final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))

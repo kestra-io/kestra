@@ -38,7 +38,7 @@
         const blueprintId = route.query.blueprintId as string;
         const blueprintSource = route.query.blueprintSource as BlueprintType;
         const blueprintSourceYaml = route.query.blueprintSourceYaml as string;
-        const implicitDefaultNamespace = authStore.user.getNamespacesForAction(
+        const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             permission.FLOW,
             action.CREATE,
         )[0];

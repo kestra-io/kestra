@@ -3,13 +3,14 @@ import {defineStore} from "pinia";
 import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
-import Inputs from "../utils/inputs";
+import {normalize} from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";
 import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
-import {useFlowStore} from "./flow";
+import {Flow, useFlowStore} from "./flow";
 import {useFileExplorerStore} from "./fileExplorer";
+import isEqual from "lodash/isEqual";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -67,16 +68,59 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const taskIdToTaskRunIdMap: Map<string, string>  = new Map();
 
+    async function triggerExecution(flow: Flow, breakpoints?: string[]) {
+        const defaultInputValues: Record<string, any> = {}
+        for (const input of (flow.inputs || [])) {
+            const {type, defaults} = input;
+            // for dates, no need to normalize the value
+            // https://github.com/kestra-io/kestra/issues/10576
+            const safeDef = type === "DATE"
+                ? defaults
+                : normalize(type, defaults);
+
+            if(safeDef !== undefined) {
+                defaultInputValues[input.id] = safeDef;
+            }
+        }
+        
+        return executionsStore.triggerExecution({
+            id: flow.id,
+            namespace: flow.namespace,
+            formData: defaultInputValues,
+            kind: "PLAYGROUND",
+            breakpoints,
+        })
+    }
+
     async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
+        const lastExecution = executions.value.length ? executions.value[0] : undefined;
+
+        // check that the inputs and labels have not changed between the last execution and the current flow
+        // if they have changed, we cannot replay the execution and must trigger a new one
+        if(lastExecution && lastExecution.flowRevision && flowStore.flow?.revision 
+            && lastExecution.flowRevision < flowStore.flow.revision){
+            const lastExecutionFlow = await flowStore.loadFlow({
+                namespace: flowStore.flow.namespace || "",
+                id: flowStore.flow.id || "",
+                revision: lastExecution.flowRevision.toString(),
+                store: false,
+            })
+
+            if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs) 
+                || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
+                return await triggerExecution(flowStore.flow, breakpoints);
+            };
+        }
+
         // if all tasks prior to current task in the graph are identical
         // to the previous execution's revision,
         // we can skip them and start the execution at the current task using replayExecution()
-        if (taskId && executions.value.length && graph
-            && executions.value[0].graph
-            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)
+        if (lastExecution && taskId && graph
+            && lastExecution.graph
+            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(lastExecution.graph, graph, taskId)
             && taskIdToTaskRunIdMap.has(taskId)) {
             return await executionsStore.replayExecution({
-                executionId: executions.value[0].id,
+                executionId: lastExecution.id,
                 taskRunId: taskIdToTaskRunIdMap.get(taskId),
                 revision: flowStore.flow?.revision,
                 breakpoints,
@@ -88,25 +132,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return;
         }
 
-        const defaultInputValues: Record<string, any> = {}
-        for (const input of (flowStore.flow.inputs || [])) {
-            const {type, defaults} = input;
-            // for dates, no need to normalize the value
-            // https://github.com/kestra-io/kestra/issues/10576
-            defaultInputValues[input.id] = type === "DATE"
-                ? defaults
-                : Inputs.normalize(type, defaults);
-        }
-
-
-
-        return await executionsStore.triggerExecution({
-            id: flowStore.flow.id,
-            namespace: flowStore.flow.namespace,
-            formData: defaultInputValues,
-            kind: "PLAYGROUND",
-            breakpoints,
-        })
+        return await triggerExecution(flowStore.flow, breakpoints);
     }
 
     async function getNextTaskIds(taskId?: string) {

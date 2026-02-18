@@ -47,12 +47,20 @@
     "after": "после",
     "aggregation": "Агрегация",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "Задайте вопрос о ваших данных. Пример запроса: Покажите мне уровень успеха моих flows за последние 7 дней."
+      },
       "flow": {
         "enable_instructions": {
           "footer": "Примечание: В настоящее время только Gemini поддерживается в качестве AI-провайдера для Open Source Edition. Для Enterprise Edition, пожалуйста, обратитесь к документации AI Copilot для настройки других провайдеров моделей.\n\nПерезапустите ваш Kestra instance после сохранения конфигурации.",
           "header": "<b>AI Copilot еще не настроен.</b>\n\nЧтобы включить AI Copilot, добавьте следующий фрагмент в файл конфигурации вашего экземпляра Kestra (например, <code>application.yml</code>), заменив <code>geminiApiKey</code> на ваш фактический ключ:"
         },
-        "generating": "Генерация YAML для flow...",
+        "generating": {
+          "app": "Генерация YAML для приложения...",
+          "dashboard": "Генерация Dashboard YAML для вас...",
+          "flow": "Генерация Flow YAML для вас...",
+          "test": "Генерация тестового YAML для вас..."
+        },
         "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow. Пример запроса: Создайте flow, который запускается каждый понедельник в 9 утра.",
         "title": "AI Агент"
       }
@@ -203,7 +211,6 @@
     "copy_to_clipboard": "Копировать в буфер обмена",
     "create": "Создать",
     "create first task": "Создайте свою первую задачу",
-    "create new revision": "Создать новую версию",
     "create_flow": "Создать Flow",
     "created date": "Дата создания",
     "creation": "Создание",
@@ -504,7 +511,7 @@
         "title": "У вас еще нет Kill Switches!"
       },
       "panels": {
-        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Namespace Context) для связанных функций.",
+        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
       },
       "pluginDefaults": {
@@ -1004,7 +1011,7 @@
     "fix_with_ai": "Исправить с помощью AI",
     "flow": "Flow",
     "flow already exists": "Flow уже существует",
-    "flow already exists message": "Поток {id} уже существует в namespace {namespace}. Хотите создать новую ревизию?",
+    "flow already exists message": "Поток <code>{id}</code> уже существует в namespace <code>{namespace}</code>. Хотите создать новую ревизию?",
     "flow creation": "Создание flow",
     "flow creation denied in namespace": "У вас нет разрешения на создание flows в namespace `{namespace}`.",
     "flow delete": "Вы уверены, что хотите удалить <code>{flowCount}</code> flow(ы)?",
@@ -1693,7 +1700,7 @@
       },
       "confirm": {
         "config_title": "Подтвердите, что конфигурация действительна",
-        "confirm": "Подтвердить",
+        "confirm": "Создать администратора",
         "not_valid": "Нет, это недействительно",
         "valid": "Да, это допустимо"
       },
@@ -1702,7 +1709,7 @@
         "firstName": "Имя",
         "lastName": "Фамилия",
         "password": "Пароль",
-        "password_requirements": "Пароль должен содержать не менее 8 символов, включая как минимум 1 заглавную букву и 1 цифру."
+        "password_requirements": "Не менее 8 символов, включая 1 заглавную букву и 1 цифру."
       },
       "login": "Войти",
       "logout": "Выход",
@@ -1710,38 +1717,40 @@
         "complete": "Запустить Kestra UI",
         "config": "Проверить конфигурацию",
         "survey": "Расскажите нам больше",
-        "user": "Создайте ваш аккаунт"
+        "user": "Создать администратора"
       },
       "subtitles": {
         "complete": "Настройка успешно завершена!",
         "config": "Вот детали вашей конфигурации",
-        "survey": "Помогите нам улучшить Kestra Open Source Edition",
-        "user": "Настройте свой экземпляр, создав учетную запись"
+        "survey": "Извините, но я не вижу текст, который нужно перевести. Пожалуйста, предоставьте текст после \"----------\", чтобы я мог помочь с переводом.",
+        "user": "Защитите ваш экземпляр, чтобы начать."
       },
       "success": {
         "subtitle": "Вы готовы!",
         "title": "Поздравляем!"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "Личное использование",
-        "company_size": "Каков размер вашей компании?",
+        "company_11_50": "Личный проект",
+        "company_1_10": "Обучение / исследование",
+        "company_250_plus": "Развертывание в производственной среде",
+        "company_50_250": "Оценка для моей команды/компании",
+        "company_personal": "Другое",
+        "company_size": "Какова ваша основная цель с Kestra?",
         "continue": "Продолжить",
-        "newsletter": "Подпишитесь на новостную рассылку Kestra — оставайтесь в курсе последних функций и изменений.",
+        "newsletter": "Получайте обновления о продукте по электронной почте.",
+        "newsletter_heading": "Будьте в курсе",
         "skip": "Пропустить",
-        "use_case": "Каков ваш основной сценарий использования?",
+        "use_case": "Для чего вы планируете это использовать?",
         "use_case_business": "Бизнес-процессы",
         "use_case_data": "Рабочие процессы данных",
         "use_case_infrastructure": "Автоматизация инфраструктуры",
-        "use_case_ml": "ML/AI конвейеры",
-        "use_case_other": "Другое"
+        "use_case_ml": "ML конвейеры",
+        "use_case_other": "Другое",
+        "use_case_scheduling": "Планирование и повторяющиеся задания"
       },
       "titles": {
-        "survey": "Расскажите подробнее",
-        "user": "Создать аккаунт"
+        "survey": "Помогите нам улучшить Kestra OSS",
+        "user": "Создать администратора"
       },
       "troubleshooting": "Забыли пароль?",
       "validation": {

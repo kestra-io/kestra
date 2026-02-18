@@ -332,7 +332,12 @@ public final class RunVariables {
                 }
 
                 if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
-                    builder.put("trigger", execution.getTrigger().getVariables());
+                    Map<String, Object> outputs = execution.getTrigger().getVariables();
+                    if (decryptVariables) {
+                        final Secret secret = new Secret(secretKey, logger);
+                        outputs = secret.decrypt(outputs);
+                    }
+                    builder.put("trigger", outputs);
 
                     // temporal hack to add back the `schedule`variables
                     // will be removed in 2.0

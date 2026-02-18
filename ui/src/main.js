@@ -1,5 +1,4 @@
 import {createApp} from "vue"
-import VueAxios from "vue-axios";
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -87,8 +86,6 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
 
     // axios
     configureAxios((instance) => {
-        app.use(VueAxios, instance);
-        app.provide("axios", instance);
         piniaStore.use(({store: piniaStoreLocal}) => {
             piniaStoreLocal.$http = instance;
         });

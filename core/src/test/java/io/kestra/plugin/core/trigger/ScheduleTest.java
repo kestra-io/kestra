@@ -159,7 +159,9 @@ class ScheduleTest {
             .labels(List.of(
                 new Label("trigger-label-1", "trigger-label-1"),
                 new Label("trigger-label-2", "{{ 'trigger-label-2' }}"),
-                new Label("trigger-label-3", "{{ null }}")
+                new Label("trigger-label-3", "{{ null }}"),
+                new Label("system.replay","replay"),
+                new Label("system.test", "test")
             ))
             .build();
         var conditionContext = conditionContext(scheduleTrigger);
@@ -176,6 +178,9 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        assertThat(evaluate.get().getLabels()).hasSize(6);
+        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("system.replay","replay"));
+        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("system.test", "test"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
         assertThat(evaluate.get().getLabels()).doesNotContain(new Label("trigger-label-3", ""));

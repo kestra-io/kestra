@@ -689,8 +689,7 @@
 
     async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
         if (selectedFiles.value.length <= 1 && node) {
-            const path = filesStore.getPath(node.data.id)
-            selectedFiles.value = path ? [path] : [];
+            selectedNodes.value = [node.data.id];
         }
         const nodes = selectedFiles.value.map((filePath) => {
             return filesStore.findNodeByPath(filePath);

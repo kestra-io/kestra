@@ -32,7 +32,7 @@ plugins {
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.6"
+    id "com.gorylenko.gradle-git-properties" version "2.5.7"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.36.0"
 
@@ -51,15 +51,19 @@ idea {
  * Main
  **********************************************************************************************************************/
 final mainClassName = "io.kestra.cli.App"
-final targetJavaVersion = JavaVersion.VERSION_25
 
 application {
     mainClass = mainClassName
 }
 
 java {
-    sourceCompatibility = targetJavaVersion
-    targetCompatibility = targetJavaVersion
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+compileJava {
+    // We use 21 release (target) level temporary, will be switched to 25 for 2.0
+    options.release = 21
 }
 
 dependencies {
@@ -80,8 +84,13 @@ allprojects {
         group = "io.kestra"
 
         java {
-            sourceCompatibility = targetJavaVersion
-            targetCompatibility = targetJavaVersion
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(25)
+            }
+        }
+        compileJava {
+            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
+            options.release = 21
         }
 
         repositories {
@@ -179,8 +188,13 @@ subprojects {subProj ->
         apply plugin: 'jacoco'
 
         java {
-            sourceCompatibility = targetJavaVersion
-            targetCompatibility = targetJavaVersion
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(25)
+            }
+        }
+        compileJava {
+            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
+            options.release = 21
         }
 
         configurations {

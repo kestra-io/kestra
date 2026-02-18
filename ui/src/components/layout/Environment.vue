@@ -4,31 +4,31 @@
     </div>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
+<script setup lang="ts">
     import {cssVariable} from "@kestra-io/ui-libs";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";
+    import {computed} from "vue";
 
-    export default {
-        computed: {
-            ...mapStores(useLayoutStore, useMiscStore),
-            name() {
-                return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
-            },
-            color() {
-                if (this.layoutStore.envColor) {
-                    return this.layoutStore.envColor;
-                }
+    const layoutStore = useLayoutStore(); 
+    const miscStore = useMiscStore(); 
+    
+    const name = computed(() => {
+        return layoutStore.envName || miscStore.configs?.environment?.name;
+    })
 
-                if (this.miscStore.configs?.environment?.color) {
-                    return this.miscStore.configs.environment.color;
-                }
-
-                return cssVariable("--bs-info");
-            }
+    const color = computed(() => {
+        if (layoutStore.envColor) {
+            return layoutStore.envColor;
         }
-    }
+
+        if (miscStore.configs?.environment?.color) {
+            return miscStore.configs.environment.color;
+        }
+
+        return cssVariable("--bs-info");
+    })
+
 </script>
 
 <style scoped lang="scss">

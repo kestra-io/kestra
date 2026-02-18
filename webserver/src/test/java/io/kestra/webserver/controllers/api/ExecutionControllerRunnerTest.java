@@ -36,6 +36,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -405,6 +406,42 @@ class ExecutionControllerRunnerTest {
             throw new AssertionError("Evaluation result is not a map. Probably due to output decryption being performed while it shouldn't for such feature.");
         }
         assertThat(resultMap.get("value")).isNotEqualTo(inputs.get("secret"));
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/webhook-plugin.yaml"}, tenantId = "triggerencrypted")
+    void triggerEncrypted() throws InterruptedException {
+        String tenantId = "triggerencrypted";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+            if (execution.getLeft().getFlowId().equals("webhook-plugin") && execution.getLeft().getState().isTerminated()) {
+                queueCount.countDown();
+            }
+        });
+
+        var response = client.toBlocking().exchange(
+            PUT(
+                "/api/v1/triggerencrypted/executions/webhook/io.kestra.tests/webhook-plugin/case1",
+                "{\"test\": \"data\"}"
+            ),
+            String.class
+        );
+
+        assertThat((Object)response.getStatus()).isEqualTo(HttpStatus.OK);
+
+        queueCount.await(180, TimeUnit.SECONDS);
+        var execution = Objects.requireNonNull(receive.blockLast());
+
+        // the output is automatically decrypted so the return has the decrypted value of the hello task output
+        TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
+        assertThat(Objects.requireNonNull(returnTask.getOutputs()).get("value")).isEqualTo("Hello World");
+
+        // the output of a trigger is also decrypted automatically
+        TaskRun outTask = execution.findTaskRunsByTaskId("out").getFirst();
+        assertThat(((Map<String, String>)Objects.requireNonNull(outTask.getOutputs()).get("values")).get("encrypted")).isEqualTo("super-secret");
     }
 
     @Test
@@ -1020,13 +1057,25 @@ class ExecutionControllerRunnerTest {
                 .GET(
                     "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-wait/" + key
                 ),
-            ExecutionController.WebhookResponse.class
+            WebhookResponse.class
         );
 
         assertThat(execution.state().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.url().toString()).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/webhook-wait/" + execution.id());
         assertThat(execution.outputs()).hasSize(1);
         assertThat(execution.outputs()).containsEntry("output", "output");
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/webhook-failed.yaml"})
+    void webhookFailed() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-failed/webhook-failed"), Execution.class)
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
+        assertThat(e.getResponse().getBody(Execution.class).get().getState().getCurrent()).isEqualTo(Type.FAILED);
     }
 
     @Test
@@ -2508,13 +2557,15 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows("flows/valids/webhook-outputs.yaml")
     void webhookWithOutputs() {
-        Map<String, Object> outputs = client.toBlocking().retrieve(
+        HttpResponse<Map<String, Object>> response = client.toBlocking().exchange(
             GET(
                 "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-outputs/webhook-outputs"
             ),
             Argument.mapOf(String.class, Object.class)
         );
 
+        assertThat(response.getStatus().getCode()).isEqualTo(202);
+        Map<String, Object> outputs = response.getBody().orElseThrow();
         assertThat(outputs).hasFieldOrPropertyWithValue("status", "ok");
         assertThat(outputs).containsKey("executionId");
     }

@@ -47,12 +47,20 @@
     "after": "après",
     "aggregation": "Agrégation",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "Posez une question sur vos données. Exemple de demande : Montrez-moi le taux de réussite de mes flows au cours des 7 derniers jours."
+      },
       "flow": {
         "enable_instructions": {
           "footer": "Remarque : Actuellement, seul Gemini est pris en charge comme fournisseur d'IA pour l'édition Open Source. Pour l'édition Enterprise, veuillez vous référer à la documentation AI Copilot pour la configuration d'autres fournisseurs de modèles.\n\nRedémarrez votre instance Kestra après avoir enregistré la configuration.",
           "header": "<b>AI Copilot n'a pas encore été configuré.</b>\n\nPour activer AI Copilot, ajoutez l'extrait suivant à votre fichier de configuration de l'instance Kestra (par exemple, <code>application.yml</code>), en remplaçant <code>geminiApiKey</code> par votre clé réelle :"
         },
-        "generating": "Génération du YAML de flow pour vous...",
+        "generating": {
+          "app": "Génération du YAML de l'application pour vous...",
+          "dashboard": "Génération du YAML du tableau de bord pour vous...",
+          "flow": "Génération du YAML de flow pour vous...",
+          "test": "Génération du YAML de test pour vous..."
+        },
         "prompt_placeholder": "Entrez des instructions pour créer votre flow Kestra. Exemple d'invite : Créez un flow qui s'exécute tous les lundis à 9h.",
         "title": "Agent IA"
       }
@@ -203,7 +211,6 @@
     "copy_to_clipboard": "Copier dans le presse-papiers",
     "create": "Créer",
     "create first task": "Créer votre première tâche",
-    "create new revision": "Créer une nouvelle révision",
     "create_flow": "Créer Flow",
     "created date": "Date de création",
     "creation": "Création",
@@ -504,7 +511,7 @@
         "title": "Vous n'avez pas encore de Kill Switches !"
       },
       "panels": {
-        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Files, Blueprints, Namespace Context) pour des fonctionnalités associées.",
+        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Files, Blueprints, Context) pour des fonctionnalités associées.",
         "title": "Aucun panneau n'est actuellement ouvert."
       },
       "pluginDefaults": {
@@ -1004,7 +1011,7 @@
     "fix_with_ai": "Corriger avec l'IA",
     "flow": "Flow",
     "flow already exists": "Flow déjà existant",
-    "flow already exists message": "Le flow {id} existe déjà dans le namespace {namespace}. Voulez-vous créer une nouvelle révision ?",
+    "flow already exists message": "Le flow <code>{id}</code> existe déjà dans le namespace <code>{namespace}</code>. Voulez-vous créer une nouvelle révision ?",
     "flow creation": "Création de flow",
     "flow creation denied in namespace": "Vous n'avez pas la permission de créer des flows dans le namespace `{namespace}`.",
     "flow delete": "Êtes vous sûr de vouloir supprimer <code>{flowCount}</code> flow(s)?",
@@ -1693,7 +1700,7 @@
       },
       "confirm": {
         "config_title": "Confirmez que la configuration est valide",
-        "confirm": "Confirmer",
+        "confirm": "Créer un utilisateur admin",
         "not_valid": "Non, ce n'est pas valide",
         "valid": "Oui, c'est valide"
       },
@@ -1702,7 +1709,7 @@
         "firstName": "Prénom",
         "lastName": "Nom de famille",
         "password": "Mot de passe",
-        "password_requirements": "Le mot de passe doit comporter au moins 8 caractères, inclure au moins 1 lettre majuscule et 1 chiffre."
+        "password_requirements": "Au moins 8 caractères avec 1 lettre majuscule et 1 chiffre."
       },
       "login": "Connexion",
       "logout": "Déconnexion",
@@ -1710,38 +1717,40 @@
         "complete": "Démarrer l'UI de Kestra",
         "config": "Valider la Configuration",
         "survey": "Dites-nous en plus",
-        "user": "Créez votre compte"
+        "user": "Créer un utilisateur admin"
       },
       "subtitles": {
         "complete": "Configuration terminée avec succès !",
         "config": "Voici les détails de votre configuration",
-        "survey": "Aidez-nous à améliorer Kestra Open Source Edition",
-        "user": "Configurez votre instance en créant un compte"
+        "survey": "I'm sorry, but it seems there is no text provided after the \"----------\" for translation. Could you please provide the text you would like translated into French?",
+        "user": "Sécurisez votre instance pour commencer."
       },
       "success": {
         "subtitle": "Vous êtes prêt !",
         "title": "Félicitations !"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "Usage personnel",
-        "company_size": "Quelle est la taille de votre entreprise ?",
+        "company_11_50": "Projet personnel",
+        "company_1_10": "Apprentissage / exploration",
+        "company_250_plus": "Déploiement en production",
+        "company_50_250": "Évaluation pour mon équipe/entreprise",
+        "company_personal": "Autre",
+        "company_size": "Quel est votre objectif principal avec Kestra ?",
         "continue": "Continuer",
-        "newsletter": "Abonnez-vous à la newsletter de Kestra – restez à jour avec les dernières fonctionnalités et modifications.",
+        "newsletter": "Recevez les mises à jour des produits par email.",
+        "newsletter_heading": "Restez informé",
         "skip": "Passer",
-        "use_case": "Quel est votre cas d'utilisation principal ?",
-        "use_case_business": "Processus métier",
+        "use_case": "Pour quoi prévoyez-vous de l'utiliser ?",
+        "use_case_business": "Flux de travail métier",
         "use_case_data": "Flux de données",
         "use_case_infrastructure": "Automatisation de l'infrastructure",
-        "use_case_ml": "Pipelines ML/AI",
-        "use_case_other": "Autre"
+        "use_case_ml": "Pipelines ML",
+        "use_case_other": "Autre",
+        "use_case_scheduling": "Planification et tâches récurrentes"
       },
       "titles": {
-        "survey": "Dites-nous en plus",
-        "user": "Créer un compte"
+        "survey": "Aidez-nous à améliorer Kestra OSS",
+        "user": "Créer un utilisateur admin"
       },
       "troubleshooting": "Mot de passe oublié ?",
       "validation": {

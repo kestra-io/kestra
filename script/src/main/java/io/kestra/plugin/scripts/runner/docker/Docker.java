@@ -420,9 +420,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     pullImage(dockerClient, image, renderedPolicy, logger);
                 }
 
-                if (getIsKilled().get()) {
-                    throw new KestraRuntimeException("Task was killed during image pull");
-                }
+                // we check, if killed during image pull.
+                checkKilled("image pull");
 
                 // create container
                 CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
@@ -492,9 +491,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     }
                 }
 
-                if (getIsKilled().get()) {
-                    throw new KestraRuntimeException("Task was killed before container start");
-                }
+                // we check, if killed before container start
+                checkKilled("container startup");
 
                 // start container
                 dockerClient.startContainerCmd(containerId).exec();

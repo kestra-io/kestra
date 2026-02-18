@@ -52,7 +52,7 @@ public class KVStoreService {
      * @return The {@link KVStore}.
      */
     public KVStore get(String tenant, String namespace) {
-        checkAccessNamespaceIsAllowed(tenant, namespace, null);
+        checkAccessNamespaceIsAllowed(tenant, namespace, namespace);
         return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore);
     }
 

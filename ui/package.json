@@ -9,7 +9,7 @@
         "check:types": "vue-tsc --noEmit",
         "build": "vite build --emptyOutDir",
         "preview": "vite preview",
-        "test:types": "vue-tsc --noEmit",
+        "test:types": "openapi-ts && vue-tsc --noEmit",
         "test:lint": "eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",

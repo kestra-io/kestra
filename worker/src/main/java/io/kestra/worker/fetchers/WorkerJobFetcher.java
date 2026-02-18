@@ -209,7 +209,7 @@ public class WorkerJobFetcher extends WorkerLoop {
                 .setMaxConcurrency(workerContext.workerThreads())
                 .build());
 
-        requestStream.onNext(requestBuilder.build());
+        doSend(requestStream, requestBuilder.build());
         lastSentPermits.set(initialPermits);
         log.info("Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
@@ -328,7 +328,12 @@ public class WorkerJobFetcher extends WorkerLoop {
 
     private void doSend(ClientCallStreamObserver<WorkerJobRequest> observer, WorkerJobRequest request) {
         synchronized (streamLock) {
-            observer.onNext(request);
+            try {
+                observer.onNext(request);
+            } catch (IllegalStateException e) {
+                log.warn("Stream cancelled, will reconnect: {}", e.getMessage());
+                requestObserverRef.set(null);
+            }
         }
     }
 

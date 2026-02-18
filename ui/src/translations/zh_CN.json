@@ -7,23 +7,16 @@
     "Editor fontfamily": "编辑器字体家族",
     "Editor fontsize": "编辑器字体大小",
     "Editor theme": "编辑器主题",
-    "Finish": "完成",
     "Fold auto": "编辑器：自动折叠多行",
     "Fold content lines": "折叠多行字符串",
     "Hover description": "编辑器：当鼠标悬停在key或value上时显示字段描述",
     "Language": "语言",
-    "Next step": "下一步",
     "Per page": "每页",
-    "Previous step": "上一步",
-    "Reset guided tour": "重置引导游览",
     "Set default page": "设置默认页面",
     "Set labels": "设置标签",
     "Set labels done": "标签设置成功",
     "Set labels to execution": "为执行 <code>{id}</code> 添加或更新标签",
     "Set labels tooltip": "设置执行标签",
-    "Skip tour": "跳过游览",
-    "Skip tutorial": "跳过教程",
-    "Step": "步骤",
     "Task Id already exist in the flow": "流程中已存在任务ID {taskId}。",
     "Total": "总计",
     "Unfold content lines": "展开多行字符串",
@@ -437,6 +430,7 @@
     "download": "下载",
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
+    "draft_available": "编辑器中有可用的草稿更改",
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "duration": "持续时间",
     "dynamic": "动态",
@@ -1119,7 +1113,6 @@
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line-by-line": "逐行",
-    "live help": "实时帮助",
     "loaded x dependencies": "已加载 {count} 个依赖项",
     "log expand setting": "日志默认显示",
     "logExporters": "日志导出器",
@@ -1366,48 +1359,6 @@
     "now": "现在",
     "of": "的",
     "ok": "确定",
-    "onboarding": {
-      "finish": "完成",
-      "next": "下一步",
-      "no_flows": "教程命名空间下没有可用的流程。",
-      "previous": "上一步",
-      "skip": "跳过产品指南",
-      "steps": {
-        "0": {
-          "content": "我们很高兴你在这里。<br />让我们创建你的第一个流程。",
-          "primary": "开始吧！",
-          "title": "欢迎使用Kestra！"
-        },
-        "1": {
-          "primary": "下一步",
-          "title": "选择一个用例<br />我们将向你展示如何完成！"
-        },
-        "2": {
-          "content": "你的流程用YAML编写，带有自动完成和语法验证。非常简单！",
-          "primary": "下一步",
-          "title": "代码编辑器"
-        },
-        "3": {
-          "content": "依赖关系视图实时更新。尝试添加新任务看看！",
-          "primary": "下一步",
-          "title": "拓扑视图"
-        },
-        "4": {
-          "content": "点击\"执行\"来启动你的流程。",
-          "title": "是时候运行了。"
-        },
-        "5": {
-          "content": "点击\"执行\"并查看你的流程运行。",
-          "title": "确认并启动！"
-        },
-        "6": {
-          "content": "查看日志和输出标签来跟踪你的执行进度。<br /><br />然后，前往流程页面探索其他用例。",
-          "primary": "创建新流程",
-          "secondary": "探索其他流程",
-          "title": "你已经完成了！"
-        }
-      }
-    },
     "open": "打开",
     "open in new tab": "在新标签页打开",
     "open in same tab": "在同一标签页打开",
@@ -1951,14 +1902,8 @@
         "title": "教程"
       }
     },
-    "welcome aboard": "🚀 欢迎使用 Kestra!",
-    "welcome aboard content": "使用我们的引导游览来创建你的第一个流程，并查看蓝图以找到更多示例。",
-    "welcome button create": "开始产品导览",
-    "welcome display require": "运行你的 <strong>第一个流程</strong> 以开始",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",
-      "start": "让我们启动并运行您的第一个workflow。",
-      "wel_text": "欢迎！",
       "welcome": "欢迎使用 Kestra"
     },
     "wordmark_colors": "字标的颜色会根据背景进行调整，而图标在深色背景上时则保持无背景。",

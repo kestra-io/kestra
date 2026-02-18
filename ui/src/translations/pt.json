@@ -7,23 +7,16 @@
     "Editor fontfamily": "Família de fontes do editor",
     "Editor fontsize": "Tamanho da fonte do editor",
     "Editor theme": "Tema do editor",
-    "Finish": "Finalizar",
     "Fold auto": "Editor: dobra automática de multilinhas",
     "Fold content lines": "Dobrar strings multilinhas",
     "Hover description": "Editor: Mostrar descrição do campo ao passar o mouse sobre o key ou value",
     "Language": "Idioma",
-    "Next step": "Próximo passo",
     "Per page": "por página",
-    "Previous step": "Passo anterior",
-    "Reset guided tour": "Reiniciar Tour Guiado",
     "Set default page": "Definir página padrão",
     "Set labels": "Definir labels",
     "Set labels done": "Labels da execução definidos com sucesso",
     "Set labels to execution": "Adicionar ou atualizar os labels da execução <code>{id}</code>",
     "Set labels tooltip": "Definir labels para a execução",
-    "Skip tour": "Pular tour",
-    "Skip tutorial": "Pular Tutorial",
-    "Step": "Passo",
     "Task Id already exist in the flow": "Task Id {taskId} já existe no flow.",
     "Total": "Total",
     "Unfold content lines": "Desdobrar strings multilinhas",
@@ -437,6 +430,7 @@
     "download": "Baixar",
     "download logs": "Baixar logs",
     "download_logos": "Baixar Pacote de Logos",
+    "draft_available": "Alteração de rascunho disponível no editor",
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "duration": "Duração",
     "dynamic": "Dinâmico",
@@ -1119,7 +1113,6 @@
     "light_background": "Esta é a opção preferida ao trabalhar com um fundo claro.",
     "light_version": "Versão clara",
     "line-by-line": "linha por linha",
-    "live help": "Ajuda ao vivo",
     "loaded x dependencies": "{count} dependências carregadas",
     "log expand setting": "Exibição padrão do Log",
     "logExporters": "Exportadores de Log",
@@ -1366,48 +1359,6 @@
     "now": "Agora",
     "of": "de",
     "ok": "OK",
-    "onboarding": {
-      "finish": "Finalizar",
-      "next": "Próximo",
-      "no_flows": "Não há flows disponíveis no namespace do tutorial.",
-      "previous": "Anterior",
-      "skip": "Pular Tour do Produto",
-      "steps": {
-        "0": {
-          "content": "Estamos entusiasmados em tê-lo aqui.<br />Vamos criar seu primeiro flow.",
-          "primary": "Vamos lá!",
-          "title": "Bem-vindo ao Kestra!"
-        },
-        "1": {
-          "primary": "Próximo",
-          "title": "Escolha um caso de uso<br />e mostraremos como é feito!"
-        },
-        "2": {
-          "content": "Seu flow é escrito em YAML com autocompletação e validação de sintaxe. Tão simples!",
-          "primary": "Próximo",
-          "title": "Editor de Código"
-        },
-        "3": {
-          "content": "A visualização de dependência está atualizando em tempo real. Tente adicionar uma nova task e veja!",
-          "primary": "Próximo",
-          "title": "Visualização de Topologia"
-        },
-        "4": {
-          "content": "\"Execute\" para iniciar seu flow.",
-          "title": "É hora de executá-lo."
-        },
-        "5": {
-          "content": "\"Execute\" e veja seu flow em ação.",
-          "title": "Confirme e inicie!"
-        },
-        "6": {
-          "content": "Verifique as abas Logs e Outputs para acompanhar o progresso da execução.<br /><br />Depois, vá para a página Flows para explorar outros casos de uso.",
-          "primary": "Crie um novo flow",
-          "secondary": "Explore outros Flows",
-          "title": "Tudo pronto!"
-        }
-      }
-    },
     "open": "Abrir",
     "open in new tab": "Em uma nova aba",
     "open in same tab": "Na mesma aba",
@@ -1951,14 +1902,8 @@
         "title": "Tutorial"
       }
     },
-    "welcome aboard": "🚀 Bem-vindo ao Kestra!",
-    "welcome aboard content": "Use nosso Tour Guiado para criar seu primeiro flow e confira os Blueprints para encontrar mais exemplos.",
-    "welcome button create": "Iniciar Tour do Produto",
-    "welcome display require": "Execute seu <strong>primeiro flow</strong> para começar",
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?",
-      "start": "Vamos colocar seu primeiro workflow em execução.",
-      "wel_text": "Bem-vindo!",
       "welcome": "Bem-vindo ao Kestra"
     },
     "wordmark_colors": "As cores da marca adaptam-se com base no fundo, enquanto o ícone permanece sem fundo quando colocado em um fundo escuro.",

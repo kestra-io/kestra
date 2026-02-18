@@ -7,23 +7,16 @@
     "Editor fontfamily": "संपादक फ़ॉन्ट परिवार",
     "Editor fontsize": "संपादक फ़ॉन्ट आकार",
     "Editor theme": "संपादक थीम",
-    "Finish": "समाप्त करें",
     "Fold auto": "संपादक: मल्टीलाइन का स्वचालित फोल्ड",
     "Fold content lines": "मल्टीलाइन स्ट्रिंग्स फोल्ड करें",
     "Hover description": "संपादक: जब key या value पर होवर करें तो फ़ील्ड का विवरण दिखाएं",
     "Language": "भाषा",
-    "Next step": "अगला चरण",
     "Per page": "प्रति पृष्ठ",
-    "Previous step": "पिछला चरण",
-    "Reset guided tour": "पुनः Guided Tour प्रारंभ करें",
     "Set default page": "पूर्व-निर्धारित पृष्ठ सेट करें",
     "Set labels": "लेबल्स सेट करें",
     "Set labels done": "निष्पादन के लेबल्स सफलतापूर्वक सेट किए गए",
     "Set labels to execution": "निष्पादन <code>{id}</code> के लेबल्स जोड़ें या अपडेट करें",
     "Set labels tooltip": "निष्पादन के लिए लेबल्स सेट करें",
-    "Skip tour": "टूर छोड़ें",
-    "Skip tutorial": "ट्यूटोरियल छोड़ें",
-    "Step": "चरण",
     "Task Id already exist in the flow": "Task Id {taskId} पहले से ही flow में मौजूद है।",
     "Total": "कुल",
     "Unfold content lines": "मल्टीलाइन स्ट्रिंग्स अनफोल्ड करें",
@@ -437,6 +430,7 @@
     "download": "डाउनलोड करें",
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
+    "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "duration": "अवधि",
     "dynamic": "डायनामिक",
@@ -1119,7 +1113,6 @@
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
     "light_version": "लाइट संस्करण",
     "line-by-line": "लाइन-बाय-लाइन",
-    "live help": "लाइव सहायता",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
     "logExporters": "लॉग Exporters",
@@ -1366,48 +1359,6 @@
     "now": "अब",
     "of": "का",
     "ok": "ठीक है",
-    "onboarding": {
-      "finish": "समाप्त करें",
-      "next": "अगला",
-      "no_flows": "ट्यूटोरियल namespace के अंतर्गत कोई flows उपलब्ध नहीं हैं।",
-      "previous": "पिछला",
-      "skip": "उत्पाद टूर छोड़ें",
-      "steps": {
-        "0": {
-          "content": "हमें खुशी है कि आप यहाँ हैं।<br />आइए अपना पहला flow बनाएं।",
-          "primary": "चलिए चलते हैं!",
-          "title": "केस्ट्रा में आपका स्वागत है!"
-        },
-        "1": {
-          "primary": "अगला",
-          "title": "एक उपयोग-मामला चुनें<br />और हम आपको दिखाएंगे कि यह कैसे किया जाता है!"
-        },
-        "2": {
-          "content": "आपका flow YAML में लिखा गया है जिसमें ऑटोकम्प्लीशन और सिंटैक्स वैलिडेशन है। बहुत सरल!",
-          "primary": "अगला",
-          "title": "कोड संपादक"
-        },
-        "3": {
-          "content": "निर्भरता दृश्य वास्तविक समय में अपडेट हो रहा है। एक नया Task जोड़ने का प्रयास करें और देखें!",
-          "primary": "अगला",
-          "title": "टोपोलॉजी दृश्य"
-        },
-        "4": {
-          "content": "अपने flow को लॉन्च करने के लिए \"Execute\" करें।",
-          "title": "इसे चलाने का समय है।"
-        },
-        "5": {
-          "content": "\"Execute\" करें और अपने flow को क्रियान्वित होते देखें।",
-          "title": "पुष्टि करें और लॉन्च करें!"
-        },
-        "6": {
-          "content": "अपने execution प्रगति को ट्रैक करने के लिए Logs और Outputs टैब्स की जाँच करें।<br /><br />फिर, अन्य उपयोग मामलों का पता लगाने के लिए Flows पेज पर जाएं।",
-          "primary": "एक नया flow बनाएं",
-          "secondary": "अन्य Flows का अन्वेषण करें",
-          "title": "आप पूरी तरह से तैयार हैं!"
-        }
-      }
-    },
     "open": "खोलें",
     "open in new tab": "एक नए टैब में",
     "open in same tab": "उसी टैब में",
@@ -1951,14 +1902,8 @@
         "title": "ट्यूटोरियल"
       }
     },
-    "welcome aboard": "🚀 केस्ट्रा में आपका स्वागत है!",
-    "welcome aboard content": "अपना पहला flow बनाने के लिए हमारे Guided Tour का उपयोग करें और अधिक उदाहरण खोजने के लिए Blueprints देखें।",
-    "welcome button create": "उत्पाद यात्रा शुरू करें",
-    "welcome display require": "शुरू करने के लिए अपना <strong>पहला flow</strong> चलाएँ",
     "welcome_page": {
       "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
-      "start": "आइए आपका पहला workflow शुरू करें और चलाएं।",
-      "wel_text": "स्वागत है!",
       "welcome": "Kestra में आपका स्वागत है"
     },
     "wordmark_colors": "शब्दचिह्न के रंग पृष्ठभूमि के आधार पर अनुकूलित होते हैं, जबकि आइकन एक गहरे पृष्ठभूमि पर रखे जाने पर बिना पृष्ठभूमि के रहता है।",

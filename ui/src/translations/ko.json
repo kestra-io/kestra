@@ -1700,7 +1700,7 @@
       },
       "confirm": {
         "config_title": "구성이 유효한지 확인하십시오",
-        "confirm": "확인",
+        "confirm": "관리자 사용자 생성",
         "not_valid": "아니요, 유효하지 않습니다",
         "valid": "네, 유효합니다"
       },
@@ -1709,7 +1709,7 @@
         "firstName": "이름",
         "lastName": "성씨",
         "password": "비밀번호",
-        "password_requirements": "비밀번호는 최소 8자 이상이어야 하며, 최소 1개의 대문자와 1개의 숫자를 포함해야 합니다."
+        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함."
       },
       "login": "로그인",
       "logout": "로그아웃",
@@ -1717,38 +1717,40 @@
         "complete": "Kestra UI 시작",
         "config": "구성 유효성 검사",
         "survey": "자세히 알려주세요",
-        "user": "계정 생성"
+        "user": "관리자 사용자 생성"
       },
       "subtitles": {
         "complete": "설정이 성공적으로 완료되었습니다!",
         "config": "여기 귀하의 구성 세부 정보가 있습니다",
-        "survey": "Kestra 오픈 소스 에디션 개선에 도움을 주세요",
-        "user": "계정을 생성하여 인스턴스를 설정하세요"
+        "survey": "죄송하지만 번역할 텍스트가 제공되지 않았습니다. 번역할 텍스트를 제공해 주시면 감사하겠습니다.",
+        "user": "인스턴스를 보호하여 시작하세요."
       },
       "success": {
         "subtitle": "모두 준비되었습니다!",
         "title": "축하합니다!"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "개인용",
-        "company_size": "귀하의 회사 규모는 어떻게 되십니까?",
+        "company_11_50": "개인 프로젝트",
+        "company_1_10": "학습 / 탐색",
+        "company_250_plus": "프로덕션 배포",
+        "company_50_250": "우리 팀/회사 평가 중",
+        "company_personal": "기타",
+        "company_size": "Kestra를 사용하는 주요 목표는 무엇인가요?",
         "continue": "계속",
-        "newsletter": "Kestra 뉴스레터를 구독하세요 – 최신 기능과 변경 사항을 계속 업데이트 받으세요.",
+        "newsletter": "제품 업데이트를 이메일로 받으세요.",
+        "newsletter_heading": "항상 최신 정보를 받아보세요",
         "skip": "건너뛰기",
-        "use_case": "주요 사용 사례는 무엇입니까?",
-        "use_case_business": "비즈니스 프로세스",
+        "use_case": "무엇을 위해 사용할 계획입니까?",
+        "use_case_business": "비즈니스 워크플로우",
         "use_case_data": "데이터 워크플로우",
         "use_case_infrastructure": "인프라 자동화",
-        "use_case_ml": "ML/AI 파이프라인",
-        "use_case_other": "기타"
+        "use_case_ml": "ML 파이프라인",
+        "use_case_other": "기타",
+        "use_case_scheduling": "일정 및 반복 작업"
       },
       "titles": {
-        "survey": "자세히 알려주세요",
-        "user": "계정 생성"
+        "survey": "Kestra OSS 개선에 도움을 주세요",
+        "user": "관리자 사용자 생성"
       },
       "troubleshooting": "비밀번호를 잊으셨습니까?",
       "validation": {

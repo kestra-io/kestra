@@ -1700,7 +1700,7 @@
       },
       "confirm": {
         "config_title": "設定が有効であることを確認してください",
-        "confirm": "確認",
+        "confirm": "管理者ユーザーを作成",
         "not_valid": "いいえ、有効ではありません。",
         "valid": "はい、有効です"
       },
@@ -1709,7 +1709,7 @@
         "firstName": "名",
         "lastName": "姓",
         "password": "パスワード",
-        "password_requirements": "パスワードは8文字以上で、少なくとも1つの大文字と1つの数字を含める必要があります。"
+        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
       },
       "login": "ログイン",
       "logout": "ログアウト",
@@ -1717,38 +1717,40 @@
         "complete": "Kestra UIを開始",
         "config": "設定を検証",
         "survey": "詳細を教えてください",
-        "user": "アカウントを作成する"
+        "user": "管理者ユーザーを作成"
       },
       "subtitles": {
         "complete": "セットアップが正常に完了しました！",
         "config": "こちらはあなたの設定の詳細です",
-        "survey": "Kestra Open Source Edition の改善にご協力ください",
-        "user": "アカウントを作成してインスタンスをセットアップする"
+        "survey": "申し訳ありませんが、翻訳するテキストが提供されていません。翻訳が必要なテキストを提供してください。",
+        "user": "インスタンスを保護して開始します。"
       },
       "success": {
         "subtitle": "準備完了です！",
         "title": "おめでとうございます！"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "個人使用",
-        "company_size": "御社の規模はどのくらいですか？",
+        "company_11_50": "個人プロジェクト",
+        "company_1_10": "学習 / 探索",
+        "company_250_plus": "本番デプロイメント",
+        "company_50_250": "私のチーム/会社のために評価中",
+        "company_personal": "その他",
+        "company_size": "Kestraを使用する主な目的は何ですか？",
         "continue": "続行",
-        "newsletter": "Kestraのニュースレターを購読して、最新の機能や変更を常に把握しましょう。",
+        "newsletter": "製品の更新情報をメールで受け取る。",
+        "newsletter_heading": "常に情報を把握",
         "skip": "スキップ",
-        "use_case": "主な使用ケースは何ですか？",
-        "use_case_business": "ビジネスプロセス",
+        "use_case": "何に使用する予定ですか？",
+        "use_case_business": "ビジネスワークフロー",
         "use_case_data": "データワークフロー",
         "use_case_infrastructure": "インフラストラクチャ自動化",
-        "use_case_ml": "ML/AI パイプライン",
-        "use_case_other": "その他"
+        "use_case_ml": "MLパイプライン",
+        "use_case_other": "その他",
+        "use_case_scheduling": "スケジューリングと定期ジョブ"
       },
       "titles": {
-        "survey": "詳細を教えてください",
-        "user": "アカウントを作成"
+        "survey": "Kestra OSSの改善にご協力ください",
+        "user": "管理者ユーザーを作成"
       },
       "troubleshooting": "パスワードをお忘れですか？",
       "validation": {

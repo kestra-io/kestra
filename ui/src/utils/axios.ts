@@ -10,7 +10,6 @@ import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 import {client} from "../generated/kestra-api/client.gen"
-import {Client} from "../generated/kestra-api/client"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -289,9 +288,9 @@ const createAxios = (
     return client;
 };
 
-let axiosInstance: Client | null = null;
+let axiosInstance: ReturnType<typeof createAxios> | null = null;
 function configureAxios(
-    callback: (clientInstance: Client["instance"]) => void,
+    callback: (clientInstance: ReturnType<typeof createAxios>["instance"]) => void,
     _store: any,
     ...args: Parameters<typeof createAxios>
 ) {

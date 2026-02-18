@@ -289,15 +289,19 @@ const createAxios = (
     return client;
 };
 
-export default (
+let axiosInstance: Client | null = null;
+function configureAxios(
     callback: (clientInstance: Client["instance"]) => void,
     _store: any,
     ...args: Parameters<typeof createAxios>
-) => {
-    callback(createAxios(...args).instance);
+) {
+    if (!axiosInstance) {
+        axiosInstance = createAxios(...args);
+    }
+    callback(axiosInstance.instance);
 }
 
-let axiosInstance: Client | null = null;
+export default configureAxios
 
 export function useClient(){
     // for storybook tests we need to allow router to be undefined

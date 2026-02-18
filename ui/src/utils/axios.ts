@@ -96,6 +96,7 @@ const createAxios = (
     instance.interceptors.response.use(
         (response) => response,
         async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean}}) => {
+
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 const coreStore = useCoreStore()
                 coreStore.message = {
@@ -285,19 +286,21 @@ const createAxios = (
         axios: instance
     })
 
-    return client;
+    return {client, instance};
 };
 
-let axiosInstance: ReturnType<typeof createAxios> | null = null;
+let clientInstance: ReturnType<typeof createAxios> | null = null;
+
 function configureAxios(
     callback: (clientInstance: ReturnType<typeof createAxios>["instance"]) => void,
     _store: any,
     ...args: Parameters<typeof createAxios>
 ) {
-    if (!axiosInstance) {
-        axiosInstance = createAxios(...args);
+    if (!clientInstance) {
+        clientInstance = createAxios(...args);
     }
-    callback(axiosInstance.instance);
+    
+    callback(clientInstance.instance);
 }
 
 export default configureAxios
@@ -309,11 +312,11 @@ export function useClient(){
     const miscStore = useMiscStore();
     const {edition} = miscStore.configs || {};
 
-    if (!axiosInstance) {
-        axiosInstance = createAxios(router, edition === "OSS");
+    if (!clientInstance) {
+        clientInstance = createAxios(router, edition === "OSS");
     }
 
-    return axiosInstance;
+    return clientInstance;
 };
 
 export function useAxios(){

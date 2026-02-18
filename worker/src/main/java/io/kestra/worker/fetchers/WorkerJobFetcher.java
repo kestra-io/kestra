@@ -158,8 +158,11 @@ public class WorkerJobFetcher extends WorkerLoop {
                 public void onError(Throwable t) {
                     if (!isRunning()) {
                         log.debug("Stream closed during shutdown: {}", t.getMessage());
+                    // log with WARN level if stream fails during normal operation because it will be automatically retried and can indicate transient issues
+                    } else if (t.getCause() != null) {
+                        log.warn("Stream error: {}. Cause: {}", t.getMessage(), t.getCause().getMessage());
                     } else {
-                        log.error("Stream error: {}", t.getMessage(), t);
+                        log.warn("Stream error: {}", t.getMessage());
                     }
                     requestObserverRef.set(null);
                     streamCompleted.countDown();

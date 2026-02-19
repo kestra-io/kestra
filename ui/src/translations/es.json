@@ -641,8 +641,8 @@
     "fileTypeNotAllowed": "Tipo de archivo no permitido. Tipos aceptados: {types}",
     "files": "Archivos",
     "filter": {
-      "active key value pairs": "Pares de key/value activos",
-      "add key value pair": "Agregar par clave/valor",
+      "active key value pairs": "Pares de Key/Value activos",
+      "add key value pair": "Agregar par de Key/Value",
       "aggregation": {
         "description": "Filtrar por método de agregación",
         "label": "Agregación"
@@ -715,6 +715,7 @@
         "description": "Filtrar por tipo de ejecución",
         "label": "Tipo"
       },
+      "kv_pair_selected": "{count} pares de Key/Value seleccionados",
       "label": "Etiqueta",
       "labels": {
         "description": "Filtrar por labels",

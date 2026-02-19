@@ -641,8 +641,8 @@
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
     "filter": {
-      "active key value pairs": "Активные пары ключ/значение",
-      "add key value pair": "Добавить пару key/value",
+      "active key value pairs": "Активные пары Key/Value",
+      "add key value pair": "Добавить пару Key/Value",
       "aggregation": {
         "description": "Фильтр по методу агрегации",
         "label": "Агрегация"
@@ -715,6 +715,7 @@
         "description": "Фильтр по виду выполнения",
         "label": "Тип"
       },
+      "kv_pair_selected": "{count} Key/Value пар выбрано",
       "label": "Ярлык",
       "labels": {
         "description": "Фильтр по labels",

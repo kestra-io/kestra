@@ -641,8 +641,8 @@
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
     "files": "文件",
     "filter": {
-      "active key value pairs": "活动的key/value对",
-      "add key value pair": "添加key/value对",
+      "active key value pairs": "活动的Key/Value对",
+      "add key value pair": "添加Key/Value对",
       "aggregation": {
         "description": "按聚合方法筛选",
         "label": "聚合"
@@ -715,6 +715,7 @@
         "description": "按执行类型筛选",
         "label": "种类"
       },
+      "kv_pair_selected": "{count} 个 Key/Value 对已选择",
       "label": "标签",
       "labels": {
         "description": "按标签筛选",

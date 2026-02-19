@@ -641,8 +641,8 @@
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
     "files": "ファイル",
     "filter": {
-      "active key value pairs": "アクティブなkey/valueペア",
-      "add key value pair": "キー/バリュー ペアを追加",
+      "active key value pairs": "アクティブなKey/Valueペア",
+      "add key value pair": "キー/Valueペアを追加",
       "aggregation": {
         "description": "集約方法でフィルター",
         "label": "集計"
@@ -715,6 +715,7 @@
         "description": "実行種別でフィルター",
         "label": "種類"
       },
+      "kv_pair_selected": "{count} 個のKey/Valueペアが選択されました",
       "label": "ラベル",
       "labels": {
         "description": "ラベルでフィルター",

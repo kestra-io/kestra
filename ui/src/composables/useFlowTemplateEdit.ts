@@ -3,11 +3,8 @@ import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate"
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils"
 import action from "../models/action"
 import permission from "../models/permission"
-import {pageFromRoute} from "../utils/eventsRouter"
 import {apiUrl} from "override/utils/route"
-import {useApiStore} from "../stores/api"
 import {usePluginsStore} from "../stores/plugins"
-import {useCoreStore} from "../stores/core"
 import {useTemplateStore} from "../stores/template"
 import {useAuthStore} from "override/stores/auth"
 import {useFlowStore} from "../stores/flow"
@@ -17,10 +14,8 @@ type LinkType = {
     query?: Record<string, string>
 }
 
-export function useFlowTemplateEdit(dataType: string, route: any, router: any, toast: any, t: any, http: any, tours: any) {
-    const apiStore = useApiStore()
+export function useFlowTemplateEdit(dataType: string, route: any, router: any, toast: any, t: any, http: any) {
     const pluginsStore = usePluginsStore()
-    const coreStore = useCoreStore()
     const templateStore = useTemplateStore()
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
@@ -28,8 +23,6 @@ export function useFlowTemplateEdit(dataType: string, route: any, router: any, t
     const content = ref("")
     const previousContent = ref("")
     const readOnlyEditFields = ref<Record<string, any>>({})
-
-    const guidedProperties = computed(() => coreStore.guidedProperties)
 
     const isEdit = computed(() => (
         route.name === `${dataType}s/update` &&
@@ -177,20 +170,6 @@ export function useFlowTemplateEdit(dataType: string, route: any, router: any, t
     }
 
     const save = () => {
-        if (tours["guidedTour"]?.isRunning?.value && !guidedProperties.value.saveFlow) {
-            apiStore.events({
-                type: "ONBOARDING",
-                onboarding: {
-                    step: tours["guidedTour"]?.currentStep?._value,
-                    action: "next",
-                    template: guidedProperties.value.template
-                },
-                page: pageFromRoute(router.currentRoute.value)
-            })
-            tours["guidedTour"]?.nextStep()
-            return
-        }
-
         if (item.value) {
             let parsedItem
             try {
@@ -268,7 +247,6 @@ export function useFlowTemplateEdit(dataType: string, route: any, router: any, t
         content,
         previousContent,
         readOnlyEditFields,
-        guidedProperties,
         isEdit,
         canSave,
         canCreate,

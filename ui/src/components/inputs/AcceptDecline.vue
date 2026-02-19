@@ -5,7 +5,7 @@
                 <div class="left-slot" />
                 <el-tooltip effect="light" :content="$t('draft_available')" placement="top">
                     <div class="buttons">
-                        <el-button type="secondary" @click="emit('reject')">
+                        <el-button @click="emit('reject')">
                             {{ $t("reject") }}
                         </el-button>
                         <el-button type="primary" @click="emit('accept')">

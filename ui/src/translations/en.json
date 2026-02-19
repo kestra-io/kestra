@@ -955,7 +955,9 @@
         }
       }
     },
-    "assets": "Assets",
+    "assets": {
+      "title": "Assets"
+    },
     "onboarding": {
       "next": "Next",
       "previous": "Previous",

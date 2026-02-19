@@ -127,7 +127,7 @@ export function useExecutionRoot() {
             {
                 name: "assets",
                 component: DemoAssets,
-                title: t("assets"),
+                title: t("assets.title"),
                 maximized: true,
                 locked: true,
                 props: {

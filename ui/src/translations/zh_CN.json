@@ -1359,6 +1359,133 @@
     "now": "现在",
     "of": "的",
     "ok": "确定",
+    "onboarding": {
+      "actions": {
+        "cancel_tutorial": "取消教程",
+        "complete": "完成",
+        "edit_flow_to_continue": "请在顶部右侧点击“Edit flow”。",
+        "execute_to_continue": "1. 在顶部右侧点击“Execute”。\n2. 为 <strong>name</strong> 提供一个值。\n3. 在弹窗中再次点击“Execute”。",
+        "finish_tutorial": "完成教程",
+        "next": "下一步",
+        "save_to_continue": "请在顶部右侧点击“Save”。"
+      },
+      "cancel_modal": {
+        "confirm": "取消教程",
+        "description": "您确定要取消“第一个 Flow”教程吗？",
+        "keep": "继续教程",
+        "title": "取消“第一个 Flow”教程"
+      },
+      "editor_hints": {
+        "build_intro": "逐步构建您的第一个 Flow。",
+        "step_1": "# 1) 添加 id",
+        "step_2": "# 2) 添加 namespace",
+        "step_3": "# 3) 添加输入参数",
+        "step_4": "# 4) 添加 tasks 并创建第一个 Python 任务",
+        "step_5": "# 5) 添加 Cron 触发器"
+      },
+      "finish_actions": {
+        "create_flow": "创建 Flow",
+        "explore_blueprints": "浏览蓝图"
+      },
+      "steps": {
+        "add_cron_trigger": {
+          "description": "Triggers 可以根据计划或外部事件（例如 Webhook 或 MQTT 消息）启动运行。<br><br>现在添加一个 Cron 计划触发器，使该 Flow 每 5 分钟运行一次。",
+          "title": "添加 Cron 触发器"
+        },
+        "add_id": {
+          "description": "ID 是您的 Flow 的唯一名称，方便您查找、运行和一致地引用它。<br><br>现在在根级别添加 <code>id</code>。",
+          "title": "添加 Flow ID"
+        },
+        "add_input": {
+          "description": "Inputs 是 Flow 级别的参数，可在任务中引用，以在运行时动态控制行为。<br><br>现在添加一个名为 <code>name</code> 且类型为 <code>STRING</code> 的输入参数。",
+          "title": "添加输入参数"
+        },
+        "add_input_default": {
+          "description": "当 Flow 被自动触发时，输入参数仍然需要在运行时提供值。<br><br><code>name</code> 输入已在上一步创建，无需再次添加。只需为现有的 <code>name</code> 输入设置默认值。",
+          "title": "设置输入的默认值"
+        },
+        "add_log_task": {
+          "description": "Tasks 是 Flow 执行的工作单元，定义为按顺序排列的步骤列表。每个任务都需要唯一的 <code>id</code> 和 <code>type</code>。Kestra 提供了许多用于外部系统的任务插件；这里我们使用一个 Python Script 任务。<br><br><code>&#123;&#123; ... &#125;&#125;</code> 语法是 Pebble 表达式，用于在运行时动态引用变量，例如来自 Flow 输入的 <code>&#123;&#123; inputs.name &#125;&#125;</code>。<br><br>现在在 <code>tasks</code> 下添加第一个任务，包括 <code>id</code>、<code>type</code> 和一个输出问候语的 <code>script</code>。",
+          "title": "添加第一个任务"
+        },
+        "add_namespace": {
+          "description": "Namespace 是类似文件夹的分组，用于按团队、项目或环境组织 Flow。<br><br>现在在根级别添加 <code>namespace</code>。",
+          "title": "添加命名空间"
+        },
+        "background_runs_info": {
+          "description": "此 Flow 现在将每 5 分钟在后台执行一次。<br><br>您可以通过左侧菜单进入“Executions”概览页面以监控计划运行。",
+          "title": "计划运行"
+        },
+        "edit_flow_from_execution": {
+          "description": "您可以直接从执行页面跳转回 Flow 定义，以便快速迭代。",
+          "title": "返回 Flow 编辑器"
+        },
+        "execute_flow": {
+          "description": "执行将使用运行时输入值启动一次 Flow 运行。",
+          "title": "执行 Flow"
+        },
+        "finish": {
+          "description": "很好的开始。您已创建、执行、参数化并安排了一个 Flow。<br><br>请选择接下来要执行的操作 ...",
+          "title": "您已完成“第一个 Flow”教程"
+        },
+        "flow_basics": {
+          "description": "在 Kestra 中，<code>flow</code> 是核心的编排单元。您使用 YAML 定义它，包括元数据和按顺序排列的任务。<br><br>请查看下面的示例结构，然后逐步构建它。",
+          "title": "Flow 基础"
+        },
+        "save_flow": {
+          "description": "保存后，您的 Flow 定义将被持久化，以便执行。",
+          "title": "保存 Flow"
+        },
+        "save_flow_again": {
+          "description": "现在您的 Flow 已包含计划任务和自动运行所需的默认输入值。",
+          "title": "保存 Flow"
+        },
+        "view_logs_status": {
+          "description": "执行详情会显示运行状态、耗时以及任务级输出日志。<br><br>现在打开执行详情，并在甘特图中点击 <code>greet</code> 查看日志。",
+          "title": "查看执行情况"
+        }
+      },
+      "validation": {
+        "add_cron_trigger_cron": "添加一个 Cron 表达式，例如：`\"*/5 * * * *\"`。",
+        "add_cron_trigger_section": "创建一个包含计划触发器的 `triggers` 部分。",
+        "add_cron_trigger_type": "将触发器类型设置为 `io.kestra.plugin.core.trigger.Schedule`。",
+        "add_id": "请在顶部添加一个 Flow ID。例如：`id: hello_flow`。",
+        "add_input_default_defaults": "为 `name` 添加默认值，例如：`defaults: \"Kestra\"`。",
+        "add_input_default_id": "保持现有输入 ID 为 `name`。",
+        "add_input_default_section": "返回 `inputs`，保留一个名为 `name` 的现有输入（不要添加第二个输入）。",
+        "add_input_id": "在 `inputs` 中添加 `id: name`。",
+        "add_input_section": "请创建一个包含一个输入参数的 `inputs` 部分。",
+        "add_input_type": "将输入类型设置为 `STRING`。",
+        "add_log_task_id": "为任务设置一个 ID，例如：`id: greet`。",
+        "add_log_task_message": "为任务添加一个 `script` 字段。",
+        "add_log_task_pebble": "在脚本中使用 Pebble 表达式以使用输入值（例如：`inputs.name`）。",
+        "add_log_task_section": "请创建一个 `tasks` 部分并添加第一个任务。",
+        "add_log_task_type": "将任务类型设置为 `io.kestra.plugin.scripts.python.Script`。",
+        "add_namespace": "请在顶部添加一个 namespace。例如：`namespace: company.team`。",
+        "complete_step": "快完成了。请完成此步骤以继续。",
+        "edit_flow_from_execution": "点击顶部栏中的“Edit flow”以继续。",
+        "execute_flow": "请运行一次 Flow 以继续。",
+        "fix_yaml": "YAML 格式存在小问题。请修复后继续。",
+        "save_flow": "点击“Save”以继续。",
+        "save_flow_again": "再次点击“Save”以继续。",
+        "view_logs_status": "打开执行详情并检查 `greet` 的日志。"
+      },
+      "welcome": {
+        "additional_help": "更多帮助",
+        "badge": "教程",
+        "blueprints": "蓝图",
+        "docs": "文档",
+        "guided_description": "通过引导步骤学习如何创建并运行您的第一个 Flow。",
+        "guided_duration": "推荐大多数用户使用",
+        "guided_title": "构建您的第一个 Flow",
+        "headline": "几分钟内构建并运行您的第一个工作流",
+        "self_serve_description": "直接进入编辑器并创建您自己的 Flow。",
+        "self_serve_note": "适合有经验的用户",
+        "self_serve_title": "从零开始创建 Flow",
+        "slack": "Slack 社区",
+        "tutorial": "教程"
+      }
+    },
     "open": "打开",
     "open in new tab": "在新标签页打开",
     "open in same tab": "在同一标签页打开",
@@ -1893,6 +2020,7 @@
         "text": "在我们的Slack社区中提问。如果您遇到困难，我们会帮助您。✋",
         "title": "需要帮助吗？"
       },
+      "menu": "Welcome",
       "tour": {
         "text": "选择您的用例，并按照分步指南学习 Kestra 的功能和能力。❤️",
         "title": "开始产品导览"
@@ -1900,8 +2028,7 @@
       "tutorial": {
         "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">视频教程</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">文档</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
         "title": "教程"
-      },
-      "menu": "Welcome"
+      }
     },
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",
@@ -1915,133 +2042,6 @@
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",
-    "years": "年",
-    "onboarding": {
-      "welcome": {
-        "headline": "几分钟内构建并运行您的第一个工作流",
-        "guided_title": "构建您的第一个 Flow",
-        "badge": "教程",
-        "guided_description": "通过引导步骤学习如何创建并运行您的第一个 Flow。",
-        "guided_duration": "推荐大多数用户使用",
-        "self_serve_title": "从零开始创建 Flow",
-        "self_serve_description": "直接进入编辑器并创建您自己的 Flow。",
-        "self_serve_note": "适合有经验的用户",
-        "additional_help": "更多帮助",
-        "docs": "文档",
-        "tutorial": "教程",
-        "blueprints": "蓝图",
-        "slack": "Slack 社区"
-      },
-      "steps": {
-        "flow_basics": {
-          "title": "Flow 基础",
-          "description": "在 Kestra 中，<code>flow</code> 是核心的编排单元。您使用 YAML 定义它，包括元数据和按顺序排列的任务。<br><br>请查看下面的示例结构，然后逐步构建它。"
-        },
-        "add_id": {
-          "title": "添加 Flow ID",
-          "description": "ID 是您的 Flow 的唯一名称，方便您查找、运行和一致地引用它。<br><br>现在在根级别添加 <code>id</code>。"
-        },
-        "add_namespace": {
-          "title": "添加命名空间",
-          "description": "Namespace 是类似文件夹的分组，用于按团队、项目或环境组织 Flow。<br><br>现在在根级别添加 <code>namespace</code>。"
-        },
-        "add_input": {
-          "title": "添加输入参数",
-          "description": "Inputs 是 Flow 级别的参数，可在任务中引用，以在运行时动态控制行为。<br><br>现在添加一个名为 <code>name</code> 且类型为 <code>STRING</code> 的输入参数。"
-        },
-        "add_log_task": {
-          "title": "添加第一个任务",
-          "description": "Tasks 是 Flow 执行的工作单元，定义为按顺序排列的步骤列表。每个任务都需要唯一的 <code>id</code> 和 <code>type</code>。Kestra 提供了许多用于外部系统的任务插件；这里我们使用一个 Python Script 任务。<br><br><code>&#123;&#123; ... &#125;&#125;</code> 语法是 Pebble 表达式，用于在运行时动态引用变量，例如来自 Flow 输入的 <code>&#123;&#123; inputs.name &#125;&#125;</code>。<br><br>现在在 <code>tasks</code> 下添加第一个任务，包括 <code>id</code>、<code>type</code> 和一个输出问候语的 <code>script</code>。"
-        },
-        "save_flow": {
-          "title": "保存 Flow",
-          "description": "保存后，您的 Flow 定义将被持久化，以便执行。"
-        },
-        "execute_flow": {
-          "title": "执行 Flow",
-          "description": "执行将使用运行时输入值启动一次 Flow 运行。"
-        },
-        "view_logs_status": {
-          "title": "查看执行情况",
-          "description": "执行详情会显示运行状态、耗时以及任务级输出日志。<br><br>现在打开执行详情，并在甘特图中点击 <code>greet</code> 查看日志。"
-        },
-        "edit_flow_from_execution": {
-          "title": "返回 Flow 编辑器",
-          "description": "您可以直接从执行页面跳转回 Flow 定义，以便快速迭代。"
-        },
-        "add_cron_trigger": {
-          "title": "添加 Cron 触发器",
-          "description": "Triggers 可以根据计划或外部事件（例如 Webhook 或 MQTT 消息）启动运行。<br><br>现在添加一个 Cron 计划触发器，使该 Flow 每 5 分钟运行一次。"
-        },
-        "add_input_default": {
-          "title": "设置输入的默认值",
-          "description": "当 Flow 被自动触发时，输入参数仍然需要在运行时提供值。<br><br><code>name</code> 输入已在上一步创建，无需再次添加。只需为现有的 <code>name</code> 输入设置默认值。"
-        },
-        "save_flow_again": {
-          "title": "保存 Flow",
-          "description": "现在您的 Flow 已包含计划任务和自动运行所需的默认输入值。"
-        },
-        "background_runs_info": {
-          "title": "计划运行",
-          "description": "此 Flow 现在将每 5 分钟在后台执行一次。<br><br>您可以通过左侧菜单进入“Executions”概览页面以监控计划运行。"
-        },
-        "finish": {
-          "title": "您已完成“第一个 Flow”教程",
-          "description": "很好的开始。您已创建、执行、参数化并安排了一个 Flow。<br><br>请选择接下来要执行的操作 ..."
-        }
-      },
-      "actions": {
-        "next": "下一步",
-        "complete": "完成",
-        "save_to_continue": "请在顶部右侧点击“Save”。",
-        "execute_to_continue": "1. 在顶部右侧点击“Execute”。\n2. 为 <strong>name</strong> 提供一个值。\n3. 在弹窗中再次点击“Execute”。",
-        "edit_flow_to_continue": "请在顶部右侧点击“Edit flow”。",
-        "cancel_tutorial": "取消教程",
-        "finish_tutorial": "完成教程"
-      },
-      "finish_actions": {
-        "explore_blueprints": "浏览蓝图",
-        "create_flow": "创建 Flow"
-      },
-      "editor_hints": {
-        "build_intro": "逐步构建您的第一个 Flow。",
-        "step_1": "# 1) 添加 id",
-        "step_2": "# 2) 添加 namespace",
-        "step_3": "# 3) 添加输入参数",
-        "step_4": "# 4) 添加 tasks 并创建第一个 Python 任务",
-        "step_5": "# 5) 添加 Cron 触发器"
-      },
-      "cancel_modal": {
-        "title": "取消“第一个 Flow”教程",
-        "description": "您确定要取消“第一个 Flow”教程吗？",
-        "confirm": "取消教程",
-        "keep": "继续教程"
-      },
-      "validation": {
-        "complete_step": "快完成了。请完成此步骤以继续。",
-        "fix_yaml": "YAML 格式存在小问题。请修复后继续。",
-        "add_id": "请在顶部添加一个 Flow ID。例如：`id: hello_flow`。",
-        "add_namespace": "请在顶部添加一个 namespace。例如：`namespace: company.team`。",
-        "add_input_section": "请创建一个包含一个输入参数的 `inputs` 部分。",
-        "add_input_id": "在 `inputs` 中添加 `id: name`。",
-        "add_input_type": "将输入类型设置为 `STRING`。",
-        "add_log_task_section": "请创建一个 `tasks` 部分并添加第一个任务。",
-        "add_log_task_id": "为任务设置一个 ID，例如：`id: greet`。",
-        "add_log_task_type": "将任务类型设置为 `io.kestra.plugin.scripts.python.Script`。",
-        "add_log_task_message": "为任务添加一个 `script` 字段。",
-        "add_log_task_pebble": "在脚本中使用 Pebble 表达式以使用输入值（例如：`inputs.name`）。",
-        "save_flow": "点击“Save”以继续。",
-        "execute_flow": "请运行一次 Flow 以继续。",
-        "view_logs_status": "打开执行详情并检查 `greet` 的日志。",
-        "edit_flow_from_execution": "点击顶部栏中的“Edit flow”以继续。",
-        "add_cron_trigger_section": "创建一个包含计划触发器的 `triggers` 部分。",
-        "add_cron_trigger_type": "将触发器类型设置为 `io.kestra.plugin.core.trigger.Schedule`。",
-        "add_cron_trigger_cron": "添加一个 Cron 表达式，例如：`\"*/5 * * * *\"`。",
-        "add_input_default_section": "返回 `inputs`，保留一个名为 `name` 的现有输入（不要添加第二个输入）。",
-        "add_input_default_id": "保持现有输入 ID 为 `name`。",
-        "add_input_default_defaults": "为 `name` 添加默认值，例如：`defaults: \"Kestra\"`。",
-        "save_flow_again": "再次点击“Save”以继续。"
-      }
-    }
+    "years": "年"
   }
 }

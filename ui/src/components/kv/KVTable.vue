@@ -87,7 +87,7 @@
                         :label="$t('expiration date')"
                     >
                         <template #default="scope">
-                            <DateAgo v-if="scope.row.expirationDate" :date="scope.row.expirationDate" />
+                            <DateAgo v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
                         </template>
                     </el-table-column>
                 </template>
@@ -389,6 +389,11 @@
     const kvs = ref<any[] | undefined>(undefined);
 
     const storageKey = storageKeys.DISPLAY_KV_COLUMNS;
+
+    const TIMEZONE = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const convertToUserTimezone = (date: string | Date) => {
+        return moment.utc(date).tz(TIMEZONE).toDate()
+    }
 
     const optionalColumns = computed(() => {
         const columns = [

@@ -103,7 +103,7 @@ public class AiServiceManager {
 
             if (type.equals("gemini")) {
                 GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
-                return new GeminiAiService(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, provider.displayName(), listeners, geminiConfig);
+                return new GeminiAiService(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig);
             }
             log.warn("Unknown AI type: {}", type);
             return null;

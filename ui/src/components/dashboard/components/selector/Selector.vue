@@ -73,7 +73,6 @@
     import {useDashboardStore} from "../../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
 
-    import {getDashboard} from "../../composables/useDashboards";
 
     import Item from "./Item.vue";
 
@@ -102,20 +101,10 @@
         return [DEFAULT, ...dashboards.value].filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
     });
 
-    const STORAGE_KEY = getDashboard(route, "key");
 
     const selected = ref<string | null>(null);
     const select = (dashboard: any) => {
         selected.value = dashboard?.title;
-
-        if (STORAGE_KEY) {
-            if (dashboard?.id) {
-                localStorage.setItem(STORAGE_KEY, dashboard.id);
-            } else {
-                localStorage.removeItem(STORAGE_KEY);
-            }
-        }
-
         emits("dashboard", dashboard.id);
     };
 
@@ -140,33 +129,18 @@
         });
     };
 
-    const getStoredDashboard = () => STORAGE_KEY ? localStorage.getItem(STORAGE_KEY) : null;
     const fetchDashboards = () => {
         dashboardStore
             .list({})
             .then((response: { results: { id: string; title: string }[] }) => {
                 dashboards.value = response.results;
-
-                const creation = Boolean(route.query.created);
-                const lastSelected = creation
-                    ? (route.params?.dashboard ?? getStoredDashboard())
-                    : (getStoredDashboard() ?? route.params?.dashboard);
-
-                if (lastSelected) {
-                    const dashboard = dashboards.value.find((d) => d.id === lastSelected);
-
-                    if (dashboard) {
-                        selected.value = dashboard.title;
-                        emits("dashboard", dashboard.id);
-                    } else {
-                        selected.value = null;
-                        emits("dashboard", "default");
-                    }
-                }
             });
     };
 
-    onBeforeMount(() => fetchDashboards());
+    onBeforeMount(() => {
+        fetchDashboards();
+        dashboardStore.getDashboardRelatedToThisRoute(route)
+    });
 
     const tenant = ref();
     watch(() => route.params.tenant, (t) => {
@@ -176,14 +150,7 @@
         }
     }, {immediate: true});
 
-    watch(() => route.params?.dashboard, (val) => {
-        if (!val || !STORAGE_KEY) {
-            return;
-        }
-        if(route.name === "home") {
-            localStorage.setItem(STORAGE_KEY, val as string);
-        }
-    }, {immediate: true});
+
 </script>
 
 <style scoped lang="scss">

@@ -24,6 +24,7 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import _throttle from "lodash/throttle";
 import {useCoreStore} from "./core";
 import {useI18n} from "vue-i18n";
+import {RouteLocation, RouteParams} from "vue-router";
 
 
 
@@ -35,6 +36,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
          defaultFlowOverviewDashboard?: string,
          defaultNamespaceOverviewDashboard?: string,
     }>();
+    const computedDashboards = ref<{
+        defaultHomeDashboard: string,
+        defaultFlowOverviewDashboard: string,
+        defaultNamespaceOverviewDashboard: string,
+    }>({defaultHomeDashboard: "default", defaultNamespaceOverviewDashboard: "default", defaultFlowOverviewDashboard: "default"});
     const chartErrors = ref<string[]>([]);
     const isCreating = ref<boolean>(false);
 
@@ -61,7 +67,26 @@ export const useDashboardStore = defineStore("dashboard", () => {
             const response = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`);
             defaultDashboards.value = response.data
         }
+        if(defaultDashboards.value){
+            updateComputedDashboardsFromLoadedDefaults(defaultDashboards.value)
+        }
         return defaultDashboards.value;
+    }
+
+    function updateComputedDashboardsFromLoadedDefaults(loadedDefaults: {
+        defaultHomeDashboard?: string,
+        defaultFlowOverviewDashboard?: string,
+        defaultNamespaceOverviewDashboard?: string,
+    }){
+        if(loadedDefaults.defaultHomeDashboard){
+            computedDashboards.value.defaultHomeDashboard = loadedDefaults.defaultHomeDashboard;
+        }
+        if(loadedDefaults.defaultNamespaceOverviewDashboard){
+            computedDashboards.value.defaultNamespaceOverviewDashboard = loadedDefaults.defaultNamespaceOverviewDashboard;
+        }
+        if(loadedDefaults.defaultFlowOverviewDashboard){
+            computedDashboards.value.defaultFlowOverviewDashboard = loadedDefaults.defaultFlowOverviewDashboard;
+        }
     }
 
     async function saveDefaults(defaultDashboardsRequest: {
@@ -70,12 +95,56 @@ export const useDashboardStore = defineStore("dashboard", () => {
         defaultNamespaceOverviewDashboard?: string,
     }) {
         const loadedDef = await loadDefaults();
-        console.log(loadedDef)
         const def = {...loadedDef, ...defaultDashboardsRequest}
 
         await axios.post(`${apiUrlWithoutTenants()}/tenants/main/settings/default-dashboards`, def, {headers: {"Content-Type": "application/json"}});
         defaultDashboards.value = def
     }
+
+    const STORAGE_KEYS = (params: RouteParams) => {
+        const suffix = params.tenant ? `_${params.tenant}` : "";
+
+        return {
+            DASHBOARD_MAIN: `dashboard_main${suffix}`,
+            DASHBOARD_FLOW: `dashboard_flow${suffix}`,
+            DASHBOARD_NAMESPACE: `dashboard_namespace${suffix}`,
+        };
+    };
+
+
+    const KEY_MAP: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
+        home: "DASHBOARD_MAIN",
+        "flows/update": "DASHBOARD_FLOW",
+        "namespaces/update": "DASHBOARD_NAMESPACE"
+    };
+
+    /**
+     * it can only be the dashboard: on the home, namespace or flow
+     */
+    const getDashboardRelatedToThisRoute = (route: RouteLocation): string | undefined => {
+        if(!route.params["tenant"]){
+            throw new Error("tenant is mandatory in getDashboardRelatedToThisRoute")
+        }
+        if(route.params["tenant"] != "main"){
+            throw new Error("tenant other than main unhandled yet")// TODO
+        }
+
+        /*if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;*/
+
+        const key = KEY_MAP[route.name as string];
+
+        if (!key) return;
+
+        switch (key){
+            case "DASHBOARD_MAIN": return computedDashboards.value.defaultHomeDashboard;
+            case "DASHBOARD_NAMESPACE": return computedDashboards.value.defaultNamespaceOverviewDashboard;
+            case "DASHBOARD_FLOW": return computedDashboards.value.defaultFlowOverviewDashboard;
+        }
+/*
+        const storageKey = STORAGE_KEYS(route.params)[key];
+
+        return localStorage.getItem(storageKey) || "default";*/
+    };
 
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let response
@@ -258,8 +327,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         isCreating,
         selectedChart,
         list,
+        getDashboardRelatedToThisRoute,
         load,
-        loadDefaults,
+        loadDefaults: loadDefaults,
         saveDefaults,
         create,
         update,

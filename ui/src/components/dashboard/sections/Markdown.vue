@@ -9,10 +9,8 @@
 <script setup lang="ts">
     import {PropType, watch, ref} from "vue";
 
-    import type {RouteLocation} from "vue-router";
-
     import type {Chart} from "../composables/useDashboards";
-    import {getDashboard, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
+    import {getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
     import Markdown from "../../layout/Markdown.vue";
     import NoData from "../../layout/NoData.vue";
@@ -25,20 +23,23 @@
     });
 
     const data = ref();
-    const {EMPTY_TEXT, generate} = useChartGenerator(props, false);
 
     import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {useDashboardStore} from "../../../stores/dashboard.ts";
 
-    const getData = async (ID: string) => {
-        if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(ID), "description") ?? EMPTY_TEXT;
+    const route = useRoute();
+    const dashboardStore = useDashboardStore();
+    const dashboardID = dashboardStore.getDashboardRelatedToThisRoute(route);
+    const {EMPTY_TEXT, generate} = useChartGenerator(dashboardID, props, false);
+
+    const getData = async () => {
+        if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(), "description") ?? EMPTY_TEXT;
         else data.value = props.chart.content ?? props.chart.source?.content;
     };
 
-    const dashboardID = (route: RouteLocation) => getDashboard(route, "id")!;
 
     function refresh() {
-        return getData(dashboardID(route));
+        return getData();
     }
 
     defineExpose({

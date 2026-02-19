@@ -17,7 +17,7 @@
     import type {TooltipItem, ChartEvent, ActiveElement, ChartData} from "chart.js";
 
     import NoData from "../../layout/NoData.vue";
-    import {Chart, getDashboard} from "../composables/useDashboards";
+    import {Chart} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
@@ -31,10 +31,12 @@
     import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
     import {FilterObject} from "../../../utils/filters";
+    import {useDashboardStore} from "../../../stores/dashboard.ts";
 
     const router = useRouter();
 
     const route = useRoute();
+    const dashboardStore = useDashboardStore();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
@@ -163,10 +165,11 @@
         return {labels, datasets};
     });
 
-    const {data: generated, generate} = useChartGenerator(props);
+    const dashboardId = dashboardStore.getDashboardRelatedToThisRoute(route)
+    const {data: generated, generate} = useChartGenerator(dashboardId, props);
 
     function refresh() {
-        return generate(getDashboard(route, "id")!);
+        return generate();
     }
 
     defineExpose({

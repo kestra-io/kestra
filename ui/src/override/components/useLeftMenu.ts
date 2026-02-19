@@ -11,7 +11,6 @@ import {useI18n} from "vue-i18n";
 
 import {useMiscStore} from "override/stores/misc";
 
-import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 import {shouldShowWelcome} from "../../utils/welcomeGuard";
 
 // Main icons
@@ -40,6 +39,7 @@ import LockOutline from "vue-material-design-icons/LockOutline.vue";
 import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
 import Battery40 from "vue-material-design-icons/Battery40.vue";
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue";
+import {useDashboardStore} from "../../stores/dashboard.ts";
 
 export type MenuItem = {
     id?: string; // Generated at the end of menu computation
@@ -67,6 +67,7 @@ export function useLeftMenu() {
 
     const configs = useMiscStore().configs;
     const showWelcomeLink = ref(false);
+    const dashboardStore = useDashboardStore();
 
     const loadWelcomeLink = async () => {
         try {
@@ -128,10 +129,10 @@ export function useLeftMenu() {
                 href: {
                     name: "home",
                     params: {
-                        dashboard: getDashboard({
+                        dashboard: dashboardStore.getDashboardRelatedToThisRoute({
                             ...$route,
                             name: "home"
-                        }, "id"),
+                        }),
                     },
                 },
                 icon: {

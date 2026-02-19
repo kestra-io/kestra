@@ -14,15 +14,15 @@
         />
     </section>
 
-    <Sections ref="dashboardComponent" :dashboard :charts :showDefault="dashboard.id === 'default'" :padding="padding" />
+    <Sections ref="dashboardComponent" :dashboard :charts :showDefault="isDashboardBundledWithUI" :padding="padding" />
 </template>
 
 <script setup lang="ts">
     import {computed, onBeforeMount, ref, useTemplateRef, watch} from "vue";
     import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    import type {Dashboard, Chart} from "./composables/useDashboards";
-    import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
+    import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
+    import {processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
@@ -64,9 +64,20 @@
         isNamespace: {type: Boolean, default: false},
     });
 
-    const padding = computed(() => !props.isFlow && !props.isNamespace);
+    const dashboardLocation = computed(() => {
+        if(props.isFlow){
+            return "flow_overview"
+        } else if (props.isNamespace){
+            return "namespace_overview"
+        } else {
+            return "home"
+        }
+    })
+
+    const padding = computed(() => dashboardLocation.value === "home");
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
+    const isDashboardBundledWithUI = ref<boolean>(false);
     const charts = ref<Chart[]>([]);
 
     const loadCharts = async (allCharts: Chart[] = []) => {
@@ -82,13 +93,26 @@
     const refreshCharts = () => {
         dashboardComponent.value?.refreshCharts?.();
     };
+    const getDefaultDashboardBundledInUI = () => {
+        if(props.isFlow){
+            return processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string)
+        } else if(props.isNamespace){
+            return YAML_NAMESPACE;
+        } else {
+            return YAML_MAIN
+        }
+    }
+    const useDefaultDashboardBundledInUI = () => {
+        dashboard.value = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI())}
+        isDashboardBundledWithUI.value = true;
+    }
 
-    const load = async (id = "default", defaultYAML = YAML_MAIN) => {
+    const load = async (id = "default") => {
         if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
             return;
         }
 
-        if (!props.isFlow && !props.isNamespace) {
+        if (dashboardLocation.value === "home") {
             // Preserve timeRange filter when switching dashboards
             const preservedQuery = Object.fromEntries(
                 Object.entries(route.query).filter(([key]) =>
@@ -104,46 +128,41 @@
                 return;
             }
         }
+        isDashboardBundledWithUI.value = false;
         if (id === "default") {
+            // if requested dashboard is the default one, we first try to find if there is any configured in the DB by an admin
             const defaults = await dashboardStore.loadDefaults();
-            if(props.isFlow){
-                id = defaults?.defaultFlowOverviewDashboard ?? id;
-            } else if(props.isNamespace){
-                id = defaults?.defaultNamespaceOverviewDashboard ?? id;
-            } else {
-                id = defaults?.defaultHomeDashboard ?? id;
+            switch (dashboardLocation.value){
+            case "home": id = defaults?.defaultHomeDashboard ?? id; break;
+            case "namespace_overview": id = defaults?.defaultNamespaceOverviewDashboard ?? id; break;
+            case "flow_overview": id = defaults?.defaultFlowOverviewDashboard ?? id; break;
             }
         }
         if (id === "default") {
-            dashboard.value = {id, charts: [], ...parse(defaultYAML)};
+            // we are in the case we will load the defaults bundled in the UI
+            useDefaultDashboardBundledInUI();
         } else {
+            // case a default dashboard exists in the DB, try to load it
             const maybeDashboard = await dashboardStore.load(id);
-            console.warn(`dashboard ${id} not found`)
-            dashboard.value = maybeDashboard ?? {id, charts: [], ...parse(defaultYAML)}
+            if(maybeDashboard){
+                dashboard.value = maybeDashboard
+            } else {
+                console.warn(`default dashboard ${id} configured in the DB was not found`)
+                useDefaultDashboardBundledInUI();
+            }
+
         }
         loadCharts(dashboard.value.charts);
     };
 
     onBeforeMount(() => {
-        const ID = getDashboard(route, "id");
-
-        if (props.isFlow) {
-            load(ID, processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
-        } else if (props.isNamespace) {
-            load(ID, YAML_NAMESPACE);
-        } else {
-            load(ID, YAML_MAIN);
-        }
+        const ID = dashboardStore.getDashboardRelatedToThisRoute(route);
+        load(ID)
     });
 
-    watch(() => getDashboard(route, "id"), (newId, oldId) => {
+    watch(() => dashboardStore.getDashboardRelatedToThisRoute(route), (newId, oldId) => {
         if (newId !== oldId) {
-            const defaultYAML = props.isFlow
-                ? processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string)
-                : props.isNamespace
-                    ? YAML_NAMESPACE
-                    : YAML_MAIN;
-            load(newId, defaultYAML);
+            load(newId);
         }
     });
 </script>

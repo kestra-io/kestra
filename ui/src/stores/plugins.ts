@@ -73,10 +73,7 @@ function usePluginsIcons() {
         });
 
         const iconsPromise =
-            axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
-                pluginsIcons.value = response.data ?? {};
-                return pluginsIcons.value;
-            });
+            Promise.resolve({})
 
         _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
             iconsLoaded.value = true;

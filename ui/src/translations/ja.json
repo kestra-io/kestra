@@ -505,7 +505,7 @@
         "title": "まだKill Switchがありません！"
       },
       "panels": {
-        "content": "FlowコードまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Context）を選択してください。",
+        "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
         "title": "現在、パネルは開いていません。"
       },
       "pluginDefaults": {

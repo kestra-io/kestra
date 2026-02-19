@@ -505,7 +505,7 @@
         "title": "У вас еще нет Kill Switches!"
       },
       "panels": {
-        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Context) для связанных функций.",
+        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Namespace Files, Blueprints, Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
       },
       "pluginDefaults": {

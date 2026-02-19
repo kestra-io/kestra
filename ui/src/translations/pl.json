@@ -505,7 +505,7 @@
         "title": "Nie masz jeszcze Kill Switches!"
       },
       "panels": {
-        "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flow, lub wybierz inny panel (Topology, Documentation, Files, Blueprints, Context) dla powiązanych funkcji.",
+        "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Namespace Files, Blueprints, Context) dla powiązanych funkcji.",
         "title": "Obecnie żadne panele nie są otwarte."
       },
       "pluginDefaults": {

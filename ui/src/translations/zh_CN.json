@@ -505,7 +505,7 @@
         "title": "您还没有 Kill Switches！"
       },
       "panels": {
-        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、上下文）以获取相关功能。",
+        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace Files、Blueprints、上下文）以获取相关功能。",
         "title": "当前没有打开的面板。"
       },
       "pluginDefaults": {

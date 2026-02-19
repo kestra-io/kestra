@@ -68,6 +68,7 @@
     const newValue = ref("");
     const detailPairs = ref<Array<{ key: string; value: string }>>([]);
 
+    // For Auditlogs Details KV pairs parsing and serialization
     const parseDetailPairs = (values: string[]) =>
         values?.map(value => {
             const [key, ...valueParts] = value?.split(":") ?? [];

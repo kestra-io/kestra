@@ -5,6 +5,7 @@ plugins {
 node {
     download = true
     version = '22.12.0'
+    npmInstallCommand = "ci"
 }
 
 tasks.register('assembleFrontend', NpmTask) {

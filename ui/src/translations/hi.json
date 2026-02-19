@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "ऐप ब्लॉक्स",
     "apps": "ऐप्स",
-    "assets": "संपत्तियाँ",
+    "assets": {
+      "title": "संपत्तियाँ"
+    },
     "attempt": "प्रयास",
     "attempts": "प्रयास",
     "auditlogs": "Audit Logs",

@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "Blocchi App",
     "apps": "Applicazioni",
-    "assets": "Risorse",
+    "assets": {
+      "title": "Risorse"
+    },
     "attempt": "Tentativo",
     "attempts": "Tentativi",
     "auditlogs": "Audit Logs",

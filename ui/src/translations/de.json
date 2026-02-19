@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
-    "assets": "Vermögenswerte",
+    "assets": {
+      "title": "Vermögenswerte"
+    },
     "attempt": "Versuch",
     "attempts": "Versuch(e)",
     "auditlogs": "Audit Logs",

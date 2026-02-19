@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "应用模块",
     "apps": "应用程序",
-    "assets": "资产",
+    "assets": {
+      "title": "资产"
+    },
     "attempt": "尝试",
     "attempts": "尝试",
     "auditlogs": "审计日志",

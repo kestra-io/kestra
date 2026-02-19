@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "Bloques de la App",
     "apps": "Aplicaciones",
-    "assets": "Activos",
+    "assets": {
+      "title": "Activos"
+    },
     "attempt": "Intento",
     "attempts": "Intento(s)",
     "auditlogs": "Audit Logs",

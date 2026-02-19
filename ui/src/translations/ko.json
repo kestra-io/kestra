@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
-    "assets": "자산",
+    "assets": {
+      "title": "자산"
+    },
     "attempt": "시도",
     "attempts": "시도 횟수",
     "auditlogs": "감사 Logs",

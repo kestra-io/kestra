@@ -400,7 +400,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     .exec();
 
                 if (!existing.isEmpty()) {
-                    containerId = existing.get(0).getId();
+                    containerId = existing.getFirst().getId();
+                    containerIdRef.set(containerId);
                     logger.debug("Resuming existing container: {}", containerId);
                 }
             }

@@ -9,7 +9,7 @@ import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
-import {client} from "../generated/kestra-api/client.gen"
+import {client} from "kestra-api/client.gen"
 
 let pendingRoute = false
 let requestsTotal = 0

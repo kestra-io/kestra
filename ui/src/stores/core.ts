@@ -6,22 +6,9 @@ import {Message} from "../components/ErrorToast.vue";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
 import {Flow} from "./flow";
 
-interface GuidedProperties {
-    tourStarted: boolean;
-    manuallyContinue: boolean;
-    template: any;
-    saveFlow?: boolean;
-    glowExecuteButton?: boolean;
-}
-
 export const useCoreStore = defineStore("core", () => {
     const message = ref<Message>()
     const error = ref<any>()
-    const guidedProperties = ref<GuidedProperties>({
-        tourStarted: false,
-        manuallyContinue: false,
-        template: undefined,
-    })
     const monacoYamlConfigured = ref(false)
     const tutorialFlows = ref<Flow[]>([])
 
@@ -36,7 +23,6 @@ export const useCoreStore = defineStore("core", () => {
     return {
         message,
         error,
-        guidedProperties,
         monacoYamlConfigured,
         tutorialFlows,
         readTutorialFlows,

@@ -505,7 +505,7 @@
         "title": "Non hai ancora Kill Switch!"
       },
       "panels": {
-        "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Files, Blueprints, Context) per funzionalità correlate.",
+        "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Namespace Files, Blueprints, Context) per funzionalità correlate.",
         "title": "Nessun pannello è attualmente aperto."
       },
       "pluginDefaults": {
@@ -642,7 +642,7 @@
     "files": "File",
     "filter": {
       "active key value pairs": "Coppie chiave/valore attive",
-      "add key value pair": "Aggiungi coppia key/value",
+      "add key value pair": "Aggiungi coppia Key/Value",
       "aggregation": {
         "description": "Filtra per metodo di aggregazione",
         "label": "Aggregazione"
@@ -715,6 +715,7 @@
         "description": "Filtra per tipo di esecuzione",
         "label": "Tipo"
       },
+      "kv_pair_selected": "{count} coppie di Key/Value selezionate",
       "label": "Etichetta",
       "labels": {
         "description": "Filtra per label",

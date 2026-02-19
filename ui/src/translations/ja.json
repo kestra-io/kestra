@@ -505,7 +505,7 @@
         "title": "まだKill Switchがありません！"
       },
       "panels": {
-        "content": "FlowコードまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Context）を選択してください。",
+        "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
         "title": "現在、パネルは開いていません。"
       },
       "pluginDefaults": {
@@ -641,8 +641,8 @@
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
     "files": "ファイル",
     "filter": {
-      "active key value pairs": "アクティブなkey/valueペア",
-      "add key value pair": "キー/バリュー ペアを追加",
+      "active key value pairs": "アクティブなKey/Valueペア",
+      "add key value pair": "キー/Valueペアを追加",
       "aggregation": {
         "description": "集約方法でフィルター",
         "label": "集計"
@@ -715,6 +715,7 @@
         "description": "実行種別でフィルター",
         "label": "種類"
       },
+      "kv_pair_selected": "{count} 個のKey/Valueペアが選択されました",
       "label": "ラベル",
       "labels": {
         "description": "ラベルでフィルター",

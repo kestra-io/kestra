@@ -954,7 +954,9 @@
         }
       }
     },
-    "assets": "Assets",
+    "assets": {
+      "title": "Assets"
+    },
     "onboarding": {
       "welcome": {
         "headline": "Build and run your first workflow in minutes",

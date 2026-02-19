@@ -78,7 +78,11 @@
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('last modified')"
-                    />
+                    >
+                        <template #default="scope">
+                            <DateAgo :date="convertToUserTimezone(scope.row.updateDate)" inverted />
+                        </template>
+                    </el-table-column>
                     <el-table-column
                         v-else-if="colProp === 'expirationDate' && !paneView"
                         prop="expirationDate"

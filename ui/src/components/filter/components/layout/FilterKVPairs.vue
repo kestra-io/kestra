@@ -50,10 +50,6 @@
                 {{ $t('add') }}
             </el-button>
         </div>
-
-        <div class="filter-counter">
-            {{ detailPairs.length }} {{ detailPairs.length === 1 ? $t('label') : $t('labels') }}
-        </div>
     </div>
 </template>
 
@@ -74,7 +70,6 @@
     const newValue = ref("");
     const detailPairs = ref<Array<{ key: string; value: string }>>([]);
 
-    // For Auditlogs Details KV pairs parsing and serialization
     const parseDetailPairs = (values: string[]) =>
         values?.map(value => {
             const [key, ...valueParts] = value?.split(":") ?? [];
@@ -196,15 +191,6 @@
         width: 100%;
         margin-top: 12px;
     }
-}
-
-.filter-counter {
-    padding: 0.75rem 1rem;
-    border-top: 1px solid var(--ks-border-primary);
-    color: var(--ks-content-secondary);
-    font-size: 12px;
-    font-weight: 500;
-    text-align: center;
 }
 
 :deep(.el-input__inner) {

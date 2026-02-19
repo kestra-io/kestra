@@ -184,10 +184,12 @@
         if (isTextOp.value) return state.textValue ?? "";
 
         if (isKVPairFilter.value) {
-            const label = props.filterKey?.label || "key/value";
-            return state.keyValuePair.length > 1
-                ? `${state.keyValuePair.length} ${label} pairs`
-                : state.keyValuePair[0] ?? "";
+            const count = state.keyValuePair.length;
+            if (props.filterKey?.key === "labels") {
+                return count === 1 ? "1 Label" : `${count} Labels`;
+            }
+            const label = props.filterKey?.label || "pair";
+            return count === 1 ? `1 ${label}` : `${count} ${label}s`;
         }
 
         switch (props.filterKey?.valueType) {
@@ -205,7 +207,6 @@
             return "";
         }
     });
-
     const resetState = () => {
         const defaultFilter = filterContext?.hasPreApplied(props.filterKey.key) 
             ? filterContext?.getPreApplied(props.filterKey.key) 

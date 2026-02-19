@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, nextTick, onBeforeUnmount, computed} from "vue";
+    import {ref, watch, nextTick, onBeforeUnmount, onMounted, computed} from "vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import * as Markdown from "../../utils/markdown";
 
@@ -41,6 +41,7 @@
             showSearch?: boolean;
             collapseExamples?: boolean;
             variant?: "default" | "enhanced";
+            showCopyButtons?: boolean;
         }>(),
         {
             source: "",
@@ -50,6 +51,7 @@
             showSearch: false, // good default for OSS docs
             collapseExamples: false,
             variant: "enhanced",
+            showCopyButtons: true,
         }
     );
 
@@ -61,6 +63,8 @@
     const markdownContainer = ref<HTMLElement | null>(null);
     const cleanups: Array<() => void> = [];
     const hasMatchesRef = ref(true);
+    let themeObserver: MutationObserver | null = null;
+    let isDarkTheme = false;
 
     /**
      * Derived values
@@ -85,6 +89,27 @@
 
     onBeforeUnmount(() => {
         cleanupEnhancements();
+        themeObserver?.disconnect();
+        themeObserver = null;
+    });
+
+    onMounted(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        const html = document.documentElement;
+        isDarkTheme = html.classList.contains("dark");
+        themeObserver = new MutationObserver((mutations) => {
+            if (mutations.some((mutation) => mutation.type === "attributes" && mutation.attributeName === "class")) {
+                const nextIsDarkTheme = html.classList.contains("dark");
+                if (nextIsDarkTheme !== isDarkTheme) {
+                    isDarkTheme = nextIsDarkTheme;
+                    void renderMarkdown();
+                }
+            }
+        });
+        themeObserver.observe(html, {attributes: true, attributeFilter: ["class"]});
     });
 
     /**
@@ -100,6 +125,7 @@
             permalink: props.permalink,
             html: props.html,
             variant: props.variant,
+            showCopyButtons: props.showCopyButtons,
         });
 
         await nextTick();

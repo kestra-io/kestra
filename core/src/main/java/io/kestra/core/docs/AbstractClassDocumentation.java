@@ -90,7 +90,6 @@ public abstract class AbstractClassDocumentation<T> {
 
         if (this.propertiesSchema.containsKey("properties")) {
             this.inputs = flattenWithoutType(properties(this.propertiesSchema), required(this.propertiesSchema));
-        required(this.propertiesSchema));
         }
     }
 

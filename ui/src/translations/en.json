@@ -1240,7 +1240,7 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
-    "files": "Files",
+    "files": "Namespace Files",
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "bookmark": "Bookmarks",
@@ -1544,7 +1544,7 @@
       },
       "panels": {
         "title": "No panels are currently open.",
-        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Files, Blueprints, Context) for related features."
+        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Namespace Files, Blueprints, Context) for related features."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",

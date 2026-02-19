@@ -1,4 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
+import io.kestra.core.runners.VariableRenderer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -89,7 +90,7 @@ public class SecretFunction implements Function {
                 log.warn("Unable to get secret consumer", e);
             }
 
-            return secret;
+            return VariableRenderer.SECRET_START + secret + VariableRenderer.SECRET_END;
         } catch (SecretException | IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }

@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 
 @Singleton
 public class VariableRenderer {
+    public static final String SECRET_START = "___SECRET_START___";
+    public static final String SECRET_END = "___SECRET_END___";
+    private static final Pattern SECRET_PATTERN = Pattern.compile("(" + SECRET_START + "(.*?)" + SECRET_END + ")");
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
@@ -71,7 +74,7 @@ public class VariableRenderer {
 
         if (inline instanceof String inlineStr && inlineStr.indexOf('{') == -1) {
             // it's not a Pebble template so we short-circuit rendering
-            return inline;
+            return SECRET_PATTERN.matcher(inlineStr).replaceAll("$2");
         }
 
         Object render = recursive
@@ -79,7 +82,8 @@ public class VariableRenderer {
             : renderOnce(inline, variables, stringify);
 
         if (render instanceof String renderStr) {
-            return RAW_PATTERN.matcher(renderStr).replaceAll("$2");
+            String res = RAW_PATTERN.matcher(renderStr).replaceAll("$2");
+            return SECRET_PATTERN.matcher(res).replaceAll("$2");
         }
 
         return render;
@@ -93,6 +97,9 @@ public class VariableRenderer {
             Matcher rawMatcher = RAW_PATTERN.matcher(inlineStr);
             replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
             result = replaceRawTags(rawMatcher, replacers);
+
+            Matcher secretMatcher = SECRET_PATTERN.matcher((String) result);
+            result = replaceRawTags(secretMatcher, replacers);
         }
 
         try {

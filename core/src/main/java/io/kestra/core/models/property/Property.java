@@ -83,7 +83,7 @@ public class Property<T> {
         }
     }
 
-    String getExpression() {
+    public String getExpression() {
         return expression;
     }
 

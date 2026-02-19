@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
@@ -77,6 +78,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -680,7 +682,7 @@ class ExecutionControllerRunnerTest {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, null);
+        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, (BiFunction<FlowInterface, Execution, Map<String, Object>>) null);
 
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -741,7 +743,7 @@ class ExecutionControllerRunnerTest {
         final String flowId = "restart_pause_last_failed";
 
         // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, null);
+        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, (BiFunction<FlowInterface, Execution, Map<String, Object>>) null);
 
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

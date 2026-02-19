@@ -104,8 +104,23 @@
                 return;
             }
         }
-
-        dashboard.value = id === "default" ? {id, charts: [], ...parse(defaultYAML)} : await dashboardStore.load(id);
+        if (id === "default") {
+            const defaults = await dashboardStore.loadDefaults();
+            if(props.isFlow){
+                id = defaults?.defaultFlowOverviewDashboard ?? id;
+            } else if(props.isNamespace){
+                id = defaults?.defaultNamespaceOverviewDashboard ?? id;
+            } else {
+                id = defaults?.defaultHomeDashboard ?? id;
+            }
+        }
+        if (id === "default") {
+            dashboard.value = {id, charts: [], ...parse(defaultYAML)};
+        } else {
+            const maybeDashboard = await dashboardStore.load(id);
+            console.warn(`dashboard ${id} not found`)
+            dashboard.value = maybeDashboard ?? {id, charts: [], ...parse(defaultYAML)}
+        }
         loadCharts(dashboard.value.charts);
     };
 

@@ -13,7 +13,7 @@ const downloadHandler = (response: AxiosResponse, filename: string) => {
     Utils.downloadUrl(url, `${filename}.csv`);
 };
 
-import {apiUrl} from "override/utils/route";
+import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 
 import Utils from "../utils/utils";
 
@@ -30,6 +30,11 @@ import {useI18n} from "vue-i18n";
 export const useDashboardStore = defineStore("dashboard", () => {
     const selectedChart = ref<Chart>();
     const dashboard = ref<Dashboard>();
+    const defaultDashboards = ref<{
+         defaultHomeDashboard?: string,
+         defaultFlowOverviewDashboard?: string,
+         defaultNamespaceOverviewDashboard?: string,
+    }>();
     const chartErrors = ref<string[]>([]);
     const isCreating = ref<boolean>(false);
 
@@ -51,8 +56,34 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return response.data;
     }
 
-    async function load(id: Dashboard["id"]) {
-        const response = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
+    async function loadDefaults() {
+        if(!defaultDashboards.value){
+            const response = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`);
+            defaultDashboards.value = response.data
+        }
+        return defaultDashboards.value;
+    }
+
+    async function saveDefaults(defaultDashboardsRequest: {
+        defaultHomeDashboard?: string,
+        defaultFlowOverviewDashboard?: string,
+        defaultNamespaceOverviewDashboard?: string,
+    }) {
+        const loadedDef = await loadDefaults();
+        console.log(loadedDef)
+        const def = {...loadedDef, ...defaultDashboardsRequest}
+
+        await axios.post(`${apiUrlWithoutTenants()}/tenants/main/settings/default-dashboards`, def, {headers: {"Content-Type": "application/json"}});
+        defaultDashboards.value = def
+    }
+
+    async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
+        let response
+        try{
+            response = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
+        } catch {
+            return undefined
+        }
         let dashboardLoaded: Dashboard;
 
         if (response.status === 200) dashboardLoaded = response.data;
@@ -166,7 +197,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             raw: {}
         };
         const errors = await validateChart(yamlChart);
-        
+
         if (errors.constraints) {
             result.error = errors.constraints;
         } else {
@@ -228,6 +259,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         selectedChart,
         list,
         load,
+        loadDefaults,
+        saveDefaults,
         create,
         update,
         delete: deleteDashboard,

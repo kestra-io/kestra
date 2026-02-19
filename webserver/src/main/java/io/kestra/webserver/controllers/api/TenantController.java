@@ -1,59 +1,82 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.webserver.models.ai.DashboardGenerationPrompt;
-import io.kestra.webserver.models.ai.FlowGenerationPrompt;
-import io.kestra.webserver.services.ai.AiServiceInterface;
-import io.kestra.webserver.services.ai.AiServiceManager;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.http.HttpRequest;
+import io.kestra.core.exceptions.ConflictException;
+import io.kestra.core.models.Setting;
+import io.kestra.core.models.settings.DashboardSettings;
+import io.kestra.core.repositories.DashboardRepositoryInterface;
+import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.tenant.TenantService;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.*;
-import io.micronaut.http.server.util.HttpClientAddressResolver;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Validated
 @Controller("/api/v1/tenants/main")
 public class TenantController {
     @Inject
-    protected HttpClientAddressResolver httpClientAddressResolver;
+    private TenantService tenantService;
+    @Inject
+    private DashboardRepositoryInterface dashboardRepository;
+    @Inject
+    private SettingRepositoryInterface settingRepository;
+
+    public record SetTenantDefaultDashboardsRequest(
+        String defaultHomeDashboard,
+        String defaultFlowOverviewDashboard,
+        String defaultNamespaceOverviewDashboard) {
+    }
+
+    public static final String OSS_DASHBOARD_SETTINGS = "kestra.oss.dashboard-settings";
 
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Tenants"}, summary = "Make this dashboard the default for the entire tenant")
-    @Post(uri = "/{id}/default-dashboard")
+    @Post(uri = "/settings/default-dashboards")
     public HttpResponse<Void> setTenantDefaultDashboard(
-        @Parameter(description = "The tenant id") @PathVariable String id,
-        @Parameter() @Body @Valid SetTenantDefaultDashboardRequest request
+        @Parameter() @Body @Valid SetTenantDefaultDashboardsRequest request
     ) {
-        Tenant tenant = tenantRepository.findById(id).orElse(null);
-        if (tenant == null) {
-            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        var tenantId = tenantService.resolveTenant();
+
+        if(request.defaultHomeDashboard() != null){
+            dashboardRepository.get(tenantId, request.defaultHomeDashboard())
+                .orElseThrow(() -> new ConflictException("Dashboard with id '" + request.defaultHomeDashboard() + "' does not exist"));
         }
-        Optional<Dashboard> existingDashboard = dashboardRepository.get(id, request.dashboardId());
-        if (existingDashboard.isEmpty()) {
-            return HttpResponse.status(HttpStatus.CONFLICT, "Dashboard with id '" + request.dashboardId() + "' does not exist");
+        if(request.defaultFlowOverviewDashboard() != null){
+            dashboardRepository.get(tenantId, request.defaultFlowOverviewDashboard())
+                .orElseThrow(() -> new ConflictException("Dashboard with id '" + request.defaultFlowOverviewDashboard() + "' does not exist"));
+        }
+        if(request.defaultNamespaceOverviewDashboard() != null){
+            dashboardRepository.get(tenantId, request.defaultNamespaceOverviewDashboard())
+                .orElseThrow(() -> new ConflictException("Dashboard with id '" + request.defaultNamespaceOverviewDashboard() + "' does not exist"));
         }
 
-        Tenant updated = tenant
-            .toBuilder()
-            .dashboardConfig(new Tenant.DashboardConfig(request.dashboardId()))
-            .build();
-        tenantRepository.update(updated, tenant);
+        var dashboardSettings = settingRepository.findByKey(OSS_DASHBOARD_SETTINGS)
+            .map(Setting::getValue)
+            .map(value -> JacksonMapper.ofJson(false).convertValue(value, DashboardSettings.class))
+            .orElse(new DashboardSettings());
+
+
+        settingRepository.save(Setting.builder()
+            .key(OSS_DASHBOARD_SETTINGS).value(
+                dashboardSettings.toBuilder()
+                    .defaultHomeDashboard(request.defaultHomeDashboard())
+                    .defaultFlowOverviewDashboard(request.defaultFlowOverviewDashboard())
+                    .defaultNamespaceOverviewDashboard(request.defaultNamespaceOverviewDashboard())
+                    .build()
+            ).build());
+
         return HttpResponse.ok();
     }
 

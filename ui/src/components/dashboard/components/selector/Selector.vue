@@ -24,6 +24,7 @@
                         title: selected ?? $t('dashboards.default')
                     }"
                     :edit="edit"
+                    :setAsDefault="setAsTenantDefault"
                     class="mt-3"
                 />
 
@@ -44,6 +45,7 @@
                         :dashboard
                         :edit="edit"
                         :remove="remove"
+                        :setAsDefault="setAsTenantDefault"
                         @click="select(dashboard)"
                     />
                     <span v-if="!filtered.length" class="empty">
@@ -84,9 +86,10 @@
 
     const emits = defineEmits(["dashboard"]);
 
+    const rootName = computed(() => ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home")
     const query = computed(() => {
         return {
-            name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
+            name: rootName.value,
             params: JSON.stringify({...route.params, dashboard: undefined}),
         };
     });
@@ -100,7 +103,7 @@
     });
 
     const STORAGE_KEY = getDashboard(route, "key");
-    
+
     const selected = ref<string | null>(null);
     const select = (dashboard: any) => {
         selected.value = dashboard?.title;
@@ -116,11 +119,19 @@
         emits("dashboard", dashboard.id);
     };
 
+    const setAsTenantDefault = (id: string) => {
+        switch (rootName.value){
+        case "flows/update": dashboardStore.saveDefaults({defaultFlowOverviewDashboard: id}); break;
+        case "namespaces/update": dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break;
+        default: dashboardStore.saveDefaults({defaultHomeDashboard: id});
+        }
+    };
+
     const edit = (id: string) => {
         router.push({name: "dashboards/update", params: {dashboard: id}});
     };
 
-    const remove = (dashboard: any) => {
+    const remove = (dashboard: {title: string, id: string}) => {
         toast.confirm(t("dashboards.deletion.confirmation", {title: dashboard.title}), () => {
             return dashboardStore.delete(dashboard.id).then(() => {
                 dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
@@ -137,8 +148,8 @@
                 dashboards.value = response.results;
 
                 const creation = Boolean(route.query.created);
-                const lastSelected = creation 
-                    ? (route.params?.dashboard ?? getStoredDashboard()) 
+                const lastSelected = creation
+                    ? (route.params?.dashboard ?? getStoredDashboard())
                     : (getStoredDashboard() ?? route.params?.dashboard);
 
                 if (lastSelected) {

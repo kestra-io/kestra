@@ -1,5 +1,7 @@
 package io.kestra.webserver.services.ai;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
@@ -93,8 +95,11 @@ public class AiServiceManager {
         }
 
         try {
+            ObjectMapper mapper = JacksonMapper.ofJson().copy()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
             if (type.equals("gemini")) {
-                GeminiConfiguration geminiConfig = JacksonMapper.ofJson().convertValue(configMap, GeminiConfiguration.class);
+                GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
                 return new GeminiAiService(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, provider.displayName(), listeners, geminiConfig);
             }
             log.warn("Unknown AI type: {}", type);

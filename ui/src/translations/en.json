@@ -479,9 +479,7 @@
     "cancel": "Cancel",
     "errorLogs": "Errors logs",
     "welcome_page": {
-      "wel_text": "Welcome!",
       "welcome": "Welcome to Kestra",
-      "start": "Let's get your first workflow up and running.",
       "guide": "Need guidance to execute your first flow?"
     },
     "product_tour": "Product Tour",
@@ -540,18 +538,6 @@
     "dependencies delete flow": "This flow has dependencies. Deleting it will prevent their dependencies to be executed.<br /><br /> Here is the list of affected flows:",
     "expand dependencies": "Expand dependencies",
     "reset": "Restart",
-    "Reset guided tour": "Restart Guided Tour",
-    "Skip tour": "Skip tour",
-    "Skip tutorial": "Skip Tutorial",
-    "Next step": "Next step",
-    "Previous step": "Previous step",
-    "Finish": "Finish",
-    "Step": "Step",
-    "welcome aboard": "\uD83D\uDE80 Welcome to Kestra!",
-    "welcome aboard content": "Use our Guided Tour to create your first flow and check Blueprints to find more examples.",
-    "welcome display require": "Run your <strong>first flow</strong> to get started",
-    "welcome button create": "Start Product Tour",
-    "live help": "Live help",
     "show task documentation": "Show task documentation",
     "hide task documentation": "Hide task documentation",
     "show task documentation in editor": "Show task documentation in the editor",
@@ -802,6 +788,7 @@
     "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
     "originalCreatedDate": "Original creation date",
     "welcome": {
+      "menu": "Welcome",
       "tour": {
         "title": "Take a product tour",
         "text": "Choose your use case and follow a step-by-step guide to learn Kestra's features and capabilities. ❤️"
@@ -969,45 +956,130 @@
     },
     "assets": "Assets",
     "onboarding": {
-      "next": "Next",
-      "previous": "Previous",
-      "finish": "Finish",
-      "skip": "Skip Product Tour",
-      "no_flows": "No flows available under tutorial namespace.",
+      "welcome": {
+        "headline": "Build and run your first workflow in minutes",
+        "guided_title": "Build your first flow",
+        "badge": "Tutorial",
+        "guided_description": "Learn how to create and run your first flow with guided steps.",
+        "guided_duration": "Recommended for most",
+        "self_serve_title": "Create flow from scratch",
+        "self_serve_description": "Go directly to the editor and build your own flow.",
+        "self_serve_note": "For experienced users",
+        "additional_help": "Additional help",
+        "docs": "Documentation",
+        "tutorial": "Tutorial",
+        "blueprints": "Blueprints",
+        "slack": "Slack community"
+      },
       "steps": {
-        "0": {
-          "title": "Welcome to Kestra!",
-          "content": "We're thrilled to have you here.<br />Let's create your first flow.",
-          "primary": "Let's go!"
+        "flow_basics": {
+          "title": "Flow basics",
+          "description": "In Kestra, a <code>flow</code> is the core orchestration unit. You define it in YAML with metadata and ordered tasks.<br><br>Review the example structure below, then continue to build it step by step."
         },
-        "1": {
-          "title": "Choose a use-case<br />and we'll show you how it's done!",
-          "primary": "Next"
+        "add_id": {
+          "title": "Add flow id",
+          "description": "The ID is the unique name of your flow, so you can find it, run it, and reference it consistently.<br><br>Now add <code>id</code> at the root level."
         },
-        "2": {
-          "title": "Code Editor",
-          "content": "Your flow is written in YAML with autocompletion and syntax validation. So simple!",
-          "primary": "Next"
+        "add_namespace": {
+          "title": "Add namespace",
+          "description": "The Namespace is the folder-like grouping that organizes flows by team, project, or environment.<br><br>Now add <code>namespace</code> at the root level."
         },
-        "3": {
-          "title": "Topology View",
-          "content": "The dependency view is updating in real time. Try adding a new task and see!",
-          "primary": "Next"
+        "add_input": {
+          "title": "Add an input",
+          "description": "Inputs are flow-level parameters that can be referenced inside tasks to dynamically control behavior at runtime.<br><br>Now add an input named <code>name</code> with type <code>STRING</code>."
         },
-        "4": {
-          "title": "It's time to run it.",
-          "content": "\"Execute\" to launch your flow."
+        "add_log_task": {
+          "title": "Add first task",
+          "description": "Tasks are the units of work your flow executes, defined as an ordered list of steps. Each task needs a unique <code>id</code> and a <code>type</code>. Kestra provides many task plugins for external systems; here we use a Python Script task.<br><br>The <code>&#123;&#123; ... &#125;&#125;</code> syntax is a Pebble expression, used to reference variables dynamically at runtime, like <code>&#123;&#123; inputs.name &#125;&#125;</code> from your flow inputs.<br><br>Now add the first task under <code>tasks</code> with <code>id</code>, <code>type</code>, and a <code>script</code> that prints a greeting."
         },
-        "5": {
-          "title": "Confirm and launch!",
-          "content": "\"Execute\" and see your flow in action."
+        "save_flow": {
+          "title": "Save flow",
+          "description": "Saving persists your flow definition so it can be executed."
         },
-        "6": {
-          "title": "You’re all set!",
-          "content": "Check the Logs and Outputs tabs to track your execution progress.<br /><br />Then, head over to the Flows page to explore other use cases.",
-          "primary": "Create a new flow",
-          "secondary": "Explore other Flows"
+        "execute_flow": {
+          "title": "Execute flow",
+          "description": "Executing starts a run of your flow with runtime input values."
+        },
+        "view_logs_status": {
+          "title": "Check execution",
+          "description": "Execution details show run status, timing, and task-level output logs.<br><br>Now open the execution details and click <code>greet</code> in the Gantt chart to see the logs."
+        },
+        "edit_flow_from_execution": {
+          "title": "Return to Flow Editor",
+          "description": "You can jump directly from an execution back to the flow definition to iterate quickly."
+        },
+        "add_cron_trigger": {
+          "title": "Add a cron trigger",
+          "description": "Triggers can start runs based on schedules or external events (for example webhooks or MQTT messages).<br><br>Now add a cron schedule trigger so this flow runs every 5 minutes."
+        },
+        "add_input_default": {
+          "title": "Set a default input value",
+          "description": "When a flow is triggered automatically, inputs still need values at runtime.<br><br>The <code>name</code> input was already created in the previous step, so there’s no need to add it again. Just set a default value for the existing <code>name</code> input."
+        },
+        "save_flow_again": {
+          "title": "Save flow",
+          "description": "Your flow now has a schedule and a default input value for automatic runs."
+        },
+        "background_runs_info": {
+          "title": "Scheduled runs",
+          "description": "This flow will now execute in the background every 5 minutes.<br><br>You can navigate to the Executions overview from the left menu to monitor scheduled runs."
+        },
+        "finish": {
+          "title": "You completed the First Flow tutorial",
+          "description": "Great start. You created, executed, parameterized, and scheduled a flow.<br><br>Choose what to do next ..."
         }
+      },
+      "actions": {
+        "next": "Next",
+        "complete": "Complete",
+        "save_to_continue": "Press Save in the top bar (right).",
+        "execute_to_continue": "1. Press Execute in the top bar (right).\n2. Provide a value for <strong>name</strong>.\n3. Press Execute again in the modal.",
+        "edit_flow_to_continue": "Press Edit flow in the top bar (right).",
+        "cancel_tutorial": "Cancel tutorial",
+        "finish_tutorial": "Finish tutorial"
+      },
+      "finish_actions": {
+        "explore_blueprints": "Explore Blueprints",
+        "create_flow": "Create Flow"
+      },
+      "editor_hints": {
+        "build_intro": "Build your first flow step by step.",
+        "step_1": "# 1) Add id",
+        "step_2": "# 2) Add namespace",
+        "step_3": "# 3) Add an input",
+        "step_4": "# 4) Add tasks and your first Python task",
+        "step_5": "# 5) Add a cron trigger"
+      },
+      "cancel_modal": {
+        "title": "Cancel First Flow tutorial",
+        "description": "Do you want to cancel the First Flow tutorial?",
+        "confirm": "Cancel tutorial",
+        "keep": "Keep tutorial"
+      },
+      "validation": {
+        "complete_step": "You're close. Complete this step to continue.",
+        "fix_yaml": "There is a small YAML formatting issue. Fix it, then continue.",
+        "add_id": "Add a flow ID at the top. Example: `id: hello_flow`.",
+        "add_namespace": "Add a namespace at the top. Example: `namespace: company.team`.",
+        "add_input_section": "Create an `inputs` section with one input.",
+        "add_input_id": "Inside `inputs`, add `id: name`.",
+        "add_input_type": "Set the input type to `STRING`.",
+        "add_log_task_section": "Create a `tasks` section and add your first task.",
+        "add_log_task_id": "Give the task an ID, for example: `id: greet`.",
+        "add_log_task_type": "Set the task type to `io.kestra.plugin.scripts.python.Script`.",
+        "add_log_task_message": "Add a `script` field to the task.",
+        "add_log_task_pebble": "Use a Pebble expression in the script so it uses your input value (for example: `inputs.name`).",
+        "save_flow": "Click Save to continue.",
+        "execute_flow": "Run the flow once to continue.",
+        "view_logs_status": "Open the execution details and check the logs for `greet`.",
+        "edit_flow_from_execution": "Click `Edit flow` in the top bar to continue.",
+        "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
+        "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
+        "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
+        "add_input_default_section": "Go back to `inputs` and keep one existing input named `name` (do not add a second input).",
+        "add_input_default_id": "Keep the existing input ID as `name`.",
+        "add_input_default_defaults": "Add a default value for `name`, for example: `defaults: \"Kestra\"`.",
+        "save_flow_again": "Click Save again to continue."
       }
     },
     "enable concurrency": "Enable concurrency",
@@ -1634,6 +1706,7 @@
     "to toggle": "to toggle",
     "accept": "Accept",
     "reject": "Reject",
+    "draft_available": "Draft change is available in the editor",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
     "task is running": "Task is running",

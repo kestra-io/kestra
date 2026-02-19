@@ -58,16 +58,18 @@
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
-                        <el-button
-                            :icon="buttonIcon"
-                            :disabled="!flowCanBeExecuted || hasBlockingChecks()"
-                            :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
-                            type="primary"
-                            nativeType="submit"
-                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
-                        >
-                            {{ $t(buttonText) }}
-                        </el-button>
+                        <span data-onboarding-target="flow-execute-confirm-button">
+                            <el-button
+                                :icon="buttonIcon"
+                                :disabled="!flowCanBeExecuted || hasBlockingChecks()"
+                                class="flow-run-trigger-button"
+                                type="primary"
+                                nativeType="submit"
+                                @click.prevent="onSubmit($refs.form); executeClicked = true;"
+                            >
+                                {{ $t(buttonText) }}
+                            </el-button>
+                        </span>
                         <el-text v-if="haveBadLabels" type="danger" size="small">
                             {{ $t('wrong labels') }}
                         </el-text>

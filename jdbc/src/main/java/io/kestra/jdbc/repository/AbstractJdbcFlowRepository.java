@@ -49,6 +49,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -306,7 +307,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 return select.fetch()
                     .map(record -> FlowWithSource.of((Flow) jdbcRepository.map(record), record.get(SOURCE_FIELD)));
-            });
+        });
     }
 
     @Override
@@ -737,7 +738,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         List<FlowWithSource> revisions = this.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId(), true);
         final int revision = revisions.isEmpty() ? 1 : revisions.getLast().getRevision() + 1;
 
-        flow = flow.toBuilder().revision(revision).build();
+        flow = flow.toBuilder().revision(revision).updated(Instant.now()).build();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
         fields.put(field("source_code"), flow.getSource());

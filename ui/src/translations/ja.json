@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
-    "assets": "アセット",
+    "assets": {
+      "title": "アセット"
+    },
     "attempt": "試行",
     "attempts": "試行回数",
     "auditlogs": "Audit Logs",

@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "Blocs d'application",
     "apps": "Applications",
-    "assets": "Ressources",
+    "assets": {
+      "title": "Ressources"
+    },
     "attempt": "Essai",
     "attempts": "Tentative(s)",
     "auditlogs": "Journaux d'audit",

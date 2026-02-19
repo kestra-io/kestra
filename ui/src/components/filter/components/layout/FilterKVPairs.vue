@@ -42,7 +42,6 @@
             <el-button
                 type="default"
                 size="small"
-                :icon="Plus"
                 class="add-btn"
                 :disabled="!newKey.trim() || !newValue.trim()"
                 @click="addPair"
@@ -55,7 +54,6 @@
 
 <script setup lang="ts">
     import {ref, watch} from "vue";
-    import {Plus} from "../../utils/icons";
 
     const props = withDefaults(defineProps<{
         modelValue: string[];

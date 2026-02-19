@@ -50,6 +50,9 @@
     import FilterMultiSelect from "./FilterMultiSelect.vue";
     import FilterComparatorSelect from "./FilterComparatorSelect.vue";
 
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
     const props = defineProps<{
         filter: AppliedFilter;
         filterKey: FilterKeyConfig;
@@ -184,13 +187,8 @@
     const footerText = computed(() => {
         if (isTextOp.value) return state.textValue ?? "";
 
-        if (isKVPairFilter.value) {
-            const count = state.keyValuePair.length;
-            if (props.filterKey?.key === "labels") {
-                return count === 1 ? "1 Key/Value pair selected" : `${count} Key/Value pairs selected`;
-            }
-            const label = props.filterKey?.label || "pair";
-            return count === 1 ? `1 ${label}` : `${count} ${label}s`;
+        if (isKVPairFilter.value && props.filterKey?.key === "labels") {
+            return t("filter.kv_pair_selected", {count: state.keyValuePair.length});
         }
 
         switch (props.filterKey?.valueType) {
@@ -208,6 +206,7 @@
             return "";
         }
     });
+
     const resetState = () => {
         const defaultFilter = filterContext?.hasPreApplied(props.filterKey.key) 
             ? filterContext?.getPreApplied(props.filterKey.key) 

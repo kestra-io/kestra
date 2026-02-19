@@ -641,7 +641,7 @@
     "fileTypeNotAllowed": "फ़ाइल प्रकार की अनुमति नहीं है। स्वीकृत प्रकार: {types}",
     "files": "फ़ाइलें",
     "filter": {
-      "active key value pairs": "सक्रिय key/value जोड़े",
+      "active key value pairs": "सक्रिय Key/Value जोड़े",
       "add key value pair": "कुंजी/मान जोड़ी जोड़ें",
       "aggregation": {
         "description": "एग्रीगेशन विधि द्वारा फ़िल्टर करें",
@@ -715,6 +715,7 @@
         "description": "प्रकार के अनुसार निष्पादन फ़िल्टर करें",
         "label": "प्रकार"
       },
+      "kv_pair_selected": "{count} Key/Value जोड़े चुने गए",
       "label": "लेबल",
       "labels": {
         "description": "लेबल द्वारा फ़िल्टर करें",

@@ -642,7 +642,7 @@
     "files": "Pliki",
     "filter": {
       "active key value pairs": "Aktywne pary klucz/wartość",
-      "add key value pair": "Dodaj parę klucz/wartość",
+      "add key value pair": "Dodaj parę Key/Value",
       "aggregation": {
         "description": "Filtruj według metody agregacji",
         "label": "Agregacja"
@@ -715,6 +715,7 @@
         "description": "Filtruj według rodzaju wykonania",
         "label": "Rodzaj"
       },
+      "kv_pair_selected": "Wybrano {count} pary Key/Value",
       "label": "Etykieta",
       "labels": {
         "description": "Filtruj według labeli",

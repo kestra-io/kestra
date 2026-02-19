@@ -2,7 +2,7 @@
     <el-dropdown trigger="click" hideOnClick placement="bottom-end">
         <el-button :icon="ChartLineVariant" class="selected">
             <span v-if="!verticalLayout" class="text-truncate">
-                {{ selected ?? $t("dashboards.default") }}
+                {{ selected?.title ?? $t('dashboards.default') }}
             </span>
         </el-button>
 
@@ -20,8 +20,8 @@
 
                 <Item
                     :dashboard="{
-                        id: filtered.filter(d => d.title === selected)?.[0]?.id ?? 'default',
-                        title: selected ?? $t('dashboards.default')
+                        id: filtered.filter(d => d.title === selected?.title)?.[0]?.id ?? 'default',
+                        title: selected?.title ?? $t('dashboards.default')
                     }"
                     :edit="edit"
                     :setAsDefault="setAsTenantDefault"
@@ -82,6 +82,8 @@
     import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
+    import {Dashboard} from "../../types.ts";
+
 
     const emits = defineEmits(["dashboard"]);
 
@@ -102,9 +104,9 @@
     });
 
 
-    const selected = ref<string | null>(null);
+    const selected = ref<Dashboard|undefined>(undefined);
+
     const select = (dashboard: any) => {
-        selected.value = dashboard?.title;
         emits("dashboard", dashboard.id);
     };
 
@@ -139,7 +141,12 @@
 
     onBeforeMount(() => {
         fetchDashboards();
-        dashboardStore.getDashboardRelatedToThisRoute(route)
+        const dashboardId = dashboardStore.getDashboardRelatedToThisRoute(route);
+        if(dashboardId){
+            dashboardStore.load(dashboardId).then(dash => selected.value=dash);
+        } else {
+            selected.value = undefined;
+        }
     });
 
     const tenant = ref();

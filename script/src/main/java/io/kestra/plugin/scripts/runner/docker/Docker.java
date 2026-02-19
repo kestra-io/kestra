@@ -421,7 +421,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
 
                 // we check, if killed during image pull.
-                checkKilled("image pull");
+                checkKilled("Execution was killed during image pull.");
 
                 // create container
                 CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
@@ -492,7 +492,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
 
                 // we check, if killed before container start
-                checkKilled("container startup");
+                checkKilled("Execution was killed before starting the container.");
 
                 // start container
                 dockerClient.startContainerCmd(containerId).exec();

@@ -171,11 +171,11 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
      * Throws a {@link KilledException} with contextual phase information
      * if this task runner was killed.
      *
-     * @param phase execution phase (e.g. "image pull", "container startup")
+     * @param message the error message.
      */
-    protected void checkKilled(String phase) {
+    protected void checkKilled(String message) {
         if (isKilled.get()) {
-            throw new KilledException(phase);
+            throw new KilledException(message);
         }
     }
 }

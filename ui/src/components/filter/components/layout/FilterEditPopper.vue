@@ -2,6 +2,7 @@
     <div class="edit-popper">
         <FilterHeader
             :label="filterKey.label"
+            :description="filterKey.description"
             @close="emits('close')"
         />
         <FilterComparatorSelect

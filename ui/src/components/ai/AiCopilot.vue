@@ -37,8 +37,9 @@
                     type="textarea"
                     :disabled="waitingForReply"
                     :autosize="{minRows: 2, maxRows: 6}"
-                    :placeholder="$t('ai.flow.prompt_placeholder')"
+                    :placeholder="$t(`ai.${generationType}.prompt_placeholder`)"
                     @keydown.exact.enter.prevent="submitPrompt"
+                    @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
                     class="ai-custom-textarea"
                 />
                 <template v-else>
@@ -77,7 +78,7 @@
                     <template v-if="waitingForReply">
                         <span class="generating-label">
                             <el-icon class="is-loading"><Loading /></el-icon>
-                            {{ $t("ai.flow.generating") }}
+                            {{ $t(`ai.flow.generating.${generationType}`) }}
                         </span>
                     </template>
                     <template v-else-if="isListening">
@@ -130,24 +131,31 @@
     import type {InputInstance} from "element-plus";
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
+    import {aiGenerationTypes, AiGenerationType} from "../../utils/constants";
 
     const aiStore = useAiStore();
     const apiStore = useApiStore();
+
+    const promptInput = ref<InputInstance>();
+    const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
+    const initialPromptBeforeListening = ref("");
+    const waitingForReply = ref(false);
 
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
     }>();
 
+    watch(prompt, (newValue) => {
+        sessionStorage.setItem("kestra-ai-prompt", newValue);
+    });
+
     const props = defineProps<{
-        flow: string;
-        conversationId: string;
+        flow: string,
+        conversationId: string,
+        generationType?: AiGenerationType
     }>();
 
-    const promptInput = ref<InputInstance>();
-    const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
-    const initialPromptBeforeListening = ref("");
-    const waitingForReply = ref(false);
     const error = ref<string | undefined>(undefined);
 
     const speechSupported = ref(false);
@@ -280,14 +288,17 @@
             action: "prompt_submit",
             ai_copilot_configured: configured.value === true,
         });
+        let aiResponse;
         try {
-            const aiResponse = await aiStore.generateFlow({
+            const type = props.generationType ?? aiGenerationTypes.FLOW;
+            aiResponse = await aiStore.generate({
                 userPrompt: prompt.value,
-                flowYaml: props.flow,
+                yaml: props.flow,
                 conversationId: props.conversationId,
-                providerId: selectedProvider.value
-            });
-            emit("generatedYaml", aiResponse as string);
+                providerId: selectedProvider.value,
+                type: type
+            }) as string;
+            emit("generatedYaml", aiResponse);
         } catch (e: any) {
             error.value = e.response?.data?.message ?? e.message;
         } finally {

@@ -70,7 +70,7 @@
     import action from "../../models/action";
     import {State, Status} from "@kestra-io/ui-libs"
     import * as ExecutionUtils from "../../utils/executionUtils";
-    import {shallowRef, ref, defineEmits} from "vue";
+    import {shallowRef, ref} from "vue";
     import {useAuthStore} from "override/stores/auth"
     import {useAxios} from "../../utils/axios";
     import {useRoute, useRouter} from "vue-router";
@@ -100,7 +100,7 @@
             }
         },
         emits: ["follow"],
-        setup() {
+        setup(props, {emit}) {
             const visible = ref(false);
 
             const {t} = useI18n();
@@ -111,19 +111,17 @@
             const route = useRoute();
             const toast = useToast();
 
-            const emit = defineEmits(["follow"]);
-
             function changeStatus() {
                 visible.value = false;
 
                 executionsStore
                     .changeStatus({
-                        executionId: this.execution.id,
-                        taskRunId: this.taskRun.id,
+                        executionId: props.execution.id,
+                        taskRunId: props.taskRun.id,
                         state: this.selectedStatus
                     })
                     .then(response => {
-                        if (response.data.id === this.execution.id) {
+                        if (response.data.id === props.execution.id) {
                             return ExecutionUtils.waitForState($http, response.data);
                         } else {
                             return response.data;
@@ -131,7 +129,7 @@
                     })
                     .then((execution) => {
                         executionsStore.execution = execution;
-                        if (execution.id === this.execution.id) {
+                        if (execution.id === props.execution.id) {
                             emit("follow")
                         } else {
                             router.push({

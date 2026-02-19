@@ -505,7 +505,7 @@
         "title": "आपके पास अभी तक कोई Kill Switches नहीं हैं!"
       },
       "panels": {
-        "content": "अपने flows को संपादित करने के लिए Flow Code या No-Code खोलें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Context)।",
+        "content": "Flow कोड या नो-कोड खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए दूसरा पैनल चुनें (Topology, Documentation, Namespace Files, Blueprints, Context)।",
         "title": "कोई पैनल वर्तमान में खुला नहीं है।"
       },
       "pluginDefaults": {

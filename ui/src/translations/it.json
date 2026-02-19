@@ -505,7 +505,7 @@
         "title": "Non hai ancora Kill Switch!"
       },
       "panels": {
-        "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Files, Blueprints, Context) per funzionalità correlate.",
+        "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Namespace Files, Blueprints, Context) per funzionalità correlate.",
         "title": "Nessun pannello è attualmente aperto."
       },
       "pluginDefaults": {

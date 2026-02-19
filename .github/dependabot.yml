@@ -63,7 +63,9 @@ updates:
         exclude-patterns: [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -78,9 +80,11 @@ updates:
         update-types: ["minor"]
         applies-to: version-updates
         exclude-patterns: [
-            "@esbuild/*",
+             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -99,7 +103,9 @@ updates:
           [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",

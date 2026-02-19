@@ -23,13 +23,6 @@ export default defineConfig([
         ],
         languageOptions: {globals: globals.node},
     },
-    {
-        files: ["src/generated/**/*.ts"],
-        rules: {
-            "@typescript-eslint/ban-ts-comment": "off",
-            "@typescript-eslint/no-empty-object-type": "off",
-        },
-    },
     ...pluginVue.configs["flat/strongly-recommended"],
     {
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],

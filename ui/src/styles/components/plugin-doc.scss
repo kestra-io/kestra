@@ -66,7 +66,9 @@
             }
 
             [id$="-body"]:not(#examples-body) span {
-                font-size: 1rem !important;
+                font-size: .9rem;
+                font-weight: 400;
+                padding-right: 0;
             }
 
             [id$="-body"] .type-box,

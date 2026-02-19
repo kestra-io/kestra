@@ -3,7 +3,7 @@ import {defineStore} from "pinia";
 import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
-import Inputs from "../utils/inputs";
+import {normalize} from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";
 import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
@@ -74,9 +74,13 @@ export const usePlaygroundStore = defineStore("playground", () => {
             const {type, defaults} = input;
             // for dates, no need to normalize the value
             // https://github.com/kestra-io/kestra/issues/10576
-            defaultInputValues[input.id] = type === "DATE"
+            const safeDef = type === "DATE"
                 ? defaults
-                : Inputs.normalize(type, defaults);
+                : normalize(type, defaults);
+
+            if(safeDef !== undefined) {
+                defaultInputValues[input.id] = safeDef;
+            }
         }
         
         return executionsStore.triggerExecution({

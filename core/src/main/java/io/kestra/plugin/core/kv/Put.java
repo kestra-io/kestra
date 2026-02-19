@@ -25,14 +25,11 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Update an existing key-value entry.",
+    title = "Update an existing Key-Value entry",
     description = """
-        Renders `key`, `value`, and `namespace` (defaults to flow namespace), then updates the KV entry.
+        Renders `key`, `value`, and `namespace` (defaults to the Flow namespace), then writes to the namespace KV store.
 
-        If both current and new values are maps, a deep merge is applied (nested object keys are preserved).
-        The `value` property also supports list entry syntax:
-        - `[{value: ...}]` replaces the whole value
-        - `[{key: ..., value: ...}]` updates one or more JSON keys (supports dotted keys for nested updates).
+        Map values are deep merged (nested object keys are preserved); keyed entries like `[{key: ..., value: ...}]` update JSON fields (dotted paths allowed) while `[{value: ...}]` replaces the entire value. Set `errorOnMissing` to `true` to fail when the key is absent, otherwise a new key-value pair is created.
         """
 )
 @Plugin(
@@ -75,25 +72,29 @@ import java.util.NoSuchElementException;
 public class Put extends Task implements RunnableTask<VoidOutput> {
     @NotNull
     @Schema(
-        title = "The key to update"
+        title = "Key to update",
+        description = "Key name within the target namespace"
     )
     private Property<String> key;
 
     @NotNull
     @Schema(
-        title = "The value update payload"
+        title = "Value payload to write",
+        description = "Maps are deep merged and entry lists can replace or patch JSON fields"
     )
     private Property<Object> value;
 
     @NotNull
     @Schema(
-        title = "The namespace in which the KV pair is stored – by default, Kestra will use the namespace of the flow."
+        title = "Target namespace",
+        description = "Defaults to the current Flow namespace; accepts expressions"
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @Schema(
-        title = "Flag specifying whether to fail if the key does not already exist."
+        title = "Fail when key is absent",
+        description = "Default `false`; when `true` throws before writing if the key does not exist"
     )
     @Builder.Default
     private Property<Boolean> errorOnMissing = Property.ofValue(false);

@@ -641,8 +641,8 @@
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
     "files": "파일",
     "filter": {
-      "active key value pairs": "활성 key/value 쌍",
-      "add key value pair": "key/value 쌍 추가",
+      "active key value pairs": "활성 Key/Value 쌍",
+      "add key value pair": "Key/Value 쌍 추가",
       "aggregation": {
         "description": "집계 방법으로 필터링",
         "label": "집계"
@@ -715,6 +715,7 @@
         "description": "실행 종류별 필터링",
         "label": "종류"
       },
+      "kv_pair_selected": "{count} Key/Value 쌍 선택됨",
       "label": "레이블",
       "labels": {
         "description": "레이블로 필터링",

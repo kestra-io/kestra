@@ -3,14 +3,22 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.Play" :type="type" :disabled="isDisabled()" @click="onClick()">
-            {{ $t("execute") }}
-        </el-button>
+        <span v-else data-onboarding-target="flow-execute-button">
+            <el-button
+                id="execute-button"
+                :icon="icon.Play"
+                :type="type"
+                :disabled="isDisabled()"
+                @click="onClick()"
+            >
+                {{ $t("execute") }}
+            </el-button>
+        </span>
         <el-dialog
             id="execute-flow-dialog"
             v-model="isOpen"
             destroyOnClose
-            :showClose="!coreStore.guidedProperties.tourStarted"
+            :showClose="true"
             :beforeClose="(done) => beforeClose(done)"
             :appendToBody="true"
             :width="dialogWidth"
@@ -75,11 +83,9 @@
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
     import {useMediaQuery} from "@vueuse/core";
-    import {pageFromRoute} from "../../utils/eventsRouter";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
     import {mapStores} from "pinia";
     import {useApiStore} from "../../stores/api";
-    import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
@@ -135,21 +141,7 @@
             },
             onClick() {
                 this.trackExecutionAction("open_modal");
-                if (this.$tours["guidedTour"]?.isRunning?.value) {
-                    this.$tours["guidedTour"]?.nextStep();
-                    this.apiStore.events({
-                        type: "ONBOARDING",
-                        onboarding: {
-                            step: this.$tours["guidedTour"]?.currentStep?._value,
-                            action: "next",
-                            template: this.coreStore.guidedProperties.template
-                        },
-                        page: pageFromRoute(this.$router.currentRoute.value)
-                    });
-                    this.toggleModal()
-                    return;
-                }
-                else if (this.checkForTrigger) {
+                if (this.checkForTrigger) {
                     this.$toast().confirm(FlowWarningDialog, () => (this.toggleModal()), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
@@ -190,14 +182,12 @@
                 this.localNamespace = undefined;
             },
             beforeClose(done){
-                if(this.coreStore.guidedProperties.tourStarted) return;
-
                 this.reset();
                 done()
             }
         },
         computed: {
-            ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
+            ...mapStores(useApiStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
             dialogWidth() {
                 return this.isLargeScreen ? "50%" : "90%";
             },
@@ -216,14 +206,6 @@
             }
         },
         watch: {
-            "coreStore.guidedProperties": {
-                handler() {
-                    if (this.coreStore.guidedProperties.executeFlow) {
-                        this.onClick();
-                    }
-                },
-                deep: true
-            },
             "flowStore.executeFlow": {
                 handler(value) {
                     if (value && !this.isDisabled()) {
@@ -269,19 +251,5 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
-    }
-    
-    .onboarding-glow {
-        animation: glowAnimation 1s infinite alternate;
-    }
-    
-    
-    @keyframes glowAnimation {
-        0% {
-            box-shadow: 0px 0px 0px 0px #8405FF;
-        }
-        100% {
-            box-shadow: 0px 0px 50px 2px #8405FF;
-        }
     }
 </style>

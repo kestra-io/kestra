@@ -36,7 +36,7 @@
             </template>
         </el-dropdown>
     </div>
-    <div>
+    <div data-onboarding-target="flow-save-button">
         <el-button
             v-if="isNamespace || isAllowedEdit"
             :icon="ContentSave"

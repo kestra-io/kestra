@@ -14,7 +14,12 @@
             @search="search = $event"
             @filter="onFilterChange"
         />
-        <el-card id="gantt" shadow="never" :class="{'no-border': !hasValidDate}">
+        <el-card
+            id="gantt"
+            data-onboarding-target="execution-gantt"
+            shadow="never"
+            :class="{'no-border': !hasValidDate}"
+        >
             <template #header v-if="hasValidDate">
                 <div class="d-flex">
                     <Duration class="th text-end" :histories="execution.state.histories" />

@@ -26,6 +26,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import reactor.core.publisher.Flux;
 
@@ -335,15 +337,38 @@ public class InputsTest {
         assertThat(e.getMessage()).contains("Invalid value for input `validatedTime`. Cause: it must be before `11:59:59`");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "justastring",
+        "not a uri",
+        ""
+    })
     @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "tenant11")
-    void inputFailed() {
+    void inputUriRejectsInvalidUris(String invalidUri) {
         HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("uri", "http:/bla");
+        map.put("uri", invalidUri);
 
         InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(map, "tenant11"));
 
-        assertThat(e.getMessage()).contains(  "Invalid value for input `uri`. Cause: Invalid URI format." );
+        assertThat(e.getMessage()).contains("Invalid value for input `uri`");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "kestra:///io/kestra/tests/inputs/file/test.yml",
+        "jdbc:duckdb:",
+        "file:///tmp/myfile.csv",
+        "http://localhost:8080/api",
+        "nsfile:///file.txt"
+    })
+    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "tenant11")
+    void inputUriAcceptsValidUris(String validUri) {
+        HashMap<String, Object> map = new HashMap<>(inputs);
+        map.put("uri", validUri);
+
+        Map<String, Object> typeds = typedInputs(map, "tenant11");
+
+        assertThat(typeds.get("uri")).isEqualTo(validUri);
     }
 
     @Test

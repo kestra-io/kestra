@@ -13,32 +13,30 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {useBlueprintsStore} from "../../stores/blueprints";
-    import {useCoreStore} from "../../stores/core";
     import {getRandomID} from "../../../scripts/id";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
-    import {useVueTour} from "../../composables/useVueTour";
 
     import type {BlueprintType} from "../../stores/blueprints"
     import {useAuthStore} from "../../override/stores/auth";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
 
     const route = useRoute();
     const {t} = useI18n();
 
-    const tour = useVueTour("guidedTour");
-
     const blueprintsStore = useBlueprintsStore();
-    const coreStore = useCoreStore();
     const flowStore = useFlowStore();
     const authStore = useAuthStore();
+    const onboardingV2Store = useOnboardingV2Store();
 
     const setupFlow = async () => {
         const blueprintId = route.query.blueprintId as string;
         const blueprintSource = route.query.blueprintSource as BlueprintType;
         const blueprintSourceYaml = route.query.blueprintSourceYaml as string;
-        const implicitDefaultNamespace = authStore.user.getNamespacesForAction(
+        const isGuidedOnboarding = route.query.onboarding === "guided";
+        const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             permission.FLOW,
             action.CREATE,
         )[0];
@@ -62,6 +60,8 @@
         } else if (blueprintId) {
             const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId);
             flowYaml = flowBlueprint.source;
+        } else if (isGuidedOnboarding) {
+            flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`;
         } else {
             flowYaml = `
 id: ${id}
@@ -73,10 +73,17 @@ tasks:
     message: Hello World! 🚀`.trim();
         }
 
+        let parsedFlow = {};
+        try {
+            parsedFlow = YAML_UTILS.parse(flowYaml) ?? {};
+        } catch {
+            parsedFlow = {};
+        }
+
         flowStore.flow = {
             id,
             namespace: selectedNamespace,
-            ...YAML_UTILS.parse(flowYaml),
+            ...parsedFlow,
             source: flowYaml,
         };
 
@@ -90,13 +97,8 @@ tasks:
     });
 
     flowStore.isCreating = true;
-    if (route.query.reset) {
-        localStorage.setItem("tourDoneOrSkip", "");
-        coreStore.guidedProperties = {
-            ...coreStore.guidedProperties,
-            tourStarted: true,
-        };
-        tour.start();
+    if (route.query.reset || route.query.onboarding === "guided") {
+        onboardingV2Store.startGuided();
     }
     setupFlow();
 

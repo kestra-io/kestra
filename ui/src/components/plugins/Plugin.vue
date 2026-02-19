@@ -62,12 +62,12 @@
             <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
-            <div class="plugin-doc">
+            <div class="plugin-doc" v-if="pluginsStore.plugin">
                 <Suspense v-loading="isLoading">
                     <SchemaToHtml
                         class="plugin-schema"
                         :darkMode="miscStore.theme === 'dark'"
-                        :schema="pluginsStore.plugin!.schema"
+                        :schema="pluginsStore.plugin.schema"
                         :propsInitiallyExpanded="true"
                         :pluginType="pluginType!"
                         noUrlChange

@@ -31,7 +31,6 @@ import {
     PointElement,
     Tooltip,
 } from "chart.js";
-import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 import {createPinia} from "pinia";
 
@@ -141,7 +140,6 @@ export default async (app, routes, _stores, translations, additionalTranslations
     app.use(VueSidebarMenu);
     app.use(Toast)
     app.provide("Toast", Toast)
-    app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 
     // filters

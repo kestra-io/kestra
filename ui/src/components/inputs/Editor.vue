@@ -71,8 +71,12 @@
                 <div class="position-absolute bottom-right">
                     <slot name="buttons" />
                 </div>
+                <div class="editor-footer-row">
+                    <slot name="footer-row" />
+                </div>
             </div>
         </div>
+
         <Teleport v-if="showWidgetContent" to=".editor-content-widget-content">
             <slot name="widget-content" />
         </Teleport>
@@ -843,6 +847,7 @@
         .editor-wrapper {
             min-width: 75%;
             width: 100%;
+            padding-bottom: 4rem; // reserve space for footer-row overlay
 
             .monaco-hover-content {
                 h4 {
@@ -875,6 +880,22 @@
                 padding: 0;
                 margin: 0;
                 //gap: .5rem;
+            }
+        }
+
+        .editor-footer-row {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1100;
+            pointer-events: none; // slot content should enable pointer-events
+            display: flex;
+            justify-content: center;
+
+            > * {
+                pointer-events: auto;
+                width: 100%;
             }
         }
     }

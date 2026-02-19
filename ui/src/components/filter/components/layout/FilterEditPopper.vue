@@ -187,7 +187,7 @@
         if (isKVPairFilter.value) {
             const count = state.keyValuePair.length;
             if (props.filterKey?.key === "labels") {
-                return count === 1 ? "1 Label" : `${count} Labels`;
+                return count === 1 ? "1 Key/Value pair selected" : `${count} Key/Value pairs selected`;
             }
             const label = props.filterKey?.label || "pair";
             return count === 1 ? `1 ${label}` : `${count} ${label}s`;

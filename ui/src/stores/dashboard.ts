@@ -118,24 +118,29 @@ export const useDashboardStore = defineStore("dashboard", () => {
         "namespaces/update": "DASHBOARD_NAMESPACE"
     };
 
-    /**
-     * it can only be the dashboard: on the home, namespace or flow
-     */
-    const getDashboardRelatedToThisRoute = (route: RouteLocation): string | undefined => {
-        if(!route.params["tenant"]){
+    function getDashboardType(route: RouteLocation) {
+        if (!route.params["tenant"]) {
             throw new Error("tenant is mandatory in getDashboardRelatedToThisRoute")
         }
-        if(route.params["tenant"] != "main"){
+        if (route.params["tenant"] != "main") {
             throw new Error("tenant other than main unhandled yet")// TODO
         }
 
         /*if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;*/
 
         const key = KEY_MAP[route.name as string];
+        return key;
+    }
 
-        if (!key) return;
+    /**
+     * it can only be the dashboard: on the home, namespace or flow
+     */
+    const getDashboardRelatedToThisRoute = (route: RouteLocation): string | undefined => {
+        const dashboardType = getDashboardType(route);
 
-        switch (key){
+        if (!dashboardType) return;
+
+        switch (dashboardType){
             case "DASHBOARD_MAIN": return computedDashboards.value.defaultHomeDashboard;
             case "DASHBOARD_NAMESPACE": return computedDashboards.value.defaultNamespaceOverviewDashboard;
             case "DASHBOARD_FLOW": return computedDashboards.value.defaultFlowOverviewDashboard;
@@ -145,6 +150,18 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         return localStorage.getItem(storageKey) || "default";*/
     };
+
+    const isDefaultDashboard = (dashboardId: string, route: RouteLocation): boolean => {
+        const dashboardType = getDashboardType(route);
+        if(!dashboardType){
+            return false;
+        }
+        switch (dashboardType){
+            case "DASHBOARD_MAIN": return computedDashboards.value.defaultHomeDashboard === dashboardId;
+            case "DASHBOARD_NAMESPACE": return computedDashboards.value.defaultNamespaceOverviewDashboard === dashboardId;
+            case "DASHBOARD_FLOW": return computedDashboards.value.defaultFlowOverviewDashboard === dashboardId;
+        }
+    }
 
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let response
@@ -328,6 +345,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         selectedChart,
         list,
         getDashboardRelatedToThisRoute,
+        isDefaultDashboard,
         load,
         loadDefaults: loadDefaults,
         saveDefaults,

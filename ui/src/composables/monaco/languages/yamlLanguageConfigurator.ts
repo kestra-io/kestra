@@ -36,10 +36,12 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         const validateYAML = computed(() => useBlueprintsStore().validateYAML);
+        // Keep Monaco YAML validation in sync with the blueprint store setting.
         watch(validateYAML, (shouldValidate) =>
             configureMonacoYaml(monaco, {validate: shouldValidate}),
         );
 
+        // Base YAML language setup shared across all YAML editors.
         configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: localStorage.getItem("hoverTextEditor") === "true",
@@ -52,14 +54,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         const yamlCompletion = (
             StandaloneServices.get(ILanguageFeaturesService).completionProvider
                 ._entries as {
-                selector: string;
-                provider: {
-                    provideCompletionItems: (
-                        model: IModel,
-                        position: IPosition,
-                    ) => ProviderResult<CompletionList>;
-                };
-            }[]
+                    selector: string;
+                    provider: {
+                        provideCompletionItems: (
+                            model: IModel,
+                            position: IPosition,
+                        ) => ProviderResult<CompletionList>;
+                    };
+                }[]
         ).find((completion) => completion.selector === "yaml");
 
         if (yamlCompletion === undefined) {
@@ -69,6 +71,8 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         const initialCompletion =
             yamlCompletion.provider.provideCompletionItems;
 
+        // Wrap Monaco YAML completion so we can tune ordering and matching behavior
+        // for Kestra plugin type values without replacing the default provider.
         yamlCompletion.provider.provideCompletionItems = async function (
             model: IModel,
             position: IPosition,
@@ -93,12 +97,33 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             const isTypeValueContext = /^\s*(?:-\s*)?type\s*:\s*$/i.test(
                 beforeWord,
             );
+            // Split plugin class names (`a.b.C`) into lowercase searchable segments.
+            const getLabelSegments = (label: string) =>
+                label.toLowerCase().split(/\.(?=\w)/).filter(Boolean);
+            // Match typed input against any segment, while still preferring the last segment.
+            const matchesTypeInput = (label: string, input: string) => {
+                if (!input) return true;
+
+                const segments = getLabelSegments(label);
+                if (segments.length === 0) return false;
+
+                const last = segments[segments.length - 1];
+                if (last.startsWith(input)) return true;
+                if (last.includes(input)) return true;
+
+                return segments.slice(0, -1).some((segment) => {
+                    return (
+                        segment.startsWith(input) || segment.includes(input)
+                    );
+                });
+            };
 
             const suggestions = (
                 defaultCompletion.suggestions as (CompletionItem & {
                     label: string;
                 })[]
             )
+                // Monaco sometimes truncates labels with `...`; restore full labels when possible.
                 .map((suggestion) => {
                     if (
                         suggestion.label.endsWith("...") &&
@@ -114,6 +139,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     }
                     return suggestion;
                 })
+                // Hide deprecated plugin classes from completion results.
                 .filter((suggestion) => {
                     if (suggestion.label.includes(".")) {
                         return !pluginsStore.deprecatedTypes.includes(
@@ -122,6 +148,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     }
                     return true;
                 })
+                // Improve ranking and filter text so plugin type lookup feels natural.
                 .map((suggestion) => {
                     const wordAtPosition = model
                         .getWordAtPosition(position)
@@ -131,9 +158,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         const sortBumperText = "a1".repeat(10);
 
                         if (suggestion.label.includes(".")) {
-                            const dotSplit = suggestion.label
-                                .toLowerCase()
-                                .split(/\.(?=\w)/);
+                            const dotSplit = getLabelSegments(suggestion.label);
                             const lastSegment = dotSplit[dotSplit.length - 1];
 
                             if (lastSegment.startsWith(wordAtPosition)) {
@@ -165,9 +190,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
                                             if (
                                                 sortBumperPrefixForPart ===
-                                                    undefined ||
+                                                undefined ||
                                                 prefix.length >=
-                                                    sortBumperPrefixForPart.length
+                                                sortBumperPrefixForPart.length
                                             ) {
                                                 return prefix;
                                             }
@@ -176,11 +201,17 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                         }, "") + suggestion.label;
                             }
 
-                            // For `type:` value context, we set filterText to the LAST segment only (strict word-start behavior).
+                            // In `type:` value context, include all segments in filter text
+                            // (e.g. `pub` matches both `Publish` and `pubsub`).
                             if (isTypeValueContext) {
-                                suggestion.filterText =
-                                    suggestion.label.split(".").pop() ??
-                                    suggestion.label;
+                                const segments = getLabelSegments(
+                                    suggestion.label,
+                                );
+                                suggestion.filterText = [
+                                    suggestion.label.toLowerCase(),
+                                    ...segments,
+                                    segments.join(""),
+                                ].join(" ");
                             } else {
                                 suggestion.filterText =
                                     (suggestion.label.includes(wordAtPosition)
@@ -201,24 +232,25 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     suggestion.sortText = suggestion.sortText?.toLowerCase();
                     return suggestion;
                 })
-                // ---- Enforce WHOLE-WORD (word-start) matching for `type:` values ----
+                // ---- Keep `type:` filtering scoped to plugin type suggestions ----
                 .filter((suggestion) => {
                     if (!isTypeValueContext) return true;
                     if (!typed) return true;
 
-                    // Only constrain plugin "type" suggestions (dotted names)
+                    // Only apply this stricter filtering logic to dotted plugin classes.
                     if (!suggestion.label.includes(".")) return true;
 
-                    const last =
-                        suggestion.label.split(".").pop()?.toLowerCase() ?? "";
-                    return last.startsWith(typed); // ✅ whole word / word-start only
+                    return matchesTypeInput(suggestion.label, typed);
                 })
-                // ---- Ensure Monaco matches against last segment only in `type:` context ----
+                // ---- Ensure Monaco matches against any segment in `type:` context ----
                 .map((suggestion) => {
                     if (isTypeValueContext && suggestion.label.includes(".")) {
-                        suggestion.filterText =
-                            suggestion.label.split(".").pop() ??
-                            suggestion.label;
+                        const segments = getLabelSegments(suggestion.label);
+                        suggestion.filterText = [
+                            suggestion.label.toLowerCase(),
+                            ...segments,
+                            segments.join(""),
+                        ].join(" ");
                     }
                     return suggestion;
                 });
@@ -258,6 +290,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         source,
                         cursorPosition,
                     );
+                    // No key under cursor means we cannot infer contextual value completions.
                     if (elementUnderCursor?.key === undefined) {
                         return NO_SUGGESTIONS;
                     }
@@ -279,11 +312,13 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                             let insertText = label;
                             const endColumn = endOfWordColumn(position, model);
 
+                            // If completion is a value, insert a leading space when cursor is after `:`.
                             if (isKey === undefined) {
                                 if (source.charAt(cursorPosition - 1) === ":") {
                                     insertText = ` ${label}`;
                                 }
                             } else {
+                                // If completion is a key, keep indentation and `key: ` formatting.
                                 if (parentStartLine === position.lineNumber) {
                                     insertText = `\n  ${label}: `;
                                 } else {
@@ -300,9 +335,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                 kind:
                                     isKey === undefined
                                         ? monaco.languages.CompletionItemKind
-                                              .Value
+                                            .Value
                                         : monaco.languages.CompletionItemKind
-                                              .Property,
+                                            .Property,
                                 label,
                                 insertText: insertText,
                                 range: {
@@ -324,6 +359,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         autoCompletionProviders.push(
             monaco.languages.registerInlineCompletionsProvider("yaml", {
                 provideInlineCompletions: async (model: any, position: any) => {
+                    // Only suggest inline required properties in flow/testsuite editors.
                     const isFlowModel =
                         model.uri.path.includes("flow-") ||
                         model.uri.path.includes("testsuites-");
@@ -336,6 +372,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         0,
                         Math.max(position.column - 1, 0),
                     );
+                    // Only trigger when the current line is empty up to the cursor.
                     if (!/^\s*$/.test(linePrefix)) return {items: []};
 
                     const previousLine =
@@ -349,7 +386,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     );
                     if (!previous) return {items: []};
 
-                    // Remove optional quotes: type: "..."
+                    // Remove optional quotes around class names: `type: "..."`.
                     const cls = previous[1].replace(/^["']|["']$/g, "");
                     if (!cls) return {items: []};
 
@@ -367,9 +404,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     const requiredProperties = Object.keys(
                         allProperties,
                     ).filter((p) => allProperties[p]?.$required === true);
+                    // Nothing required means no inline snippet to propose.
                     if (!requiredProperties.length) return {items: []};
 
                     const indent = lineContent.match(/^\s*/)?.[0] ?? "";
+                    // Build a multi-line snippet containing all required keys.
                     const snippet = requiredProperties
                         .map((k, i) => `${i > 0 ? indent : ""}${k}: `)
                         .join("\n");
@@ -405,9 +444,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         enableForwardStability: true,
                     };
                 },
-                handleItemDidShow() {},
-                handlePartialAccept() {},
-                freeInlineCompletions() {},
+                handleItemDidShow() { },
+                handlePartialAccept() { },
+                freeInlineCompletions() { },
             } as any),
         );
 

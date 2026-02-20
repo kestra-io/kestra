@@ -45,8 +45,7 @@ import java.util.NoSuchElementException;
                   - id: update_my_string
                     type: io.kestra.plugin.core.kv.Put
                     key: my-string-key
-                    value:
-                      - value: "new-value"
+                    value: "new-value"
                 """
         ),
         @Example(

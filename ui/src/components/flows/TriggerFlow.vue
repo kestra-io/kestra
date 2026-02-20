@@ -1,9 +1,6 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <component :is="RemoteButton" v-if="RemoteButton" @click="onClick()">
-            {{ $t("execute") }}
-        </component>
-        <el-button v-else-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
+        <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
         <span v-else data-onboarding-target="flow-execute-button">
@@ -82,9 +79,9 @@
 
 
 <script>
-    import {shallowRef} from "vue";
     import FlowRun from "./FlowRun.vue";
     import Play from "vue-material-design-icons/Play.vue";
+    import {shallowRef} from "vue";
     import {useMediaQuery} from "@vueuse/core";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
     import {mapStores} from "pinia";
@@ -92,7 +89,6 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
-    import {registerRemotes, registerShared, loadRemote} from "@module-federation/enhanced/runtime";
 
     export default {
         components: {
@@ -129,28 +125,8 @@
                 isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
                     Play: shallowRef(Play)
-                },
-                RemoteButton: null
+                }
             };
-        },
-        mounted() {
-            registerRemotes([
-                {
-                    type: "module",
-                    name: "remote",
-                    entry: "http://localhost:4174/remoteEntryRemote.js"
-                },
-            ])
-
-            registerShared({
-                vue: {
-                    singleton: true,
-                },
-            });
-
-            loadRemote("remote/remote-button").then((module) => {
-                this.RemoteButton = shallowRef(module.default);
-            });
         },
         methods: {
             trackExecutionAction(action) {

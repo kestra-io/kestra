@@ -176,8 +176,6 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                         }, "") + suggestion.label;
                             }
 
-                            // IMPORTANT:
-                            // Your previous code injected substring matching into filterText, which defeats word-start matching.
                             // For `type:` value context, we set filterText to the LAST segment only (strict word-start behavior).
                             if (isTypeValueContext) {
                                 suggestion.filterText =

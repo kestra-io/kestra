@@ -28,6 +28,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     @Setter protected boolean schedulerEnabled = true;
     @Setter protected boolean workerEnabled = true;
     @Setter protected boolean indexerEnabled = true;
+    @Setter protected boolean controllerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -51,11 +52,13 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
         poolExecutor.execute(applicationContext.getBean(DefaultExecutor.class));
 
-        if (workerEnabled) {
+        if (controllerEnabled) {
             Controller controller = applicationContext.getBean(Controller.class);
             poolExecutor.execute(controller::start);
             servers.add(controller);
-            
+        }
+
+        if (workerEnabled) {
             Worker worker = applicationContext.getBean(Worker.class);
             poolExecutor.execute(() -> worker.start(workerThread, null));
             servers.add(worker);

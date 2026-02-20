@@ -1,5 +1,7 @@
 package io.kestra.webserver.services.ai;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
@@ -22,6 +24,7 @@ public class AiServiceManager {
     private final Map<String, AiServiceInterface> aiServices = new HashMap<>();
     private final AiProvidersConfiguration providersConfiguration;
     private String defaultProviderId;
+    protected final NamespaceContextTool namespaceContextTool;
 
     public AiServiceManager(
         AiProvidersConfiguration providersConfiguration,
@@ -32,9 +35,11 @@ public class AiServiceManager {
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners
+        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        NamespaceContextTool namespaceContextTool
     ) {
         this.providersConfiguration = providersConfiguration;
+        this.namespaceContextTool = namespaceContextTool;
 
         List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
@@ -93,9 +98,12 @@ public class AiServiceManager {
         }
 
         try {
+            ObjectMapper mapper = JacksonMapper.ofJson().copy()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
             if (type.equals("gemini")) {
-                GeminiConfiguration geminiConfig = JacksonMapper.ofJson().convertValue(configMap, GeminiConfiguration.class);
-                return new GeminiAiService(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, provider.displayName(), listeners, geminiConfig);
+                GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
+                return new GeminiAiService(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig);
             }
             log.warn("Unknown AI type: {}", type);
             return null;
@@ -131,6 +139,3 @@ public class AiServiceManager {
         return defaultProviderId;
     }
 }
-
-
-

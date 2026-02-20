@@ -271,7 +271,7 @@
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
-    import Inputs, {type InputType} from "../../utils/inputs";
+    import {normalize, type InputType} from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
     // @ts-expect-error no types for it yet
     import {inputsToFormData} from "../../utils/submitTask";
@@ -432,9 +432,9 @@
                     * Handle multiline JSON default values
                     * See https://github.com/kestra-io/kestra/issues/11449
                     */
-                    inputsValues[id] = Inputs.normalize(type as InputType, normalizeJSON(input.defaults as string));
+                    inputsValues[id] = normalize(type as InputType, normalizeJSON(input.defaults as string));
                 } else {
-                    inputsValues[id] = Inputs.normalize(type as InputType, valueOrDefault);
+                    inputsValues[id] = normalize(type as InputType, valueOrDefault);
                 }
             }
         }

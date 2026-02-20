@@ -1,6 +1,7 @@
 import axios from "axios";
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
+import {AiGenerationType} from "../utils/constants";
 
 export const useAiStore = defineStore("ai", {
     actions: {
@@ -9,15 +10,29 @@ export const useAiStore = defineStore("ai", {
             return response.data ?? [];
         },
 
-        async generateFlow({userPrompt, flowYaml, conversationId, providerId}: {userPrompt: string, flowYaml: string, conversationId: string, providerId?: string}) {
-            const response = await axios.post(`${apiUrl()}/ai/generate/flow`, {
+        async generate({userPrompt, yaml, conversationId, providerId, type}: {userPrompt: string, yaml: string, conversationId: string, providerId?: string, type: AiGenerationType}) {
+            const response = await axios.post(`${apiUrl()}/ai/generate/${type}`, {
                 userPrompt,
-                flowYaml,
+                yaml,
                 conversationId,
                 providerId
             });
 
             return response.data;
+        },
+
+        async generateFlow({userPrompt, yaml, conversationId, providerId, namespace, tenantId}: {userPrompt: string, yaml: string, conversationId: string, providerId?: string, namespace?: string, tenantId?: string, type: AiGenerationType}) {
+            const response = await axios.post(`${apiUrl()}/ai/generate/flow`, {
+                userPrompt,
+                yaml,
+                conversationId,
+                providerId,
+                namespace,
+                tenantId
+            });
+
+            return response.data;
         }
+
     }
 });

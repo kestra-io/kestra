@@ -1,8 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.webserver.models.ai.DashboardGenerationPrompt;
 import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.core.tenant.TenantService;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Body;
@@ -28,10 +30,13 @@ import java.util.Map;
 @Requires(bean = AiServiceManager.class)
 public class AiController {
     @Inject
-    private AiServiceManager aiServiceManager;
+    protected AiServiceManager aiServiceManager;
 
     @Inject
-    private HttpClientAddressResolver httpClientAddressResolver;
+    protected HttpClientAddressResolver httpClientAddressResolver;
+
+    @Inject
+    protected TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/generate/flow", produces = "application/yaml")
@@ -42,7 +47,19 @@ public class AiController {
     ) {
         AiServiceInterface service = aiServiceManager.getAiService(flowGenerationPrompt.providerId());
 
-        return service.generateFlow(httpClientAddressResolver.resolve(httpRequest), flowGenerationPrompt);
+        return service.generateFlow(httpClientAddressResolver.resolve(httpRequest), flowGenerationPrompt, tenantService.resolveTenant());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/generate/dashboard", produces = "application/yaml")
+    @Operation(tags = {"AI"}, summary = "Generate or regenerate a dashboard based on a prompt")
+    public String generateDashboard(
+        @RequestBody(description = "Prompt and context required for dashboard generation") @Body DashboardGenerationPrompt dashboardGenerationPrompt,
+        HttpRequest<?> httpRequest
+    ) {
+        AiServiceInterface service = aiServiceManager.getAiService(dashboardGenerationPrompt.providerId());
+
+        return service.generateDashboard(httpClientAddressResolver.resolve(httpRequest), dashboardGenerationPrompt);
     }
 
     @ExecuteOn(TaskExecutors.IO)

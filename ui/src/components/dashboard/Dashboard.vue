@@ -1,5 +1,5 @@
 <template>
-    <Header v-if="header" :dashboard :load />
+    <Header v-if="header && dashboard" :dashboard :load />
 
     <section id="filter" :class="{filterPadding: padding}">
         <KSFilter
@@ -52,8 +52,10 @@
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
     const router = useRouter();
+    const coreStore = useCoreStore();
 
     import {useDashboardStore} from "../../stores/dashboard";
+    import {useCoreStore} from "../../stores/core.ts";
     const dashboardStore = useDashboardStore();
 
     defineOptions({inheritAttrs: false});
@@ -112,6 +114,17 @@
             return;
         }
 
+        const doesRouteHaveSpecificDashboard = route.params?.dashboard && typeof route.params?.dashboard === "string" && route.params?.dashboard;
+        // handle navigating on /ui/dashboards
+        if(route.name === "home" && !doesRouteHaveSpecificDashboard && id){
+            await router.push({
+                name: route.name,
+                query: route.query,
+                params: {...route.params, dashboard: id}
+            })
+            return
+        }
+
         if (dashboardLocation.value === "home") {
             // Preserve timeRange filter when switching dashboards
             const preservedQuery = Object.fromEntries(
@@ -125,9 +138,9 @@
                     params: {...route.params, dashboard: id},
                     query: preservedQuery,
                 });
-                return;
             }
         }
+
         isDashboardBundledWithUI.value = false;
         if (id === "default") {
             // if requested dashboard is the default one, we first try to find if there is any configured in the DB by an admin
@@ -142,27 +155,37 @@
             // we are in the case we will load the defaults bundled in the UI
             useDefaultDashboardBundledInUI();
         } else {
+
             // case a default dashboard exists in the DB, try to load it
             const maybeDashboard = await dashboardStore.load(id);
+
             if(maybeDashboard){
                 dashboard.value = maybeDashboard
             } else {
-                console.warn(`default dashboard ${id} configured in the DB was not found`)
-                useDefaultDashboardBundledInUI();
-            }
 
+                console.warn(`default dashboard ${id} configured in the DB was not found`)
+                const err = `Dashboard with id '${id}' could not be found`;
+                coreStore.message = {
+                    variant: "error",
+                    title: err,
+                    message: err,
+                };
+
+            }
         }
-        loadCharts(dashboard.value.charts);
+
+        await loadCharts(dashboard.value.charts);
     };
 
-    onBeforeMount(() => {
-        const ID = dashboardStore.getDashboardRelatedToThisRoute(route);
-        load(ID)
+    onBeforeMount(async () => {
+        await dashboardStore.getDashboardRelatedToThisRoute(route).then(async ID => {
+            await load(ID)
+        });
     });
 
-    watch(() => dashboardStore.getDashboardRelatedToThisRoute(route), (newId, oldId) => {
-        if (newId !== oldId) {
-            load(newId);
+    watch(() => dashboardStore.dashboard, (newDashboard, oldDashboard) => {
+        if (newDashboard?.id !== oldDashboard?.id) {
+            load(newDashboard?.id);
         }
     });
 </script>

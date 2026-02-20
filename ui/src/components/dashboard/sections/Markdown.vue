@@ -17,6 +17,7 @@
     import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
@@ -25,12 +26,9 @@
     const data = ref();
 
     import {useRoute} from "vue-router";
-    import {useDashboardStore} from "../../../stores/dashboard.ts";
 
     const route = useRoute();
-    const dashboardStore = useDashboardStore();
-    const dashboardID = dashboardStore.getDashboardRelatedToThisRoute(route);
-    const {EMPTY_TEXT, generate} = useChartGenerator(dashboardID, props, false);
+    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false);
 
     const getData = async () => {
         if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(), "description") ?? EMPTY_TEXT;

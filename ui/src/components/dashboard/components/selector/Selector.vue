@@ -82,7 +82,6 @@
     import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
-    import {Dashboard} from "../../types.ts";
 
 
     const emits = defineEmits(["dashboard"]);
@@ -104,7 +103,7 @@
     });
 
 
-    const selected = ref<Dashboard|undefined>(undefined);
+    const selected = ref<{id: string, title: string}|undefined>(undefined);
 
     const select = (dashboard: any) => {
         emits("dashboard", dashboard.id);
@@ -141,12 +140,17 @@
 
     onBeforeMount(() => {
         fetchDashboards();
-        const dashboardId = dashboardStore.getDashboardRelatedToThisRoute(route);
-        if(dashboardId){
-            dashboardStore.load(dashboardId).then(dash => selected.value=dash);
-        } else {
-            selected.value = undefined;
-        }
+        dashboardStore.getDashboardRelatedToThisRoute(route).then(dashboardId => {
+            if(dashboardId){
+                if(dashboardId === "default"){
+                    selected.value = {id: "default", title: t("dashboards.default")}
+                } else {
+                    dashboardStore.load(dashboardId).then(dash => dash ? selected.value={id: dash.id, title: dash.title ?? dash.id} : selected.value = undefined);
+                }
+            } else {
+                selected.value = undefined;
+            }
+        });
     });
 
     const tenant = ref();

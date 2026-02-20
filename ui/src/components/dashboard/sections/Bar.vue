@@ -31,15 +31,14 @@
     import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
     import {FilterObject} from "../../../utils/filters";
-    import {useDashboardStore} from "../../../stores/dashboard.ts";
 
     const router = useRouter();
 
     const route = useRoute();
-    const dashboardStore = useDashboardStore();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
@@ -165,8 +164,7 @@
         return {labels, datasets};
     });
 
-    const dashboardId = dashboardStore.getDashboardRelatedToThisRoute(route)
-    const {data: generated, generate} = useChartGenerator(dashboardId, props);
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
 
     function refresh() {
         return generate();

@@ -135,20 +135,25 @@ export const useDashboardStore = defineStore("dashboard", () => {
     /**
      * it can only be the dashboard: on the home, namespace or flow
      */
-    const getDashboardRelatedToThisRoute = (route: RouteLocation): string | undefined => {
+    const getDashboardRelatedToThisRoute = async (route: RouteLocation): Promise<string | undefined> => {
+        if(route.params?.dashboard && typeof route.params.dashboard === "string" && route.params.dashboard !== "default"){
+            // then we are already looking explicitly at a specific dashboard
+            return Promise.resolve(route.params.dashboard)
+        }
+
         const dashboardType = getDashboardType(route);
 
-        if (!dashboardType) return;
-
+        if (!dashboardType) return Promise.resolve(undefined);
+        await loadDefaults()
         switch (dashboardType){
-            case "DASHBOARD_MAIN": return computedDashboards.value.defaultHomeDashboard;
-            case "DASHBOARD_NAMESPACE": return computedDashboards.value.defaultNamespaceOverviewDashboard;
-            case "DASHBOARD_FLOW": return computedDashboards.value.defaultFlowOverviewDashboard;
+            case "DASHBOARD_MAIN": return Promise.resolve(computedDashboards.value.defaultHomeDashboard);
+            case "DASHBOARD_NAMESPACE": return Promise.resolve(computedDashboards.value.defaultNamespaceOverviewDashboard);
+            case "DASHBOARD_FLOW": return Promise.resolve(computedDashboards.value.defaultFlowOverviewDashboard);
         }
-/*
-        const storageKey = STORAGE_KEYS(route.params)[key];
+        /*
+                const storageKey = STORAGE_KEYS(route.params)[key];
 
-        return localStorage.getItem(storageKey) || "default";*/
+                return localStorage.getItem(storageKey) || "default";*/
     };
 
     const isDefaultDashboard = (dashboardId: string, route: RouteLocation): boolean => {
@@ -170,15 +175,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
         } catch {
             return undefined
         }
-        let dashboardLoaded: Dashboard;
 
-        if (response.status === 200) dashboardLoaded = response.data;
-        else dashboardLoaded = {title: "Default", id, charts: [], sourceCode: ""};
+        if (response.status === 404){
+            return undefined;
+        }
 
-        dashboard.value = dashboardLoaded;
-        sourceCode.value = dashboardLoaded.sourceCode ?? ""
+        dashboard.value = response.data;
+        sourceCode.value = response.data.sourceCode ?? ""
 
-        return dashboardLoaded;
+        return dashboard.value;
     }
 
     async function create(source: Dashboard["sourceCode"]) {

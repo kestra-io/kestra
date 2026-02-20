@@ -261,7 +261,7 @@
         return result;
     }
 
-    watch(source, async () => {
+    /*watch(source, async () => { FIXME is this duplicated in dashboard.ts ?
         const errorsResult = await dashboardStore.validateDashboard(source.value);
         if (errorsResult.constraints) {
             errors.value = [errorsResult.constraints];
@@ -286,7 +286,7 @@
             }
         }
     });
-
+*/
     onMounted(() => {
         loadPlugins();
     });

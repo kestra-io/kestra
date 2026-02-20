@@ -60,6 +60,7 @@
                             ref="chartsComponents"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
+                            :dashboardId="dashboard.id"
                             :filters
                             :showDefault="props.showDefault"
                         />

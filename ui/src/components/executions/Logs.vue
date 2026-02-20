@@ -52,6 +52,9 @@
                     <IconButton :tooltip="$t('refresh')" @click="loadLogs()">
                         <Refresh />
                     </IconButton>
+                    <el-badge v-if="sseClosed" isDot type="warning" class="refresh-badge">
+                        <span class="visually-hidden">{{ $t('logs may be stale') }}</span>
+                    </el-badge>
                 </el-button-group>
             </el-form-item>
         </Collapse>
@@ -68,6 +71,7 @@
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
+            @sse-closed="sseClosed = $event"
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />
@@ -183,7 +187,8 @@
                 openedTaskrunsCount: 0,
                 raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
                 logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
-                logCursor: undefined
+                logCursor: undefined,
+                sseClosed: false,
             };
         },
         created() {
@@ -275,7 +280,7 @@
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.effectiveLevel
+                        minLevel: this.level
                     }
                 })
             },

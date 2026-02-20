@@ -243,7 +243,6 @@
     import Utils from "../../utils/utils";
     import * as LogUtils from "../../utils/logs";
     import throttle from "lodash/throttle";
-    import {useAxios} from "../../utils/axios";
 
     export default {
         name: "TaskRunDetails",
@@ -261,6 +260,7 @@
             "reset-expand-collapse-all-switch",
             "log-cursor",
             "log-indices-by-level",
+            "sse-closed",
         ],
         props: {
             logCursor: {
@@ -337,6 +337,7 @@
                 subflowTaskRunDetailsRefs: {},
                 throttledExecutionUpdate: undefined,
                 targetExecution: undefined,
+                sseClosed: false,
             };
         },
         watch: {
@@ -403,20 +404,20 @@
                     }
 
                     if (!State.isRunning(this.followedExecution.state.current)) {
-                        // wait a bit to make sure we don't miss logs as log indexer is asynchronous
+                        // wait longer to make sure we don't miss logs as log indexer is asynchronous
                         setTimeout(() => {
                             this.closeLogsSSE();
-                        }, 2000);
-
-                        if (!this.logsSSE) {
-                            this.loadLogs(newExecution.id);
-                        }
+                            this.sseClosed = true;
+                            this.$emit("sse-closed", true);
+                        }, 10000); // Increased from 2000 to 10000
 
                         return;
                     }
 
                     // running or paused
                     if (!this.logsSSE) {
+                        this.sseClosed = false;
+                        this.$emit("sse-closed", false);
                         this.followLogs(newExecution.id);
                     }
                 },
@@ -441,12 +442,6 @@
             }
 
             this.autoExpandBasedOnSettings();
-        },
-        setup(){
-            const $http = useAxios();
-            return {
-                $http
-            }
         },
         computed: {
             ...mapStores(useCoreStore, useExecutionsStore),
@@ -884,6 +879,8 @@
                     })
                     .then((logs) => {
                         this.rawLogs = logs;
+                        this.sseClosed = false;
+                        this.$emit("sse-closed", false);
                     });
             },
             attempts(taskRun) {

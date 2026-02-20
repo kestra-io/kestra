@@ -10194,6 +10194,10 @@ components:
           type: object
           additionalProperties:
             type: object
+        styles:
+          type: array
+          items:
+            type: string
     Property_Boolean_:
       type: object
       properties:

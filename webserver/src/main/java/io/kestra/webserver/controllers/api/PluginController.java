@@ -311,7 +311,7 @@ public class PluginController {
                     if (plugin.getPluginUiManifest().containsKey(task)) {
                         manifest.put(task, plugin.getPluginUiManifest().get(task)
                             .stream()
-                            .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo()))
+                            .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles()))
                             .toList());
                     }
                 }

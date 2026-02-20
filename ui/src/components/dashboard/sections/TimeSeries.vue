@@ -173,10 +173,14 @@
 
     const parseValue = (value: unknown): unknown => {
         const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
+        const query = {
+            ...Object.fromEntries(props.filters.map(({field, value, operation}) => [`filters[${field}][${operation}]`, value])),
+            ...route.query
+        };
         return date.isValid() ? date.format(KestraUtils.getDateFormat(
-            (route.query.startDate ?? route.query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
-            (route.query.endDate ?? route.query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
-            route.query["filters[timeRange][EQUALS]"] as string | undefined
+            (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
+            (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
+            query["filters[timeRange][EQUALS]"] as string | undefined
         )) : value;
     };
 

@@ -1,5 +1,7 @@
 package io.kestra.core.models.annotations;
 
+import io.kestra.core.models.enums.MonacoLanguages;
+
 import java.lang.annotation.*;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -37,6 +39,12 @@ public @interface Plugin {
     String[] aliases() default {};
 
     Priority priority() default Priority.SECONDARY;
+
+    /**
+     *
+     * @return the main language used for the plugin
+     */
+    MonacoLanguages language() default MonacoLanguages.NONE;
 
     enum Priority {
         PRIMARY,

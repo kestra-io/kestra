@@ -1,8 +1,8 @@
 import Revisions from "../../../src/components/layout/Revisions.vue";
-import {ComponentPropsAndSlots, StoryObj} from "@storybook/vue3-vite";
-import {expect, fn, waitFor} from "storybook/test";
-import {vueRouter} from "storybook-vue3-router";
-import {nextTick} from "vue";
+import { ComponentPropsAndSlots, StoryObj } from "@storybook/vue3-vite";
+import { expect, fn, waitFor } from "storybook/test";
+import { vueRouter } from "storybook-vue3-router";
+import { nextTick } from "vue";
 
 
 export default {
@@ -10,8 +10,8 @@ export default {
     component: Revisions,
     decorators: [
         vueRouter([
-            {path: "/", name: "home", component: {template: "<div />"}}
-        ], {initialRoute: "/"}),
+            { path: "/", name: "home", component: { template: "<div />" } }
+        ], { initialRoute: "/" }),
     ]
 };
 
@@ -22,9 +22,9 @@ function crudText(revision: number) {
 }
 
 const render: Story["render"] = (args: ComponentPropsAndSlots<typeof Revisions>) => ({
-    components: {Revisions},
+    components: { Revisions },
     setup() {
-        return {args, crudText};
+        return { args, crudText };
     },
     template: `<Revisions v-bind="{...args}">
         <template #crud="{revision}">
@@ -40,7 +40,7 @@ async function selectorOptions(canvasElement: HTMLElement) {
         selector.click();
         await waitFor(() => selector.ariaDescribedByElements !== null);
         revisionSelectorsOptions.push(
-            (selector.ariaDescribedByElements?? []).flatMap(selectorDropdown => [...selectorDropdown.querySelectorAll("[role='option']")] as HTMLElement[])
+            (selector.ariaDescribedByElements ?? []).flatMap(selectorDropdown => [...selectorDropdown.querySelectorAll("[role='option']")] as HTMLElement[])
         );
     }
     return revisionSelectorsOptions;
@@ -55,7 +55,7 @@ function getSimplifiedOptions(revisionSelectorsOptions: HTMLElement[][]) {
     );
 }
 
-const revisions: {revision: number, source?: string}[] = [
+const revisions: { revision: number, source?: string }[] = [
     {
         revision: 1,
     },
@@ -78,14 +78,14 @@ export const Default: Story = {
         revisions,
         revisionSource: revisionSourceMock,
         onRestore: (source: string) => {
-            revisions.push({revision: revisions[revisions.length - 1].revision + 1, source});
+            revisions.push({ revision: revisions[revisions.length - 1].revision + 1, source });
             return Promise.resolve();
         }
     },
-    async play({args, canvas, canvasElement}) {
+    async play({ args, canvas, canvasElement }) {
         await expect(
             ([...canvasElement.querySelectorAll(".editor .monaco-editor")] as HTMLElement[])
-            .every(el => el.getAttribute("aria-uri")?.endsWith(`.${args.lang}`))
+                .every(el => el.getAttribute("aria-uri")?.endsWith(`.${args.lang}`))
         ).toBeTruthy();
 
         let revisionSelectorsOptions = await selectorOptions(canvasElement);

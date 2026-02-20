@@ -7,7 +7,6 @@ import {useExecutionsStore} from "../../../stores/executions";
 
 //@ts-expect-error no declaration file
 import Logs from "../Logs.vue";
-//@ts-expect-error no declaration file
 import Gantt from "../Gantt.vue";
 //@ts-expect-error no declaration file
 import Topology from "../Topology.vue";
@@ -128,7 +127,7 @@ export function useExecutionRoot() {
             {
                 name: "assets",
                 component: DemoAssets,
-                title: t("assets"),
+                title: t("assets.title"),
                 maximized: true,
                 locked: true,
                 props: {

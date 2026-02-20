@@ -404,7 +404,6 @@
                         formattedOffset: timezoneMoment.format("Z")
                     };
                 }).sort((a, b) => a.offset - b.offset),
-                guidedTour: undefined,
                 now: this.$moment(),
                 localeKey: this.$moment.locale(),
             };
@@ -420,7 +419,6 @@
             this.pendingSettings.timezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
-            this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
@@ -939,7 +937,7 @@
         },
     };
 </script>
-<style lang="scss">
+<style scoped lang="scss">
     .settings-wrapper .el-input-number {
         max-width: 20vw;
 

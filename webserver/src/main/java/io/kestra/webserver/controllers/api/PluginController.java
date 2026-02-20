@@ -6,7 +6,6 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.ui.PluginUiManifest;
-import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginRegistry;
@@ -331,15 +330,15 @@ public class PluginController {
         if (path.contains("..") || path.startsWith("/") || path.startsWith("\\") || path.contains("\0")) {
             return HttpResponse.badRequest();
         }
-        Class<? extends io.kestra.core.models.Plugin> classByIdentifier = pluginRegistry.findClassByIdentifier(
-            getPluginIdentifier(group, null));
-        if (classByIdentifier == null) {
-            throw new NotFoundException();
-        }
+
+        RegisteredPlugin plugin = pluginRegistry.plugins(p -> p.group().equals(group))
+            .stream()
+            .findFirst()
+            .orElseThrow(NotFoundException::new);
 
         String resourcePath = path.startsWith("/") ? "plugin-ui" + path : "plugin-ui/" + path;
 
-        InputStream in = classByIdentifier.getClassLoader().getResourceAsStream(resourcePath);
+        InputStream in = plugin.getClassLoader().getResourceAsStream(resourcePath);
         if (in == null) {
             throw new NotFoundException();
         }

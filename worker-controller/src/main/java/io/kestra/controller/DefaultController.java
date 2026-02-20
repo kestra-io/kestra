@@ -6,7 +6,9 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.HealthStatusManager;
+import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.kestra.controller.config.ControllerConfiguration;
+import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
@@ -45,13 +47,17 @@ public class DefaultController extends AbstractService implements Controller {
     protected final HealthStatusManager healthStatusManager;
 
     protected final ControllerConfiguration controllerConfiguration;
+    
+    protected final GrpcConfiguration grpcConfiguration;
 
     @Inject
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
+        GrpcConfiguration grpcConfiguration,
         ControllerConfiguration controllerConfiguration,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
         super(ServiceType.CONTROLLER, eventPublisher);
+        this.grpcConfiguration = grpcConfiguration;
         this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
         this.healthStatusManager = new HealthStatusManager();
@@ -84,6 +90,11 @@ public class DefaultController extends AbstractService implements Controller {
         ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
             .addService(healthStatusManager.getHealthService());
 
+        if (grpcConfiguration.reflectionEnabled()) {
+            LOG.info("gRPC proto reflection is enabled");
+            serverBuilder = serverBuilder.addService(ProtoReflectionServiceV1.newInstance());
+        }
+        
         // Configure maxConnectionAge for load balancing across multiple controllers
         // This forces workers to periodically reconnect, redistributing them across available controllers
         if (controllerConfiguration.maxConnectionAge() != null && !controllerConfiguration.maxConnectionAge().isZero()) {

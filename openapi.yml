@@ -206,6 +206,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocumentationWithSchema"
+  /api/v1/plugins/pluginUiManifest:
+    post:
+      tags:
+      - Plugins
+      summary: Get plugins group by subgroups
+      operationId: getPluginUiManifest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/TaskWithVersion"
+        required: true
+      responses:
+        "200":
+          description: getPluginUiManifest 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUiManifest"
   /api/v1/plugins/properties/{type}:
     get:
       tags:
@@ -342,6 +363,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocumentationWithSchema"
+  /api/v1/plugins/{group}/pluginUi/{path}:
+    get:
+      tags:
+      - Plugins
+      summary: Get plugins group by subgroups
+      operationId: getPluginUi
+      parameters:
+      - name: group
+        in: path
+        description: The plugin group
+        required: true
+        schema:
+          type: string
+      - name: path
+        in: path
+        description: The file path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getPluginUi 200 response
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
   /api/v1/{tenant}/basicAuth:
     post:
       tags:
@@ -10126,6 +10174,26 @@ components:
       - BUSINESS
       - DATA
       - INFRASTRUCTURE
+    PluginUiManifest:
+      type: object
+      properties:
+        manifest:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/PluginUiModuleWithGroup"
+    PluginUiModuleWithGroup:
+      type: object
+      properties:
+        uiModule:
+          type: string
+        group:
+          type: string
+        staticInfo:
+          type: object
+          additionalProperties:
+            type: object
     Property_Boolean_:
       type: object
       properties:
@@ -10683,6 +10751,13 @@ components:
           type: string
           format: uri
           nullable: true
+    TaskWithVersion:
+      type: object
+      properties:
+        cls:
+          type: string
+        version:
+          type: string
     TenantInterface:
       type: object
       properties:

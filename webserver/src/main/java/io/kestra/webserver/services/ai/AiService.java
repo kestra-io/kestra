@@ -24,6 +24,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final T aiConfiguration;
     private final FlowAiCopilot flowAiCopilot;
     private final DashboardAiCopilot dashboardAiCopilot;
+    private final NamespaceContextTool namespaceContextTool;
     private final String instanceUid;
     private final String aiProvider;
     private final String displayName;
@@ -51,14 +52,17 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         return AiServices.builder(FlowYamlBuilder.class)
             .chatModel(this.chatModel(
                 this.listeners("FlowYamlBuilder", conversationId)
-            )).build();
+            ))
+            .tools(namespaceContextTool)
+            .build();
     }
 
     protected DashboardYamlBuilder dashboardYamlBuilder(String conversationId) {
         return AiServices.builder(DashboardYamlBuilder.class)
             .chatModel(this.chatModel(
                 this.listeners("DashboardYamlBuilder", conversationId)
-            )).build();
+            ))
+            .build();
     }
 
     public AiService(
@@ -67,6 +71,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final VersionProvider versionProvider,
         final InstanceService instanceService,
         final PosthogService postHogService,
+        final NamespaceContextTool namespaceContextTool,
         final String aiProvider,
         final String displayName,
         final List<ChatModelListener> listeners,
@@ -78,13 +83,14 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.displayName = displayName;
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
+        this.namespaceContextTool = namespaceContextTool;
 
         this.flowAiCopilot = new FlowAiCopilot(jsonSchemaGenerator, pluginRegistry, versionProvider.getVersion());
         this.dashboardAiCopilot = new DashboardAiCopilot(jsonSchemaGenerator, pluginRegistry, versionProvider.getVersion());
     }
 
     @Override
-    public String generateFlow(String ip, FlowGenerationPrompt flowGenerationPrompt) {
+    public String generateFlow(String ip, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
         AiService.GenerationContext ctx = this.beforeGeneration(ip, flowGenerationPrompt.conversationId(), "FlowGeneration", Map.of(
             "flowYaml", flowGenerationPrompt.yaml(),
             "userPrompt", flowGenerationPrompt.userPrompt()
@@ -93,7 +99,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         String generatedFlow = flowAiCopilot.generateFlow(
             this.pluginFinder(flowGenerationPrompt.conversationId()),
             this.flowYamlBuilder(flowGenerationPrompt.conversationId()),
-            flowGenerationPrompt
+            flowGenerationPrompt,
+            tenantId
         );
 
         return this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow");

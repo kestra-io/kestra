@@ -954,7 +954,9 @@
         }
       }
     },
-    "assets": "Assets",
+    "assets": {
+      "title": "Assets"
+    },
     "onboarding": {
       "welcome": {
         "headline": "Build and run your first workflow in minutes",
@@ -1240,7 +1242,7 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
-    "files": "Files",
+    "files": "Namespace Files",
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "bookmark": "Bookmarks",
@@ -1544,7 +1546,7 @@
       },
       "panels": {
         "title": "No panels are currently open.",
-        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Files, Blueprints, Context) for related features."
+        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Namespace Files, Blueprints, Context) for related features."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
@@ -1773,10 +1775,11 @@
         "drag to reorder columns": "Drag to reorder columns",
         "empty": "You don't have any saved filter yet.",
         "save duplicate": "A filter with this name already exists.",
-        "active key value pairs": "Active key/value pairs",
+        "active key value pairs": "Active Key/Value pairs",
+        "kv_pair_selected": "{count} Key/Value pairs selected",
         "key": "Key",
         "value": "Value",
-        "add key value pair": "Add key/value pair",
+        "add key value pair": "Add Key/Value pair",
         "search options": "Search...",
         "select all": "Select All",
         "deselect all": "Deselect All",

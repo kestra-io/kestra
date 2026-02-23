@@ -62,6 +62,7 @@
                 @close="closeAiCopilot"
                 :flow="editorContent"
                 :conversationId="conversationId"
+                :namespace="namespace"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
                 :generationType="aiGenerationTypes.FLOW"
             />

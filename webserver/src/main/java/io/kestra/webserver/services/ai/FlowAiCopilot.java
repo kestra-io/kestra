@@ -56,13 +56,13 @@ public class FlowAiCopilot extends AbstractAiCopilot {
         return EXCLUDED_PLUGIN_TYPES;
     }
 
-    public String generateFlow(PluginFinder pluginFinder, FlowYamlBuilder flowYamlBuilder, FlowGenerationPrompt flowGenerationPrompt) {
+    public String generateFlow(PluginFinder pluginFinder, FlowYamlBuilder flowYamlBuilder, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
         String enhancedPrompt = String.format("Current Flow YAML:\n```yaml\n%s\n```\n\nUser's prompt:\n``\n%s\n```", java.util.Optional.ofNullable(flowGenerationPrompt.yaml()).orElse(""), flowGenerationPrompt.userPrompt());
 
         List<String> mostRelevantPlugins = this.mostRelevantPlugins(pluginFinder, enhancedPrompt, this.excludedPluginTypes());
 
         return this.generateYaml(
-            flowYamlBuilder::buildFlow,
+            (schemaJson, genErr, userPr) -> flowYamlBuilder.buildFlow(schemaJson, genErr, java.util.Optional.ofNullable(flowGenerationPrompt.yaml()).orElse(""), flowGenerationPrompt.namespace(), tenantId, userPr),
             Flow.class,
             mostRelevantPlugins,
             NON_REQUEST_ERROR,

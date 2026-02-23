@@ -24,6 +24,7 @@
                             >
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
@@ -59,6 +60,7 @@
                             >
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
@@ -112,6 +114,7 @@
     import Restore from "vue-material-design-icons/Restore.vue";
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue";
     import Editor from "../../components/inputs/Editor.vue";
+    import moment from "moment";
 
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
@@ -120,6 +123,7 @@
 
     export interface Revision {
         revision: number;
+        updated?: string;  // ISO datetime string
         source?: string;
     }
 
@@ -219,13 +223,35 @@
         }
     }
 
+    function formatTimestamp(updatedDate?: string): string {
+        if (!updatedDate) return "";
+
+        return moment(updatedDate).format("YYYY-MM-DD HH:mm");
+    }
+
+    function formatRevisionText(revision: number): string {
+        let text = revision.toString();
+
+        if (currentRevisionWithSource.value.revision === revision) {
+            text += ` (${t("current")})`;
+        }
+
+        return text;
+    }
+
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision}) => ({
-                value: revisionIndex(revision.toString()),
-                text: revision + (currentRevisionWithSource.value.revision === revision ? ` (${t("current")})` : "")
-            }));
+            .map(({revision, updated}) => {
+                const isCurrent = currentRevisionWithSource.value.revision === revision;
+                return {
+                    value: revisionIndex(revision.toString()),
+                    revision: revision,
+                    timestamp: formatTimestamp(updated),
+                    isCurrent: isCurrent,
+                    text: formatRevisionText(revision)
+                };
+            });
     }
 
     const leftOptions = computed(() => {
@@ -353,11 +379,27 @@
 
     .revision-option {
         padding-right: 0.5rem;
-        min-width: 300px;
+        min-width: 350px;
+    }
+
+    .revision-number {
+        font-weight: 500;
+    }
+
+    .revision-timestamp {
+        color: #888;
+        font-size: 0.85em;
     }
 
     .display-select {
         width: 10%;
+    }
+
+    .revision-timestamp {
+        color: #888;
+        font-size: 0.85em;
+        text-align: right;
+        flex-shrink: 0;
     }
 
 </style>

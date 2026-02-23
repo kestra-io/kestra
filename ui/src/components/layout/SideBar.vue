@@ -78,7 +78,7 @@
                     r.class = "vsm--link_active";
                 }
 
-                if (typeof r.href === "string" && r.child && r.child.some(c => typeof c.href === "string" && $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
+                if ((!r.href || typeof r.href === "string") && r.child && r.child.some(c => typeof c.href === "string" && $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
                     r.class = "vsm--link_active";
                     r.child = disabledCurrentRoute(r.child);
                 }

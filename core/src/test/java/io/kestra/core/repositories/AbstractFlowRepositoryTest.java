@@ -357,7 +357,7 @@ public abstract class AbstractFlowRepositoryTest {
             List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, false);
 
             assertThat(revisions).hasSize(1);
-            assertThat(revisions.getFirst()).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision3);
+            assertThat(revisions.getFirst()).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision3);
 
         } finally {
             toDelete.forEach(this::deleteFlow);
@@ -613,10 +613,44 @@ public abstract class AbstractFlowRepositoryTest {
                 flowId, null, List.of(1, 3, 4));
 
             assertThat(revisions).hasSize(3);
-            assertThat(revisions.get(0)).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision1);
-            assertThat(revisions.get(1)).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision3);
-            assertThat(revisions.get(2)).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision4);
+            assertThat(revisions.get(0)).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision1);
+            assertThat(revisions.get(1)).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision3);
+            assertThat(revisions.get(2)).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision4);
 
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldReturnUpdatedInFindRevisions() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            // When: Create a flow with multiple revisions
+            FlowWithSource created = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+            toDelete.add(created);
+
+            FlowWithSource updated = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), created);
+            toDelete.add(updated);
+
+            // Then: findRevisions should return updated for each revision
+            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true);
+
+            assertThat(revisions).hasSize(2);
+
+            // Each revision should have an updated timestamp
+            for (FlowWithSource revision : revisions) {
+                assertThat(revision.getUpdated())
+                    .as("Revision %d should have updated", revision.getRevision())
+                    .isNotNull();
+            }
+
+            // Revisions should be ordered by revision number
+            assertThat(revisions.get(0).getRevision()).isEqualTo(1);
+            assertThat(revisions.get(1).getRevision()).isEqualTo(2);
         } finally {
             toDelete.forEach(this::deleteFlow);
         }

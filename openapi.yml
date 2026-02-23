@@ -8034,6 +8034,10 @@ components:
           minimum: 1
           type: integer
           format: int32
+        updated:
+          type: string
+          description: The timestamp when this revision was created or last updated.
+          format: date-time
         description:
           type: string
         inputs:
@@ -9185,6 +9189,8 @@ components:
         yaml:
           type: string
         providerId:
+          type: string
+        namespace:
           type: string
     FlowGraph:
       type: object

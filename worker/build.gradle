@@ -20,6 +20,8 @@ dependencies {
     testImplementation project(':tests')
     testImplementation project(':jdbc')
     testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':queue').sourceSets.test.output
+
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
     

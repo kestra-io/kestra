@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
 
 /**
  * Component responsible for fetching worker jobs using the pull/ack bidirectional streaming pattern.
@@ -50,6 +52,21 @@ import java.util.concurrent.atomic.AtomicReference;
 @Singleton
 @Slf4j
 public class WorkerJobFetcher extends WorkerLoop {
+    
+    /**
+     * Interval for checking capacity changes and sending permit updates.
+     */
+    private static final Duration PERMIT_CHECK_INTERVAL = Duration.ofMillis(100);
+
+    /**
+     * Minimum delay before the first reconnection attempt after a stream error.
+     */
+    private static final long MIN_RECONNECT_DELAY_MS = Duration.ofMillis(500).toMillis();
+
+    /**
+     * Maximum delay between reconnection attempts (exponential backoff ceiling).
+     */
+    private static final long MAX_RECONNECT_DELAY_MS = Duration.ofSeconds(30).toMillis();
 
     private final WorkerControllerServiceStub workerControllerServiceStub;
     private final WorkerQueueRegistry workerQueueRegistry;
@@ -80,9 +97,16 @@ public class WorkerJobFetcher extends WorkerLoop {
     private volatile CountDownLatch streamCompleted;
 
     /**
-     * Interval for checking capacity changes and sending permit updates.
+     * Current reconnect backoff delay. Doubles after each failure, capped at {@link #MAX_RECONNECT_DELAY_MS}.
+     * Reset to {@link #MIN_RECONNECT_DELAY_MS} on successful connection.
      */
-    private static final Duration PERMIT_CHECK_INTERVAL = Duration.ofMillis(100);
+    private final AtomicLong currentReconnectDelayMs = new AtomicLong(MIN_RECONNECT_DELAY_MS);
+
+    /**
+     * Epoch-millisecond timestamp before which no reconnection attempt should be made.
+     * Set in {@code onError()} and cleared on successful connection.
+     */
+    private final AtomicLong reconnectNotBefore = new AtomicLong(0L);
 
     /**
      * Creates a new {@code WorkerJobFetcher} instance.
@@ -117,6 +141,12 @@ public class WorkerJobFetcher extends WorkerLoop {
     protected void doOnLoop() throws Exception {
         // Check if we need to establish a new stream connection
         if (requestObserverRef.get() == null) {
+            long remainingBackoffMs = reconnectNotBefore.get() - System.currentTimeMillis();
+            if (remainingBackoffMs > 0) {
+                // Honor the exponential backoff window; wake up periodically so stop signals are respected
+                Thread.sleep(Math.min(remainingBackoffMs, PERMIT_CHECK_INTERVAL.toMillis()));
+                return;
+            }
             startStream();
             return;
         }
@@ -165,6 +195,7 @@ public class WorkerJobFetcher extends WorkerLoop {
                         log.warn("Stream error: {}", t.getMessage());
                     }
                     requestObserverRef.set(null);
+                    scheduleReconnectBackoff();
                     streamCompleted.countDown();
                 }
 
@@ -211,6 +242,9 @@ public class WorkerJobFetcher extends WorkerLoop {
 
         doSend(requestStream, requestBuilder.build());
         lastSentPermits.set(initialPermits);
+        // Connection established - reset backoff so the next disconnection starts from the minimum delay
+        currentReconnectDelayMs.set(MIN_RECONNECT_DELAY_MS);
+        reconnectNotBefore.set(0L);
         log.info("Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
             WorkerGroup.forLog(workerGroup),
@@ -324,6 +358,17 @@ public class WorkerJobFetcher extends WorkerLoop {
         } catch (Exception e) {
             log.error("Error sending permit update: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Records the current backoff delay as the reconnection deadline, then doubles the delay
+     * for the next failure, capped at {@link #MAX_RECONNECT_DELAY_MS}.
+     */
+    private void scheduleReconnectBackoff() {
+        long backoffMs = currentReconnectDelayMs.get();
+        currentReconnectDelayMs.set(Math.min(currentReconnectDelayMs.get() * 2, MAX_RECONNECT_DELAY_MS));
+        reconnectNotBefore.set(System.currentTimeMillis() + backoffMs);
+        log.debug("Stream error, will reconnect in {}ms", backoffMs);
     }
 
     private void doSend(ClientCallStreamObserver<WorkerJobRequest> observer, WorkerJobRequest request) {

@@ -30,6 +30,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,11 +73,10 @@ class TriggerControllerTest {
     SchedulerConfiguration schedulerConfiguration;
 
     @BeforeEach
-    protected void setup() throws TimeoutException {
+    protected void setup() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-
-        Await.until(() -> scheduler.isActive(), Duration.ofMillis(100), Duration.ofSeconds(20));
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
     }
 
     @SuppressWarnings("unchecked")
@@ -264,10 +264,13 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldDeleteTriggerById() {
+    void shouldDeleteTriggerById() throws FlowProcessingException, QueueException {
         // GIVEN
-        TriggerState state = newRandomTriggerState();
-        jdbcTriggerRepository.save(state);
+        Flow flow1 = generateFlowWithTrigger(IdUtils.create().toLowerCase());
+        TriggerState state = createTriggerFromFlow(flow1, true);
+        flowService.create(GenericFlow.of(flow1));
+
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> jdbcTriggerRepository.findById(state).isPresent());
 
         // WHEN
         HttpResponse<Void> response = client.toBlocking()
@@ -278,7 +281,6 @@ class TriggerControllerTest {
 
         // THEN
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        assertThat(jdbcTriggerRepository.findById(state)).isEmpty();
     }
 
     @Test

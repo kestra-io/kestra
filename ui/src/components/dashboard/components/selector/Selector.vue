@@ -116,13 +116,13 @@
         emits("dashboard", dashboard.id);
     };
 
-    const setAsTenantDefault = (id: string) => {
+    const setAsTenantDefault = async (id: string) => {
         switch (rootName.value){
-        case "flows/update": dashboardStore.saveDefaults({defaultFlowOverviewDashboard: id}); break;
-        case "namespaces/update": dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break;
-        default: dashboardStore.saveDefaults({defaultHomeDashboard: id});
+        case "flows/update": await dashboardStore.saveDefaults({defaultFlowOverviewDashboard: id}); break;
+        case "namespaces/update": await dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break;
+        default: await dashboardStore.saveDefaults({defaultHomeDashboard: id});
         }
-        select({id: id})
+        await fetchDashboards()
     };
 
     const edit = (id: string) => {
@@ -138,12 +138,8 @@
         });
     };
 
-    const fetchDashboards = () => {
-        dashboardStore
-            .list({}, route)
-            .then((response) => {
-                dashboards.value = response;
-            });
+    const fetchDashboards = async () => {
+        dashboards.value = await dashboardStore.list({}, route) ;
     };
 
     onBeforeMount(() => {
@@ -151,7 +147,7 @@
     });
 
     const tenant = ref();
-    watch(() => route.params.tenant, (t) => {
+    watch(() => route.params.dashboard, (t) => {
         if (tenant.value !== t) {
             fetchDashboards();
             tenant.value = t;

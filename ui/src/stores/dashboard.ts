@@ -17,7 +17,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 
 import Utils from "../utils/utils";
 
-import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/composables/useDashboards";
+import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts";
 import {useAxios} from "../utils/axios";
 import {removeRefPrefix, usePluginsStore} from "./plugins";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -27,6 +27,7 @@ import {useI18n} from "vue-i18n";
 import {RouteLocation, RouteParams} from "vue-router";
 
 export const useDashboardStore = defineStore("dashboard", () => {
+    const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
     const selectedChart = ref<Chart>();
     const activeDashboard = ref<Dashboard>();
     const defaultDashboards = ref<{
@@ -34,11 +35,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
          defaultFlowOverviewDashboard?: string,
          defaultNamespaceOverviewDashboard?: string,
     }>();
-    const computedDashboards = ref<{
-        defaultHomeDashboard: string,
-        defaultFlowOverviewDashboard: string,
-        defaultNamespaceOverviewDashboard: string,
-    }>({defaultHomeDashboard: "default", defaultNamespaceOverviewDashboard: "default", defaultFlowOverviewDashboard: "default"});
     const chartErrors = ref<string[]>([]);
     const isCreating = ref<boolean>(false);
 
@@ -57,34 +53,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const {sort, ...params} = options;
         const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
         const res = response.data as { results: { id: string; title: string }[]};
-        return res.results.map(dashboard => {return {...dashboard, isDefault: isDefaultDashboard(dashboard.id, route)}})
+        dashboardList.value = res.results.map(dashboard => {return {...dashboard, isDefault: isDefaultDashboard(dashboard.id, route)}});
+        return dashboardList.value;
     }
 
     async function loadDefaults() {
-        if(!defaultDashboards.value){
-            const response = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`);
-            defaultDashboards.value = response.data
-        }
-        if(defaultDashboards.value){
-            updateComputedDashboardsFromLoadedDefaults(defaultDashboards.value)
-        }
+        const response = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`);
+        defaultDashboards.value = response.data
         return defaultDashboards.value;
-    }
-
-    function updateComputedDashboardsFromLoadedDefaults(loadedDefaults: {
-        defaultHomeDashboard?: string,
-        defaultFlowOverviewDashboard?: string,
-        defaultNamespaceOverviewDashboard?: string,
-    }){
-        if(loadedDefaults.defaultHomeDashboard){
-            computedDashboards.value.defaultHomeDashboard = loadedDefaults.defaultHomeDashboard;
-        }
-        if(loadedDefaults.defaultNamespaceOverviewDashboard){
-            computedDashboards.value.defaultNamespaceOverviewDashboard = loadedDefaults.defaultNamespaceOverviewDashboard;
-        }
-        if(loadedDefaults.defaultFlowOverviewDashboard){
-            computedDashboards.value.defaultFlowOverviewDashboard = loadedDefaults.defaultFlowOverviewDashboard;
-        }
     }
 
     async function saveDefaults(defaultDashboardsRequest: {
@@ -124,8 +100,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
             throw new Error("tenant other than main unhandled yet")// TODO
         }
 
-        /*if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;*/
-
         const key = KEY_MAP[route.name as string];
         return key;
     }
@@ -139,7 +113,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
 
         // URL
-        if(route.params?.dashboard && typeof route.params.dashboard === "string"){
+        if(route.params?.dashboard && typeof route.params.dashboard === "string" && route.params.dashboard !== "default"){
+            console.log("route selected from url: " +route.params.dashboard)
             return route.params.dashboard;
         }
 
@@ -147,16 +122,19 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const key = getUserDashboardStorageKey(route);
         const userDashboard = localStorage.getItem(key);
         if(userDashboard){
+            console.log("route selected from localstorage: " +userDashboard)
             return userDashboard;
         }
 
         // tenant default
         const defaultTenantDashboard = await getTenantDefaultDashboardId(route);
         if(defaultTenantDashboard) {
+            console.log("route selected from tenant default: " +defaultTenantDashboard)
             return defaultTenantDashboard;
         }
 
         // default
+        console.log("route selected from default")
         return "default"
     }
 
@@ -176,11 +154,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
         await loadDefaults()
         switch (dashboardType) {
             case "DASHBOARD_MAIN":
-                return Promise.resolve(computedDashboards.value.defaultHomeDashboard);
+                return Promise.resolve(defaultDashboards.value?.defaultHomeDashboard);
             case "DASHBOARD_NAMESPACE":
-                return Promise.resolve(computedDashboards.value.defaultNamespaceOverviewDashboard);
+                return Promise.resolve(defaultDashboards.value?.defaultNamespaceOverviewDashboard);
             case "DASHBOARD_FLOW":
-                return Promise.resolve(computedDashboards.value.defaultFlowOverviewDashboard);
+                return Promise.resolve(defaultDashboards.value?.defaultFlowOverviewDashboard);
         }
     }
 
@@ -190,9 +168,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return false;
         }
         switch (dashboardType){
-            case "DASHBOARD_MAIN": return computedDashboards.value.defaultHomeDashboard === dashboardId;
-            case "DASHBOARD_NAMESPACE": return computedDashboards.value.defaultNamespaceOverviewDashboard === dashboardId;
-            case "DASHBOARD_FLOW": return computedDashboards.value.defaultFlowOverviewDashboard === dashboardId;
+            case "DASHBOARD_MAIN": return defaultDashboards.value?.defaultHomeDashboard === dashboardId;
+            case "DASHBOARD_NAMESPACE": return defaultDashboards.value?.defaultNamespaceOverviewDashboard === dashboardId;
+            case "DASHBOARD_FLOW": return defaultDashboards.value?.defaultFlowOverviewDashboard === dashboardId;
         }
     }
 

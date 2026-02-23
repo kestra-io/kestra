@@ -22,7 +22,7 @@
                     :dashboard="{
                         id: filtered.filter(d => d.id === selected?.id)?.[0]?.id ?? 'default',
                         title: (selected?.title ?? $t('dashboards.default')),
-                        isDefault: false // TODO
+                        isDefault: filtered.filter(d => d.id === selected?.id)?.[0]?.isDefault
                     }"
                     :edit="edit"
                     :setAsDefault="setAsTenantDefault"
@@ -122,6 +122,7 @@
         case "namespaces/update": await dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break;
         default: await dashboardStore.saveDefaults({defaultHomeDashboard: id});
         }
+        dashboards.value = []
         await fetchDashboards()
     };
 
@@ -149,6 +150,7 @@
     const tenant = ref();
     watch(() => route.params.dashboard, (t) => {
         if (tenant.value !== t) {
+            // TODO tenant ???
             fetchDashboards();
             tenant.value = t;
         }

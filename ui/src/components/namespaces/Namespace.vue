@@ -18,7 +18,7 @@
     import Actions from "override/components/namespaces/Actions.vue";
     import {useMiscStore} from "override/stores/misc";
     import Tabs from "../Tabs.vue";
-
+    // FIXME when navigating from company.team.one to company.team, dashboard is not refreshed
     const {tabs} = useTabs();
     const {details} = useHelpers();
 

@@ -12,6 +12,7 @@ import {applyDefaultFilters} from "../components/filter/composables/useDefaultFi
 
 export default [
     //Initial
+    // FIXME when open up UI for the first time, the tenant is not loaded before getting redirected to dashboard page
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 

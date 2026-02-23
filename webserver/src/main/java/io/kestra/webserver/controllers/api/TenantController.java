@@ -10,7 +10,6 @@ import io.kestra.core.tenant.TenantService;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -19,7 +18,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -44,7 +42,7 @@ public class TenantController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Tenants"}, summary = "Make this dashboard the default for the entire tenant")
     @Post(uri = "/settings/default-dashboards")
-    public HttpResponse<Void> setTenantDefaultDashboard(
+    public HttpResponse<DashboardSettings> setTenantDefaultDashboard(
         @Parameter() @Body @Valid SetTenantDefaultDashboardsRequest request
     ) {
         var tenantId = tenantService.resolveTenant();
@@ -68,16 +66,17 @@ public class TenantController {
             .orElse(new DashboardSettings());
 
 
+        DashboardSettings saved = dashboardSettings.toBuilder()
+            .defaultHomeDashboard(request.defaultHomeDashboard())
+            .defaultFlowOverviewDashboard(request.defaultFlowOverviewDashboard())
+            .defaultNamespaceOverviewDashboard(request.defaultNamespaceOverviewDashboard())
+            .build();
         settingRepository.save(Setting.builder()
             .key(OSS_DASHBOARD_SETTINGS).value(
-                dashboardSettings.toBuilder()
-                    .defaultHomeDashboard(request.defaultHomeDashboard())
-                    .defaultFlowOverviewDashboard(request.defaultFlowOverviewDashboard())
-                    .defaultNamespaceOverviewDashboard(request.defaultNamespaceOverviewDashboard())
-                    .build()
+                saved
             ).build());
 
-        return HttpResponse.ok();
+        return HttpResponse.ok(saved);
     }
 
 }

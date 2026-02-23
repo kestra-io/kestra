@@ -53,6 +53,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const {sort, ...params} = options;
         const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
         const res = response.data as { results: { id: string; title: string }[]};
+        await loadDefaults();
         dashboardList.value = res.results.map(dashboard => {return {...dashboard, isDefault: isDefaultDashboard(dashboard.id, route)}});
         return dashboardList.value;
     }
@@ -71,8 +72,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const loadedDef = await loadDefaults();
         const def = {...loadedDef, ...defaultDashboardsRequest}
 
-        await axios.post(`${apiUrlWithoutTenants()}/tenants/main/settings/default-dashboards`, def, {headers: {"Content-Type": "application/json"}});
-        defaultDashboards.value = def
+        const res = await axios.post(`${apiUrlWithoutTenants()}/tenants/main/settings/default-dashboards`, def, {headers: {"Content-Type": "application/json"}});
+        defaultDashboards.value = res.data
     }
 
     const STORAGE_KEYS = (params: RouteParams) => {
@@ -97,7 +98,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             throw new Error("tenant is mandatory in getDashboardType")
         }
         if (route.params["tenant"] != "main") {
-            throw new Error("tenant other than main unhandled yet")// TODO
+            throw new Error("tenant other than main unhandled yet")// FIXME
         }
 
         const key = KEY_MAP[route.name as string];
@@ -114,7 +115,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         // URL
         if(route.params?.dashboard && typeof route.params.dashboard === "string" && route.params.dashboard !== "default"){
-            console.log("route selected from url: " +route.params.dashboard)
             return route.params.dashboard;
         }
 
@@ -122,19 +122,16 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const key = getUserDashboardStorageKey(route);
         const userDashboard = localStorage.getItem(key);
         if(userDashboard){
-            console.log("route selected from localstorage: " +userDashboard)
             return userDashboard;
         }
 
         // tenant default
         const defaultTenantDashboard = await getTenantDefaultDashboardId(route);
         if(defaultTenantDashboard) {
-            console.log("route selected from tenant default: " +defaultTenantDashboard)
             return defaultTenantDashboard;
         }
 
         // default
-        console.log("route selected from default")
         return "default"
     }
 

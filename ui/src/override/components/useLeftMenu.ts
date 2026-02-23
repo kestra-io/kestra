@@ -127,7 +127,7 @@ export function useLeftMenu() {
                 href: {
                     name: "home",
                     params: {
-                        dashboard: "default",
+                        dashboard: undefined,
                     },
                 },
                 icon: {

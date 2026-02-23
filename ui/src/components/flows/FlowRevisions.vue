@@ -94,6 +94,9 @@
                 flowStore.flowYaml = response.source;
             })
             .then(() => {
+                return flowStore.initYamlSource();
+            })
+            .then(() => {
                 router.push({query: {}});
             });
     }

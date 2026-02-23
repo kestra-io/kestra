@@ -30,7 +30,7 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
      */
     @Override
     public ConnectionResult connect(String workerId, String workerGroupKey) {
-        log.debug("Connecting to controller to resolve worker group for key: {}", workerGroupKey);
+        log.info("Connecting to controller");
 
         ConnectRequest request = ConnectRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerId))

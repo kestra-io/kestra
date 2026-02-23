@@ -1,6 +1,9 @@
 package io.kestra.worker;
 
+import io.grpc.Deadline;
+import io.grpc.stub.AbstractStub;
 import io.kestra.controller.GrpcChannelManager;
+import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc.ConnectControllerServiceBlockingStub;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
@@ -19,11 +22,16 @@ import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
+
 /**
  * Factory for creating gRPC stubs for worker services.
  */
 @Factory
 public class GrpcStubFactory {
+    
+    @Inject
+    WorkerControllersConfiguration workerControllersConfiguration;
     
     @Bean
     @Singleton
@@ -46,7 +54,7 @@ public class GrpcStubFactory {
     @Bean
     @Singleton
     public ConnectControllerServiceBlockingStub connectControllerServiceBlockingStub(GrpcChannelManager manager) {
-        return ConnectControllerServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+        return withWaitForReady(ConnectControllerServiceGrpc.newBlockingStub(manager.getDefaultChannel()));
     }
     
     @Bean
@@ -65,5 +73,13 @@ public class GrpcStubFactory {
     @Singleton
     public NamespaceFileMetadataServiceBlockingStub namespaceFileMetadataServiceBlockingStub(GrpcChannelManager manager) {
         return NamespaceFileMetadataServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+    
+    public <S extends AbstractStub<S>> S withWaitForReady(S stub) {
+        if (workerControllersConfiguration.waitForReady().enabled()) {
+            Duration deadline = workerControllersConfiguration.waitForReady().deadline();
+            return stub.withWaitForReady().withDeadline(Deadline.after(deadline.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS));
+        }
+        return stub;
     }
 }

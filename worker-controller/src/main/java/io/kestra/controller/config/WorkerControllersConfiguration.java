@@ -59,7 +59,10 @@ public record WorkerControllersConfiguration(
     LoadBalancing loadBalancing,
 
     @Valid
-    HealthCheck healthCheck
+    HealthCheck healthCheck,
+
+    @Valid
+    WaitForReady waitForReady
 ) {
     /**
      * Service discovery type.
@@ -170,6 +173,21 @@ public record WorkerControllersConfiguration(
     public record HealthCheck(
         @Bindable(defaultValue = "true")
         boolean enabled
+    ) {
+    }
+
+
+    /**
+     * Wait-for-ready configuration for gRPC calls. When enabled, workers will wait for the controller to be ready before making gRPC calls.
+     * 
+     * @param enabled
+     */
+    @ConfigurationProperties("wait-for-ready")
+    public record WaitForReady(
+        @Bindable(defaultValue = "true")
+        boolean enabled,
+        @Bindable(defaultValue = "PT30S")
+        Duration deadline
     ) {
     }
 }

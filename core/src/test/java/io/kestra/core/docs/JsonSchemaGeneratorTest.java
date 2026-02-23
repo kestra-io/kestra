@@ -63,7 +63,13 @@ class JsonSchemaGeneratorTest {
     @Test
     void tasks() {
         List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
-        Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
+        Class<? extends Task> cls = scan
+            .stream()
+            .filter(rp -> rp.group().equals("io.kestra.plugin.templates"))
+            .findFirst()
+            .map(RegisteredPlugin::getTasks)
+            .map(List::getFirst)
+            .orElseThrow();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));

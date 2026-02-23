@@ -18,7 +18,7 @@ class PluginScannerTest {
         PluginScanner pluginScanner = new PluginScanner(PluginScannerTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-        assertThat(scan.size()).isEqualTo(1);
+        assertThat(scan.size()).isEqualTo(2);
         assertThat(scan.getFirst().getManifest().getMainAttributes().getValue("X-Kestra-Group")).isEqualTo("io.kestra.plugin.templates");
     }
 

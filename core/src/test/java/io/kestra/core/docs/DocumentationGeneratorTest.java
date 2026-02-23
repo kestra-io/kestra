@@ -42,7 +42,7 @@ class DocumentationGeneratorTest {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-        assertThat(scan.size()).isEqualTo(1);
+        assertThat(scan.size()).isEqualTo(2);
         PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
         ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.getFirst().version(), false);
 

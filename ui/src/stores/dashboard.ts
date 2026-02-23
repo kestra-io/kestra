@@ -133,8 +133,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
 
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
-        if(!route.name || !DASHBOARD_ROUTES.includes(route.name.toString())){
-            throw new Error("invalid route in getDashboard: "+route.name?.toString())
+        const routeName = route.name?.toString();
+        if(!routeName || !DASHBOARD_ROUTES.includes(routeName)){
+            throw new Error("invalid route in getDashboard: "+routeName?.toString())
         }
 
         // URL
@@ -143,7 +144,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
 
         // Localstorage
-        // TODO
+        const key = getUserDashboardStorageKey(route);
+        const userDashboard = localStorage.getItem(key);
+        if(userDashboard){
+            return userDashboard;
+        }
 
         // tenant default
         const defaultTenantDashboard = await getTenantDefaultDashboardId(route);
@@ -153,6 +158,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         // default
         return "default"
+    }
+
+    function getUserDashboardStorageKey(route: RouteLocation){
+        const tenant = route.params["tenant"];
+        const routeName = route.name?.toString();
+        if (!tenant) {
+            throw new Error("tenant is mandatory in getDashboardType")
+        }
+        return `userDashboard/${tenant}/${routeName}`
     }
 
     async function getTenantDefaultDashboardId(route: RouteLocation) {
@@ -366,6 +380,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         getDashboardId,
         isDefaultDashboard,
         load,
+        getUserDashboardStorageKey,
         defaultDashboards,
         loadDefaults,
         saveDefaults,

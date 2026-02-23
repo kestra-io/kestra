@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref, useTemplateRef, watch} from "vue";
+    import {computed, ref, useTemplateRef, watch} from "vue";
     import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
@@ -177,10 +177,10 @@
         await loadCharts(dashboard.value.charts);
     };
 
-    onBeforeMount(async () => {
+    watch(() => route.params.dashboard, async () => {
         const dashboardId = await dashboardStore.getDashboardId(route);
         await load(dashboardId);
-    });
+    }, {immediate: true});
 </script>
 
 <style scoped lang="scss">

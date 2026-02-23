@@ -357,6 +357,10 @@ paths:
       responses:
         "200":
           description: setTenantDefaultDashboard 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSettings"
   /api/v1/{tenant}/basicAuth:
     post:
       tags:

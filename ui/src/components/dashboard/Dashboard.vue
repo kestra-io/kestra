@@ -78,7 +78,7 @@
 
     const padding = computed(() => dashboardLocation.value === "home");
 
-    const dashboard = ref<Dashboard>({id: "", charts: []});
+    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "__default", charts: []});
     const isDashboardBundledWithUI = ref<boolean>(false);
     const charts = ref<Chart[]>([]);
 
@@ -105,7 +105,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = () => {
-        dashboard.value = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI())}
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI())}
         isDashboardBundledWithUI.value = true;
     }
 
@@ -160,7 +160,7 @@
             const maybeDashboard = await dashboardStore.load(id);
 
             if(maybeDashboard){
-                dashboard.value = maybeDashboard
+                dashboardStore.activeDashboard = maybeDashboard
             } else {
 
                 console.warn(`default dashboard ${id} configured in the DB was not found`)
@@ -178,15 +178,8 @@
     };
 
     onBeforeMount(async () => {
-        await dashboardStore.getDashboardRelatedToThisRoute(route).then(async ID => {
-            await load(ID)
-        });
-    });
-
-    watch(() => dashboardStore.dashboard, (newDashboard, oldDashboard) => {
-        if (newDashboard?.id !== oldDashboard?.id) {
-            load(newDashboard?.id);
-        }
+        const dashboardId = await dashboardStore.getDashboardId(route);
+        await load(dashboardId);
     });
 </script>
 

@@ -20,8 +20,9 @@
 
                 <Item
                     :dashboard="{
-                        id: filtered.filter(d => d.title === selected?.title)?.[0]?.id ?? 'default',
-                        title: selected?.title ?? $t('dashboards.default')
+                        id: filtered.filter(d => d.id === selected?.id)?.[0]?.id ?? 'default',
+                        title: (selected?.title ?? $t('dashboards.default')),
+                        isDefault: false // TODO
                     }"
                     :edit="edit"
                     :setAsDefault="setAsTenantDefault"
@@ -95,17 +96,23 @@
     });
 
     const search = ref("");
-    const dashboards = ref<{ id: string; title: string }[]>([]);
-    const filtered = computed(() => {
-        const DEFAULT = {id: "default", title: t("dashboards.default")};
+    const dashboards = ref<{ id: string; title: string, isDefault: boolean }[]>([]);
+    const filtered = computed<{id: string, title: string, isDefault: boolean}[]>(() => {
+        const DEFAULT = {id: "default", title: t("dashboards.default"), isDefault: false};
 
         return [DEFAULT, ...dashboards.value].filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
     });
 
 
-    const selected = ref<{id: string, title: string}|undefined>(undefined);
+    const selected = computed(() => {
+        if(dashboardStore.activeDashboard){
+            return {id: dashboardStore.activeDashboard.id, title:dashboardStore.activeDashboard.title ?? dashboardStore.activeDashboard.id}
+        } else {
+            return undefined
+        }
+    });
 
-    const select = (dashboard: any) => {
+    const select = (dashboard: {id: string}) => {
         emits("dashboard", dashboard.id);
     };
 
@@ -115,6 +122,7 @@
         case "namespaces/update": dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break;
         default: dashboardStore.saveDefaults({defaultHomeDashboard: id});
         }
+        select({id: id})
     };
 
     const edit = (id: string) => {
@@ -132,25 +140,14 @@
 
     const fetchDashboards = () => {
         dashboardStore
-            .list({})
-            .then((response: { results: { id: string; title: string }[] }) => {
-                dashboards.value = response.results;
+            .list({}, route)
+            .then((response) => {
+                dashboards.value = response;
             });
     };
 
     onBeforeMount(() => {
         fetchDashboards();
-        dashboardStore.getDashboardRelatedToThisRoute(route).then(dashboardId => {
-            if(dashboardId){
-                if(dashboardId === "default"){
-                    selected.value = {id: "default", title: t("dashboards.default")}
-                } else {
-                    dashboardStore.load(dashboardId).then(dash => dash ? selected.value={id: dash.id, title: dash.title ?? dash.id} : selected.value = undefined);
-                }
-            } else {
-                selected.value = undefined;
-            }
-        });
     });
 
     const tenant = ref();

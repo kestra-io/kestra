@@ -26,11 +26,9 @@ import {useCoreStore} from "./core";
 import {useI18n} from "vue-i18n";
 import {RouteLocation, RouteParams} from "vue-router";
 
-
-
 export const useDashboardStore = defineStore("dashboard", () => {
     const selectedChart = ref<Chart>();
-    const dashboard = ref<Dashboard>();
+    const activeDashboard = ref<Dashboard>();
     const defaultDashboards = ref<{
          defaultHomeDashboard?: string,
          defaultFlowOverviewDashboard?: string,
@@ -55,11 +53,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const axios = useAxios();
 
-    async function list(options: Record<string, any>) {
+    async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options;
         const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
-
-        return response.data;
+        const res = response.data as { results: { id: string; title: string }[]};
+        return res.results.map(dashboard => {return {...dashboard, isDefault: isDefaultDashboard(dashboard.id, route)}})
     }
 
     async function loadDefaults() {
@@ -120,7 +118,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     function getDashboardType(route: RouteLocation) {
         if (!route.params["tenant"]) {
-            throw new Error("tenant is mandatory in getDashboardRelatedToThisRoute")
+            throw new Error("tenant is mandatory in getDashboardType")
         }
         if (route.params["tenant"] != "main") {
             throw new Error("tenant other than main unhandled yet")// TODO
@@ -132,29 +130,45 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return key;
     }
 
-    /**
-     * it can only be the dashboard: on the home, namespace or flow
-     */
-    const getDashboardRelatedToThisRoute = async (route: RouteLocation): Promise<string | undefined> => {
-        if(route.params?.dashboard && typeof route.params.dashboard === "string" && route.params.dashboard !== "default"){
-            // then we are already looking explicitly at a specific dashboard
-            return Promise.resolve(route.params.dashboard)
+    const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
+
+    const getDashboardId = async (route: RouteLocation): Promise<string> => {
+        if(!route.name || !DASHBOARD_ROUTES.includes(route.name.toString())){
+            throw new Error("invalid route in getDashboard: "+route.name?.toString())
         }
 
+        // URL
+        if(route.params?.dashboard && typeof route.params.dashboard === "string"){
+            return route.params.dashboard;
+        }
+
+        // Localstorage
+        // TODO
+
+        // tenant default
+        const defaultTenantDashboard = await getTenantDefaultDashboardId(route);
+        if(defaultTenantDashboard) {
+            return defaultTenantDashboard;
+        }
+
+        // default
+        return "default"
+    }
+
+    async function getTenantDefaultDashboardId(route: RouteLocation) {
         const dashboardType = getDashboardType(route);
 
         if (!dashboardType) return Promise.resolve(undefined);
         await loadDefaults()
-        switch (dashboardType){
-            case "DASHBOARD_MAIN": return Promise.resolve(computedDashboards.value.defaultHomeDashboard);
-            case "DASHBOARD_NAMESPACE": return Promise.resolve(computedDashboards.value.defaultNamespaceOverviewDashboard);
-            case "DASHBOARD_FLOW": return Promise.resolve(computedDashboards.value.defaultFlowOverviewDashboard);
+        switch (dashboardType) {
+            case "DASHBOARD_MAIN":
+                return Promise.resolve(computedDashboards.value.defaultHomeDashboard);
+            case "DASHBOARD_NAMESPACE":
+                return Promise.resolve(computedDashboards.value.defaultNamespaceOverviewDashboard);
+            case "DASHBOARD_FLOW":
+                return Promise.resolve(computedDashboards.value.defaultFlowOverviewDashboard);
         }
-        /*
-                const storageKey = STORAGE_KEYS(route.params)[key];
-
-                return localStorage.getItem(storageKey) || "default";*/
-    };
+    }
 
     const isDefaultDashboard = (dashboardId: string, route: RouteLocation): boolean => {
         const dashboardType = getDashboardType(route);
@@ -180,10 +194,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return undefined;
         }
 
-        dashboard.value = response.data;
+        activeDashboard.value = response.data;
         sourceCode.value = response.data.sourceCode ?? ""
 
-        return dashboard.value;
+        return activeDashboard.value;
     }
 
     async function create(source: Dashboard["sourceCode"]) {
@@ -318,7 +332,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     watch(sourceCode, _throttle(async () => {
         const errorsResult = await validateDashboard(sourceCode.value);
 
-        const dbId = dashboard.value?.id;
+        const dbId = activeDashboard.value?.id;
         if (errorsResult.constraints) {
             errors.value = [errorsResult.constraints];
         } else {
@@ -344,15 +358,16 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }, 300, {trailing: true, leading: false}));
 
     return {
-        dashboard,
+        activeDashboard,
         chartErrors,
         isCreating,
         selectedChart,
         list,
-        getDashboardRelatedToThisRoute,
+        getDashboardId,
         isDefaultDashboard,
         load,
-        loadDefaults: loadDefaults,
+        defaultDashboards,
+        loadDefaults,
         saveDefaults,
         create,
         update,

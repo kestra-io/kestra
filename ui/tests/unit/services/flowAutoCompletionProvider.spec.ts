@@ -139,6 +139,7 @@ describe("FlowAutoCompletionProvider", () => {
             "labels",
             "envs",
             "globals",
+            "parent",
             "parents",
             "error",
             "kestra",
@@ -166,6 +167,8 @@ describe("FlowAutoCompletionProvider", () => {
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
             "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
+            "ksuid()",
+            "parentOutput()"
         ]);
     })
 

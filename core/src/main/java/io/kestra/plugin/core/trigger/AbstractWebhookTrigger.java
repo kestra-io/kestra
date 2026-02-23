@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.trigger;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.triggers.AbstractTrigger;

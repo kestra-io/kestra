@@ -19,7 +19,6 @@ import jakarta.inject.Inject;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -46,28 +45,12 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
 
     @Test
     void flowDeserializationIssue() throws Exception {
-        deserializationIssuesCaseTest.flowDeserializationIssue(this::sendToQueueV2);
+        deserializationIssuesCaseTest.flowDeserializationIssue(this::sendToQueue);
     }
 
     private void sendToQueue(DeserializationIssuesCaseTest.QueueMessage queueMessage) {
 
         Table<Record> table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
-
-        Map<Field<Object>, Object> fields = fields(queueMessage);
-
-        dslContextWrapper.transaction(configuration -> {
-            DSLContext context = DSL.using(configuration);
-
-            context
-                .insertInto(table)
-                .set(fields)
-                .execute();
-        });
-    }
-
-    private void sendToQueueV2(DeserializationIssuesCaseTest.QueueMessage queueMessage) {
-
-        Table<Record> table = DSL.table(jdbcTableConfigs.tableConfig("queue").table());
 
         Map<Field<Object>, Object> fields = fieldsV2(queueMessage);
 

@@ -32,6 +32,7 @@ public class WebhookPluginTest {
     @Client("/")
     ReactorHttpClient client;
 
+    @Inject
     private DispatchQueueInterface<Execution> executionQueue;
 
     @SuppressWarnings("unchecked")

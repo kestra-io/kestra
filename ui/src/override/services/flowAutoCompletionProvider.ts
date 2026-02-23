@@ -46,6 +46,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "labels",
             "envs",
             "globals",
+            "parent",
             "parents",
             "error",
             "kestra",
@@ -73,6 +74,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
             "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
+            "ksuid()",
+            "parentOutput()",
         ]);
     }
 

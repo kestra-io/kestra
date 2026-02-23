@@ -976,7 +976,7 @@ public class ExecutionController {
         this.controlRevision(execution.get(), revision);
 
         if (!(execution.get().getState().isFailed())) {
-            throw new IllegalStateException("Execution must be terminated or paused and not killed to be restarted, current state is '" +
+            throw new IllegalStateException("Execution must be failed to be restarted, current state is '" +
                 execution.get().getState().getCurrent() + "' !"
             );
         }
@@ -1191,6 +1191,10 @@ public class ExecutionController {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             return null;
+        }
+
+        if (!execution.get().getState().canChangeStatus()) {
+            throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
 
         var executionCommand = ChangeTaskRunState.from(execution.get(), stateRequest.taskRunId(), stateRequest.state());

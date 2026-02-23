@@ -3,7 +3,6 @@ package io.kestra.webserver.controllers.api;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
@@ -13,7 +12,6 @@ import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.plugin.core.debug.Return;
-import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;
@@ -43,7 +41,6 @@ import java.util.Objects;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
@@ -375,77 +372,6 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"})
-    void commaInSingleLabelsValue() {
-        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
-
-        MutableHttpRequest<Object> deleteRequest = HttpRequest
-            .DELETE("/api/v1/main/executions/by-query?labels=" + encodedCommaWithinLabel);
-        assertDoesNotThrow(() -> client.toBlocking().retrieve(deleteRequest, PagedResults.class));
-
-        MutableHttpRequest<List<Object>> restartRequest = HttpRequest
-            .POST("/api/v1/main/executions/restart/by-query?labels=" + encodedCommaWithinLabel, List.of());
-        assertDoesNotThrow(() -> client.toBlocking().retrieve(restartRequest, BulkResponse.class));
-
-        MutableHttpRequest<List<Object>> resumeRequest = HttpRequest
-            .POST("/api/v1/main/executions/resume/by-query?labels=" + encodedCommaWithinLabel, List.of());
-        assertDoesNotThrow(() -> client.toBlocking().retrieve(resumeRequest, BulkResponse.class));
-
-        MutableHttpRequest<List<Object>> replayRequest = HttpRequest
-            .POST("/api/v1/main/executions/replay/by-query?labels=" + encodedCommaWithinLabel, List.of());
-        assertDoesNotThrow(() -> client.toBlocking().retrieve(replayRequest, BulkResponse.class));
-
-        MutableHttpRequest<List<Object>> labelsRequest = HttpRequest
-            .POST("/api/v1/main/executions/labels/by-query?labels=" + encodedCommaWithinLabel, List.of());
-        assertDoesNotThrow(() -> client.toBlocking().retrieve(labelsRequest, BulkResponse.class));
-
-        MutableHttpRequest<List<Object>> killRequest = HttpRequest
-            .DELETE("/api/v1/main/executions/kill/by-query?labels=" + encodedCommaWithinLabel, List.of());
-        assertDoesNotThrow(() -> client.toBlocking().retrieve(killRequest, BulkResponse.class));
-
-        MutableHttpRequest<MultipartBody> triggerRequest = HttpRequest
-            .POST("/api/v1/main/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
-            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        assertThat(client.toBlocking().retrieve(triggerRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
-
-        MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
-            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
-
-        MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar");
-        assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal()).isEqualTo(2L);
-
-        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
-            .GET("/api/v1/main/executions/search?labels=project:foo,bar");
-        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(2L);
-
-        MutableHttpRequest<Object> searchRequest_triggerExecution = HttpRequest
-            .GET("/api/v1/executions/search?triggerExecutionId=test");
-        assertThat(client.toBlocking().retrieve(searchRequest_triggerExecution, PagedResults.class).getTotal()).isEqualTo(0L);
-    }
-
-    @Test
-    void commaInOneOfMultiLabels() {
-        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
-        String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
-
-        MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createExecutionInputsFlowBody())
-            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"), new Label("status", "test"));
-
-        MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test");
-        assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal()).isEqualTo(1L);
-
-        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
-            .GET("/api/v1/main/executions/search?labels=project:foo,bar" + "&labels=status:test");
-        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(1L);
-    }
-
-    @Test
     @LoadFlows(value = {"flows/valids/minimal.yaml"})
     void scheduleDate() {
         // given
@@ -517,21 +443,6 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void exportExecutions() {
-        createAndExecuteFlow();
-
-        HttpResponse<byte[]> response = client.toBlocking().exchange(
-            HttpRequest.GET("/api/v1/main/executions/export/by-query/csv"),
-            byte[].class
-        );
-
-        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-        assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=executions.csv");
-        String csv = new String(response.body());
-        assertThat(csv).contains("id");
-    }
-
-    @Test
     void shouldBlockExecutionAndThrowCheckErrorMessage() {
         String namespaceId = "io.othercompany";
         String flowId = "flowWithCheck";
@@ -564,25 +475,6 @@ class ExecutionControllerTest {
         );
     }
 
-    void createAndExecuteFlow() {
-        String namespaceId = "io.othercompany";
-        String flowId = "flowId";
-        Flow create = Flow.builder()
-            .id(flowId)
-            .tenantId(MAIN_TENANT)
-            .namespace(namespaceId)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
-            .build();
 
-        client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/flows", create.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
-            Flow.class
-        );
-
-        client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/executions/" + namespaceId + "/" + flowId, null),
-            Execution.class
-        );
-    }
 
 }

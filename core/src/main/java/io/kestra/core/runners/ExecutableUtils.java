@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -71,7 +72,7 @@ public final class ExecutableUtils {
         List<Label> labels,
         boolean inheritLabels,
         Property<ZonedDateTime> scheduleDate,
-        Map<String, Object> outputMap) throws IllegalVariableEvaluationException {
+        Map<String, Object> outputMap) throws InternalException {
 
         // extract a trace context for propagation
         final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).services().tracerFactory()
@@ -90,11 +91,14 @@ public final class ExecutableUtils {
             if (currentExecution.getLabels() != null && currentExecution.getLabels().contains(new Label(Label.RESTARTED, "true"))
                 && currentTask.getRestartBehavior() == ExecutableTask.RestartBehavior.RETRY_FAILED) {
                 ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).services().additionalService(ExecutionRepositoryInterface.class);
+                TaskOutputService taskOutputService = ((DefaultRunContext) runContext).services().additionalService(TaskOutputService.class);
+
+                Map<String, Object> previousOutputs = taskOutputService.getOutputs(currentTaskRun);
 
                 Optional<Execution> existingSubflowExecution = Optional.empty();
-                if (!MapUtils.isEmpty(outputMap) && outputMap.containsKey("executionId")) {
+                if (!MapUtils.isEmpty(previousOutputs) && previousOutputs.containsKey("executionId")) {
                     // we know which execution to restart; this should be the case for Subflow tasks
-                    existingSubflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) outputMap.get("executionId"));
+                    existingSubflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) previousOutputs.get("executionId"));
                 }
 
                 if (existingSubflowExecution.isEmpty()) {
@@ -129,7 +133,7 @@ public final class ExecutableUtils {
                             .parentTask(currentTask)
                             .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
                             .execution(restarted)
-                            .outputs(outputMap) // FIXME check that it may not be what we need to do...
+                            .outputs(previousOutputs)
                             .build());
                     } catch (Exception e) {
                         throw new RuntimeException(e);

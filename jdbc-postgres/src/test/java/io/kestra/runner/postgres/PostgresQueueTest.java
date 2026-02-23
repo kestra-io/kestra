@@ -26,9 +26,9 @@ class PostgresQueueTest extends JdbcQueueTest {
                 .namespace("namespace")
                 .flowId("flowId")
                 .state(new State().withState(State.Type.SUCCESS))
-                .outputs(Variables.inMemory(Map.of("value", "\u0000")))
                 .build()
             )
+            .outputs(Variables.inMemory(Map.of("value", "\u0000")))
             .build();
 
         var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));

@@ -25,7 +25,7 @@
     },
     "dependencies": {
         "@js-joda/core": "^5.7.0",
-        "@kestra-io/ui-libs": "^0.0.278",
+        "@kestra-io/ui-libs": "^0.0.280",
         "@vue-flow/background": "^1.3.2",
         "@vue-flow/controls": "^1.1.2",
         "@vue-flow/core": "^1.48.2",
@@ -79,9 +79,9 @@
     "devDependencies": {
         "@codecov/vite-plugin": "^1.9.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
-        "@eslint/js": "^9.39.2",
+        "@eslint/js": "^9.39.3",
         "@playwright/test": "^1.58.2",
-        "@rushstack/eslint-patch": "^1.16.0",
+        "@rushstack/eslint-patch": "^1.16.1",
         "@shikijs/markdown-it": "^3.22.0",
         "@storybook/addon-themes": "^10.2.10",
         "@storybook/addon-vitest": "^10.2.10",
@@ -106,7 +106,7 @@
         "@vueuse/router": "^14.2.1",
         "change-case": "5.4.4",
         "cross-env": "^10.1.0",
-        "eslint": "^9.39.2",
+        "eslint": "^9.39.3",
         "eslint-plugin-storybook": "^10.2.10",
         "eslint-plugin-vue": "^9.33.0",
         "globals": "^17.3.0",
@@ -130,7 +130,7 @@
         "uuid": "^13.0.0",
         "vite": "npm:rolldown-vite@latest",
         "vitest": "^3.2.4",
-        "vue-tsc": "^3.2.4"
+        "vue-tsc": "^3.2.5"
     },
     "optionalDependencies": {
         "@esbuild/darwin-arm64": "^0.27.3",

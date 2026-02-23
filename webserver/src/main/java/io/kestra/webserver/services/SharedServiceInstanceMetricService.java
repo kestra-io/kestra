@@ -74,9 +74,9 @@ public class SharedServiceInstanceMetricService {
         sumedServiceInstanceMetrics.forEach((metricKey, value) -> {
             sharedMetricsValues.computeIfAbsent(metricKey, k -> new AtomicReference<>()).set(value);
 
-            List<String> tags = new ArrayList<>(metricKey.tags().stream().map(
+            List<String> tags = metricKey.tags().stream().map(
                         (tag) -> List.of(tag.key(), tag.value())
-                    ).flatMap(List::stream).toList());
+                    ).flatMap(List::stream).toList();
 
             sharedMetricsGauges.computeIfAbsent(metricKey, (mk) -> metricRegistry.gauge(
                 removeMetricPrefix(metricKey.name()),

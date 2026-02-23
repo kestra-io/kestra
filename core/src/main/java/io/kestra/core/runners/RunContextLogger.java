@@ -15,8 +15,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.DispatchQueueInterface;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +34,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     private final String loggerName;
     private volatile Logger logger; // must be volatile as it is built lazily via DCL
 
-    private DispatchQueueInterface<LogEntry> logQueue;
-    private BroadcastQueueInterface<FollowLogEvent> followLogQueue;
+    private LogEntryEmitter logEmitter;
     private LogEntry logEntry;
     private Level loglevel;
     private final List<String> useSecrets = new ArrayList<>();
@@ -53,7 +50,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.logToFile = false;
     }
 
-    public RunContextLogger(DispatchQueueInterface<LogEntry> logQueue, BroadcastQueueInterface<FollowLogEvent> followLogQueue, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile) {
+    public RunContextLogger(LogEntryEmitter logEmitter, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile) {
         if (logEntry.getTaskId() != null) {
             this.loggerName = baseLoggerName(logEntry) + "." + logEntry.getTaskId();
         } else if (logEntry.getTriggerId() != null) {
@@ -62,8 +59,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             this.loggerName = baseLoggerName(logEntry);
         }
 
-        this.logQueue = logQueue;
-        this.followLogQueue = followLogQueue;
+        this.logEmitter = logEmitter;
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
         this.logToFile = logToFile;
@@ -174,8 +170,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
      * @see #emitLogs(List)
      */
     public void emitLog(LogEntry logEntry) {
-        this.logQueue.emitAsync(logEntry);
-        this.followLogQueue.emitAsync(FollowLogEvent.from(logEntry));
+        this.logEmitter.emits(logEntry);
     }
 
     /**
@@ -185,8 +180,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
      * @see #emitLog(LogEntry)
      */
     public void emitLogs(List<LogEntry> logEntries) {
-        this.logQueue.emitAsync(logEntries);
-        this.followLogQueue.emitAsync(logEntries.stream().map(FollowLogEvent::from).toList());
+        this.logEmitter.emits(logEntries);
     }
 
     private Logger initializeLogger() {
@@ -203,8 +197,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         }
 
         // unit tests don't always have the log queue as we construct a logger directly without it
-        if (this.logQueue != null && this.followLogQueue != null && !this.logToFile) {
-            ContextAppender contextAppender = new ContextAppender(this, newLogger, this.logQueue, this.followLogQueue, this.logEntry);
+        if (this.logEmitter != null && !this.logToFile) {
+            ContextAppender contextAppender = new ContextAppender(this, newLogger, this.logEmitter, this.logEntry);
             contextAppender.setContext(loggerContext);
             contextAppender.start();
 
@@ -346,14 +340,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
     @Slf4j
     public static class ContextAppender extends BaseAppender {
-        private final DispatchQueueInterface<LogEntry> logQueue;
-        private final BroadcastQueueInterface<FollowLogEvent> followLogQueue;
+        private final LogEntryEmitter logEmitter;
         private final LogEntry logEntry;
 
-        public ContextAppender(RunContextLogger runContextLogger, Logger logger, DispatchQueueInterface<LogEntry> logQueue, BroadcastQueueInterface<FollowLogEvent> followLogQueue, LogEntry logEntry) {
+        public ContextAppender(RunContextLogger runContextLogger, Logger logger, LogEntryEmitter logEmitter, LogEntry logEntry) {
             super(runContextLogger, logger);
-            this.logQueue = logQueue;
-            this.followLogQueue = followLogQueue;
+            this.logEmitter = logEmitter;
             this.logEntry = logEntry;
         }
 
@@ -362,8 +354,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             e = this.transform(e);
 
             var entries = logEntries(e, logEntry);
-            logQueue.emitAsync(entries);
-            followLogQueue.emitAsync(entries.stream().map(FollowLogEvent::from).toList());
+            logEmitter.emits(entries);
         }
     }
 

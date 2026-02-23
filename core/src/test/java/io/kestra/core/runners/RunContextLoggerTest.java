@@ -34,6 +34,9 @@ class RunContextLoggerTest {
     @Inject
     private BroadcastQueueInterface<FollowLogEvent> followLogQueue;
 
+    @Inject
+    private LogEntryEmitter logEntryEmitter;
+
     @Test
     void logs() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -43,8 +46,7 @@ class RunContextLoggerTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         RunContextLogger runContextLogger = new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEntryEmitter,
             LogEntry.of(execution),
             Level.TRACE,
             false
@@ -75,8 +77,7 @@ class RunContextLoggerTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         RunContextLogger runContextLogger = new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEntryEmitter,
             LogEntry.of(execution),
             Level.TRACE,
             false
@@ -99,8 +100,7 @@ class RunContextLoggerTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         RunContextLogger runContextLogger = new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEntryEmitter,
             LogEntry.of(execution),
             Level.TRACE,
             false
@@ -137,8 +137,7 @@ class RunContextLoggerTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         RunContextLogger runContextLogger = new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEntryEmitter,
             LogEntry.of(execution),
             Level.TRACE,
             false
@@ -177,8 +176,7 @@ class RunContextLoggerTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         RunContextLogger runContextLogger = new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEntryEmitter,
             LogEntry.of(execution),
             Level.TRACE,
             false

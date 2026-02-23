@@ -5,8 +5,6 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.DispatchQueueInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -16,11 +14,12 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RunContextLoggerFactory {
 
-    @Inject
-    private DispatchQueueInterface<LogEntry> logQueue;
+    private final LogEntryEmitter logEmitter;
 
     @Inject
-    private BroadcastQueueInterface<FollowLogEvent> followLogQueue;
+    public RunContextLoggerFactory(LogEntryEmitter logEmitter) {
+        this.logEmitter = logEmitter;
+    }
 
     public RunContextLogger create(WorkerTask workerTask) {
         return create(workerTask.getTaskRun(), workerTask.getTask(), workerTask.getExecutionKind());
@@ -28,8 +27,7 @@ public class RunContextLoggerFactory {
 
     public RunContextLogger create(TaskRun taskRun, Task task, ExecutionKind executionKind) {
         return new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEmitter,
             LogEntry.of(taskRun, executionKind),
             task.getLogLevel(),
             task.isLogToFile()
@@ -38,8 +36,7 @@ public class RunContextLoggerFactory {
 
     public RunContextLogger create(Execution execution) {
         return new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEmitter,
             LogEntry.of(execution),
             null,
             false
@@ -48,8 +45,7 @@ public class RunContextLoggerFactory {
 
     public RunContextLogger create(TriggerContext triggerContext, AbstractTrigger trigger) {
         return new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEmitter,
             LogEntry.of(triggerContext, trigger),
             trigger.getLogLevel(),
             trigger.isLogToFile()
@@ -58,8 +54,7 @@ public class RunContextLoggerFactory {
 
     public RunContextLogger create(FlowInterface flow, AbstractTrigger trigger) {
         return new RunContextLogger(
-            logQueue,
-            followLogQueue,
+            logEmitter,
             LogEntry.of(flow, trigger),
             trigger.getLogLevel(),
             trigger.isLogToFile()

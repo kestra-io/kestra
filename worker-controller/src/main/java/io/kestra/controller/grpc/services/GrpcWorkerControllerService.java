@@ -18,6 +18,7 @@ import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
@@ -42,7 +43,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     private DispatchQueueInterface<MetricEntry> metricEntryQueue;
 
     @Inject
-    private DispatchQueueInterface<LogEntry> logEntryQueue;
+    private LogEntryEmitter logEntryEmitter;
 
     @Inject
     private TriggerEventQueue triggerEventQueue;
@@ -203,7 +204,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
         BatchMessage<LogEntry> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.LOG_ENTRY);
         if (!message.records().isEmpty()) {
-            logEntryQueue.emitAsync(message.records());
+            logEntryEmitter.emits(message.records());
         }
         responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
         responseObserver.onCompleted();

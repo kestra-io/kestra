@@ -52,6 +52,23 @@ public class WorkerQueueRegistry {
         );
     }
 
+    /**
+     * Retrieves the first {@code WorkerQueue} associated with the given type.
+     *
+     * @param type     the class type of the queue elements
+     * @param <T>      the type of elements in the queue
+     * @return the {@code WorkerQueue}, or {@code null} if no such queue exists
+     */
+    @SuppressWarnings("unchecked")
+    public <T> WorkerQueue<T> get(Class<T> type) {
+        return queues.entrySet().stream()
+            .filter(entry -> entry.getKey().type().equals(type))
+            .findFirst()
+            .map(Map.Entry::getValue)
+            .map(queue -> (WorkerQueue<T>) queue)
+            .orElseThrow(() -> new IllegalStateException("No queue found for type: " + type.getName()));
+    }
+
     private record QueueKey(String workerId, Class<?> type) {
     }
 }

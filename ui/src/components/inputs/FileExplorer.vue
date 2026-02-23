@@ -502,14 +502,17 @@ function onDocDropOrEnd() {
 }
 
 onMounted(() => {
-    document.addEventListener("dragover", onDocDragOver, {capture: true});
-    document.addEventListener("drop", onDocDropOrEnd, {capture: true});
+  document.addEventListener("dragover", onDocDragOver, true);
+  document.addEventListener("drop", onDocDropOrEnd, true);
 });
 
 onBeforeUnmount(() => {
-    document.removeEventListener("dragover", onDocDragOver, {capture: true} as any);
-    document.removeEventListener("drop", onDocDropOrEnd, {capture: true} as any);
+  document.removeEventListener("dragover", onDocDragOver, true);
+  document.removeEventListener("drop", onDocDropOrEnd, true);
+     draggingFromSidebar.value = false;
+  cleanupDragClasses();
 });
+
 
     const filePicker = ref<HTMLInputElement>();
     const folderPicker = ref<HTMLInputElement>();

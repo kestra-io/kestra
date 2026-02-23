@@ -4,11 +4,9 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.Scheduler;
-import io.kestra.core.runners.Worker;
-import io.kestra.core.utils.Await;
-import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -20,9 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @KestraTest(startRunner = true, startScheduler = true)
 class TriggerTest {
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
@@ -30,50 +25,29 @@ class TriggerTest {
 
     @Test
     @LoadFlows({"flows/valids/http-listen.yaml"})
-    void trigger() throws Exception {
-        Await.until(() -> scheduler.isActive(), Duration.ofMillis(100), Duration.ofSeconds(20));
-
-        // mock flow listeners
+    void shouldExecuteFlowForHttpTrigger() throws Exception {
+        Awaitility.await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
         CountDownLatch queueCount = new CountDownLatch(1);
-
-        // scheduler
-        try (
-            Worker worker = applicationContext.createBean(Worker.class);
-        ) {
-            // wait for execution
-            executionQueue.addListener(execution -> {
-                if (execution.getFlowId().equals("http-listen")) {
-                    queueCount.countDown();
-                }
-            });
-
-            worker.start(1, null);
-
-            assertTrue(queueCount.await(1, TimeUnit.MINUTES));
-        }
+        // wait for execution
+        executionQueue.addListener(execution -> {
+            if (execution.getFlowId().equals("http-listen")) {
+                queueCount.countDown();
+            }
+        });
+        assertTrue(queueCount.await(1, TimeUnit.MINUTES));
     }
 
     @Test
     @LoadFlows({"flows/valids/http-listen-encrypted.yaml"})
-    void trigger_EncryptedBody() throws Exception {
-        Await.until(() -> scheduler.isActive(), Duration.ofMillis(100), Duration.ofSeconds(20));
-        // mock flow listeners
+    void shouldExecuteFlowForHttpTriggerWithEncryptedBody() throws Exception {
+        Awaitility.await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
         CountDownLatch queueCount = new CountDownLatch(1);
-
-        // scheduler
-        try (
-            Worker worker = applicationContext.createBean(Worker.class)
-        ) {
-            // wait for execution
-            executionQueue.addListener(execution -> {
-                if (execution.getFlowId().equals("http-listen-encrypted")) {
-                    queueCount.countDown();
-                }
-            });
-
-            worker.start(1, null);
-
-            assertTrue(queueCount.await(1, TimeUnit.MINUTES));
-        }
+        // wait for execution
+        executionQueue.addListener(execution -> {
+            if (execution.getFlowId().equals("http-listen-encrypted")) {
+                queueCount.countDown();
+            }
+        });
+        assertTrue(queueCount.await(1, TimeUnit.MINUTES));
     }
 }

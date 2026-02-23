@@ -232,6 +232,9 @@ subprojects {subProj ->
             //assertj
             testImplementation 'org.assertj:assertj-core'
 
+            // ArchUnit for architecture testing
+            testImplementation "com.tngtech.archunit:archunit-junit5"
+
             agent "org.aspectj:aspectjweaver:1.9.25.1"
 
             testImplementation platform("io.qameta.allure:allure-bom")

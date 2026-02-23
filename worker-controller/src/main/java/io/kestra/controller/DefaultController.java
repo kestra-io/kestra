@@ -61,6 +61,7 @@ public class DefaultController extends AbstractService implements Controller {
         this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
         this.healthStatusManager = new HealthStatusManager();
+        setState(ServiceState.CREATED);
     }
 
     /**

@@ -23,7 +23,6 @@ public class AbstractService implements Service {
         this.id = IdUtils.create();
         this.serviceType = serviceType;
         this.eventPublisher = eventPublisher;
-        setState(ServiceState.CREATED);
     }
     
     protected void setState(final ServiceState state) {

@@ -155,6 +155,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
+        setState(ServiceState.CREATED);
     }
 
     @PostConstruct

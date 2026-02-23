@@ -14,7 +14,6 @@ import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.WorkerIOSender;
 import io.kestra.worker.services.WorkerConnectionService;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -132,10 +131,9 @@ public class WorkerAgent extends AbstractService implements Worker {
         // Connect to the controller to resolve worker configuration
         WorkerConnectionService.ConnectionResult connectionResult = workerConnectionService.connect(getId(), workerGroupKey);
         this.workerGroup = connectionResult.workerGroup();
-        
+
         this.setState(ServiceState.CREATED);
 
-        
         String[] tags = workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, workerGroup};
         // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION, numThreads, tags);

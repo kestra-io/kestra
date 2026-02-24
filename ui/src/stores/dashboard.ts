@@ -97,9 +97,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         if (!route.params["tenant"]) {
             throw new Error("tenant is mandatory in getDashboardType")
         }
-        if (route.params["tenant"] != "main") {
-            throw new Error("tenant other than main unhandled yet")// FIXME
-        }
 
         const key = KEY_MAP[route.name as string];
         return key;

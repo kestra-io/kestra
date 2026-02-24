@@ -306,7 +306,8 @@ public class QueryFilterTest {
 
             buildQueryFiltersForOperations(Field.GROUP, Resource.USER,
                 Set.of(
-                    Op.EQUALS
+                    Op.EQUALS,
+                    Op.CONTAINS
                 )
             )
         ).flatMap(s -> s);
@@ -632,7 +633,6 @@ public class QueryFilterTest {
                     Op.NOT_IN,
                     Op.STARTS_WITH,
                     Op.ENDS_WITH,
-                    Op.CONTAINS,
                     Op.REGEX,
                     Op.PREFIX,
                     Op.NOT_EQUALS

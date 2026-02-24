@@ -1,5 +1,6 @@
 import {mergeConfig} from "vite";
 import type {StorybookConfig} from "@storybook/vue3-vite";
+import path from "path";
 
 const config: StorybookConfig = {
     stories: [
@@ -11,17 +12,17 @@ const config: StorybookConfig = {
         options: {},
     },
     async viteFinal(config) {
-        const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx")
+        const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx");
         config.plugins = [
             ...(config.plugins ?? []),
             viteJSXPlugin(),
         ];
 
-        if (config.resolve) {
-            config.resolve.alias = {
-                ...config.resolve?.alias
-            };
-        }
+        config.resolve = config.resolve || {};
+        config.resolve.alias = {
+            ...(config.resolve.alias || {}),
+            "@": path.resolve(__dirname, "../src"),
+        };
 
         return mergeConfig(config, {
             define: {"process.env": {}},

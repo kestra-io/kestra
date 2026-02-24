@@ -6,7 +6,7 @@
             v-for="(schema, key, index) in properties"
         >
             <template #label>
-                <span v-if="required(key)" class="me-1 text-danger">*</span>
+                <span v-if="isRequired(key)" class="me-1 text-danger">*</span>
                 <span v-if="getKey(key)" class="label">
                     {{
                         getKey(key)
@@ -56,6 +56,7 @@
 <script>
     import Task from "./MixinTask";
     import {useBlockComponent} from "./useBlockComponent";
+    import {getTaskComponent} from "./getTaskComponent";
 
     export default {
         name: "TaskBasic",
@@ -65,6 +66,7 @@
             const {getBlockComponent} = useBlockComponent();
             return {
                 getBlockComponent,
+                getTaskComponent,
             };
         },
         computed: {

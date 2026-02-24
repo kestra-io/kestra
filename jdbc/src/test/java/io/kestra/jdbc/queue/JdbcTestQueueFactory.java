@@ -12,7 +12,6 @@ import io.kestra.queue.jdbc.JdbcDispatchQueue;
 import io.kestra.queue.jdbc.JdbcKeyedDispatchQueue;
 import io.kestra.queue.jdbc.JdbcVNodeDispatchQueue;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
-import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 
@@ -30,27 +29,27 @@ public class JdbcTestQueueFactory {
     @Inject
     private MetricRegistry metricRegistry;
 
-    @Bean
+    @QueueBean
     public BroadcastQueueInterface<AbstractBroadcastQueueTest.TestBroadcast> broadCastQueue() {
         return new JdbcBroadcastQueue<>(AbstractBroadcastQueueTest.TestBroadcast.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
-    @Bean
+    @QueueBean
     public DispatchQueueInterface<AbstractDispatchQueueTest.TestDispatch> dispatchQueue() {
         return new JdbcDispatchQueue<>(AbstractDispatchQueueTest.TestDispatch.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
-    @Bean
+    @QueueBean
     public KeyedDispatchQueueInterface<AbstractKeyedDispatchQueueTest.TestKeyedDispatch> keyDispatchQueue() {
         return new JdbcKeyedDispatchQueue<>(AbstractKeyedDispatchQueueTest.TestKeyedDispatch.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
-    @Bean
+    @QueueBean
     public VNodeDispatchQueueInterface<AbstractVNodeDispatchQueueTest.TestVNodeDispatchDispatch> vNodeDispatchQueue() {
         return new JdbcVNodeDispatchQueue<>(AbstractVNodeDispatchQueueTest.TestVNodeDispatchDispatch.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
-    @Bean
+    @QueueBean
     public BroadcastQueueInterface<AbstractQueueCacheTest.DeletableBroadcastTestEvent> deletableBroadcastTestEventDispatchQueue() {
         return new JdbcBroadcastQueue<>(AbstractQueueCacheTest.DeletableBroadcastTestEvent.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }

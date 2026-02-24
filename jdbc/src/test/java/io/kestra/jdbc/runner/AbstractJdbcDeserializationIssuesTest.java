@@ -52,7 +52,7 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
 
         Table<Record> table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
 
-        Map<Field<Object>, Object> fields = fieldsV2(queueMessage);
+        Map<Field<Object>, Object> fields = fields(queueMessage);
 
         dslContextWrapper.transaction(configuration -> {
             DSLContext context = DSL.using(configuration);
@@ -65,14 +65,6 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     }
 
     protected Map<Field<Object>, Object> fields(DeserializationIssuesCaseTest.QueueMessage queueMessage) {
-        Map<Field<Object>, Object> fields = new HashMap<>();
-        fields.put(AbstractJdbcRepository.field("type"), queueMessage.type().getName());
-        fields.put(AbstractJdbcRepository.field("key"), queueMessage.key() != null ? queueMessage.key() : IdUtils.create());
-        fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(queueMessage.value()));
-        return fields;
-    }
-
-    protected Map<Field<Object>, Object> fieldsV2(DeserializationIssuesCaseTest.QueueMessage queueMessage) {
         String queueName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, queueMessage.type().getSimpleName());
         Map<Field<Object>, Object> fields = new HashMap<>();
         fields.put(AbstractJdbcRepository.field("type"), JdbcQueueClient.queueNameToType(queueName));

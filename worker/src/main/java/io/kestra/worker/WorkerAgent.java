@@ -49,12 +49,10 @@ import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
 public class WorkerAgent extends AbstractService implements Worker {
 
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
-
-    @Inject
-    private MetricRegistry metricRegistry;
-
-    @Inject
-    private ServerConfig serverConfig;
+    
+    private final MetricRegistry metricRegistry;
+    
+    private final ServerConfig serverConfig;
 
     @Getter
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
@@ -87,7 +85,9 @@ public class WorkerAgent extends AbstractService implements Worker {
         WorkerJobExecutor workerJobExecutor,
         WorkerJobFetcher workerJobFetcher,
         List<WorkerIOSender> workerIOSenders,
-        MaintenanceService maintenanceService
+        MaintenanceService maintenanceService,
+        MetricRegistry metricRegistry,
+        ServerConfig serverConfig
     ) {
         super(ServiceType.WORKER, eventPublisher);
         this.workerConnectionService = workerConnectionService;
@@ -96,6 +96,8 @@ public class WorkerAgent extends AbstractService implements Worker {
         this.workerIOSenders = workerIOSenders;
         this.maintenanceService = maintenanceService;
         this.workerIOThreadsExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("worker-io-", 0).factory());
+        this.metricRegistry = metricRegistry;
+        this.serverConfig = serverConfig;
     }
 
     /**
@@ -165,6 +167,8 @@ public class WorkerAgent extends AbstractService implements Worker {
             workerJobFetcher.pause();
         }
 
+        setState(inMaintenanceMode ? ServiceState.MAINTENANCE : ServiceState.RUNNING);
+
         // Start the WorkerJobFetcher
         workerJobFetcher.init(workerContext);
         workerIOThreadsExecutor.submit(workerJobFetcher);
@@ -174,7 +178,6 @@ public class WorkerAgent extends AbstractService implements Worker {
         } else {
             log.info("Worker started with {} thread(s)", numThreads);
         }
-        setState(inMaintenanceMode ? ServiceState.MAINTENANCE : ServiceState.RUNNING);
     }
 
     private void enterMaintenance() {
@@ -230,6 +233,26 @@ public class WorkerAgent extends AbstractService implements Worker {
         // Stop all Worker IO Sender Threads
         stopAllWorkerIOThreads();
         return terminatedGracefully ? TERMINATED_GRACEFULLY : TERMINATED_FORCED;
+    }
+
+    /**
+     * Stop the worker immediately, without waiting for job completion.
+     * <p>
+     * This method exits for testing purposes, as it may lead to data loss or inconsistent state if jobs are terminated abruptly.
+     */
+    public void stopNow() {
+        log.info("Stopping now");
+        this.disposables.forEach(Disposable::dispose);
+
+        // Stop fetching new WorkerJob
+        this.workerJobFetcher.stop(Duration.ZERO);
+
+        // Stop all Worker IO Sender Threads
+        stopAllWorkerIOThreads();
+
+        // Stop WorkerJobExecutor
+        this.workerJobExecutor.shutdownNow();
+        log.info("Stopped");
     }
 
     private void stopAllWorkerIOThreads() {

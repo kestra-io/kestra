@@ -69,7 +69,7 @@ public class JdbcQueueClient {
 
                 Map<Field<Object>, Object> fields = HashMap.newHashMap(5);
                 fields.put(field("type"), queueNameToType(queue));
-                fields.put(field("routing_key"), routingKey);
+                fields.put(field("routing_key"), (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
                 fields.put(field("key"), key);
                 fields.put(field("value"), JSONB.valueOf(value));
                 fields.put(field("created"), Instant.now());
@@ -106,7 +106,7 @@ public class JdbcQueueClient {
                 for (PublishedMessage entry : messages) {
                     insert = insert.values(
                         queueNameToType(entry.queue),
-                        entry.routingKey,
+                        (entry.routingKey == null || entry.routingKey.isEmpty()) ? null : entry.routingKey,
                         entry.key,
                         JSONB.valueOf(entry.value),
                         now

@@ -8,6 +8,7 @@ import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.GrpcWorkerIOSender.SendStrategy;
 import io.micronaut.context.annotation.Factory;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 /**
@@ -20,6 +21,7 @@ public class WorkerIOSenderFactory {
      * Creates a sender for {@link WorkerTaskResult} events (sent per-item).
      */
     @Singleton
+    @Named
     public GrpcWorkerIOSender<WorkerTaskResult> taskResultSender(
         final WorkerControllerServiceStub controllerServiceStub,
         final WorkerQueueRegistry workerQueueRegistry) {
@@ -36,6 +38,7 @@ public class WorkerIOSenderFactory {
      * Creates a sender for {@link WorkerTriggerResult} events (sent per-item).
      */
     @Singleton
+    @Named
     public GrpcWorkerIOSender<WorkerTriggerResult> triggerResultSender(
         final WorkerControllerServiceStub controllerServiceStub,
         final WorkerQueueRegistry workerQueueRegistry) {
@@ -52,6 +55,7 @@ public class WorkerIOSenderFactory {
      * Creates a sender for {@link LogEntry} events (sent as a batch).
      */
     @Singleton
+    @Named
     public GrpcWorkerIOSender<LogEntry> logEntrySender(
         final WorkerControllerServiceStub controllerServiceStub,
         final WorkerQueueRegistry workerQueueRegistry) {
@@ -68,6 +72,7 @@ public class WorkerIOSenderFactory {
      * Creates a sender for {@link MetricEntry} events (sent as a batch).
      */
     @Singleton
+    @Named
     public GrpcWorkerIOSender<MetricEntry> metricsSender(
         final WorkerControllerServiceStub controllerServiceStub,
         final WorkerQueueRegistry workerQueueRegistry) {

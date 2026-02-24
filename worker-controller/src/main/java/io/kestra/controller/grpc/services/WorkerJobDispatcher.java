@@ -7,12 +7,14 @@ import io.kestra.controller.grpc.WorkerJobPayload;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
@@ -27,6 +29,9 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTaskRunning;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerRunning;
+import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerReceived;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.Either;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -35,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -81,6 +87,7 @@ public class WorkerJobDispatcher {
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private final TriggerEventQueue triggerEventQueue;
 
     /**
      * Global closed flag to prevent operations after shutdown.
@@ -121,10 +128,12 @@ public class WorkerJobDispatcher {
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         WorkerJobRunningStateStore workerJobRunningStateStore,
         BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
-        DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue) {
+        DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        TriggerEventQueue triggerEventQueue) {
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.workerTaskResultQueue = workerTaskResultQueue;
+        this.triggerEventQueue = triggerEventQueue;
 
         // Subscribe to execution killed events
         this.killQueueSubscriber = executionKilledQueue.subscriber();
@@ -240,8 +249,6 @@ public class WorkerJobDispatcher {
             return;
         }
 
-        QueueSubscriber<WorkerJobEvent> subscriberToClose = null;
-
         state.lock.lock();
         try {
             // Remove worker from indexes
@@ -264,18 +271,14 @@ public class WorkerJobDispatcher {
                 // No more workers - dispose immediately
                 groupStates.remove(workerGroup);
                 workerIdsByGroup.remove(workerGroup);
-                subscriberToClose = state.subscriber();
                 log.info("Disposing subscription for group '{}': no workers remaining", WorkerGroup.forLog(workerGroup));
+                closeSubscriberQuietly(state.subscriber(), workerGroup);
             } else if (!hasAnyPermitsInGroup(workerGroup)) {
                 // Workers exist but no permits - pause
                 pauseSubscription(state, workerGroup);
             }
         } finally {
             state.lock.unlock();
-        }
-
-        if (subscriberToClose != null) {
-            closeSubscriberQuietly(subscriberToClose, workerGroup);
         }
     }
 
@@ -472,6 +475,7 @@ public class WorkerJobDispatcher {
             workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTaskRunning.of(workerTask, workerInstance));
         } else if (job instanceof WorkerTrigger workerTrigger) {
             workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTriggerRunning.of(workerTrigger, workerInstance));
+            triggerEventQueue.send(new TriggerReceived(TriggerId.of(workerTrigger.getTriggerContext()), context.getWorkerId()));
         }
     }
 
@@ -509,14 +513,14 @@ public class WorkerJobDispatcher {
     private void pauseSubscription(GroupState state, String workerGroup) {
         if (state.isPaused.compareAndSet(false, true)) {
             state.subscriber.pause();
-            log.debug("Paused subscription for group '{}'", WorkerGroup.forLog(workerGroup));
+            log.info("Paused subscription for group '{}'", WorkerGroup.forLog(workerGroup));
         }
     }
 
     private void resumeSubscription(GroupState state, String workerGroup) {
         if (state.isPaused.compareAndSet(true, false)) {
             state.subscriber.resume();
-            log.debug("Resumed subscription for group '{}'", WorkerGroup.forLog(workerGroup));
+            log.info("Resumed subscription for group '{}'", WorkerGroup.forLog(workerGroup));
         }
     }
 
@@ -556,10 +560,10 @@ public class WorkerJobDispatcher {
             state.lock.lock();
             try {
                 // Mark as closing - no new operations
+                closeSubscriberQuietly(state.subscriber, group);
             } finally {
                 state.lock.unlock();
             }
-            closeSubscriberQuietly(state.subscriber, group);
         });
 
         // Complete all active worker streams so gRPC can release them

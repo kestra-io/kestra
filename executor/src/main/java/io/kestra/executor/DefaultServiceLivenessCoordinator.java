@@ -355,7 +355,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
             } else {
                 try {
-                    String workerGroupKey = workerTaskRunning.getWorkerInstance().workerGroup();
+                    String raw = workerTaskRunning.getWorkerInstance().workerGroup();
+                    String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
                     WorkerTask workerTask = WorkerTask.builder()
                         .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
                         .task(workerTaskRunning.getTask())
@@ -381,7 +382,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         // WorkerTriggerRunning
         if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
             try {
-                String workerGroupKey = workerTriggerRunning.getWorkerInstance().workerGroup();
+                String raw = workerTriggerRunning.getWorkerInstance().workerGroup();
+                String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
                 WorkerTrigger workerTrigger = WorkerTrigger.builder()
                     .trigger(workerTriggerRunning.getTrigger())
                     .conditionContext(workerTriggerRunning.getConditionContext())

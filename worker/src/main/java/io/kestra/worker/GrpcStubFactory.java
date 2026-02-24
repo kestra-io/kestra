@@ -54,7 +54,12 @@ public class GrpcStubFactory {
     @Bean
     @Singleton
     public ConnectControllerServiceBlockingStub connectControllerServiceBlockingStub(GrpcChannelManager manager) {
-        return withWaitForReady(ConnectControllerServiceGrpc.newBlockingStub(manager.getDefaultChannel()));
+        ConnectControllerServiceBlockingStub stub = ConnectControllerServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+        // Only set wait-for-ready here; deadline is applied per-call to avoid a stale absolute timestamp on a singleton.
+        if (workerControllersConfiguration.waitForReady().enabled()) {
+            return stub.withWaitForReady();
+        }
+        return stub;
     }
     
     @Bean

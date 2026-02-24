@@ -1,5 +1,7 @@
 package io.kestra.worker.services;
 
+import io.grpc.Deadline;
+import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc.ConnectControllerServiceBlockingStub;
 import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
@@ -7,6 +9,8 @@ import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * gRPC-based implementation of {@link WorkerConnectionService}.
@@ -19,10 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 public class GrpcWorkerConnectionService implements WorkerConnectionService {
 
     private final ConnectControllerServiceBlockingStub connectControllerService;
+    private final WorkerControllersConfiguration workerControllersConfiguration;
 
     @Inject
-    public GrpcWorkerConnectionService(ConnectControllerServiceBlockingStub connectControllerService) {
+    public GrpcWorkerConnectionService(ConnectControllerServiceBlockingStub connectControllerService,
+                                       WorkerControllersConfiguration workerControllersConfiguration) {
         this.connectControllerService = connectControllerService;
+        this.workerControllersConfiguration = workerControllersConfiguration;
     }
 
     /**
@@ -39,7 +46,13 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
 
         try {
             log.debug("Sending connect request to controller for workerId: {}, workerGroupKey: {}", workerId, workerGroupKey);
-            ConnectResponse response = connectControllerService.connect(request);
+            // Apply deadline per-call: Deadline.after() creates an absolute timestamp, so it must not be baked into a singleton stub.
+            ConnectControllerServiceBlockingStub stub = connectControllerService;
+            if (workerControllersConfiguration.waitForReady().enabled()) {
+                long deadlineMs = workerControllersConfiguration.waitForReady().deadline().toMillis();
+                stub = stub.withDeadline(Deadline.after(deadlineMs, TimeUnit.MILLISECONDS));
+            }
+            ConnectResponse response = stub.connect(request);
             String resolvedGroup = response.getWorkerGroup();
             if (resolvedGroup == null || resolvedGroup.isEmpty()) {
                 log.debug("No worker group resolved for key: {}", workerGroupKey);

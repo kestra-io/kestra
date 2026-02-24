@@ -60,7 +60,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FolderOpenOutline),
-            label: "Files"
+            label: "Namespace Files"
         },
         uid: "files",
         prepend: true,

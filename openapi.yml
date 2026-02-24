@@ -9163,6 +9163,8 @@ components:
           type: string
         providerId:
           type: string
+        namespace:
+          type: string
     FlowGraph:
       type: object
       properties:
@@ -10231,6 +10233,7 @@ components:
       - PATH
       - PARENT_PATH
       - VERSION
+      - USERNAME
       x-type: String
     QueryFilter.Op:
       type: string

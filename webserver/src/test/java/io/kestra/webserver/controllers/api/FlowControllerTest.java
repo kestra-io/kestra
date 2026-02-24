@@ -1055,16 +1055,16 @@ class FlowControllerTest {
         assertEquals("validFlow1.yaml", violations.getFirst().getFilename());
         // We don't send any revision while the flow already exists so it's outdated
         assertTrue(violations.getFirst().isOutdated());
-        assertEquals(3, violations.getFirst().getDeprecationPaths().size());
-        assertThat(violations.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners");
+        assertEquals(2, violations.getFirst().getDeprecationPaths().size());
+        assertThat(violations.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty");
         assertTrue(violations.getFirst().getWarnings().isEmpty());
         assertTrue(violations.getFirst().getInfos().isEmpty());
 
         // Validate second valid flow
         assertEquals("validFlow2.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
-        assertEquals(2, violations.get(1).getDeprecationPaths().size());
-        assertThat(violations.get(1).getDeprecationPaths()).containsExactlyInAnyOrder("tasks[0]", "tasks[1]");
+        assertEquals(4, violations.get(1).getDeprecationPaths().size());
+        assertThat(violations.get(1).getDeprecationPaths()).containsExactlyInAnyOrder("tasks[0]", "tasks[0].additionalProperty", "tasks[1]", "tasks[1].additionalProperty");
         assertTrue(violations.get(1).getWarnings().isEmpty());
         assertTrue(violations.get(1).getInfos().isEmpty());
 
@@ -1104,8 +1104,8 @@ class FlowControllerTest {
         assertEquals("validFlow1.yaml", violations.getFirst().getFilename());
         // We don't send any revision while the flow already exists so it's outdated
         assertTrue(violations.getFirst().isOutdated());
-        assertEquals(3, violations.getFirst().getDeprecationPaths().size());
-        assertThat(violations.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners");
+        assertEquals(2, violations.getFirst().getDeprecationPaths().size());
+        assertThat(violations.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty");
         assertTrue(violations.getFirst().getWarnings().isEmpty());
         assertTrue(violations.getFirst().getInfos().isEmpty());
 

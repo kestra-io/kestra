@@ -11,12 +11,8 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
-import org.slf4j.event.Level;
-import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.*;
@@ -25,7 +21,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     @Inject
@@ -60,78 +55,6 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
         loopUntilTestCaseTest.waitForChildTaskWarning("waitforchildtaskwarning");
     }
 
-    @Test
-    @LoadFlows({"flows/valids/inputs-large.yaml"})
-    void flowTooLarge() throws Exception {
-        char[] chars = new char[200000];
-        Arrays.fill(chars, 'a');
-
-        Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
-        inputs.put("string", new String(chars));
-
-        Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
-            NAMESPACE,
-            "inputs-large",
-            null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(120)
-        );
-
-        assertThat(execution.getTaskRunList().size()).isGreaterThanOrEqualTo(6); // the exact number is test-run-dependent.
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-    }
-
-    @Test
-    @LoadFlows(value = {"flows/valids/inputs-large.yaml"}, tenantId = TENANT_1)
-    @Disabled
-    void queueMessageTooLarge() {
-        char[] chars = new char[1100000];
-        Arrays.fill(chars, 'a');
-
-        Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
-        inputs.put("string", new String(chars));
-
-        var exception = assertThrows(QueueException.class, () -> runnerUtils.runOne(
-            TENANT_1,
-            NAMESPACE,
-            "inputs-large",
-            null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(60)
-        ));
-
-        // the size is different on all runs, so we cannot assert on the exact message size
-        assertThat(exception.getMessage()).contains("Message of size");
-        assertThat(exception.getMessage()).contains("has exceeded the configured limit of 1048576");
-        assertThat(exception).isInstanceOf(MessageTooBigException.class);
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/workertask-result-too-large.yaml"})
-    void workerTaskResultTooLarge() throws Exception {
-        List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logsQueue.addListener(l -> logs.add(l));
-
-        Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
-            NAMESPACE,
-            "workertask-result-too-large"
-        );
-
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage()
-            .startsWith("Unable to emit the worker task result to the queue"));
-
-        assertThat(matchingLog).isNotNull();
-        assertThat(matchingLog.getLevel()).isEqualTo(Level.ERROR);
-        // the size is different on all runs, so we cannot assert on the exact message size
-        assertThat(matchingLog.getMessage()).contains("Message of size");
-        assertThat(matchingLog.getMessage()).contains("has exceeded the configured limit of 1048576");
-
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-
-    }
 
     @Test
     @LoadFlows("flows/valids/errors.yaml")

@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -557,5 +559,52 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/after-execution-error.yaml")
     public void shouldCallTasksAfterError(Execution execution) throws InternalException {
         afterExecutionTestCase.shouldCallTasksAfterError(execution);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/workertask-result-too-large.yaml"})
+    protected void workerTaskResultTooLarge() throws Exception {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logsQueue.addListener(l -> logs.add(l));
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "workertask-result-too-large"
+        );
+
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage()
+            .startsWith("Unable to emit the worker task result to the queue"));
+
+        assertThat(matchingLog).isNotNull();
+        assertThat(matchingLog.getLevel()).isEqualTo(Level.ERROR);
+        // the size is different on all runs, so we cannot assert on the exact message size
+        assertThat(matchingLog.getMessage()).contains("message of size");
+        assertThat(matchingLog.getMessage()).contains("has exceeded the configured limit of 1048576");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/inputs-large.yaml"})
+    protected void flowTooLarge() throws Exception {
+        char[] chars = new char[200000];
+        Arrays.fill(chars, 'a');
+
+        Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
+        inputs.put("string", new String(chars));
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "inputs-large",
+            null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
+            Duration.ofSeconds(120)
+        );
+
+        assertThat(execution.getTaskRunList().size()).isGreaterThanOrEqualTo(6); // the exact number is test-run-dependent.
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 }

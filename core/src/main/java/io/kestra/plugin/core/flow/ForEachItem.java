@@ -25,6 +25,7 @@ import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -590,7 +591,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             // get the list of splits from the outputs of the split task
             String taskId = this.id.substring(0, this.id.lastIndexOf('_')) + ForEachItemExecutable.SUFFIX;
             var taskOutput = extractOutput(runContext, taskId);
-            if (taskOutput == null) {
+            if (MapUtils.isEmpty(taskOutput)) {
                 // there were no subflow executions
                 return null;
             }

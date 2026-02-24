@@ -561,7 +561,10 @@ class ExecutionControllerRunnerTest {
 
         assertThat(replay).isNotNull();
 
-        Execution finishedChildExecution = awaitExecution(parentExecution.getId(), exec -> exec.getState().getCurrent().isSuccess());
+        Execution finishedChildExecution = runnerUtils.awaitChildExecution(
+            flow.get(),
+            parentExecution,
+            Duration.ofSeconds(15));
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
@@ -605,7 +608,6 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(replay).isNotNull();
-        awaitExecution(parentExecution.getId(), exec -> exec.getState().getCurrent().isSuccess());
 
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
@@ -2488,7 +2490,7 @@ class ExecutionControllerRunnerTest {
             ));
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Illegal state: Execution must be terminated or paused and not killed to be restarted, current state is 'KILLED' !");
+        assertThat(e.getMessage()).contains("Illegal state: Execution must be failed to be restarted, current state is 'KILLED' !");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -2706,7 +2708,10 @@ class ExecutionControllerRunnerTest {
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
             .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test");
-        assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal()).isEqualTo(1L);
+        await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(),
+            it -> it == 1L
+        );
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
             .GET("/api/v1/main/executions/search?labels=project:foo,bar" + "&labels=status:test");

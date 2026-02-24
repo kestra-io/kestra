@@ -3,17 +3,13 @@ package io.kestra.queue;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +19,7 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 15;
@@ -190,7 +187,24 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
-    @Introspected
-    public record TestDispatch(String key, Integer id) implements DispatchEvent {
+    @Test
+    void queueMessageTooLarge() {
+        char[] chars = new char[1100000];
+        Arrays.fill(chars, 'a');
+
+        AbstractDispatchQueueTest.TestDispatch message = new AbstractDispatchQueueTest.TestDispatch(this.keyPrefix() + "_" + IdUtils.create(), 1, new String(chars));
+
+        var exception = assertThrows(QueueException.class, () -> dispatchQueue.emit(message));
+
+        // the size is different on all runs, so we cannot assert on the exact message size
+        assertThat(exception.getMessage()).contains("message of size");
+        assertThat(exception.getMessage()).contains("has exceeded the configured limit of 1048576");
+        assertThat(exception).isInstanceOf(MessageTooBigException.class);
+    }
+
+    public record TestDispatch(String key, Integer id, String value) implements DispatchEvent {
+        public TestDispatch(String key, Integer id) {
+            this(key, id, null);
+        }
     }
 }

@@ -2,7 +2,6 @@ package io.kestra.core.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.*;
@@ -115,9 +114,7 @@ public class TaskOutputService {
 
     /**
      * Get the outputs of a task run. This method will read the outputs from the database or from the internal storage depending on where they are stored.
-     * WARNING: this method should only be used in tests.
      */
-    @VisibleForTesting
     public Map<String, Object> getOutputs(TaskRun taskRun)  throws InternalException {
         return outputRepository.findById(taskRun.getTenantId(), taskRun.getId())
             .map(throwFunction(output -> readOutput(taskRun, output)))

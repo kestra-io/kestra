@@ -34,6 +34,9 @@ kestra:
         retention: 30d
   queue:
     type: mysql
+    message-protection:
+      enabled: true
+      limit: 1048576
   repository:
     type: mysql
   storage:
@@ -45,13 +48,10 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
-      message-protection:
-        enabled: true
-        limit: 1048576
   grpc:
     maxRetryAttempts: 1
     shutdownTimeout: 3s
-  
+
   controller:
     port: ${random.port}
   worker:

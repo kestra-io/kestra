@@ -25,6 +25,9 @@ kestra:
   server-type: STANDALONE
   queue:
     type: postgres
+    message-protection:
+      enabled: true
+      limit: 1048576
   repository:
     type: postgres
   storage:
@@ -36,9 +39,6 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
-      message-protection:
-        enabled: true
-        limit: 1048576
   tasks:
     subflow:
       allow-parameter-outputs: true

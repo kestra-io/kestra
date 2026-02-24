@@ -8,7 +8,7 @@ tasks:
     failOnMaxReached: true
     checkFrequency:
       interval: PT1S
-      maxDuration: P10S
+      maxDuration: PT10S
     tasks:
       - id: return_test
         type: io.kestra.core.tasks.debugs.Return

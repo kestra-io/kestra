@@ -10234,6 +10234,7 @@ components:
       - PARENT_PATH
       - VERSION
       - USERNAME
+      - GROUP
       x-type: String
     QueryFilter.Op:
       type: string

@@ -202,11 +202,42 @@ public class DashboardController {
     public HttpResponse<Void> deleteDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException {
-        if (dashboardRepository.delete(tenantService.resolveTenant(), id) != null) {
+        String tenantId = tenantService.resolveTenant();
+        if (dashboardRepository.delete(tenantId, id) != null) {
+            removeDefaultDashboardReferences(id);
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
+    }
+
+    private void removeDefaultDashboardReferences(String dashboardId) {
+        settingRepository.findByKey(OSS_DASHBOARD_SETTINGS)
+            .map(Setting::getValue)
+            .map(value -> JacksonMapper.ofJson(false).convertValue(value, DashboardSettings.class))
+            .ifPresent(settings -> {
+                var builder = settings.toBuilder();
+
+                if (dashboardId.equals(settings.getDefaultHomeDashboard())) {
+                    builder.defaultHomeDashboard(null);
+                }
+                if (dashboardId.equals(settings.getDefaultFlowOverviewDashboard())) {
+                    builder.defaultFlowOverviewDashboard(null);
+                }
+                if (dashboardId.equals(settings.getDefaultNamespaceOverviewDashboard())) {
+                    builder.defaultNamespaceOverviewDashboard(null);
+                }
+
+                DashboardSettings updated = builder.build();
+                if (updated.equals(settings)) {
+                    return;
+                }
+
+                settingRepository.save(Setting.builder()
+                    .key(OSS_DASHBOARD_SETTINGS)
+                    .value(updated)
+                    .build());
+            });
     }
 
     public static final String OSS_DASHBOARD_SETTINGS = "kestra.oss.dashboard-settings";

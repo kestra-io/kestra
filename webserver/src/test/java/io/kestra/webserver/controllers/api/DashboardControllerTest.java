@@ -27,7 +27,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -150,7 +149,9 @@ class DashboardControllerTest {
             DashboardSettings.class
         );
         assertThatObject(emptyDefaults.getStatus()).isEqualTo(HttpStatus.OK);
-        assertThat(emptyDefaults.body()).isNull();
+        assertThat(emptyDefaults.body().getDefaultHomeDashboard()).isNull();
+        assertThat(emptyDefaults.body().getDefaultFlowOverviewDashboard()).isNull();
+        assertThat(emptyDefaults.body().getDefaultNamespaceOverviewDashboard()).isNull();
 
         String dashboardYaml = """
             id: defaults
@@ -239,6 +240,68 @@ class DashboardControllerTest {
         assertThat(clearedDefaults.getDefaultHomeDashboard()).isNull();
         assertThat(clearedDefaults.getDefaultFlowOverviewDashboard()).isNull();
         assertThat(clearedDefaults.getDefaultNamespaceOverviewDashboard()).isNull();
+    }
+
+    @Test
+    void shouldRemoveDeletedDashboardFromDefaults() {
+        String dashboardYaml = """
+            id: defaults-to-delete
+            title: Some Dashboard
+            description: Default overview dashboard
+            timeWindow:
+              default: P30D # P30DT30H
+              max: P365D
+
+            charts:
+              - id: logs_timeseries
+                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                chartOptions:
+                  displayName: Error Logs
+                  description: Count of ERROR logs per date
+                  legend:
+                    enabled: true
+                  column: date
+                  colorByColumn: level
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+                      displayName: Execution Date
+                    level:
+                      field: LEVEL
+                    total:
+                      displayName: Total Error Logs
+                      agg: COUNT
+                      graphStyle: BARS
+                  where:
+                    - field: LEVEL
+                      type: IN
+                      values:
+                        - ERROR""";
+
+        Dashboard dashboard = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            Dashboard.class
+        );
+
+        client.toBlocking().exchange(
+            POST("/api/v1/tenants/main/settings/default-dashboards",
+                new SetTenantDefaultDashboardsRequest(dashboard.getId(), dashboard.getId(), dashboard.getId()))
+        );
+
+        client.toBlocking().exchange(
+            DELETE(DASHBOARD_PATH + "/" + dashboard.getId())
+        );
+
+        HttpResponse<DashboardSettings> defaultsAfterDelete = client.toBlocking().exchange(
+            GET("/api/v1/main/dashboards/settings/default-dashboards"),
+            DashboardSettings.class
+        );
+        assertThatObject(defaultsAfterDelete.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(defaultsAfterDelete.body().getDefaultHomeDashboard()).isNull();
+        assertThat(defaultsAfterDelete.body().getDefaultFlowOverviewDashboard()).isNull();
+        assertThat(defaultsAfterDelete.body().getDefaultNamespaceOverviewDashboard()).isNull();
     }
 
     // The goal is to cover the legacy implementation that was autogenerating id so it was present on the backend but the source code didn't contain it.

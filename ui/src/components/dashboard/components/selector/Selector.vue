@@ -148,9 +148,8 @@
     });
 
     const tenant = ref();
-    watch(() => route.params.dashboard, (t) => {
+    watch(() => route.params.tenant, (t) => {
         if (tenant.value !== t) {
-            // TODO tenant ???
             fetchDashboards();
             tenant.value = t;
         }

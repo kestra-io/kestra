@@ -170,16 +170,18 @@
                     title: err,
                     message: err,
                 };
-
             }
         }
 
         await loadCharts(dashboard.value.charts);
     };
 
-    watch(() => route.params.dashboard, async () => {
-        const dashboardId = await dashboardStore.getDashboardId(route);
-        await load(dashboardId);
+    watch([() => route.params.dashboard, () => route.params.tenant], async () => {
+        if(route.params.tenant){
+            // at initial load after login tenant is not yet immediately available
+            const dashboardId = await dashboardStore.getDashboardId(route);
+            await load(dashboardId);
+        }
     }, {immediate: true});
 </script>
 

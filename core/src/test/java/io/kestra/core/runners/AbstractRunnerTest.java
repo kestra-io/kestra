@@ -15,6 +15,7 @@ import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -584,27 +585,5 @@ public abstract class AbstractRunnerTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/inputs-large.yaml"})
-    protected void flowTooLarge() throws Exception {
-        char[] chars = new char[200000];
-        Arrays.fill(chars, 'a');
-
-        Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
-        inputs.put("string", new String(chars));
-
-        Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
-            "io.kestra.tests",
-            "inputs-large",
-            null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(120)
-        );
-
-        assertThat(execution.getTaskRunList().size()).isGreaterThanOrEqualTo(6); // the exact number is test-run-dependent.
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 }

@@ -7,6 +7,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.slf4j.event.Level;
 
 /**
  * Factory for constructing new {@link RunContextLogger} objects.
@@ -23,6 +24,16 @@ public class RunContextLoggerFactory {
 
     public RunContextLogger create(WorkerTask workerTask) {
         return create(workerTask.getTaskRun(), workerTask.getTask(), workerTask.getExecutionKind());
+    }
+
+    public RunContextLogger create(WorkerTaskResult workerTaskResult) {
+        // TODO this is not ideal but this is the best we can do for now here
+        return new RunContextLogger(
+            logEmitter,
+            LogEntry.of(workerTaskResult.getTaskRun(), null),
+            Level.TRACE,
+            false
+        );
     }
 
     public RunContextLogger create(TaskRun taskRun, Task task, ExecutionKind executionKind) {

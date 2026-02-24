@@ -15,12 +15,13 @@ import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.LogEntryEmitter;
-import io.kestra.core.runners.NoTransactionContext;
-import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.queues.UnsupportedMessageException;
+import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
@@ -56,6 +57,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Inject
     private WorkerJobDispatcher workerJobDispatcher;
+
+    @Inject
+    private RunContextLoggerFactory runContextLoggerFactory;
 
     /**
      * Bidirectional streaming RPC for job distribution using the pull/ack pattern.
@@ -170,7 +174,24 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             try {
                 workerTaskResultQueue.emit(workerTaskResult);
             } catch (QueueException e) {
-                throw new RuntimeException(e);
+                // If there is a QueueException it can either be caused by the message limit or another queue issue.
+                // We fail the task and try to resend it.
+                WorkerTaskResult failed = new WorkerTaskResult(workerTaskResult.getTaskRun().fail(), workerTaskResult.getOutputs());
+                if (e instanceof MessageTooBigException) {
+                    // If it's a message too big, we remove the outputs
+                    failed = failed.withOutputs(null);
+                }
+                if (e instanceof UnsupportedMessageException) {
+                    // we expect the offending char is in the output so we remove it
+                    failed = failed.withOutputs(null);
+                }
+                RunContextLogger contextLogger = runContextLoggerFactory.create(workerTaskResult);
+                contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
+                try {
+                    this.workerTaskResultQueue.emit(failed);
+                } catch (QueueException ex) {
+                    log.error("Unable to emit the worker task result for task {} taskrun {}", failed.getTaskRun().getTaskId(), failed.getTaskRun().getId(), e);
+                }
             }
         });
         responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());

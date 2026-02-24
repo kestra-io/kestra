@@ -91,7 +91,6 @@
         return flowStore.saveFlow({flow: revisionSource})
             .then((response:any) => {
                 toast.saved(response.id);
-                flowStore.flowYaml = response.source;
             })
             .then(() => {
                 return flowStore.initYamlSource();

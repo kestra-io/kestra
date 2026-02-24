@@ -103,7 +103,7 @@ jobs:
     if: "needs.file-changes.outputs.backend == 'true'"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         name: Checkout - Current ref
         with:
           fetch-depth: 0

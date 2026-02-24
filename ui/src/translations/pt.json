@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "Blocos do App",
     "apps": "Aplicativos",
-    "assets": "Ativos",
+    "assets": {
+      "title": "Ativos"
+    },
     "attempt": "Tentativa",
     "attempts": "Tentativa(s)",
     "auditlogs": "Audit Logs",
@@ -505,7 +507,7 @@
         "title": "Você ainda não tem Kill Switches!"
       },
       "panels": {
-        "content": "Abra Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Files, Blueprints, Context) para recursos relacionados.",
+        "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Namespace Files, Blueprints, Context) para recursos relacionados.",
         "title": "Atualmente, nenhum painel está aberto."
       },
       "pluginDefaults": {
@@ -641,8 +643,8 @@
     "fileTypeNotAllowed": "Tipo de arquivo não permitido. Tipos aceitos: {types}",
     "files": "Arquivos",
     "filter": {
-      "active key value pairs": "Pares de chave/valor ativos",
-      "add key value pair": "Adicionar par chave/valor",
+      "active key value pairs": "Pares de Key/Value Ativos",
+      "add key value pair": "Adicionar par Chave/Valor",
       "aggregation": {
         "description": "Filtrar por método de agregação",
         "label": "Agregação"
@@ -715,6 +717,7 @@
         "description": "Filtrar por tipo de execução",
         "label": "Tipo"
       },
+      "kv_pair_selected": "{count} pares de Key/Value selecionados",
       "label": "Etiqueta",
       "labels": {
         "description": "Filtrar por labels",

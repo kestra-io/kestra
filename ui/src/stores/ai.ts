@@ -19,6 +19,19 @@ export const useAiStore = defineStore("ai", {
             });
 
             return response.data;
+        },
+
+        async generateFlow({userPrompt, yaml, conversationId, providerId, namespace, tenantId}: {userPrompt: string, yaml: string, conversationId: string, providerId?: string, namespace?: string, tenantId?: string, type: AiGenerationType}) {
+            const response = await axios.post(`${apiUrl()}/ai/generate/flow`, {
+                userPrompt,
+                yaml,
+                conversationId,
+                providerId,
+                namespace,
+                tenantId
+            });
+
+            return response.data;
         }
 
     }

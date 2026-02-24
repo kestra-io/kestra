@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.flows.input.URIInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.secret.SecretNotFoundException;
@@ -25,8 +26,11 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.jetbrains.annotations.Nullable;
+import io.kestra.core.exceptions.InputOutputValidationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -444,6 +448,92 @@ class FlowInputOutputTest {
 
         Assertions.assertNotNull(outputs);
         Assertions.assertTrue(outputs.containsKey("empty_file"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
+        "jdbc:duckdb:",
+        "file:///tmp/myfile.csv",
+        "http://localhost:8080/api",
+        "nsfile:///file.txt"
+    })
+    void shouldAcceptValidUriInputs(String validUri) {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                URIInput.builder().id("uri").type(Type.URI).required(true).build()
+            ))
+            .build();
+
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("uri", validUri));
+
+        assertThat(result.get("uri")).isEqualTo(validUri);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "justastring",
+        "not a uri",
+        ""
+    })
+    void shouldRejectInvalidUriInputs(String invalidUri) {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(
+                URIInput.builder().id("uri").type(Type.URI).required(true).build()
+            ))
+            .build();
+
+        Assertions.assertThrows(
+            InputOutputValidationException.class,
+            () -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("uri", invalidUri))
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
+        "jdbc:duckdb:",
+        "file:///tmp/myfile.csv",
+        "http://localhost:8080/api",
+        "nsfile:///file.txt"
+    })
+    void shouldAcceptValidUriOutputs(String validUri) {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .outputs(List.of(
+                Output.builder().id("duck").type(Type.URI).build()
+            ))
+            .build();
+
+        Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("duck", validUri));
+
+        assertThat(result.get("duck")).isEqualTo(validUri);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "justastring",
+        "not a uri",
+        ""
+    })
+    void shouldRejectInvalidUriOutputs(String invalidUri) {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .outputs(List.of(
+                Output.builder().id("duck").type(Type.URI).build()
+            ))
+            .build();
+
+        Assertions.assertThrows(
+            InputOutputValidationException.class,
+            () -> flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("duck", invalidUri))
+        );
     }
 
     private static class MemoryCompletedPart implements CompletedPart {

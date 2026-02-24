@@ -2,6 +2,7 @@ package io.kestra.cli.commands.flows;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -17,7 +18,7 @@ class FlowValidateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST).start()) {
             String[] args = {
                 "--local",
                 "src/test/resources/helper/include.yaml"
@@ -35,7 +36,7 @@ class FlowValidateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST).start()) {
             String[] args = {
                 "--tenant",
                 "some-ee-tenant",
@@ -54,7 +55,7 @@ class FlowValidateCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST).start()) {
             String[] args = {
                 "--local",
                 "src/test/resources/warning/flow-with-warning.yaml"

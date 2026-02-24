@@ -87,7 +87,7 @@
 
     const emits = defineEmits(["dashboard"]);
 
-    const rootName = computed(() => ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home")
+    const rootName = computed(() => ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home");
     const query = computed(() => {
         return {
             name: rootName.value,

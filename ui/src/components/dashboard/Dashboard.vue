@@ -50,12 +50,12 @@
     import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
 
     import {useRoute, useRouter} from "vue-router";
+    import {useDashboardStore} from "../../stores/dashboard";
+    import {useCoreStore} from "../../stores/core.ts";
+
     const route = useRoute();
     const router = useRouter();
     const coreStore = useCoreStore();
-
-    import {useDashboardStore} from "../../stores/dashboard";
-    import {useCoreStore} from "../../stores/core.ts";
     const dashboardStore = useDashboardStore();
 
     defineOptions({inheritAttrs: false});

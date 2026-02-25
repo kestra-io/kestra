@@ -1,3 +1,4 @@
+// @ts-check
 import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
 
 /**

@@ -25,14 +25,14 @@
                 <SchemaToHtml
                     class="plugin-schema"
                     :darkMode="miscStore.theme === 'dark'"
-                    :schema="currentPlugin?.schema"
+                    :schema="filteredSchema"
                     :pluginType="currentPlugin?.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
                     noUrlChange
                 >
                     <template #markdown="{content}">
                         <!-- Plugin schema content: search disabled -->
-                        <Markdown 
+                        <Markdown
                             font-size-var="font-size-base"
                             :source="content"
                         />
@@ -99,6 +99,54 @@
             window.open(releaseNotesUrl.value, "_blank");
         }
     };
+
+    /**
+     * Filters out deprecated/hidden definitions from a definitions map.
+     * Handles both `definitions` (JSON Schema draft-07) and `$defs` (draft-2019+).
+     */
+    function filterDefinitions(defs: Record<string, any>): Record<string, any> {
+        return Object.entries(defs).reduce((acc, [key, value]: [string, any]) => {
+            const title: string = value?.title ?? "";
+
+            const shouldFilter =
+                value?.deprecated === true ||
+                value?.hidden === true ||
+                key.includes("FlowCondition") ||
+                key.includes("FlowNamespaceCondition") ||
+                /condition for a (specific flow|flow namespace)/i.test(title);
+
+            if (!shouldFilter) {
+                acc[key] = value;
+            }
+
+            return acc;
+        }, {} as Record<string, any>);
+    }
+
+    /**
+     * Returns the schema with deprecated definitions removed.
+     * Watches currentPlugin directly so Vue tracks reactivity properly.
+     */
+    const filteredSchema = computed(() => {
+        const plugin = currentPlugin.value;
+
+        if (!plugin?.schema) {
+            return undefined;
+        }
+
+        const schema = plugin.schema;
+        const result: any = {...schema};
+
+        if (schema.definitions && Object.keys(schema.definitions).length > 0) {
+            result.definitions = filterDefinitions(schema.definitions);
+        }
+
+        if (schema.$defs && Object.keys(schema.$defs).length > 0) {
+            result.$defs = filterDefinitions(schema.$defs);
+        }
+
+        return result;
+    });
 </script>
 
 <style scoped lang="scss">

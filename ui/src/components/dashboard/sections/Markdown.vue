@@ -9,36 +9,35 @@
 <script setup lang="ts">
     import {PropType, watch, ref} from "vue";
 
-    import type {RouteLocation} from "vue-router";
-
     import type {Chart} from "../composables/useDashboards";
-    import {getDashboard, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
+    import {getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
     import Markdown from "../../layout/Markdown.vue";
     import NoData from "../../layout/NoData.vue";
     import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     });
 
     const data = ref();
-    const {EMPTY_TEXT, generate} = useChartGenerator(props, false);
 
     import {useRoute} from "vue-router";
-    const route = useRoute();
 
-    const getData = async (ID: string) => {
-        if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(ID), "description") ?? EMPTY_TEXT;
+    const route = useRoute();
+    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false);
+
+    const getData = async () => {
+        if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(), "description") ?? EMPTY_TEXT;
         else data.value = props.chart.content ?? props.chart.source?.content;
     };
 
-    const dashboardID = (route: RouteLocation) => getDashboard(route, "id")!;
 
     function refresh() {
-        return getData(dashboardID(route));
+        return getData();
     }
 
     defineExpose({

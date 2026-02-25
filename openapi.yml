@@ -10219,6 +10219,8 @@ components:
       - END_DATE
       - EXPIRATION_DATE
       - STATE
+      - STATUS
+      - EMAIL
       - TIME_RANGE
       - TRIGGER_EXECUTION_ID
       - TRIGGER_ID
@@ -10234,6 +10236,7 @@ components:
       - PARENT_PATH
       - VERSION
       - USERNAME
+      - EXPIRED_AT
       x-type: String
     QueryFilter.Op:
       type: string

@@ -304,6 +304,10 @@ public abstract class AbstractJdbcRepository {
             return getDateCondition(value, operation, dateColumn);
         }
 
+        if (field == QueryFilter.Field.STATUS) {
+            return statusCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
             return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
@@ -330,6 +334,14 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
+        return defaultHandlers(field, value, operation);
+    }
+
+    private Condition defaultHandlers(
+        QueryFilter.Field field,
+        Object value,
+        QueryFilter.Op operation
+    ) {
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -404,6 +416,10 @@ public abstract class AbstractJdbcRepository {
             case NOT_IN, NOT_EQUALS -> DSL.not(statesFilter(stateList));
             default -> throw new InvalidQueryFiltersException("Unsupported operation for State.Type: " + operation);
         };
+    }
+
+    protected Condition statusCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

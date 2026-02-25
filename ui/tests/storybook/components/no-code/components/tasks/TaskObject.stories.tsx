@@ -62,7 +62,7 @@ export const AppTableBlock: Story = {
     render: AppTableBlockRender,
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        fireEvent.click(await canvas.findByText("+ Add a new value"));
+        fireEvent.click(await canvas.findByText("+ Add a new value", undefined, {timeout: 4000}));
         expect(await canvas.findByText(/null/, {selector: "pre"})).toBeVisible();
         fireEvent.click(await canvas.findByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}));
 

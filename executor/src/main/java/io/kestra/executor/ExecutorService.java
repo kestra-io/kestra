@@ -1196,9 +1196,11 @@ public class ExecutorService {
                 )
                 .record(taskRun.getState().getDurationOrComputeIt());
 
+            ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
             if (
                 taskRun.getAssets() != null &&
                     (!taskRun.getAssets().getInputs().isEmpty() || !taskRun.getAssets().getOutputs().isEmpty())
+                    && executionKind != ExecutionKind.TEST
             ) {
                 AssetUser assetUser = new AssetUser(
                     taskRun.getTenantId(),

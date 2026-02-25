@@ -98,7 +98,6 @@
     });
 
     const panelWidth = ref(640)
-    const panelWrapper = ref<HTMLDivElement | null>(null)
 
     const {startResizing, resizing} = useResizablePanel(activeTab)
 
@@ -263,6 +262,7 @@
             color: var(--ks-content-tertiary);
             background: none;
             border: none;
+            z-index: 5;
         }
 
         &.panelTabResizing {

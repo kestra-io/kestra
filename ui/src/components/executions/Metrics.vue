@@ -24,11 +24,12 @@
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
     import Drawer from "../Drawer.vue"
     import MetricsTable from "./MetricsTable.vue"
+    import {Execution} from "../../stores/executions";
 
     const props = defineProps<{
         embed?: boolean;
         taskRun: Record<string, any>;
-        execution: Record<string, any>;
+        execution: Execution;
     }>();
 
     const isOpen = ref(false)

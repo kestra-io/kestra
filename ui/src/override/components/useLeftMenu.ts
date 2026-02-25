@@ -55,6 +55,8 @@ export type MenuItem = {
         locked?: boolean;
     };
     hidden?: boolean;
+    disabled?: boolean;
+    "class"?: string;
 };
 
 export function useLeftMenu() {
@@ -111,7 +113,7 @@ export function useLeftMenu() {
     const menu = computed<MenuItem[]>(() => {
         const generated = [
             {
-                title: t("product_tour"),
+                title: t("welcome.menu"),
                 routes: routeStartWith("welcome"),
                 href: {
                     name: "welcome",

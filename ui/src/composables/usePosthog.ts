@@ -28,8 +28,10 @@ function statsGlobalData(config: Config, uid: string): any {
         from: "APP",
         iid: config.uuid,
         uid: uid,
-        app_version: config.version,
-        app_type: config.edition
+        app: {
+            version: config.version,
+            type: config.edition
+        }
     }
 }
 
@@ -82,7 +84,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             autocapture: false,
         })
 
-        posthog.register(statsGlobalData(config, uid));
+        posthog.register_for_session(statsGlobalData(config, uid));
 
         if (!posthog.get_property("__alias")) {
             posthog.alias(apiConfig.id)

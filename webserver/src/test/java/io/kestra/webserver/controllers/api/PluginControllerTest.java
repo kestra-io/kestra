@@ -65,7 +65,7 @@ class PluginControllerTest {
             .findFirst()
             .orElseThrow();
 
-        assertThat(core.getCategories()).containsExactlyInAnyOrder(PluginSubGroup.PluginCategory.STORAGE, PluginSubGroup.PluginCategory.CORE);
+        assertThat(core.getCategories()).containsExactlyInAnyOrder(PluginSubGroup.PluginCategory.CORE);
 
         // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
         list = client.toBlocking().retrieve(
@@ -167,7 +167,7 @@ class PluginControllerTest {
             Argument.mapOf(String.class, Object.class)
         );
 
-        assertThat((Map<String, Object>) doc.get("properties")).hasSize(23);
+        assertThat((Map<String, Object>) doc.get("properties")).hasSize(24);
         assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 

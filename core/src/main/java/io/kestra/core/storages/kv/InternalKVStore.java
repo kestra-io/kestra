@@ -204,8 +204,7 @@ public class InternalKVStore implements KVStore {
         Integer purgedMetadataCount = this.kvMetadataRepository.purge(kvEntries.stream().map(kv -> PersistedKvMetadata.from(tenant, kv)).toList());
 
         long actualDeletedEntries = kvEntries.stream()
-            .map(KVEntry::key)
-            .map(this::storageUri)
+            .map(entry -> this.storageUri(entry.key(), entry.version()))
             .map(throwFunction(uri -> {
                 boolean deleted = this.storage.delete(tenant, namespace, uri);
                 URI metadataURI = URI.create(uri.getPath() + ".metadata");

@@ -323,6 +323,16 @@
 
     const editorRef = ref<HTMLDivElement | null>(null);
 
+    const isFlowYamlEditor = computed(() => props.language === "yaml" && props.schemaType === "flow");
+
+    function hasVisibleInlineGhostText(codeEditor: monaco.editor.IStandaloneCodeEditor): boolean {
+        return codeEditor.getDomNode()?.querySelector(".ghost-text") !== null;
+    }
+
+    function isTypeLine(lineContent: string): boolean {
+        return /^\s*(?:-\s*)?type\s*:\s*.+\s*$/.test(lineContent);
+    }
+
     watch(() => props.path, (newValue, oldValue) => {
         if (newValue !== oldValue) {
             changeTab(newValue, () => Promise.resolve(props.value));
@@ -556,6 +566,8 @@
 
     const disposeCompletions = ref<() => void>();
 
+    let moveCursorCmdDisposable: monaco.IDisposable | undefined;
+
     const pluginsStore = usePluginsStore();
     const flowStore = useFlowStore();
 
@@ -718,6 +730,11 @@
                 showClasses: false,
                 showWords: false
             },
+            ...(isFlowYamlEditor.value ? {
+                inlineSuggest: {
+                    enabled: true,
+                },
+            } : {}),
             ...(isInFlowEditor ? {
                 padding: {
                     top: 16
@@ -797,9 +814,79 @@
                     ...options,
                     fixedOverflowWidgets: true // Helps suggestion widget render above other elements
                 });
+
+                if (!moveCursorCmdDisposable) {
+                    moveCursorCmdDisposable = monaco.editor.registerCommand(
+                        "moveCursor",
+                        (_accessor, args?: { lineNumber: number; column: number }) => {
+                            const ed = localEditor.value;
+                            if (!ed || !args?.lineNumber || !args?.column) return;
+
+                            ed.setPosition({lineNumber: args.lineNumber, column: args.column});
+                            ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
+                            ed.focus();
+                        }
+                    );
+                }
+
                 let localBackspaceTimeout: number | null = null;
+                let suggestController: {
+                    model: { state: 0 | 1 | 2 },
+                    cancelSuggestWidget: () => void
+                } | undefined;
 
                 localEditor.value.onKeyDown((e) => {
+                    if (
+                        isFlowYamlEditor.value &&
+                        suggestController?.model.state !== 0 &&
+                        (e.keyCode === monaco.KeyCode.Enter || e.keyCode === monaco.KeyCode.Tab)
+                    ) {
+                        const currentLine = localEditor.value?.getModel()?.getLineContent(localEditor.value.getPosition()?.lineNumber ?? 0) ?? "";
+                        if (isTypeLine(currentLine)) {
+                            // Let suggestion acceptance happen first, then move to next line and trigger ghost suggestion.
+                            setTimeout(() => {
+                                const editor = localEditor.value;
+                                if (!editor) {
+                                    return;
+                                }
+
+                                const position = editor.getPosition();
+                                if (!position) {
+                                    return;
+                                }
+
+                                const acceptedLine = editor.getModel()?.getLineContent(position.lineNumber) ?? "";
+                                if (!isTypeLine(acceptedLine)) {
+                                    return;
+                                }
+
+                                editor.trigger("typeAcceptedInsertLine", "editor.action.insertLineAfter", {});
+                                editor.trigger("typeAcceptedInlineSuggest", "editor.action.inlineSuggest.trigger", {});
+                            }, 0);
+                        }
+                    }
+
+                    if (isFlowYamlEditor.value && hasVisibleInlineGhostText(localEditor.value!)) {
+                        if (e.keyCode === monaco.KeyCode.Tab) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            localEditor.value?.trigger("inlineSuggestCommit", "editor.action.inlineSuggest.commit", {});
+                            return;
+                        }
+
+                        if (e.keyCode === monaco.KeyCode.Enter) {
+                            localEditor.value?.trigger("inlineSuggestHide", "editor.action.inlineSuggest.hide", {});
+                            return;
+                        }
+                    }
+
+                    if (isFlowYamlEditor.value && e.keyCode === monaco.KeyCode.Enter) {
+                        // Let Monaco insert the newline first, then ask inline provider for ghost suggestion.
+                        setTimeout(() => {
+                            localEditor.value?.trigger("inlineSuggestTrigger", "editor.action.inlineSuggest.trigger", {});
+                        }, 0);
+                    }
+
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);
 
@@ -822,7 +909,7 @@
                     new PlaceholderContentWidget(props.placeholder, localEditor.value);
                 }
 
-                const suggestController = localEditor.value!.getContribution("editor.contrib.suggestController") as unknown as {
+                suggestController = localEditor.value!.getContribution("editor.contrib.suggestController") as unknown as {
                     model: { state: 0 | 1 | 2 },
                     cancelSuggestWidget: () => void
                 };
@@ -869,7 +956,7 @@
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
         emit("editorDidMount", editorResolved.value);
 
-        /* Hhandle resizing. */
+        /* Handle resizing. */
         resizeObserver.value = new ResizeObserver(() => {
             if (localEditor.value) {
                 localEditor.value.layout();
@@ -952,6 +1039,9 @@
             localEditor.value?.dispose();
             localEditor.value?.getModel()?.dispose();
             localEditor.value = undefined
+
+            moveCursorCmdDisposable?.dispose();
+            moveCursorCmdDisposable = undefined;
         }
     }
 

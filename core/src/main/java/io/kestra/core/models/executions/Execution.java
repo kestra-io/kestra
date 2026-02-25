@@ -194,7 +194,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .kind(kind)
             .build();
 
-        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
+        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
         if (labels != null) {
             executionLabels.addAll(labels);
         }
@@ -365,6 +365,15 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.kind,
             newBreakpoints
         );
+    };
+
+    public Execution addLabel(Label label) {
+        List<Label> existingLabel = this.labels == null ? new ArrayList<>(1) : new ArrayList<>(this.labels);
+        if (existingLabel.stream().noneMatch(l -> l.key().equals(label.key()))) {
+            existingLabel.add(label);
+        }
+
+        return withLabels(existingLabel);
     }
 
     public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList,

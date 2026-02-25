@@ -38,7 +38,7 @@ export function useTabs() {
         {
             ...lockedProps("assets"),
             name: "assets",
-            title: t("assets"),
+            title: t("assets.title"),
         },
         {
             ...lockedProps("variables"),

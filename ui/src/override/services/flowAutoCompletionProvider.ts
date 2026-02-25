@@ -112,7 +112,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     const triggerDoc: {schema: JSONSchema} | undefined = await this.pluginsStore.load({
                         cls: triggerType,
                         commit: false
-                    });
+                    }) as any;
                     return Object.keys(triggerDoc?.schema?.outputs?.properties ?? {});
                 })
         );

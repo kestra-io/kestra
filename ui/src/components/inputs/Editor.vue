@@ -71,8 +71,12 @@
                 <div class="position-absolute bottom-right">
                     <slot name="buttons" />
                 </div>
+                <div class="editor-footer-row">
+                    <slot name="footer-row" />
+                </div>
             </div>
         </div>
+
         <Teleport v-if="showWidgetContent" to=".editor-content-widget-content">
             <slot name="widget-content" />
         </Teleport>
@@ -121,7 +125,7 @@
         minimap: {type: Boolean, default: false},
         creating: {type: Boolean, default: false},
         label: {type: String, default: undefined},
-        shouldFocus: {type: Boolean, default: true},
+        shouldFocus: {type: Boolean, default: false},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
         scrollKey: {type: String, default: undefined},
@@ -364,7 +368,6 @@
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
 
-
         if (props.scrollKey && scrollMemory) {
             const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
             if (savedState) {
@@ -418,6 +421,17 @@
                 editor.getAction("editor.action.formatDocument")?.run();
             }
         }
+
+        editor.addAction({
+            id: "moveCursor",
+            label: "Move cursor",
+            run: (ed, args?: { lineNumber: number; column: number }) => {
+                if (!args?.lineNumber || !args?.column) return;
+                ed.setPosition({lineNumber: args.lineNumber, column: args.column});
+                ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
+                ed.focus();
+            },
+        });
 
         editor.addAction({
             id: "kestra-execute",
@@ -754,6 +768,10 @@
     z-index: 1001;
 }
 
+:not(.blueprint-container)  .ks-editor {
+    z-index: 1;
+}
+
 .el-form .ks-editor {
     display: flex;
     width: 100%;
@@ -829,6 +847,7 @@
         .editor-wrapper {
             min-width: 75%;
             width: 100%;
+            padding-bottom: 4rem; // reserve space for footer-row overlay
 
             .monaco-hover-content {
                 h4 {
@@ -861,6 +880,22 @@
                 padding: 0;
                 margin: 0;
                 //gap: .5rem;
+            }
+        }
+
+        .editor-footer-row {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1100;
+            pointer-events: none; // slot content should enable pointer-events
+            display: flex;
+            justify-content: center;
+
+            > * {
+                pointer-events: auto;
+                width: 100%;
             }
         }
     }

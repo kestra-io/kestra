@@ -13,6 +13,7 @@ import {useMiscStore} from "override/stores/misc";
 vi.mock("vue-router", () => ({
   useRouter: () => ({push: vi.fn(), replace: vi.fn(), currentRoute: {value: {path: "/"}}, beforeEach: vi.fn(), afterEach: vi.fn()}),
   useRoute: () => ({params: {}, query: {}, path: "/"}),
+  routerKey: Symbol("router"),
 }));
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}));
@@ -171,10 +172,11 @@ describe("useDependencies composable", () => {
   describe("SSE", () => {
     it("should close SSE on unmount when subtype is EXECUTION", async () => {
       const close = vi.fn();
+      class MockEventSource {
+        close = close;
+      }
 
-      vi.stubGlobal("EventSource", vi.fn(() => ({
-        close,
-      })));
+      vi.stubGlobal("EventSource", MockEventSource as unknown as typeof EventSource);
 
       const {wrapper} = mountComponentWithUseDependencies(EXECUTION);
       await nextTick();

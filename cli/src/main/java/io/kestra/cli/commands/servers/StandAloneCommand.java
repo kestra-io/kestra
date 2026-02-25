@@ -121,6 +121,11 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
+        if (tenantId != null) {
+            TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
+            tenantIdSelectorService.createTenant(tenantId);
+        }
+
         if (flowPath != null) {
             try {
                 LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);

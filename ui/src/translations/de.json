@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
-    "assets": "Vermögenswerte",
+    "assets": {
+      "title": "Vermögenswerte"
+    },
     "attempt": "Versuch",
     "attempts": "Versuch(e)",
     "auditlogs": "Audit Logs",
@@ -715,6 +717,7 @@
         "description": "Nach Ausführungsart filtern",
         "label": "Art"
       },
+      "kv_pair_selected": "{count} Key/Value-Paare ausgewählt",
       "label": "Label",
       "labels": {
         "description": "Nach Labels filtern",

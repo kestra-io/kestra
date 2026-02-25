@@ -176,32 +176,33 @@ public abstract class AbstractTaskRunnerTest {
         Mockito.when(commands.relativeWorkingDirectoryFilesPaths()).thenCallRealMethod();
         Mockito.when(commands.relativeWorkingDirectoryFilesPaths(false)).thenCallRealMethod();
 
-        var taskRunner = taskRunner();
+        var taskRunner1 = taskRunner();
         Property<List<String>> renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
             runContext,
-            taskRunner.additionalVars(runContext, commands),
+            taskRunner1.additionalVars(runContext, commands),
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
-            taskRunner instanceof RemoteRunnerInterface
+            taskRunner1 instanceof RemoteRunnerInterface
         ));
         Mockito.when(commands.getCommands()).thenReturn(
             renderedCommands
         );
 
-        var result = taskRunner.run(runContext, commands, Collections.emptyList());
+        var result = taskRunner1.run(runContext, commands, Collections.emptyList());
         assertThat(result).isNotNull();
         assertThat(result.getExitCode()).isZero();
 
         renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
             runContext,
-            taskRunner.additionalVars(runContext, commands),
+            taskRunner1.additionalVars(runContext, commands),
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
-            taskRunner instanceof RemoteRunnerInterface
+            taskRunner1 instanceof RemoteRunnerInterface
         ));
         Mockito.when(commands.getCommands()).thenReturn(
             renderedCommands
         );
 
-        result = taskRunner.run(runContext, commands, Collections.emptyList());
+        var taskRunner2 = taskRunner();
+        result = taskRunner2.run(runContext, commands, Collections.emptyList());
         assertThat(result).isNotNull();
         assertThat(result.getExitCode()).isZero();
     }

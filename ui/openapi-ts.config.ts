@@ -1,12 +1,7 @@
-// @ts-check
+import {defineConfig, $, definePluginConfig} from "@hey-api/openapi-ts";
 import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
 
-/**
- * Generates a unique hash for a given string, suitable for use as a method name.
- * @param {string} str 
- * @returns {string} A unique hash string derived from the input string.
- */
-const generateHash = (str) => {
+const generateHash = (str: string) => {
   let hash = 0;
   for (const char of str) {
     hash = (hash << 5) - hash + char.charCodeAt(0);
@@ -15,16 +10,13 @@ const generateHash = (str) => {
   return hash.toString(16).replace("-", "0");
 };
 
-/**
- * @type {import("@hey-api/openapi-ts").UserConfig}
- */
-export default {
+export default defineConfig({
   input: "../openapi.yml",
   output: {
     path: "./src/generated/kestra-api",
     postProcess: ["eslint"],
   },
-  
+
   plugins: [
     {
         name: "@hey-api/client-axios",
@@ -38,8 +30,8 @@ export default {
             },
         }
     },
-    defineKestraHeyConfig({
+    defineKestraHeyConfig(definePluginConfig, $)({
         output: "./src/generated/kestra-heyapi-sdk",
     })
   ],
-};
+});

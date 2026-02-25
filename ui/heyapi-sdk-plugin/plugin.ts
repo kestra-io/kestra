@@ -1,8 +1,7 @@
-import {$} from "@hey-api/openapi-ts";
 import type {KestraSdkPlugin} from "./types";
 
 
-export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
+export const handler: ($:any) => KestraSdkPlugin["Handler"] = ($) => ({plugin}: any) => {
   const useRouteSymbol = plugin.symbol(
     "useRoute", 
     {
@@ -16,7 +15,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
   const functionNode = $.func().generic("TParams")
     .params(
       $.param("parameters").type($.type("TParams"))
-    ).returns($.type.and($.type("TParams"), $.type.object().prop("tenant", (p) => p.type("string"))))
+    ).returns($.type.and($.type("TParams"), $.type.object().prop("tenant", (p:any) => p.type("string"))))
     .do(
       // const tenant = useRouter().params.tenant
       $.const("tenant").assign(
@@ -35,7 +34,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
   
   plugin.forEach(
     "operation",
-    ({operation}) => {
+    ({operation}: any) => {
         // on each operation, create a method that executes the operation from the sdk
         const methodName = plugin.config.methodNameBuilder?.(operation);
         if (!methodName) {
@@ -78,7 +77,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
 
         const optionsId = "options"
 
-        const isTenantOnlyRequiredParam = Object.values(pathParams).filter(p => p.name !== "tenant" && p.required).length === 0;
+        const isTenantOnlyRequiredParam = Object.values(pathParams).filter((p: any) => p.name !== "tenant" && p.required).length === 0;
 
         const paramId = "parameters"
         const functionNode = $.func()
@@ -90,7 +89,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                             .generic($.type.query(originalOperationSymbol))
                             .idx(0), $.type.literal("tenant"))
                         ,
-                            $.type.object().prop("tenant", (p) => p.type("string").optional())
+                            $.type.object().prop("tenant", (p:any) => p.type("string").optional())
                         )
                     )
                     ,

@@ -24,7 +24,7 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import _throttle from "lodash/throttle";
 import {useCoreStore} from "./core";
 import {useI18n} from "vue-i18n";
-import {RouteLocation, RouteParams} from "vue-router";
+import {RouteLocation} from "vue-router";
 
 export const useDashboardStore = defineStore("dashboard", () => {
     const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
@@ -76,33 +76,18 @@ export const useDashboardStore = defineStore("dashboard", () => {
         defaultDashboards.value = res.data
     }
 
-    const STORAGE_KEYS = (params: RouteParams) => {
-        const suffix = params.tenant ? `_${params.tenant}` : "";
+    const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
+    type DASHBOARD_TYPE = "DASHBOARD_MAIN" | "DASHBOARD_FLOW" | "DASHBOARD_NAMESPACE";
 
-        return {
-            DASHBOARD_MAIN: `dashboard_main${suffix}`,
-            DASHBOARD_FLOW: `dashboard_flow${suffix}`,
-            DASHBOARD_NAMESPACE: `dashboard_namespace${suffix}`,
-        };
-    };
-
-
-    const KEY_MAP: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
+    const KEY_MAP: Record<string, DASHBOARD_TYPE> = {
         home: "DASHBOARD_MAIN",
         "flows/update": "DASHBOARD_FLOW",
         "namespaces/update": "DASHBOARD_NAMESPACE"
     };
 
     function getDashboardType(route: RouteLocation) {
-        if (!route.params["tenant"]) {
-            throw new Error("tenant is mandatory in getDashboardType")
-        }
-
-        const key = KEY_MAP[route.name as string];
-        return key;
+        return KEY_MAP[route.name as string];
     }
-
-    const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
 
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
         const routeName = route.name?.toString();
@@ -158,14 +143,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const isDefaultDashboard = (dashboardId: string, route: RouteLocation): boolean => {
         const dashboardType = getDashboardType(route);
-        if(!dashboardType){
-            return false;
+        if(dashboardType){            
+            switch (dashboardType){
+                case "DASHBOARD_MAIN": return defaultDashboards.value?.defaultHomeDashboard === dashboardId;
+                case "DASHBOARD_NAMESPACE": return defaultDashboards.value?.defaultNamespaceOverviewDashboard === dashboardId;
+                case "DASHBOARD_FLOW": return defaultDashboards.value?.defaultFlowOverviewDashboard === dashboardId;
+            }
         }
-        switch (dashboardType){
-            case "DASHBOARD_MAIN": return defaultDashboards.value?.defaultHomeDashboard === dashboardId;
-            case "DASHBOARD_NAMESPACE": return defaultDashboards.value?.defaultNamespaceOverviewDashboard === dashboardId;
-            case "DASHBOARD_FLOW": return defaultDashboards.value?.defaultFlowOverviewDashboard === dashboardId;
-        }
+        return false;
     }
 
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {

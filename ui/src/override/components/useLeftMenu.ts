@@ -126,9 +126,6 @@ export function useLeftMenu() {
                 title: t("dashboards.labels.plural"),
                 href: {
                     name: "home",
-                    params: {
-                        dashboard: undefined,
-                    },
                 },
                 icon: {
                     element: ChartLineVariant,

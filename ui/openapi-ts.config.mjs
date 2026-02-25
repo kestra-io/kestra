@@ -1,7 +1,11 @@
-import {defineConfig} from "@hey-api/openapi-ts";
 import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
 
-const generateHash = (str: string) => {
+/**
+ * Generates a unique hash for a given string, suitable for use as a method name.
+ * @param {string} str 
+ * @returns {string} A unique hash string derived from the input string.
+ */
+const generateHash = (str) => {
   let hash = 0;
   for (const char of str) {
     hash = (hash << 5) - hash + char.charCodeAt(0);
@@ -10,7 +14,10 @@ const generateHash = (str: string) => {
   return hash.toString(16).replace("-", "0");
 };
 
-export default defineConfig({
+/**
+ * @type {import("@hey-api/openapi-ts").UserConfig}
+ */
+export default {
   input: "../openapi.yml",
   output: {
     path: "./src/generated/kestra-api",
@@ -34,4 +41,4 @@ export default defineConfig({
         output: "./src/generated/kestra-heyapi-sdk",
     })
   ],
-});
+};

@@ -143,12 +143,6 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_CONSUME_DURATION_DESCRIPTION = "Queue message consumer duration for each message";
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION = "queue.consume.batch.duration";
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION_DESCRIPTION = "Queue message consumer duration for a batch of messages";
-    public static final String METRIC_QUEUE_RECEIVE_COUNT = "queue.receive.count";
-    public static final String METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION = "Total number of received messages";
-    public static final String METRIC_QUEUE_RECEIVE_DURATION = "queue.receive.duration";
-    public static final String METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION = "Queue duration to receive and consume a batch of messages";
-    public static final String METRIC_QUEUE_POLL_SIZE = "queue.poll.size";
-    public static final String METRIC_QUEUE_POLL_SIZE_DESCRIPTION = "Size of a poll to the queue (message batch size)";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
@@ -160,8 +154,6 @@ public class MetricRegistry {
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
-    public static final String TAG_QUEUE_CONSUMER = "consumer";
-    public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";
     public static final String TAG_QUEUE_NAME = "queue_name";
     public static final String TAG_LABEL_PREFIX = "label";
     /**

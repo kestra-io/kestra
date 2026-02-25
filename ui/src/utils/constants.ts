@@ -60,6 +60,7 @@ export const SECTIONS_MAP = {
     "error handlers": "errors",
     finally: "finally",
     "after execution": "afterExecution",
+    inputs: "inputs",
     [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
 } as const;
 

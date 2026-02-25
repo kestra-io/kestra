@@ -56,7 +56,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         await loadDefaults();
         let isThereADefault = false
         dashboardList.value = res.results.map(dashboard => {
-            const isADefaultForThisRoute = isDefaultDashboard(dashboard.id, route);
+            const isADefaultForThisRoute = isAdminDefinedDefaultDashboard(dashboard.id, route);
             if(isADefaultForThisRoute){
                 isThereADefault = true;
             }
@@ -132,7 +132,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const tenant = route.params["tenant"];
         const routeName = route.name?.toString();
         if (!tenant) {
-            throw new Error("tenant is mandatory in getDashboardType")
+            throw new Error("tenant is mandatory in getUserDashboardStorageKey")
         }
         return `userDashboard/${tenant}/${routeName}`
     }
@@ -152,7 +152,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
     }
 
-    const isDefaultDashboard = (dashboardId: string, route: RouteLocation): boolean => {
+    const isAdminDefinedDefaultDashboard = (dashboardId: string, route: RouteLocation): boolean => {
         const dashboardType = getDashboardType(route);
         if(dashboardType){
             switch (dashboardType){
@@ -346,7 +346,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         selectedChart,
         list,
         getDashboardId,
-        isDefaultDashboard,
         load,
         getUserDashboardStorageKey,
         defaultDashboards,

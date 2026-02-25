@@ -5215,14 +5215,6 @@ paths:
         Existing flows missing from `flows` will be deleted if the query delete is `true`
       operationId: updateFlowsInNamespace
       parameters:
-      - name: override
-        in: query
-        description: If namespace of all provided flows should be overridden
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
       - name: delete
         in: query
         description: If missing flow should be deleted
@@ -5237,6 +5229,14 @@ paths:
         required: true
         schema:
           type: string
+      - name: override
+        in: query
+        description: If namespace of all provided flows should be overridden
+        required: true
+        explode: false
+        schema:
+          type: boolean
+          default: false
       - name: tenant
         in: path
         required: true
@@ -10356,6 +10356,13 @@ components:
           type: string
           default: 3s
     ServerInstance:
+      required:
+      - hostname
+      - id
+      - metrics
+      - props
+      - type
+      - version
       type: object
       properties:
         id:

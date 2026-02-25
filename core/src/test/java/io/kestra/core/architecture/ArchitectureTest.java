@@ -1,44 +1,27 @@
 package io.kestra.core.architecture;
 
-import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
-import org.junit.jupiter.api.BeforeAll;
+import io.kestra.tests.architecture.BaseArchitectureTest;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
 
 /**
- * Architecture tests using ArchUnit to enforce coding rules and architectural constraints.
- * These tests help maintain code quality and architectural boundaries across the codebase.
+ * Architecture tests specific to the core module.
+ * These tests enforce architectural constraints on core classes such as services, repositories, and tasks.
  */
-public class ArchitectureTest {
-
-    private static JavaClasses importedClasses;
-
-    @BeforeAll
-    static void setup() {
-        importedClasses = new ClassFileImporter()
-            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-            .importPackages("io.kestra");
-    }
+public class ArchitectureTest extends BaseArchitectureTest {
 
     @Test
-    void servicesShouldNotDependOnControllers() {
+    void servicesShouldNotDependOnEndpoints() {
         ArchRule rule = noClasses()
             .that().resideInAPackage("..services..")
-            .should().dependOnClassesThat().resideInAPackage("..endpoints..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("..endpoints..")
             .because("Services should not depend on controller/endpoint layer");
 
         rule.check(importedClasses);
-    }
-
-    @Test
-    void noClassesShouldUseJavaUtilLogging() {
-        NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING.check(importedClasses);
     }
 
     @Test
@@ -65,37 +48,6 @@ public class ArchitectureTest {
             .should().haveSimpleNameEndingWith("Service")
             .orShould().haveSimpleNameEndingWith("ServiceInterface")
             .because("Service classes should follow naming conventions");
-
-        rule.check(importedClasses);
-    }
-
-    @Test
-    void modelsShouldNotDependOnServices() {
-        ArchRule rule = noClasses()
-            .that().resideInAPackage("..models..")
-            .should().dependOnClassesThat().resideInAPackage("..services..")
-            .because("Models should be independent of service layer");
-
-        rule.check(importedClasses);
-    }
-
-    @Test
-    void modelsShouldNotDependOnRepositories() {
-        ArchRule rule = noClasses()
-            .that().resideInAPackage("..models..")
-            .should().dependOnClassesThat().resideInAPackage("..repositories..")
-            .because("Models should be independent of repository layer");
-
-        rule.check(importedClasses);
-    }
-
-    @Test
-    void modelsShouldNotDependOnMicronaut() {
-        ArchRule rule = noClasses()
-            .that().resideInAPackage("..models..")
-            .should().dependOnClassesThat()
-            .resideInAPackage("io.micronaut..")
-            .because("Domain models should be framework-agnostic and must not depend on Micronaut");
 
         rule.check(importedClasses);
     }

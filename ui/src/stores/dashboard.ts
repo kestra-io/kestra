@@ -54,7 +54,18 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
         const res = response.data as { results: { id: string; title: string }[]};
         await loadDefaults();
-        dashboardList.value = res.results.map(dashboard => {return {...dashboard, isDefault: isDefaultDashboard(dashboard.id, route)}});
+        let isThereADefault = false
+        dashboardList.value = res.results.map(dashboard => {
+            const isADefaultForThisRoute = isDefaultDashboard(dashboard.id, route);
+            if(isADefaultForThisRoute){
+                isThereADefault = true;
+            }
+            return {...dashboard, isDefault: isADefaultForThisRoute}
+        });
+        if(!isThereADefault){
+            const defaultDashboardBundledInUI = {id: "default", title: t("dashboards.default"), isDefault: true};
+            dashboardList.value = [defaultDashboardBundledInUI, ...dashboardList.value];
+        }
         return dashboardList.value;
     }
 
@@ -143,7 +154,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const isDefaultDashboard = (dashboardId: string, route: RouteLocation): boolean => {
         const dashboardType = getDashboardType(route);
-        if(dashboardType){            
+        if(dashboardType){
             switch (dashboardType){
                 case "DASHBOARD_MAIN": return defaultDashboards.value?.defaultHomeDashboard === dashboardId;
                 case "DASHBOARD_NAMESPACE": return defaultDashboards.value?.defaultNamespaceOverviewDashboard === dashboardId;

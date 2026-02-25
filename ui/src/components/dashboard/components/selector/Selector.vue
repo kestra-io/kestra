@@ -98,9 +98,7 @@
     const search = ref("");
     const dashboards = ref<{ id: string; title: string, isDefault: boolean }[]>([]);
     const filtered = computed<{id: string, title: string, isDefault: boolean}[]>(() => {
-        const DEFAULT = {id: "default", title: t("dashboards.default"), isDefault: false};
-
-        return [DEFAULT, ...dashboards.value].filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
+        return dashboards.value.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
     });
 
 

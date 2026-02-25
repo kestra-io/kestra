@@ -52,11 +52,13 @@
     import {useRoute, useRouter} from "vue-router";
     import {useDashboardStore} from "../../stores/dashboard";
     import {useCoreStore} from "../../stores/core.ts";
+    import {useI18n} from "vue-i18n";
 
     const route = useRoute();
     const router = useRouter();
     const coreStore = useCoreStore();
     const dashboardStore = useDashboardStore();
+    const {t} = useI18n();
 
     defineOptions({inheritAttrs: false});
 
@@ -105,7 +107,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI())}
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
         isDashboardBundledWithUI.value = true;
     }
 

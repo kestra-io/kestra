@@ -30,8 +30,6 @@ export default defineConfig({
             },
         }
     },
-    defineKestraHeyConfig(definePluginConfig, $)({
-        output: "./src/generated/kestra-heyapi-sdk",
-    })
+    defineKestraHeyConfig(definePluginConfig, $)()
   ],
 });

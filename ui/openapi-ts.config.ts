@@ -1,5 +1,5 @@
 import {defineConfig, $, definePluginConfig} from "@hey-api/openapi-ts";
-import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
+import {defineKestraHeyConfig} from "./heyapi-sdk-plugin/index.mjs";
 
 const generateHash = (str: string) => {
   let hash = 0;

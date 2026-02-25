@@ -1,7 +1,10 @@
-import type {KestraSdkPlugin} from "./types";
 
-
-export const handler: ($:any) => KestraSdkPlugin["Handler"] = ($) => ({plugin}: any) => {
+/**
+ * 
+ * @param {typeof import("@hey-api/openapi-ts").$} $ 
+ * @returns {($:typeof import("@hey-api/openapi-ts").$) => import("./types").KestraSdkPlugin["Handler"]}
+ */
+export const handler = ($) => ({plugin}) => {
   const useRouteSymbol = plugin.symbol(
     "useRoute", 
     {
@@ -15,7 +18,7 @@ export const handler: ($:any) => KestraSdkPlugin["Handler"] = ($) => ({plugin}: 
   const functionNode = $.func().generic("TParams")
     .params(
       $.param("parameters").type($.type("TParams"))
-    ).returns($.type.and($.type("TParams"), $.type.object().prop("tenant", (p:any) => p.type("string"))))
+    ).returns($.type.and($.type("TParams"), $.type.object().prop("tenant", (p) => p.type("string"))))
     .do(
       // const tenant = useRouter().params.tenant
       $.const("tenant").assign(
@@ -30,11 +33,12 @@ export const handler: ($:any) => KestraSdkPlugin["Handler"] = ($) => ({plugin}: 
   const exportedFunctionNode = $.const(addTenantToParametersSymbol).export().assign(functionNode);
   plugin.node(exportedFunctionNode);
 
-  const operationsDict: Record<string, {symbol:ReturnType<typeof plugin.symbol>, methodName: string}[]> = {}
+  /** @type {Record<string, {symbol: import("@hey-api/openapi-ts").Symbol, methodName: string}[]>} */
+  const operationsDict = {}
   
   plugin.forEach(
     "operation",
-    ({operation}: any) => {
+    ({operation}) => {
         // on each operation, create a method that executes the operation from the sdk
         const methodName = plugin.config.methodNameBuilder?.(operation);
         if (!methodName) {
@@ -77,7 +81,7 @@ export const handler: ($:any) => KestraSdkPlugin["Handler"] = ($) => ({plugin}: 
 
         const optionsId = "options"
 
-        const isTenantOnlyRequiredParam = Object.values(pathParams).filter((p: any) => p.name !== "tenant" && p.required).length === 0;
+        const isTenantOnlyRequiredParam = Object.values(pathParams).filter((p) => p.name !== "tenant" && p.required).length === 0;
 
         const paramId = "parameters"
         const functionNode = $.func()
@@ -89,7 +93,7 @@ export const handler: ($:any) => KestraSdkPlugin["Handler"] = ($) => ({plugin}: 
                             .generic($.type.query(originalOperationSymbol))
                             .idx(0), $.type.literal("tenant"))
                         ,
-                            $.type.object().prop("tenant", (p:any) => p.type("string").optional())
+                            $.type.object().prop("tenant", (p) => p.type("string").optional())
                         )
                     )
                     ,

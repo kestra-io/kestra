@@ -10281,6 +10281,7 @@ components:
       - PARENT_PATH
       - VERSION
       - USERNAME
+      - NAME
       x-type: String
     QueryFilter.Op:
       type: string

@@ -264,6 +264,12 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
             }
+        },
+        NAME("name") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -347,6 +353,12 @@ public record QueryFilter(
                 return List.of(Field.QUERY, Field.USERNAME);
             }
         },
+        GROUP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
+            }
+        },
         SECRET_METADATA {
             @Override
             public List<Field> supportedField() {
@@ -414,6 +426,7 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 // ASSET_ID is not supported for now as it needs complex json parsing
                 return List.of(
+                    Field.ASSET_ID,
                     Field.NAMESPACE,
                     Field.FLOW_ID,
                     Field.FLOW_REVISION,

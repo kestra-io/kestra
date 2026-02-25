@@ -63,6 +63,18 @@ public class RequestUtils {
      *
      * @return the new filter list
      */
+    public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(List<QueryFilter> filters, String query) {
+        return getFiltersOrDefaultToLegacyMapping(
+            filters, query, null, null, null, null, null, null, null, null, null, null
+        );
+    }
+
+    /**
+     * if filters is defined, use that, otherwise map all legacy params to the new filter API
+     * if you are manipulating an entity queryable by date, use {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)} instead
+     *
+     * @return the new filter list
+     */
     public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
         List<QueryFilter> filters,
         String query,

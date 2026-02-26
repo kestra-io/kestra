@@ -298,7 +298,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                      ZipOutputStream archive = new ZipOutputStream(bos)) {
                     var zipEntry = new ZipEntry("outputs.ion");
                     archive.putNextEntry(zipEntry);
-                    archive.write(JacksonMapper.ofIon().writeValueAsBytes(taskRun));
+                    archive.write(JacksonMapper.ofIon().writeValueAsBytes(taskRunWithOutput.outputs()));
                     archive.closeEntry();
                     archive.finish();
                     Path archiveFile = runContext.workingDir().createTempFile(".zip");

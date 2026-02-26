@@ -59,11 +59,7 @@
             </div>
         </template>
         <template #menu>
-            <Toc
-                @router-change="onRouterChange"
-                v-if="pluginsStore.plugins"
-                :plugins="pluginsStore.plugins.filter(p => !p.subGroup && !p.deprecated)"
-            />
+            <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
             <div class="plugin-doc" v-if="pluginsStore.plugin">
@@ -100,6 +96,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "override/stores/misc";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
+    import type {JSONSchema} from "@kestra-io/ui-libs";
 
 
     const pluginsStore = usePluginsStore();
@@ -135,55 +132,41 @@
         return split ? split[split.length - 1] : undefined;
     });
 
-    /**
-     * Filters out deprecated/hidden definitions from a definitions map.
-     * Handles both `definitions` (JSON Schema draft-07) and `$defs` (draft-2019+).
-     */
-    function filterDefinitions(defs: Record<string, any>): Record<string, any> {
-        return Object.entries(defs).reduce((acc, [key, value]: [string, any]) => {
-            const title: string = value?.title ?? "";
+    const filteredSchema = computed((): JSONSchema => {
+        const schema = pluginsStore.plugin?.schema as JSONSchema;
 
-            const shouldFilter =
-                value?.deprecated === true ||
-                value?.hidden === true ||
-                key.includes("FlowCondition") ||
-                key.includes("FlowNamespaceCondition") ||
-                /condition for a (specific flow|flow namespace)/i.test(title);
-
-            if (!shouldFilter) {
-                acc[key] = value;
-            }
-
-            return acc;
-        }, {} as Record<string, any>);
-    }
-
-    /**
-     * filteredSchema watches pluginsStore.plugin directly so Vue tracks
-     * reactivity properly, including after nextTick-delayed cache assignments.
-     */
-    const filteredSchema = computed(() => {
-        const plugin = pluginsStore.plugin;
-
-        if (!plugin?.schema) {
-            return undefined;
+        if (!schema?.definitions) {
+            return schema;
         }
 
-        const schema = plugin.schema;
-        const result: any = {...schema};
+        const filteredDefinitions = Object.entries(schema.definitions).reduce(
+            (acc, [key, value]: [string, any]) => {
+                const title: string = value?.title ?? "";
 
-        if (schema.definitions && Object.keys(schema.definitions).length > 0) {
-            result.definitions = filterDefinitions(schema.definitions);
-        }
+                const shouldFilter =
+                    value?.deprecated === true ||
+                    value?.hidden === true ||
+                    key.includes("FlowCondition") ||
+                    key.includes("FlowNamespaceCondition") ||
+                    /condition for a (specific flow|flow namespace)/i.test(title);
 
-        if (schema.$defs && Object.keys(schema.$defs).length > 0) {
-            result.$defs = filterDefinitions(schema.$defs);
-        }
+                if (!shouldFilter) {
+                    acc[key] = value;
+                }
 
-        return result;
+                return acc;
+            },
+            {} as Record<string, any>
+        );
+
+        return {
+            ...schema,
+            definitions: filteredDefinitions,
+        };
     });
 
     const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value));
+
 
     const isPluginList = computed(
         () => typeof route.name === "string" && route.name === "plugins/list"
@@ -256,6 +239,7 @@
         },
         {immediate: true}
     );
+
 
     watch(
         () => pluginsStore.plugins,

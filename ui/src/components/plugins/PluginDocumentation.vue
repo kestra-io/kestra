@@ -61,6 +61,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import GitHub from "vue-material-design-icons/Github.vue";
     import intro from "../../assets/docs/basic.md?raw";
+    import type {JSONSchema} from "@kestra-io/ui-libs";
 
     const props = withDefaults(defineProps<{
         overrideIntro?: string | null;
@@ -100,52 +101,37 @@
         }
     };
 
-    /**
-     * Filters out deprecated/hidden definitions from a definitions map.
-     * Handles both `definitions` (JSON Schema draft-07) and `$defs` (draft-2019+).
-     */
-    function filterDefinitions(defs: Record<string, any>): Record<string, any> {
-        return Object.entries(defs).reduce((acc, [key, value]: [string, any]) => {
-            const title: string = value?.title ?? "";
+    const filteredSchema = computed((): JSONSchema => {
+        const schema = currentPlugin.value?.schema as JSONSchema;
 
-            const shouldFilter =
-                value?.deprecated === true ||
-                value?.hidden === true ||
-                key.includes("FlowCondition") ||
-                key.includes("FlowNamespaceCondition") ||
-                /condition for a (specific flow|flow namespace)/i.test(title);
-
-            if (!shouldFilter) {
-                acc[key] = value;
-            }
-
-            return acc;
-        }, {} as Record<string, any>);
-    }
-
-    /**
-     * Returns the schema with deprecated definitions removed.
-     * Watches currentPlugin directly so Vue tracks reactivity properly.
-     */
-    const filteredSchema = computed(() => {
-        const plugin = currentPlugin.value;
-
-        if (!plugin?.schema) {
-            return undefined;
+        if (!schema?.definitions) {
+            return schema;
         }
 
-        const schema = plugin.schema;
-        const result: any = {...schema};
+        const filteredDefinitions = Object.entries(schema.definitions).reduce(
+            (acc, [key, value]: [string, any]) => {
+                const title: string = value?.title ?? "";
 
-        if (schema.definitions && Object.keys(schema.definitions).length > 0) {
-            result.definitions = filterDefinitions(schema.definitions);
-        }
+                const shouldFilter =
+                    value?.deprecated === true ||
+                    value?.hidden === true ||
+                    key.includes("FlowCondition") ||
+                    key.includes("FlowNamespaceCondition") ||
+                    /condition for a (specific flow|flow namespace)/i.test(title);
 
-        if (schema.$defs && Object.keys(schema.$defs).length > 0) {
-            result.$defs = filterDefinitions(schema.$defs);
-        }
+                if (!shouldFilter) {
+                    acc[key] = value;
+                }
 
-        return result;
+                return acc;
+            },
+            {} as Record<string, any>
+        );
+
+        return {
+            ...schema,
+            definitions: filteredDefinitions,
+        };
     });
 </script>
 

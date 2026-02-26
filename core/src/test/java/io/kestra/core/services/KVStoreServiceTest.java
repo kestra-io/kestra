@@ -56,7 +56,7 @@ class KVStoreServiceTest {
 
     @Test
     void shouldPurgeKVStoreForSpecificVersions() throws IOException {
-        KVStore kvStore = new InternalKVStore(MAIN_TENANT, "system", storageInterface, kvMetadataStateStore);
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, IdUtils.create(), storageInterface, kvMetadataStateStore);
         String key = IdUtils.create();
 
         kvStore.put(key, new KVValueAndMetadata(null, "value1"));

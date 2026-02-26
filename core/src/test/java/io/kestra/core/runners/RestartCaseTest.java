@@ -193,6 +193,26 @@ public class RestartCaseTest {
 
     public void restartSubflow() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-parent");
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // here we must have failed the subflow
+        runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().isFailed(), MAIN_TENANT, "io.kestra.tests", "restart-child");
+
+        // restart to end the subflow
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restarted1 = executionService.restart(execution, flow, null);
+        execution = runnerUtils.restartExecution(
+            e -> e.getState().getCurrent() == Type.SUCCESS && e.getFlowId().equals("restart-parent"),
+            restarted1
+        );
+        assertThat(execution.getTaskRunList()).hasSize(3);
+
+        runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().isSuccess(), MAIN_TENANT, "io.kestra.tests", "restart-child");
+    }
+
+    public void restartSubflowWithForEach() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-parent-for-each");
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
@@ -203,17 +223,17 @@ public class RestartCaseTest {
         Flow flow = flowRepository.findByExecution(execution);
         Execution restarted1 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
-            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent"),
+            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-for-each") && e.getTaskRunList().size() == 4,
             restarted1
         );
         Execution restarted2 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
-            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent"),
+            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-for-each") && e.getTaskRunList().size() == 5,
             restarted2
         );
         Execution restarted3 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
-            e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-parent"),
+            e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-parent-for-each"),
             restarted3
         );
         assertThat(execution.getTaskRunList()).hasSize(6);

@@ -179,6 +179,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/restart-parent-for-each.yaml", "flows/valids/restart-child.yaml"})
+    protected void restartSubflowWithForEach() throws Exception {
+        restartCaseTest.restartSubflowWithForEach();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/restart-parent.yaml", "flows/valids/restart-child.yaml"})
     protected void restartSubflow() throws Exception {
         restartCaseTest.restartSubflow();

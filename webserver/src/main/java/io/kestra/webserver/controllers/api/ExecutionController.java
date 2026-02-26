@@ -614,6 +614,7 @@ public class ExecutionController {
                 .flowRevision(flow.getRevision())
                 .labels(LabelService.labelsExcludingSystem(flow.getLabels()))
                 .state(new State().withState(State.Type.FAILED))
+                .trigger(ExecutionTrigger.of(webhook, Map.of()))
                 .build();
 
             Logger logger = webhookContext.webhookService().runContext(flow, failedExecution).logger();

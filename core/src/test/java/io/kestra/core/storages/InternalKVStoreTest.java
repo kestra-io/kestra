@@ -246,26 +246,7 @@ class InternalKVStoreTest {
 
         Assertions.assertDoesNotThrow(() -> KVStore.validateKey("AN_UPPER.CASE-key"));
     }
-
-    @Test
-    void should_purge_entries() throws IOException {
-        InternalKVStore kv = kv();
-        String key = IdUtils.create();
-
-        kv.put(key, new KVValueAndMetadata(null, "value1"));
-        kv.put(key, new KVValueAndMetadata(null, "value2"));
-        kv.put(key, new KVValueAndMetadata(null, "value3"));
-
-        storeService.purge(MAIN_TENANT, kv.namespace(), List.of(
-            new KVEntry(kv.namespace(), key, 1, null, Instant.now(), Instant.now(), null),
-            new KVEntry(kv.namespace(), key, 3, null, Instant.now(), Instant.now(), null)
-        ));
-
-        List<KVEntry> kvEntries = kv.list();
-        assertThat(kvEntries).hasSize(1);
-        assertThat(kvEntries.getFirst().version()).isEqualTo(2);
-    }
-
+    
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
         return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface, kvMetadataStateStore);

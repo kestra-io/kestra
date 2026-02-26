@@ -1,11 +1,13 @@
 package io.kestra.core.services;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 
 @KestraTest
 class KVStoreServiceTest {
@@ -49,6 +53,26 @@ class KVStoreServiceTest {
         kvStore.put("key", new KVValueAndMetadata(new KVMetadata("myDescription", Duration.ofHours(1)), "value"));
         Assertions.assertNotNull(storeService.get(MAIN_TENANT, "system", null));
     }
+
+    @Test
+    void shouldPurgeKVStoreForSpecificVersions() throws IOException {
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, "system", storageInterface, kvMetadataStateStore);
+        String key = IdUtils.create();
+
+        kvStore.put(key, new KVValueAndMetadata(null, "value1"));
+        kvStore.put(key, new KVValueAndMetadata(null, "value2"));
+        kvStore.put(key, new KVValueAndMetadata(null, "value3"));
+
+        storeService.purge(MAIN_TENANT, kvStore.namespace(), List.of(
+            new KVEntry(kvStore.namespace(), key, 1, null, Instant.now(), Instant.now(), null),
+            new KVEntry(kvStore.namespace(), key, 3, null, Instant.now(), Instant.now(), null)
+        ));
+
+        List<KVEntry> kvEntries = storeService.listAll(MAIN_TENANT, kvStore.namespace());
+        assertThat(kvEntries).hasSize(1);
+        assertThat(kvEntries.getFirst().version()).isEqualTo(2);
+    }
+
 
     @MockBean(NamespaceService.class)
     public static class MockNamespaceService extends DefaultNamespaceService {

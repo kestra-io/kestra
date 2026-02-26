@@ -1,6 +1,7 @@
 package io.kestra.core.validations;
 
 import io.kestra.core.models.ServerType;
+import io.kestra.core.utils.Enums;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
@@ -33,7 +34,7 @@ public class ServerCommandValidator {
     @Inject
     public ServerCommandValidator(final Environment environment) {
         this.environment = environment;
-        this.serverType = ServerType.valueOf(environment.getRequiredProperty("kestra.server-type", String.class));
+        this.serverType = Enums.getForNameIgnoreCase(environment.getRequiredProperty("kestra.server-type", String.class), ServerType.class);
     }
 
     @PostConstruct

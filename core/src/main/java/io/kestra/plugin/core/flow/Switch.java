@@ -215,7 +215,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        private String value;
         private boolean defaults;
+        private String value;
     }
 }

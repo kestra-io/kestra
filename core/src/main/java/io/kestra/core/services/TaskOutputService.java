@@ -257,4 +257,13 @@ public class TaskOutputService {
 
         return result;
     }
+
+    /**
+     * Purge (hard delete) task outputs for a given list of executions.
+     *
+     * @return the number of deleted outputs
+     */
+    public int purge(List<Execution> executions) {
+        return this.outputRepository.purgeByExecutionIds(executions.stream().map(Execution::getId).toList());
+    }
 }

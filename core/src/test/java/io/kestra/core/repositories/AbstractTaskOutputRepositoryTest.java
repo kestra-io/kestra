@@ -188,4 +188,29 @@ public abstract class AbstractTaskOutputRepositoryTest {
         List<TaskOutput> outputs = taskOutputRepository.findByExecution(execution);
         assertThat(outputs).hasSize(1);
     }
+
+    @Test
+    void should_purge_task_output() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId1 = IdUtils.create();
+        String executionId2 = IdUtils.create();
+
+        String taskRunId1 = IdUtils.create();
+        String taskRunId2 = IdUtils.create();
+
+        byte[] value1 = "output 1".getBytes(StandardCharsets.UTF_8);
+        byte[] value2 = "output 2".getBytes(StandardCharsets.UTF_8);
+
+        String uri1 = "kestra://outputs/" + executionId1 + "/" + taskRunId1;
+        String uri2 = "kestra://outputs/" + executionId2 + "/" + taskRunId2;
+
+        TaskOutput taskOutput1 = new TaskOutput(taskRunId1, tenant, executionId1, value1, uri1);
+        TaskOutput taskOutput2 = new TaskOutput(taskRunId2, tenant, executionId2, value2, uri2);
+
+        taskOutputRepository.save(taskOutput1);
+        taskOutputRepository.save(taskOutput2);
+
+        int purged = taskOutputRepository.purgeByExecutionIds(List.of(executionId1, executionId2));
+        assertThat(purged).isEqualTo(2);
+    }
 }

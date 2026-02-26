@@ -480,6 +480,7 @@ public class ExecutionService {
 
                 if (purgeExecution) {
                     builder.executionsCount(this.executionRepository.purge(executions));
+                    builder.taskOutputsCount(this.taskOutputService.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -782,6 +783,9 @@ public class ExecutionService {
     public static class PurgeResult {
         @Builder.Default
         private int executionsCount = 0;
+
+        @Builder.Default
+        private int taskOutputsCount = 0;
 
         @Builder.Default
         private int logsCount = 0;

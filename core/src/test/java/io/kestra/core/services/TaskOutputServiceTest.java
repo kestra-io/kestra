@@ -336,6 +336,48 @@ class TaskOutputServiceTest {
         assertThat(level2.get("number")).isEqualTo(999);
     }
 
+    @Test
+    void purge() throws InternalException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        // Execution 1
+        String executionId1 = IdUtils.create();
+        String taskRunId1 = IdUtils.create();
+        TaskRun taskRun1 = TaskRun.builder()
+            .id(taskRunId1)
+            .tenantId(tenant)
+            .executionId(executionId1)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("test-task")
+            .state(new State())
+            .build();
+        taskOutputService.saveOutputs(taskRun1, Map.of("key", "value1"));
+
+        // Execution 2
+        String executionId2 = IdUtils.create();
+        String taskRunId2 = IdUtils.create();
+        TaskRun taskRun2 = TaskRun.builder()
+            .id(taskRunId2)
+            .tenantId(tenant)
+            .executionId(executionId2)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("test-task")
+            .state(new State())
+            .build();
+        taskOutputService.saveOutputs(taskRun2, Map.of("key", "value2"));
+
+        // Purge Execution 1
+        Execution execution1 = Execution.builder().id(executionId1).tenantId(tenant).build();
+        int purgedCount = taskOutputService.purge(java.util.List.of(execution1));
+
+        // Verify
+        assertThat(purgedCount).isEqualTo(1);
+        assertThat(taskOutputRepository.findById(tenant, taskRunId1)).isEmpty();
+        assertThat(taskOutputRepository.findById(tenant, taskRunId2)).isPresent();
+    }
+
     // Test Output implementation
     @Builder
     @Getter
@@ -345,3 +387,4 @@ class TaskOutputServiceTest {
         private final Boolean success;
     }
 }
+

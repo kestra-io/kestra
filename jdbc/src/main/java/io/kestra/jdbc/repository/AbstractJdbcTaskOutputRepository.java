@@ -71,6 +71,20 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
             });
     }
 
+    @Override
+    public int purgeByExecutionIds(List<String> executionIds) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var delete = DSL
+                    .using(configuration)
+                    .delete(this.jdbcRepository.getTable())
+                    .where(EXECUTION_ID_FIELD.in(executionIds));
+
+                return delete.execute();
+            });
+    }
+
     private static TaskOutput map(org.jooq.Record record) {
         return new TaskOutput(record.get(TASK_RUN_ID_FIELD), record.get(TENANT_ID_FIELD), record.get(EXECUTION_ID_FIELD), record.get(VALUE_FIELD), record.get(URI_ID_FIELD));
     }

@@ -1860,6 +1860,10 @@
     "side-by-side": "并排",
     "slack support": "通过Slack提问",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "无法连接到您的Kestra实例。请确保它正在运行，然后刷新页面。",
+        "title": "连接中断"
+      },
       "loading_execution": "加载执行时出现问题"
     },
     "source": "来源",

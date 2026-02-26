@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS task_outputs_execution_id ON task_outputs ("execution_id");

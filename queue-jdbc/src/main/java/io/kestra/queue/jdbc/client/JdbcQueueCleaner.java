@@ -17,7 +17,6 @@ import org.jooq.impl.DSL;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -53,7 +52,7 @@ public class JdbcQueueCleaner {
         broadcastQueues.forEach(queue -> {
             Integer queueType = JdbcQueueClient.queueNameToType(queue.queueName());
             dslContextWrapper.transaction(configuration -> {
-                var condition = CREATED_FIELD.lessOrEqual(period(configuration, retention)).and(TYPE_FIELD.eq(queueType));
+                var condition = CREATED_FIELD.lessOrEqual(ZonedDateTime.now().minus(retention).toOffsetDateTime()).and(TYPE_FIELD.eq(queueType));
                 int deleted = delete(configuration, condition);
                 log.info("Cleaned {} records for the '{}' queue", deleted, queue.queueName());
                 totalDeleted.add(deleted);
@@ -85,13 +84,5 @@ public class JdbcQueueCleaner {
                 .where(condition)
                 .execute();
         }
-    }
-
-    private Temporal period(org.jooq.Configuration configuration, Duration retention) {
-        if (configuration.dialect().family() == SQLDialect.MYSQL) {
-            // 'date' column in the table is in local time for MySQL
-            return ZonedDateTime.now().minus(retention).toLocalDateTime();
-        }
-        return ZonedDateTime.now().minus(retention).toOffsetDateTime();
     }
 }

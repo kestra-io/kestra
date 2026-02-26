@@ -342,6 +342,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocumentationWithSchema"
+  /api/v1/tenants/main/settings/default-dashboards:
+    post:
+      tags:
+      - Tenants
+      summary: Make this dashboard the default for the entire tenant
+      operationId: setTenantDefaultDashboard
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TenantController.SetTenantDefaultDashboardsRequest"
+        required: true
+      responses:
+        "200":
+          description: setTenantDefaultDashboard 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSettings"
   /api/v1/{tenant}/basicAuth:
     post:
       tags:
@@ -770,6 +789,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PagedResults_Map_String.Object__"
+  /api/v1/{tenant}/dashboards/settings/default-dashboards:
+    get:
+      tags:
+      - Dashboards
+      summary: Get default dashboards
+      operationId: getDefaultDashboards
+      parameters:
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getDefaultDashboards 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSettings"
   /api/v1/{tenant}/dashboards/validate:
     post:
       tags:
@@ -8630,6 +8668,15 @@ components:
           type: string
         providerId:
           type: string
+    DashboardSettings:
+      type: object
+      properties:
+        defaultHomeDashboard:
+          type: string
+        defaultFlowOverviewDashboard:
+          type: string
+        defaultNamespaceOverviewDashboard:
+          type: string
     DependsOn:
       type: object
       properties:
@@ -10691,6 +10738,15 @@ components:
           type: string
           format: uri
           nullable: true
+    TenantController.SetTenantDefaultDashboardsRequest:
+      type: object
+      properties:
+        defaultHomeDashboard:
+          type: string
+        defaultFlowOverviewDashboard:
+          type: string
+        defaultNamespaceOverviewDashboard:
+          type: string
     TenantInterface:
       type: object
       properties:

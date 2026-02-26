@@ -263,8 +263,8 @@ public class ExecutionService {
         return finalTaskRunToRestart;
     }
 
-    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
-        return replay(execution, flow, taskRunId, revision, Optional.empty(), false);
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+        return replay(execution, flow, taskRunId, revision, breakpoints, false);
     }
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent) throws Exception {

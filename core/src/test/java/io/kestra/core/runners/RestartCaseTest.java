@@ -143,7 +143,7 @@ public class RestartCaseTest {
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // wait
-        Execution restartedExec = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
+        Execution restartedExec = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null, Optional.empty());
         executionQueue.emit(restartedExec);
 
         assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);

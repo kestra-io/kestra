@@ -23,7 +23,6 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.utils.*;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
@@ -570,7 +569,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     // Handle failed flow retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
                         FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                        Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null);
+                        Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
                     // Handle WaitFor

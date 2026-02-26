@@ -1095,7 +1095,9 @@ public class ExecutionController {
 
         this.controlRevision(execution.get(), revision);
 
-        return innerReplay(execution.get(), taskRunId, revision, breakpoints);
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.get().getNamespace(), execution.get().getFlowId(), Optional.ofNullable(revision));
+
+        return innerReplay(execution.get(), flow, taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1139,19 +1141,19 @@ public class ExecutionController {
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(newInputs -> Mono.fromCallable(() ->
-                innerReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+                innerReplay(current.withInputs(newInputs), flow, taskRunId, revision, breakpoints)));
 
     }
 
-    private ApiAsyncEvent innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+    private ApiAsyncEvent innerReplay(Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
             }
         }
 
-        var executionReplayCommand = Replay.from(execution, taskRunId, revision, breakpoints);
-        executionCommandQueue.emit(executionReplayCommand);
+        var replayedExecution = executionService.replay(execution, flow, taskRunId, revision, breakpoints, true);
+        executionQueue.emit(replayedExecution);
 
         // update parent exec with replayed label
         List<Label> newLabels = new ArrayList<>(execution.getLabels());
@@ -1161,7 +1163,7 @@ public class ExecutionController {
         var updateLabelsCommand = UpdateLabels.from(execution, newLabels);
         executionCommandQueue.emit(updateLabelsCommand);
 
-        return ApiAsyncEvent.from(executionReplayCommand.eventId());
+        return ApiAsyncEvent.from(updateLabelsCommand.eventId());
     }
 
     private void controlRevision(Execution execution, Integer revision) {
@@ -1868,11 +1870,11 @@ public class ExecutionController {
         }
 
         for (Execution execution : executions) {
+            Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
             if (latestRevision) {
-                Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
-                innerReplay(execution, null, flow.getRevision(), Optional.empty());
+                innerReplay(execution, flow, null, flow.getRevision(), Optional.empty());
             } else {
-                innerReplay(execution, null, null, Optional.empty());
+                innerReplay(execution, flow, null, null, Optional.empty());
             }
         }
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());

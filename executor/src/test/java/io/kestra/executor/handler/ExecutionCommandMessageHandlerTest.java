@@ -50,19 +50,6 @@ class ExecutionCommandMessageHandlerTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/minimal.yaml")
-    void replay(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        var command = Replay.from(execution, null, null, Optional.empty());
-
-        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
-
-        assertThat(handle).isPresent();
-        assertThat(handle.get().getExecution().getId()).isNotEqualTo(execution.getId());
-        assertThat(handle.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.CREATED);
-    }
-
-    @Test
     @LoadFlows("flows/valids/minimal.yaml")
     void pause() {
         var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();

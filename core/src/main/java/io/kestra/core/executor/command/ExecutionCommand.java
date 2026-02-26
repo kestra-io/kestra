@@ -17,7 +17,6 @@ import java.util.Map;
     @JsonSubTypes.Type(value = ChangeTaskRunState.class, name = "CHANGE_TASK_RUN_STATE"),
     @JsonSubTypes.Type(value = ForceRun.class, name = "FORCE_RUN"),
     @JsonSubTypes.Type(value = Pause.class, name = "PAUSE"),
-    @JsonSubTypes.Type(value = Replay.class, name = "REPLAY"),
     @JsonSubTypes.Type(value = Restart.class, name = "RESTART"),
     @JsonSubTypes.Type(value = Resume.class, name = "RESUME"),
     @JsonSubTypes.Type(value = ResumeFromBreakpoint.class, name = "RESUME_FROM_BREAKPOINT"),

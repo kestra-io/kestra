@@ -39,8 +39,6 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 var newExecution = switch (message) {
                     case Restart restartCommand ->
                         executionService.restart(execution, executorContext.getFlow(), restartCommand.revision(), true);
-                    case Replay replayCommand ->
-                        executionService.replay(execution, executorContext.getFlow(), replayCommand.taskRunId(), replayCommand.revision(), replayCommand.breakpoints(), true);
                     case Pause ignored ->
                         executionService.pause(execution);
                     case Unqueue unqueueCommand ->

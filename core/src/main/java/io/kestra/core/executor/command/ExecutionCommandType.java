@@ -7,7 +7,6 @@ public enum ExecutionCommandType {
     CHANGE_TASK_RUN_STATE,
     FORCE_RUN,
     PAUSE,
-    REPLAY,
     RESTART,
     RESUME,
     RESUME_FROM_BREAKPOINT,

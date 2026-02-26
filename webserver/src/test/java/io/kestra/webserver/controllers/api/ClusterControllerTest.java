@@ -8,7 +8,11 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,6 +24,11 @@ class ClusterControllerTest {
 
     @Inject
     Worker worker;
+    
+    @BeforeEach
+    void beforeEach() {
+        Awaitility.await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100)).until(() -> worker.getState() != null);
+    }
 
     @Test
     void shouldGetServiceInfo() {

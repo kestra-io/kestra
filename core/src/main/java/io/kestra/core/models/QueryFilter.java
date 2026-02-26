@@ -347,6 +347,12 @@ public record QueryFilter(
                 return List.of(Field.QUERY, Field.USERNAME);
             }
         },
+        BINDING {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE);
+            }
+        },
         SECRET_METADATA {
             @Override
             public List<Field> supportedField() {

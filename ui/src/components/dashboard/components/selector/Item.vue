@@ -30,7 +30,7 @@
     const authStore = useAuthStore();
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
     const isAllowedToSetDefaults = computed(() => {
-        const user = authStore.user as Record<string, unknown> | null;
+        const user = authStore.user as Record<string, unknown> | undefined;
 
         return isOSS.value
             || (

@@ -84,7 +84,7 @@ public class QueueService {
         try {
             return Either.left(MAPPER.readValue(record, cls));
         } catch (IOException e) {
-            return Either.right(new DeserializationException(e, Arrays.toString(record)));
+            return Either.right(new DeserializationException(e, new String(record)));
         }
     }
 }

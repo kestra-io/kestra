@@ -1,5 +1,6 @@
 package io.kestra.controller.grpc.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.ByteString;
@@ -12,26 +13,22 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
-import io.kestra.core.runners.NoTransactionContext;
-import io.kestra.core.runners.WorkerInstance;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.runners.WorkerJobEvent;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.runners.WorkerTaskRunning;
-import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.runners.WorkerTriggerRunning;
+import io.kestra.core.runners.*;
+import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -39,6 +36,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -79,7 +77,8 @@ import java.util.stream.Stream;
 @Singleton
 @Slf4j
 public class WorkerJobDispatcher {
-    
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     // TTL for killed execution IDs in the local cache to prevent unbounded growth
     // This cache is used for pre-dispatch filtering of tasks belonging to killed executions avoiding unnecessary dispatch and allowing for faster kill response times.
     private static final Duration KILLED_CACHE_TTL = Duration.ofHours(24);
@@ -345,6 +344,7 @@ public class WorkerJobDispatcher {
     private void handleIncomingJob(String workerGroup, Either<WorkerJobEvent, DeserializationException> either) {
         if (either.isRight()) {
             log.error("Deserialization error for job in group '{}': {}", workerGroup, either.getRight().getMessage());
+            handleDeserializationError(either.getRight());
             return;
         }
 
@@ -396,6 +396,31 @@ public class WorkerJobDispatcher {
         }
     }
 
+    private void handleDeserializationError(DeserializationException deserializationException) {
+        if (deserializationException.getRecord() != null) {
+            try {
+                var json = MAPPER.readTree(deserializationException.getRecord());
+                var job = json.get("job");
+                if (job != null) {
+                    var type = job.get("type") != null ? job.get("type").asText() : null;
+                    if ("task".equals(type)) {
+                        // try to deserialize the taskRun to fail it
+                        var taskRun = MAPPER.treeToValue(job.get("taskRun"), TaskRun.class);
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(taskRun.fail()));
+                    } else if ("trigger".equals(type)) {
+                        // try to deserialize the triggerContext to fail it
+                        var triggerContext = MAPPER.treeToValue(job.get("triggerContext"), TriggerContext.class);
+                        var workerTriggerResult = new TriggerEvaluated(TriggerId.of(triggerContext.getTenantId(), triggerContext.getNamespace(), triggerContext.getFlowId(), triggerContext.getTriggerId()), null);
+                        this.triggerEventQueue.send(workerTriggerResult);
+                    }
+                }
+            } catch (IOException | QueueException e) {
+                // ignore the message if we cannot do anything about it
+                log.error("Unexpected exception when trying to handle a deserialization error", e);
+            }
+        }
+    }
+
     /**
      * Gets workers in a specific group using the secondary index.
      */
@@ -437,7 +462,7 @@ public class WorkerJobDispatcher {
      * CRITICAL: The job is persisted to WorkerJobRunningStateStore BEFORE sending.
      * If sending fails, the permit is restored and the job is re-queued.
      */
-    private void dispatchJobToWorker(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job, 
+    private void dispatchJobToWorker(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
                                      WorkerJobEvent originalEvent) {
         String jobId = job.uid();
 
@@ -629,7 +654,7 @@ public class WorkerJobDispatcher {
         AtomicBoolean isPaused,
         ReentrantLock lock
     ) {
-        
+
         public GroupState(QueueSubscriber<WorkerJobEvent> subscriber) {
             this(subscriber, new AtomicBoolean(true), new ReentrantLock());
         }

@@ -25,7 +25,7 @@ import org.junit.jupiter.api.TestInstance;
 import java.time.LocalDateTime;
 import java.util.*;
 
-@KestraTest
+@KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 // must be per-class to allow calling once init() which took a lot of time
 public abstract class AbstractJdbcDeserializationIssuesTest {
@@ -41,6 +41,11 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     @Test
     void workerTaskDeserializationIssue() throws Exception {
         deserializationIssuesCaseTest.workerTaskDeserializationIssue(this::sendToQueue);
+    }
+
+    @Test
+    void workerTriggerDeserializationIssue() throws Exception {
+        deserializationIssuesCaseTest.workerTriggerDeserializationIssue(this::sendToQueue);
     }
 
     @Test

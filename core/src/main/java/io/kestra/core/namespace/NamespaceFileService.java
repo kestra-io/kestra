@@ -93,12 +93,7 @@ public class NamespaceFileService {
     public Integer purge(String tenantId, String namespace, List<NamespaceFile> namespaceFiles) throws IOException {
         Integer purgedMetadataCount = getRepository().purge(
             namespaceFiles.stream()
-                .map(nsFile -> NamespaceFileMetadata.builder()
-                    .tenantId(tenantId)
-                    .namespace(namespace)
-                    .path(nsFile.path())
-                    .version(nsFile.version())
-                    .build())
+                .map(nsFile -> NamespaceFileMetadata.of(tenantId, nsFile))
                 .toList()
         );
 

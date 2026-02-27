@@ -141,19 +141,9 @@
 
         const filteredDefinitions = Object.entries(schema.definitions).reduce(
             (acc, [key, value]: [string, any]) => {
-                const title: string = value?.title ?? "";
-
-                const shouldFilter =
-                    value?.deprecated === true ||
-                    value?.hidden === true ||
-                    key.includes("FlowCondition") ||
-                    key.includes("FlowNamespaceCondition") ||
-                    /condition for a (specific flow|flow namespace)/i.test(title);
-
-                if (!shouldFilter) {
+                if (!value?.$deprecated) {
                     acc[key] = value;
                 }
-
                 return acc;
             },
             {} as Record<string, any>

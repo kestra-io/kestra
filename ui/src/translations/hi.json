@@ -1860,6 +1860,10 @@
     "side-by-side": "साइड-बाय-साइड",
     "slack support": "किसी भी प्रश्न को Slack के माध्यम से पूछें",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "हम आपकी Kestra instance तक नहीं पहुँच सके। सुनिश्चित करें कि यह चल रहा है, फिर पृष्ठ को रीफ्रेश करें।",
+        "title": "कनेक्शन बाधित"
+      },
       "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"
     },
     "source": "स्रोत",

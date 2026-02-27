@@ -143,7 +143,9 @@ class WorkerTest {
     }
 
     @Test
-    @FlakyTest
+
+
+    @FlakyTest(description = "after multiple tries we could not unflaky it")
     void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);
 

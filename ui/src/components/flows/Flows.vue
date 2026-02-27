@@ -252,7 +252,11 @@
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <IconButton :tooltip="t('execute')" @click="openExecuteModal(scope.row)">
+                                        <IconButton 
+                                            v-if="canExecute(scope.row)"
+                                            :tooltip="t('execute')"
+                                            @click="openExecuteModal(scope.row)"
+                                        >
                                             <Play />
                                         </IconButton>
                                         <IconButton
@@ -428,6 +432,7 @@
     const canRead = computed(() => user?.value?.isAllowed(permission.FLOW, action.READ, routeNamespace.value));
     const canDelete = computed(() => user?.value?.isAllowed(permission.FLOW, action.DELETE, routeNamespace.value));
     const canUpdate = computed(() => user?.value?.isAllowed(permission.FLOW, action.UPDATE, routeNamespace.value));
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.namespace);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 

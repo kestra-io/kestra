@@ -14,7 +14,7 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
@@ -77,7 +77,7 @@ public class FlowService {
     private FlowTopologyService flowTopologyService;
 
     @Inject
-    private DispatchQueueInterface<FlowInterface> flowQueue;
+    private BroadcastQueueInterface<FlowInterface> flowQueue;
 
     @Inject
     private TriggerEventQueue triggerEventQueue;

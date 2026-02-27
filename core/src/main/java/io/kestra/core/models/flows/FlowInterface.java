@@ -12,6 +12,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
  * The base interface for FLow.
  */
 @JsonDeserialize(as = GenericFlow.class)
-public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, TenantInterface, HasUID, HasSource, DispatchEvent {
+public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, TenantInterface, HasUID, HasSource, BroadcastEvent {
 
     Pattern YAML_REVISION_MATCHER = Pattern.compile("(?m)^revision: \\d+\n?");
 

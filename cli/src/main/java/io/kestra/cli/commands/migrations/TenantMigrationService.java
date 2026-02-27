@@ -24,7 +24,7 @@ public class TenantMigrationService {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private DispatchQueueInterface<FlowInterface> flowQueue;
+    private BroadcastQueueInterface<FlowInterface> flowQueue;
 
     public void migrateTenant(String tenantId, String tenantName, boolean dryRun) {
         if (StringUtils.isNotBlank(tenantId) && !MAIN_TENANT.equals(tenantId)){

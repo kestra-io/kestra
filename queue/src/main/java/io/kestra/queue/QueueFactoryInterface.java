@@ -33,7 +33,7 @@ public interface QueueFactoryInterface {
 
     DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue();
 
-    DispatchQueueInterface<FlowInterface> flowQueue();
+    BroadcastQueueInterface<FlowInterface> flowQueue();
 
     BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue();
 

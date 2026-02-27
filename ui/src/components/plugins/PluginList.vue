@@ -132,6 +132,10 @@
                     : []
             );
 
+    const getPluginDisplayName = (plugin: any): string => {
+        return plugin?.manifest?.["X-Kestra-Title"];
+    };
+
     const isPluginVisible = (plugin: any): boolean => {
         if (!plugin) return false;
         return getPluginElements(plugin).length > 0;
@@ -161,8 +165,8 @@
             )
             .filter(isPluginVisible)
             .sort((a, b) => {
-                const nameA = (a.manifest?.["X-Kestra-Title"] ?? "").toLowerCase();
-                const nameB = (b.manifest?.["X-Kestra-Title"] ?? "").toLowerCase();
+                const nameA = (getPluginDisplayName(a) ?? "").toLowerCase();
+                const nameB = (getPluginDisplayName(b) ?? "").toLowerCase();
                 return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
             });
     });
@@ -171,6 +175,7 @@
         if (!searchQuery.value) return basePlugins.value;
         const query = searchQuery.value.toLowerCase();
         return basePlugins.value.filter(plugin =>
+            (getPluginDisplayName(plugin) ?? "").toLowerCase().includes(query) ||
             (plugin.title ?? "").toLowerCase().includes(query) ||
             getPluginElements(plugin).some(element => element.toLowerCase().includes(query))
         );

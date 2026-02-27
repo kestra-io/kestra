@@ -2,6 +2,7 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -10,8 +11,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +20,10 @@ public abstract class AbstractTaskOutputRepositoryTest {
     @Inject
     protected TaskOutputRepositoryInterface taskOutputRepository;
 
-    private Execution createExecution(String tenant, String executionId) {
+    private Execution createExecution(String tenant, String executionId, String... taskRunId) {
+        List<TaskRun> taskRuns = taskRunId == null ? Collections.emptyList() : Arrays.asList(taskRunId).stream()
+            .map(id -> TaskRun.builder().id(id).build())
+            .toList();
         return Execution.builder()
             .id(executionId)
             .tenantId(tenant)
@@ -28,6 +31,7 @@ public abstract class AbstractTaskOutputRepositoryTest {
             .flowId("test-flow")
             .flowRevision(1)
             .state(new State())
+            .taskRunList(taskRuns)
             .build();
     }
 
@@ -71,11 +75,11 @@ public abstract class AbstractTaskOutputRepositoryTest {
     void should_find_by_execution() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String executionId = IdUtils.create();
-        Execution execution = createExecution(tenant, executionId);
-
         String taskRunId1 = IdUtils.create();
         String taskRunId2 = IdUtils.create();
         String taskRunId3 = IdUtils.create();
+
+        Execution execution = createExecution(tenant, executionId, taskRunId1, taskRunId2, taskRunId3);
 
         byte[] value1 = "output 1".getBytes(StandardCharsets.UTF_8);
         byte[] value2 = "output 2".getBytes(StandardCharsets.UTF_8);
@@ -137,11 +141,12 @@ public abstract class AbstractTaskOutputRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String executionId1 = IdUtils.create();
         String executionId2 = IdUtils.create();
-        Execution execution1 = createExecution(tenant, executionId1);
-        Execution execution2 = createExecution(tenant, executionId2);
-
         String taskRunId1 = IdUtils.create();
         String taskRunId2 = IdUtils.create();
+
+        Execution execution1 = createExecution(tenant, executionId1, taskRunId1);
+        Execution execution2 = createExecution(tenant, executionId2, taskRunId2);
+
 
         byte[] value1 = "output 1".getBytes(StandardCharsets.UTF_8);
         byte[] value2 = "output 2".getBytes(StandardCharsets.UTF_8);
@@ -169,7 +174,7 @@ public abstract class AbstractTaskOutputRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String taskRunId = IdUtils.create();
         String executionId = IdUtils.create();
-        Execution execution = createExecution(tenant, executionId);
+        Execution execution = createExecution(tenant, executionId, taskRunId);
 
         byte[] value1 = "initial value".getBytes(StandardCharsets.UTF_8);
         byte[] value2 = "updated value".getBytes(StandardCharsets.UTF_8);
@@ -190,7 +195,7 @@ public abstract class AbstractTaskOutputRepositoryTest {
     }
 
     @Test
-    void should_purge_task_output() {
+    protected void should_purge_task_output() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String executionId1 = IdUtils.create();
         String executionId2 = IdUtils.create();

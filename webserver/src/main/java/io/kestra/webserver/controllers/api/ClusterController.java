@@ -37,7 +37,7 @@ public class ClusterController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get("/metrics/{serviceType}")
-    @Operation(tags = {"Services"}, summary = "Get metrics for running workers")
+    @Operation(tags = {"Services"}, summary = "Get metrics for running services")
     public Set<Metric> metrics(@QueryValue ServiceType serviceType) {
         return repository.find(
                 Pageable.unpaged(),

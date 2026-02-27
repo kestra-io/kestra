@@ -73,6 +73,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue";
     import {TaskIcon, isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {isPluginMatched} from "../../utils/pluginUtils";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import PluginUnified from "./PluginUnified.vue";
@@ -173,16 +174,7 @@
 
     const sortedPlugins = computed(() => {
         if (!searchQuery.value) return basePlugins.value;
-        const query = searchQuery.value.toLowerCase();
-        return basePlugins.value.filter(plugin =>
-            (getPluginDisplayName(plugin) ?? "").toLowerCase().includes(query) ||
-            (plugin.title ?? "").toLowerCase().includes(query) ||
-            getPluginElements(plugin).some(element => element.toLowerCase().includes(query)) ||
-            (plugin.name ?? "").toLowerCase().includes(query) ||
-            (plugin.group ?? "").toLowerCase().includes(query) ||
-            (plugin.artifactId ?? "").toLowerCase().includes(query) ||
-            (plugin.manifest?.["X-Kestra-Title"] ?? "").toLowerCase().includes(query)
-        );
+        return basePlugins.value.filter(plugin => isPluginMatched(plugin, searchQuery.value));
     });
 
     const loadPluginIcons = async () => {

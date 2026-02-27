@@ -1860,6 +1860,10 @@
     "side-by-side": "obok siebie",
     "slack support": "Zadaj pytanie przez Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Nie udało nam się połączyć z instancją Kestra. Upewnij się, że jest uruchomiona, a następnie odśwież stronę.",
+        "title": "Połączenie przerwane"
+      },
       "loading_execution": "Wystąpił problem podczas ładowania wykonania"
     },
     "source": "Źródło",

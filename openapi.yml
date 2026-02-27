@@ -390,6 +390,25 @@ paths:
               schema:
                 type: string
                 format: binary
+  /api/v1/tenants/main/settings/default-dashboards:
+    post:
+      tags:
+      - Tenants
+      summary: Make this dashboard the default for the entire tenant
+      operationId: setTenantDefaultDashboard
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TenantController.SetTenantDefaultDashboardsRequest"
+        required: true
+      responses:
+        "200":
+          description: setTenantDefaultDashboard 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSettings"
   /api/v1/{tenant}/basicAuth:
     post:
       tags:
@@ -818,6 +837,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PagedResults_Map_String.Object__"
+  /api/v1/{tenant}/dashboards/settings/default-dashboards:
+    get:
+      tags:
+      - Dashboards
+      summary: Get default dashboards
+      operationId: getDefaultDashboards
+      parameters:
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getDefaultDashboards 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSettings"
   /api/v1/{tenant}/dashboards/validate:
     post:
       tags:
@@ -5263,14 +5301,6 @@ paths:
         Existing flows missing from `flows` will be deleted if the query delete is `true`
       operationId: updateFlowsInNamespace
       parameters:
-      - name: override
-        in: query
-        description: If namespace of all provided flows should be overridden
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
       - name: delete
         in: query
         description: If missing flow should be deleted
@@ -5285,6 +5315,14 @@ paths:
         required: true
         schema:
           type: string
+      - name: override
+        in: query
+        description: If namespace of all provided flows should be overridden
+        required: true
+        explode: false
+        schema:
+          type: boolean
+          default: false
       - name: tenant
         in: path
         required: true
@@ -8678,6 +8716,15 @@ components:
           type: string
         providerId:
           type: string
+    DashboardSettings:
+      type: object
+      properties:
+        defaultHomeDashboard:
+          type: string
+        defaultFlowOverviewDashboard:
+          type: string
+        defaultNamespaceOverviewDashboard:
+          type: string
     DependsOn:
       type: object
       properties:
@@ -10305,6 +10352,7 @@ components:
       - PATH
       - PARENT_PATH
       - VERSION
+      - USERNAME
       x-type: String
     QueryFilter.Op:
       type: string
@@ -10427,6 +10475,13 @@ components:
           type: string
           default: 3s
     ServerInstance:
+      required:
+      - hostname
+      - id
+      - metrics
+      - props
+      - type
+      - version
       type: object
       properties:
         id:
@@ -10761,6 +10816,14 @@ components:
         cls:
           type: string
         version:
+    TenantController.SetTenantDefaultDashboardsRequest:
+      type: object
+      properties:
+        defaultHomeDashboard:
+          type: string
+        defaultFlowOverviewDashboard:
+          type: string
+        defaultNamespaceOverviewDashboard:
           type: string
     TenantInterface:
       type: object

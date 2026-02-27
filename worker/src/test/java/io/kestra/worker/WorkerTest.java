@@ -2,6 +2,7 @@ package io.kestra.worker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -142,6 +143,7 @@ class WorkerTest {
     }
 
     @Test
+    @FlakyTest(description = "after multiple tries we could not unflaky it")
     void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);
 

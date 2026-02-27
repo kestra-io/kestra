@@ -240,7 +240,7 @@
                 }
             }
         }
-    })
+    });
 
     const props = withDefaults(
         defineProps<{
@@ -265,7 +265,7 @@
             horizontalDefault: undefined,
             toggleOrientationButton: true,
             expandedSubflows: () => [],
-        })
+        });
 
     const emit = defineEmits([
         "follow",

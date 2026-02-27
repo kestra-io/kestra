@@ -584,7 +584,7 @@ paths:
     get:
       tags:
       - Services
-      summary: Get metrics for running workers
+      summary: Get metrics for running services
       operationId: metrics
       parameters:
       - name: serviceType

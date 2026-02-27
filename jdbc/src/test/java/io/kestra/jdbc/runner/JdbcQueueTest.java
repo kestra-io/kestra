@@ -4,6 +4,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerTaskResult;
@@ -23,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @KestraTest
 abstract public class JdbcQueueTest {
     @Inject
-    protected DispatchQueueInterface<FlowInterface> flowQueue;
+    protected BroadcastQueueInterface<FlowInterface> flowQueue;
 
     @Inject
     protected DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;

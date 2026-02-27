@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
@@ -49,7 +49,7 @@ class FlowServiceTest {
     @Inject
     private FlowTopologyRepositoryInterface flowTopologyRepository;
     @Inject
-    private DispatchQueueInterface<FlowInterface> flowQueue;
+    private BroadcastQueueInterface<FlowInterface> flowQueue;
     @Inject
     private TriggerEventQueue triggerEventQueue;
 

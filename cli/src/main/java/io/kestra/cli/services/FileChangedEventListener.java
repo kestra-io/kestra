@@ -6,7 +6,7 @@ import io.kestra.core.models.flows.FlowWithPath;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.PluginDefaultService;
@@ -50,7 +50,7 @@ public class FileChangedEventListener {
     private ModelValidator modelValidator;
 
     @Inject
-    private DispatchQueueInterface<FlowInterface> flowQueue;
+    private BroadcastQueueInterface<FlowInterface> flowQueue;
 
     private FlowFilesManager flowFilesManager;
     private Runnable cancellation;

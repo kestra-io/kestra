@@ -85,8 +85,8 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
 
     @QueueBean
     @Override
-    public DispatchQueueInterface<FlowInterface> flowQueue() {
-        return new JdbcDispatchQueue<>(FlowInterface.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
+    public BroadcastQueueInterface<FlowInterface> flowQueue() {
+        return new JdbcBroadcastQueue<>(FlowInterface.class, queueService, jdbcQueueClient, executorsUtils, metricRegistry);
     }
 
     @QueueBean

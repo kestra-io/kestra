@@ -14,6 +14,7 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.trigger.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.With;
@@ -248,13 +249,15 @@ public final class RunVariables {
                 builder.put("execution", executionMap.build());
 
                 if (execution.getTaskRunList() != null) {
-                    if (outputs != null) {
+                    if (!MapUtils.isEmpty(outputs)) {
                         if (decryptVariables) {
                             final Secret secret = new Secret(secretKey, logger);
                             builder.put("outputs", secret.decrypt(outputs));
                         } else {
                             builder.put("outputs", outputs);
                         }
+                    } else {
+                        builder.put("outputs", Collections.emptyMap());
                     }
 
                     Map<String, Object> tasksMap = new HashMap<>();

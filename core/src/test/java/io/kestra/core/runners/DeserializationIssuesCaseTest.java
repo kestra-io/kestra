@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
@@ -164,7 +165,7 @@ public class DeserializationIssuesCaseTest {
     private VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue;
 
     @Inject
-    protected DispatchQueueInterface<FlowInterface> flowQueue;
+    protected BroadcastQueueInterface<FlowInterface> flowQueue;
 
     public record QueueMessage(Class<?> type, String key, String value) {}
 

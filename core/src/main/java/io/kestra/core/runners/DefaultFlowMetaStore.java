@@ -6,7 +6,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.PluginDefaultService;
@@ -25,11 +25,11 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final FlowRepositoryInterface flowRepository;
     private final PluginDefaultService pluginDefaultService;
     private final ConcurrentHashMap<String, FlowWithSource> cache = new ConcurrentHashMap<>();
-    private final DispatchQueueInterface<FlowInterface> flowQueue;
+    private final BroadcastQueueInterface<FlowInterface> flowQueue;
 
     private QueueSubscriber<FlowInterface> subscriber;
 
-    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, DispatchQueueInterface<FlowInterface> flowQueue) {
+    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, BroadcastQueueInterface<FlowInterface> flowQueue) {
         this.flowRepository = flowRepository;
         this.pluginDefaultService = pluginDefaultService;
         this.flowQueue = flowQueue;

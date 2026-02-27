@@ -1,5 +1,4 @@
 import type {UserConfig} from "@hey-api/openapi-ts";
-// @ts-expect-error need a second tsconfig file for node execution (vite.config, openapi-ts.config, vitest.config)
 import * as path from "path";
 import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
 

@@ -10816,6 +10816,7 @@ components:
         cls:
           type: string
         version:
+          type: string
     TenantController.SetTenantDefaultDashboardsRequest:
       type: object
       properties:

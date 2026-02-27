@@ -164,8 +164,6 @@ public class ExecutionService {
             .stream()
             .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
-                    // Keep only CREATED/RESTARTED to avoid having large history
-                    // Keeping RESTARTED at history is useful for LoopUntil Task Restart/Replay case since we depend on it to check reached max duration
                     return taskRun.resetAttempts().incrementIteration();
                 }
 

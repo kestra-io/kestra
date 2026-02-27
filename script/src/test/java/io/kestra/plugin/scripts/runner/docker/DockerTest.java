@@ -144,7 +144,7 @@ class DockerTest extends AbstractTaskRunnerTest {
             callOnKill(taskRunner, () -> {
                 // override the kill method to not kill the container
             });
-            initialContainerThread.interrupt();
+            taskRunner.kill();
             initialContainerThread.join();
 
             // Create a new RunContext with the same taskRunId to maintain labels AND the same method to get a similar context
@@ -317,11 +317,15 @@ class DockerTest extends AbstractTaskRunnerTest {
             resumeContainerThread.interrupt();
             resumeContainerThread.join();
 
-            List<Container> existingContainers = client.listContainersCmd()
-                .withShowAll(true)
-                .withLabelFilter(labels)
-                .exec();
-            MatcherAssert.assertThat(existingContainers.isEmpty(), is(true));
+            Await.until(() ->
+                    client.listContainersCmd()
+                        .withShowAll(true)
+                        .withLabelFilter(labels)
+                        .exec()
+                        .isEmpty(),
+                Duration.ofMillis(200),
+                Duration.ofSeconds(30)
+            );
         }
     }
 }

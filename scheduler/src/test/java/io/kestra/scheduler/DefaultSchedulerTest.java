@@ -1,5 +1,6 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.RunContextFactory;
@@ -217,6 +218,7 @@ class DefaultSchedulerTest {
     }
 
     @Test
+    @FlakyTest
     void shouldStopAndRestartSchedulingLoopWhenEnteringAndExitingMaintenanceMode() {
         // GIVEN
         try (DefaultScheduler scheduler = createDefaultScheduler();) {

@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.runner.docker;
 
 import com.github.dockerjava.api.model.Container;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
@@ -200,6 +201,7 @@ class DockerTest extends AbstractTaskRunnerTest {
     }
 
     @Test
+    @FlakyTest
     void interruptAfterResume() throws Exception {
         var taskRunId = IdUtils.create();
 

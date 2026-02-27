@@ -201,7 +201,7 @@ public abstract class AbstractDefaultNamespaceFileMetadataStateStoreTest {
     }
 
     @Test
-    void shouldFilterBySubstringWhenFindAllGivenContainingValue() {
+    public void shouldFilterBySubstringWhenFindAllGivenContainingValue() {
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();

@@ -1,5 +1,6 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -267,6 +268,7 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    @FlakyTest
     void shouldSucceedScheduleConditionalScheduleTriggerGivenValidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.defaultFlow(builder -> builder

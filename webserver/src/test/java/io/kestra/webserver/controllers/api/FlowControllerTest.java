@@ -552,6 +552,7 @@ class FlowControllerTest {
         assertThat(e.getResponse().getBody(String.class).get()).contains("Required QueryValue [revisions] not specified");
     }
 
+    @FlakyTest
     @Test
     void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();

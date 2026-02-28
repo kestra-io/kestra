@@ -2,7 +2,6 @@ package io.kestra.plugin.core.dashboard.data;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.EqualTo;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ public interface ITriggers extends IData<ITriggers.Fields> {
         if (!namespaceFilters.isEmpty()) {
             updatedWhere.removeIf(filter -> filter.getField().equals(ITriggers.Fields.NAMESPACE));
             namespaceFilters.forEach(f -> {
-                updatedWhere.add(EqualTo.<ITriggers.Fields>builder().field(ITriggers.Fields.NAMESPACE).value(f.value()).build());
+                updatedWhere.add(f.toDashboardFilterBuilder(ITriggers.Fields.NAMESPACE, f.value()));
             });
         }
 

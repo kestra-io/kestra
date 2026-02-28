@@ -341,14 +341,40 @@ public abstract class AbstractJdbcRepository {
             case LESS_THAN -> DSL.field(columnName).lessThan(value);
             case IN -> DSL.field(columnName).in(ListUtils.convertToListString(value));
             case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToListString(value));
-            case STARTS_WITH -> DSL.field(columnName).like(value + "%");
-            case ENDS_WITH -> DSL.field(columnName).like("%" + value);
-            case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
-            case REGEX -> DSL.field(columnName).likeRegex((String) value);
-            case PREFIX -> DSL.field(columnName).like(value + ".%")
-                .or(DSL.field(columnName).eq(value));
+            case STARTS_WITH -> {
+                String s = requireStringValue(value, "STARTS_WITH");
+                yield DSL.field(columnName).like(s + "%");
+            }
+            case ENDS_WITH -> {
+                String s = requireStringValue(value, "ENDS_WITH");
+                yield DSL.field(columnName).like("%" + s);
+            }
+            case CONTAINS -> {
+                String s = requireStringValue(value, "CONTAINS");
+                yield DSL.field(columnName).like("%" + s + "%");
+            }
+            case REGEX -> {
+                String s = requireStringValue(value, "REGEX");
+                yield DSL.field(columnName).likeRegex(s);
+            }
+            case PREFIX -> {
+                String s = requireStringValue(value, "PREFIX");
+                yield DSL.field(columnName).like(s + ".%")
+                    .or(DSL.field(columnName).eq(s));
+            }
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
+    }
+
+    private static String requireStringValue(Object value, String operationName) {
+        if (value == null) {
+            throw new InvalidQueryFiltersException(operationName + " operation requires a non-null string value");
+        }
+        if (value instanceof List<?>) {
+            throw new InvalidQueryFiltersException(operationName + " operation requires a string value, got a List");
+        }
+        Object converted = primitiveOrToString(value);
+        return converted == null ? null : converted.toString();
     }
 
     private Condition getDateCondition(Object value, Op operation, String dateColumn) {

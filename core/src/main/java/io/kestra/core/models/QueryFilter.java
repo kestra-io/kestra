@@ -412,8 +412,8 @@ public record QueryFilter(
         ASSET_LINEAGE_EVENT {
             @Override
             public List<Field> supportedField() {
+                // ASSET_ID is not supported for now as it needs complex json parsing
                 return List.of(
-                    Field.ASSET_ID,
                     Field.NAMESPACE,
                     Field.FLOW_ID,
                     Field.FLOW_REVISION,

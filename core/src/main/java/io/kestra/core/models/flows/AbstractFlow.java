@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,9 @@ public abstract class AbstractFlow implements FlowInterface {
 
     @Min(value = 1)
     Integer revision;
+
+    @Schema(description = "The timestamp when this revision was created or last updated.")
+    Instant updated;
 
     String description;
 

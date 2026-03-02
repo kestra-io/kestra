@@ -133,11 +133,11 @@ public class Exit extends Task implements ExecutionUpdatableTask {
             case WARNING -> State.Type.WARNING;
             case KILLED -> State.Type.KILLED;
             case FAILED -> State.Type.FAILED;
-            case CANCELED -> State.Type.CANCELLED;
+            case CANCELED, CANCELLED -> State.Type.CANCELLED;
         };
     }
 
     public enum ExitState {
-        SUCCESS, WARNING, KILLED, FAILED, CANCELED
+        SUCCESS, WARNING, KILLED, FAILED, @Deprecated(since = "1.3", forRemoval = true) CANCELED, CANCELLED
     }
 }

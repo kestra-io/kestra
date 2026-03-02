@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
-    "assets": "자산",
+    "assets": {
+      "title": "자산"
+    },
     "attempt": "시도",
     "attempts": "시도 횟수",
     "auditlogs": "감사 Logs",
@@ -505,7 +507,7 @@
         "title": "아직 Kill Switch가 없습니다!"
       },
       "panels": {
-        "content": "Flow Code 또는 No-Code를 열어 flow 편집을 시작하거나 관련 기능을 위해 다른 패널(Topology, Documentation, Files, Blueprints, Context)을 선택하세요.",
+        "content": "Flow 코드 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace Files, Blueprints, Context)을 선택하세요.",
         "title": "현재 열려 있는 패널이 없습니다."
       },
       "pluginDefaults": {
@@ -641,8 +643,8 @@
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
     "files": "파일",
     "filter": {
-      "active key value pairs": "활성 key/value 쌍",
-      "add key value pair": "key/value 쌍 추가",
+      "active key value pairs": "활성 Key/Value 쌍",
+      "add key value pair": "Key/Value 쌍 추가",
       "aggregation": {
         "description": "집계 방법으로 필터링",
         "label": "집계"
@@ -715,6 +717,7 @@
         "description": "실행 종류별 필터링",
         "label": "종류"
       },
+      "kv_pair_selected": "{count} Key/Value 쌍 선택됨",
       "label": "레이블",
       "labels": {
         "description": "레이블로 필터링",
@@ -1857,6 +1860,10 @@
     "side-by-side": "나란히",
     "slack support": "Slack을 통해 질문하기",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Kestra 인스턴스에 연결할 수 없습니다. 실행 중인지 확인한 후 페이지를 새로 고치세요.",
+        "title": "연결이 중단되었습니다"
+      },
       "loading_execution": "실행을 로드하는 중 문제가 발생했습니다."
     },
     "source": "소스",

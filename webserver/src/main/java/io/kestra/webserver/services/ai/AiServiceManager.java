@@ -24,6 +24,7 @@ public class AiServiceManager {
     private final Map<String, AiServiceInterface> aiServices = new HashMap<>();
     private final AiProvidersConfiguration providersConfiguration;
     private String defaultProviderId;
+    protected final NamespaceContextTool namespaceContextTool;
 
     public AiServiceManager(
         AiProvidersConfiguration providersConfiguration,
@@ -34,9 +35,11 @@ public class AiServiceManager {
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners
+        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        NamespaceContextTool namespaceContextTool
     ) {
         this.providersConfiguration = providersConfiguration;
+        this.namespaceContextTool = namespaceContextTool;
 
         List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
@@ -100,7 +103,7 @@ public class AiServiceManager {
 
             if (type.equals("gemini")) {
                 GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
-                return new GeminiAiService(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, provider.displayName(), listeners, geminiConfig);
+                return new GeminiAiService(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig);
             }
             log.warn("Unknown AI type: {}", type);
             return null;
@@ -136,6 +139,3 @@ public class AiServiceManager {
         return defaultProviderId;
     }
 }
-
-
-

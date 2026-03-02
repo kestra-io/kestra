@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "Блоки приложения",
     "apps": "Приложения",
-    "assets": "Активы",
+    "assets": {
+      "title": "Активы"
+    },
     "attempt": "Попытка",
     "attempts": "Попытка(и)",
     "auditlogs": "Аудиторские логи",
@@ -505,7 +507,7 @@
         "title": "У вас еще нет Kill Switches!"
       },
       "panels": {
-        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Context) для связанных функций.",
+        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Namespace Files, Blueprints, Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
       },
       "pluginDefaults": {
@@ -641,8 +643,8 @@
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
     "filter": {
-      "active key value pairs": "Активные пары ключ/значение",
-      "add key value pair": "Добавить пару key/value",
+      "active key value pairs": "Активные пары Key/Value",
+      "add key value pair": "Добавить пару Key/Value",
       "aggregation": {
         "description": "Фильтр по методу агрегации",
         "label": "Агрегация"
@@ -715,6 +717,7 @@
         "description": "Фильтр по виду выполнения",
         "label": "Тип"
       },
+      "kv_pair_selected": "{count} Key/Value пар выбрано",
       "label": "Ярлык",
       "labels": {
         "description": "Фильтр по labels",
@@ -1857,6 +1860,10 @@
     "side-by-side": "бок о бок",
     "slack support": "Задайте любой вопрос через Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Мы не смогли подключиться к вашей Kestra instance. Убедитесь, что она запущена, затем обновите страницу.",
+        "title": "Соединение прервано"
+      },
       "loading_execution": "Произошла ошибка при загрузке выполнения"
     },
     "source": "Источник",

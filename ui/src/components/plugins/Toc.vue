@@ -13,7 +13,7 @@
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
                     :key="plugin.group"
-                    :ref="(el: any) => pluginRefs[plugin.group] = el"                
+                    :ref="(el: any) => pluginRefs[plugin.group] = el"
                 >
                     <ul class="toc-h3">
                         <li v-for="(types, namespace) in group(plugin)" :key="namespace">
@@ -191,17 +191,17 @@
     .plugins-list {
         display: flex;
         flex-direction: column;
-        
+
         .search {
             flex-shrink: 0;
             background-color: var(--ks-background-panel);
             padding-bottom: 0.5rem;
         }
-        
+
         .el-collapse {
             flex: 1;
         }
-        
+
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
@@ -255,7 +255,7 @@
     .selected {
         color: var(--ks-content-link);
     }
-    
+
     @media (max-width: 991px) {
         .plugins-list {
             .search {
@@ -263,7 +263,7 @@
                 top: 0;
                 z-index: 10;
             }
-            
+
             .el-collapse {
                 overflow-y: auto;
             }

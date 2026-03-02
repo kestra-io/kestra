@@ -1860,6 +1860,10 @@
     "side-by-side": "lado a lado",
     "slack support": "Haz cualquier pregunta vía Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "No pudimos alcanzar tu instancia de Kestra. Asegúrate de que esté en ejecución, luego actualiza la página.",
+        "title": "Conexión interrumpida"
+      },
       "loading_execution": "Algo salió mal al cargar la ejecución."
     },
     "source": "Fuente",

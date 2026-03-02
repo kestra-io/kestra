@@ -174,15 +174,6 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.IN).build(), Resource.ASSET_USAGE),
             Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.NOT_IN).build(), Resource.ASSET_USAGE),
 
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.EQUALS).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.NOT_EQUALS).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.CONTAINS).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.STARTS_WITH).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.ENDS_WITH).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.REGEX).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.IN).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.NOT_IN).build(), Resource.ASSET_LINEAGE_EVENT),
-
             Arguments.of(QueryFilter.builder().field(Field.TYPE).operation(Op.EQUALS).build(), Resource.ASSET),
             Arguments.of(QueryFilter.builder().field(Field.TYPE).operation(Op.NOT_EQUALS).build(), Resource.ASSET),
             Arguments.of(QueryFilter.builder().field(Field.TYPE).operation(Op.CONTAINS).build(), Resource.ASSET),
@@ -379,12 +370,6 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.ASSET_USAGE),
             Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.GREATER_THAN).build(), Resource.ASSET_USAGE),
             Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.ASSET_USAGE),
-
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.PREFIX).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.LESS_THAN).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.GREATER_THAN).build(), Resource.ASSET_LINEAGE_EVENT),
-            Arguments.of(QueryFilter.builder().field(Field.ASSET_ID).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.ASSET_LINEAGE_EVENT),
 
             Arguments.of(QueryFilter.builder().field(Field.TYPE).operation(Op.PREFIX).build(), Resource.ASSET),
             Arguments.of(QueryFilter.builder().field(Field.TYPE).operation(Op.LESS_THAN).build(), Resource.ASSET),

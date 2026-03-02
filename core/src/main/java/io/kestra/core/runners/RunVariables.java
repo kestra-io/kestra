@@ -414,8 +414,10 @@ public final class RunVariables {
             } else if (inputs.containsKey(id)) {
                 try {
                     Map<String, String> encryptedString = (Map<String,String>) inputs.get(id);
-                    String decoded = secret.decrypt(encryptedString.get("value"));
-                    inputs.put(id, decoded);
+                    if (encryptedString != null) {
+                        String decoded = secret.decrypt(encryptedString.get("value"));
+                        inputs.put(id, decoded);
+                    }
                 } catch (GeneralSecurityException e) {
                     throw new RuntimeException(e);
                 }

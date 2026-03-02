@@ -1860,6 +1860,10 @@
     "side-by-side": "бок о бок",
     "slack support": "Задайте любой вопрос через Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Мы не смогли подключиться к вашей Kestra instance. Убедитесь, что она запущена, затем обновите страницу.",
+        "title": "Соединение прервано"
+      },
       "loading_execution": "Произошла ошибка при загрузке выполнения"
     },
     "source": "Источник",

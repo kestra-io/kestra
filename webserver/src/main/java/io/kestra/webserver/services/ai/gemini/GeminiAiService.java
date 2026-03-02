@@ -11,6 +11,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.AiService;
+import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
 import io.kestra.webserver.utils.HttpClientUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +24,8 @@ import java.util.List;
 public class GeminiAiService extends AiService<GeminiConfiguration> {
     public static final String TYPE = "gemini";
 
-    public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService, PosthogService posthogService, String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration) {
-        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, TYPE, displayName, listeners, geminiConfiguration);
+    public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService, PosthogService posthogService, NamespaceContextTool namespaceContextTool, String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration) {
+        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration);
     }
 
     public ChatModel chatModel(List<ChatModelListener> listeners) {

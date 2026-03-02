@@ -37,6 +37,7 @@ export interface FilterKeyConfig {
 export interface FilterValue {
     label: string;
     value: string;
+    color?: string;
     description?: string;
 }
 

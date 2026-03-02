@@ -23,6 +23,7 @@ import java.util.List;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Deprecated(forRemoval = true, since = "1.3.0")
 public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
     @CommandLine.Parameters(index = "0", description = "The namespace to update")
     public String namespace;
@@ -46,6 +47,7 @@ public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
         super.call();
         to = to.startsWith("/") ? to : "/" + to;
         to = to.endsWith("/") ? to : to + "/";
+        stdErr("WARNING: this command is deprecated, use `kestractl nsfile upload` instead");
 
         try (var files = Files.walk(from); DefaultHttpClient client = client()) {
             if (delete) {

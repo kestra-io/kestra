@@ -28,6 +28,27 @@
 
     const flowStore = useFlowStore();
     const flow = computed(() => flowStore.flow);
+    const storeRevisions = computed(() => flowStore.revisions);
+
+    // Load revisions from API only if not already in store
+    onMounted(async () => {
+        if (flow.value && (!storeRevisions.value || storeRevisions.value.length === 0)) {
+            await flowStore.loadRevisions({
+                namespace: flow.value.namespace,
+                id: flow.value.id
+            });
+        }
+    });
+
+    // Watch for flow changes to reload revisions
+    watch(flow, async (newFlow) => {
+        if (newFlow && (!storeRevisions.value || storeRevisions.value.length === 0)) {
+            await flowStore.loadRevisions({
+                namespace: newFlow.namespace,
+                id: newFlow.id
+            });
+        }
+    });
 
     const revisions = ref<Array<{revision: number}>>([]);
 
@@ -54,11 +75,17 @@
     onMounted(fetchRevisions);
 
     const flowRevisions = computed(() => {
+        // Use store revisions if available (includes updated)
+        if (storeRevisions.value && storeRevisions.value.length > 0) {
+            return storeRevisions.value;
+        }
+
+        // Fallback to generating from flow.revision count (no timestamps)
         if (!flow.value) {
             return revisions.value;
         }
-        return revisions.value.length ? revisions.value : [];
-    });
+        return [...Array(flow.value.revision).keys()].map(idx => ({revision: idx + 1}));
+    })
 
     async function restoreRevision(revisionSource: string) {
         return flowStore.saveFlow({flow: revisionSource})

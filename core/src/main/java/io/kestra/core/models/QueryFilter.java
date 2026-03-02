@@ -258,6 +258,12 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
+        },
+        USERNAME("username") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -335,6 +341,12 @@ public record QueryFilter(
                 );
             }
         },
+        USER {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.USERNAME);
+            }
+        },
         SECRET_METADATA {
             @Override
             public List<Field> supportedField() {
@@ -400,8 +412,8 @@ public record QueryFilter(
         ASSET_LINEAGE_EVENT {
             @Override
             public List<Field> supportedField() {
+                // ASSET_ID is not supported for now as it needs complex json parsing
                 return List.of(
-                    Field.ASSET_ID,
                     Field.NAMESPACE,
                     Field.FLOW_ID,
                     Field.FLOW_REVISION,

@@ -13,7 +13,15 @@
                     :key="option.value"
                     :label="option.label"
                     :value="option.value"
-                />
+                >
+                    <span v-if="option.color" class="color-option">
+                        <span
+                            class="color-dot"
+                            :style="{backgroundColor: option.color}"
+                        />
+                        {{ option.label }}
+                    </span>
+                </el-option>
             </el-select>
         </div>
 
@@ -50,7 +58,7 @@
         endDateValue?: Date | null;
         startDateValue?: Date | null;
         timeRangeMode?: "predefined" | "custom";
-        options: {value: string; label: string}[];
+        options: {value: string; label: string; color?: string}[];
     }>();
 
     const emit = defineEmits<{
@@ -119,5 +127,19 @@
 
 .el-select-dropdown__item {
     font-size: 14px;
+}
+
+.color-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .color-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
 }
 </style>

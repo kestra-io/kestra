@@ -1,15 +1,15 @@
 package io.kestra.core.junit.annotations;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-
 import io.kestra.core.junit.extensions.FlowExecutorExtension;
+import io.kestra.core.models.executions.ExecutionKind;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.time.Duration;
 
-import org.junit.jupiter.api.extension.ExtendWith;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -21,4 +21,6 @@ public @interface ExecuteFlow {
     String timeout() default "PT60S";
 
     String tenantId() default MAIN_TENANT;
+
+    ExecutionKind executionKind() default ExecutionKind.NORMAL;
 }

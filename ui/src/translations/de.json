@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
-    "assets": "Vermögenswerte",
+    "assets": {
+      "title": "Vermögenswerte"
+    },
     "attempt": "Versuch",
     "attempts": "Versuch(e)",
     "auditlogs": "Audit Logs",
@@ -505,7 +507,7 @@
         "title": "Sie haben noch keine Kill Switches!"
       },
       "panels": {
-        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Kontext) für verwandte Funktionen aus.",
+        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Namespace-Dateien, Blueprints, Kontext) für verwandte Funktionen aus.",
         "title": "Derzeit sind keine Panels geöffnet."
       },
       "pluginDefaults": {
@@ -715,6 +717,7 @@
         "description": "Nach Ausführungsart filtern",
         "label": "Art"
       },
+      "kv_pair_selected": "{count} Key/Value-Paare ausgewählt",
       "label": "Label",
       "labels": {
         "description": "Nach Labels filtern",
@@ -1857,6 +1860,10 @@
     "side-by-side": "nebeneinander",
     "slack support": "Fragen Sie via Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Wir konnten Ihre Kestra-Instanz nicht erreichen. Stellen Sie sicher, dass sie läuft, und aktualisieren Sie dann die Seite.",
+        "title": "Verbindung unterbrochen"
+      },
       "loading_execution": "Beim Laden der Ausführung ist etwas schiefgelaufen."
     },
     "source": "Quelle",

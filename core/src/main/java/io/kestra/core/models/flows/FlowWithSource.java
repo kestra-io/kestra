@@ -7,7 +7,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -85,6 +84,7 @@ public class FlowWithSource extends Flow {
             .retry(flow.retry)
             .sla(flow.sla)
             .checks(flow.checks)
+            .updated(flow.updated)
             .build();
     }
 }

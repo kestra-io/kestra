@@ -302,6 +302,15 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     }
 
                     suggestion.sortText = suggestion.sortText?.toLowerCase();
+                    
+                    if (suggestion.kind === monaco.languages.CompletionItemKind.Property) {
+                        const pluginsStore = usePluginsStore(); 
+                        const schemaProps = pluginsStore.editorPlugin?.schema?.properties?.properties ?? {};
+
+                        if (schemaProps[suggestion.label]?.$required === true) {
+                            suggestion.detail = "Required";
+                        }
+                    }
 
                     return suggestion;
                 })

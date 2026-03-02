@@ -27,7 +27,6 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "override/*": ["src/override/*"]
       "override/*": ["src/override/*"],
       "kestra-api/*": ["src/generated/kestra-api/*"]
     }

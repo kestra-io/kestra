@@ -57,8 +57,7 @@ public abstract class AbstractFlowLoaderExtension {
 
         Set<String> flowIds = new HashSet<>();
         for (String path : paths) {
-            URL resource = loadFile(path);
-            Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+            Flow flow = getFlow(path);
             flowIds.add(flow.getId());
         }
         flowRepository.findAllForAllTenants().stream()
@@ -69,5 +68,11 @@ public abstract class AbstractFlowLoaderExtension {
                 executionRepository.findByFlowId(tenantId, flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                     .forEach(executionRepository::delete);
             });
+    }
+
+    protected static Flow getFlow(String path) throws URISyntaxException {
+        URL resource = loadFile(path);
+        Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+        return flow;
     }
 }

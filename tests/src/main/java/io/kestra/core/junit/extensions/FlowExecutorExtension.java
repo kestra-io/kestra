@@ -42,7 +42,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
             context = extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())).get(ApplicationContext.class, ApplicationContext.class);
 
             if (context == null) {
-                throw new IllegalStateException("No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'");
+                throw new IllegalStateException("No application context, to use '@ExecuteFlow' annotation, you need to add '@KestraTest'");
             }
         }
 

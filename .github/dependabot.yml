@@ -43,7 +43,8 @@ updates:
     groups:
       build:
         applies-to: version-updates
-        patterns: ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*"]
+        patterns:
+          ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*"]
 
       types:
         applies-to: version-updates
@@ -63,7 +64,9 @@ updates:
         exclude-patterns: [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -80,7 +83,9 @@ updates:
         exclude-patterns: [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",
@@ -99,7 +104,9 @@ updates:
           [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",

@@ -62,6 +62,7 @@
                 @close="closeAiCopilot"
                 :flow="editorContent"
                 :conversationId="conversationId"
+                :namespace="namespace"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
                 :generationType="aiGenerationTypes.FLOW"
             />
@@ -90,11 +91,12 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useFlowStore} from "../../stores/flow";
+    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
     import {useApiStore} from "../../stores/api";
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
     import {aiGenerationTypes} from "../../utils/constants";
 
@@ -120,6 +122,9 @@
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
+        if (onboardingStore.isGuidedActive) {
+            return;
+        }
         if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && props.flow) {
             event.preventDefault();
             event.stopPropagation();
@@ -144,7 +149,7 @@
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
     const aiCopilotAllowed = computed(() => {
-        return authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
+        return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
     });
 
     async function loadFile() {
@@ -202,7 +207,7 @@
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
-        if(route.query.ai === "open") {
+        if(route.query.ai === "open" && !onboardingStore.isGuidedActive) {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
         }
@@ -226,6 +231,9 @@
     });
 
     watch(() => flowStore.openAiCopilot, (newVal) => {
+        if (onboardingStore.isGuidedActive) {
+            return;
+        }
         if (newVal) {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
@@ -258,6 +266,7 @@
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
     const apiStore = useApiStore();
+    const onboardingStore = useOnboardingV2Store();
     const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0);
 
     const editorScrollKey = computed(() => {
@@ -321,8 +330,10 @@
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
 
+        const isCreating = flowStore.isCreating;
+
         // Use saveAll() for consistency with the Save button behavior
-        const result = flowStore.isCreating
+        const result = isCreating
             ? await flowStore.save()
             : await flowStore.saveAll();
 
@@ -336,6 +347,10 @@
                     tenant: route.params?.tenant,
                 },
             });
+        }
+
+        if (isSuccessfulFlowSaveOutcome(result)) {
+            onboardingStore.recordSave();
         }
     };
 

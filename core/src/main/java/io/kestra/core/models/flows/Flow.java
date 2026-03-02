@@ -56,7 +56,7 @@ public class Flow extends AbstractFlow implements HasUID {
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
-                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source", "updated");
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         });

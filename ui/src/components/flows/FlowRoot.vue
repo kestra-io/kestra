@@ -20,7 +20,6 @@
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapStores} from "pinia";
-    import {useCoreStore} from "../../stores/core";
     import {useFlowStore} from "../../stores/flow";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -69,18 +68,6 @@
                         }
                     }
                 }
-            },
-            "coreStore.guidedProperties": {
-                deep: true,
-                immediate: true,
-                handler: function (newValue) {
-                    if (newValue?.manuallyContinue) {
-                        setTimeout(() => {
-                            this.$tours["guidedTour"]?.nextStep();
-                            this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, manuallyContinue: false};
-                        }, 500);
-                    }
-                },
             },
             "flowStore.flow": {
                 deep: true,
@@ -314,7 +301,7 @@
             }
         },
         computed: {
-            ...mapStores(useCoreStore, useFlowStore, useAuthStore, useMiscStore),
+            ...mapStores(useFlowStore, useAuthStore, useMiscStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,

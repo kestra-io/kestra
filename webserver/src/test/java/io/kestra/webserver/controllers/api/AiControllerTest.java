@@ -110,7 +110,7 @@ class AiControllerTest {
             ))));
 
         HttpResponse<String> response = client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/ai/generate/flow", new FlowGenerationPrompt(IdUtils.create(), "Say 'hi'", "yaml", null)),
+            HttpRequest.POST("/api/v1/main/ai/generate/flow", new FlowGenerationPrompt(IdUtils.create(), "Say 'hi'", "yaml", null, "io.kestra.tests")),
             String.class
         );
 

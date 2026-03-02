@@ -7,23 +7,16 @@
     "Editor fontfamily": "Police de l'éditeur",
     "Editor fontsize": "Taille de police de l'éditeur",
     "Editor theme": "Theme de l'éditeur",
-    "Finish": "Terminer",
     "Fold auto": "Éditeur : Replier automatiquement le contenu multi-lignes",
     "Fold content lines": "Replier les multilignes",
     "Hover description": "Éditeur : Afficher la description du champ lors du survol du key ou value",
     "Language": "Langue",
-    "Next step": "Étape suivante",
     "Per page": "par page",
-    "Previous step": "Étape précédente",
-    "Reset guided tour": "Recommencer la visite guidée",
     "Set default page": "Définir la page par défaut",
     "Set labels": "Ajouter des labels",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
     "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
     "Set labels tooltip": "Ajouter des labels à l'exécution",
-    "Skip tour": "Passer",
-    "Skip tutorial": "Passer le tutoriel",
-    "Step": "Étape",
     "Task Id already exist in the flow": "L'identifiant {taskId} est déjà utilisé dans le flow.",
     "Total": "Total",
     "Unfold content lines": "Déplier les multilignes",
@@ -70,7 +63,9 @@
     "api": "API",
     "appBlocks": "Blocs d'application",
     "apps": "Applications",
-    "assets": "Ressources",
+    "assets": {
+      "title": "Ressources"
+    },
     "attempt": "Essai",
     "attempts": "Tentative(s)",
     "auditlogs": "Journaux d'audit",
@@ -437,6 +432,7 @@
     "download": "Télécharger",
     "download logs": "Télécharger les logs",
     "download_logos": "Télécharger le pack de logos",
+    "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "duration": "Durée",
     "dynamic": "Dynamique",
@@ -511,7 +507,7 @@
         "title": "Vous n'avez pas encore de Kill Switches !"
       },
       "panels": {
-        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Files, Blueprints, Namespace Context) pour des fonctionnalités associées.",
+        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Namespace Files, Blueprints, Context) pour des fonctionnalités associées.",
         "title": "Aucun panneau n'est actuellement ouvert."
       },
       "pluginDefaults": {
@@ -647,7 +643,7 @@
     "fileTypeNotAllowed": "Type de fichier non autorisé. Types acceptés : {types}",
     "files": "Fichiers",
     "filter": {
-      "active key value pairs": "Paires clé/valeur actives",
+      "active key value pairs": "Paires de Key/Value actives",
       "add key value pair": "Ajouter une paire clé/valeur",
       "aggregation": {
         "description": "Filtrer par méthode d'agrégation",
@@ -721,6 +717,7 @@
         "description": "Filtrer par type d'exécution",
         "label": "Type"
       },
+      "kv_pair_selected": "{count} paires Key/Value sélectionnées",
       "label": "Étiquette",
       "labels": {
         "description": "Filtrer par labels",
@@ -1119,7 +1116,6 @@
     "light_background": "C'est l'option préférée lorsque vous travaillez avec un fond clair.",
     "light_version": "Version légère",
     "line-by-line": "ligne par ligne",
-    "live help": "Aide en direct",
     "loaded x dependencies": "{count} dépendances chargées",
     "log expand setting": "Affichage par défaut des journaux",
     "logExporters": "Exportateurs de Logs",
@@ -1367,45 +1363,130 @@
     "of": "de",
     "ok": "OK",
     "onboarding": {
-      "finish": "Finir",
-      "next": "Suivant",
-      "no_flows": "Aucun flux disponible dans l'espace de noms du tutoriel.",
-      "previous": "Précédent",
-      "skip": "Passer la visite guidée du produit",
+      "actions": {
+        "cancel_tutorial": "Annuler le tutoriel",
+        "complete": "Terminer",
+        "edit_flow_to_continue": "Cliquez sur Modifier le flow dans la barre du haut (à droite).",
+        "execute_to_continue": "1. Cliquez sur Exécuter dans la barre du haut (à droite).\n2. Fournissez une valeur pour <strong>name</strong>.\n3. Cliquez à nouveau sur Exécuter dans la fenêtre modale.",
+        "finish_tutorial": "Terminer le tutoriel",
+        "next": "Suivant",
+        "save_to_continue": "Cliquez sur Enregistrer dans la barre du haut (à droite)."
+      },
+      "cancel_modal": {
+        "confirm": "Annuler le tutoriel",
+        "description": "Voulez-vous annuler le tutoriel Premier Flow ?",
+        "keep": "Conserver le tutoriel",
+        "title": "Annuler le tutoriel Premier Flow"
+      },
+      "editor_hints": {
+        "build_intro": "Créez votre premier flow étape par étape.",
+        "step_1": "# 1) Ajouter l’id",
+        "step_2": "# 2) Ajouter le namespace",
+        "step_3": "# 3) Ajouter un input",
+        "step_4": "# 4) Ajouter des tâches et votre première tâche Python",
+        "step_5": "# 5) Ajouter un trigger cron"
+      },
+      "finish_actions": {
+        "create_flow": "Créer un flow",
+        "explore_blueprints": "Explorer les Blueprints"
+      },
       "steps": {
-        "0": {
-          "content": "Nous sommes ravis de vous avoir ici.<br />Créons votre premier flux.",
-          "primary": "Allons-y!",
-          "title": "Bienvenue chez Kestra!"
+        "add_cron_trigger": {
+          "description": "Les triggers peuvent démarrer des runs selon des horaires ou des événements externes (par exemple des webhooks ou des messages MQTT).<br><br>Ajoutez maintenant un trigger de planification cron pour que ce flow s’exécute toutes les 5 minutes.",
+          "title": "Ajouter un trigger cron"
         },
-        "1": {
-          "primary": "Suivant",
-          "title": "Choisissez un cas d'utilisation<br />et nous vous montrerons comment faire!"
+        "add_id": {
+          "description": "L’ID est le nom unique de votre flow, afin que vous puissiez le retrouver, l’exécuter et le référencer de manière cohérente.<br><br>Ajoutez maintenant <code>id</code> au niveau racine.",
+          "title": "Ajouter l’ID du flow"
         },
-        "2": {
-          "content": "Votre flux est écrit en YAML avec autocomplétion et validation de la syntaxe. Si simple!",
-          "primary": "Suivant",
-          "title": "Éditeur de code"
+        "add_input": {
+          "description": "Les inputs sont des paramètres au niveau du flow qui peuvent être référencés dans les tâches pour contrôler dynamiquement le comportement à l’exécution.<br><br>Ajoutez maintenant un input nommé <code>name</code> avec le type <code>STRING</code>.",
+          "title": "Ajouter une entrée"
         },
-        "3": {
-          "content": "La vue de dépendance se met à jour en temps réel. Essayez d'ajouter une nouvelle tâche et voyez!",
-          "primary": "Suivant",
-          "title": "Vue topologique"
+        "add_input_default": {
+          "description": "Lorsqu’un flow est déclenché automatiquement, les inputs ont tout de même besoin de valeurs à l’exécution.<br><br>L’input <code>name</code> a déjà été créé à l’étape précédente, il n’est donc pas nécessaire de l’ajouter à nouveau. Définissez simplement une valeur par défaut pour l’input existant <code>name</code>.",
+          "title": "Définir une valeur par défaut pour l’input"
         },
-        "4": {
-          "content": "\"Exécuter\" pour lancer votre flux.",
-          "title": "Il est temps de l'exécuter."
+        "add_log_task": {
+          "description": "Les tâches sont les unités de travail exécutées par votre flow, définies comme une liste ordonnée d’étapes. Chaque tâche a besoin d’un <code>id</code> unique et d’un <code>type</code>. Kestra fournit de nombreux plugins de tâches pour des systèmes externes ; ici, nous utilisons une tâche de script Python.<br><br>La syntaxe <code>&#123;&#123; ... &#125;&#125;</code> est une expression Pebble, utilisée pour référencer des variables dynamiquement à l’exécution, comme <code>&#123;&#123; inputs.name &#125;&#125;</code> depuis vos inputs de flow.<br><br>Ajoutez maintenant la première tâche sous <code>tasks</code> avec <code>id</code>, <code>type</code> et un <code>script</code> qui affiche un message de bienvenue.",
+          "title": "Ajouter la première tâche"
         },
-        "5": {
-          "content": "\"Exécuter\" et voyez votre flux en action.",
-          "title": "Confirmez et lancez!"
+        "add_namespace": {
+          "description": "Le Namespace est un regroupement de type dossier qui organise les flows par équipe, projet ou environnement.<br><br>Ajoutez maintenant <code>namespace</code> au niveau racine.",
+          "title": "Ajouter un namespace"
         },
-        "6": {
-          "content": "Consultez les onglets Logs et Outputs pour suivre la progression de votre exécution.<br /><br />Ensuite, rendez-vous sur la page Flows pour explorer d'autres cas d'utilisation.",
-          "primary": "Créer un nouveau flux",
-          "secondary": "Explorer d'autres flux",
-          "title": "Vous êtes prêt!"
+        "background_runs_info": {
+          "description": "Ce flow s’exécutera désormais en arrière-plan toutes les 5 minutes.<br><br>Vous pouvez accéder à la vue d’ensemble des Exécutions depuis le menu de gauche pour surveiller les runs planifiés.",
+          "title": "Exécutions planifiées"
+        },
+        "edit_flow_from_execution": {
+          "description": "Vous pouvez revenir directement d’une exécution à la définition du flow pour itérer rapidement.",
+          "title": "Retourner à l’éditeur de flows"
+        },
+        "execute_flow": {
+          "description": "L’exécution démarre un run de votre flow avec des valeurs d’input au moment de l’exécution.",
+          "title": "Exécuter le flow"
+        },
+        "finish": {
+          "description": "Bon début. Vous avez créé, exécuté, paramétré et planifié un flow.<br><br>Choisissez ce que vous souhaitez faire ensuite ...",
+          "title": "Vous avez terminé le tutoriel Premier Flow"
+        },
+        "flow_basics": {
+          "description": "Dans Kestra, un <code>flow</code> est l’unité centrale d’orchestration. Vous le définissez en YAML avec des métadonnées et des tâches ordonnées.<br><br>Examinez la structure d’exemple ci-dessous, puis continuez à la construire étape par étape.",
+          "title": "Les bases des flows"
+        },
+        "save_flow": {
+          "description": "L’enregistrement conserve la définition de votre flow afin qu’il puisse être exécuté.",
+          "title": "Enregistrer le flow"
+        },
+        "save_flow_again": {
+          "description": "Votre flow dispose maintenant d’un planning et d’une valeur d’input par défaut pour les exécutions automatiques.",
+          "title": "Enregistrer le flow"
+        },
+        "view_logs_status": {
+          "description": "Les détails d’exécution affichent le statut du run, les temps et les logs de sortie au niveau des tâches.<br><br>Ouvrez maintenant les détails d’exécution et cliquez sur <code>greet</code> dans le diagramme de Gantt pour voir les logs.",
+          "title": "Vérifier l’exécution"
         }
+      },
+      "validation": {
+        "add_cron_trigger_cron": "Ajoutez une expression cron, par exemple : `\"*/5 * * * *\"`.",
+        "add_cron_trigger_section": "Créez une section `triggers` avec un trigger de planification.",
+        "add_cron_trigger_type": "Définissez le type du trigger sur `io.kestra.plugin.core.trigger.Schedule`.",
+        "add_id": "Ajoutez un ID de flow en haut. Exemple : `id: hello_flow`.",
+        "add_input_default_defaults": "Ajoutez une valeur par défaut pour `name`, par exemple : `defaults: \"Kestra\"`.",
+        "add_input_default_id": "Conservez l’ID de l’input existant comme `name`.",
+        "add_input_default_section": "Revenez à `inputs` et conservez un input existant nommé `name` (n’ajoutez pas un second input).",
+        "add_input_id": "Dans `inputs`, ajoutez `id: name`.",
+        "add_input_section": "Créez une section `inputs` avec un input.",
+        "add_input_type": "Définissez le type de l’input sur `STRING`.",
+        "add_log_task_id": "Donnez un ID à la tâche, par exemple : `id: greet`.",
+        "add_log_task_message": "Ajoutez un champ `script` à la tâche.",
+        "add_log_task_pebble": "Utilisez une expression Pebble dans le script afin qu’il utilise votre valeur d’input (par exemple : `inputs.name`).",
+        "add_log_task_section": "Créez une section `tasks` et ajoutez votre première tâche.",
+        "add_log_task_type": "Définissez le type de la tâche sur `io.kestra.plugin.scripts.python.Script`.",
+        "add_namespace": "Ajoutez un namespace en haut. Exemple : `namespace: company.team`.",
+        "complete_step": "Vous y êtes presque. Terminez cette étape pour continuer.",
+        "edit_flow_from_execution": "Cliquez sur `Modifier le flow` dans la barre du haut pour continuer.",
+        "execute_flow": "Exécutez le flow une fois pour continuer.",
+        "fix_yaml": "Il y a un petit problème de formatage YAML. Corrigez-le, puis continuez.",
+        "save_flow": "Cliquez sur Enregistrer pour continuer.",
+        "save_flow_again": "Cliquez à nouveau sur Enregistrer pour continuer.",
+        "view_logs_status": "Ouvrez les détails d’exécution et vérifiez les logs pour `greet`."
+      },
+      "welcome": {
+        "additional_help": "Aide supplémentaire",
+        "badge": "Tutoriel",
+        "blueprints": "Blueprints",
+        "docs": "Documentation",
+        "guided_description": "Apprenez à créer et exécuter votre premier flow grâce à des étapes guidées.",
+        "guided_duration": "Recommandé pour la plupart",
+        "guided_title": "Créez votre premier flow",
+        "headline": "Créez et exécutez votre premier workflow en quelques minutes",
+        "self_serve_description": "Accédez directement à l’éditeur et créez votre propre flow.",
+        "self_serve_note": "Pour les utilisateurs expérimentés",
+        "self_serve_title": "Créer un flow à partir de zéro",
+        "slack": "Communauté Slack",
+        "tutorial": "Tutoriel"
       }
     },
     "open": "Afficher",
@@ -1700,7 +1781,7 @@
       },
       "confirm": {
         "config_title": "Confirmez que la configuration est valide",
-        "confirm": "Confirmer",
+        "confirm": "Créer un utilisateur admin",
         "not_valid": "Non, ce n'est pas valide",
         "valid": "Oui, c'est valide"
       },
@@ -1709,7 +1790,7 @@
         "firstName": "Prénom",
         "lastName": "Nom de famille",
         "password": "Mot de passe",
-        "password_requirements": "Le mot de passe doit comporter au moins 8 caractères, inclure au moins 1 lettre majuscule et 1 chiffre."
+        "password_requirements": "Au moins 8 caractères avec 1 lettre majuscule et 1 chiffre."
       },
       "login": "Connexion",
       "logout": "Déconnexion",
@@ -1717,38 +1798,40 @@
         "complete": "Démarrer l'UI de Kestra",
         "config": "Valider la Configuration",
         "survey": "Dites-nous en plus",
-        "user": "Créez votre compte"
+        "user": "Créer un utilisateur admin"
       },
       "subtitles": {
         "complete": "Configuration terminée avec succès !",
         "config": "Voici les détails de votre configuration",
-        "survey": "Aidez-nous à améliorer Kestra Open Source Edition",
-        "user": "Configurez votre instance en créant un compte"
+        "survey": "I'm sorry, but it seems there is no text provided after the \"----------\" for translation. Could you please provide the text you would like translated into French?",
+        "user": "Sécurisez votre instance pour commencer."
       },
       "success": {
         "subtitle": "Vous êtes prêt !",
         "title": "Félicitations !"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "Usage personnel",
-        "company_size": "Quelle est la taille de votre entreprise ?",
+        "company_11_50": "Projet personnel",
+        "company_1_10": "Apprentissage / exploration",
+        "company_250_plus": "Déploiement en production",
+        "company_50_250": "Évaluation pour mon équipe/entreprise",
+        "company_personal": "Autre",
+        "company_size": "Quel est votre objectif principal avec Kestra ?",
         "continue": "Continuer",
-        "newsletter": "Abonnez-vous à la newsletter de Kestra – restez à jour avec les dernières fonctionnalités et modifications.",
+        "newsletter": "Recevez les mises à jour des produits par email.",
+        "newsletter_heading": "Restez informé",
         "skip": "Passer",
-        "use_case": "Quel est votre cas d'utilisation principal ?",
-        "use_case_business": "Processus métier",
+        "use_case": "Pour quoi prévoyez-vous de l'utiliser ?",
+        "use_case_business": "Flux de travail métier",
         "use_case_data": "Flux de données",
         "use_case_infrastructure": "Automatisation de l'infrastructure",
-        "use_case_ml": "Pipelines ML/AI",
-        "use_case_other": "Autre"
+        "use_case_ml": "Pipelines ML",
+        "use_case_other": "Autre",
+        "use_case_scheduling": "Planification et tâches récurrentes"
       },
       "titles": {
-        "survey": "Dites-nous en plus",
-        "user": "Créer un compte"
+        "survey": "Aidez-nous à améliorer Kestra OSS",
+        "user": "Créer un utilisateur admin"
       },
       "troubleshooting": "Mot de passe oublié ?",
       "validation": {
@@ -1777,6 +1860,10 @@
     "side-by-side": "côte à côte",
     "slack support": "Demandez de l'aide sur notre Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Nous n'avons pas pu atteindre votre instance Kestra. Assurez-vous qu'elle est en cours d'exécution, puis actualisez la page.",
+        "title": "Connexion interrompue"
+      },
       "loading_execution": "Une erreur s'est produite lors du chargement de l'exécution"
     },
     "source": "Source",
@@ -1940,6 +2027,7 @@
         "text": "Posez n'importe quelle question dans notre communauté Slack. Si vous êtes bloqué, nous sommes là pour vous aider. ✋",
         "title": "Besoin d'aide ?"
       },
+      "menu": "Welcome",
       "tour": {
         "text": "Choisissez votre cas d'utilisation et suivez un guide étape par étape pour découvrir les fonctionnalités et capacités de Kestra. ❤️",
         "title": "Faire une visite guidée du produit"
@@ -1949,14 +2037,8 @@
         "title": "Tutoriel"
       }
     },
-    "welcome aboard": "🚀 Bienvenue à bord !",
-    "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
-    "welcome button create": "Démarrer la visite guidée du produit",
-    "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flow</strong> !",
     "welcome_page": {
       "guide": "Besoin d'aide pour exécuter votre premier flow ?",
-      "start": "Mettons votre premier workflow en marche.",
-      "wel_text": "Bienvenue !",
       "welcome": "Bienvenue sur Kestra"
     },
     "wordmark_colors": "Les couleurs du logotype s'adaptent en fonction de l'arrière-plan, tandis que l'icône reste sans arrière-plan lorsqu'elle est placée sur un fond sombre.",

@@ -197,6 +197,12 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartFailedWithAfterExecution();
     }
 
+    @Test
+    @LoadFlows({"flows/valids/loop-until-restart.yaml"})
+    protected void restartOrReplayLoopUntil() throws Exception{
+        restartCaseTest.restartOrReplayLoopUntil();
+    }
+
     @RetryingTest(5)
     @LoadFlows({"flows/valids/trigger-flow-listener-no-inputs.yaml",
         "flows/valids/trigger-flow-listener.yaml",

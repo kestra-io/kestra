@@ -15,7 +15,10 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 public class WithFlowExtension extends AbstractFlowLoaderExtension implements
     ParameterResolver, AfterEachCallback {
 
-    private String tenantId;
+    private static final ExtensionContext.Namespace NAMESPACE =
+        ExtensionContext.Namespace.create(WithFlowExtension.class);
+
+    private static final String KEY_TENANT_ID = "tenantId";
 
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
@@ -28,15 +31,24 @@ public class WithFlowExtension extends AbstractFlowLoaderExtension implements
     public Object resolveParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
         WithFlow withFlow = getLoadFlows(extensionContext);
-        this.tenantId = StringUtils.isNotBlank(withFlow.tenantId()) ? withFlow.tenantId() : TestsUtils.randomTenant();
+        String tenantId = StringUtils.isNotBlank(withFlow.tenantId()) ? withFlow.tenantId() : TestsUtils.randomTenant();
+
+        ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
+        store.put(KEY_TENANT_ID, tenantId);
+
         loadFlows(extensionContext, tenantId, new String[] { withFlow.value() });
         return getFlow(withFlow.value()).toBuilder().tenantId(tenantId).build();
     }
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
-        WithFlow withFlow = getLoadFlows(extensionContext);
-        deleteFlows(tenantId, new String[] { withFlow.value() });
+        ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
+        String tenantId = store.get(KEY_TENANT_ID, String.class);
+
+        if (StringUtils.isNotBlank(tenantId)) {
+            WithFlow withFlow = getLoadFlows(extensionContext);
+            deleteFlows(tenantId, new String[] { withFlow.value() });
+        }
     }
 
     private static WithFlow getLoadFlows(ExtensionContext extensionContext) {

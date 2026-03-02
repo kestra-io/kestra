@@ -30,7 +30,7 @@
     import {Bar} from "vue-chartjs";
     import type {TooltipItem, ChartEvent, ActiveElement} from "chart.js";
     import NoData from "../../layout/NoData.vue";
-    import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
+    import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
     import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
@@ -48,6 +48,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
@@ -161,7 +162,7 @@
                 }
                 chartClick(moment, router, route, {}, parsedData.value, elements, "label", {
                     ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
-                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})              
+                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})
                 });
             },
         }, theme.value);
@@ -311,10 +312,10 @@
                 : yDatasetData,
         };
     });
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
 
     function refresh(customFilters?: FilterObject[]) {
-        return generate(getDashboard(route, "id")!, undefined, customFilters);
+        return generate(undefined, customFilters);
     }
 
     defineExpose({

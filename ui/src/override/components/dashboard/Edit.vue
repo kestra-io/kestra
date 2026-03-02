@@ -41,9 +41,13 @@
 
     onMounted(() => {
         dashboardStore.isCreating = false;
-        
+
         dashboardStore.load(route.params.dashboard as string).then((response) => {
-            dashboard.value = response;
+            if(!response){
+                toast.error(`dashboard ${route.params.dashboard} not found`);
+            } else {
+                dashboard.value = response;
+            }
         });
     });
 

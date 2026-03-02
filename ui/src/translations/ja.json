@@ -63,7 +63,9 @@
     "api": "API",
     "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
-    "assets": "アセット",
+    "assets": {
+      "title": "アセット"
+    },
     "attempt": "試行",
     "attempts": "試行回数",
     "auditlogs": "Audit Logs",
@@ -505,7 +507,7 @@
         "title": "まだKill Switchがありません！"
       },
       "panels": {
-        "content": "FlowコードまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Context）を選択してください。",
+        "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
         "title": "現在、パネルは開いていません。"
       },
       "pluginDefaults": {
@@ -641,8 +643,8 @@
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
     "files": "ファイル",
     "filter": {
-      "active key value pairs": "アクティブなkey/valueペア",
-      "add key value pair": "キー/バリュー ペアを追加",
+      "active key value pairs": "アクティブなKey/Valueペア",
+      "add key value pair": "キー/Valueペアを追加",
       "aggregation": {
         "description": "集約方法でフィルター",
         "label": "集計"
@@ -715,6 +717,7 @@
         "description": "実行種別でフィルター",
         "label": "種類"
       },
+      "kv_pair_selected": "{count} 個のKey/Valueペアが選択されました",
       "label": "ラベル",
       "labels": {
         "description": "ラベルでフィルター",
@@ -1857,6 +1860,10 @@
     "side-by-side": "並列表示",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Kestraインスタンスに接続できませんでした。実行中であることを確認し、ページを更新してください。",
+        "title": "接続が中断されました"
+      },
       "loading_execution": "実行の読み込み中に問題が発生しました。"
     },
     "source": "ソース",

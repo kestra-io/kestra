@@ -76,7 +76,7 @@
                 ref="logScroller"
                 :items="temporalLogs"
                 :minItemSize="50"
-                keyField="index"
+                keyField="taskRunId"
                 class="log-lines temporal"
                 :buffer="200"
                 :prerender="20"

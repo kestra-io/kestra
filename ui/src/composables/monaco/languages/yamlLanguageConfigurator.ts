@@ -26,6 +26,78 @@ import {useBlueprintsStore} from "../../../stores/blueprints";
 import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import CompletionItem = languages.CompletionItem;
 
+type TaskLike = Record<string, unknown>;
+
+function isTaskLike(value: unknown): value is TaskLike {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        typeof (value as TaskLike).id === "string" &&
+        typeof (value as TaskLike).type === "string"
+    );
+}
+
+function filterMissingRequiredTaskProperties({
+    source,
+    cursorIndex,
+    requiredProperties,
+}: {
+    source: string;
+    cursorIndex: number;
+    requiredProperties: string[];
+}): string[] {
+    if (!requiredProperties.length || !source.length) {
+        return [];
+    }
+
+    try {
+        const safeCursorIndex = Math.max(
+            0,
+            Math.min(cursorIndex - 1, source.length - 1),
+        );
+        const probeIndexes = [safeCursorIndex];
+        let previousNonWhitespace = safeCursorIndex;
+        while (
+            previousNonWhitespace > 0 &&
+            /\s/.test(source.charAt(previousNonWhitespace))
+        ) {
+            previousNonWhitespace--;
+        }
+        if (previousNonWhitespace !== safeCursorIndex) {
+            probeIndexes.push(previousNonWhitespace);
+        }
+
+        for (const probeIndex of probeIndexes) {
+            const localized = YamlUtils.localizeElementAtIndex(
+                source,
+                probeIndex,
+            );
+            const candidates = [...(localized?.parents ?? []), localized?.value];
+
+            for (let i = candidates.length - 1; i >= 0; i--) {
+                const candidate = candidates[i];
+                if (
+                    isTaskLike(candidate) &&
+                    typeof candidate.id === "string" &&
+                    typeof candidate.type === "string"
+                ) {
+                    return requiredProperties.filter(
+                        (property) =>
+                            !Object.prototype.hasOwnProperty.call(
+                                candidate,
+                                property,
+                            ),
+                    );
+                }
+            }
+        }
+
+        return requiredProperties;
+    } catch {
+        return requiredProperties;
+    }
+}
+
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     private readonly _yamlAutoCompletion: YamlAutoCompletion;
 
@@ -407,14 +479,25 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     // Nothing required means no inline snippet to propose.
                     if (!requiredProperties.length) return {items: []};
 
+                    const missingRequiredProperties =
+                        filterMissingRequiredTaskProperties({
+                            source: model.getValue(),
+                            cursorIndex: model.getOffsetAt(position),
+                            requiredProperties,
+                        });
+                    if (!missingRequiredProperties.length) return {items: []};
+
                     const indent = lineContent.match(/^\s*/)?.[0] ?? "";
                     // Build a multi-line snippet containing all required keys.
-                    const snippet = requiredProperties
+                    const snippet = missingRequiredProperties
                         .map((k, i) => `${i > 0 ? indent : ""}${k}: `)
                         .join("\n");
 
                     const column =
-                        indent.length + requiredProperties[0].length + 2 + 1;
+                        indent.length +
+                        missingRequiredProperties[0].length +
+                        2 +
+                        1;
 
                     return {
                         items: [

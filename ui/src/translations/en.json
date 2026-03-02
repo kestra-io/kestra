@@ -1439,7 +1439,11 @@
     },
     "instance": "Instance",
     "something_went_wrong": {
-      "loading_execution": "Something went wrong while loading the execution"
+      "loading_execution": "Something went wrong while loading the execution",
+     "connection_lost": {
+        "title": "Connection interrupted",
+        "message": "We couldn't reach your Kestra instance. Make sure it's running, then refresh the page."
+      }
     },
     "debug": "Debug",
     "default": "Default",

@@ -15,6 +15,7 @@ import java.util.List;
     name = "validate",
     description = "Validate a flow"
 )
+@Deprecated(forRemoval = true, since = "1.3.0")
 public class FlowValidateCommand extends AbstractValidateCommand {
     @Inject
     private ModelValidator modelValidator;
@@ -27,6 +28,8 @@ public class FlowValidateCommand extends AbstractValidateCommand {
 
     @Override
     public Integer call() throws Exception {
+        stdErr("WARNING: this command is deprecated, use `kestractl flows validate` instead");
+
         return this.call(
             FlowWithSource.class,
             modelValidator,

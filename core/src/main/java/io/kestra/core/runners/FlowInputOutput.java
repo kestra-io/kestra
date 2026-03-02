@@ -47,8 +47,6 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -58,7 +56,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class FlowInputOutput {
-    private static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
+
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
 
     private final StorageInterface storageInterface;
@@ -493,12 +491,11 @@ public class FlowInputOutput {
                 case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current :  JacksonMapper.toObject(current.toString());
                 case YAML -> (current instanceof Map || current instanceof Collection<?>) ? current : YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
-                    Matcher matcher = URI_PATTERN.matcher(current.toString());
-                    if (matcher.matches()) {
-                        yield current.toString();
-                    } else {
+                    URI uri = java.net.URI.create(current.toString());
+                    if (uri.getScheme() == null) {
                         throw new IllegalArgumentException("Invalid URI format.");
                     }
+                    yield current.toString();
                 }
                 case ARRAY, MULTISELECT -> {
                     List<?> asList;

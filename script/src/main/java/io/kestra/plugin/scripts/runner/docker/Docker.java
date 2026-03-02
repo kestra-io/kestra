@@ -11,6 +11,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.sun.jna.LastErrorException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -48,6 +49,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -376,6 +378,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
 
         try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
+            AtomicReference<String> containerIdRef = new AtomicReference<>();
+
+            onKill(() -> {
+                if (containerIdRef.get() != null) {
+                    kill(dockerClient, containerIdRef.get(), logger);
+                }
+            });
+
+
             // evaluate resume (task property overrides plugin configuration if set)
             Boolean resumeProp = runContext.render(this.resume).as(Boolean.class).orElse(Boolean.FALSE);
             boolean resumeEnabled = Boolean.TRUE.equals(resumeProp);
@@ -389,7 +400,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     .exec();
 
                 if (!existing.isEmpty()) {
-                    containerId = existing.get(0).getId();
+                    containerId = existing.getFirst().getId();
+                    containerIdRef.set(containerId);
                     logger.debug("Resuming existing container: {}", containerId);
                 }
             }
@@ -409,10 +421,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     pullImage(dockerClient, image, renderedPolicy, logger);
                 }
 
+                // we check, if killed during image pull.
+                checkKilled("Execution was killed during image pull.");
+
                 // create container
                 CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
                 CreateContainerResponse exec = container.exec();
                 containerId = exec.getId();
+                containerIdRef.set(containerId);
+
                 if (logger.isTraceEnabled()) {
                     logger.trace("Container created: {}", containerId);
                 }
@@ -475,6 +492,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     }
                 }
 
+                // we check, if killed before container start
+                checkKilled("Execution was killed before starting the container.");
+
                 // start container
                 dockerClient.startContainerCmd(containerId).exec();
 
@@ -520,9 +540,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     .details(DockerTaskRunnerDetailResult.builder().containerId(runContainerId).build())
                     .build();
             }
-
-            // register the runnable to be used for killing the container.
-            onKill(() -> kill(dockerClient, runContainerId, logger));
 
             AtomicBoolean ended = new AtomicBoolean(false);
 

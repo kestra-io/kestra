@@ -17,7 +17,7 @@
     import type {TooltipItem, ChartEvent, ActiveElement, ChartData} from "chart.js";
 
     import NoData from "../../layout/NoData.vue";
-    import {Chart, getDashboard} from "../composables/useDashboards";
+    import {Chart} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
@@ -38,6 +38,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
@@ -163,10 +164,10 @@
         return {labels, datasets};
     });
 
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
 
     function refresh() {
-        return generate(getDashboard(route, "id")!);
+        return generate();
     }
 
     defineExpose({

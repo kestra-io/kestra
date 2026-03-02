@@ -27,6 +27,7 @@ import java.util.List;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Deprecated(forRemoval = true, since = "1.3.0")
 public class FlowUpdatesCommand extends AbstractApiCommand {
 
     @CommandLine.Parameters(index = "0", description = "The directory containing files")
@@ -45,6 +46,7 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
+        stdErr("WARNING: this command is deprecated, use `kestractl flows deploy` instead");
 
         try (var files = Files.walk(directory)) {
             List<String> flows = files

@@ -98,8 +98,9 @@
                     type: "object",
                     properties: {},
                     required: [],
+                    $language: "",
                 }),
-                
+
             }
         }
         return schema;
@@ -205,9 +206,9 @@
             })
             .map((schemaRef: string) => `${schemaRef}.`)
             .join("");
-        
 
-        
+
+
         return schemas.value.map((schema: any) => {
             const schemaRef = schema.$ref
                 ? schema.$ref.split("/").pop()

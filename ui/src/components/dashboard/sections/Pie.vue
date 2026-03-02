@@ -25,10 +25,10 @@
     import {computed, PropType, watch} from "vue";
     import type {TooltipItem, ChartEvent, ActiveElement, Chart as ChartJS} from "chart.js";
 
-    import {Chart, getDashboard} from "../composables/useDashboards";
+    import {Chart} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
-    
+
     import NoData from "../../layout/NoData.vue";
     import Utils, {useTheme} from "../../../utils/utils";
 
@@ -47,6 +47,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
@@ -129,11 +130,11 @@
             if (!chartArea || !meta || !meta.data) return;
             // Available radius = half of the smaller dimension (width or height)
             const availableRadius = Math.min(chartArea.width, chartArea.height) / 2;
-            // define thickness bounds relative to available radius 
+            // define thickness bounds relative to available radius
             const minThicknessPx = Math.max(6, availableRadius * 0.05); // >0
-            const maxThicknessPx = Math.max(12, availableRadius * 0.3);  // >0 
+            const maxThicknessPx = Math.max(12, availableRadius * 0.3);  // >0
             // Reading weights from dataset with fallback weight(1)
-            const weights: number[] = (dataset.thicknessWeight && Array.isArray(dataset.thicknessWeight))? dataset.thicknessWeight.map((w: any) => 
+            const weights: number[] = (dataset.thicknessWeight && Array.isArray(dataset.thicknessWeight))? dataset.thicknessWeight.map((w: any) =>
             {
                 const n = Number(w);
                 return Number.isFinite(n) ? Math.min(Math.max(n, 0), 1) : 1;
@@ -207,10 +208,10 @@
         };
     });
 
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
 
     function refresh() {
-        return generate(getDashboard(route, "id")!);
+        return generate();
     }
 
     defineExpose({
@@ -223,7 +224,7 @@
 </script>
 
 <style scoped lang="scss">
-   
+
    .chart {
     height: 100% !important;
     width: 100% !important;

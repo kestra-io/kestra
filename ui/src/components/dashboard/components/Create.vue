@@ -7,14 +7,14 @@
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue"
-    import {RouteLocationGeneric, useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useDashboardStore} from "../../../stores/dashboard"
     import {useBlueprintsStore} from "../../../stores/blueprints"
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
     import {useToast} from "../../../utils/toast"
     import {getRandomID} from "../../../../scripts/id"
-    import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
+    import {processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
     import TopNavBar from "../../../components/layout/TopNavBar.vue"
     import useRouteContext from "../../../composables/useRouteContext"
 
@@ -48,9 +48,6 @@
         const name = route.query.name as string
         const params = route.query.params as string;
 
-        const key = getDashboard({name, ...(params ? JSON.parse(params) : {})} as RouteLocationGeneric, "key")
-        if(key) localStorage.setItem(key, response.id)
-
         router.push({
             name,
             params: {
@@ -63,7 +60,7 @@
 
     onMounted(async () => {
         dashboardStore.isCreating = true;
-        
+
         const {blueprintId, name, params} = route.query;
 
         if (blueprintId) {

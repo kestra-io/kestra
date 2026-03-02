@@ -172,10 +172,11 @@ describe("useDependencies composable", () => {
   describe("SSE", () => {
     it("should close SSE on unmount when subtype is EXECUTION", async () => {
       const close = vi.fn();
+      class MockEventSource {
+        close = close;
+      }
 
-      vi.stubGlobal("EventSource", vi.fn(() => ({
-        close,
-      })));
+      vi.stubGlobal("EventSource", MockEventSource as unknown as typeof EventSource);
 
       const {wrapper} = mountComponentWithUseDependencies(EXECUTION);
       await nextTick();

@@ -17,12 +17,13 @@ export interface Schema{
     items?: Schema;
     const?: string;
     format?: string;
+    $language: string;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
 
 function getType(property: any, definitions: Record<string, any>, key?: string): string {
-    
+
     if (property.enum !== undefined) {
         return "enum";
     }

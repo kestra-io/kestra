@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue";
+import {computed, ref, watch, type Ref} from "vue";
 import {defineStore} from "pinia";
 import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
@@ -53,7 +53,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         });
     }
 
-    const executions = ref<ExecutionWithGraph[]>([])
+    const executions = ref([]) as Ref<ExecutionWithGraph[]>
     function addExecution(execution: ExecutionWithGraph, graph: VueFlowUtils.FlowGraph) {
         execution.graph = graph
         executions.value.unshift(execution);
@@ -82,7 +82,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 defaultInputValues[input.id] = safeDef;
             }
         }
-        
+
         return executionsStore.triggerExecution({
             id: flow.id,
             namespace: flow.namespace,
@@ -97,7 +97,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         // check that the inputs and labels have not changed between the last execution and the current flow
         // if they have changed, we cannot replay the execution and must trigger a new one
-        if(lastExecution && lastExecution.flowRevision && flowStore.flow?.revision 
+        if(lastExecution && lastExecution.flowRevision && flowStore.flow?.revision
             && lastExecution.flowRevision < flowStore.flow.revision){
             const lastExecutionFlow = await flowStore.loadFlow({
                 namespace: flowStore.flow.namespace || "",
@@ -106,7 +106,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 store: false,
             })
 
-            if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs) 
+            if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
                 || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
                 return await triggerExecution(flowStore.flow, breakpoints);
             };

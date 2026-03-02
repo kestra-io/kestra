@@ -21,6 +21,7 @@ import java.nio.file.Path;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Deprecated(forRemoval = true, since = "1.3.0")
 public class FlowUpdateCommand extends AbstractApiCommand {
     @CommandLine.Parameters(index = "0", description = "The file containing the flow")
     public Path flowFile;
@@ -38,6 +39,7 @@ public class FlowUpdateCommand extends AbstractApiCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
+        stdErr("WARNING: this command is deprecated, use `kestractl flows deploy` instead");
 
         checkFile();
 

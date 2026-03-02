@@ -115,7 +115,7 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
             } as any;
             return () => (
                 <div style="padding: 20px; background: #f5f5f5; border-radius: 8px;">
-                    <Table chart={chart}/>
+                    <Table chart={chart} dashboardId="default" />
                 </div>
             );
         }

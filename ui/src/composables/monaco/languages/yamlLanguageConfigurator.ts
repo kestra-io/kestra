@@ -302,6 +302,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     }
 
                     suggestion.sortText = suggestion.sortText?.toLowerCase();
+
                     return suggestion;
                 })
                 // ---- Keep `type:` filtering scoped to plugin type suggestions ----

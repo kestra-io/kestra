@@ -1860,6 +1860,10 @@
     "side-by-side": "並列表示",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Kestraインスタンスに接続できませんでした。実行中であることを確認し、ページを更新してください。",
+        "title": "接続が中断されました"
+      },
       "loading_execution": "実行の読み込み中に問題が発生しました。"
     },
     "source": "ソース",

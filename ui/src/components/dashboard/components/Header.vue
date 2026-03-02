@@ -18,7 +18,7 @@
                     v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
                 >
                     <router-link
-                        :to="{name: 'dashboards/update', params: {id: props.dashboard?.id}}"
+                        :to="{name: 'dashboards/update', params: {dashboard: props.dashboard.id}}"
                     >
                         <el-button :icon="Pencil">
                             {{ $t("dashboards.edition.label") }}

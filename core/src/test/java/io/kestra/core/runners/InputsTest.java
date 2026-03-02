@@ -337,13 +337,13 @@ public class InputsTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "tenant11")
-    void inputFailed() {
+    void inputUriFailed() {
         HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("uri", "http:/bla");
+        map.put("uri", "justastring");
 
         InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(map, "tenant11"));
 
-        assertThat(e.getMessage()).contains(  "Invalid value for input `uri`. Cause: Invalid URI format." );
+        assertThat(e.getMessage()).contains("Invalid value for input `uri`. Cause: Invalid URI format.");
     }
 
     @Test

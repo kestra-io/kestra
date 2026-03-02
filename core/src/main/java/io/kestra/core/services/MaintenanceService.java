@@ -2,6 +2,10 @@ package io.kestra.core.services;
 
 import io.kestra.core.utils.Disposable;
 import jakarta.inject.Singleton;
+import lombok.Builder;
+import lombok.Value;
+
+import java.time.ZonedDateTime;
 
 public interface MaintenanceService {
 
@@ -11,6 +15,17 @@ public interface MaintenanceService {
      * @return {@code true} if the cluster is in maintenance mode
      */
     boolean isInMaintenanceMode();
+
+    /**
+     * Retrieves the current maintenance mode status with detailed information.
+     *
+     * @return {@link Status} containing maintenance mode details
+     */
+    default Status getStatus() {
+        return Status.builder()
+            .isActive(isInMaintenanceMode())
+            .build();
+    }
 
     /**
      * Listens for cluster maintenance events.
@@ -52,5 +67,32 @@ public interface MaintenanceService {
         public Disposable listen(MaintenanceListener listener) {
             return Disposable.of(() -> {}); // NOOP
         }
+    }
+
+    /**
+     * Maintenance mode status details.
+     */
+    @Value
+    @Builder(toBuilder = true)
+    class Status {
+        /**
+         * Whether maintenance mode is currently active.
+         */
+        boolean isActive;
+
+        /**
+         * Reason for the maintenance.
+         */
+        String reason;
+
+        /**
+         * Time when maintenance mode was activated.
+         */
+        ZonedDateTime startTime;
+
+        /**
+         * Estimated time when maintenance will be completed.
+         */
+        ZonedDateTime estimatedEnd;
     }
 }

@@ -66,7 +66,7 @@
             <list-preview v-if="!forceEditor && preview.type === 'LIST'" :value="preview.content" />
             <img v-else-if="!forceEditor && preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <pdf-preview v-else-if="!forceEditor && preview.type === 'PDF'" :source="preview.content" />
-            <markdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :source="preview.content" />
+            <markdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :source="preview.content" :html="false" />
             <editor
                 v-else
                 :model-value="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)"

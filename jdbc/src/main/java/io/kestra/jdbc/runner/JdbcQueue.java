@@ -8,6 +8,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.*;
+import io.kestra.core.runners.WorkerGroupExecutorInterface;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
@@ -212,6 +213,25 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.cls.getName();
     }
 
+    @Override
+    public Integer queueLagForConsumerGroup(String consumerGroup, Class<?> queueType) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext ctx = DSL.using(configuration);
+
+            var condition = buildTypeCondition(queueType()).and(buildConsumerCondition(queueType));
+            if (consumerGroup != null) {
+                condition = condition.and(CONSUMER_GROUP_FIELD.eq(consumerGroup));
+            } else {
+                condition = condition.and(CONSUMER_GROUP_FIELD.isNull());
+            }
+
+            return ctx.selectCount()
+                .from(this.table)
+                .where(condition)
+                .fetchOneInto(Integer.class);
+        });
+    }
+
     /**
      * Delete all messages of the queue for a set of keys.
      * This is used to purge a queue for specific keys.
@@ -282,6 +302,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     abstract protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     protected abstract Condition buildTypeCondition(String type);
+
+    protected abstract Condition buildConsumerCondition(Class<?> queueType);
 
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {

@@ -492,6 +492,7 @@ jar {
 
 shadowJar {
     archiveClassifier.set(null)
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()
     zip64 = true
 }

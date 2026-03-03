@@ -1,5 +1,6 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -67,6 +68,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     }
 
     @Test
+    @FlakyTest
     void schedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

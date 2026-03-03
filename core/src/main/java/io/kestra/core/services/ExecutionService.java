@@ -31,6 +31,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -163,8 +164,6 @@ public class ExecutionService {
             .stream()
             .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
-                    // Keep only CREATED/RUNNING
-                    // To avoid having large history
                     return taskRun.resetAttempts().incrementIteration();
                 }
 
@@ -838,7 +837,7 @@ public class ExecutionService {
             alterState = originalTaskRun.withState(newStateType).getState();
         } else {
             Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
-            if (!task.isFlowable() || task instanceof WorkingDirectory) {
+            if (!task.isFlowable() || task instanceof WorkingDirectory || task instanceof LoopUntil) {
                 // The current task run is the reference task run, its default state will be newState
                 alterState = originalTaskRun.withState(newStateType).getState();
             } else {

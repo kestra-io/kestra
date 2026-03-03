@@ -462,7 +462,6 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
     private AtomicInteger getMetricRunningCount(final WorkerTask workerTask) {
         String[] tags = this.metricRegistry.tags(workerTask, workerGroup);
-        Arrays.sort(tags);
 
         long index = Hashing.hashToLong(String.join("-", tags));
 

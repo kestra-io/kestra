@@ -18,8 +18,13 @@ class PluginScannerTest {
         PluginScanner pluginScanner = new PluginScanner(PluginScannerTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-        assertThat(scan.size()).isEqualTo(1);
-        assertThat(scan.getFirst().getManifest().getMainAttributes().getValue("X-Kestra-Group")).isEqualTo("io.kestra.plugin.templates");
+        assertThat(scan.size()).isEqualTo(2);
+        RegisteredPlugin templatePlugin = scan
+            .stream()
+            .filter(rp -> rp.group().equals("io.kestra.plugin.templates"))
+            .findFirst()
+            .orElseThrow();
+        assertThat(templatePlugin.getManifest().getMainAttributes().getValue("X-Kestra-Group")).isEqualTo("io.kestra.plugin.templates");
     }
 
     @Test

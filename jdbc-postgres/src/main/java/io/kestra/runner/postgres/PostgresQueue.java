@@ -7,13 +7,11 @@ import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.NonNull;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +44,11 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     @Override
     protected Condition buildTypeCondition(String type) {
         return DSL.condition("type = CAST(? AS queue_type)", type);
+    }
+
+    @Override
+    protected Condition buildConsumerCondition(Class<?> queueType) {
+        return DSL.field("consumer_" + queueName(queueType), Boolean.class).isFalse();
     }
 
     @Override

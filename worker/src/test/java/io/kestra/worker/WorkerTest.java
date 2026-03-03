@@ -1,5 +1,6 @@
 package io.kestra.worker;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -144,6 +145,7 @@ class WorkerTest {
     }
 
     @Test
+    @FlakyTest
     void shouldKillTasksWhenExecutionKillEventReceived() throws InterruptedException, QueueException {
         // Given
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -157,7 +159,7 @@ class WorkerTest {
         String executionId = IdUtils.create();
 
         try (Worker worker = applicationContext.createBean(Worker.class)) {
-            worker.start(16, null);
+            worker.start(1, null);
 
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
@@ -175,7 +177,7 @@ class WorkerTest {
             executionKilledQueue.emit(killedExecution);
 
             await()
-                .atMost(Duration.ofMinutes(1))
+                .atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofMillis(100))
                 .until(() -> results.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5);
 

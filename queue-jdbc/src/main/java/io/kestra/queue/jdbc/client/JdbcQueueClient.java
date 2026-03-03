@@ -96,7 +96,7 @@ public class JdbcQueueClient {
 
             var condition = field("type").eq(queueNameToType(queue));
             if (routingKey != null && !routingKey.isEmpty()) {
-                condition = condition.and(field("routing_key").in(routingKey));
+                condition = condition.and(field("routing_key").eq(routingKey));
             } else {
                 condition = condition.and(field("routing_key").isNull());
             }

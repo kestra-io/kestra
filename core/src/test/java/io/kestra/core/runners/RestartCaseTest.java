@@ -340,6 +340,7 @@ public class RestartCaseTest {
         Execution replayedExecution = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("loop_test", List.of()).getId(), null, Optional.empty());
         assertThat(replayedExecution.getState().getCurrent()).isEqualTo(Type.RESTARTED);
         assertThat(replayedExecution.getId()).isNotEqualTo(firstExecution.getId());
+        executionQueue.emit(replayedExecution);
 
         Execution finalReplayedExecution = runnerUtils.awaitChildExecution(
             flow,

@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startWorker = false)
 @Property(name = "kestra.server-type", value = "EXECUTOR")
+@org.junit.jupiter.api.parallel.Execution(org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD)
 public abstract class AbstractQueueLagTest {
 
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
@@ -63,20 +64,19 @@ public abstract class AbstractQueueLagTest {
     @Test
     void shouldReturnPositiveLag_whenMessagesProducedAfterConsumerStopped() throws Exception {
         // Given
-        String consumerGroup = IdUtils.create();
         CountDownLatch consumedLatch = new CountDownLatch(1);
         QueueSubscriber<WorkerJobEvent> closeConsumer = workerJobQueue.subscriber(NO_LAG_TEST_WORKER_GROUP_NAME).subscribe(either -> {
             consumedLatch.countDown();
         });
 
-        workerJobQueue.emit(consumerGroup, buildWorkerJob("io.kestra.lag.test", consumerGroup));
+        workerJobQueue.emit(NO_LAG_TEST_WORKER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test", NO_LAG_TEST_WORKER_GROUP_NAME));
         assertTrue(consumedLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         closeConsumer.close();
 
-        workerJobQueue.emit(consumerGroup, buildWorkerJob("io.kestra.lag.test.new", consumerGroup));
+        workerJobQueue.emit(NO_LAG_TEST_WORKER_GROUP_NAME, buildWorkerJob("io.kestra.lag.test.new", NO_LAG_TEST_WORKER_GROUP_NAME));
 
         // When
-        Integer lag = workerJobQueue.queueLag(consumerGroup);
+        Integer lag = workerJobQueue.queueLag(NO_LAG_TEST_WORKER_GROUP_NAME);
 
         // Then
         assertThat(lag).isNotNull();

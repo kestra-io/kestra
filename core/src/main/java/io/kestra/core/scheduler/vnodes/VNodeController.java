@@ -90,7 +90,7 @@ public class VNodeController implements AutoCloseable {
                 .collect(Collectors.toSet());
 
             // Check if the active scheduler list is different from our local view
-            if (localSchedulerServices.isEmpty() || !localSchedulerServices.equals(activeSchedulerServices)) {
+            if (!localSchedulerServices.equals(activeSchedulerServices)) {
                 log.info("Starting VNodes rebalancing for schedulers: {}", activeSchedulerServices);
                 Disposable disposable = null;
                 try {

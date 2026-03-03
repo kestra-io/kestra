@@ -17,8 +17,6 @@ vi.mock("../../../src/composables/usePosthog", () => ({
     }),
 }));
 
-const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
-
 describe("posthog queue", () => {
     beforeEach(() => {
         posthogMock.__loaded = false;
@@ -29,7 +27,7 @@ describe("posthog queue", () => {
     });
 
     it("queues events until initialized and flushes after init", async () => {
-        const {capturePosthogEvent} = await import("../../../src/utils/posthog");
+        const {capturePosthogEvent, initPosthogIfEnabled} = await import("../../../src/utils/posthog");
 
         capturePosthogEvent(
             {isUiAnonymousUsageEnabled: true},
@@ -39,15 +37,14 @@ describe("posthog queue", () => {
 
         expect(posthogMock.capture).not.toHaveBeenCalled();
 
-        await flushPromises();
-        await flushPromises();
+        await initPosthogIfEnabled({isUiAnonymousUsageEnabled: true});
 
         expect(posthogMock.capture).toHaveBeenCalledTimes(1);
         expect(posthogMock.capture).toHaveBeenCalledWith("test_event", {foo: "bar"});
     });
 
     it("opts out and resets when disabled after init", async () => {
-        const {capturePosthogEvent} = await import("../../../src/utils/posthog");
+        const {capturePosthogEvent, initPosthogIfEnabled} = await import("../../../src/utils/posthog");
 
         capturePosthogEvent(
             {isUiAnonymousUsageEnabled: true},
@@ -55,8 +52,7 @@ describe("posthog queue", () => {
             {foo: "bar"}
         );
 
-        await flushPromises();
-        await flushPromises();
+        await initPosthogIfEnabled({isUiAnonymousUsageEnabled: true});
 
         capturePosthogEvent(
             {isUiAnonymousUsageEnabled: false},

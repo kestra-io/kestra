@@ -10,7 +10,7 @@
             <KSFilter
                 :configuration="pluginFilter"
                 :buttons="{
-                    savedFilters: {shown: false}, 
+                    savedFilters: {shown: false},
                     tableOptions: {shown: false}
                 }"
                 :searchInputFullWidth="true"
@@ -65,6 +65,7 @@
     import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
+    import {isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {usePluginFilter} from "../filter/configurations";
@@ -76,7 +77,7 @@
     const route = useRoute();
     const router = useRouter();
     const pluginsStore = usePluginsStore();
-    
+
     const pluginFilter = usePluginFilter();
 
     const props = withDefaults(defineProps<{
@@ -123,10 +124,7 @@
             .filter((plugin, index, self) =>
                 index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
             )
-            .filter(plugin =>
-                plugin.title.toLowerCase().includes(searchInput.value) ||
-                allElements(plugin).some(e => e.toLowerCase().includes(searchInput.value))
-            )
+            .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => isVisible(plugin))
             .sort((a, b) => {
                 const nameA = a.manifest["X-Kestra-Title"].toLowerCase();
@@ -247,3 +245,4 @@
         width: 2em;
     }
 </style>
+

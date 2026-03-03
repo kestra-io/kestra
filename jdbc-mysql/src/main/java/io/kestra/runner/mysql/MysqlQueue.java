@@ -29,6 +29,16 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
     }
 
     @Override
+    protected Condition buildConsumerCondition(Class<?> queueType) {
+        return DSL.or(List.of(
+            AbstractJdbcRepository.field("consumers").isNull(),
+            AbstractJdbcRepository.field("consumers").in(
+                QUEUE_CONSUMERS.allForConsumerNotIn(queueName(queueType))
+            )
+        ));
+    }
+
+    @Override
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate) {
         var select = ctx
             .select(

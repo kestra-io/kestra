@@ -105,7 +105,10 @@ allprojects {
 
         configurations {
             developmentOnly // for dependencies that are needed for development only
-            micronaut
+            micronaut {
+                canBeResolved = false
+                canBeConsumed = false
+            }
         }
 
         // dependencies
@@ -154,6 +157,7 @@ allprojects {
             implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
             implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations'
             implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
+            implementation group: 'org.yaml', name: 'snakeyaml'
             implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'

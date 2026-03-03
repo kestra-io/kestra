@@ -115,6 +115,7 @@ jobs:
         with:
           java-enabled: true
           java-version: 25
+          java-enable-develocity-injection: 'true'
 
       - name: Generate the openapi spec
         run: ./gradlew generateOpenapiSpec

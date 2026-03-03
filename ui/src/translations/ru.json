@@ -7,23 +7,16 @@
     "Editor fontfamily": "Шрифт редактора",
     "Editor fontsize": "Размер шрифта редактора",
     "Editor theme": "Тема редактора",
-    "Finish": "Завершить",
     "Fold auto": "Редактор: автоматическое сворачивание многострочных строк",
     "Fold content lines": "Свернуть многострочные строки",
     "Hover description": "Редактор: Показать описание поля при наведении на key или value",
     "Language": "Язык",
-    "Next step": "Следующий шаг",
     "Per page": "на страницу",
-    "Previous step": "Предыдущий шаг",
-    "Reset guided tour": "Перезапустить Руководство",
     "Set default page": "Установить страницу по умолчанию",
     "Set labels": "Установить метки",
     "Set labels done": "Метки выполнения успешно установлены",
     "Set labels to execution": "Добавить или обновить метки выполнения <code>{id}</code>",
     "Set labels tooltip": "Установить метки для выполнения",
-    "Skip tour": "Пропустить тур",
-    "Skip tutorial": "Пропустить учебник",
-    "Step": "Шаг",
     "Task Id already exist in the flow": "Task Id {taskId} уже существует в flow.",
     "Total": "Всего",
     "Unfold content lines": "Развернуть многострочные строки",
@@ -47,12 +40,20 @@
     "after": "после",
     "aggregation": "Агрегация",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "Задайте вопрос о ваших данных. Пример запроса: Покажите мне уровень успеха моих flows за последние 7 дней."
+      },
       "flow": {
         "enable_instructions": {
           "footer": "Примечание: В настоящее время только Gemini поддерживается в качестве AI-провайдера для Open Source Edition. Для Enterprise Edition, пожалуйста, обратитесь к документации AI Copilot для настройки других провайдеров моделей.\n\nПерезапустите ваш Kestra instance после сохранения конфигурации.",
           "header": "<b>AI Copilot еще не настроен.</b>\n\nЧтобы включить AI Copilot, добавьте следующий фрагмент в файл конфигурации вашего экземпляра Kestra (например, <code>application.yml</code>), заменив <code>geminiApiKey</code> на ваш фактический ключ:"
         },
-        "generating": "Генерация YAML для flow...",
+        "generating": {
+          "app": "Генерация YAML для приложения...",
+          "dashboard": "Генерация Dashboard YAML для вас...",
+          "flow": "Генерация Flow YAML для вас...",
+          "test": "Генерация тестового YAML для вас..."
+        },
         "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow. Пример запроса: Создайте flow, который запускается каждый понедельник в 9 утра.",
         "title": "AI Агент"
       }
@@ -62,7 +63,9 @@
     "api": "API",
     "appBlocks": "Блоки приложения",
     "apps": "Приложения",
-    "assets": "Активы",
+    "assets": {
+      "title": "Активы"
+    },
     "attempt": "Попытка",
     "attempts": "Попытка(и)",
     "auditlogs": "Аудиторские логи",
@@ -369,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Закодируйте <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">секретное значение в Base64</a></strong>",
+          "first": "Закодируйте <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">секретное значение в Base64</a>",
           "intro": "Чтобы создать новый Secret:",
           "second": "Добавьте переменную окружения с именем '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' с указанным выше значением",
           "third": "Перезапустите ваш экземпляр Kestra"
@@ -429,6 +432,7 @@
     "download": "Скачать",
     "download logs": "Скачать логи",
     "download_logos": "Скачать пакет логотипов",
+    "draft_available": "Черновик изменений доступен в редакторе",
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "duration": "Длительность",
     "dynamic": "Динамический",
@@ -498,9 +502,17 @@
           "title": "В настоящее время зависимости отсутствуют."
         }
       },
+      "kill_switches": {
+        "content": "Функция Kill Switch предоставляет механизм на основе UI для остановки проблемных выполнений. Она заменяет команды CLI <code>--skip-executions</code> и <code>--skip-flows</code> на комплексный административный интерфейс.",
+        "title": "У вас еще нет Kill Switches!"
+      },
       "panels": {
-        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Namespace Context) для связанных функций.",
+        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Namespace Files, Blueprints, Context) для связанных функций.",
         "title": "В настоящее время панели не открыты."
+      },
+      "pluginDefaults": {
+        "content": "Параметры плагина по умолчанию позволяют централизованно управлять конфигурацией вашего плагина и делиться ею со всеми flow в вашем namespace.",
+        "title": "У вас еще нет стандартных настроек плагина!"
       },
       "plugins": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
@@ -595,6 +607,7 @@
         "title": "Компоненты Workflow"
       }
     },
+    "execution_started": "Выполнение началось!",
     "execution_starts_progress": "Как только начнется выполнение, вы увидите здесь обновления о ходе выполнения.",
     "execution_status": "Выполнение:",
     "executions": "Выполнения",
@@ -619,6 +632,8 @@
     "export all templates": "Экспортировать все шаблоны",
     "export_csv": "Экспортировать как CSV",
     "exports": "Экспорты",
+    "failed to export plugin defaults": "Не удалось экспортировать значения по умолчанию плагина",
+    "failed to import plugin defaults": "Не удалось импортировать значения по умолчанию плагина",
     "failed to render pdf": "Не удалось отобразить предварительный просмотр PDF",
     "false": "Ложь",
     "feeds": {
@@ -628,8 +643,8 @@
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
     "filter": {
-      "active key value pairs": "Активные пары ключ/значение",
-      "add key value pair": "Добавить пару key/value",
+      "active key value pairs": "Активные пары Key/Value",
+      "add key value pair": "Добавить пару Key/Value",
       "aggregation": {
         "description": "Фильтр по методу агрегации",
         "label": "Агрегация"
@@ -694,10 +709,15 @@
         "parent_description": "Показать только верхнеуровневые/корневые выполнения"
       },
       "key": "Ключ",
+      "kill_switch_type": {
+        "description": "Фильтр по типу kill switch",
+        "label": "Тип"
+      },
       "kind": {
         "description": "Фильтр по виду выполнения",
         "label": "Тип"
       },
+      "kv_pair_selected": "{count} Key/Value пар выбрано",
       "label": "Ярлык",
       "labels": {
         "description": "Фильтр по labels",
@@ -798,6 +818,7 @@
           "labels": "Метки выполнения (формат key:value)",
           "namespace": "Пространство имен, к которому принадлежит выполняемый flow",
           "outputs": "Выходные данные, сгенерированные в ходе выполнения",
+          "parent-execution": "ID родительской Ausführung, который вызвал эту Ausführung",
           "revision": "Версия flow, используемая для этой Ausführung",
           "start-date": "Когда началась выполнение",
           "state": "Текущий состояние выполнения",
@@ -987,6 +1008,7 @@
     "fix_with_ai": "Исправить с помощью AI",
     "flow": "Flow",
     "flow already exists": "Flow уже существует",
+    "flow already exists message": "Поток <code>{id}</code> уже существует в namespace <code>{namespace}</code>. Хотите создать новую ревизию?",
     "flow creation": "Создание flow",
     "flow creation denied in namespace": "У вас нет разрешения на создание flows в namespace `{namespace}`.",
     "flow delete": "Вы уверены, что хотите удалить <code>{flowCount}</code> flow(ы)?",
@@ -997,6 +1019,9 @@
     "flow must have id and namespace": "Flow должен иметь id и namespace.",
     "flow must not be empty": "Flow не должен быть пустым",
     "flow not imported": "Некоторые flow не удалось импортировать",
+    "flow revision latest": "Последняя версия flow",
+    "flow revision original": "Оригинальная ревизия flow",
+    "flow revision specific": "Конкретная ревизия flow",
     "flow source not found": "Источник flow не найден",
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
@@ -1091,7 +1116,6 @@
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
     "light_version": "Легкая версия",
     "line-by-line": "построчно",
-    "live help": "Живая помощь",
     "loaded x dependencies": "{count} зависимости загружены",
     "log expand setting": "Отображение logs по умолчанию",
     "logExporters": "Экспортеры Log",
@@ -1111,6 +1135,7 @@
     "min": "Мин",
     "minutes": "Минуты",
     "missingSource": "Отсутствует источник",
+    "modify inputs": "Изменить inputs",
     "modify_inputs": "Изменить inputs",
     "monogram": "Монограмма",
     "months": "Месяцы",
@@ -1338,45 +1363,130 @@
     "of": "из",
     "ok": "ОК",
     "onboarding": {
-      "finish": "Завершить",
-      "next": "Далее",
-      "no_flows": "Нет доступных flows в namespace учебника.",
-      "previous": "Назад",
-      "skip": "Пропустить ознакомительный тур с продуктом",
+      "actions": {
+        "cancel_tutorial": "Отменить руководство",
+        "complete": "Завершить",
+        "edit_flow_to_continue": "Нажмите Edit flow в верхней панели (справа).",
+        "execute_to_continue": "1. Нажмите Execute в верхней панели (справа).\n2. Укажите значение для <strong>name</strong>.\n3. Нажмите Execute ещё раз в модальном окне.",
+        "finish_tutorial": "Завершить руководство",
+        "next": "Далее",
+        "save_to_continue": "Нажмите Save в верхней панели (справа)."
+      },
+      "cancel_modal": {
+        "confirm": "Отменить руководство",
+        "description": "Вы хотите отменить руководство «Первый Flow»?",
+        "keep": "Продолжить руководство",
+        "title": "Отменить руководство «Первый Flow»"
+      },
+      "editor_hints": {
+        "build_intro": "Создайте свой первый flow шаг за шагом.",
+        "step_1": "# 1) Добавьте id",
+        "step_2": "# 2) Добавьте namespace",
+        "step_3": "# 3) Добавьте input",
+        "step_4": "# 4) Добавьте tasks и вашу первую Python-задачу",
+        "step_5": "# 5) Добавьте cron-триггер"
+      },
+      "finish_actions": {
+        "create_flow": "Создать flow",
+        "explore_blueprints": "Посмотреть шаблоны"
+      },
       "steps": {
-        "0": {
-          "content": "Мы рады видеть вас здесь.<br />Давайте создадим ваш первый flow.",
-          "primary": "Поехали!",
-          "title": "Добро пожаловать в Kestra!"
+        "add_cron_trigger": {
+          "description": "Triggers могут запускать выполнения по расписанию или по внешним событиям (например, webhooks или MQTT-сообщения).<br><br>Теперь добавьте cron-триггер расписания, чтобы этот flow запускался каждые 5 минут.",
+          "title": "Добавьте cron-триггер"
         },
-        "1": {
-          "primary": "Далее",
-          "title": "Выберите сценарий использования<br />и мы покажем вам, как это делается!"
+        "add_id": {
+          "description": "ID — это уникальное имя вашего flow, чтобы вы могли находить его, запускать и последовательно ссылаться на него.<br><br>Теперь добавьте <code>id</code> на корневом уровне.",
+          "title": "Добавьте ID flow"
         },
-        "2": {
-          "content": "Ваш flow написан на YAML с автозаполнением и проверкой синтаксиса. Так просто!",
-          "primary": "Далее",
-          "title": "Редактор кода"
+        "add_input": {
+          "description": "Inputs — это параметры на уровне flow, которые можно использовать внутри задач, чтобы динамически управлять поведением во время выполнения.<br><br>Теперь добавьте input с именем <code>name</code> и типом <code>STRING</code>.",
+          "title": "Добавьте input"
         },
-        "3": {
-          "content": "Вид зависимости обновляется в реальном времени. Попробуйте добавить новый task и посмотрите!",
-          "primary": "Далее",
-          "title": "Вид топологии"
+        "add_input_default": {
+          "description": "Когда flow запускается автоматически, inputs всё равно нуждаются в значениях во время выполнения.<br><br>Input <code>name</code> уже был создан на предыдущем шаге, поэтому добавлять его снова не нужно. Просто задайте значение по умолчанию для существующего input <code>name</code>.",
+          "title": "Задайте значение input по умолчанию"
         },
-        "4": {
-          "content": "\"Execute\" для запуска вашего flow.",
-          "title": "Пора запустить его."
+        "add_log_task": {
+          "description": "Tasks — это единицы работы, которые выполняет ваш flow, определённые как упорядоченный список шагов. Каждой задаче нужен уникальный <code>id</code> и <code>type</code>. Kestra предоставляет множество плагинов задач для внешних систем; здесь мы используем задачу Python Script.<br><br>Синтаксис <code>&#123;&#123; ... &#125;&#125;</code> — это выражение Pebble, используемое для динамического обращения к переменным во время выполнения, например <code>&#123;&#123; inputs.name &#125;&#125;</code> из inputs flow.<br><br>Теперь добавьте первую задачу под <code>tasks</code> с <code>id</code>, <code>type</code> и <code>script</code>, который выводит приветствие.",
+          "title": "Добавьте первую задачу"
         },
-        "5": {
-          "content": "\"Execute\" и посмотрите ваш flow в действии.",
-          "title": "Подтвердите и запустите!"
+        "add_namespace": {
+          "description": "Namespace — это группировка, похожая на папку, которая организует flow по команде, проекту или окружению.<br><br>Теперь добавьте <code>namespace</code> на корневом уровне.",
+          "title": "Добавьте namespace"
         },
-        "6": {
-          "content": "Проверьте вкладки Logs и Outputs, чтобы отслеживать прогресс выполнения.<br /><br />Затем перейдите на страницу Flows, чтобы изучить другие варианты использования.",
-          "primary": "Создать новый flow",
-          "secondary": "Исследовать другие Flows",
-          "title": "Все готово!"
+        "background_runs_info": {
+          "description": "Этот flow теперь будет выполняться в фоне каждые 5 минут.<br><br>Вы можете перейти к обзору Executions в левом меню, чтобы отслеживать запуски по расписанию.",
+          "title": "Запуски по расписанию"
+        },
+        "edit_flow_from_execution": {
+          "description": "Вы можете перейти напрямую из выполнения обратно к определению flow, чтобы быстро вносить изменения.",
+          "title": "Вернитесь в редактор flow"
+        },
+        "execute_flow": {
+          "description": "Запуск начинает выполнение flow с входными значениями, заданными во время выполнения.",
+          "title": "Запустите flow"
+        },
+        "finish": {
+          "description": "Отличное начало. Вы создали flow, запустили его, добавили параметры и расписание.<br><br>Выберите, что делать дальше ...",
+          "title": "Вы завершили руководство «Первый Flow»"
+        },
+        "flow_basics": {
+          "description": "В Kestra <code>flow</code> — это основная единица оркестрации. Вы определяете его в YAML с метаданными и упорядоченными задачами.<br><br>Просмотрите пример структуры ниже, затем продолжайте создавать её шаг за шагом.",
+          "title": "Основы flow"
+        },
+        "save_flow": {
+          "description": "Сохранение фиксирует определение вашего flow, чтобы его можно было выполнить.",
+          "title": "Сохраните flow"
+        },
+        "save_flow_again": {
+          "description": "Теперь у вашего flow есть расписание и значение input по умолчанию для автоматических запусков.",
+          "title": "Сохраните flow"
+        },
+        "view_logs_status": {
+          "description": "Детали выполнения показывают статус запуска, тайминги и выходные логи на уровне задач.<br><br>Теперь откройте детали выполнения и нажмите <code>greet</code> на диаграмме Ганта, чтобы посмотреть логи.",
+          "title": "Проверьте выполнение"
         }
+      },
+      "validation": {
+        "add_cron_trigger_cron": "Добавьте cron-выражение, например: `\"*/5 * * * *\"`.",
+        "add_cron_trigger_section": "Создайте секцию `triggers` с триггером расписания.",
+        "add_cron_trigger_type": "Установите тип триггера в `io.kestra.plugin.core.trigger.Schedule`.",
+        "add_id": "Добавьте ID flow вверху. Пример: `id: hello_flow`.",
+        "add_input_default_defaults": "Добавьте значение по умолчанию для `name`, например: `defaults: \"Kestra\"`.",
+        "add_input_default_id": "Оставьте существующий ID input как `name`.",
+        "add_input_default_section": "Вернитесь в `inputs` и оставьте один существующий input с именем `name` (не добавляйте второй input).",
+        "add_input_id": "Внутри `inputs` добавьте `id: name`.",
+        "add_input_section": "Создайте секцию `inputs` с одним input.",
+        "add_input_type": "Установите тип input в `STRING`.",
+        "add_log_task_id": "Дайте задаче ID, например: `id: greet`.",
+        "add_log_task_message": "Добавьте поле `script` в задачу.",
+        "add_log_task_pebble": "Используйте выражение Pebble в скрипте, чтобы оно использовало значение input (например: `inputs.name`).",
+        "add_log_task_section": "Создайте секцию `tasks` и добавьте первую задачу.",
+        "add_log_task_type": "Установите тип задачи в `io.kestra.plugin.scripts.python.Script`.",
+        "add_namespace": "Добавьте namespace вверху. Пример: `namespace: company.team`.",
+        "complete_step": "Вы почти у цели. Завершите этот шаг, чтобы продолжить.",
+        "edit_flow_from_execution": "Нажмите `Edit flow` в верхней панели, чтобы продолжить.",
+        "execute_flow": "Запустите flow один раз, чтобы продолжить.",
+        "fix_yaml": "Есть небольшая проблема с форматированием YAML. Исправьте её, затем продолжайте.",
+        "save_flow": "Нажмите Save, чтобы продолжить.",
+        "save_flow_again": "Нажмите Save ещё раз, чтобы продолжить.",
+        "view_logs_status": "Откройте детали выполнения и проверьте логи для `greet`."
+      },
+      "welcome": {
+        "additional_help": "Дополнительная помощь",
+        "badge": "Руководство",
+        "blueprints": "Шаблоны",
+        "docs": "Документация",
+        "guided_description": "Узнайте, как создать и запустить свой первый flow с помощью пошаговых инструкций.",
+        "guided_duration": "Рекомендуется большинству пользователей",
+        "guided_title": "Создайте свой первый flow",
+        "headline": "Создайте и запустите свой первый workflow за несколько минут",
+        "self_serve_description": "Перейдите прямо в редактор и создайте свой flow.",
+        "self_serve_note": "Для опытных пользователей",
+        "self_serve_title": "Создать flow с нуля",
+        "slack": "Сообщество Slack",
+        "tutorial": "Руководство"
       }
     },
     "open": "Открыть",
@@ -1436,13 +1546,36 @@
       "toggle": "Песочница",
       "tooltip_persistence": "Если вы выключите и снова включите Playground, информация останется, пока вы находитесь на странице."
     },
-    "pluginDefaults": "Настройки плагина по умолчанию",
+    "plugin defaults exported": "Экспортированы значения по умолчанию плагина",
+    "plugin defaults imported": "Параметры плагина по умолчанию импортированы",
+    "plugin defaults not imported": "Некоторые значения по умолчанию для плагинов не удалось импортировать",
+    "pluginDefaults": {
+      "add": "Добавить плагин по умолчанию",
+      "add_subtitle": "Настройте новый плагин по умолчанию с его свойствами",
+      "cancel": "Отменить",
+      "custom": "Пользовательский плагин",
+      "custom_configure": "Пользовательский тип плагина - настройка с использованием YAML",
+      "custom_placeholder": "Введите тип плагина",
+      "custom_type": "Пользовательский тип плагина",
+      "edit": "Редактировать значение по умолчанию для плагина",
+      "edit_subtitle": "Изменить существующую конфигурацию плагина по умолчанию",
+      "form": "Форма",
+      "predefined": "Предопределенный плагин",
+      "select_predefined": "Выберите Предопределенный Плагин",
+      "show_yaml": "Показать YAML",
+      "title": "Настройки плагина по умолчанию",
+      "update": "Обновить плагин по умолчанию",
+      "use_custom": "Использовать пользовательский",
+      "yaml": "YAML",
+      "yaml_configuration": "Конфигурация YAML"
+    },
     "pluginPage": {
       "alt": "Иконка плагинов",
       "search": "Поиск среди {count}+ плагинов",
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
       "title2": "Ищите tasks и triggers для создания вашего flow."
     },
+    "plugin_default_already_exists": "Плагин по умолчанию для <code>{type}</code> уже существует.",
     "plugins": {
       "name": "Плагин",
       "names": "Плагины",
@@ -1458,6 +1591,7 @@
       "label": "Предварительный просмотр",
       "view": "Просмотр"
     },
+    "product_tour": "Тур по продукту",
     "properties": {
       "hidden": "Скрыто в таблице",
       "hint": "Выберите видимые столбцы",
@@ -1477,10 +1611,14 @@
     "remove_bookmark": "Вы уверены, что хотите удалить эту закладку?",
     "replay": "Повтор",
     "replay confirm": "Вы уверены, что хотите повторить это выполнение <code>{id}</code> и создать новое?",
+    "replay execution description": "Это создаст новое выполнение на основе выбранного выполнения.",
+    "replay execution title": "Повторное выполнение",
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
+    "replay inputs": "Входные данные",
     "replay latest revision": "Повтор с использованием последней редакции",
     "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
+    "replay using": "Повторное воспроизведение с использованием",
     "replay with inputs": "Воспроизвести с inputами",
     "replayed": "Выполнение повторено",
     "required field": "Обязательное поле",
@@ -1502,6 +1640,7 @@
     "resumed confirm": "Вы уверены, что хотите возобновить выполнение <code>{id}</code>?",
     "resumed done": "Выполнение возобновлено",
     "resumed title": "Возобновить выполнение <code>{id}</code>",
+    "reuse original inputs": "Повторное использование оригинальных input",
     "reuse_original_inputs": "Повторно использовать оригинальные inputы",
     "revision": "Редакция",
     "revision deleted": "Ревизия {revision} была успешно удалена",
@@ -1642,7 +1781,7 @@
       },
       "confirm": {
         "config_title": "Подтвердите, что конфигурация действительна",
-        "confirm": "Подтвердить",
+        "confirm": "Создать администратора",
         "not_valid": "Нет, это недействительно",
         "valid": "Да, это допустимо"
       },
@@ -1651,7 +1790,7 @@
         "firstName": "Имя",
         "lastName": "Фамилия",
         "password": "Пароль",
-        "password_requirements": "Пароль должен содержать не менее 8 символов, включая как минимум 1 заглавную букву и 1 цифру."
+        "password_requirements": "Не менее 8 символов, включая 1 заглавную букву и 1 цифру."
       },
       "login": "Войти",
       "logout": "Выход",
@@ -1659,38 +1798,40 @@
         "complete": "Запустить Kestra UI",
         "config": "Проверить конфигурацию",
         "survey": "Расскажите нам больше",
-        "user": "Создайте ваш аккаунт"
+        "user": "Создать администратора"
       },
       "subtitles": {
         "complete": "Настройка успешно завершена!",
         "config": "Вот детали вашей конфигурации",
-        "survey": "Помогите нам улучшить Kestra Open Source Edition",
-        "user": "Настройте свой экземпляр, создав учетную запись"
+        "survey": "Извините, но я не вижу текст, который нужно перевести. Пожалуйста, предоставьте текст после \"----------\", чтобы я мог помочь с переводом.",
+        "user": "Защитите ваш экземпляр, чтобы начать."
       },
       "success": {
         "subtitle": "Вы готовы!",
         "title": "Поздравляем!"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "Личное использование",
-        "company_size": "Каков размер вашей компании?",
+        "company_11_50": "Личный проект",
+        "company_1_10": "Обучение / исследование",
+        "company_250_plus": "Развертывание в производственной среде",
+        "company_50_250": "Оценка для моей команды/компании",
+        "company_personal": "Другое",
+        "company_size": "Какова ваша основная цель с Kestra?",
         "continue": "Продолжить",
-        "newsletter": "Подпишитесь на новостную рассылку Kestra — оставайтесь в курсе последних функций и изменений.",
+        "newsletter": "Получайте обновления о продукте по электронной почте.",
+        "newsletter_heading": "Будьте в курсе",
         "skip": "Пропустить",
-        "use_case": "Каков ваш основной сценарий использования?",
+        "use_case": "Для чего вы планируете это использовать?",
         "use_case_business": "Бизнес-процессы",
         "use_case_data": "Рабочие процессы данных",
         "use_case_infrastructure": "Автоматизация инфраструктуры",
-        "use_case_ml": "ML/AI конвейеры",
-        "use_case_other": "Другое"
+        "use_case_ml": "ML конвейеры",
+        "use_case_other": "Другое",
+        "use_case_scheduling": "Планирование и повторяющиеся задания"
       },
       "titles": {
-        "survey": "Расскажите подробнее",
-        "user": "Создать аккаунт"
+        "survey": "Помогите нам улучшить Kestra OSS",
+        "user": "Создать администратора"
       },
       "troubleshooting": "Забыли пароль?",
       "validation": {
@@ -1719,6 +1860,10 @@
     "side-by-side": "бок о бок",
     "slack support": "Задайте любой вопрос через Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Мы не смогли подключиться к вашей Kestra instance. Убедитесь, что она запущена, затем обновите страницу.",
+        "title": "Соединение прервано"
+      },
       "loading_execution": "Произошла ошибка при загрузке выполнения"
     },
     "source": "Источник",
@@ -1882,6 +2027,7 @@
         "text": "Задайте любой вопрос в нашем сообществе Slack. Если вы застряли, мы здесь, чтобы помочь вам. ✋",
         "title": "Нужна помощь?"
       },
+      "menu": "Welcome",
       "tour": {
         "text": "Выберите ваш сценарий использования и следуйте пошаговому руководству, чтобы изучить возможности и функции Kestra. ❤️",
         "title": "Пройдите экскурсию по продукту"
@@ -1891,14 +2037,8 @@
         "title": "Учебник"
       }
     },
-    "welcome aboard": "🚀 Добро пожаловать в Kestra!",
-    "welcome aboard content": "Используйте наше Руководство, чтобы создать ваш первый flow и ознакомьтесь с Blueprints для поиска дополнительных примеров.",
-    "welcome button create": "Начать ознакомительный тур с продуктом",
-    "welcome display require": "Запустите ваш <strong>первый flow</strong>, чтобы начать",
     "welcome_page": {
       "guide": "Нужна помощь в выполнении вашего первого flow?",
-      "start": "Давайте запустим ваш первый workflow.",
-      "wel_text": "Добро пожаловать!",
       "welcome": "Добро пожаловать в Kestra"
     },
     "wordmark_colors": "Цвета логотипа адаптируются в зависимости от фона, в то время как иконка остается без фона, когда размещена на темном фоне.",

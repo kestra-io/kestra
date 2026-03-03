@@ -2,11 +2,9 @@ package io.kestra.webserver.services.ai;
 
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
-import io.kestra.core.utils.IdUtils;
 import io.micrometer.core.instrument.Clock;
 
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public record MetadataAppenderChatModelListener(String instanceUid, String provider, String spanName, Supplier<AiService.ConversationMetadata> conversationMetadataGetter) implements ChatModelListener {

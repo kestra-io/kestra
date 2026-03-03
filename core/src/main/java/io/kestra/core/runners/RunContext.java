@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Plugin;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+@JsonSerialize(using = RunContextSerializer.class)
 public abstract class RunContext implements PropertyContext {
 
     /**
@@ -235,4 +237,9 @@ public abstract class RunContext implements PropertyContext {
      * @return an InputAndOutput that can be used to work with inputs and outputs.
      */
     public abstract InputAndOutput inputAndOutput();
+
+    /**
+     * Get access to the SDK handler which allows to interact easily with the Kestra API via the SDK.
+     */
+    public abstract SDK sdk();
 }

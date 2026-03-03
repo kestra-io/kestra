@@ -25,6 +25,7 @@ interface RenderOptions {
     permalink?: boolean;
     html?: boolean;
     variant?: RenderVariant;
+    showCopyButtons?: boolean;
 }
 
 export async function render(markdown: string, options: RenderOptions = {}) {
@@ -85,15 +86,15 @@ export async function render(markdown: string, options: RenderOptions = {}) {
     });
 
     if (variant === "enhanced") {
-        applyEnhancedRenderers(md);
+        applyEnhancedRenderers(md, options.showCopyButtons ?? true);
     } else {
         md.renderer.rules.table_open = () => "<table class=\"table\">\n";
     }
     return md.render(markdownWithAlerts);
 }
 
-function applyEnhancedRenderers(md: any) {
-    const defaultHeadingOpen = md.renderer.rules.heading_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+function applyEnhancedRenderers(md: any, showCopyButtons: boolean) {
+    const defaultHeadingOpen = md.renderer.rules.heading_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, _env: any, self: any) => self.renderToken(tokens, idx, options));
     md.renderer.rules.heading_open = (tokens: any, idx: number, options: any, env: any, self: any) => {
         const token = tokens[idx];
         const level = typeof token.tag === "string" && /^h\d$/i.test(token.tag) ? Number(token.tag.substring(1)) : null;
@@ -104,7 +105,7 @@ function applyEnhancedRenderers(md: any) {
         return defaultHeadingOpen(tokens, idx, options, env, self);
     };
 
-    const defaultTableOpen = md.renderer.rules.table_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    const defaultTableOpen = md.renderer.rules.table_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, _env: any, self: any) => self.renderToken(tokens, idx, options));
     md.renderer.rules.table_open = (tokens: any, idx: number, options: any, env: any, self: any) => {
         const token = tokens[idx];
         token.attrSet("class", "doc-table");
@@ -112,7 +113,7 @@ function applyEnhancedRenderers(md: any) {
         return defaultTableOpen(tokens, idx, options, env, self);
     };
 
-    const defaultFence = md.renderer.rules.fence?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    const defaultFence = md.renderer.rules.fence?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, _env: any, self: any) => self.renderToken(tokens, idx, options));
 
     md.renderer.rules.fence = (tokens: any, idx: number, options: any, env: any, self: any) => {
         const token = tokens[idx];
@@ -124,14 +125,18 @@ function applyEnhancedRenderers(md: any) {
             ? highlighted.replace("<pre", `<pre id="${codeId}"`)
             : highlighted;
 
+        const copyButton = showCopyButtons
+            ? `<button type="button" class="doc-copy-button"
+            data-copy-target="${codeId}" aria-label="Copy code block">
+        <span class="doc-copy-label">Copy</span>
+    </button>`
+            : "";
+
         return `
 <div class="doc-code-block" data-language="${langName.toLowerCase()}">
   <div class="doc-code-toolbar">
     <span class="doc-code-language">${langName.toUpperCase()}</span>
-    <button type="button" class="doc-copy-button"
-            data-copy-target="${codeId}" aria-label="Copy code block">
-        <span class="doc-copy-label">Copy</span>
-    </button>
+    ${copyButton}
   </div>
   ${enriched}
 </div>`;

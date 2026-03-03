@@ -30,10 +30,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "List execution counts for a list of flows.",
+    title = "Count executions for flows or namespaces (deprecated).",
     description = """
-        **This task is deprecated**, please use the `io.kestra.plugin.kestra.executions.Count` task instead.
-        This can be used to send an alert if a condition is met about execution counts."""
+        Deprecated; use `io.kestra.plugin.kestra.executions.Count` instead.
+
+        Fetches execution counts in a date range, optionally filtered by states, flows, or namespaces. Keeps rows where the rendered `expression` returns true (e.g., `{{ eq count 0 }}` to alert on inactivity). You must provide either `flows` or `namespaces`, otherwise the task errors."""
 )
 @Plugin(
     examples = {

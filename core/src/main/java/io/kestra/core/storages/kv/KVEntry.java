@@ -34,7 +34,14 @@ public record KVEntry(String namespace, String key, Integer version, @Nullable S
         );
     }
 
-    public static KVEntry from(PersistedKvMetadata persistedKvMetadata) throws IOException {
-        return new KVEntry(persistedKvMetadata.getNamespace(), persistedKvMetadata.getName(), persistedKvMetadata.getVersion(), persistedKvMetadata.getDescription(), persistedKvMetadata.getCreated(), persistedKvMetadata.getUpdated(), persistedKvMetadata.getExpirationDate());
+    public static KVEntry from(PersistedKvMetadata persistedKvMetadata) {
+        return new KVEntry(
+            persistedKvMetadata.getNamespace(),
+            persistedKvMetadata.getName(),
+            persistedKvMetadata.getVersion(),
+            persistedKvMetadata.getDescription(),
+            persistedKvMetadata.getCreated(),
+            persistedKvMetadata.getUpdated(),
+            persistedKvMetadata.getExpirationDate());
     }
 }

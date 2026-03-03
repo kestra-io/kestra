@@ -1,5 +1,7 @@
 package io.kestra.core.models.annotations;
 
+import io.kestra.core.models.enums.MonacoLanguages;
+
 import java.lang.annotation.*;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -40,4 +42,10 @@ public @interface PluginProperty {
      * @return true if this property needs to be hidden from the documentation.
      */
     boolean hidden() default false;
+
+    /**
+     *
+     * @return the language used for the property
+     */
+    MonacoLanguages language() default MonacoLanguages.NONE;
 }

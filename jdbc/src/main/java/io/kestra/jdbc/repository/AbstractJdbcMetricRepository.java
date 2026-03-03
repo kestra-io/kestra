@@ -9,7 +9,6 @@ import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
@@ -36,9 +35,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
-                                        QueueService queueService,
                                         JdbcFilterService filterService) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
 
         this.filterService = filterService;
     }
@@ -185,10 +183,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).eq(execution.getId()))
+                    .where(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
     }
@@ -201,12 +196,19 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
+                    .where(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
                     .execute();
             });
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
     }
 
     private List<String> queryDistinct(String tenantId, Condition condition, String field) {
@@ -361,7 +363,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
                 filterService,
                 filters,
                 getFieldsMapping()
-            );
+            ).and(NORMAL_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {

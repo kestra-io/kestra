@@ -67,13 +67,14 @@
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
-    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET, type Node} from "../utils/types";
+    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types";
+    import type {Types, Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
         elements: cytoscape.ElementDefinition[];
         selected: Node["id"] | undefined;
-        subtype?: typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET;
+        subtype?: Types;
     }>();
 
     const focusSelectedRow = () => {

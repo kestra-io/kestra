@@ -2,23 +2,21 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Data;
-import io.kestra.core.models.flows.DependsOn;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.RenderableInput;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -49,8 +47,6 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -60,7 +56,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class FlowInputOutput {
-    private static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
+
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
 
     private final StorageInterface storageInterface;
@@ -339,13 +335,13 @@ public class FlowInputOutput {
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
-                  Set<InputOutputValidationException> exceptions =  e.getConstraintViolations().stream()
+                    Set<InputOutputValidationException> exceptions =  e.getConstraintViolations().stream()
                       .map(c-> InputOutputValidationException.of(c.getMessage(), finalInput))
                       .collect(Collectors.toSet());
                     resolvable.resolveWithError(exceptions);
                 }
             }
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException | ConstraintViolationException e){
             resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage(), input));
         }
         catch (Exception e) {
@@ -427,18 +423,9 @@ public class FlowInputOutput {
                     if (current == null && Boolean.FALSE.equals(output.getRequired())) {
                         return Optional.of(new AbstractMap.SimpleEntry<>(output.getId(), null));
                     }
-                    return parseData(execution, output, current)
-                        .map(entry -> {
-                            if (output.getType().equals(Type.SECRET)) {
-                                return new AbstractMap.SimpleEntry<>(
-                                    entry.getKey(),
-                                    EncryptedString.from(entry.getValue().toString())
-                                );
-                            }
-                            return entry;
-                        });
+                    return parseData(execution, output, current);
                 }
-                catch (IllegalArgumentException e){
+                catch (IllegalArgumentException | ConstraintViolationException e){
                     throw InputOutputValidationException.of(e.getMessage(), output);
                 }
                 catch (Exception e) {
@@ -466,11 +453,11 @@ public class FlowInputOutput {
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
             data.getId(),
-            parseType(execution, data.getType(), data.getId(), elementType, current)
+            parseType(execution, data.getType(), data.getId(), elementType, current, data)
         ));
     }
 
-    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
+    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current, Data data) throws Exception {
         try {
             return switch (type) {
                 case SELECT, ENUM, STRING, EMAIL -> current.toString();
@@ -478,7 +465,10 @@ public class FlowInputOutput {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
-                    yield EncryptionService.encrypt(secretKey.get(), current.toString());
+                        SecretInput secretInput = (SecretInput) data;
+                        secretInput.validate(current.toString());
+                        String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
+                        yield  EncryptedString.from(encrypted);
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
@@ -501,12 +491,11 @@ public class FlowInputOutput {
                 case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current :  JacksonMapper.toObject(current.toString());
                 case YAML -> (current instanceof Map || current instanceof Collection<?>) ? current : YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
-                    Matcher matcher = URI_PATTERN.matcher(current.toString());
-                    if (matcher.matches()) {
-                        yield current.toString();
-                    } else {
+                    URI uri = java.net.URI.create(current.toString());
+                    if (uri.getScheme() == null) {
                         throw new IllegalArgumentException("Invalid URI format.");
                     }
+                    yield current.toString();
                 }
                 case ARRAY, MULTISELECT -> {
                     List<?> asList;
@@ -521,7 +510,7 @@ public class FlowInputOutput {
                         yield asList.stream()
                             .map(throwFunction(element -> {
                                 try {
-                                    return parseType(execution, elementType, id, null, element);
+                                    return parseType(execution, elementType, id, null, element, data);
                                 } catch (Throwable e) {
                                     throw new IllegalArgumentException("Unable to parse array element as `" + elementType + "` on `" + element + "`", e);
                                 }
@@ -532,7 +521,7 @@ public class FlowInputOutput {
                     }
                 }
             };
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | ConstraintViolationException e) {
             throw e;
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");

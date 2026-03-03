@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 ARG KESTRA_PLUGINS=""
 ARG APT_PACKAGES=""
@@ -13,6 +13,7 @@ COPY --chown=kestra:kestra docker /
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
+    apt-get install curl -y && \
     if [ -n "${APT_PACKAGES}" ]; then apt-get install -y --no-install-recommends ${APT_PACKAGES}; fi && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \

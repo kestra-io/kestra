@@ -71,8 +71,12 @@
                 <div class="position-absolute bottom-right">
                     <slot name="buttons" />
                 </div>
+                <div class="editor-footer-row">
+                    <slot name="footer-row" />
+                </div>
             </div>
         </div>
+
         <Teleport v-if="showWidgetContent" to=".editor-content-widget-content">
             <slot name="widget-content" />
         </Teleport>
@@ -96,7 +100,7 @@
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import {useScrollMemory} from "../../composables/useScrollMemory";
-
+    import {findDuplicateTaskIds} from "../../utils/yamlValidation.ts"
     const {t} = useI18n()
 
     const props = defineProps({
@@ -121,7 +125,7 @@
         minimap: {type: Boolean, default: false},
         creating: {type: Boolean, default: false},
         label: {type: String, default: undefined},
-        shouldFocus: {type: Boolean, default: true},
+        shouldFocus: {type: Boolean, default: false},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
         scrollKey: {type: String, default: undefined},
@@ -187,6 +191,34 @@
         }
     );
 
+    watch(
+        () => props.modelValue,
+        (newValue) => {
+            if (!editor || !isCodeEditor(editor) || !monacoEditor.value) return;
+
+            const model = editor.getModel();
+            if (!model) return;
+
+            // Only run for YAML files
+            if (props.lang !== "yaml") return;
+
+            const duplicateMarkers = findDuplicateTaskIds(newValue);
+
+            monacoEditor.value.monaco.editor.setModelMarkers(
+                model,
+                "duplicate-task-ids",
+                duplicateMarkers.map((m) => ({
+                    startLineNumber: m.startLineNumber,
+                    startColumn: m.startColumn,
+                    endLineNumber: m.endLineNumber,
+                    endColumn: m.endColumn,
+                    message: m.message,
+                    severity: monacoEditor.value!.monaco.MarkerSeverity.Error,
+                }))
+            );
+        },
+        {immediate: true}
+    );
 
     const themeComputed = computed(() => {
         return useMiscStore().theme;
@@ -276,7 +308,7 @@
         const settingsEditorFontSize = localStorage.getItem("editorFontSize")
 
         return {
-            
+
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily")
                 ? localStorage.getItem("editorFontFamily")
@@ -335,25 +367,24 @@
         }
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
-        
-        
+
         if (props.scrollKey && scrollMemory) {
             const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
             if (savedState) {
                 codeEditor.restoreViewState(savedState);
                 codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
             }
-            
+
             const top = scrollMemory.loadData<number>("scrollTop", 0);
             if (typeof top === "number") {
                 codeEditor.setScrollTop(top);
             }
-            
+
             const throttledSave = useThrottleFn(() => {
                 scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
                 scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop");
             }, 100);
-            
+
             codeEditor.onDidScrollChange?.(throttledSave);
         }
 
@@ -390,6 +421,17 @@
                 editor.getAction("editor.action.formatDocument")?.run();
             }
         }
+
+        editor.addAction({
+            id: "moveCursor",
+            label: "Move cursor",
+            run: (ed, args?: { lineNumber: number; column: number }) => {
+                if (!args?.lineNumber || !args?.column) return;
+                ed.setPosition({lineNumber: args.lineNumber, column: args.column});
+                ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
+                ed.focus();
+            },
+        });
 
         editor.addAction({
             id: "kestra-execute",
@@ -726,6 +768,10 @@
     z-index: 1001;
 }
 
+:not(.blueprint-container)  .ks-editor {
+    z-index: 1;
+}
+
 .el-form .ks-editor {
     display: flex;
     width: 100%;
@@ -801,6 +847,7 @@
         .editor-wrapper {
             min-width: 75%;
             width: 100%;
+            padding-bottom: 4rem; // reserve space for footer-row overlay
 
             .monaco-hover-content {
                 h4 {
@@ -833,6 +880,22 @@
                 padding: 0;
                 margin: 0;
                 //gap: .5rem;
+            }
+        }
+
+        .editor-footer-row {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1100;
+            pointer-events: none; // slot content should enable pointer-events
+            display: flex;
+            justify-content: center;
+
+            > * {
+                pointer-events: auto;
+                width: 100%;
             }
         }
     }

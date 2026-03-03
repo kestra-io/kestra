@@ -41,12 +41,11 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a list of tasks repeatedly until the expected condition is met.",
+    title = "Repeat tasks until a condition becomes true.",
     description = """
-        Use this task if your workflow requires blocking calls polling for a job to finish or for some external API to return a specific HTTP response.
+        Runs the child tasks in a loop, evaluating `condition` after each iteration. Condition is rendered and coerced to boolean; loop stops when true or when `maxIterations`/`maxDuration` in `checkFrequency` are hit (optionally failing via `failOnMaxReached`).
 
-        You can access the outputs of the nested tasks in the `condition` property. The `condition` is evaluated after all nested task runs finish.
-        """
+        Iteration count and outputs are available under `outputs.loop.*` for conditions or downstream use."""
 )
 @Plugin(
     examples = {
@@ -182,8 +181,13 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }
-
-        Instant creationDate = parentTaskRun.getState().getHistories().getFirst().getDate();
+        Instant creationDate = parentTaskRun.getState()
+            .getHistories()
+            .reversed()
+            .stream()
+            .filter(history -> history.getState().isCreated())
+            .findFirst().get()
+            .getDate();
         Optional<Duration> maxDuration = runContext.render(this.getCheckFrequency().getMaxDuration()).as(Duration.class);
         if (maxDuration.isPresent()
             && creationDate != null

@@ -40,9 +40,11 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Pause the current execution and wait for approval (either by humans or other automated processes).",
-    description = "All tasks downstream from the Pause task will be put on hold until the execution is manually resumed from the UI.\n\n" +
-        "The Execution will be in a Paused state, and you can either manually resume it by clicking on the \"Resume\" button in the UI or by calling the POST API endpoint `/api/v1/executions/{executionId}/resume`. The execution can also be resumed automatically after the `pauseDuration`."
+    title = "Pause the flow until it is resumed.",
+    description = """
+        Stops downstream task scheduling and moves the execution to PAUSED. Resume manually from the UI, via the `/executions/{id}/resume` API, or automatically after `pauseDuration` if set.
+
+        You can declare `onResume` inputs to collect human/automation feedback before continuing."""
 )
 @Plugin(
     examples = {

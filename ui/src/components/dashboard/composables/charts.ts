@@ -47,7 +47,7 @@ export function defaultConfig(override: {
 
     return _merge(
         {
-            animation: false,
+            animation: false as const,
             responsive: true,
             maintainAspectRatio: false,
             layout: {
@@ -90,7 +90,7 @@ export function defaultConfig(override: {
                     display: false,
                 },
                 tooltip: {
-                    mode: "index",
+                    mode: "index" as const,
                     intersect: false,
                     enabled: false,
                     boxPadding: 5,
@@ -197,7 +197,7 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
             query: {
                 ...query,
                 ...filters,
-                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "P30D"
+                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"
             },
         });
     }
@@ -227,7 +227,7 @@ export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     }
 
     hex = getSchemeValue(result as any, "logs");
-    if (hex) {
+    if (hex && hex !== "transparent") {
         return hex;
     }
 

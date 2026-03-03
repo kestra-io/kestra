@@ -26,7 +26,11 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create or modify a Key-Value pair."
+    title = "Create or update a key-value entry.",
+    description = """
+        Renders `key`, `value`, and `namespace` (defaults to flow namespace) and writes to the KV store. Supports TTL, description, type coercion (`kvType`), and overwrite control.
+
+        If `kvType` is set, the string value is parsed/validated accordingly (number, boolean, datetime, duration, JSON, etc.)."""
 )
 @Plugin(
     examples = {

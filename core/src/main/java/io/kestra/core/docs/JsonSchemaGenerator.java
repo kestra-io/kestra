@@ -31,6 +31,7 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
+import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
@@ -52,7 +53,8 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.*;
-import java.time.*;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -66,7 +68,6 @@ import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 @Slf4j
 public class JsonSchemaGenerator {
 
-    private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
     private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
@@ -368,10 +369,6 @@ public class JsonSchemaGenerator {
                     return List.of(
                         javaType.getTypeParameters().getFirst()
                     );
-                } else if (isAssignableFromResolvedAsString(erasedType)) {
-                    return List.of(
-                        javaType.getTypeParameters().getFirst()
-                    );
                 } else {
                     return List.of(
                         javaType.getTypeParameters().getFirst(),
@@ -395,6 +392,9 @@ public class JsonSchemaGenerator {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
                 if (pluginPropertyAnnotation.beta()) {
                     memberAttributes.put("$beta", true);
+                }
+                if (pluginPropertyAnnotation.language() != MonacoLanguages.NONE) {
+                    memberAttributes.put("$language", pluginPropertyAnnotation.language().toString());
                 }
                 if (pluginPropertyAnnotation.internalStorageURI()) {
                     memberAttributes.put("$internalStorageURI", true);
@@ -695,15 +695,6 @@ public class JsonSchemaGenerator {
         });
     }
 
-    private boolean isAssignableFromResolvedAsString(Class<?> declaredType) {
-        for (Class<?> clazz : TYPES_RESOLVED_AS_STRING) {
-            if (clazz.isAssignableFrom(declaredType)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {
         if (declaredType.getErasedType() == Task.class) {
             return getRegisteredPlugins()
@@ -966,6 +957,9 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("$beta")) {
             objectNode.set("$beta", mainClassDef.get("$beta"));
+        }
+        if (mainClassDef.has("$language")) {
+            objectNode.set("$language", mainClassDef.get("$language"));
         }
     }
 

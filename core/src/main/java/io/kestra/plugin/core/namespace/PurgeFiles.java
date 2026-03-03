@@ -26,8 +26,11 @@ import java.util.concurrent.atomic.AtomicLong;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge namespace files for one or multiple namespaces.",
-    description = "This task purges namespace files (and their versions) stored in Kestra. You can restrict the purge to specific namespaces (or a namespace glob pattern), optionally include child namespaces, and filter files by a glob pattern. The purge strategy is controlled via `behavior` (e.g. keep the last N versions and/or delete versions older than a given date)."
+    title = "Purge Namespace files (and versions).",
+    description = """
+        Deletes files from Namespace storage using a purge `behavior` (default keeps 1 latest version), optional file glob, and Namespace filters (`namespaces` list or `namespacePattern`). Child Namespaces are included by default.
+
+        Use to clean old asset versions at scale; behavior controls retention (keepAmount/before)."""
 )
 @Plugin(
     examples = {

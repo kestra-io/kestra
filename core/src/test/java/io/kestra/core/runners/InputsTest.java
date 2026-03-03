@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -26,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
-import jakarta.validation.ConstraintViolationException;
 import reactor.core.publisher.Flux;
 
 import java.io.*;
@@ -157,7 +157,7 @@ public class InputsTest {
     @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "tenant1")
     void allValidInputs() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs, "tenant1");
-
+        EncryptedString encrypted = (EncryptedString) typeds.get("secret");
         assertThat(typeds.get("string")).isEqualTo("myString");
         assertThat(typeds.get("int")).isEqualTo(42);
         assertThat(typeds.get("float")).isEqualTo(42.42F);
@@ -180,7 +180,8 @@ public class InputsTest {
         assertThat(typeds.get("validatedDuration")).isEqualTo(Duration.parse("PT15S"));
         assertThat(typeds.get("validatedFloat")).isEqualTo(0.42F);
         assertThat(typeds.get("validatedTime")).isEqualTo(LocalTime.parse("11:27:49"));
-        assertThat(typeds.get("secret")).isNotEqualTo("secret"); // secret inputs are encrypted
+        assertThat(encrypted.getType()).isEqualTo(EncryptedString.TYPE);
+        assertThat(encrypted.getValue()).isNotEqualTo("secret"); // secret should be encrypted
         assertThat(typeds.get("array")).isInstanceOf(List.class);
         assertThat((List<Integer>) typeds.get("array")).hasSize(3);
         assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
@@ -336,13 +337,13 @@ public class InputsTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "tenant11")
-    void inputFailed() {
+    void inputUriFailed() {
         HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("uri", "http:/bla");
+        map.put("uri", "justastring");
 
         InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(map, "tenant11"));
 
-        assertThat(e.getMessage()).contains(  "Invalid value for input `uri`. Cause: Invalid URI format." );
+        assertThat(e.getMessage()).contains("Invalid value for input `uri`. Cause: Invalid URI format.");
     }
 
     @Test
@@ -482,6 +483,41 @@ public class InputsTest {
             "Invalid value for input `multi`. Cause: value `H` doesn't match the values `[A, B, C]`"
         );
     }
+
+    @Test
+    @LoadFlows(value = "flows/valids/secret-input-validation.yaml")
+    void secretInputValidation(){
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "secret-input-validation").get();
+        InputOutputValidationException ex = assertThrows(InputOutputValidationException.class, ()-> flowIO.readExecutionInputs(
+            flow,
+            Execution.builder()
+                .id("test")
+                .namespace(flow.getNamespace())
+                .tenantId(flow.getTenantId())
+                .flowRevision(1)
+                .flowId(flow.getId())
+                .build(),
+            Map.of("input1", "any")
+        ));
+        assertThat(ex.getMessage()).isEqualTo("Invalid value for input `input1`. Cause: input1: it must match the pattern `(?=.{8,})(?=.*[A-Z])(?=.*[0-9]).*`");
+
+        Map< String , Object> resolvedInputs = flowIO.readExecutionInputs(
+            flow,
+            Execution.builder()
+                .id("test")
+                .namespace(flow.getNamespace())
+                .tenantId(flow.getTenantId())
+                .flowRevision(1)
+                .flowId(flow.getId())
+                .build(),
+            Map.of("input1", "1245Abc@$Zk")
+        );
+        EncryptedString encryptedString = (EncryptedString) resolvedInputs.get("input1");
+        assertThat(encryptedString).isNotNull();
+
+    }
+
+
     private URI createFile() throws IOException {
         File tempFile = File.createTempFile("file", ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());

@@ -51,9 +51,9 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/waitfor-child-task-warning.yaml"})
+    @LoadFlows(value = {"flows/valids/waitfor-child-task-warning.yaml"}, tenantId = "waitforchildtaskwarning")
     void waitForChildTaskWarning() throws Exception {
-        loopUntilTestCaseTest.waitForChildTaskWarning();
+        loopUntilTestCaseTest.waitForChildTaskWarning("waitforchildtaskwarning");
     }
 
     @Test
@@ -159,9 +159,9 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     }
 
     @RetryingTest(5)
-    @LoadFlows({"flows/valids/for-each-item-subflow-sleep.yaml",
-        "flows/valids/for-each-item-no-wait.yaml"})
+    @LoadFlows(value = {"flows/valids/for-each-item-subflow-sleep.yaml",
+        "flows/valids/for-each-item-no-wait.yaml"}, tenantId = "foreachitemnowait")
     protected void forEachItemNoWait() throws Exception {
-        forEachItemCaseTest.forEachItemNoWait();
+        forEachItemCaseTest.forEachItemNoWait("foreachitemnowait");
     }
 }

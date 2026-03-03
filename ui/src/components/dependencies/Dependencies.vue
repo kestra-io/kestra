@@ -56,6 +56,7 @@
 
     import {useDependencies} from "./composables/useDependencies";
     import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";
+    import type {Types} from "./utils/types";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
 
@@ -74,7 +75,7 @@
         }>;
     }>();
 
-    const SUBTYPE = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
+    const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
 
     const container = ref(null);
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);

@@ -6,6 +6,9 @@ import io.kestra.core.utils.Either;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public interface QueueInterface<T> extends Closeable, Pauseable {
@@ -27,11 +30,22 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
         emitAsync(null, messages);
     }
 
+    default void emitOnly(T message) throws QueueException {
+        emitOnly(null, message);
+    }
+
+    default void emitOnly(String consumerGroup, T message) throws QueueException {
+        throw new UnsupportedOperationException();
+    }
+
+
     void emitAsync(String consumerGroup, List<T> messages) throws QueueException;
 
     default void delete(T message) throws QueueException {
         delete(null, message);
     }
+
+    Integer queueLagForConsumerGroup(String consumerGroup, Class<?> queueType);
 
     void delete(String consumerGroup, T message) throws QueueException;
 

@@ -3,6 +3,7 @@ package io.kestra.core.models.tasks.runners;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.KilledException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.PluginVersioning;
 import io.kestra.core.models.WorkerJobLifecycle;
@@ -155,5 +156,26 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
      */
     protected void onKill(final Runnable runnable) {
         this.killable.set(runnable);
+    }
+
+    /**
+     * Throws a {@link KilledException} if this task runner was killed.
+     */
+    protected void checkKilled() {
+        if (isKilled.get()) {
+            throw new KilledException();
+        }
+    }
+
+    /**
+     * Throws a {@link KilledException} with contextual phase information
+     * if this task runner was killed.
+     *
+     * @param message the error message.
+     */
+    protected void checkKilled(String message) {
+        if (isKilled.get()) {
+            throw new KilledException(message);
+        }
     }
 }

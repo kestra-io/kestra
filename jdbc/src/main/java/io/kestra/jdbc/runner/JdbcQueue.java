@@ -8,6 +8,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.*;
+import io.kestra.core.runners.WorkerGroupExecutorInterface;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
@@ -170,6 +171,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             .increment();
     }
 
+    @Override
     public void emitOnly(String consumerGroup, T message) throws QueueException{
         this.produce(consumerGroup, queueService.key(message), message, true);
     }
@@ -209,6 +211,25 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected String queueType() {
         return this.cls.getName();
+    }
+
+    @Override
+    public Integer queueLagForConsumerGroup(String consumerGroup, Class<?> queueType) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext ctx = DSL.using(configuration);
+
+            var condition = buildTypeCondition(queueType()).and(buildConsumerCondition(queueType));
+            if (consumerGroup != null) {
+                condition = condition.and(CONSUMER_GROUP_FIELD.eq(consumerGroup));
+            } else {
+                condition = condition.and(CONSUMER_GROUP_FIELD.isNull());
+            }
+
+            return ctx.selectCount()
+                .from(this.table)
+                .where(condition)
+                .fetchOneInto(Integer.class);
+        });
     }
 
     /**
@@ -281,6 +302,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     abstract protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     protected abstract Condition buildTypeCondition(String type);
+
+    protected abstract Condition buildConsumerCondition(Class<?> queueType);
 
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
@@ -531,8 +554,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Integer switchSteps = 5;
 
         public List<Step> computeSteps() {
-            if (this.maxPollInterval.compareTo(this.minPollInterval) <= 0) {
-                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than 'minPollInterval' (" + this.minPollInterval + ")");
+            if (this.maxPollInterval.compareTo(this.minPollInterval) < 0) {
+                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than or equal to 'minPollInterval' (" + this.minPollInterval + ")");
+            }
+
+            if (this.maxPollInterval.equals(this.minPollInterval)) {
+                return List.of(new Step(this.minPollInterval, Duration.ZERO));
             }
 
             List<Step> steps = new ArrayList<>();

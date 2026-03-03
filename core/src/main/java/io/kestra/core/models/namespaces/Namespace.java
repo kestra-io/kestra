@@ -17,8 +17,4 @@ public class Namespace implements NamespaceInterface {
     @NotNull
     @Pattern(regexp="^[a-z0-9][a-z0-9._-]*")
     protected String id;
-
-    @NotNull
-    @Builder.Default
-    boolean deleted = false;
 }

@@ -13,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class Setting {
+public class Setting implements HasUID {
     public static final String INSTANCE_UUID = "instance.uuid";
     public static final String INSTANCE_VERSION = "instance.version";
     public static final String INSTANCE_EDITION = "instance.edition";
@@ -23,4 +23,9 @@ public class Setting {
 
     @NotNull
     private Object value;
+
+    @Override
+    public String uid() {
+        return key;
+    }
 }

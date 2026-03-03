@@ -2,7 +2,6 @@ package io.kestra.repository.h2;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
@@ -23,11 +22,10 @@ import java.util.*;
 public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public H2ExecutionRepository(@Named("executions") H2Repository<Execution> repository,
-                                 QueueService queueService,
                                  ApplicationContext applicationContext,
                                  AbstractJdbcExecutorStateStorage executorStateStorage,
                                  JdbcFilterService filterService) {
-        super(repository, queueService, applicationContext, executorStateStorage, filterService);
+        super(repository, applicationContext, executorStateStorage, filterService);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
         return H2ExecutionRepositoryService.findLabelCondition(input, operation);
     }
 

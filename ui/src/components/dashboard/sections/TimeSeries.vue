@@ -28,8 +28,9 @@
     import {useRoute, useRouter} from "vue-router";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
+    import type {TooltipItem, ChartEvent, ActiveElement} from "chart.js";
     import NoData from "../../layout/NoData.vue";
-    import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
+    import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
     import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
@@ -47,6 +48,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
@@ -103,15 +105,15 @@
                     : {}),
                 tooltip: {
                     enabled: props.short ? false : true,
-                    filter: (value) => value.raw,
+                    filter: (value: TooltipItem<"bar">) => value.raw,
                     callbacks: {
-                        label: (value) => {
+                        label: (value: TooltipItem<"bar">) => {
                             if (!value.dataset.tooltip) return "";
                             return `${value.dataset.tooltip}`;
                         },
                     },
-                    external: (props.short) ? function (context) {
-                        tooltipContent.value = tooltip(context.tooltip);
+                    external: (props.short) ? function (context: { tooltip: any }) {
+                        tooltipContent.value = tooltip(context.tooltip) ?? "";
                     } : undefined,
                 },
             },
@@ -119,7 +121,7 @@
                 x: {
                     title: {
                         display: props.short || props.execution ? false : true,
-                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
+                        text: data?.columns?.[chartOptions?.column ?? ""]?.displayName ?? chartOptions?.column ?? "",
                     },
                     position: "bottom",
                     ...DEFAULTS,
@@ -154,32 +156,40 @@
                     },
                 }),
             },
-            onClick: (e, elements) => {
-                if (data.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
+            onClick: (_e: ChartEvent, elements: ActiveElement[]) => {
+                if (data?.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;
                 }
                 chartClick(moment, router, route, {}, parsedData.value, elements, "label", {
                     ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
-                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})              
+                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})
                 });
             },
         }, theme.value);
     });
 
-    function isDuration(field) {
+    function isDuration(field: string | undefined): boolean {
         return field === "DURATION";
     }
 
-    const parseValue = (value) => {
-        const date = moment(value, moment.ISO_8601, true);
-        return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
+    const parseValue = (value: unknown): unknown => {
+        const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
+        const query = {
+            ...Object.fromEntries(props.filters.map(({field, value, operation}) => [`filters[${field}][${operation}]`, value])),
+            ...route.query
+        };
+        return date.isValid() ? date.format(KestraUtils.getDateFormat(
+            (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
+            (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
+            query["filters[timeRange][EQUALS]"] as string | undefined
+        )) : value;
     };
 
     const parsedData = computed(() => {
-        const rawData = generated.value.results;
+        const rawData = generated.value.results as Record<string, any>[] | undefined;
         const xAxis = (() => {
-            const values = rawData?.map((v) => {
-                return parseValue(v[chartOptions.column]);
+            const values = rawData?.map((v: Record<string, any>) => {
+                return parseValue(v[chartOptions?.column ?? ""]);
             });
 
             return Array.from(new Set(values)).sort();
@@ -187,11 +197,12 @@
 
         const aggregatorKeys = aggregator.value.map(([key]) => key);
 
-        const reducer = (array, field, yAxisID) => {
+        const reducer = (array: Record<string, any>[] | undefined, field: string, yAxisID: string) => {
             if (!array?.length) return;
 
-            const {columns} = data;
-            const {column, colorByColumn} = chartOptions;
+            const columns = data?.columns ?? {};
+            const column = chartOptions?.column ?? "";
+            const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined;
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
@@ -210,10 +221,10 @@
                         yAxisID,
                         data: [],
                         tooltip: stack,
-                        label: params[colorByColumn],
+                        label: colorByColumn ? params[colorByColumn] : undefined,
                         backgroundColor: getConsistentHEXColor(
                             theme.value,
-                            params[colorByColumn],
+                            colorByColumn ? params[colorByColumn] : undefined,
                         ),
                         unique: new Set(),
                     };
@@ -231,7 +242,7 @@
                     });
                 } else {
                     // Update existing stack value for the same date
-                    const existing = current.data.find((v) => v.x === parsedDate);
+                    const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate);
                     if (existing) existing.y += params[field];
                 }
 
@@ -239,10 +250,10 @@
             }, {});
         };
 
-        const getData = (field, object = {}) => {
-            return Object.values(object).map((dataset) => {
+        const getData = (_field: string, object: Record<string, any> = {}) => {
+            return Object.values(object).map((dataset: any) => {
                 const data = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v) => v.x === xAxisLabel);
+                    const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel);
                     return temp ? temp.y : 0;
                 });
 
@@ -269,17 +280,17 @@
 
         let duration: number[] = [];
         if(yBShown.value){
-            const helper = Array.from(new Set(rawData?.map((v) => parseValue(v.date)))).sort();
+            const helper = Array.from(new Set(rawData?.map((v: Record<string, any>) => parseValue(v.date)))).sort();
 
             // Step 1: Group durations by formatted date
-            const groupedDurations = {};
-            rawData?.forEach(item => {
-                const formattedDate = parseValue(item.date);
+            const groupedDurations: Record<string, number> = {};
+            rawData?.forEach((item: Record<string, any>) => {
+                const formattedDate = parseValue(item.date) as string;
                 groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
             });
 
             // Step 2: Map to target dates
-            duration = helper.map(date => groupedDurations[date] || 0);
+            duration = helper.map(date => groupedDurations[date as string] || 0);
         }
 
         return {
@@ -301,10 +312,10 @@
                 : yDatasetData,
         };
     });
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
 
     function refresh(customFilters?: FilterObject[]) {
-        return generate(getDashboard(route, "id")!, undefined, customFilters);
+        return generate(undefined, customFilters);
     }
 
     defineExpose({

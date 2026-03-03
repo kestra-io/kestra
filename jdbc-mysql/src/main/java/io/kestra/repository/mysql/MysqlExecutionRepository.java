@@ -2,7 +2,6 @@ package io.kestra.repository.mysql;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
@@ -26,11 +25,10 @@ import static io.kestra.core.models.QueryFilter.Op.EQUALS;
 public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public MysqlExecutionRepository(@Named("executions") MysqlRepository<Execution> repository,
-                                    QueueService queueService,
                                     ApplicationContext applicationContext,
                                     AbstractJdbcExecutorStateStorage executorStateStorage,
                                     JdbcFilterService filterService) {
-        super(repository, queueService, applicationContext, executorStateStorage, filterService);
+        super(repository, applicationContext, executorStateStorage, filterService);
     }
 
     @Override
@@ -39,7 +37,7 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
         return MysqlExecutionRepositoryService.findLabelCondition(input, operation);
     }
 

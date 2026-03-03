@@ -42,9 +42,15 @@ class DocumentationGeneratorTest {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-        assertThat(scan.size()).isEqualTo(1);
-        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.getFirst().version(), false);
+        assertThat(scan.size()).isEqualTo(2);
+        RegisteredPlugin templatePlugin = scan
+            .stream()
+            .filter(rp -> rp.group().equals("io.kestra.plugin.templates"))
+            .findFirst()
+            .orElseThrow();
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(
+            templatePlugin, templatePlugin.getTasks().getFirst(), Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, templatePlugin.version(), false);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -104,7 +110,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render).contains("Return a value for debugging purposes.");
-        assertThat(render).contains("This task is mostly useful for troubleshooting.");
+        assertThat(render).contains("Render a templated string and return it so you can quickly inspect or reuse values during a flow.");
         assertThat(render).contains("## Metrics");
         assertThat(render).contains("### `length`\n" + "* **Type:** ==counter== ");
         assertThat(render).contains("### `duration`\n" + "* **Type:** ==timer== ");
@@ -193,6 +199,6 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render).contains("title: Process");
-        assertThat(render).contains("Task runner that executes a task as a subprocess on the Kestra host.");
+        assertThat(render).contains("Run tasks as local subprocesses on the worker.");
     }
 }

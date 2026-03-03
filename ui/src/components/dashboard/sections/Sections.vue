@@ -60,6 +60,7 @@
                             ref="chartsComponents"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
+                            :dashboardId="dashboard.id"
                             :filters
                             :showDefault="props.showDefault"
                         />
@@ -91,9 +92,7 @@
     const chartsComponents = ref<{refresh(): void}[]>();
 
     function refreshCharts() {
-        chartsComponents.value!.forEach((component) => {
-            component.refresh();
-        });
+        (chartsComponents.value ?? []).forEach((component) => component.refresh());
     }
 
     defineExpose({

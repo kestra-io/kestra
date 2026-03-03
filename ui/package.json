@@ -27,7 +27,7 @@
     },
     "dependencies": {
         "@js-joda/core": "^5.7.0",
-        "@kestra-io/ui-libs": "^0.0.283",
+        "@kestra-io/ui-libs": "^0.0.284",
         "@vue-flow/background": "^1.3.2",
         "@vue-flow/controls": "^1.1.2",
         "@vue-flow/core": "^1.48.2",
@@ -164,4 +164,3 @@
         "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"
     }
 }
-

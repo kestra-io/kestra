@@ -202,7 +202,8 @@ public class DefaultWorker implements Worker {
     void initMetricsAndTracer() {
         // the method is called twice due to how we create the bean, see https://github.com/micronaut-projects/micronaut-core/issues/11656
         if (this.init.compareAndSet(false, true)) {
-            String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
+            String[] tags = {MetricRegistry.TAG_WORKER_GROUP, this.workerGroupKey != null ? this.workerGroupKey : "__default__"};
+
             // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION, numThreads, tags);
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);

@@ -206,6 +206,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocumentationWithSchema"
+  /api/v1/plugins/pluginUiManifest:
+    post:
+      tags:
+      - Plugins
+      summary: Get plugins group by subgroups
+      operationId: getPluginUiManifest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/TaskWithVersion"
+        required: true
+      responses:
+        "200":
+          description: getPluginUiManifest 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUiManifest"
   /api/v1/plugins/properties/{type}:
     get:
       tags:
@@ -342,6 +363,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocumentationWithSchema"
+  /api/v1/plugins/{group}/pluginUi/{path}:
+    get:
+      tags:
+      - Plugins
+      summary: Get plugins group by subgroups
+      operationId: getPluginUi
+      parameters:
+      - name: group
+        in: path
+        description: The plugin group
+        required: true
+        schema:
+          type: string
+      - name: path
+        in: path
+        description: The file path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getPluginUi 200 response
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
   /api/v1/tenants/main/settings/default-dashboards:
     post:
       tags:
@@ -580,6 +628,33 @@ paths:
             application/yaml:
               schema:
                 type: string
+  /api/v1/{tenant}/cluster/metrics/{serviceType}:
+    get:
+      tags:
+      - Services
+      summary: Get metrics for running services
+      operationId: metrics
+      parameters:
+      - name: serviceType
+        in: query
+        required: true
+        explode: false
+        schema:
+          $ref: "#/components/schemas/ServiceType"
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: metrics 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Metric"
   /api/v1/{tenant}/cluster/services/{id}:
     get:
       tags:
@@ -9654,7 +9729,7 @@ components:
           items:
             $ref: "#/components/schemas/Metric.Tag"
         value:
-          type: object
+          type: number
     Metric.Tag:
       type: object
       properties:
@@ -10173,6 +10248,30 @@ components:
       - BUSINESS
       - DATA
       - INFRASTRUCTURE
+    PluginUiManifest:
+      type: object
+      properties:
+        manifest:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/PluginUiModuleWithGroup"
+    PluginUiModuleWithGroup:
+      type: object
+      properties:
+        uiModule:
+          type: string
+        group:
+          type: string
+        staticInfo:
+          type: object
+          additionalProperties:
+            type: object
+        styles:
+          type: array
+          items:
+            type: string
     Property_Boolean_:
       type: object
       properties:
@@ -10738,6 +10837,13 @@ components:
           type: string
           format: uri
           nullable: true
+    TaskWithVersion:
+      type: object
+      properties:
+        cls:
+          type: string
+        version:
+          type: string
     TenantController.SetTenantDefaultDashboardsRequest:
       type: object
       properties:

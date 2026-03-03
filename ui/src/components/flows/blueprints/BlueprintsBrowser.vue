@@ -101,19 +101,19 @@
     import {useRoute, useRouter} from "vue-router";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import DataTable from "../../../../components/layout/DataTable.vue";
-    import Errors from "../../../../components/errors/Errors.vue";
-    import KSFilter from "../../../../components/filter/components/KSFilter.vue";
-    import {editorViewTypes} from "../../../../utils/constants";
-    import Utils from "../../../../utils/utils";
-    import {usePluginsStore} from "../../../../stores/plugins";
-    import {useBlueprintsStore} from "../../../../stores/blueprints";
-    import {useApiStore} from "../../../../stores/api";
-    import {useCoreStore} from "../../../../stores/core";
-    import {useDocStore} from "../../../../stores/doc";
+    import DataTable from "../../../components/layout/DataTable.vue";
+    import Errors from "../../../components/errors/Errors.vue";
+    import KSFilter from "../../../components/filter/components/KSFilter.vue";
+    import {editorViewTypes} from "../../../utils/constants";
+    import Utils from "../../../utils/utils";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../stores/blueprints";
+    import {useApiStore} from "../../../stores/api";
+    import {useCoreStore} from "../../../stores/core";
+    import {useDocStore} from "../../../stores/doc";
     import {canCreate} from "override/composables/blueprintsPermissions";
-    import {useDataTableActions} from "../../../../composables/useDataTableActions";
-    import {useBlueprintFilter} from "../../../../components/filter/configurations";
+    import {useDataTableActions} from "../../../composables/useDataTableActions";
+    import {useBlueprintFilter} from "../../filter/configurations";
 
     const blueprintFilter = useBlueprintFilter();
 

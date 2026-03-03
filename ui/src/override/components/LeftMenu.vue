@@ -15,7 +15,7 @@
 <script setup lang="ts">
     import {useLeftMenu} from "override/components/useLeftMenu";
     import SideBar from "../../components/layout/SideBar.vue";
-    import Auth from "../../override/components/auth/Auth.vue";
+    import Auth from "override/components/auth/Auth.vue";
 
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");

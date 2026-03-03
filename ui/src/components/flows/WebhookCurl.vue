@@ -34,7 +34,7 @@
     import {computed, onMounted, ref} from "vue";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
-    import {baseUrl, basePath, apiUrl} from "../../override/utils/route";
+    import {baseUrl, basePath, apiUrl} from "override/utils/route";
     import {useFlowStore} from "../../stores/flow";
 
     interface Flow {

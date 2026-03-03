@@ -308,6 +308,10 @@ public abstract class AbstractJdbcRepository {
             return groupCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.NAME) {
+            return nameCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
             return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
@@ -411,6 +415,10 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition groupCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition nameCondition(Object value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 

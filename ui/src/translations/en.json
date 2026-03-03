@@ -1834,6 +1834,14 @@
             "label": "Namespace",
             "description": "Filter by namespace"
         },
+        "username": {
+          "label": "Username",
+          "description": "Filter by username"
+        },
+        "group": {
+          "label": "Group",
+          "description": "Filter by group"
+        },
         "kill_switch_type": {
             "label": "Type",
             "description": "Filter by kill switch type"

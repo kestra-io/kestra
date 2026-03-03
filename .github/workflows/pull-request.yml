@@ -100,7 +100,7 @@ jobs:
   check-openapi-spec-up-to-date:
     name: Check Openapi generated spec is up to date
     needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
+#    if: "needs.file-changes.outputs.backend == 'true'"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -109,7 +109,7 @@ jobs:
           fetch-depth: 0
 
       # Setup build
-      - uses: kestra-io/actions/composite/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@try-out-develocity-injectuon2
         name: Setup - Build
         id: build
         with:

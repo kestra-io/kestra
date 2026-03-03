@@ -26,6 +26,7 @@ dependencies {
     implementation "io.micronaut.picocli:micronaut-picocli"
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-server-netty"
+    implementation "org.yaml:snakeyaml"
 
     // logs
     implementation 'ch.qos.logback.contrib:logback-json-classic'

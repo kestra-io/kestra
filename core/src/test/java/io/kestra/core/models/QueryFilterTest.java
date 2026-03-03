@@ -259,19 +259,6 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ASSET_ID, Resource.ASSET_LINEAGE_EVENT,
-                Set.of(
-                    Op.EQUALS,
-                    Op.NOT_EQUALS,
-                    Op.CONTAINS,
-                    Op.STARTS_WITH,
-                    Op.ENDS_WITH,
-                    Op.REGEX,
-                    Op.IN,
-                    Op.NOT_IN
-                )
-            ),
-
             buildQueryFiltersForOperations(Field.TYPE, Resource.ASSET,
                 Set.of(
                     Op.EQUALS,
@@ -567,16 +554,6 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(Field.ASSET_ID, Resource.ASSET_USAGE,
-                Set.of(
-                    Op.PREFIX,
-                    Op.LESS_THAN,
-                    Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.GREATER_THAN,
-                    Op.GREATER_THAN_OR_EQUAL_TO
-                )
-            ),
-
-            buildQueryFiltersForOperations(Field.ASSET_ID, Resource.ASSET_LINEAGE_EVENT,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,

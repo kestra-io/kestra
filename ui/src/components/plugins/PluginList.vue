@@ -82,7 +82,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useScrollMemory} from "../../composables/useScrollMemory";
     import {capitalize, formatPluginTitle} from "../../utils/global";
-    import {useMiscStore} from "../../override/stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     interface Props {
         plugins: any[];

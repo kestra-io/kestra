@@ -4,7 +4,7 @@ import TypeIcon from "../utils/icons/Type.vue";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue";
 import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
-import {useNamespacesStore} from "../../override/stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces";
 import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
 import {useFlowStore} from "../../stores/flow";
 

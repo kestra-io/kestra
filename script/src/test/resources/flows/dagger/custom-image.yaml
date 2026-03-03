@@ -1,0 +1,29 @@
+# Example flow definition for Dagger with custom container image
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+# Example flow definition for Dagger with custom container image
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+# Example flow definition for Dagger with custom container image
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+id: dagger-custom-image-test
+namespace: io.kestra.plugin.scripts.dagger
+
+description: Test flow for Dagger with custom container image
+
+tasks:
+  - id: run_dagger_custom_image
+    type: io.kestra.plugin.scripts.dagger.Script
+    containerImage: python:3.11
+    script: |
+      container |
+      from "python:3.11" |
+      withExec ["python", "--version"] |
+      stdout

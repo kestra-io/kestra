@@ -1,0 +1,18 @@
+# Example flow definition for Dagger Script task
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+id: dagger-script-test
+namespace: io.kestra.plugin.scripts.dagger
+
+description: Test flow for Dagger Script task
+
+tasks:
+  - id: run_dagger_script
+    type: io.kestra.plugin.scripts.dagger.Script
+    script: |
+      container |
+      from "alpine" |
+      withExec ["echo", "Hello from Dagger Script"] |
+      stdout

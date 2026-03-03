@@ -1,0 +1,16 @@
+# Example flow definition for Dagger Commands task
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+id: dagger-commands-test
+namespace: io.kestra.plugin.scripts.dagger
+
+description: Test flow for Dagger Commands task
+
+tasks:
+  - id: run_dagger_commands
+    type: io.kestra.plugin.scripts.dagger.Commands
+    commands:
+      - container | from "alpine" | withExec ["echo", "Hello from Dagger Commands"] | stdout
+      - container | from "alpine" | withExec ["cat", "/etc/os-release"] | stdout

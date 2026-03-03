@@ -1,0 +1,27 @@
+# Example flow definition for Dagger with beforeCommands
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+# Example flow definition for Dagger with beforeCommands
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+# Example flow definition for Dagger with beforeCommands
+# NOTE: This is an example-only file for documentation and manual testing purposes.
+# It is NOT executed during unit test runs (./gradlew test).
+# To execute this flow, it must be deployed to a running Kestra instance.
+
+id: dagger-before-commands-test
+namespace: io.kestra.plugin.scripts.dagger
+
+description: Test flow for Dagger with beforeCommands
+
+tasks:
+  - id: run_dagger_with_before
+    type: io.kestra.plugin.scripts.dagger.Commands
+    beforeCommands:
+      - dagger version
+    commands:
+      - container | from "alpine" | withExec ["uname", "-a"] | stdout

@@ -7160,6 +7160,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiSecretListResponse_ApiSecretMeta_"
       deprecated: true
+  /api/v1/{tenant}/outputs/{executionId}/{taskRunId}:
+    get:
+      tags:
+      - Outputs
+      summary: Get task run outputs
+      operationId: getTaskRunOutputs
+      parameters:
+      - name: executionId
+        in: path
+        description: The execution id
+        required: true
+        schema:
+          type: string
+      - name: taskRunId
+        in: path
+        description: The task run id
+        required: true
+        schema:
+          type: string
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getTaskRunOutputs 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskOutput"
   /api/v1/{tenant}/secrets:
     get:
       tags:
@@ -10721,6 +10752,20 @@ components:
             $ref: "#/components/schemas/Input_Object_"
         subflowId:
           $ref: "#/components/schemas/ExecutableTask.SubflowId"
+    TaskOutput:
+      type: object
+      properties:
+        taskRunId:
+          type: string
+        tenantId:
+          type: string
+        executionId:
+          type: string
+        value:
+          type: string
+          format: byte
+        uri:
+          type: string
     TaskRun:
       required:
       - executionId

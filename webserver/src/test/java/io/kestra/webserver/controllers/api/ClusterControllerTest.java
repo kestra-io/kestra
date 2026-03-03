@@ -1,13 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.Metric;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
-import io.kestra.worker.DefaultWorker;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
@@ -31,7 +29,7 @@ class ClusterControllerTest {
 
     @Inject
     Worker worker;
-    
+
     @BeforeEach
     void beforeEach() {
         Awaitility.await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100)).until(() -> worker.getState() != null);

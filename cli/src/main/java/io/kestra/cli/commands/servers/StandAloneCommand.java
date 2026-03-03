@@ -103,6 +103,9 @@ public class StandAloneCommand extends AbstractServerCommand {
     @Option(names = {"--no-controller"}, description = "Flag to disable starting an embedded controller.")
     boolean controllerDisabled = false;
 
+    @Option(names = {"--stop"}, description = "Stop immediatly after start. This can be used to troubleshoot startup issues.")
+    boolean stopImmediately = false;
+
     @Override
     public boolean isFlowAutoLoadEnabled() {
         return !tutorialsDisabled;
@@ -165,7 +168,11 @@ public class StandAloneCommand extends AbstractServerCommand {
                 fileWatcher.startListeningFromConfig();
             }
 
-            Await.until(() -> !this.applicationContext.isRunning());
+            if (!stopImmediately) {
+                Await.until(() -> !this.applicationContext.isRunning());
+            } else {
+                this.applicationContext.stop();
+            }
         }
 
         return 0;

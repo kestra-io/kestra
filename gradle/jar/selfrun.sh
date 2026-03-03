@@ -34,6 +34,8 @@ fi
 # -XX:MaxRAMPercentage=50.0: configure max heap to 50% of available RAM (default 25%)
 KESTRA_JAVA_OPTS="-XX:MaxRAMPercentage=50.0"
 
+echo "KESTRA_AOT_OPTS=${KESTRA_AOT_OPTS}"
+
 # Exec
-exec java ${KESTRA_JAVA_OPTS} ${JAVA_OPTS} ${JAVA_ADD_OPENS} --enable-native-access=ALL-UNNAMED -jar "$0" "$@"
+exec java ${KESTRA_JAVA_OPTS} ${JAVA_OPTS} ${JAVA_ADD_OPENS} ${KESTRA_AOT_OPTS} --enable-native-access=ALL-UNNAMED -jar "$0" "$@"
 exit 127

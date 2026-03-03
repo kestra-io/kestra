@@ -13,6 +13,7 @@ import jakarta.inject.Inject;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +79,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
 
         try {
             Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, runningTimeout);
+            log.info("All services started successfully (JVM running for {}).", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
         } catch (TimeoutException e) {
             throw new RuntimeException(
                 servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())

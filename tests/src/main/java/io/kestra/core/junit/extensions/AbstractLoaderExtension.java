@@ -19,25 +19,29 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public abstract class AbstractFlowLoaderExtension {
+public abstract class AbstractLoaderExtension {
 
-    protected ApplicationContext applicationContext;
+    protected ApplicationContext context;
 
-    protected void loadFlows(ExtensionContext extensionContext, String tenantId, String[] paths)
-        throws IOException, URISyntaxException {
-        if (applicationContext == null) {
+    protected void loadApplicationContext(ExtensionContext extensionContext){
+        if (context == null) {
             extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())).put("test", "bla");
 
-            applicationContext = extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get()))
+            context = extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get()))
                 .get(ApplicationContext.class, ApplicationContext.class);
 
-            if (applicationContext == null) {
+            if (context == null) {
                 throw new IllegalStateException(
                     "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'");
             }
         }
+    }
 
-        LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(
+    protected void loadFlows(ExtensionContext extensionContext, String tenantId, String[] paths)
+        throws IOException, URISyntaxException {
+        loadApplicationContext(extensionContext);
+
+        LocalFlowRepositoryLoader repositoryLoader = context.getBean(
             LocalFlowRepositoryLoader.class);
 
         for (String path : paths) {
@@ -48,12 +52,12 @@ public abstract class AbstractFlowLoaderExtension {
     }
 
     protected void deleteFlows(String tenantId, String[] paths) throws URISyntaxException {
-        if (!applicationContext.isRunning()) {
+        if (!context.isRunning()) {
             return;
         }
 
-        FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
-        ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
+        FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
+        ExecutionRepositoryInterface executionRepository = context.getBean(ExecutionRepositoryInterface.class);
 
         Set<String> flowIds = new HashSet<>();
         for (String path : paths) {

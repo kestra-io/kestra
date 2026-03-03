@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-public class WithFlowExtension extends AbstractFlowLoaderExtension implements
+public class WithFlowExtension extends AbstractLoaderExtension implements
     ParameterResolver, AfterEachCallback {
 
     private static final ExtensionContext.Namespace NAMESPACE =

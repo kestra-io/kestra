@@ -25,8 +25,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-public class FlowExecutorExtension implements AfterEachCallback, ParameterResolver {
-    private ApplicationContext context;
+public class FlowExecutorExtension extends AbstractLoaderExtension implements AfterEachCallback, ParameterResolver {
 
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
@@ -38,13 +37,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
     @Override
     public Object resolveParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
-        if (context == null) {
-            context = extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())).get(ApplicationContext.class, ApplicationContext.class);
-
-            if (context == null) {
-                throw new IllegalStateException("No application context, to use '@ExecuteFlow' annotation, you need to add '@KestraTest'");
-            }
-        }
+        loadApplicationContext(extensionContext);
 
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
         String tenantId = executeFlow.tenantId();
@@ -73,8 +66,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         FlowService flowService = context.getBean(FlowService.class);
 
         String path = executeFlow.value();
-        URL resource = loadFile(path);
-        Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+        Flow loadedFlow = getFlow(path);
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
             .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId()))

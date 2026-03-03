@@ -4,7 +4,7 @@ info:
   license:
     name: Apache 2.0
     url: https://raw.githubusercontent.com/kestra-io/kestra/master/LICENSE
-  version: 1.0.0
+  version: 1.4.0-SNAPSHOT
 tags:
 - name: Flows
   description: Flows API

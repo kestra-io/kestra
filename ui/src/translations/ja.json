@@ -1342,6 +1342,7 @@
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "no_file_choosen": "ファイルが選択されていません",
     "no_flow_outputs": "出力は利用できません。",
+    "no_history": "履歴はありません",
     "no_inputs": "入力が利用できません。",
     "no_logs_data": "データなし",
     "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
@@ -1860,6 +1861,10 @@
     "side-by-side": "並列表示",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Kestraインスタンスに接続できませんでした。実行中であることを確認し、ページを更新してください。",
+        "title": "接続が中断されました"
+      },
       "loading_execution": "実行の読み込み中に問題が発生しました。"
     },
     "source": "ソース",

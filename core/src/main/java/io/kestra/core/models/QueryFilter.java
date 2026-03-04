@@ -277,10 +277,16 @@ public record QueryFilter(
                 return List.of(Op.EQUALS);
             }
         },
-        EXPIRED_AT("expired_at") {
+        NAME("name") {
             @Override
             public List<Op> supportedOp() {
-                return List.of();
+                return List.of(Op.EQUALS);
+            }
+        },
+        GROUP("groupList") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.IN, Op.EQUALS);
             }
         };
 
@@ -362,7 +368,7 @@ public record QueryFilter(
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME);
             }
         },
         INVITATION {

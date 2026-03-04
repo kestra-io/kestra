@@ -4,7 +4,7 @@ plugins {
 
 node {
     download = true
-    version = '22.12.0'
+    version = '22.13.0'
     npmInstallCommand = "ci"
 }
 
@@ -17,6 +17,8 @@ tasks.register('assembleFrontend', NpmTask) {
     inputs.file('index.html')
     inputs.file('package.json')
     inputs.file('vite.config.js')
+    inputs.file('openapi-ts.config.ts')
+    // inputs.file('../openapi.yml')
 
     args = ['run', 'build']
     outputs.dir('../webserver/src/main/resources/ui')

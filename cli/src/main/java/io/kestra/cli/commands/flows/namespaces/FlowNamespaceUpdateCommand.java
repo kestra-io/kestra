@@ -26,6 +26,7 @@ import java.util.stream.Stream;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Deprecated(forRemoval = true, since = "1.3.0")
 public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
 
     @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "Replace namespace of all flows by the one provided")
@@ -37,6 +38,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
     @Override
     public Integer call() throws Exception {
         super.call();
+        stdErr("WARNING: this command is deprecated, use `kestractl nsfile upload` instead");
 
         try (Stream<Path> files = Files.walk(directory)) {
             List<Path> flows = files

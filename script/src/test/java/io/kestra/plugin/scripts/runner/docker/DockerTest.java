@@ -253,6 +253,11 @@ class DockerTest extends AbstractTaskRunnerTest {
                 return !existingContainers.isEmpty() && existingContainers.get(0).getState().equals("running");
             }, Duration.ofMillis(100), timeout); // Add timeout to avoid waiting forever for container to be created
 
+            TestsUtils.awaitLog(
+                logs,
+                logEntry -> logEntry.getMessage().contains("Container created:")
+            );
+
             callOnKill(taskRunner, () -> {
                 // override the kill method to not kill the container
             });
@@ -275,10 +280,10 @@ class DockerTest extends AbstractTaskRunnerTest {
             resumeContainerThread.start();
 
             // Wait for the log message indicating resume
-            LogEntry awaitLog = TestsUtils
-                .awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container:"));
             LogEntry createContainerLog = TestsUtils
                 .awaitLog(logs, logEntry -> logEntry.getMessage().contains("Container created:"));
+            LogEntry awaitLog = TestsUtils
+                .awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container:"));
 
             receive.blockLast(timeout);
             // Assert that the log messages are present

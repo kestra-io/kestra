@@ -306,6 +306,12 @@ public abstract class AbstractJdbcRepository {
 
         if (field == QueryFilter.Field.STATUS) {
             return statusCondition(value, operation);
+        if (field == QueryFilter.Field.GROUP) {
+            return groupCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.NAME) {
+            return nameCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
@@ -420,6 +426,12 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition statusCondition(Object value, QueryFilter.Op operation) {
         return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
+    protected Condition groupCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition nameCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

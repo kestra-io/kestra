@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @OpenAPIDefinition(
     info = @Info(
         title = "Kestra",
+        version = "${version}",
         license = @License(name = "Apache 2.0", url = "https://raw.githubusercontent.com/kestra-io/kestra/master/LICENSE")
     ),
     tags = {

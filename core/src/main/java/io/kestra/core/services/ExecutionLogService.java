@@ -44,6 +44,25 @@ public class ExecutionLogService {
         return logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate);
     }
 
+    /**
+     * Purges log entries matching the given criteria, with separate control over execution and trigger logs.
+     *
+     * @return an array of two ints: [executionLogsDeleted, triggerLogsDeleted]
+     */
+    public int[] purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeTriggerLogs) {
+        int executionLogsDeleted = 0;
+        int triggerLogsDeleted = 0;
+
+        if (purgeExecutionLogs) {
+            executionLogsDeleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, true, false);
+        }
+        if (purgeTriggerLogs) {
+            triggerLogsDeleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, false, true);
+        }
+
+        return new int[]{executionLogsDeleted, triggerLogsDeleted};
+    }
+
 
     /**
      * Fetches the error logs of an execution.

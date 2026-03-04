@@ -10,6 +10,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionLogService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -104,6 +105,20 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
     @NotNull
     private Property<String> endDate;
 
+    @Schema(
+        title = "Whether to purge execution logs",
+        description = "Execution logs are logs where the trigger ID is null. Default is true."
+    )
+    @Builder.Default
+    private Property<Boolean> purgeExecutionLogs = Property.ofValue(true);
+
+    @Schema(
+        title = "Whether to purge trigger logs",
+        description = "Trigger logs are logs where the trigger ID is not null. Default is true."
+    )
+    @Builder.Default
+    private Property<Boolean> purgeTriggerLogs = Property.ofValue(true);
+
     @Override
     public Output run(RunContext runContext) throws Exception {
         ExecutionLogService logService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionLogService.class);
@@ -118,17 +133,26 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
 
         var logLevelsRendered = runContext.render(this.logLevels).asList(Level.class);
         var renderedDate = runContext.render(startDate).as(String.class).orElse(null);
-        int deleted = logService.purge(
+        boolean execLogs = runContext.render(purgeExecutionLogs).as(Boolean.class).orElse(true);
+        boolean trigLogs = runContext.render(purgeTriggerLogs).as(Boolean.class).orElse(true);
+
+        int[] deleted = logService.purge(
             flowInfo.tenantId(),
             runContext.render(namespace).as(String.class).orElse(null),
             runContext.render(flowId).as(String.class).orElse(null),
             runContext.render(executionId).as(String.class).orElse(null),
             logLevelsRendered.isEmpty() ? null : logLevelsRendered,
             renderedDate != null ? ZonedDateTime.parse(renderedDate) : null,
-            ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow())
+            ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
+            execLogs,
+            trigLogs
         );
 
-        return Output.builder().count(deleted).build();
+        return Output.builder()
+            .count(deleted[0] + deleted[1])
+            .executionLogsCount(deleted[0])
+            .triggerLogsCount(deleted[1])
+            .build();
     }
 
 
@@ -136,8 +160,18 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of deleted logs"
+            title = "The total count of deleted logs"
         )
         private int count;
+
+        @Schema(
+            title = "The count of deleted execution logs"
+        )
+        private int executionLogsCount;
+
+        @Schema(
+            title = "The count of deleted trigger logs"
+        )
+        private int triggerLogsCount;
     }
 }

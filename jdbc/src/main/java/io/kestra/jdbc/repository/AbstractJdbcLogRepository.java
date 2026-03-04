@@ -328,6 +328,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, null, null);
+    }
+
+    @Override
+    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, Boolean purgeExecutionLogs, Boolean purgeTriggerLogs) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -356,6 +361,12 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
                 if (logLevels != null) {
                     delete = delete.and(levelsCondition(logLevels));
+                }
+
+                if (Boolean.TRUE.equals(purgeExecutionLogs) && !Boolean.TRUE.equals(purgeTriggerLogs)) {
+                    delete = delete.and(field("trigger_id").isNull());
+                } else if (Boolean.TRUE.equals(purgeTriggerLogs) && !Boolean.TRUE.equals(purgeExecutionLogs)) {
+                    delete = delete.and(field("trigger_id").isNotNull());
                 }
 
                 return delete.execute();

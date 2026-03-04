@@ -50,11 +50,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import static io.kestra.core.models.flows.State.Type.CREATED;
-import static io.kestra.core.models.flows.State.Type.RUNNING;
-import static io.kestra.core.models.flows.State.Type.SKIPPED;
-import static io.kestra.core.models.flows.State.Type.SUCCESS;
-import static io.kestra.core.models.flows.State.Type.WARNING;
+import static io.kestra.core.models.flows.State.Type.*;
 
 @Slf4j
 public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> {
@@ -181,7 +177,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, MetricRegistry.METRIC_WORKER_STARTED_COUNT_DESCRIPTION, metricTags)
             .increment();
 
-        if (workerTask.getTaskRun().getState().getCurrent() == CREATED) {
+        if (workerTask.getTaskRun().getState().getCurrent() == CREATED || workerTask.getTaskRun().getState().getCurrent() == SUBMITTED) {
             this.metricRegistry
                 .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, MetricRegistry.METRIC_WORKER_QUEUED_DURATION_DESCRIPTION, metricTags)
                 .record(Duration.between(

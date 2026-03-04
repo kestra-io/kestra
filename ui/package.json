@@ -116,7 +116,7 @@
         "globals": "^17.4.0",
         "husky": "^9.1.7",
         "jsdom": "^28.1.0",
-        "lint-staged": "^16.3.1",
+        "lint-staged": "^16.3.2",
         "monaco-editor": "^0.52.2",
         "monaco-yaml": "5.3.1",
         "patch-package": "^8.0.1",

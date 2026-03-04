@@ -288,6 +288,12 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.IN, Op.EQUALS);
             }
+        },
+        EXPIRED_AT("expired_at") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of();
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())

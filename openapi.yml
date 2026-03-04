@@ -10384,6 +10384,7 @@ components:
       - USERNAME
       - NAME
       - GROUP
+      - EXPIRED_AT
       x-type: String
     QueryFilter.Op:
       type: string

@@ -12,22 +12,22 @@ const meta: Meta<typeof Table> = {
         vueRouter([
             {
                 path: "/",
-                component: () => <div></div>
+                component: {template: "<div></div>"}
             },
             {
-                path: "/flows/update",
+                path: "/:tenant?/flows/edit/:namespace/:id/:tab?",
                 name: "flows/update",
-                component: () => <div></div>
+                component: {template: "<div></div>"}
             },
             {
-                path: "/executions/update",
+                path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?",
                 name: "executions/update",
-                component: () => <div></div>
+                component: {template: "<div></div>"}
             },
             {
-                path: "/namespaces/update",
+                path: "/:tenant?/namespaces/edit/:id/:tab?",
                 name: "namespaces/update",
-                component: () => <div></div>
+                component: {template: "<div></div>"}
             },
         ])
     ]
@@ -40,10 +40,7 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
         setup() {
             const store = useAxios() as any;
             store.post = async function (uri: string) {
-                console.log("post request", uri)
-
                 if (uri.includes("charts/executions_finished")) {
-                    console.log("match charts/executions_finished", uri)
 
                     return {
                         data: {
@@ -118,7 +115,7 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
             } as any;
             return () => (
                 <div style="padding: 20px; background: #f5f5f5; border-radius: 8px;">
-                    <Table chart={chart}/>
+                    <Table chart={chart} dashboardId="default" />
                 </div>
             );
         }

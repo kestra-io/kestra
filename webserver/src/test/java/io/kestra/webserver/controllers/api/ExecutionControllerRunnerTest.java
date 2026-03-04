@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
@@ -36,6 +37,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -76,6 +78,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -408,6 +411,42 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-plugin.yaml"}, tenantId = "triggerencrypted")
+    void triggerEncrypted() throws InterruptedException {
+        String tenantId = "triggerencrypted";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+            if (execution.getLeft().getFlowId().equals("webhook-plugin") && execution.getLeft().getState().isTerminated()) {
+                queueCount.countDown();
+            }
+        });
+
+        var response = client.toBlocking().exchange(
+            PUT(
+                "/api/v1/triggerencrypted/executions/webhook/io.kestra.tests/webhook-plugin/case1",
+                "{\"test\": \"data\"}"
+            ),
+            String.class
+        );
+
+        assertThat((Object)response.getStatus()).isEqualTo(HttpStatus.OK);
+
+        queueCount.await(180, TimeUnit.SECONDS);
+        var execution = Objects.requireNonNull(receive.blockLast());
+
+        // the output is automatically decrypted so the return has the decrypted value of the hello task output
+        TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
+        assertThat(Objects.requireNonNull(returnTask.getOutputs()).get("value")).isEqualTo("Hello World");
+
+        // the output of a trigger is also decrypted automatically
+        TaskRun outTask = execution.findTaskRunsByTaskId("out").getFirst();
+        assertThat(((Map<String, String>)Objects.requireNonNull(outTask.getOutputs()).get("values")).get("encrypted")).isEqualTo("super-secret");
+    }
+
+    @Test
     @LoadFlows(value = {"flows/valids/restart_with_inputs.yaml"}, tenantId = "restartexecutionfromunknowntaskid")
     void restartExecutionFromUnknownTaskId() throws TimeoutException, QueueException {
         String tenantId = "restartexecutionfromunknowntaskid";
@@ -643,7 +682,7 @@ class ExecutionControllerRunnerTest {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, null);
+        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, (BiFunction<FlowInterface, Execution, Map<String, Object>>) null);
 
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -704,7 +743,7 @@ class ExecutionControllerRunnerTest {
         final String flowId = "restart_pause_last_failed";
 
         // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, null);
+        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, (BiFunction<FlowInterface, Execution, Map<String, Object>>) null);
 
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -1020,13 +1059,25 @@ class ExecutionControllerRunnerTest {
                 .GET(
                     "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-wait/" + key
                 ),
-            ExecutionController.WebhookResponse.class
+            WebhookResponse.class
         );
 
         assertThat(execution.state().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.url().toString()).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/webhook-wait/" + execution.id());
         assertThat(execution.outputs()).hasSize(1);
         assertThat(execution.outputs()).containsEntry("output", "output");
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/webhook-failed.yaml"})
+    void webhookFailed() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-failed/webhook-failed"), Execution.class)
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
+        assertThat(e.getResponse().getBody(Execution.class).get().getState().getCurrent()).isEqualTo(Type.FAILED);
     }
 
     @Test
@@ -2508,13 +2559,15 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows("flows/valids/webhook-outputs.yaml")
     void webhookWithOutputs() {
-        Map<String, Object> outputs = client.toBlocking().retrieve(
+        HttpResponse<Map<String, Object>> response = client.toBlocking().exchange(
             GET(
                 "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-outputs/webhook-outputs"
             ),
             Argument.mapOf(String.class, Object.class)
         );
 
+        assertThat(response.getStatus().getCode()).isEqualTo(202);
+        Map<String, Object> outputs = response.getBody().orElseThrow();
         assertThat(outputs).hasFieldOrPropertyWithValue("status", "ok");
         assertThat(outputs).containsKey("executionId");
     }

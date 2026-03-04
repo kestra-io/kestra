@@ -34,12 +34,15 @@
                     v-if="aiCopilotAllowed"
                     :show="flow"
                     :opened="aiCopilotOpened"
-                    @click="draftSource = undefined; aiCopilotOpened = true"
+                    @click="onAiCopilotButtonClick"
                 />
                 <ContentSave v-if="!flow" @click="saveFileContent" />
             </template>
             <template v-if="playgroundStore.enabled" #widget-content>
                 <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+            </template>
+            <template #buttons>
+                <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
             </template>
         </Editor>
         <!-- Backdrop overlay -->
@@ -59,14 +62,11 @@
                 @close="closeAiCopilot"
                 :flow="editorContent"
                 :conversationId="conversationId"
+                :namespace="namespace"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
+                :generationType="aiGenerationTypes.FLOW"
             />
         </Transition>
-        <AcceptDecline
-            v-if="hasDraft"
-            @accept="acceptDraft"
-            @reject="declineDraft"
-        />
     </div>
 </template>
 
@@ -91,11 +91,14 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useFlowStore} from "../../stores/flow";
+    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
+    import {useApiStore} from "../../stores/api";
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+    import {aiGenerationTypes} from "../../utils/constants";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
@@ -103,12 +106,12 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
-    import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import Utils from "../../utils/utils";
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
     import permission from "../../models/permission"
     import action from "../../models/action"
+    import AcceptDecline from "./AcceptDecline.vue";
 
     const route = useRoute();
     const router = useRouter();
@@ -119,6 +122,9 @@
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
+        if (onboardingStore.isGuidedActive) {
+            return;
+        }
         if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && props.flow) {
             event.preventDefault();
             event.stopPropagation();
@@ -143,9 +149,8 @@
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
     const aiCopilotAllowed = computed(() => {
-        return authStore.user?.isAllowedGlobal(permission.AI_COPILOT, action.READ);
-    }
-    )
+        return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
+    });
 
     async function loadFile() {
         if (props.dirty || props.flow) return;
@@ -202,7 +207,7 @@
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
-        if(route.query.ai === "open") {
+        if(route.query.ai === "open" && !onboardingStore.isGuidedActive) {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
         }
@@ -226,6 +231,9 @@
     });
 
     watch(() => flowStore.openAiCopilot, (newVal) => {
+        if (onboardingStore.isGuidedActive) {
+            return;
+        }
         if (newVal) {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
@@ -257,6 +265,8 @@
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
+    const apiStore = useApiStore();
+    const onboardingStore = useOnboardingV2Store();
     const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0);
 
     const editorScrollKey = computed(() => {
@@ -313,15 +323,17 @@
         const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position);
         pluginsStore.updateDocumentation({cls, version, hash: hash.value});
-    };
+    }
 
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
 
+        const isCreating = flowStore.isCreating;
+
         // Use saveAll() for consistency with the Save button behavior
-        const result = flowStore.isCreating
+        const result = isCreating
             ? await flowStore.save()
             : await flowStore.saveAll();
 
@@ -335,6 +347,10 @@
                     tenant: route.params?.tenant,
                 },
             });
+        }
+
+        if (isSuccessfulFlowSaveOutcome(result)) {
+            onboardingStore.recordSave();
         }
     };
 
@@ -366,7 +382,22 @@
 
     const conversationId = ref<string>(Utils.uid());
 
+    function trackAiCopilotAction(action: string) {
+        apiStore.posthogEvents({
+            type: "AI_COPILOT",
+            action,
+            ai_copilot_configured: miscStore.configs?.isAiEnabled === true,
+        });
+    }
+
+    function onAiCopilotButtonClick() {
+        trackAiCopilotAction("open_click");
+        draftSource.value = undefined;
+        aiCopilotOpened.value = true;
+    }
+
     function acceptDraft() {
+        trackAiCopilotAction("changes_apply");
         const accepted = draftSource.value;
         draftSource.value = undefined;
         conversationId.value = Utils.uid();
@@ -374,6 +405,7 @@
     }
 
     function declineDraft() {
+        trackAiCopilotAction("changes_reject");
         draftSource.value = undefined;
         aiCopilotOpened.value = true;
     }

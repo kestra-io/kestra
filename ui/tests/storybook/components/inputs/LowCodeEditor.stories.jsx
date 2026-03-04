@@ -16,7 +16,7 @@ export default {
         ])]
 };
 
-const Template= (args) => ({
+const Template = (args) => ({
     setup() {
         const axios = useAxios()
         provide(TOPOLOGY_CLICK_INJECTION_KEY, ref())
@@ -24,7 +24,9 @@ const Template= (args) => ({
             return  Promise.resolve({data: {}})
         }
 
-        return () => <div style="width:600px; height:600px;"><LowCodeEditor {...args} /></div>;
+        return () => (<div style="width:600px; height:600px;">
+            <LowCodeEditor {...args} />
+        </div>);
     }
 });
 

@@ -43,9 +43,9 @@ const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
 
     // Physical forces
-    nodeRepulsion: 10_000_000,
+    nodeRepulsion: 400_000,
     edgeElasticity: 100,
-    idealEdgeLength: 250,
+    idealEdgeLength: 50,
 
     // Gravity settings
     gravity: 0.05,
@@ -57,7 +57,7 @@ const layout: cytoscape.CoseLayoutOptions = {
 
     // Spacing and padding
     padding: 50,
-    componentSpacing: 200,
+    componentSpacing: 50,
 
     // Node sizing
     nodeDimensionsIncludeLabels: true,

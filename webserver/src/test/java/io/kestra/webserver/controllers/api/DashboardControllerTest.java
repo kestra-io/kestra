@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.settings.DashboardSettings;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -16,15 +17,16 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.webserver.controllers.api.TenantController.SetTenantDefaultDashboardsRequest;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ import java.util.Map;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatObject;
 
 @KestraTest
 class DashboardControllerTest {
@@ -137,6 +140,168 @@ class DashboardControllerTest {
         );
         assertThat(deleted).isNotNull();
         assertThat(deleted.code()).isEqualTo(204);
+    }
+
+    @Test
+    void shouldManageDefaultDashboards() {
+        HttpResponse<DashboardSettings> emptyDefaults = client.toBlocking().exchange(
+            GET("/api/v1/main/dashboards/settings/default-dashboards"),
+            DashboardSettings.class
+        );
+        assertThatObject(emptyDefaults.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(emptyDefaults.body().getDefaultHomeDashboard()).isNull();
+        assertThat(emptyDefaults.body().getDefaultFlowOverviewDashboard()).isNull();
+        assertThat(emptyDefaults.body().getDefaultNamespaceOverviewDashboard()).isNull();
+
+        String dashboardYaml = """
+            id: defaults
+            title: Some Dashboard
+            description: Default overview dashboard
+            timeWindow:
+              default: P30D # P30DT30H
+              max: P365D
+
+            charts:
+              - id: logs_timeseries
+                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                chartOptions:
+                  displayName: Error Logs
+                  description: Count of ERROR logs per date
+                  legend:
+                    enabled: true
+                  column: date
+                  colorByColumn: level
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+                      displayName: Execution Date
+                    level:
+                      field: LEVEL
+                    total:
+                      displayName: Total Error Logs
+                      agg: COUNT
+                      graphStyle: BARS
+                  where:
+                    - field: LEVEL
+                      type: IN
+                      values:
+                        - ERROR""";
+
+        Dashboard dashboard = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            Dashboard.class
+        );
+
+        client.toBlocking().exchange(
+            POST("/api/v1/tenants/main/settings/default-dashboards",
+                new SetTenantDefaultDashboardsRequest(dashboard.getId(), null, null))
+        );
+
+        DashboardSettings defaults = client.toBlocking().retrieve(
+            GET("/api/v1/main/dashboards/settings/default-dashboards"),
+            DashboardSettings.class
+        );
+        assertThat(defaults.getDefaultHomeDashboard()).isEqualTo(dashboard.getId());
+        assertThat(defaults.getDefaultFlowOverviewDashboard()).isNull();
+        assertThat(defaults.getDefaultNamespaceOverviewDashboard()).isNull();
+
+        client.toBlocking().exchange(
+            POST("/api/v1/tenants/main/settings/default-dashboards",
+                new SetTenantDefaultDashboardsRequest(dashboard.getId(), dashboard.getId(), dashboard.getId()))
+        );
+
+        DashboardSettings updatedDefaults = client.toBlocking().retrieve(
+            GET("/api/v1/main/dashboards/settings/default-dashboards"),
+            DashboardSettings.class
+        );
+        assertThat(updatedDefaults.getDefaultHomeDashboard()).isEqualTo(dashboard.getId());
+        assertThat(updatedDefaults.getDefaultFlowOverviewDashboard()).isEqualTo(dashboard.getId());
+        assertThat(updatedDefaults.getDefaultNamespaceOverviewDashboard()).isEqualTo(dashboard.getId());
+
+        HttpClientResponseException conflict = Assertions.assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(
+                POST("/api/v1/tenants/main/settings/default-dashboards",
+                    new SetTenantDefaultDashboardsRequest("missing-dashboard", null, null))
+            )
+        );
+        assertThatObject(conflict.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+
+        client.toBlocking().exchange(
+            POST("/api/v1/tenants/main/settings/default-dashboards",
+                new SetTenantDefaultDashboardsRequest(null, null, null))
+        );
+
+        DashboardSettings clearedDefaults = client.toBlocking().retrieve(
+            GET("/api/v1/main/dashboards/settings/default-dashboards"),
+            DashboardSettings.class
+        );
+        assertThat(clearedDefaults.getDefaultHomeDashboard()).isNull();
+        assertThat(clearedDefaults.getDefaultFlowOverviewDashboard()).isNull();
+        assertThat(clearedDefaults.getDefaultNamespaceOverviewDashboard()).isNull();
+    }
+
+    @Test
+    void shouldRemoveDeletedDashboardFromDefaults() {
+        String dashboardYaml = """
+            id: defaults-to-delete
+            title: Some Dashboard
+            description: Default overview dashboard
+            timeWindow:
+              default: P30D # P30DT30H
+              max: P365D
+
+            charts:
+              - id: logs_timeseries
+                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                chartOptions:
+                  displayName: Error Logs
+                  description: Count of ERROR logs per date
+                  legend:
+                    enabled: true
+                  column: date
+                  colorByColumn: level
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+                      displayName: Execution Date
+                    level:
+                      field: LEVEL
+                    total:
+                      displayName: Total Error Logs
+                      agg: COUNT
+                      graphStyle: BARS
+                  where:
+                    - field: LEVEL
+                      type: IN
+                      values:
+                        - ERROR""";
+
+        Dashboard dashboard = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            Dashboard.class
+        );
+
+        client.toBlocking().exchange(
+            POST("/api/v1/tenants/main/settings/default-dashboards",
+                new SetTenantDefaultDashboardsRequest(dashboard.getId(), dashboard.getId(), dashboard.getId()))
+        );
+
+        client.toBlocking().exchange(
+            DELETE(DASHBOARD_PATH + "/" + dashboard.getId())
+        );
+
+        HttpResponse<DashboardSettings> defaultsAfterDelete = client.toBlocking().exchange(
+            GET("/api/v1/main/dashboards/settings/default-dashboards"),
+            DashboardSettings.class
+        );
+        assertThatObject(defaultsAfterDelete.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(defaultsAfterDelete.body().getDefaultHomeDashboard()).isNull();
+        assertThat(defaultsAfterDelete.body().getDefaultFlowOverviewDashboard()).isNull();
+        assertThat(defaultsAfterDelete.body().getDefaultNamespaceOverviewDashboard()).isNull();
     }
 
     // The goal is to cover the legacy implementation that was autogenerating id so it was present on the backend but the source code didn't contain it.

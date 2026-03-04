@@ -1,27 +1,11 @@
 package io.kestra.cli;
 
-import io.micronaut.context.event.StartupEvent;
-import io.micronaut.runtime.event.annotation.EventListener;
+import io.kestra.core.contexts.KestraContext;
 import picocli.CommandLine;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 class VersionProvider implements CommandLine.IVersionProvider {
-    private static io.kestra.core.utils.VersionProvider versionProvider;
-
+    @Override
     public String[] getVersion() {
-        return new String[] { versionProvider.getVersion() };
-    }
-
-    @Singleton
-    public static class ContextHelper {
-        @Inject
-        private io.kestra.core.utils.VersionProvider versionProvider;
-
-        @EventListener
-        void onStartup(final StartupEvent event) {
-            VersionProvider.versionProvider = this.versionProvider;
-        }
+        return new String[]{KestraContext.getContext().getVersion()};
     }
 }

@@ -106,7 +106,11 @@
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
 
     const canReset = computed(() => {
-        return filter.hasAppliedFilters?.value ?? !!filter.searchQuery?.value;
+        return (
+            !!filter.hasAppliedFilters?.value ||
+            !!filter.hasDismissedDefaultVisibleKeys?.value ||
+            !!filter.searchQuery?.value
+        );
     });
 
     const getFilterKeyConfig = (appliedFilter: any) => {

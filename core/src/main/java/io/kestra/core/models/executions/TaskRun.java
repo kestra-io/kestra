@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @ToString
 @EqualsAndHashCode
@@ -319,8 +320,14 @@ public class TaskRun implements TenantInterface {
     }
 
     public TaskRun resetAttempts() {
+        State.Type lastCreationState = this.state.getHistories()
+            .reversed()
+            .stream()
+            .filter(history -> history.getState().isCreated())
+            .findFirst().get()
+            .getState();
         return this.toBuilder()
-            .state(new State(State.Type.CREATED, List.of(this.state.getHistories().getFirst())))
+            .state(new State(lastCreationState, this.state.getHistories()))
             .attempts(null)
             .build();
     }

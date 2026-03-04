@@ -33,12 +33,13 @@
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
+    import {Execution} from "../../stores/executions";
 
     const {t, te} = useI18n();
 
     defineProps<{
         data: Record<string, any>;
-        execution?: Record<string, any>;
+        execution?: Execution;
     }>();
     
     const emit = defineEmits<{ (e: "on-copy", event: any): void }>();

@@ -54,6 +54,10 @@ abstract public class TestsUtils {
         queueConsumersCancellations.get().clear();
     }
 
+    public static String randomPassword() {
+        return IdUtils.create() + "Aa1!";
+    }
+
     public static String randomNamespace(String... prefix) {
         return TestsUtils.randomString(prefix);
     }
@@ -234,7 +238,11 @@ abstract public class TestsUtils {
         Execution execution = TestsUtils.mockExecution(flow, inputs, null);
         TaskRun taskRun = TestsUtils.mockTaskRun(execution, task);
 
-        return runContextFactory.of(flow, task, execution, taskRun);
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+
+        runContextFactory.initializer().forExecutor((DefaultRunContext) runContext);
+
+        return runContext;
     }
 
     public static <T> Flux<T> receive(QueueInterface<T> queue) {

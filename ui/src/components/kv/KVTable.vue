@@ -78,14 +78,22 @@
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('last modified')"
-                    />
+                    >
+                        <template #default="scope">
+                            <DateAgo :date="convertToUserTimezone(scope.row.updateDate)" inverted />
+                        </template>
+                    </el-table-column>
                     <el-table-column
                         v-else-if="colProp === 'expirationDate' && !paneView"
                         prop="expirationDate"
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('expiration date')"
-                    />
+                    >
+                        <template #default="scope">
+                            <DateAgo v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
+                        </template>
+                    </el-table-column>
                 </template>
 
                 <el-table-column columnKey="copy" className="row-action">
@@ -142,19 +150,20 @@
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
                 <NamespaceSelect
                     v-model="kv.namespace"
-                    :readonly="kv.update"
+                    :readOnly="kv.update"
                     :includeSystemNamespace="true"
                     all
                 />
             </el-form-item>
 
             <el-form-item :label="$t('key')" prop="key" required>
-                <el-input v-model="kv.key" :readonly="kv.update" />
+                <el-input v-model="kv.key" :disabled="kv.update" />
             </el-form-item>
 
             <el-form-item :label="$t('kv.type')" prop="type" required>
                 <el-select
                     v-model="kv.type"
+                    :disabled="kv.update"
                     @change="kv.value = undefined"
                 >
                     <el-option value="STRING" />
@@ -263,6 +272,7 @@
     import KSFilter from "../filter/components/KSFilter.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import DateAgo from "../layout/DateAgo.vue";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -326,7 +336,7 @@
             }
 
             kvs.value = allKvs;
-            total.value = allKvs.length;
+            total.value = kvsResponse.total ?? 0;
         } finally {
             if (callback) callback();
         }
@@ -388,6 +398,11 @@
     const kvs = ref<any[] | undefined>(undefined);
 
     const storageKey = storageKeys.DISPLAY_KV_COLUMNS;
+
+    const TIMEZONE = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const convertToUserTimezone = (date: string | Date) => {
+        return moment.utc(date).tz(TIMEZONE).toDate()
+    }
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -560,7 +575,7 @@
 
     function removeKvs() {
         const groupedByNamespace = _groupBy(selection.value, "namespace");
-        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
+        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
         toast.confirm(

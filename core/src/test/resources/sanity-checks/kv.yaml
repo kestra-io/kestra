@@ -4,6 +4,7 @@ namespace: sanitychecks.core
 variables:
   key: mykey
   data: test12345
+  data_updated: test67890
 
 tasks:
   - id: set
@@ -12,6 +13,12 @@ tasks:
     value: "{{ vars.data }}"
     kvType: STRING
 
+  - id: put
+    type: io.kestra.plugin.core.kv.Put
+    key: "{{ vars.key }}"
+    value:
+      - value: "{{ vars.data_updated }}"
+
   - id: get
     type: io.kestra.plugin.core.kv.Get
     key: "{{ vars.key }}"
@@ -19,7 +26,7 @@ tasks:
   - id: assert_get_set
     type: io.kestra.plugin.core.execution.Assert
     conditions:
-      - "{{ vars.data == outputs.get.value }}"
+      - "{{ vars.data_updated == outputs.get.value }}"
 
   - id: delete
     type: io.kestra.plugin.core.kv.Delete

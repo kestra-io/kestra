@@ -11,25 +11,21 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.AiService;
+import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
 import io.kestra.webserver.utils.HttpClientUtils;
-import io.micronaut.context.annotation.Requires;
-import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-@Singleton
-@Requires(property = "kestra.ai.type", value = GeminiAiService.TYPE)
-@Requires(property = "kestra.ai.gemini.api-key")
 @Slf4j
 public class GeminiAiService extends AiService<GeminiConfiguration> {
     public static final String TYPE = "gemini";
 
-    public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService, PosthogService posthogService, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration) {
-        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, TYPE, listeners, geminiConfiguration);
+    public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService, PosthogService posthogService, NamespaceContextTool namespaceContextTool, String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration) {
+        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration);
     }
 
     public ChatModel chatModel(List<ChatModelListener> listeners) {
@@ -45,7 +41,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .logRequests(getAiConfiguration().logRequests())
             .logResponses(getAiConfiguration().logResponses())
             .thinkingConfig(GeminiThinkingConfig.builder().includeThoughts(false).build())
-            .returnThinking(false);
+            .returnThinking(false)
+            .timeout(getAiConfiguration().timeout());
 
         if (getAiConfiguration().clientPem() != null) {
             try (ByteArrayInputStream is = new ByteArrayInputStream(getAiConfiguration().clientPem().getBytes(StandardCharsets.UTF_8));

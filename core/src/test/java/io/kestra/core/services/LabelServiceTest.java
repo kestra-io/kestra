@@ -35,7 +35,7 @@ class LabelServiceTest {
             .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue")))
             .build();
 
-        List<Label> labels = LabelService.labelsExcludingSystem(flow);
+        List<Label> labels = LabelService.labelsExcludingSystem(flow.getLabels());
 
         assertThat(labels).hasSize(1);
         assertThat(labels.getFirst()).isEqualTo(new Label("key", "value"));

@@ -50,7 +50,7 @@
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils";
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
     import isEqual from "lodash/isEqual";
-    import {useMiscStore} from "../../../override/stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     defineOptions({
         name: "TaskEditor",
@@ -394,9 +394,7 @@
 
         const cleanedValue = removeNullAndUndefined(toRaw(val));
         if (typeof modelValue.value === "string") {
-            modelValue.value = YAML_UTILS.stringify(isPluginDefaults.value
-                ? [cleanedValue]
-                : cleanedValue);
+            modelValue.value = YAML_UTILS.stringify(cleanedValue);
         } else {
             modelValue.value = cleanedValue;
         }

@@ -338,6 +338,14 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
+        return defaultHandlers(field, value, operation);
+    }
+
+    private Condition defaultHandlers(
+        QueryFilter.Field field,
+        Object value,
+        QueryFilter.Op operation
+    ) {
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -419,7 +427,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition nameCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+        return defaultHandlers(QueryFilter.Field.NAME, value, operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

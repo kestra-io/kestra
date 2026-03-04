@@ -11,7 +11,9 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.Duration;
 import java.util.List;import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractQueueCacheTest {
@@ -66,9 +68,12 @@ public abstract class AbstractQueueCacheTest {
 
         var event = new DeletableBroadcastTestEvent(IdUtils.create(), IdUtils.create(), false);
         testQueue.emit(event);
-        Thread.sleep(100); // make sure it receives the new flow
 
-        values = queueCache.values();
+        // we need to await at least the Kafka poll interval which should be 500ms by default
+        values = await().atMost(Duration.ofSeconds(1)).until(
+            () -> queueCache.values(),
+            it -> it.size() == 3
+        );
 
         assertThat(values).hasSize(3);
 

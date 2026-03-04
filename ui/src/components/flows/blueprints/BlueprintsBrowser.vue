@@ -325,6 +325,10 @@
     watch([() => props.blueprintType, () => props.blueprintKind], () => {
         loadData();
     });
+
+    defineExpose({
+        reload: () => load(onDataLoaded),
+    });
 </script>
 
 <style scoped lang="scss">

@@ -29,7 +29,8 @@ public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.LABELS,
         QueryFilter.Field.TRIGGER_STATE,
         QueryFilter.Field.METADATA,
-        QueryFilter.Field.GROUP
+        QueryFilter.Field.GROUP,
+        QueryFilter.Field.NAME
     );
 
     @Test

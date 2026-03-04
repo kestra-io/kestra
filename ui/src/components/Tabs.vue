@@ -49,7 +49,7 @@
     import {ref, computed, watch, onMounted, nextTick, useAttrs} from "vue";
     import {useRoute} from "vue-router";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
-    import BlueprintDetail from "../override/components/flows/blueprints/BlueprintDetail.vue";
+    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
 
     interface Tab {
         name?: string;

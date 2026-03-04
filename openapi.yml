@@ -10380,6 +10380,7 @@ components:
       - PARENT_PATH
       - VERSION
       - USERNAME
+      - NAME
       - GROUP
       x-type: String
     QueryFilter.Op:

@@ -304,11 +304,12 @@ public class RestartCaseTest {
         Optional<TaskRun> parentTaskRun1 = finalRestartedExecution.findTaskRunsByTaskId("loop_test").stream().findFirst();
         assertThat(parentTaskRun1.isPresent());
 
-        State.History lastFailed1 = parentTaskRun1.get().getState().getHistories().getLast();
+        State.History lastState1 = parentTaskRun1.get().getState().getHistories().getLast();
         State.History lastRestarted1 = parentTaskRun1.get().getState().getHistories().reversed().stream()
             .filter(history -> history.getState() == Type.RESTARTED).findFirst().get();
         assertThat(lastRestarted1).isNotNull();
-        assertThat(lastRestarted1.getDate().plus(10, ChronoUnit.SECONDS).isBefore(lastFailed1.getDate()));
+        assertThat(lastRestarted1.getDate().plus(3, ChronoUnit.SECONDS)).isBefore(lastState1.getDate());
+
 
         // replaying case
         Execution replayedExecution = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("loop_test", List.of()).getId(), null);
@@ -326,12 +327,11 @@ public class RestartCaseTest {
         Optional<TaskRun> parentTaskRun2 = finalReplayedExecution.findTaskRunsByTaskId("loop_test").stream().findFirst();
         assertThat(parentTaskRun2.isPresent());
 
-        State.History lastFailed2 = parentTaskRun2.get().getState().getHistories().getLast();
+        State.History lastState2 = parentTaskRun2.get().getState().getHistories().getLast();
         State.History lastRestarted2 = parentTaskRun2.get().getState().getHistories().reversed().stream()
             .filter(history -> history.getState() == Type.RESTARTED).findFirst().get();
         assertThat(lastRestarted2).isNotNull();
-        assertThat(lastRestarted2.getDate().plus(10, ChronoUnit.SECONDS).isBefore(lastFailed2.getDate()));
-
+        assertThat(lastRestarted2.getDate().plus(3, ChronoUnit.SECONDS)).isBefore(lastState2.getDate());
     }
 
 }

@@ -18,7 +18,6 @@
     import Actions from "override/components/namespaces/Actions.vue";
     import {useMiscStore} from "override/stores/misc";
     import Tabs from "../Tabs.vue";
-
     const {tabs} = useTabs();
     const {details} = useHelpers();
 

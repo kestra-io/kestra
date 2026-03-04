@@ -4,6 +4,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
@@ -67,9 +68,12 @@ public class TestRunnerUtils {
         return this.runOne(tenantId, namespace, flowId, revision, inputs, null, null);
     }
 
-    public Execution runOne(String tenantId, String namespace, String flowId, Duration duration)
-        throws TimeoutException, QueueException {
-        return this.runOne(tenantId, namespace, flowId, null, null, duration, null);
+    public Execution runOne(String tenantId, String namespace, String flowId, Duration duration, ExecutionKind executionKind) throws TimeoutException, QueueException {
+        return this.runOne(tenantId, namespace, flowId, null, null, duration, null, executionKind);
+    }
+
+    public Execution runOne(String tenantId, String namespace, String flowId, Duration duration) throws TimeoutException, QueueException {
+        return this.runOne(tenantId, namespace, flowId, duration, null);
     }
 
     public Execution runOne(String tenantId, String namespace, String flowId, Integer revision, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration)
@@ -79,13 +83,20 @@ public class TestRunnerUtils {
 
     public Execution runOne(String tenantId, String namespace, String flowId, Integer revision, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels)
         throws TimeoutException, QueueException {
+        return this.runOne(tenantId, namespace, flowId, revision, inputs, duration, labels, null);
+    }
+
+    public Execution runOne(String tenantId, String namespace, String flowId, Integer revision, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels, ExecutionKind executionKind)
+        throws TimeoutException, QueueException {
         return this.runOne(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration,
-            labels);
+            labels,
+            executionKind
+        );
     }
 
     public Execution runOne(Flow flow, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs)
@@ -98,15 +109,18 @@ public class TestRunnerUtils {
         return this.runOne(flow, inputs, duration, null);
     }
 
-    public Execution runOne(Flow flow, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels)
-        throws TimeoutException, QueueException {
+    public Execution runOne(Flow flow, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels, ExecutionKind executionKind) throws TimeoutException, QueueException {
         if (duration == null) {
             duration = Duration.ofSeconds(15);
         }
 
-        Execution execution = Execution.newExecution(flow, inputs, labels, Optional.empty());
+        Execution execution = Execution.newExecution(flow, inputs, labels, Optional.empty(), executionKind);
 
         return runOne(execution, flow, duration);
+    }
+
+    public Execution runOne(Flow flow, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, List<Label> labels) throws TimeoutException, QueueException {
+        return this.runOne(flow, inputs, duration, labels, null);
     }
 
     public Execution runOne(Execution execution, Flow flow, Duration duration)

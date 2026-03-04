@@ -4,25 +4,13 @@ import {ref} from "vue";
 import {useAxios} from "../utils/axios";
 import {Message} from "../components/ErrorToast.vue";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
-
-interface GuidedProperties {
-    tourStarted: boolean;
-    manuallyContinue: boolean;
-    template: any;
-    saveFlow?: boolean;
-    glowExecuteButton?: boolean;
-}
+import {Flow} from "./flow";
 
 export const useCoreStore = defineStore("core", () => {
     const message = ref<Message>()
     const error = ref<any>()
-    const guidedProperties = ref<GuidedProperties>({
-        tourStarted: false,
-        manuallyContinue: false,
-        template: undefined,
-    })
     const monacoYamlConfigured = ref(false)
-    const tutorialFlows = ref<any[]>([])
+    const tutorialFlows = ref<Flow[]>([])
 
     const axios = useAxios();
 
@@ -35,7 +23,6 @@ export const useCoreStore = defineStore("core", () => {
     return {
         message,
         error,
-        guidedProperties,
         monacoYamlConfigured,
         tutorialFlows,
         readTutorialFlows,

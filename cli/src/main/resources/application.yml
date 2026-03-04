@@ -240,6 +240,13 @@ kestra:
     cache-size: 1000
 
   metrics:
+    sharedServiceInstanceMetrics:
+      WORKER:
+        - kestra.worker.job.pending
+        - kestra.worker.job.thread
+        - kestra.worker.job.running
+      WEBSERVER:
+        - kestra.queue.message.lag.count
     prefix: kestra
 
   traces:

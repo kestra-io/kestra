@@ -1,12 +1,12 @@
 package io.kestra.plugin.core.execution;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class ExitTest {
@@ -39,5 +39,23 @@ class ExitTest {
         assertThat(execution.findTaskRunsByTaskId("nested_bool_check").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("nested_bool_check").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("nested_was_false").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/exit-canceled.yaml")
+    void shouldExitWithCanceled(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/exit-cancelled.yaml")
+    void shouldExitWithCancelled(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 }

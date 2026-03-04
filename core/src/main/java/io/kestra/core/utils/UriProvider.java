@@ -1,6 +1,7 @@
 package io.kestra.core.utils;
 
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.micronaut.context.annotation.Value;
 import org.apache.commons.lang3.StringUtils;
 import io.kestra.core.models.executions.Execution;
@@ -50,5 +51,15 @@ public class UriProvider {
             "flows/" +
             flow.getNamespace() + "/" +
             flow.getId());
+    }
+
+    public URI webhookUrl(FlowInterface flow, AbstractWebhookTrigger trigger) {
+        return this.build("/api/v1/" +
+            (flow.getTenantId() != null ? flow.getTenantId() + "/" : "") +
+            "executions/webhook/" +
+            flow.getNamespace() + "/" +
+            flow.getId() + "/" +
+            trigger.getKey()
+        );
     }
 }

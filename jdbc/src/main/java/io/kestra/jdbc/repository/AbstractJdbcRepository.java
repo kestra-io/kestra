@@ -19,7 +19,6 @@ import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -302,10 +301,19 @@ public abstract class AbstractJdbcRepository {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
-            OffsetDateTime dateTime = (value instanceof ZonedDateTime)
-                ? ((ZonedDateTime) value).toOffsetDateTime()
-                : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
-            return applyDateCondition(dateTime, operation, dateColumn);
+            return getDateCondition(value, operation, dateColumn);
+        }
+
+        if (field == QueryFilter.Field.GROUP) {
+            return groupCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.NAME) {
+            return nameCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.EXPIRATION_DATE) {
+            return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
 
         if (field == QueryFilter.Field.SCOPE) {
@@ -351,6 +359,13 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
+    private Condition getDateCondition(Object value, Op operation, String dateColumn) {
+        OffsetDateTime dateTime = (value instanceof ZonedDateTime)
+            ? ((ZonedDateTime) value).toOffsetDateTime()
+            : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
+        return applyDateCondition(dateTime, operation, dateColumn);
+    }
+
     private static Object primitiveOrToString(Object o) {
         if (o == null) return null;
 
@@ -372,7 +387,7 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
 
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
@@ -397,6 +412,14 @@ public abstract class AbstractJdbcRepository {
             case NOT_IN, NOT_EQUALS -> DSL.not(statesFilter(stateList));
             default -> throw new InvalidQueryFiltersException("Unsupported operation for State.Type: " + operation);
         };
+    }
+
+    protected Condition groupCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition nameCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

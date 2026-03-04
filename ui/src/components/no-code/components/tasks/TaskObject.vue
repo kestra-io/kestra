@@ -150,7 +150,7 @@
             ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
                 // Allow "type" field for outputs context, filter it out for other contexts
                 const shouldFilterType = key === "type" && !isOutputsContext;
-                return !shouldFilterType && !Array.isArray(value);
+                return value && !shouldFilterType && !Array.isArray(value);
             })
             : [];
     });
@@ -222,6 +222,7 @@
 
 <style lang="scss">
     .el-form-item__content {
+        display: block !important;
         .el-form-item {
             width: 100%;
         }

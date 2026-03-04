@@ -377,6 +377,12 @@ public record QueryFilter(
                 return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME);
             }
         },
+        ROLE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
+            }
+        },
         INVITATION {
             @Override
             public List<Field> supportedField() {

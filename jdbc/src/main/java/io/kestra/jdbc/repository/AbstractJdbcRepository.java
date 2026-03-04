@@ -433,7 +433,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition nameCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+        return defaultHandlers(QueryFilter.Field.NAME, value, operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

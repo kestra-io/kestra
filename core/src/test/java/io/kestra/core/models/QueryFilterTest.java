@@ -319,6 +319,12 @@ public class QueryFilterTest {
 
             buildQueryFiltersForOperations(Field.EXPIRED_AT, Resource.INVITATION,
                 Set.of()
+            ),
+
+            buildQueryFiltersForOperations(Field.NAME, Resource.ROLE,
+                Set.of(
+                    Op.EQUALS
+                )
             )
         ).flatMap(s -> s);
     }
@@ -653,6 +659,23 @@ public class QueryFilterTest {
                     Op.REGEX,
                     Op.PREFIX,
                     Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAME, Resource.ROLE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.CONTAINS,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.PREFIX,
+                    Op.NOT_EQUALS,
+                    Op.IN
                 )
             ),
 

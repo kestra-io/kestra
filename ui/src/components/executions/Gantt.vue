@@ -429,7 +429,7 @@
 
             const taskDelta = stopTs - startTs;
 
-            let tooltip = `${t("duration")} : ${Utils.humanDuration(taskDelta)}`;
+            let tooltip = `${t("duration")} : ${Utils.humanDuration(taskDelta / 1000)}`;
 
             if (runningState.length > 0) {
                 tooltip += `\n${t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;

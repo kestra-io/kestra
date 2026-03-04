@@ -1342,6 +1342,7 @@
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_file_choosen": "未选择文件",
     "no_flow_outputs": "没有可用的output。",
+    "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
@@ -1860,6 +1861,10 @@
     "side-by-side": "并排",
     "slack support": "通过Slack提问",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "无法连接到您的Kestra实例。请确保它正在运行，然后刷新页面。",
+        "title": "连接中断"
+      },
       "loading_execution": "加载执行时出现问题"
     },
     "source": "来源",

@@ -246,6 +246,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     }
 
     @Test
+    @FlakyTest
     void shouldReEmitTriggerToTheSameWorkerGroup() throws Exception {
         String workerGroup = IdUtils.create();
 

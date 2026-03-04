@@ -30,17 +30,6 @@ export default [
             // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
             // but both were more complex and fragile than this simple check.
             const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
-            if (!to.params.dashboard) {
-                next({
-                    ...to,
-                    params: {
-                        ...to.params,
-                        dashboard: "default",
-                    },
-                    query,
-                });
-                return;
-            }
             if(change) {
                 next({
                     ...to,
@@ -80,7 +69,7 @@ export default [
 
     //Blueprints
     {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},
-    {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../override/components/flows/blueprints/BlueprintDetail.vue"), props: true},
+    {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("override/components/flows/blueprints/BlueprintDetail.vue"), props: true},
 
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},

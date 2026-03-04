@@ -1,12 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-
 import com.github.tomakehurst.wiremock.admin.model.GetServeEventsResult;
 import com.github.tomakehurst.wiremock.http.Body;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 import io.kestra.webserver.utils.PosthogUtil;
@@ -14,7 +13,6 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +20,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.Objects;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -111,7 +110,7 @@ class AiControllerTest {
             ))));
 
         HttpResponse<String> response = client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/ai/generate/flow", new FlowGenerationPrompt(IdUtils.create(), "Say 'hi'", null)),
+            HttpRequest.POST("/api/v1/main/ai/generate/flow", new FlowGenerationPrompt(IdUtils.create(), "Say 'hi'", "yaml", null, "io.kestra.tests")),
             String.class
         );
 

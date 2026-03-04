@@ -54,6 +54,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
     public Class<QueryFilterFormat> getAnnotationType() {
         return QueryFilterFormat.class;
     }
+
     @Override
     public BindingResult<List<QueryFilter>> bind(ArgumentConversionContext<List<QueryFilter>> context, HttpRequest<?> source) {
         Map<String, List<String>> queryParams = source.getParameters().asMap();

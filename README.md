@@ -85,30 +85,42 @@ Deploy Kestra on Google Cloud Infrastructure Manager using [our Terraform module
 Make sure that Docker is running. Then, start Kestra in a single command:
 
 ```bash
-docker run --pull=always --rm -it -p 8080:8080 --user=root \
+docker run --pull=always -it -p 8080:8080 --user=root \
+  --name kestra --restart=always \
+  -v kestra_data:/app/storage \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /tmp:/tmp kestra/kestra:latest server local
+  -v /tmp:/tmp \
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use PowerShell:
 ```powershell
-docker run --pull=always --rm -it -p 8080:8080 --user=root `
-    -v "/var/run/docker.sock:/var/run/docker.sock" `
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root `
+  --name kestra --restart=always `
+  -v "kestra_data:/app/storage" `
+  -v "/var/run/docker.sock:/var/run/docker.sock" `
+  -v "C:/Temp:/tmp" `
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use Command Prompt (CMD):
 ```cmd
-docker run --pull=always --rm -it -p 8080:8080 --user=root ^
-    -v "/var/run/docker.sock:/var/run/docker.sock" ^
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root ^
+  --name kestra --restart=always ^
+  -v "kestra_data:/app/storage" ^
+  -v "/var/run/docker.sock:/var/run/docker.sock" ^
+  -v "C:/Temp:/tmp" ^
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use WSL (Linux-based environment in Windows):
 ```bash
-docker run --pull=always --rm -it -p 8080:8080 --user=root \
-    -v "/var/run/docker.sock:/var/run/docker.sock" \
-    -v "/mnt/c/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root \
+  --name kestra --restart=always \
+  -v kestra_data:/app/storage \
+  -v "/var/run/docker.sock:/var/run/docker.sock" \
+  -v "/mnt/c/Temp:/tmp" \
+  kestra/kestra:latest server local
 ```
 
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
@@ -215,7 +227,7 @@ Stay connected and get support:
 We welcome contributions of all kinds!
 
 - **Report Issues:** Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/kestra-io/kestra/issues).
-- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
+- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/contribute-to-kestra) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
 - **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
 - **Contribute to our Docs:** Contribute edits or updates to keep our [documentation](https://github.com/kestra-io/docs) top-notch.
 
@@ -236,4 +248,3 @@ Give our repository a star to stay informed about the latest features and update
 ---
 
 Thank you for considering Kestra for your workflow orchestration needs. We can't wait to see what you'll build!
-

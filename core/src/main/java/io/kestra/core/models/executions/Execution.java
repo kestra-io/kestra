@@ -8,10 +8,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Streams;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.SoftDeletable;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
@@ -53,7 +53,7 @@ import java.util.zip.CRC32;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Execution implements DeletedInterface, TenantInterface {
+public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID {
 
     @With
     @Hidden
@@ -129,6 +129,12 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Nullable
     List<Breakpoint> breakpoints;
 
+    @Override
+    @JsonIgnore
+    public String uid() {
+        return id;
+    }
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
      *
@@ -188,7 +194,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .kind(kind)
             .build();
 
-        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
+        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
         if (labels != null) {
             executionLabels.addAll(labels);
         }
@@ -359,6 +365,15 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.kind,
             newBreakpoints
         );
+    };
+
+    public Execution addLabel(Label label) {
+        List<Label> existingLabel = this.labels == null ? new ArrayList<>(1) : new ArrayList<>(this.labels);
+        if (existingLabel.stream().noneMatch(l -> l.key().equals(label.key()))) {
+            existingLabel.add(label);
+        }
+
+        return withLabels(existingLabel);
     }
 
     public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList,
@@ -580,50 +595,65 @@ public class Execution implements DeletedInterface, TenantInterface {
             .findFirst();
     }
 
+    /*
+     * Using reversed().findFirst() is intended for better performance,
+     * as these methods are used heavily.
+     * Do not replace it with Streams.findLast() in these methods,
+     * as Streams.findLast() performs worse.
+     *
+     * See: @see <a href="https://github.com/kestra-io/kestra/pull/14385">KESTRA#14385</a>
+     */
     public Optional<TaskRun> findLastNotTerminated() {
         if (this.taskRunList == null) {
             return Optional.empty();
         }
 
-        return Streams.findLast(this.taskRunList
+        return this.taskRunList
+            .reversed()
             .stream()
             .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
-        );
+            .findFirst();
     }
 
+
     public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastCreated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isCreated())
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastRunning(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isRunning())
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastTerminated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isTerminated())
-        );
+            .findFirst();
     }
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks) {
@@ -808,7 +838,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     /**
      * Convert an exception on Executor and add log to the current {@code RUNNING} taskRun, on the
      * lastAttempts. If no Attempt is found, we create one (must be nominal case). The executor will
-     * catch the {@code FAILED} taskRun emitted and will failed the execution. In the worst case, we
+     * catch the {@code FAILED} taskRun emitted and will fail the execution. In the worst case, we
      * FAILED the execution (only from {@link io.kestra.plugin.core.trigger.Flow}).
      *
      * @param e the exception throw from Executor
@@ -840,8 +870,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()),
-                        t.getLogs()
+                        this.withTaskRun(t.taskRun()),
+                        t.logs()
                     );
                 } catch (InternalException ex) {
                     return null;
@@ -911,19 +941,14 @@ public class Execution implements DeletedInterface, TenantInterface {
         );
     }
 
-    @Value
-    public static class FailedTaskRunWithLog {
-
-        private TaskRun taskRun;
-        private List<LogEntry> logs;
+    public record FailedTaskRunWithLog(
+        TaskRun taskRun,
+        List<LogEntry> logs) {
     }
 
-    @Value
-    @Builder
-    public static class FailedExecutionWithLog {
-
-        private Execution execution;
-        private List<LogEntry> logs;
+    public record FailedExecutionWithLog(
+        Execution execution,
+        List<LogEntry> logs) {
     }
 
     /**
@@ -1128,7 +1153,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .toList();
     }
 
-
+    @Override
     public Execution toDeleted() {
         return this.toBuilder()
             .deleted(true)

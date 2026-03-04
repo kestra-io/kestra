@@ -4,7 +4,7 @@
     </a>
     <RouterLink
         v-else
-        :to="{name:'docs/view', params: {path: finalHref.replace(/^\//, '')}}"
+        :to="{name:'docs/view', params: {path: finalHref?.replace(/^\//, '')}}"
         custom
         v-slot="{href:linkHref}"
     >
@@ -32,7 +32,7 @@
     const props = withDefaults(defineProps<{
         href?: string;
         useRaw?: boolean;
-        class?: string | Record<string, boolean> | Array<string | Record<string, boolean>>;
+        class?: string | Record<string, boolean> | Array<undefined | string | Record<string, boolean>>;
     }>(), {
         href: undefined,
         useRaw: false,
@@ -40,9 +40,23 @@
     });
 
     const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")));
-    const finalHref = computed(() => props.useRaw ? `/${props.href}` : href.value);
+    const finalHref = computed(() => props.useRaw ? props.href : href.value);
 
     const navigateInVuex = () => {
         docStore.docPath = finalHref.value;
     };
 </script>
+
+<style lang="scss" scoped>
+    .docsMenu {
+        .depth-0 {
+            padding-left: 20px;
+        }
+        .depth-1 {
+            padding-left: 20px;
+        }
+        .depth-2 {
+            padding-left: 30px;
+        }
+    }
+</style>

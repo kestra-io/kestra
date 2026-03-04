@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Op;
@@ -18,9 +19,9 @@ import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
 import lombok.Getter;
 import org.jooq.*;
 import org.jooq.Record;
@@ -34,8 +35,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
-
 public abstract class AbstractJdbcRepository {
     public static final Field<Boolean> DELETED_FIELD = field("deleted", Boolean.class);
     public static final Field<String> TENANT_ID_FIELD = field("tenant_id", String.class);
@@ -45,8 +44,8 @@ public abstract class AbstractJdbcRepository {
     protected static final int FETCH_SIZE = 100;
 
     @Getter
-    @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
-    private String systemFlowNamespace;
+    @Inject
+    private KestraConfig kestraConfig;
 
     protected Condition defaultFilter() {
         return DELETED_FIELD.eq(false);
@@ -302,10 +301,11 @@ public abstract class AbstractJdbcRepository {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
-            OffsetDateTime dateTime = (value instanceof ZonedDateTime)
-                ? ((ZonedDateTime) value).toOffsetDateTime()
-                : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
-            return applyDateCondition(dateTime, operation, dateColumn);
+            return getDateCondition(value, operation, dateColumn);
+        }
+
+        if (field == QueryFilter.Field.EXPIRATION_DATE) {
+            return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
 
         if (field == QueryFilter.Field.SCOPE) {
@@ -351,6 +351,13 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
+    private Condition getDateCondition(Object value, Op operation, String dateColumn) {
+        OffsetDateTime dateTime = (value instanceof ZonedDateTime)
+            ? ((ZonedDateTime) value).toOffsetDateTime()
+            : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
+        return applyDateCondition(dateTime, operation, dateColumn);
+    }
+
     private static Object primitiveOrToString(Object o) {
         if (o == null) return null;
 
@@ -372,7 +379,7 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
 
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
@@ -465,7 +472,7 @@ public abstract class AbstractJdbcRepository {
         }
         FlowScope scope = flowScopes.getFirst();
 
-        String systemNamespace = this.getSystemFlowNamespace();
+        String systemNamespace = this.kestraConfig.getSystemFlowNamespace();
         return switch (operation){
             case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
             case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);

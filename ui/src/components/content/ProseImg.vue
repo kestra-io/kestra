@@ -3,7 +3,7 @@
         <img
             v-bind="$attrs"
             :alt="alt"
-            :src="docStore.resourceUrl(src)"
+            :src="finalUrl"
             loading="lazy"
         >
     </span>
@@ -11,10 +11,11 @@
 
 <script setup lang="ts">
     import {useDocStore} from "../../stores/doc";
+    import {computed} from "vue";
     
     const docStore = useDocStore();
-    
-    defineProps({
+
+    const props = defineProps({
         src: {
             type: String,
             default: ""
@@ -35,7 +36,10 @@
             type: String,
             default: ""
         }
-    })
+    });
+
+    const rawDocUrl = computed(() => docStore.resourceUrl(props.src)!);
+    const finalUrl = computed(() => docStore.docPath ? rawDocUrl.value.replace("/./", "/" + docStore.docPath + "/") : rawDocUrl.value);
 </script>
 
 <style scoped lang="scss">

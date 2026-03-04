@@ -56,10 +56,10 @@ class SwitchTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "third")
+    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "switchthird")
     void switchThird() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            "third",
+            "switchthird",
             "io.kestra.tests",
             "switch",
             null,
@@ -74,10 +74,10 @@ class SwitchTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "switchdefault")
     void switchDefault() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "switchdefault",
             "io.kestra.tests",
             "switch",
             null,
@@ -90,10 +90,10 @@ class SwitchTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/switch-impossible.yaml"})
+    @LoadFlows(value = {"flows/valids/switch-impossible.yaml"}, tenantId = "switchimpossible")
     void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "switchimpossible",
             "io.kestra.tests",
             "switch-impossible",
             null,
@@ -104,7 +104,7 @@ class SwitchTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/switch-in-concurrent-loop.yaml")
+    @ExecuteFlow(value = "flows/valids/switch-in-concurrent-loop.yaml", tenantId = "switchinconcurrentloop")
     void switchInConcurrentLoop(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(5);

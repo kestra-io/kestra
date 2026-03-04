@@ -36,37 +36,43 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Add or overwrite labels for the current execution at runtime.",
-    description = "Trying to pass a system label (a label starting with `system.`) will fail the task."
+    title = "Add or overwrite labels on the current execution.",
+    description = """
+        Accepts labels as a map, list of `{key,value}` pairs, or JSON string. Values are rendered, merged into existing labels, and overwrite by default.
+
+        System labels (`system.*`) are rejected and empty values are not allowed. Useful for tagging runs with payload metadata (customer, env, etc.)."""
 )
 @Plugin(
     examples = {
         @Example(
             title = "Add labels based on a webhook payload",
             full = true,
-            code = {
-                "id: webhook_based_labels",
-                "namespace: company.team",
-                "tasks:",
-                "  - id: update_labels_with_map",
-                "    type: io.kestra.plugin.core.execution.Labels",
-                "    labels:",
-                "      customerId: \"{{ trigger.body.customerId }}\"",
-                "  - id: by_list",
-                "    type: io.kestra.plugin.core.execution.Labels",
-                "    labels:",
-                "      - key: order_id",
-                "        value: \"{{ trigger.body.orderId }}\"",
-                "      - key: order_type",
-                "        value: \"{{ trigger.body.orderType }}\"",
-                "triggers:",
-                "  - id: webhook",
-                "    key: order_webhook",
-                "    type: io.kestra.plugin.core.trigger.Webhook",
-                "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.Expression",
-                "        expression: \"{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}\""
-            }
+            code = """
+                id: webhook_based_labels
+                namespace: company.team
+
+                tasks:
+                  - id: update_labels_with_map
+                    type: io.kestra.plugin.core.execution.Labels
+                    labels:
+                      customerId: "{{ trigger.body.customerId }}"
+                      
+                  - id: by_list
+                    type: io.kestra.plugin.core.execution.Labels
+                    labels:
+                      - key: order_id
+                        value: "{{ trigger.body.orderId }}"
+                      - key: order_type
+                        value: "{{ trigger.body.orderType }}"
+                        
+                triggers:
+                  - id: webhook
+                    key: order_webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.Expression
+                        expression: "{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}"
+            """
         )
     },
     aliases = "io.kestra.core.tasks.executions.Labels"

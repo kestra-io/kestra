@@ -44,11 +44,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Schedule a flow based on a CRON expression.",
-    description = "You can add multiple Schedule triggers to a flow.\n" +
-        "The scheduler keeps track of the last scheduled date, allowing you to easily [backfill](https://kestra.io/docs/concepts/backfill) missed executions.\n" +
-        "Keep in mind that if you change the trigger ID, the scheduler will consider this as a new schedule, and will start creating new scheduled executions from the current date.\n" +
-        "By default, all schedules use UTC. If you need a different timezone, add the `timezone` property to your trigger definition."
+    title = "Schedule a Flow with a CRON expression.",
+    description = """
+        Runs a Flow on a cron schedule (5 fields by default; enable seconds with `withSeconds`). Tracks last scheduled date to support backfill. Changing the trigger `id` starts a new schedule from “now”. Default timezone is UTC; override via `timezone`.
+
+        Multiple Schedule triggers can coexist on one Flow."""
 )
 @Plugin(
     examples = {

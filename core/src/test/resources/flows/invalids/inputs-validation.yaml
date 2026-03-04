@@ -5,9 +5,47 @@ inputs:
   - id: file
     type: FILE
     defaults: something
-  - id: array
+
+  - id: array1
     type: ARRAY
     itemType: ARRAY
+
+  - id: array2
+    type: ARRAY
+    itemType: SECRET
+
+  - id: array3
+    type: ARRAY
+    itemType: MULTISELECT
+
+  - id: array4
+    type: ARRAY
+    itemType: SELECT
+
+  - id: array5
+    type: ARRAY
+    itemType: ENUM
+
+
+  - id: multiselect1
+    type: MULTISELECT
+    itemType: ARRAY
+
+  - id: multiselect2
+    type: MULTISELECT
+    itemType: SECRET
+
+  - id: multiselect3
+    type: MULTISELECT
+    itemType: MULTISELECT
+
+  - id: multiselect4
+    type: MULTISELECT
+    itemType: SELECT
+
+  - id: multiselect5
+    type: MULTISELECT
+    itemType: ENUM
 
 tasks:
   - id: hello

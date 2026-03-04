@@ -91,13 +91,13 @@
 
                     <el-table-column columnKey="copy" className="row-action">
                         <template #default="scope">
-                            <el-tooltip :content="$t('copy_to_clipboard')">
-                                <el-button 
-                                    :icon="ContentCopy" 
-                                    link
-                                    @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
-                                />
-                            </el-tooltip>
+                            <IconButton
+                                :tooltip="$t('copy_to_clipboard')"
+                                placement="left"
+                                @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
+                            >
+                                <ContentCopy />
+                            </IconButton>
                         </template>
                     </el-table-column>
 
@@ -107,12 +107,14 @@
                         className="row-action"
                     >
                         <template #default="scope">
-                            <el-button 
+                            <IconButton
                                 v-if="canUpdate(scope.row)"
-                                :icon="FileDocumentEdit"
-                                link
+                                :tooltip="$t('update')"
+                                placement="left"
                                 @click="updateSecretModal(scope.row)"
-                            />
+                            >
+                                <FileDocumentEdit />
+                            </IconButton>
                         </template>
                     </el-table-column>
 
@@ -122,12 +124,14 @@
                         className="row-action"
                     >
                         <template #default="scope">
-                            <el-button 
+                            <IconButton
                                 v-if="canDelete(scope.row)"
-                                :icon="Delete"
-                                link
+                                :tooltip="$t('delete')"
+                                placement="left"
                                 @click="removeSecret(scope.row)"
-                            />
+                            >
+                                <Delete />
+                            </IconButton>
                         </template>
                     </el-table-column>
                 </SelectTable>
@@ -232,6 +236,7 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
     import Id from "../Id.vue";
+    import IconButton from "../IconButton.vue";
     import Drawer from "../Drawer.vue";
     import Labels from "../layout/Labels.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
@@ -304,7 +309,6 @@
 
     const form = ref<FormInstance>();
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
-    const selectTable = ref<InstanceType<typeof SelectTable>>();
 
     const total = ref(0);
     const hasData = ref<boolean>();

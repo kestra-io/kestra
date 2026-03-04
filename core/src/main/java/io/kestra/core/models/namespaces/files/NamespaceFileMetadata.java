@@ -2,8 +2,8 @@ package io.kestra.core.models.namespaces.files;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.NamespaceFile;
@@ -24,7 +24,7 @@ import java.time.Instant;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @ToString
 @EqualsAndHashCode
-public class NamespaceFileMetadata implements DeletedInterface, TenantInterface, HasUID {
+public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadata>, TenantInterface, HasUID {
     @With
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
@@ -94,7 +94,7 @@ public class NamespaceFileMetadata implements DeletedInterface, TenantInterface,
         return NamespaceFileMetadata.builder()
             .tenantId(tenantId)
             .namespace(namespaceFile.namespace())
-            .path(namespaceFile.path(true).toString())
+            .path(namespaceFile.filePath().toString())
             .version(namespaceFile.version())
             .build();
     }
@@ -116,6 +116,7 @@ public class NamespaceFileMetadata implements DeletedInterface, TenantInterface,
         return this.toBuilder().updated(saveDate).last(true).build();
     }
 
+    @Override
     public NamespaceFileMetadata toDeleted() {
         return this.toBuilder().deleted(true).updated(Instant.now()).build();
     }

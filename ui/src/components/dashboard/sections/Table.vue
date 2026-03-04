@@ -13,11 +13,10 @@
                 :width="value.field === 'STATE' ? 140 : null"
             >
                 <template #default="scope">
-                    <component :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)">
-                        <template v-if="!resolvedComponent(value.field)">
-                            {{ scope.row[key] }}
-                        </template>
-                    </component>
+                    <template v-if="resolvedComponent(value.field) === undefined">
+                        {{ scope.row[key] }}
+                    </template>
+                    <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                 </template>
             </el-table-column>
         </el-table>
@@ -37,10 +36,8 @@
 <script setup lang="ts">
     import {PropType, watch, ref, computed} from "vue";
 
-    import type {RouteLocation} from "vue-router";
-
     import type {Chart} from "../types.ts";
-    import {getDashboard, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
+    import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
 
     import Date from "./table/columns/Date.vue";
     import Duration from "./table/columns/Duration.vue";
@@ -52,6 +49,7 @@
     import NoData from "../../layout/NoData.vue";
 
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
@@ -71,7 +69,7 @@
         case "DURATION":
             return Duration;
         default:
-            if (field.toLowerCase().includes("date")) return Date;
+            if (field?.toLowerCase().includes("date")) return Date;
             return undefined;
         }
     };
@@ -102,13 +100,13 @@
     };
 
     const data = ref();
-    const {EMPTY_TEXT, generate} = useChartGenerator(props, false);
 
     import {useRoute} from "vue-router";
     import {FilterObject} from "../../../utils/filters";
     const route = useRoute();
+    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false);
 
-    const getData = async (ID: string) => (data.value = await generate(ID, pagination.value));
+    const getData = async () => (data.value = await generate(pagination.value));
 
     const pageNumber = ref(1);
     const pageSize = ref(25);
@@ -119,7 +117,6 @@
             : undefined;
     });
 
-    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string;
 
     const handlePageChange = (options: { page?: number; size?: number | string }) => {
         if (pageNumber.value === options.page && pageSize.value === options.size) return;
@@ -132,11 +129,11 @@
         };
         pageSize.value = sizeNumber ?? 25;
 
-        return getData(dashboardID(route));
+        return getData();
     };
 
     function refresh() {
-        return getData(dashboardID(route));
+        return getData();
     }
 
     defineExpose({

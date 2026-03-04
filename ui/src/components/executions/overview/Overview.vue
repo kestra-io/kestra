@@ -341,9 +341,7 @@
                             )?.value ?? "-",
                     },
                 ]),
-            ...(execution.value.trigger?.type ===
-                "io.kestra.plugin.core.flow.Subflow" &&
-                execution.value.trigger?.variables?.executionId
+            ...(execution.value.trigger?.variables?.executionId
                 ? [
                     {
                         icon: History,

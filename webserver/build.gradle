@@ -69,10 +69,22 @@ tasks.register('updateOpenapiVersion') {
             println "Error: OpenAPI file not found at $openapiFilePath. Skipping version update."
         }
     }
-
-
 }
 
-tasks.named('jar') {
+tasks.register('generateOpenapiSpec', Copy) {
+    def compileJavaProvider = tasks.named('compileJava')
+    def openapiSpecPath = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
+
+    from(compileJavaProvider.map(compileTask -> compileTask.outputs.files.filter{File f -> f == file(openapiSpecPath)}.singleFile))
+    into file("${project.getParent().projectDir}")
+    rename { 'openapi.yml' }
+}
+
+tasks.named('jar', Jar) {
     dependsOn updateOpenapiVersion
+    exclude '**/spring-configuration-metadata.json'
+}
+
+tasks.named('compileJava') {
+    outputs.file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
 }

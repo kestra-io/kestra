@@ -1,7 +1,9 @@
 package io.kestra.cli.commands.migrations.metadata;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
@@ -12,9 +14,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.NamespaceUtils;
 import jakarta.inject.Singleton;
-import lombok.AllArgsConstructor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,22 +30,36 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
-@AllArgsConstructor
 public class MetadataMigrationService {
     protected FlowRepositoryInterface flowRepository;
     protected TenantService tenantService;
     protected KvMetadataRepositoryInterface kvMetadataRepository;
     protected NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository;
     protected StorageInterface storageInterface;
-    protected NamespaceUtils namespaceUtils;
+    protected KestraConfig kestraConfig;
+
+    @Singleton
+    public MetadataMigrationService(FlowRepositoryInterface flowRepository, 
+                                    TenantService tenantService,
+                                    KvMetadataRepositoryInterface kvMetadataRepository, 
+                                    NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository, 
+                                    StorageInterface storageInterface, 
+                                    KestraConfig kestraConfig) {
+        this.flowRepository = flowRepository;
+        this.tenantService = tenantService;
+        this.kvMetadataRepository = kvMetadataRepository;
+        this.namespaceFileMetadataRepository = namespaceFileMetadataRepository;
+        this.storageInterface = storageInterface;
+        this.kestraConfig = kestraConfig;
+    }
 
     @VisibleForTesting
     public Map<String, List<String>> namespacesPerTenant() {
         String tenantId = tenantService.resolveTenant();
         return Map.of(tenantId, Stream.concat(
-            Stream.of(namespaceUtils.getSystemFlowNamespace()),
+            Stream.of(kestraConfig.getSystemFlowNamespace()),
             flowRepository.findDistinctNamespace(tenantId).stream()
-        ).map(NamespaceUtils::asTree).flatMap(Collection::stream).distinct().toList());
+        ).map(NamespaceInterface::asTree).flatMap(Collection::stream).distinct().toList());
     }
 
     public void kvMigration() throws IOException {

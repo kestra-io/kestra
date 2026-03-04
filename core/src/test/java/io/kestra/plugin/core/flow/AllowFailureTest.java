@@ -24,7 +24,7 @@ class AllowFailureTest {
     protected TestRunnerUtils runnerUtils;
 
     @Test
-    @ExecuteFlow("flows/valids/allow-failure.yaml")
+    @ExecuteFlow(value = "flows/valids/allow-failure.yaml", tenantId = "success")
     void success(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(9);
         control(execution);
@@ -34,10 +34,10 @@ class AllowFailureTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/allow-failure.yaml"}, tenantId = "fail")
+    @LoadFlows(value = {"flows/valids/allow-failure.yaml"}, tenantId = "failed")
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            "fail",
+            "failed",
             "io.kestra.tests",
             "allow-failure",
             null,

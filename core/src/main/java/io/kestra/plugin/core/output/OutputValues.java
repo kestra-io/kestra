@@ -18,13 +18,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Output one or more values.",
+    title = "Emit custom values from a task.",
     description = """
-        You can use this task to return some outputs and pass them to downstream tasks.
-        It's helpful for parsing and returning values from a task. You can then access these outputs in your downstream tasks
-        using the expression `{{ outputs.mytask_id.values.my_output_name }}` and you can see them in the Outputs tab.
-        The values can be strings, numbers, arrays, or any valid JSON object.
-        """
+        Renders the provided map and returns it under `outputs.<taskId>.values`. Accepts strings, numbers, arrays, or JSON objects; templated entries are rendered with the current context.
+
+        Use to surface intermediate data for downstream tasks or inspection in the Outputs tab."""
 )
 @Plugin(
     examples = {

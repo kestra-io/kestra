@@ -52,15 +52,19 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                 ] : []) as any,
                 {
                     key: "level",
-                    label: t("filter.level.label"),
+                    label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs");
                         return VALUES.LEVELS;
                     },
-                    showComparatorSelection: true,
+                    defaultValue: () => (
+                        typeof window !== "undefined"
+                            ? localStorage.getItem("defaultLogLevel") || "INFO"
+                            : "INFO"
+                    ),
                     visibleByDefault: true
                 },
                 {

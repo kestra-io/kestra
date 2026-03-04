@@ -250,6 +250,23 @@
                                 <template v-else-if="col.prop === 'trigger'">
                                     <TriggerAvatar :execution="scope.row" />
                                 </template>
+                                <template v-else-if="col.prop === 'trigger.variables.executionId'">
+                                    <RouterLink
+                                        v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
+                                        :to="{
+                                            name: 'executions/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                flowId: scope.row?.flowId,
+                                                id: scope.row?.trigger?.variables?.executionId
+                                            }
+                                        }"
+                                        class="execution-id"
+                                    >
+                                        <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                                    </RouterLink>
+                                    <span v-else>-</span>
+                                </template>
                             </template>
                             <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
                                 <el-tooltip :content="$t('taskid column details')" effect="light">
@@ -264,13 +281,12 @@
                             :label="$t('actions')"
                         >
                             <template #default="scope">
-                                <router-link
+                                <IconButton
+                                    :tooltip="$t('details')"
                                     :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
                                 >
-                                    <Kicon :tooltip="$t('details')" placement="left">
-                                        <TextSearch />
-                                    </Kicon>
-                                </router-link>
+                                    <TextSearch />
+                                </IconButton>
                             </template>
                         </el-table-column>
                     </template>
@@ -409,7 +425,7 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -478,7 +494,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
-        defaultScopeFilter: true
+        defaultScopeFilter: false
     });
 
     const emit = defineEmits<{
@@ -573,10 +589,16 @@
             description: t("filter.table_column.executions.task-id")
         },
         {
-            label: t("triggers"), 
-            prop: "trigger", 
-            default: true, 
+            label: t("triggers"),
+            prop: "trigger",
+            default: true,
             description: t("filter.table_column.executions.trigger")
+        },
+        {
+            label: t("parent execution"),
+            prop: "trigger.variables.executionId",
+            default: false,
+            description: t("filter.table_column.executions.parent-execution")
         }
     ]);
 
@@ -598,7 +620,7 @@
     );
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger"].includes(prop);
+        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop);
     };
 
     const selectionMapper = (execution: any) => {

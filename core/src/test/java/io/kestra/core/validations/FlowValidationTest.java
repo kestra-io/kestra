@@ -3,6 +3,7 @@ package io.kestra.core.validations;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
@@ -111,10 +112,10 @@ class FlowValidationTest {
                 message: {{ abc }}
 
             """;
-            List<ValidateConstraintViolation> results = flowService.validate("my-tenant", invalidYaml);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, invalidYaml)));
 
-            assertThat(results).hasSize(1);
-            assertThat(results.getFirst().getConstraints()).contains("YAML parsing error").contains("at line");
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).contains("YAML parsing error").contains("at line");
     }
 
     @Test
@@ -128,7 +129,7 @@ class FlowValidationTest {
                 message: {{ undefinedVar }}
             """;
 
-        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", yamlWithUndefinedVar);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, yamlWithUndefinedVar)));
 
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().getConstraints()).contains("Validation error");
@@ -140,7 +141,7 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getMessage()).contains(": Invalid Flow: Recursive call to flow [io.kestra.tests.recursive-flow]");
+        assertThat(validate.get().getMessage()).contains("Invalid Flow: Recursive call to flow [io.kestra.tests.recursive-flow]");
     }
 
     @Test
@@ -243,8 +244,8 @@ class FlowValidationTest {
                     .id("log")
                     .type(Log.class.getName())
                     .message("any")
-                    .assets(io.kestra.core.models.property.Property.ofValue(
-                        new AssetsDeclaration(true, List.of(new AssetIdentifier(null, null, "anyId", "custom")), null))
+                    .assets(
+                        new AssetsDeclaration(true, List.of(new AssetIdentifier(null, null, "anyId", "custom")), null)
                     )
                     .build()
             ))

@@ -25,7 +25,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events between two specific datetime values."
+    title = "Allow events only between two datetimes.",
+    description = """
+        Compares a rendered date (defaults to `{{ trigger.date }}`) against optional `after` and `before` bounds expressed as ISO-8601 datetimes with zone.
+
+        You must provide at least one bound; if both are set the date must fall strictly between them. Missing both bounds triggers an evaluation error."""
 )
 @Plugin(
     examples = {

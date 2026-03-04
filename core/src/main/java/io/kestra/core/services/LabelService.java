@@ -15,10 +15,15 @@ public final class LabelService {
     private LabelService() {}
 
     /**
-     * Return flow labels excluding system labels.
+     * Return labels after excluding system labels.
+     * This method is used generally for any labels list
+     * When labels list is null it handles it implicitly to prevent unnecessary null checks at the callers
      */
-    public static List<Label> labelsExcludingSystem(FlowInterface flow) {
-        return ListUtils.emptyOnNull(flow.getLabels()).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
+    public static List<Label> labelsExcludingSystem(List<Label> labels) {
+        return ListUtils.emptyOnNull(labels)
+                .stream()
+                .filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX))
+                .toList();
     }
 
     /**
@@ -28,20 +33,17 @@ public final class LabelService {
      * In case rendering is not possible, the label will be omitted.
      */
     public static List<Label> fromTrigger(RunContext runContext, FlowInterface flow, AbstractTrigger trigger) {
-        final List<Label> labels = new ArrayList<>();
 
-        if (flow.getLabels() != null) {
-            labels.addAll(LabelService.labelsExcludingSystem(flow)); // no need for rendering
-        }
+        final List<Label> labels = new ArrayList<>(labelsExcludingSystem(flow.getLabels())); // no need for rendering
 
-        if (trigger.getLabels() != null) {
-            for (Label label : trigger.getLabels()) {
+        // It is better to remove system labels before rendering
+            List<Label> triggerLabels = labelsExcludingSystem(trigger.getLabels());
+            for (Label label : triggerLabels) {
                 final var value = renderLabelValue(runContext, label);
                 if (value != null) {
                     labels.add(new Label(label.key(), value));
                 }
             }
-        }
 
         return labels;
     }

@@ -1,7 +1,7 @@
 package io.kestra.core.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
@@ -25,7 +25,7 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode
 @TestSuiteValidation
-public class TestSuite implements HasUID, TenantInterface, DeletedInterface, HasSource {
+public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSuite>, HasSource {
 
     @NotNull
     @NotBlank
@@ -85,10 +85,6 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
             );
     }
 
-    public TestSuite delete() {
-        return this.toBuilder().deleted(true).build();
-    }
-
     public TestSuite disable() {
         var disabled = true;
         return this.toBuilder()
@@ -119,5 +115,10 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
         }
 
         return yamlSource + String.format("\ndisabled: %s", disabled);
+    }
+
+    @Override
+    public TestSuite toDeleted() {
+        return toBuilder().deleted(true).build();
     }
 }

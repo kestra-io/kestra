@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -18,7 +19,6 @@ import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
@@ -26,7 +26,6 @@ import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -71,7 +70,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     protected final AbstractJdbcExecutorStateStorage executorStateStorage;
 
     private QueueInterface<Execution> executionQueue;
-    private final NamespaceUtils namespaceUtils;
+    private final KestraConfig kestraConfig;
 
     private final JdbcFilterService filterService;
 
@@ -101,15 +100,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     @SuppressWarnings("unchecked")
     public AbstractJdbcExecutionRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
-        QueueService queueService,
         ApplicationContext applicationContext,
         AbstractJdbcExecutorStateStorage executorStateStorage,
         JdbcFilterService filterService
     ) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
         this.executorStateStorage = executorStateStorage;
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.namespaceUtils = applicationContext.getBean(NamespaceUtils.class);
+        this.kestraConfig = applicationContext.getBean(KestraConfig.class);
 
         // we inject ApplicationContext in order to get the ExecutionQueue lazy to avoid StackOverflowError
         this.applicationContext = applicationContext;
@@ -170,7 +168,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         return findCondition(query, Map.of());
     }
 
-    abstract protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
+    abstract public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -522,9 +520,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     ) {
         if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
             if (scope.contains(FlowScope.USER)) {
-                select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
+                select = select.and(field("namespace").ne(kestraConfig.getSystemFlowNamespace()));
             } else if (scope.contains(FlowScope.SYSTEM)) {
-                select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
+                select = select.and(field("namespace").eq(kestraConfig.getSystemFlowNamespace()));
             }
         }
 
@@ -979,7 +977,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 filterService,
                 filters,
                 getFieldsMapping()
-            );
+            ).and(NORMAL_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {
@@ -1025,11 +1023,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 Map<String, String> mergedMap = new HashMap<>();
 
                 labelFilters.forEach(labelFilter -> {
-                    Map<String, String> currentMap =
-                        labelFilter.getValue() instanceof String stringLabel ?
-                            Label.from(stringLabel)
-                            : (Map<String, String>) labelFilter.getValue();
-                    mergedMap.putAll(currentMap);
+                    if (labelFilter.getLabelKey() != null) {
+                        mergedMap.put(labelFilter.getLabelKey(), labelFilter.getValue().toString());
+                    } else if (labelFilter.getValue() instanceof String stringLabel) {
+                        mergedMap.putAll(Label.from(stringLabel));
+                    } else {
+                        mergedMap.putAll((Map<String, String>) labelFilter.getValue());
+                    }
                 });
 
                 selectConditionStep = selectConditionStep.and(findCondition(null, mergedMap));

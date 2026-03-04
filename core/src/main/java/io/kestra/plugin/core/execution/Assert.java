@@ -33,30 +33,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Assert some conditions to control task output data.",
-    description = "Used to control outputs data emitted from previous task on this execution."
+    title = "Assert boolean expressions against execution data.",
+    description = """
+        Renders each string in `conditions` and coerces the result to boolean (empty string/0 is false, everything else true). Any falsy assertion logs an error, emits `failed`/`success` metrics, and stops the flow with an exception.
+
+        Use `errorMessage` to append extra context to the thrown error."""
 )
 @Plugin(
     examples = {
         @Example(
             title = "Assert based on inputs data",
             full = true,
-            code = {
-                "id: assert\n" +
-                "namespace: company.team\n" +
-                "\n" +
-                "inputs:\n" +
-                "  - id: param\n" +
-                "    type: STRING\n" +
-                "    required: true\n" +
-                "\n" +
-                "tasks:\n" +
-                "  - id: fail\n" +
-                "    type: io.kestra.plugin.core.execution.Assert\n" +
-                "    conditions:\n" +
-                "      - \"{{ inputs.param == 'ok' }}\"\n" +
-                "      - \"{{ 1 + 1 == 3 }}\"\n"
-            }
+            code = """
+                id: assert
+                namespace: company.team
+
+
+                inputs:
+                  - id: param
+                    type: STRING
+                    required: true
+                    
+                tasks:
+                  - id: fail
+                    type: io.kestra.plugin.core.execution.Assert
+                    conditions:
+                      - "{{ inputs.param == 'ok' }}"
+                      - "{{ 1 + 1 == 3 }}"
+            """
         )
     },
     metrics = {

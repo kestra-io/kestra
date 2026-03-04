@@ -17,6 +17,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
+
 /**
  * The default {@link Storage} implementation acting as a facade to the {@link StorageInterface}.
  */
@@ -154,7 +156,7 @@ public class InternalStorage implements Storage {
     @Override
     public URI putFile(InputStream inputStream, String name) throws IOException {
         URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
+        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + toLogicalPath(name));
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream));
     }
 

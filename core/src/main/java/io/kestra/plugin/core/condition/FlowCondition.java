@@ -21,7 +21,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a specific flow. Note that this condition is deprecated, use `io.kestra.plugin.core.condition.ExecutionFlow` instead."
+    title = "Match a specific flow (deprecated).",
+    description = """
+        Filters by flow id and namespace on the current flow definition.
+
+        Deprecated in favor of `io.kestra.plugin.core.condition.ExecutionFlow`, which works with Flow triggers and execution context."""
 )
 @Plugin(
     examples = {

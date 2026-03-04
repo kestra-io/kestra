@@ -11,6 +11,7 @@ import org.jooq.impl.DSL;
 import java.util.*;
 
 import static io.kestra.core.models.QueryFilter.Op.EQUALS;
+import static io.kestra.core.models.QueryFilter.Op.NOT_EQUALS;
 
 public abstract class MysqlFlowRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query, Map<String, String> labels) {
@@ -42,7 +43,14 @@ public abstract class MysqlFlowRepositoryService {
                 Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
                if(operation.equals(EQUALS))
                 conditions.add(valueField.eq(value != null));
+               else if (operation.equals(NOT_EQUALS)) {
+                   // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
+                   String extractValueSqlTemplate = "JSON_UNQUOTE(JSON_EXTRACT(`value`, REPLACE(JSON_UNQUOTE(JSON_SEARCH(`value`, 'one', {0}, NULL, '$.labels[*].key')), '.key', '.value')))";
+                   Field<String> extractedValue = DSL.field(extractValueSqlTemplate, String.class, DSL.val(key));
 
+                   conditions.add(extractedValue.isNull().or(extractedValue.ne(DSL.val(value, String.class)))
+                   );
+               }
             });
         }
         return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);

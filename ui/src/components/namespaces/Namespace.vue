@@ -18,7 +18,6 @@
     import Actions from "override/components/namespaces/Actions.vue";
     import {useMiscStore} from "override/stores/misc";
     import Tabs from "../Tabs.vue";
-
     const {tabs} = useTabs();
     const {details} = useHelpers();
 
@@ -44,7 +43,7 @@
             const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H";
                 const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION};
                 router.replace({name: route.name, params: route.params, query: newQuery});
             }

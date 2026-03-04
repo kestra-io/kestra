@@ -37,8 +37,12 @@ public interface KVStore {
     }
 
     default URI storageUri(String key, String namespace, int version) {
-        String filePath = key == null ? "" : ("/" + key + ".ion") + (version > 1 ? (".v" + version) : "");
-        return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + filePath);
+        String fileName = kvFileName(key, version);
+        return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + (fileName.isEmpty() ? fileName : ("/" + fileName)));
+    }
+
+    static String kvFileName(String key, int version) {
+        return key == null ? "" : (key + ".ion") + (version > 1 ? (".v" + version) : "");
     }
 
     /**

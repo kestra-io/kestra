@@ -21,9 +21,6 @@ public class KVStoreService {
     private StorageInterface storageInterface;
 
     @Inject
-    private FlowService flowService;
-
-    @Inject
     private NamespaceService namespaceService;
 
     /**
@@ -38,7 +35,7 @@ public class KVStoreService {
         boolean isNotSameNamespace = fromNamespace != null && !namespace.equals(fromNamespace);
         if (isNotSameNamespace && isNotParentNamespace(namespace, fromNamespace)) {
             try {
-                flowService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
+                namespaceService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
             } catch (IllegalArgumentException e) {
                 throw new KVStoreException(String.format(
                     "Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.", namespace, fromNamespace)

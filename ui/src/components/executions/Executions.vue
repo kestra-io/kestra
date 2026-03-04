@@ -4,6 +4,11 @@
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
+                        <el-button :icon="Download" @click="exportExecutionsAsStream()">
+                            {{ $t('export_csv') }}
+                        </el-button>
+                    </li>
+                    <li>
                         <template v-if="hasAnyExecute">
                             <TriggerFlow />
                         </template>
@@ -51,11 +56,12 @@
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
+                    :defaultScope="defaultScopeFilter"
                 />
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
             </template>
 
             <template #table>
@@ -70,7 +76,7 @@
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
-                    :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                    :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
                         <BulkSelect
@@ -144,10 +150,7 @@
 
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput
-                                        :key="executionLabels.map((l) => l.key).join('-')"
-                                        v-model:labels="executionLabels"
-                                    />
+                                    <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>
                             </el-form>
                         </el-dialog>
@@ -195,10 +198,7 @@
                                     <DateAgo :inverted="true" :date="scope.row?.state?.endDate" />
                                 </template>
                                 <template v-else-if="col.prop === 'state.duration'">
-                                    <span v-if="isRunning(scope.row)">{{
-                                        humanizeDuration(durationFrom(scope.row).toString())
-                                    }}</span>
-                                    <span v-else>{{ humanizeDuration(scope.row?.state?.duration) }}</span>
+                                    <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                                 </template>
                                 <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
                                     <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
@@ -247,6 +247,26 @@
                                         }}
                                     </code>
                                 </template>
+                                <template v-else-if="col.prop === 'trigger'">
+                                    <TriggerAvatar :execution="scope.row" />
+                                </template>
+                                <template v-else-if="col.prop === 'trigger.variables.executionId'">
+                                    <RouterLink
+                                        v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
+                                        :to="{
+                                            name: 'executions/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                flowId: scope.row?.flowId,
+                                                id: scope.row?.trigger?.variables?.executionId
+                                            }
+                                        }"
+                                        class="execution-id"
+                                    >
+                                        <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                                    </RouterLink>
+                                    <span v-else>-</span>
+                                </template>
                             </template>
                             <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
                                 <el-tooltip :content="$t('taskid column details')" effect="light">
@@ -261,13 +281,12 @@
                             :label="$t('actions')"
                         >
                             <template #default="scope">
-                                <router-link
+                                <IconButton
+                                    :tooltip="$t('details')"
                                     :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
                                 >
-                                    <Kicon :tooltip="$t('details')" placement="left">
-                                        <TextSearch />
-                                    </Kicon>
-                                </router-link>
+                                    <TextSearch />
+                                </IconButton>
                             </template>
                         </el-table-column>
                     </template>
@@ -384,7 +403,7 @@
     import _merge from "lodash/merge";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, onMounted, watch, h, useTemplateRef} from "vue";
+    import {ref, computed, watch, h, useTemplateRef} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
 
@@ -403,15 +422,15 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
+    import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import DataTable from "../layout/DataTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    //@ts-expect-error no declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
@@ -419,18 +438,18 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
 
     import {filterValidLabels} from "./utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
-    import {defaultNamespace} from "../../composables/useNamespaces";
-    import {humanizeDuration, invisibleSpace} from "../../utils/filters";
+    import {invisibleSpace} from "../../utils/filters";
     import Utils from "../../utils/utils";
+    import Duration from "../../components/dashboard/sections/table/columns/Duration.vue";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
 
-    import useRestoreUrl from "../../composables/useRestoreUrl";
     import useRouteContext from "../../composables/useRouteContext";
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useDataTableActions} from "../../composables/useDataTableActions";
@@ -446,7 +465,7 @@
 
     const {t} = useI18n();
     const toast = useToast();
-    
+
     const executionFilter = useExecutionFilter();
     const flowExecutionFilter = useFlowExecutionFilter();
 
@@ -462,6 +481,7 @@
         hidden?: string[] | null;
         flowId?: string | undefined;
         namespace?: string | undefined;
+        defaultScopeFilter?: boolean;
     }>(), {
         embed: false,
         filter: true,
@@ -474,6 +494,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
+        defaultScopeFilter: false
     });
 
     const emit = defineEmits<{
@@ -495,7 +516,6 @@
     const selectedStatus = ref(undefined);
     const lastRefreshDate = ref(new Date());
     const unqueueDialogVisible = ref(false);
-    const isDefaultNamespaceAllow = ref(true);
     const changeStatusDialogVisible = ref(false);
     const actionOptions = ref<Record<string, any>>({});
     const dblClickRouteName = ref("executions/update");
@@ -503,76 +523,88 @@
 
     const optionalColumns = ref([
         {
-            label: t("start date"), 
-            prop: "state.startDate", 
-            default: true, 
+            label: t("start date"),
+            prop: "state.startDate",
+            default: true,
             description: t("filter.table_column.executions.start-date")
         },
         {
-            label: t("end date"), 
-            prop: "state.endDate", 
-            default: true, 
+            label: t("end date"),
+            prop: "state.endDate",
+            default: true,
             description: t("filter.table_column.executions.end-date")
         },
         {
-            label: t("duration"), 
-            prop: "state.duration", 
-            default: true, 
+            label: t("duration"),
+            prop: "state.duration",
+            default: true,
             description: t("filter.table_column.executions.duration")
         },
         {
-            label: t("namespace"), 
-            prop: "namespace", 
-            default: true, 
+            label: t("namespace"),
+            prop: "namespace",
+            default: true,
             description: t("filter.table_column.executions.namespace")
         },
         {
-            label: t("flow"), 
-            prop: "flowId", 
-            default: true, 
+            label: t("flow"),
+            prop: "flowId",
+            default: true,
             description: t("filter.table_column.executions.flow")
         },
         {
-            label: t("labels"), 
-            prop: "labels", 
-            default: true, 
+            label: t("labels"),
+            prop: "labels",
+            default: true,
             description: t("filter.table_column.executions.labels")
         },
         {
-            label: t("state"), 
-            prop: "state.current", 
-            default: true, 
+            label: t("state"),
+            prop: "state.current",
+            default: true,
             description: t("filter.table_column.executions.state")
         },
         {
-            label: t("revision"), 
-            prop: "flowRevision", 
-            default: false, 
+            label: t("revision"),
+            prop: "flowRevision",
+            default: false,
             description: t("filter.table_column.executions.revision")
         },
         {
-            label: t("inputs"), 
-            prop: "inputs", 
-            default: false, 
+            label: t("inputs"),
+            prop: "inputs",
+            default: false,
             description: t("filter.table_column.executions.inputs")
         },
         {
-            label: t("outputs"), 
-            prop: "outputs", 
-            default: false, 
+            label: t("outputs"),
+            prop: "outputs",
+            default: false,
             description: t("filter.table_column.executions.outputs")
         },
         {
-            label: t("task id"), 
-            prop: "taskRunList.taskId", 
-            default: false, 
+            label: t("task id"),
+            prop: "taskRunList.taskId",
+            default: false,
             description: t("filter.table_column.executions.task-id")
+        },
+        {
+            label: t("triggers"),
+            prop: "trigger",
+            default: true,
+            description: t("filter.table_column.executions.trigger")
+        },
+        {
+            label: t("parent execution"),
+            prop: "trigger.variables.executionId",
+            default: false,
+            description: t("filter.table_column.executions.parent-execution")
         }
     ]);
 
-    const storageKey = computed(() => 
-        route.name === "flows/update" 
-            ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS 
+    const storageKey = computed(() =>
+        route.name === "flows/update"
+            ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
             : storageKeys.DISPLAY_EXECUTIONS_COLUMNS
     );
 
@@ -581,14 +613,14 @@
         storageKey: storageKey.value
     });
 
-    const visibleColumns = computed(() => 
+    const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => optionalColumns.value.find(c => c.prop === prop))
             .filter(Boolean) as any[]
     );
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId"].includes(prop);
+        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop);
     };
 
     const selectionMapper = (execution: any) => {
@@ -613,11 +645,6 @@
     const routeInfo = computed(() => ({title: t("executions")}));
     useRouteContext(routeInfo, props.embed);
 
-    const {saveRestoreUrl} = useRestoreUrl({
-        restoreUrl: true,
-        isDefaultNamespaceAllow: isDefaultNamespaceAllow.value
-    });
-
     const dataTableRef = ref(null);
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
 
@@ -633,8 +660,7 @@
         dblClickRouteName: dblClickRouteName.value,
         embed: props.embed,
         dataTableRef,
-        loadData: loadData,
-        saveRestoreUrl
+        loadData: loadData
     });
 
     const {
@@ -738,10 +764,6 @@
         load(onDataLoaded);
     };
 
-    const isRunning = (item: any) => {
-        return State.isRunning(item?.state?.current);
-    };
-
     const loadQuery = (base: any) => {
         let queryFilter = queryWithFilter();
 
@@ -759,10 +781,6 @@
         }
 
         return _merge(base, queryFilter);
-    };
-
-    const durationFrom = (item: any) => {
-        return (+new Date() - new Date(item?.state?.startDate).getTime()) / 1000;
     };
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {
@@ -810,6 +828,7 @@
             return action(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
+                    toggleAllUnselected();
                     loadData();
                 });
         } else {
@@ -823,6 +842,7 @@
             return action(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
+                    toggleAllUnselected();
                     loadData();
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
@@ -1002,6 +1022,7 @@
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
+                        toggleAllUnselected();
                         loadData();
                     });
             } else {
@@ -1012,6 +1033,7 @@
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
+                        toggleAllUnselected();
                         loadData();
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
                         return {message: t(exec.message, {executionId: exec.invalidValue})};
@@ -1042,36 +1064,17 @@
         emit("state-count", {runningCount, totalCount});
     };
 
-    onMounted(() => {
-        const query = {...route.query};
-        let queryHasChanged = false;
-
-        const queryKeys = Object.keys(query);
-        if (props.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-            query["filters[namespace][PREFIX]"] = defaultNamespace();
-            queryHasChanged = true;
-        }
-
-        if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-            query["filters[scope][EQUALS]"] = "USER";
-            queryHasChanged = true;
-        }
-
-        if (queryHasChanged) {
-            router.replace({query});
-        }
-
-        if (route.name === "flows/update") {
-            optionalColumns.value = optionalColumns.value.
-                filter(col => col.prop !== "namespace" && col.prop !== "flowId");
-        }
-    });
-
     watch(isOpenLabelsModal, (opening) => {
         if (opening) {
             executionLabels.value = [];
         }
     });
+
+    async function exportExecutionsAsStream() {
+        await executionsStore.exportExecutionsAsCSV(
+            route.query
+        )
+    }
 </script>
 
 

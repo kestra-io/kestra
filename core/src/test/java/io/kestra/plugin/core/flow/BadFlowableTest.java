@@ -13,14 +13,16 @@ import org.junit.jupiter.api.Test;
 public class BadFlowableTest {
 
     @Test
-    @ExecuteFlow("flows/valids/flowable-fail.yaml")
+    @ExecuteFlow(value = "flows/valids/flowable-fail.yaml", tenantId = "sequential")
     void sequential(Execution execution) {
         assertThat(execution.getTaskRunList().size()).as("Task runs were: \n" + JacksonMapper.log(execution.getTaskRunList())).isGreaterThanOrEqualTo(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     @Test
-    @ExecuteFlow("flows/valids/flowable-with-parent-fail.yaml")
+    @ExecuteFlow(value = "flows/valids/flowable-with-parent-fail.yaml", tenantId = "flowablewithparentfail")
     void flowableWithParentFail(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

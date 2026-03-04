@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junitpioneer.jupiter.RetryingTest;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +58,7 @@ class FileChangedEventListenerTest {
     }
 
     @FlakyTest
-    @RetryingTest(2)
+    @Test
     void test() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "test");
         // remove the flow if it already exists
@@ -98,7 +97,7 @@ class FileChangedEventListenerTest {
     }
 
     @FlakyTest
-    @RetryingTest(2)
+    @Test
     void testWithPluginDefault() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "testWithPluginDefault");
         // remove the flow if it already exists

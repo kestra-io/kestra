@@ -139,7 +139,7 @@ export const WithFilter = {
     }
 }
 
-// check if when the filter changes, the message disapears
+// check if when the filter changes, the message disappears
 WithFilter.play = async ({canvasElement}) => {
     const can = within(canvasElement);
     const input = can.getByLabelText("Filter");

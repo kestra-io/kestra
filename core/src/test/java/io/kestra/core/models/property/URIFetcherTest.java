@@ -1,10 +1,11 @@
 package io.kestra.core.models.property;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.*;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -25,13 +27,16 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest
 class URIFetcherTest {
     @Inject
     private StorageInterface storage;
 
     @Inject
     private RunContextFactory runContextFactory;
+
+    @Inject
+    private NamespaceFactory namespaceFactory;
 
     @Test
     void supports() {
@@ -84,7 +89,7 @@ class URIFetcherTest {
     }
 
     @Test
-    void shouldFetchFromNsfile() throws IOException {
+    void shouldFetchFromNsfile() throws IOException, URISyntaxException {
         String namespace = IdUtils.create();
         URI uri = createNsFile(namespace, false);
         RunContext runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace)));
@@ -96,7 +101,7 @@ class URIFetcherTest {
     }
 
     @Test
-    void shouldFetchFromNsfileFromOtherNs() throws IOException {
+    void shouldFetchFromNsfileFromOtherNs() throws IOException, URISyntaxException {
         String namespace = IdUtils.create();
         URI uri = createNsFile(namespace, true);
         RunContext runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "other")));
@@ -142,10 +147,10 @@ class URIFetcherTest {
         );
     }
 
-    private URI createNsFile(String namespace, boolean nsInAuthority) throws IOException {
+    private URI createNsFile(String namespace, boolean nsInAuthority) throws IOException, URISyntaxException {
         String filePath = "file.txt";
-        storage.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storage.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storage);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 }

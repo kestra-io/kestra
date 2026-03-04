@@ -23,8 +23,7 @@ public class ListenersTestTask extends Task implements RunnableTask<ListenersTes
     @Override
     public ListenersTestTask.Output run(RunContext runContext) throws Exception {
         ExecutionRepositoryInterface executionRepository =  ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
-        RetryUtils.Instance<Execution, NoSuchElementException> retryInstance =  ((DefaultRunContext)runContext).getApplicationContext().getBean(RetryUtils.class)
-            .of(
+        RetryUtils.Instance<Execution, NoSuchElementException> retryInstance =  RetryUtils.of(
                 Exponential.builder()
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(1))

@@ -10,8 +10,8 @@ import io.micronaut.runtime.event.annotation.EventListener;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -26,10 +26,10 @@ import static io.kestra.core.server.ServiceLivenessManager.OnStateTransitionFail
  * Moreover, this class periodically send state updates (a.k.a. heartbeats) to indicate service's liveness.
  */
 @Context
+@Requires(property = "kestra.server-type")
 @Requires(beans = ServiceLivenessUpdater.class)
+@Slf4j
 public class ServiceLivenessManager extends AbstractServiceLivenessTask {
-
-    private static final Logger log = LoggerFactory.getLogger(ServiceLivenessManager.class);
 
     private static final String TASK_NAME = "service-liveness-manager-task";
     private final LocalServiceStateFactory localServiceStateFactory;

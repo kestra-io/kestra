@@ -20,8 +20,8 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByFlowId(executionsApi.flowId);
             await executionsPage.setFilterByLabel("foo", "bar");
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(25);
-            expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
+            await executionsPage.expectCountOfExecutionsToBe(25)
+            await executionsPage.expectTotalExecutionsCountToBe(26);
         });
 
         await test.step("Set label to 'foo:baz' using Select All on filtered 'foo:bar' executions", async () => {
@@ -31,21 +31,21 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.clickOnSetLabels();
             await executionsPage.setLabelOnSelectedExecutions();
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(0);
+            await executionsPage.expectCountOfExecutionsToBe(0)
         });
 
         await test.step("Switch filter to label 'a:b' which should not be affected by the label change", async () => {
-            await executionsPage.removeFilterByLabelKey("foo");
+            await executionsPage.removeFilterByLabelKey("foo"); 
             await executionsPage.setFilterByLabel("a", "b");
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(1);
+            await executionsPage.expectCountOfExecutionsToBe(1)
         });
     });
 
     test.use({flow: {fileName: "failure-then-success.yaml", flowId: "failure-then-success"}});
     test("Restart only on a filtered set of executions when using Select All", async ({executionsPage, executionsApi, page}) => {
         test.slow(); // creating and resuming many executions
-        expect(page.getByRole("heading", {name: "Executions"})).toBeVisible();
+        expect(page.getByRole("heading", {name: "Executions ", exact: true})).toBeVisible();
 
         await test.step("Generate 26 executions with the 'foo:bar' label and a single 'a:b' one", async () => {
             for (let i = 0; i < 26; i++) {
@@ -60,7 +60,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("foo", "bar");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(25);
+            await executionsPage.expectCountOfExecutionsToBe(25)
             expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
         });
 
@@ -76,7 +76,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByState(ExecutionState.SUCCESS);
             await executionsPage.setPaginationTo(Pagination.ITEMS_50);
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(26);
+            await executionsPage.expectCountOfExecutionsToBe(26)
         });
 
         await test.step("Switch filter to label 'a:b' which should not be affected by the Restart action", async () => {
@@ -84,7 +84,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("a", "b");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(1);
+            await executionsPage.expectCountOfExecutionsToBe(1)
         });
     });
 
@@ -106,7 +106,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("foo", "bar");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(25);
+            await executionsPage.expectCountOfExecutionsToBe(25)
             expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
         });
 
@@ -129,7 +129,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("a", "b");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(1);
+            await executionsPage.expectCountOfExecutionsToBe(1)
         });
     });
 });

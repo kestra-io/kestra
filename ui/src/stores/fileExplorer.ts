@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import Utils from "../utils/utils";
-import {useNamespacesStore} from "../override/stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
 
@@ -206,7 +206,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 toast.error(t("namespace files.create.file_already_exists"));
                 return {};
             }
-            await namespacesStore.createFile({
+            await namespacesStore.saveOrCreateFile({
                 namespace: namespaceId.value,
                 path,
                 content,
@@ -220,10 +220,10 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 for (const item of array) {
                     const folderPath = `${basePath}${item.fileName}`;
                     if (folderPath === parentPath && isDirectory(item)) {
-                        item.children = sorted([...item.children, NEW]);
+                        item.children = sorted([...(item.children ?? []), NEW]);
                         return true;
                     }
-                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
+                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children ?? [], pathParts.slice(1))) {
                         return true;
                     }
                 }
@@ -249,6 +249,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     function getPath(uid: string ) {
         // first, use the node unique id to find it in all the subtrees of the fileTree
         const findPath = (array: TreeNode[], currentPath = ""): string | undefined => {
+            if (!Array.isArray(array)) return undefined;
             for (const item of array) {
                 const newPath = currentPath ? `${currentPath}/${item.fileName}` : item.fileName;
                 if (item.id === uid) {
@@ -328,7 +329,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             if (fullPath === path) {
                 return item;
             }
-            if (isDirectory(item) && item.children.length > 0) {
+            if (isDirectory(item) && item.children && item.children.length > 0) {
                 const foundNode = findNodeByPath(path, item.children, `${fullPath}/`);
                 if (foundNode) {
                     return foundNode;

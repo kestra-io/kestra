@@ -3,16 +3,39 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
-            {{ $t("execute") }}
-        </el-button>
-        <el-dialog id="execute-flow-dialog" v-model="isOpen" destroyOnClose :showClose="!coreStore.guidedProperties.tourStarted" :beforeClose="(done) => beforeClose(done)" :appendToBody="true">
+        <span v-else data-onboarding-target="flow-execute-button">
+            <el-button
+                id="execute-button"
+                :icon="icon.Play"
+                :type="type"
+                :disabled="isDisabled()"
+                @click="onClick()"
+            >
+                {{ $t("execute") }}
+            </el-button>
+        </span>
+        <el-dialog
+            id="execute-flow-dialog"
+            v-model="isOpen"
+            destroyOnClose
+            :showClose="true"
+            :beforeClose="(done) => beforeClose(done)"
+            :appendToBody="true"
+            :width="dialogWidth"
+        >
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+            <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
         </el-dialog>
-        <el-dialog v-if="isSelectFlowOpen" v-model="isSelectFlowOpen" destroyOnClose :beforeClose="() => reset()" :appendToBody="true">
+        <el-dialog
+            v-if="isSelectFlowOpen"
+            v-model="isSelectFlowOpen"
+            destroyOnClose
+            :beforeClose="() => reset()"
+            :appendToBody="true"
+            :width="dialogWidth"
+        >
             <el-form
                 labelPosition="top"
             >
@@ -46,7 +69,7 @@
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+                        <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </el-form-item>
             </el-form>
@@ -57,14 +80,12 @@
 
 <script>
     import FlowRun from "./FlowRun.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
-    import {pageFromRoute} from "../../utils/eventsRouter";
+    import {useMediaQuery} from "@vueuse/core";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
     import {mapStores} from "pinia";
     import {useApiStore} from "../../stores/api";
-    import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
@@ -101,29 +122,26 @@
                 isSelectFlowOpen: false,
                 localFlow: undefined,
                 localNamespace: undefined,
+                isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
-                    LightningBolt: shallowRef(LightningBolt),
                     Play: shallowRef(Play)
                 }
             };
         },
         methods: {
+            trackExecutionAction(action) {
+                this.apiStore.posthogEvents({
+                    type: "FLOW_EXECUTION",
+                    action,
+                });
+            },
+            async handleExecutionStart() {
+                this.closeModal();
+                this.$toast().success(this.$t("execution_started"));
+            },
             onClick() {
-                if (this.$tours["guidedTour"]?.isRunning?.value) {
-                    this.$tours["guidedTour"]?.nextStep();
-                    this.apiStore.events({
-                        type: "ONBOARDING",
-                        onboarding: {
-                            step: this.$tours["guidedTour"]?.currentStep?._value,
-                            action: "next",
-                            template: this.coreStore.guidedProperties.template
-                        },
-                        page: pageFromRoute(this.$router.currentRoute.value)
-                    });
-                    this.toggleModal()
-                    return;
-                }
-                else if (this.checkForTrigger) {
+                this.trackExecutionAction("open_modal");
+                if (this.checkForTrigger) {
                     this.$toast().confirm(FlowWarningDialog, () => (this.toggleModal()), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
@@ -164,14 +182,15 @@
                 this.localNamespace = undefined;
             },
             beforeClose(done){
-                if(this.coreStore.guidedProperties.tourStarted) return;
-
                 this.reset();
                 done()
             }
         },
         computed: {
-            ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
+            ...mapStores(useApiStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
+            dialogWidth() {
+                return this.isLargeScreen ? "50%" : "90%";
+            },
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;
             },
@@ -187,14 +206,6 @@
             }
         },
         watch: {
-            "coreStore.guidedProperties": {
-                handler() {
-                    if (this.coreStore.guidedProperties.executeFlow) {
-                        this.onClick();
-                    }
-                },
-                deep: true
-            },
             "flowStore.executeFlow": {
                 handler(value) {
                     if (value && !this.isDisabled()) {
@@ -240,19 +251,5 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
-    }
-    
-    .onboarding-glow {
-        animation: glowAnimation 1s infinite alternate;
-    }
-    
-    
-    @keyframes glowAnimation {
-        0% {
-            box-shadow: 0px 0px 0px 0px #8405FF;
-        }
-        100% {
-            box-shadow: 0px 0px 50px 2px #8405FF;
-        }
     }
 </style>

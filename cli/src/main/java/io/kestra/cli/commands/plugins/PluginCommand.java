@@ -2,7 +2,6 @@ package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 
@@ -25,9 +24,7 @@ public class PluginCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "plugins", "--help");
-
-        return 0;
+        return App.runCli(new String[]{"plugins", "--help"});
     }
 
     @Override

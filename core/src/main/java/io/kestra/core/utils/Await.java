@@ -6,6 +6,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated use {@link org.awaitility.Awaitility} instead
+ */
+@Deprecated
 public class Await {
     private static final Duration defaultSleep = Duration.ofMillis(100);
 

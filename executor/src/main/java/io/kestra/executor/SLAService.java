@@ -1,7 +1,7 @@
 package io.kestra.executor;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.ExecutionChangedSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
@@ -19,7 +19,7 @@ public class SLAService {
      * Evaluate execution changed SLA of a flow for an execution.
      * Each violated SLA will be logged.
      */
-    public List<Violation> evaluateExecutionChangedSLA(RunContext runContext, Flow flow, Execution execution) {
+    public List<Violation> evaluateExecutionChangedSLA(RunContext runContext, FlowInterface flow, Execution execution) {
         return ListUtils.emptyOnNull(flow.getSla()).stream()
             .filter(ExecutionChangedSLA.class::isInstance)
             .map(

@@ -16,16 +16,13 @@ import java.util.function.Predicate;
 public class JooqDSLContextWrapper {
     private final DSLContext dslContext;
 
-    private final RetryUtils retryUtils;
-
     @Inject
-    public JooqDSLContextWrapper(DSLContext dslContext, RetryUtils retryUtils) {
+    public JooqDSLContextWrapper(DSLContext dslContext) {
         this.dslContext = dslContext;
-        this.retryUtils = retryUtils;
     }
 
     private <T> RetryUtils.Instance<T, RuntimeException> retryer() {
-        return retryUtils.of(
+        return RetryUtils.of(
             Random.builder()
                 .minInterval(Duration.ofMillis(50))
                 .maxAttempts(-1)

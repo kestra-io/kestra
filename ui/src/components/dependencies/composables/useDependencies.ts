@@ -20,7 +20,9 @@ import cytoscape from "cytoscape";
 
 import {State, cssVariable} from "@kestra-io/ui-libs";
 
-import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Element} from "../utils/types";
+import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../utils/types";
+import type {Types, Node, Edge, Element} from "../utils/types";
+
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {edgeColors, getStyle} from "../utils/style";
@@ -41,9 +43,9 @@ const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
 
     // Physical forces
-    nodeRepulsion: 10_000_000,
+    nodeRepulsion: 400_000,
     edgeElasticity: 100,
-    idealEdgeLength: 250,
+    idealEdgeLength: 50,
 
     // Gravity settings
     gravity: 0.05,
@@ -55,7 +57,7 @@ const layout: cytoscape.CoseLayoutOptions = {
 
     // Spacing and padding
     padding: 50,
-    componentSpacing: 200,
+    componentSpacing: 50,
 
     // Node sizing
     nodeDimensionsIncludeLabels: true,
@@ -158,12 +160,12 @@ const setExecutionEdgeColors = throttle(
  * before applying new styles or resetting the graph state.
  *
  * @param cy - The cytoscape core instance containing the graph elements.
- * @param subtype - The dependency subtype, either `FLOW`, `EXECUTION` or `NAMESPACE`.
+ * @param subtype - The dependency subtype, either `FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`.
  *                  Edge styles are only reset when subtype is `EXECUTION`.
  * @param classes - An array of class names to remove from all elements.
  *                  Defaults to [`selected`, `faded`, `hovered`, `executions`].
  */
-export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
+export function clearClasses(cy: cytoscape.Core, subtype: Types, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
     cy.elements().removeClass(classes.join(" "));
     if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
@@ -194,10 +196,10 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
  * @param cy - The cytoscape core instance managing the graph.
  * @param node - The node element to select.
  * @param selected - Vue ref storing the currently selected node ID.
- * @param subtype - Determines how connected elements are highlighted (`FLOW`, `EXECUTION` or `NAMESPACE`).
+ * @param subtype - Determines how connected elements are highlighted (`FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`).
  * @param id - Optional explicit ID to assign to the ref (defaults to the node’s own ID).
  */
-function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, id?: Node["id"]): void {
+function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: Types, id?: Node["id"]): void {
     // Clear all existing classes
     clearClasses(cy, subtype);
 
@@ -223,7 +225,7 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selecte
     selected.value = id ?? node.id();
 
     // Smoothly center and zoom the viewport on the selected node
-    cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
+    cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});  // codespell:ignore
 }
 
 /**
@@ -256,14 +258,24 @@ function hoverHandler(cy: cytoscape.Core): void {
  * Initializes and manages a cytoscape instance within a Vue component.
  *
  * @param container - Vue ref pointing to the DOM element that hosts the cytoscape graph.
- * @param subtype - Dependency subtype, either `FLOW`, `EXECUTION` or `NAMESPACE`. Defaults to `FLOW`.
+ * @param subtype - Dependency subtype, either `FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`. Defaults to `FLOW`.
  * @param initialNodeID - Optional ID of the node to preselect after layout completes.
  * @param params - Vue Router params, expected to include `id` and `namespace`.
  * @param isTesting - When true, bypasses API data fetching and uses mock/test data.
  * @returns An object with element getters, loading state, rendering state, selected node ID,
  *          selection helpers, and control handlers.
  */
-export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
+export function useDependencies(
+    container: Ref<HTMLElement | null>,
+    subtype: Types = FLOW,
+    initialNodeID: string,
+    params: RouteParams,
+    isTesting = false,
+    fetchAssetDependencies?: () => Promise<{
+        data: Element[];
+        count: number;
+    }>
+) {
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
@@ -301,7 +313,13 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         }
     };
 
-    const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
+    const elements = ref<{
+        data: cytoscape.ElementDefinition[];
+        count: number;
+    }>({
+        data: [],
+        count: 0,
+    });
     onMounted(async () => {
         if (isTesting) {
             if (!container.value) {
@@ -313,13 +331,32 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             isLoading.value = false;
         } else {
             try {
-                if (subtype === NAMESPACE) {
-                    const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
+                if (fetchAssetDependencies) {
+                    const result = await fetchAssetDependencies();
+                    elements.value = {
+                        data: result.data,
+                        count: result.count
+                    };
+                    isLoading.value = false;
+                } else if (subtype === NAMESPACE) {
+                    const {data} = await namespacesStore.loadDependencies({
+                        namespace: params.id as string,
+                    });
                     const nodes = data.nodes ?? [];
-                    elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
+                    elements.value = {
+                        data: transformResponse(data, NAMESPACE),
+                        count: new Set(nodes.map((r: { uid: string }) => r.uid)).size,
+                    };
                     isLoading.value = false;
                 } else {
-                    const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype}, false);
+                    const result = await flowStore.loadDependencies(
+                        {
+                            id: (subtype === FLOW ? params.id : params.flowId) as string,
+                            namespace: params.namespace as string,
+                            subtype: subtype === FLOW ? FLOW : EXECUTION,
+                        },
+                        false
+                    );
                     elements.value = {data: result.data ?? [], count: result.count};
                     isLoading.value = false;
                 }
@@ -448,8 +485,16 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         selectedNodeID,
         selectNode,
         handlers: {
-            zoomIn: () => cy.zoom({level: cy.zoom() + 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
-            zoomOut: () => cy.zoom({level: cy.zoom() - 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
+            zoomIn: () =>
+                cy.zoom({
+                    level: cy.zoom() + 0.1,
+                    renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition(),
+                }),
+            zoomOut: () =>
+                cy.zoom({
+                    level: cy.zoom() - 0.1,
+                    renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition(),
+                }),
             clearSelection: () => {
                 clearClasses(cy, subtype);
                 selectedNodeID.value = undefined;
@@ -465,12 +510,26 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
  * Cytoscape-compatible elements with the given subtype.
  *
  * @param response - The API response object containing `nodes` and `edges` arrays.
- * @param subtype - The node subtype, either `FLOW`, `EXECUTION`, or `NAMESPACE`.
+ * @param subtype - The node subtype, either `FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`.
  * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: {nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[]; }, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Element[] {
-    const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: {subtype}}));
-    const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
+export function transformResponse(response: {nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[];}, subtype: Types): Element[] {
+    const nodes: Node[] = response.nodes.map((node) => ({
+        id: node.uid,
+        type: NODE,
+        flow: node.id,
+        namespace: node.namespace,
+        metadata: {subtype},
+    }));
+    const edges: Edge[] = response.edges.map((edge) => ({
+        id: uuid(),
+        type: EDGE,
+        source: edge.source,
+        target: edge.target,
+    }));
 
-    return [...nodes.map((node) => ({data: node}) as Element), ...edges.map((edge) => ({data: edge}) as Element)];
+    return [
+        ...nodes.map((node) => ({data: node}) as Element),
+        ...edges.map((edge) => ({data: edge}) as Element),
+    ];
 }

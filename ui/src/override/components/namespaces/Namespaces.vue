@@ -2,8 +2,8 @@
     <Navbar :title="routeInfo.title">
         <template #additional-right>
             <Action
-                v-if="canCreate"
-                :label="t('create')"
+                v-if="!isOSS && canCreate"
+                :label="$t('create')"
                 :to="{name: 'namespaces/create', params: {tab: 'edit'}}"
             />
         </template>
@@ -26,7 +26,7 @@
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
-            <span>{{ t("no_namespaces") }}</span>
+            <span>{{ $t("no_namespaces") }}</span>
         </el-col>
 
         <el-col
@@ -54,13 +54,13 @@
                         class="node"
                     >
                         <div class="d-flex">
-                            <DotsSquare class="me-2 icon" />
+                            <FolderOpenOutline class="me-2 icon" />
                             <span class="pe-3">
                                 {{ namespaceLabel(data.label) }}
                             </span>
                             <slot name="description" :namespace="data" />
                             <span v-if="data.system" class="system">
-                                {{ t("system_namespace") }}
+                                {{ $t("system_namespace") }}
                             </span>
                         </div>
                         <el-button size="small">
@@ -89,11 +89,14 @@
     import permission from "../../../models/permission";
     import action from "../../../models/action";
 
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import useRestoreUrl from "../../../composables/useRestoreUrl";
+
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
     
     const namespacesFilter = useNamespacesFilter();
+    const {saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
 
     interface Node {
         id: string;
@@ -127,14 +130,20 @@
 
     onMounted(() => loadData());
     watch(
-        () => route.query,
-        () => loadData(),
+        () => route.query.q,
+        () => {
+            loadData();
+            saveRestoreUrl();
+        },
+        {immediate: true}
     );
 
     const miscStore = useMiscStore();
     const systemNamespace = computed(
         () => miscStore.configs?.systemNamespace || "system",
     );
+    
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const namespacesHierarchy = computed(() => {
         if (namespaces.value === undefined || namespaces.value.length === 0) {
@@ -145,7 +154,7 @@
 
         namespaces.value.forEach((item) => {
             const parts = item.id.split(".");
-            let currentLevel = map;
+            let currentLevel = map as any;
 
             parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
@@ -188,7 +197,7 @@
         return result;
     });
 
-    const namespaceLabel = (path) => {
+    const namespaceLabel = (path: string) => {
         const segments = path.split(".");
         return segments.length > 1 ? segments[segments.length - 1] : path;
     };

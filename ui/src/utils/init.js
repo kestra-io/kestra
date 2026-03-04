@@ -1,4 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router";
+import {watch} from "vue";
+import {setSelectedTenant} from "kestra-api/index";
 import {configure} from "vue-gtag";
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
@@ -31,7 +33,6 @@ import {
     PointElement,
     Tooltip,
 } from "chart.js";
-import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 import {createPinia} from "pinia";
 
@@ -70,7 +71,8 @@ export default async (app, routes, _stores, translations, additionalTranslations
 
     // router
     const router = createRouter({
-        history: createWebHistory(window.KESTRA_UI_PATH),
+        // make e2e tests pass in dev mode
+        history: createWebHistory(import.meta.env.DEV ? "/ui" : window.KESTRA_UI_PATH),
         routes
     });
 
@@ -140,7 +142,6 @@ export default async (app, routes, _stores, translations, additionalTranslations
     app.use(VueSidebarMenu);
     app.use(Toast)
     app.provide("Toast", Toast)
-    app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 
     // filters
@@ -167,6 +168,10 @@ export default async (app, routes, _stores, translations, additionalTranslations
         .forEach(([name, component]) => app.component(name, component));
 
     app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
+
+    watch(() => router.currentRoute.value.params.tenant, (to) => {
+        setSelectedTenant(to);
+    }, {immediate: true});
 
     return {router, piniaStore};
 }

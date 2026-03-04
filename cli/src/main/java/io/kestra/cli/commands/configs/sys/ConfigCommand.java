@@ -1,6 +1,5 @@
 package io.kestra.cli.commands.configs.sys;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
@@ -20,8 +19,6 @@ public class ConfigCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "configs",  "--help");
-
-        return 0;
+        return App.runCli(new String[]{"configs",  "--help"});
     }
 }

@@ -1,11 +1,11 @@
 <template>
     <nav class="d-flex align-items-center w-100 gap-3 top-bar">
+        <SidebarToggleButton
+            v-if="layoutStore.sideMenuCollapsed"
+            @toggle="layoutStore.setSideMenuCollapsed(false)"
+        />
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <div class="d-flex align-items-end gap-2">
-                <SidebarToggleButton
-                    v-if="layoutStore.sideMenuCollapsed"
-                    @toggle="layoutStore.setSideMenuCollapsed(false)"
-                />
                 <div class="d-flex flex-column gap-2">
                     <el-breadcrumb v-if="breadcrumb">
                         <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
@@ -33,6 +33,11 @@
                             @click="onStarClick"
                         />
                     </h1>
+                    <div class="description">
+                        <slot name="description">
+                            {{ longDescription }}
+                        </slot>
+                    </div>
                 </div>
             </div>
         </div>
@@ -47,9 +52,6 @@
                 </el-button>
             </div>
             <slot name="additional-right" />
-            <div class="d-flex fixed-buttons icons">
-                <Impersonating />
-            </div>
         </div>
     </nav>
 </template>
@@ -59,7 +61,6 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, RouterLink} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
-    import Impersonating from "override/components/auth/Impersonating.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
@@ -77,15 +78,20 @@
     const props = defineProps<{
         title: string;
         description?: string;
-        breadcrumb?: { label: string; link?: RouterLinkTo; disabled?: boolean }[];
+        longDescription?: string;
+        breadcrumb?: {
+            label: string;
+            link?: RouterLinkTo;
+            disabled?: boolean;
+        }[];
         beta?: boolean;
     }>();
 
-    const logsStore = useLogsStore();
-    const bookmarksStore = useBookmarksStore();
-    const flowStore = useFlowStore();
     const route = useRoute();
+    const logsStore = useLogsStore();
+    const flowStore = useFlowStore();
     const layoutStore = useLayoutStore();
+    const bookmarksStore = useBookmarksStore();
 
 
     const shouldDisplayDeleteButton = computed(() => {
@@ -161,10 +167,31 @@
             overflow: hidden;
         }
 
+        .top-title {
+            position: relative;
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(to left, var(--ks-background-card), transparent);
+            pointer-events: none;
+            }
+        }
+
         h1 {
             line-height: 1.6;
             display: flex !important;
             align-items: center;
+        }
+
+        .description {
+            font-size: 0.875rem;
+            margin-top: -0.5rem;
+            color: var(--ks-content-secondary);
         }
 
         .icon {
@@ -193,16 +220,6 @@
         }
 
         .side {
-            .fixed-buttons {
-                align-items: center;
-
-                button, :deep(button), a, :deep(a) {
-                    border: none;
-                    font-size: var(--font-size-lg);
-                    padding: .25rem;
-                }
-            }
-
             :slotted(ul), :deep(ul) {
                 display: flex;
                 list-style: none;
@@ -212,7 +229,14 @@
                 align-items: center;
             }
         }
+
+        @media (max-width: 992px) {
+            padding: 0.75rem 1.5rem;
+        }
+
         @media (max-width: 768px) {
+            padding: 0.4rem 0.75rem;
+
             .mycontainer {
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, auto));
@@ -220,13 +244,10 @@
                 gap: 10px;
                 overflow: hidden;
             }
-            .icons {
-                grid-row: 2;
-                grid-column: 2;
-                display: contents;
-            }
         }
         @media (max-width: 664px) {
+            padding: 0.3rem 0.5rem;
+            
             .mycontainer {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, auto));

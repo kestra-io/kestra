@@ -1,8 +1,11 @@
 package io.kestra.core.models.dashboards.filters;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -32,6 +35,9 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Introspected
 public abstract class AbstractFilter<F extends Enum<F>> {
+    @NotNull
+    @JsonProperty(value = "field", required = true)
+    @Valid
     private F field;
     private String labelKey;
 

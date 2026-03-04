@@ -9,12 +9,4 @@ public class WorkerSecurityService {
     public State.Type callInSecurityContext(AbstractWorkerCallable callable) {
         return callable.call();
     }
-
-    public boolean isInSecurityContext() {
-        throw new UnsupportedOperationException();
-    }
-
-    public AbstractWorkerCallable getCallable() {
-        throw new UnsupportedOperationException();
-    }
 }

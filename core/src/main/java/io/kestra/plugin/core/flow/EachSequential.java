@@ -34,15 +34,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "For each value in the list, execute one or more tasks sequentially (Deprecated).",
-    description = "This task is deprecated, please use the `io.kestra.plugin.core.flow.ForEach` task instead.\n\n" +
-        "The list of `tasks` will be executed for each item sequentially. " +
-        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`. \n\n" +
-        "You can access the current iteration value using the variable `{{ taskrun.value }}`. " +
-        "The task list will be executed sequentially for each item.\n\n" +
-        "We highly recommend triggering a subflow for each value. " +
-        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) " +
-        "for more details."
+    title = "Iterate values sequentially (deprecated).",
+    description = """
+        Deprecated; use `io.kestra.plugin.core.flow.ForEach`.
+
+        Renders `value` (JSON array or list) and runs the child task list sequentially for each item, exposing the current item as `taskrun.value`. Great for small loops; prefer subflow per item for scalability."""
 )
 @Plugin(
     examples = {
@@ -127,14 +123,9 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
-            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
-            .toList();
-        if (childTasks.isEmpty()) {
-            return Optional.of(State.Type.SUCCESS);
-        }
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
-        return FlowableUtils.resolveState(
+        return FlowableUtils.resolveSequentialState(
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),

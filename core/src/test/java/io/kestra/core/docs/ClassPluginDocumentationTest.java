@@ -34,11 +34,17 @@ class ClassPluginDocumentationTest {
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
             List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-            assertThat(scan.size()).isEqualTo(1);
-            assertThat(scan.getFirst().getTasks().size()).isEqualTo(1);
+            assertThat(scan.size()).isEqualTo(2);
+            RegisteredPlugin templatePlugin = scan
+                .stream()
+                .filter(rp -> rp.group().equals("io.kestra.plugin.templates"))
+                .findFirst()
+                .orElseThrow();
+            assertThat(templatePlugin.getTasks().size()).isEqualTo(1);
 
-            PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
-            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.getFirst().version(), false);
+            PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(
+                templatePlugin, templatePlugin.getTasks().getFirst(), Task.class, null);
+            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, templatePlugin.version(), false);
 
             assertThat(doc.getDocExamples().size()).isEqualTo(2);
             assertThat(doc.getIcon()).isNotNull();
@@ -103,7 +109,7 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
-            assertThat(doc.getDefs().size()).isEqualTo(20);
+            assertThat(doc.getDefs()).hasSize(23);
             assertThat(doc.getDocLicense()).isNull();
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type")).isEqualTo("object");
@@ -124,7 +130,7 @@ class ClassPluginDocumentationTest {
 
             assertThat(((Map<?, ?>) doc.getPropertiesSchema().get("properties")).get("version")).isNotNull();
             assertThat(doc.getCls()).isEqualTo("io.kestra.plugin.core.runner.Process");
-            assertThat(doc.getPropertiesSchema().get("title")).isEqualTo("Task runner that executes a task as a subprocess on the Kestra host.");
+            assertThat(doc.getPropertiesSchema().get("title")).isEqualTo("Run tasks as local subprocesses on the worker.");
             assertThat(doc.getDefs()).isEmpty();
         }));
     }
@@ -142,9 +148,9 @@ class ClassPluginDocumentationTest {
             ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
             assertThat(doc.getCls()).isEqualTo("io.kestra.core.models.property.DynamicPropertyExampleTask");
-            assertThat(doc.getDefs()).hasSize(6);
+            assertThat(doc.getDefs()).hasSize(9);
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
-            assertThat(properties).hasSize(21);
+            assertThat(properties).hasSize(22);
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
             assertThat(number.get("anyOf")).isNotNull();

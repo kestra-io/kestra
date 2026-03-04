@@ -5,8 +5,10 @@ import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.validations.MultiselectInputValidation;
 import io.kestra.core.validations.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -14,15 +16,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@MultiselectInputValidation
 public class MultiselectInput extends Input<List<String>> implements ItemTypeInterface, RenderableInput {
     @Schema(
         title = "Deprecated, please use `values` instead."
@@ -77,29 +77,34 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
 
     @Override
     public void validate(List<String> inputs) throws ConstraintViolationException {
+        Set<ConstraintViolation<?>> violations = new HashSet<>();
+
         if (values != null && options != null) {
-            throw ManualConstraintViolation.toConstraintViolationException(
+            violations.add( ManualConstraintViolation.of(
                 "you can't define both `values` and `options`",
                 this,
                 MultiselectInput.class,
                 getId(),
                 ""
-            );
+            ));
         }
 
         if (!this.getAllowCustomValue()) {
             for (String input : inputs) {
                 List<@Regex String> finalValues = this.values != null ? this.values : this.options;
                 if (!finalValues.contains(input)) {
-                    throw ManualConstraintViolation.toConstraintViolationException(
-                        "it must match the values `" + finalValues + "`",
+                    violations.add(ManualConstraintViolation.of(
+                        "value `" + input + "` doesn't match the values `" + finalValues + "`",
                         this,
                         MultiselectInput.class,
                         getId(),
                         input
-                    );
+                    ));
                 }
             }
+        }
+        if (!violations.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(violations);
         }
     }
 
@@ -145,7 +150,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
 
         String type = Optional.ofNullable(result).map(Object::getClass).map(Class::getSimpleName).orElse("<null>");
         throw ManualConstraintViolation.toConstraintViolationException(
-            "Invalid expression result. Expected a list of strings, but received " + type,
+            "Invalid expression result. Expected a list of strings",
             this,
             MultiselectInput.class,
             getId(),

@@ -7,8 +7,8 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,9 +29,8 @@ import static io.kestra.core.plugins.PluginManager.createLocalRepositoryIfNotExi
  * A {@link PluginManager} implementation managing plugin artifacts on local storage.
  */
 @Singleton
+@Slf4j
 public class LocalPluginManager implements PluginManager {
-
-    private static final Logger log = LoggerFactory.getLogger(LocalPluginManager.class);
 
     private final Provider<PluginRegistry> pluginRegistryProvider;
 

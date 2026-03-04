@@ -1,0 +1,14 @@
+id: sequential-with-disabled
+namespace: io.kestra.tests
+
+tasks:
+  - id: Sequential
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: Hello World! 🚀
+        disabled: true
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World!

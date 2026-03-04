@@ -72,7 +72,7 @@
         if (props.labels.length === 0) {
             addItem();
         } else {
-            locals.value = [...props.labels];
+            locals.value = props.labels;
             if (locals.value.length === 0) {
                 addItem();
             }

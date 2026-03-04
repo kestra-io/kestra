@@ -10,9 +10,11 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.Duration;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
@@ -21,16 +23,15 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
+@Slf4j
 public abstract class AbstractTemplateRepositoryTest {
     @Inject
     protected TemplateRepositoryInterface templateRepository;
@@ -139,8 +140,6 @@ public abstract class AbstractTemplateRepositoryTest {
         templateRepository.delete(template3);
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractTemplateRepositoryTest.class);
-
     @Test
     protected void delete() throws TimeoutException {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -152,7 +151,7 @@ public abstract class AbstractTemplateRepositoryTest {
         assertThat(templateRepository.findById(tenant, template.getNamespace(), template.getId()).isPresent()).isFalse();
 
         Await.until(() -> {
-            LOG.info("-------------> number of event: {}", TemplateListener.getEmits(tenant).size());
+            log.info("-------------> number of event: {}", TemplateListener.getEmits(tenant).size());
             return TemplateListener.getEmits(tenant).size() == 2;
 
         }, Duration.ofMillis(100), Duration.ofSeconds(5));

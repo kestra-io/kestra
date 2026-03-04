@@ -16,6 +16,8 @@
         @update-properties="updateDisplayColumns"
         legacyQuery
         readOnly
+        :defaultScope="false"
+        :defaultTimeRange="false"
     />
 
     <el-table
@@ -91,24 +93,18 @@
                             />
                         </div>
                         <template v-if="!scope.row.backfill.paused">
-                            <el-button size="small" @click="pauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('pause backfill')">
-                                    <Pause />
-                                </Kicon>
-                            </el-button>
+                            <IconButton size="small" :tooltip="$t('pause backfill')" @click="pauseBackfill(scope.row)">
+                                <Pause />
+                            </IconButton>
                         </template>
                         <template v-else-if="userCan(action.UPDATE)">
-                            <el-button size="small" @click="unpauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('continue backfill')">
-                                    <Play />
-                                </Kicon>
-                            </el-button>
+                            <IconButton size="small" :tooltip="$t('continue backfill')" @click="unpauseBackfill(scope.row)">
+                                <Play />
+                            </IconButton>
 
-                            <el-button size="small" @click="deleteBackfill(scope.row)">
-                                <Kicon :tooltip="$t('delete backfill')">
-                                    <Delete />
-                                </Kicon>
-                            </el-button>
+                            <IconButton size="small" :tooltip="$t('delete backfill')" @click="deleteBackfill(scope.row)">
+                                <Delete />
+                            </IconButton>
                         </template>
                     </div>
                 </template>
@@ -117,35 +113,50 @@
 
         <el-table-column columnKey="disable" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-switch
-                    v-if="canBeDisabled(scope.row)"
-                    size="small"
-                    :activeText="$t('enabled')"
-                    :modelValue="!scope.row.disabled"
-                    @change="setDisabled(scope.row, $event)"
-                    class="switch-text"
-                    :activeActionIcon="Check"
-                />
+                <el-tooltip
+                    v-if="hasTrigger(scope.row)"
+                    :content="$t('trigger disabled')"
+                    :disabled="!scope.row.sourceDisabled"
+                    effect="light"
+                >
+                    <el-switch
+                        size="small"
+                        :activeText="$t('enabled')"
+                        :modelValue="!(scope.row.disabled || scope.row.sourceDisabled)"
+                        @change="setDisabled(scope.row, $event)"
+                        class="switch-text"
+                        :activeActionIcon="Check"
+                        :disabled="scope.row.sourceDisabled"
+                    />
+                </el-tooltip>
             </template>
         </el-table-column>
 
         <el-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-button size="small" v-if="scope.row.evaluateRunningDate" @click="restart(scope.row)">
-                    <Kicon :tooltip="$t('restart trigger.button')">
-                        <Restart />
-                    </Kicon>
-                </el-button>
+                <IconButton
+                    v-if="scope.row.evaluateRunningDate"
+                    size="small"
+                    :tooltip="$t('restart trigger.button')"
+                    placement="left"
+                    @click="restart(scope.row)"
+                >
+                    <Restart />
+                </IconButton>
             </template>
         </el-table-column>
 
         <el-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-button size="small" v-if="scope.row.executionId" @click="unlock(scope.row)">
-                    <Kicon :tooltip="$t('unlock trigger.button')">
-                        <LockOff />
-                    </Kicon>
-                </el-button>
+                <IconButton
+                    v-if="scope.row.executionId"
+                    size="small"
+                    :tooltip="$t('unlock trigger.button')"
+                    placement="left"
+                    @click="unlock(scope.row)"
+                >
+                    <LockOff />
+                </IconButton>
             </template>
         </el-table-column>
 
@@ -157,11 +168,9 @@
 
         <el-table-column columnKey="action" className="row-action">
             <template #default="scope">
-                <el-button size="small" @click="triggerId = scope.row.id; isOpen = true">
-                    <Kicon :tooltip="$t('details')" placement="left">
-                        <TextSearch />
-                    </Kicon>
-                </el-button>
+                <IconButton size="small" :tooltip="$t('details')" @click="triggerId = scope.row.id; isOpen = true">
+                    <TextSearch />
+                </IconButton>
             </template>
         </el-table-column>
     </el-table>
@@ -228,21 +237,6 @@
             :embed="true"
         />
         <template #footer>
-            <router-link
-                v-if="isSchedule(selectedTrigger?.type)"
-                :to="{
-                    name: 'admin/triggers',
-                    query: {
-                        namespace: selectedTrigger?.namespace,
-                        flowId: selectedTrigger?.flowId,
-                        q: selectedTrigger?.triggerId
-                    }
-                }"
-            >
-                <el-button class="me-2">
-                    {{ $t("backfill") }}
-                </el-button>
-            </router-link>
             <el-button
                 type="primary"
                 @click="postBackfill()"
@@ -284,7 +278,7 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import Drawer from "../Drawer.vue";
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
@@ -472,7 +466,7 @@
             backfill: cleanBackfill.value
         })
             .then((newTrigger: any) => {
-                (window as any).$toast().saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -493,7 +487,7 @@
     const pauseBackfill = (trigger: any) => {
         triggerStore.pauseBackfill(trigger)
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -506,7 +500,7 @@
     const unpauseBackfill = (trigger: any) => {
         triggerStore.unpauseBackfill(trigger)
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -519,7 +513,7 @@
     const deleteBackfill = (trigger: any) => {
         triggerStore.deleteBackfill(trigger)
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -532,7 +526,7 @@
     const setDisabled = (trigger: any, value: boolean) => {
         triggerStore.update({...trigger, disabled: !value})
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -548,7 +542,7 @@
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
         }).then((newTrigger: any) => {
-            toast.saved(newTrigger.id);
+            toast.saved(newTrigger.triggerId);
             triggers.value = triggers.value.map((t: any) => {
                 if (t.id === newTrigger.id) {
                     return newTrigger
@@ -564,7 +558,7 @@
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
         }).then((newTrigger: any) => {
-            toast.saved(newTrigger.id);
+            toast.saved(newTrigger.triggerId);
             triggers.value = triggers.value.map((t: any) => {
                 if (t.id === newTrigger.id) {
                     return newTrigger
@@ -588,9 +582,8 @@
         return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
     };
 
-    const canBeDisabled = (trigger: any) => {
-        return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id)
-            && !trigger?.sourceDisabled;
+    const hasTrigger = (trigger: any) => {
+        return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id);
     };
 
     const addNewTrigger = () => {

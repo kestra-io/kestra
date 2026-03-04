@@ -57,7 +57,7 @@ class ScheduleOnDatesTest {
     }
 
     @Test
-    public void shouldReturnFirstDateWhenNextEvaluationDateAndNoExistingTriggerDate() throws Exception {
+    public void shouldReturnFirstDateWhenNextEvaluationDateAndNoExistingTriggerDate() {
         // given
         var now = ZonedDateTime.now();
         var before = now.minusMinutes(1).truncatedTo(ChronoUnit.SECONDS);
@@ -75,7 +75,7 @@ class ScheduleOnDatesTest {
         ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.empty());
 
         // then
-        assertThat(nextDate).isEqualTo(before);
+        assertThat(nextDate).isEqualTo(after);
     }
 
     @Test

@@ -1,20 +1,32 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.docs.*;
+import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.ui.PluginUiManifest;
+import io.kestra.core.models.ui.PluginUiModuleWithGroup;
+import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -23,6 +35,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -267,6 +280,79 @@ public class PluginController {
             .distinct()
             .toList();
     }
+
+    @Post("/pluginUiManifest")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Plugins"}, summary = "Get plugins group by subgroups")
+    public PluginUiManifest getPluginUiManifest(@Body List<TaskWithVersion> taskWithVersions) {
+        Map<String, List<String>> pluginTasks = new HashMap<>();
+        for (TaskWithVersion t : taskWithVersions) {
+            pluginRegistry.findMetadataByIdentifier(
+                getPluginIdentifier(t.cls(), t.version())).ifPresent(meta ->
+                pluginTasks.computeIfAbsent(meta.group(), k -> new ArrayList<>()).add(t.cls())
+            );
+        }
+
+        if (pluginTasks.isEmpty()) {
+            throw new NotFoundException();
+        }
+
+        Set<String> groups = pluginTasks.keySet();
+        List<RegisteredPlugin> plugins = pluginRegistry.plugins(registeredPlugin -> groups.contains(registeredPlugin.group()));
+
+        if (ListUtils.isEmpty(plugins)) {
+            throw new NotFoundException();
+        }
+
+        Map<String, List<PluginUiModuleWithGroup>> manifest = new HashMap<>();
+        for (RegisteredPlugin plugin : plugins) {
+            if (!MapUtils.isEmpty(plugin.getPluginUiManifest())) {
+                for (String task : pluginTasks.get(plugin.group())) {
+                    if (plugin.getPluginUiManifest().containsKey(task)) {
+                        manifest.put(task, plugin.getPluginUiManifest().get(task)
+                            .stream()
+                            .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles()))
+                            .toList());
+                    }
+                }
+            }
+        }
+
+        return new PluginUiManifest(manifest);
+    }
+
+    @Get(value = "/{group}/pluginUi/{path:.*}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Plugins"}, summary = "Get plugins group by subgroups")
+    public HttpResponse<StreamedFile> getPluginUi(
+            @Parameter(description = "The plugin group") @PathVariable String group,
+            @Parameter(description = "The file path") @PathVariable String path) {
+        if (path.contains("..") || path.startsWith("/") || path.startsWith("\\") || path.contains("\0")) {
+            return HttpResponse.badRequest();
+        }
+
+        RegisteredPlugin plugin = pluginRegistry.plugins(p -> p.group().equals(group))
+            .stream()
+            .findFirst()
+            .orElseThrow(NotFoundException::new);
+
+        String resourcePath = path.startsWith("/") ? "plugin-ui" + path : "plugin-ui/" + path;
+
+        InputStream in = plugin.getClassLoader().getResourceAsStream(resourcePath);
+        if (in == null) {
+            throw new NotFoundException();
+        }
+
+        MediaType mediaType = MediaType
+            .forExtension(NameUtils.extension(resourcePath))
+            .orElse(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        StreamedFile streamedFile = new StreamedFile(in, mediaType);
+
+        //todo add front cache later
+        return HttpResponse.ok(streamedFile);
+    }
+
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {
         return pluginRegistry.findMetadataByIdentifier(getPluginIdentifier(className, version))

@@ -6,7 +6,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
@@ -18,6 +17,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
-@KestraTest
+@MicronautTest
 class ErrorControllerTest {
     @Inject
     @Client("/")

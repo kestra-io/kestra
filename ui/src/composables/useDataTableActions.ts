@@ -3,6 +3,7 @@ import {useRoute, useRouter} from "vue-router";
 import _merge from "lodash/merge";
 import _cloneDeep from "lodash/cloneDeep";
 import _isEqual from "lodash/isEqual";
+import useRestoreUrl from "./useRestoreUrl";
 
 interface SortItem {
     prop?: string;
@@ -26,7 +27,6 @@ interface DataTableActionsOptions {
     embed?: boolean;
     dataTableRef?: Ref<DataTableRef | null>;
     loadData?: (callback?: () => void) => void;
-    saveRestoreUrl?: () => void;
 }
 
 export function useDataTableActions(options: DataTableActionsOptions = {}) {
@@ -35,7 +35,6 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
 
     const sort = ref("");
     const dblClickRouteName = ref(options.dblClickRouteName);
-    const loadInit = ref(true);
     const ready = ref(false);
     const internalPageSize = ref(25);
     const internalPageNumber = ref(1);
@@ -46,6 +45,8 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     const pageNumber = computed(() => options.pageNumber);
     const embed = computed(() => options.embed);
     const dataTableRef = computed(() => options.dataTableRef?.value);
+
+    const {loadInit, saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
 
     const sortString = (sortItem: SortItem, sortKeyMapper: (k: string) => string): string | undefined => {
         if (sortItem && sortItem.prop && sortItem.order) {
@@ -149,9 +150,7 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
         ready.value = true;
         loadInit.value = true;
 
-        if (options.saveRestoreUrl) {
-            options.saveRestoreUrl();
-        }
+        saveRestoreUrl();
 
         if (dataTableRef.value) {
             dataTableRef.value.isLoading = false;

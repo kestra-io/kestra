@@ -1104,6 +1104,14 @@ public abstract class StorageTestSuite {
         assertThat(withMetadata.metadata()).isEqualTo(expectedMetadata);
     }
 
+    @Test
+    void limitShouldPreserveSpecialCharts() throws IOException {
+        var uri = URI.create("/%89%B4%89%B4%EC%9D%B4%EC%96%B4+%EB%A7%90+%EC%95%84%ED%8A%B8%EC%9B%8D+NP+%EC%8A%A4%ED%8C%90+%EC%9D%B8%ED%8C%85+JQ+%EB%82%A8%EC%84%B1+%EC%9D%B8%EB%B0%B4%EB%93%9C+%EB%93%9C%EB%A1%9C%EC%A6%88%2C+101470%2C+FI261DR15M001-21-1st+Fit+%28QC%29+Sample+Data+Package-en.txt");
+
+        var limited = storageInterface.limit(uri, 100);
+        assertThat(uri.getPath()).endsWith(limited.getPath().substring(7));
+    }
+
     private URI putFile(String tenantId, String path) throws Exception {
         return storageInterface.put(
             tenantId,

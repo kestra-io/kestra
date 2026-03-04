@@ -78,47 +78,60 @@
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('last modified')"
-                    />
+                    >
+                        <template #default="scope">
+                            <DateAgo :date="convertToUserTimezone(scope.row.updateDate)" inverted />
+                        </template>
+                    </el-table-column>
                     <el-table-column
                         v-else-if="colProp === 'expirationDate' && !paneView"
                         prop="expirationDate"
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('expiration date')"
-                    />
+                    >
+                        <template #default="scope">
+                            <DateAgo v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
+                        </template>
+                    </el-table-column>
                 </template>
 
                 <el-table-column columnKey="copy" className="row-action">
                     <template #default="scope">
-                        <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
-                            <el-button
-                                :icon="ContentCopy"
-                                link
-                                @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
-                            />
-                        </el-tooltip>
+                        <IconButton
+                            v-if="scope.row.key !== undefined"
+                            :tooltip="$t('copy_to_clipboard')"
+                            placement="left"
+                            @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                        >
+                            <ContentCopy />
+                        </IconButton>
                     </template>
                 </el-table-column>
 
                 <el-table-column v-if="!paneView" columnKey="update" className="row-action">
                     <template #default="scope">
-                        <el-button
+                        <IconButton
                             v-if="canUpdate(scope.row)"
-                            :icon="FileDocumentEdit"
-                            link
+                            :tooltip="$t('update')"
+                            placement="left"
                             @click="updateKvModal(scope.row)"
-                        />
+                        >
+                            <FileDocumentEdit />
+                        </IconButton>
                     </template>
                 </el-table-column>
 
                 <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
                     <template #default="scope">
-                        <el-button
+                        <IconButton
                             v-if="canDelete(scope.row)"
-                            :icon="Delete"
-                            link
+                            :tooltip="$t('delete')"
+                            placement="left"
                             @click="removeKv(scope.row.namespace, scope.row.key)"
-                        />
+                        >
+                            <Delete />
+                        </IconButton>
                     </template>
                 </el-table-column>
             </SelectTable>
@@ -134,19 +147,20 @@
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
                 <NamespaceSelect
                     v-model="kv.namespace"
-                    :readonly="kv.update"
+                    :readOnly="kv.update"
                     :includeSystemNamespace="true"
                     all
                 />
             </el-form-item>
 
             <el-form-item :label="$t('key')" prop="key" required>
-                <el-input v-model="kv.key" :readonly="kv.update" />
+                <el-input v-model="kv.key" :disabled="kv.update" />
             </el-form-item>
 
             <el-form-item :label="$t('kv.type')" prop="type" required>
                 <el-select
                     v-model="kv.type"
+                    :disabled="kv.update"
                     @change="kv.value = undefined"
                 >
                     <el-option value="STRING" />
@@ -244,15 +258,16 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
     import Id from "../Id.vue";
+    import IconButton from "../IconButton.vue";
     import Drawer from "../Drawer.vue";
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    //@ts-expect-error No declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import DateAgo from "../layout/DateAgo.vue";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -261,6 +276,7 @@
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
     import {useKvFilter} from "../filter/configurations";
+    import moment from "moment-timezone";
 
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
@@ -272,7 +288,6 @@
     import DataTable from "../layout/DataTable.vue";
     import _merge from "lodash/merge";
     import {type DataTableRef, useDataTableActions} from "../../composables/useDataTableActions.ts";
-
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
 
     const loadData = async (callback?: () => void) => {
@@ -290,8 +305,33 @@
                 })
             }));
 
-            kvs.value = kvsResponse.results;
-            total.value = kvsResponse.total;
+            let allKvs = kvsResponse.results ?? [];
+
+            if (props.includeInherited && props.namespace) {
+                const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
+                
+                for (const parentNs of parentNamespaces) {
+                    const parentKvsResponse = await kvStore.find(loadQuery({
+                        filters: {
+                            namespace: {
+                                EQUALS: parentNs
+                            }
+                        }
+                    }));
+
+                    const parentKvs = parentKvsResponse?.results ?? [];
+                    if (parentKvs.length > 0) {
+                        const currentKeys = new Set(allKvs.map((kv: any) => kv?.key).filter(Boolean));
+                        const newKvs = parentKvs.filter(
+                            (kv: any) => kv?.key && !currentKeys.has(kv.key)
+                        );
+                        allKvs.push(...newKvs);
+                    }
+                }
+            }
+
+            kvs.value = allKvs;
+            total.value = kvsResponse.total ?? 0;
         } finally {
             if (callback) callback();
         }
@@ -310,9 +350,11 @@
     const props = withDefaults(defineProps<{
         namespace?: string;
         paneView?: boolean;
+        includeInherited?: boolean;
     }>(), {
         namespace: undefined,
-        paneView: false
+        paneView: false,
+        includeInherited: false
     });
 
     const route = useRoute();
@@ -351,6 +393,11 @@
     const kvs = ref<any[] | undefined>(undefined);
 
     const storageKey = storageKeys.DISPLAY_KV_COLUMNS;
+
+    const TIMEZONE = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const convertToUserTimezone = (date: string | Date) => {
+        return moment.utc(date).tz(TIMEZONE).toDate()
+    }
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -497,6 +544,11 @@
             kv.value.value = JSON.stringify(value);
         } else if (type === "BOOLEAN") {
             kv.value.value = value;
+        } else if (type === "DATETIME") {
+            // Follow Timezone from Settings to display KV of type DATETIME (issue #9428)
+            // Convert the datetime value to the user's timezone for proper display in the date picker
+            const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess();
+            kv.value.value = moment(value).tz(userTimezone).toDate();
         } else {
             kv.value.value = value.toString();
         }
@@ -518,7 +570,7 @@
 
     function removeKvs() {
         const groupedByNamespace = _groupBy(selection.value, "namespace");
-        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
+        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
         toast.confirm(
@@ -530,6 +582,7 @@
                         .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
                         .then(() => {
                             toast.deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
+                            toggleAllUnselected();
                             loadData();
                         });
                 });

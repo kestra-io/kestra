@@ -25,8 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class FlowTriggerServiceTest {
-    public static final List<Label> EMPTY_LABELS = List.of();
-    public static final Optional<MultipleConditionStorageInterface> EMPTY_MULTIPLE_CONDITION_STORAGE = Optional.empty();
+    private static final List<Label> EMPTY_LABELS = List.of();
 
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -56,14 +55,27 @@ class FlowTriggerServiceTest {
 
         var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
 
-        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggers(
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
             simpleFlowExecution,
-            List.of(simpleFlow, flowWithFlowTrigger),
-            EMPTY_MULTIPLE_CONDITION_STORAGE
+            flowWithFlowTrigger
         );
 
         assertThat(resultingExecutionsToRun).size().isEqualTo(1);
-        assertThat(resultingExecutionsToRun.get(0).getFlowId()).isEqualTo(flowWithFlowTrigger.getId());
+        assertThat(resultingExecutionsToRun.getFirst().getFlowId()).isEqualTo(flowWithFlowTrigger.getId());
+    }
+
+    @Test
+    void computeExecutionsFromFlowTriggers_none() {
+        var simpleFlow = aSimpleFlow();
+
+        var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            simpleFlowExecution,
+            simpleFlow
+        );
+
+        assertThat(resultingExecutionsToRun).isEmpty();
     }
 
     @Test
@@ -81,10 +93,9 @@ class FlowTriggerServiceTest {
 
         var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.CREATED);
 
-        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggers(
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
             simpleFlowExecution,
-            List.of(simpleFlow, flowWithFlowTrigger),
-            EMPTY_MULTIPLE_CONDITION_STORAGE
+            flowWithFlowTrigger
         );
 
         assertThat(resultingExecutionsToRun).size().isEqualTo(0);
@@ -109,10 +120,9 @@ class FlowTriggerServiceTest {
             .kind(ExecutionKind.TEST)
             .build();
 
-        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggers(
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
             simpleFlowExecutionComingFromATest,
-            List.of(simpleFlow, flowWithFlowTrigger),
-            EMPTY_MULTIPLE_CONDITION_STORAGE
+            flowWithFlowTrigger
         );
 
         assertThat(resultingExecutionsToRun).size().isEqualTo(0);

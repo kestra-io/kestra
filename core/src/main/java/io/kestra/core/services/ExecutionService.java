@@ -31,6 +31,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -163,8 +164,6 @@ public class ExecutionService {
             .stream()
             .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
-                    // Keep only CREATED/RUNNING
-                    // To avoid having large history
                     return taskRun.resetAttempts().incrementIteration();
                 }
 
@@ -187,8 +186,8 @@ public class ExecutionService {
     }
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
-            throw new IllegalStateException("Execution must be terminated to be restarted, " +
+        if (!execution.getState().canBeRestarted()) {
+            throw new IllegalStateException("Execution must be terminated or paused and not killed to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
         }
@@ -300,7 +299,7 @@ public class ExecutionService {
             );
 
             // remove all child for replay task id
-            Set<String> taskRunToRemove = GraphUtils.successors(graphCluster, List.of(taskRunId))
+            Set<String> taskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
                 .stream()
                 .filter(task -> task instanceof AbstractGraphTask)
                 .map(task -> ((AbstractGraphTask) task))
@@ -338,7 +337,7 @@ public class ExecutionService {
         Execution newExecution = markAs(execution, flow, taskRunId, newState);
 
         // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
-        if (execution.getState().isTerminated()) {
+        if (execution.getState().canChangeStatus()) {
             List<TaskRun> newTaskRuns =  newExecution.getTaskRunList();
             // We need to remove global error tasks and flowable error tasks if any
             flow
@@ -356,7 +355,7 @@ public class ExecutionService {
 
             return newExecution.withTaskRunList(newTaskRuns);
         } else {
-            return newExecution;
+            throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
     }
 
@@ -408,7 +407,7 @@ public class ExecutionService {
 
 
                 if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
-                    ArrayList<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
+                    List<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
                     attempts.set(attempts.size() - 1, attempts.getLast().withState(targetState));
                     newTaskRun = newTaskRun.withAttempts(attempts);
                 }
@@ -754,7 +753,7 @@ public class ExecutionService {
         var parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
         Execution newExecution = execution;
         if (parentTaskRun.getState().getCurrent() != State.Type.KILLED) {
-            newExecution = newExecution.withTaskRun(parentTaskRun.withState(State.Type.KILLED));
+            newExecution = newExecution.withTaskRun(parentTaskRun.withStateAndAttempt(State.Type.KILLED));
         }
         if (parentTaskRun.getParentTaskRunId() != null) {
             return killParentTaskruns(parentTaskRun, newExecution);
@@ -790,7 +789,7 @@ public class ExecutionService {
 
         GraphCluster graphCluster = GraphUtils.of(flow, execution);
 
-        return GraphUtils.successors(graphCluster, new ArrayList<>(workerTaskRunId))
+        return GraphUtils.successors(graphCluster, workerTaskRunId)
             .stream()
             .filter(task -> task instanceof AbstractGraphTask)
             .map(task -> (AbstractGraphTask) task)
@@ -838,7 +837,7 @@ public class ExecutionService {
             alterState = originalTaskRun.withState(newStateType).getState();
         } else {
             Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
-            if (!task.isFlowable() || task instanceof WorkingDirectory) {
+            if (!task.isFlowable() || task instanceof WorkingDirectory || task instanceof LoopUntil) {
                 // The current task run is the reference task run, its default state will be newState
                 alterState = originalTaskRun.withState(newStateType).getState();
             } else {

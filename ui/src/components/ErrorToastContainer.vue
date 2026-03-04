@@ -2,7 +2,7 @@
     <el-button
         v-if="isFlowContext"
         @click="fixWithAi"
-        class="position-absolute slack-on-error el-button--small"
+        class="el-button--small"
         size="small"
     >
         <AiIcon class="me-1" />
@@ -20,11 +20,11 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, computed, onMounted, watch } from "vue";
-    import { useRoute } from "vue-router";
+    import {ref, computed, onMounted, watch} from "vue";
+    import {useRoute} from "vue-router";
     import AiIcon from "vue-material-design-icons/Creation.vue";
     import * as Markdown from "../utils/markdown";
-    import { useFlowStore } from "../stores/flow";
+    import {useFlowStore} from "../stores/flow";
 
     interface ErrorItem {
         path?: string;
@@ -63,9 +63,9 @@
 
     const renderMarkdown = async (): Promise<string> => {
         if (props.message.response && props.message.response.status === 503) {
-            return await Markdown.render("Server is temporarily unavailable. Please try again later.", { html: true });
+            return await Markdown.render("Server is temporarily unavailable. Please try again later.", {html: true});
         }
-        return await Markdown.render(props.message.message || props.message.content?.message || "", { html: true });
+        return await Markdown.render(props.message.message || props.message.content?.message || "", {html: true});
     };
 
     const fixWithAi = async () => {
@@ -95,7 +95,7 @@
     // Watch for changes in message
     watch(() => props.message, async () => {
         markdownRenderer.value = await renderMarkdown();
-    }, { deep: true });
+    }, {deep: true});
 
     onMounted(async () => {
         markdownRenderer.value = await renderMarkdown();

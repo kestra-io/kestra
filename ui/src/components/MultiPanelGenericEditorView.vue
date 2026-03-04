@@ -134,6 +134,9 @@
     :deep(.editor-panels){
         position: absolute;
     }
+    :deep(.el-splitter-bar){
+        width: 2px !important;
+    }
 
     .default-theme{
         :deep(.el-splitter-panel) {

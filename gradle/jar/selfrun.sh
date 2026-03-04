@@ -12,8 +12,8 @@ fi
 # Check java version
 JAVA_FULLVERSION=$(java -fullversion 2>&1)
 case "$JAVA_FULLVERSION" in
-    [a-z]*\ full\ version\ \"\(1|9|10|11|12|13|14|15|16|17|18|19|20\)\..*\")
-        echo "[ERROR] Kestra require at least Java 21." 1>&2
+    [a-z]*\ full\ version\ \"\(1|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24\)\..*\")
+        echo "[ERROR] Kestra require at least Java 25." 1>&2
         exit 1
         ;;
 esac
@@ -35,5 +35,5 @@ fi
 KESTRA_JAVA_OPTS="-XX:MaxRAMPercentage=50.0"
 
 # Exec
-exec java ${KESTRA_JAVA_OPTS} ${JAVA_OPTS} ${JAVA_ADD_OPENS} -Djava.security.manager=allow -jar "$0" "$@"
+exec java ${KESTRA_JAVA_OPTS} ${JAVA_OPTS} ${JAVA_ADD_OPENS} --enable-native-access=ALL-UNNAMED -jar "$0" "$@"
 exit 127

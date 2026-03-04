@@ -7,6 +7,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
+import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -47,7 +48,6 @@ import static org.hamcrest.Matchers.*;
 @KestraTest
 class JsonSchemaGeneratorTest {
 
-
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
 
@@ -63,7 +63,13 @@ class JsonSchemaGeneratorTest {
     @Test
     void tasks() {
         List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
-        Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
+        Class<? extends Task> cls = scan
+            .stream()
+            .filter(rp -> rp.group().equals("io.kestra.plugin.templates"))
+            .findFirst()
+            .map(RegisteredPlugin::getTasks)
+            .map(List::getFirst)
+            .orElseThrow();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
@@ -170,10 +176,11 @@ class JsonSchemaGeneratorTest {
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(3),
+                Matchers.aMapWithSize(4),
                 hasKey("conditions"),
                 hasKey("stopAfter"),
-                hasKey("type")
+                hasKey("type"),
+                hasKey("allowConcurrent")
             ));
         });
     }
@@ -204,6 +211,12 @@ class JsonSchemaGeneratorTest {
             var returnTask = definitions.get(Return.class.getName());
             var metrics = (List<Object>) returnTask.get("$metrics");
             assertThat(metrics.size(), is(2));
+
+            var properties = (Map<String, Object>) returnTask.get("properties");
+            var typeProperty = (Map<String, Object>) properties.get("type");
+            assertThat(typeProperty, is(notNullValue()));
+            var enumList = (List<?>) typeProperty.get("enum");
+            assertThat(enumList.size(), is(2));
 
             var firstMetric = (Map<String, Object>) metrics.getFirst();
             assertThat(firstMetric.get("name"), is("length"));
@@ -246,6 +259,7 @@ class JsonSchemaGeneratorTest {
         assertThat(generate.get("$beta"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(2));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$language"), is(MonacoLanguages.PYTHON.toString()));
     }
 
     @SuppressWarnings("unchecked")
@@ -345,7 +359,7 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(27));
+        assertThat(definitions.size(), is(30));
     }
 
     @SuppressWarnings("unchecked")
@@ -442,7 +456,7 @@ class JsonSchemaGeneratorTest {
         beta = true
     )
     public static class BetaTask extends Task {
-        @PluginProperty(beta = true)
+        @PluginProperty(beta = true, language = MonacoLanguages.PYTHON)
         private String beta;
     }
 

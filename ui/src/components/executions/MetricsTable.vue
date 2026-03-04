@@ -19,7 +19,9 @@
                 <template v-for="col in displayColumns" :key="col">
                     <el-table-column v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                         <template #default="scope">
-                            <p>{{ scope.row.taskId }}</p>
+                            <p class="m-0">
+                                {{ scope.row.taskId }}
+                            </p>
                         </template>
                     </el-table-column>
 

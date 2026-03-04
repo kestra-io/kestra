@@ -3,6 +3,8 @@ package io.kestra.core.plugins;
 import io.kestra.core.app.AppBlockInterface;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -11,6 +13,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
 import lombok.*;
@@ -39,6 +42,8 @@ public class RegisteredPlugin {
     public static final String STORAGES_GROUP_NAME = "storages";
     public static final String SECRETS_GROUP_NAME = "secrets";
     public static final String TASK_RUNNERS_GROUP_NAME = "task-runners";
+    public static final String ASSETS_GROUP_NAME = "assets";
+    public static final String ASSETS_EXPORTERS_GROUP_NAME = "asset-exporters";
     public static final String APPS_GROUP_NAME = "apps";
     public static final String APP_BLOCKS_GROUP_NAME = "app-blocks";
     public static final String CHARTS_GROUP_NAME = "charts";
@@ -56,6 +61,8 @@ public class RegisteredPlugin {
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<Class<? extends TaskRunner<?>>> taskRunners;
+    private final List<Class<? extends Asset>> assets;
+    private final List<Class<? extends AssetExporter<?>>> assetExporters;
     private final List<Class<? extends AppPluginInterface>> apps;
     private final List<Class<? extends AppBlockInterface>> appBlocks;
     private final List<Class<? extends Chart<?>>> charts;
@@ -66,6 +73,7 @@ public class RegisteredPlugin {
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
+    Map<String, List<PluginUiModule>> pluginUiManifest;
 
     public boolean isValid() {
         return !tasks.isEmpty() ||
@@ -74,6 +82,8 @@ public class RegisteredPlugin {
             !storages.isEmpty() ||
             !secrets.isEmpty() ||
             !taskRunners.isEmpty() ||
+            !assets.isEmpty()  ||
+            !assetExporters.isEmpty() ||
             !apps.isEmpty()  ||
             !appBlocks.isEmpty() ||
             !charts.isEmpty() ||
@@ -145,6 +155,14 @@ public class RegisteredPlugin {
             return AppPluginInterface.class;
         }
 
+        if (this.getAssets().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return Asset.class;
+        }
+
+        if (this.getAssetExporters().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AssetExporter.class;
+        }
+
         if (this.getLogExporters().stream().anyMatch(r -> r.getName().equals(cls))) {
             return LogExporter.class;
         }
@@ -180,6 +198,8 @@ public class RegisteredPlugin {
         result.put(STORAGES_GROUP_NAME, Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put(SECRETS_GROUP_NAME, Arrays.asList(this.getSecrets().toArray(Class[]::new)));
         result.put(TASK_RUNNERS_GROUP_NAME, Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
+        result.put(ASSETS_GROUP_NAME, Arrays.asList(this.getAssets().toArray(Class[]::new)));
+        result.put(ASSETS_EXPORTERS_GROUP_NAME, Arrays.asList(this.getAssetExporters().toArray(Class[]::new)));
         result.put(APPS_GROUP_NAME, Arrays.asList(this.getApps().toArray(Class[]::new)));
         result.put(APP_BLOCKS_GROUP_NAME, Arrays.asList(this.getAppBlocks().toArray(Class[]::new)));
         result.put(CHARTS_GROUP_NAME, Arrays.asList(this.getCharts().toArray(Class[]::new)));
@@ -308,7 +328,7 @@ public class RegisteredPlugin {
         }
         return null;
     }
-    
+
     public long crc32() {
         return Optional.ofNullable(externalPlugin).map(ExternalPlugin::getCrc32).orElse(-1L);
     }
@@ -359,6 +379,12 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
+        if (!this.getAssets().isEmpty()) {
+            b.append("[Assets: ");
+            b.append(this.getAssets().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
         if (!this.getApps().isEmpty()) {
             b.append("[Apps: ");
             b.append(this.getApps().stream().map(Class::getName).collect(Collectors.joining(", ")));
@@ -406,6 +432,15 @@ public class RegisteredPlugin {
             b.append(this.getAliases().values().stream().collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue
+            )));
+            b.append("] ");
+        }
+
+        if (!this.getPluginUiManifest().isEmpty()) {
+            b.append("[Plugin UI manifests: ");
+            b.append(this.getPluginUiManifest().entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().stream().map(Objects::toString).collect(Collectors.joining(","))
             )));
             b.append("] ");
         }

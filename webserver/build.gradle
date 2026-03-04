@@ -39,6 +39,7 @@ dependencies {
     testImplementation project(':worker')
     testImplementation "org.wiremock:wiremock-jetty12"
     testImplementation "org.awaitility:awaitility"
+    testImplementation "io.opentelemetry:opentelemetry-sdk-testing"
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')
@@ -47,3 +48,24 @@ dependencies {
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+        "-Amicronaut.openapi.expand.version=${project.version}"
+    ]
+}
+tasks.register('generateOpenapiSpec', Copy) {
+    def compileJavaProvider = tasks.named('compileJava')
+    def openapiSpecPath = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
+
+    from(compileJavaProvider.map(compileTask -> compileTask.outputs.files.filter{File f -> f == file(openapiSpecPath)}.singleFile))
+    into file("${project.getParent().projectDir}")
+    rename { 'openapi.yml' }
+}
+
+tasks.named('jar', Jar) {
+    exclude '**/spring-configuration-metadata.json'
+}
+
+tasks.named('compileJava') {
+    outputs.file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
+}

@@ -34,8 +34,9 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Download a file from an HTTP server.",
-    description = "This task connects to a HTTP server and copies a file to Kestra's internal storage."
+    title = "Download a file over HTTP(S) to Kestra storage.",
+    description = """
+        Performs an HTTP request and streams the response body into internal storage. Validates Content-Length when present and can fail on empty responses (`failOnEmptyResponse`, unless `options.allowFailed` allows it). Filename is taken from `saveAs`, `Content-Disposition`, or derived from the URI."""
 )
 @Plugin(
     examples = {
@@ -60,7 +61,15 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 public class Download extends AbstractHttp implements RunnableTask<Download.Output> {
     @Schema(title = "Should the task fail when downloading an empty file.")
     @Builder.Default
-    private final Property<Boolean> failOnEmptyResponse = Property.ofValue(true);
+    private Property<Boolean> failOnEmptyResponse = Property.ofValue(true);
+
+    @Schema(
+        title = "Name of the file inside the output.",
+        description = """
+            If not provided, the filename will be extracted from the `Content-Disposition` header.
+            If no `Content-Disposition` header, a name would be generated."""
+    )
+    private Property<String> saveAs;
 
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
@@ -111,20 +120,26 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                 }
             }
 
-            String filename = null;
-            if (response.getHeaders().firstValue("Content-Disposition").isPresent()) {
-                String contentDisposition = response.getHeaders().firstValue("Content-Disposition").orElseThrow();
-                filename = filenameFromHeader(runContext, contentDisposition);
-            }
-            if (filename != null) {
-                filename = URLEncoder.encode(filename, StandardCharsets.UTF_8);
+            String rFilename = runContext.render(this.saveAs).as(String.class).orElse(null);
+            if (rFilename == null) {
+                if (response.getHeaders().firstValue("Content-Disposition").isPresent()) {
+                    String contentDisposition = response.getHeaders().firstValue("Content-Disposition").orElseThrow();
+                    rFilename = filenameFromHeader(runContext, contentDisposition);
+                    if (rFilename != null) {
+                        URLEncoder.encode(rFilename, StandardCharsets.UTF_8);
+                        rFilename = rFilename.replace(' ', '+');
+                        // brackets are IPv6 reserved characters
+                        rFilename = rFilename.replace("[", "%5B");
+                        rFilename = rFilename.replace("]", "%5D");
+                    }
+                }
             }
 
             logger.debug("File '{}' downloaded with size '{}'", from, size);
 
             return Output.builder()
                 .code(response.getStatus().getCode())
-                .uri(runContext.storage().putFile(tempFile, filename))
+                .uri(runContext.storage().putFile(tempFile, rFilename))
                 .headers(response.getHeaders().map())
                 .length(size.get())
                 .build();

@@ -104,6 +104,7 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
                 assertThat(SchedulerStreamingTest.startedEvaluate.get(false), is(1));
                 assertThat(last.getTrigger().getVariables().get("startedEvaluate"), is(1));
                 assertTrue(last.getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
+                assertTrue(last.getLabels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
             }
         );
     }

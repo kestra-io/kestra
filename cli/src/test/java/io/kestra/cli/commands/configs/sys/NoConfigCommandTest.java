@@ -68,7 +68,8 @@ class NoConfigCommandTest {
 
 
             assertThat(exitCode).isNotZero();
-            assertThat(out.toString()).isEmpty();
+            // check that the only log is an access log: this has the advantage to also check that access log is working!
+            assertThat(out.toString()).contains("POST /api/v1/main/flows HTTP/1.1 | status: 500");
             assertThat(err.toString()).contains("No bean of type [io.kestra.core.repositories.FlowRepositoryInterface] exists");
         }
     }

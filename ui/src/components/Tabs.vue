@@ -8,19 +8,21 @@
             :disabled="tab.disabled"
         >
             <template #label>
-                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
+                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
                     <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
                     <EnterpriseBadge :enable="tab.locked">
-                        {{ tab.title }}
-                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
+                        <span class="tab-label-wrapper">
+                            {{ tab.title }}
+                            <el-badge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
+                        </span>
                     </EnterpriseBadge>
                 </component>
             </template>
         </el-tab-pane>
     </el-tabs>
-    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
+    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized, 'no-overflow': activeTab.noOverflow}">
         <BlueprintDetail
             v-if="selectedBlueprintId"
             :blueprintId="selectedBlueprintId"
@@ -37,138 +39,138 @@
             ref="tabContent"
             :is="activeTab.component"
             :namespace="namespaceToForward"
-            @go-to-detail="blueprintId => selectedBlueprintId = blueprintId"
+            @go-to-detail="(blueprintId: string) => selectedBlueprintId = blueprintId"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
     </section>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {ref, computed, watch, onMounted, nextTick, useAttrs} from "vue";
+    import {useRoute} from "vue-router";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
-    import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
+    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
 
-    export default {
-        components: {EnterpriseBadge,BlueprintDetail},
-        props: {
-            tabs: {
-                type: Array,
-                required: true
-            },
-            routeName: {
-                type: String,
-                default: ""
-            },
-            top: {
-                type: Boolean,
-                default: true
-            },
-            /**
-             * The active embedded tab. If this component is not embedded, keep it undefined.
-             */
-            embedActiveTab: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-            namespace: {
-                type: String,
-                default: null
-            },
-            type: {
-                type: String,
-                default: undefined
-            }
-        },
-        emits: [
-            /**
-             * Especially useful when embedded since you need to handle the embedActiveTab prop change on the parent component.
-             * @property {Object} newTab the new active tab
-             */
-            "changed"
-        ],
-        data() {
+    interface Tab {
+        name?: string;
+        title: string;
+        hidden?: boolean;
+        disabled?: boolean;
+        props?: any;
+        count?: number;
+        locked?: boolean;
+        query?: any;
+        component?: any;
+        maximized?: boolean;
+        noOverflow?: boolean;
+        "v-on"?: any;
+    }
+
+    const props = withDefaults(defineProps<{
+        tabs: Tab[];
+        routeName?: string;
+        top?: boolean;
+        /**
+         * The active embedded tab. If this component is not embedded, keep it undefined.
+         */
+        embedActiveTab?: string;
+        namespace?: string | null;
+        type?: string;
+    }>(), {
+        routeName: "",
+        top: true,
+        embedActiveTab: undefined,
+        namespace: null,
+        type: undefined
+    });
+
+    const emit = defineEmits<{
+        /**
+         * Especially useful when embedded since you need to handle the embedActiveTab prop change on the parent component.
+         * @property {Object} newTab the new active tab
+         */
+        changed: [tab: Tab];
+    }>();
+
+    const attrs = useAttrs();
+    const route = useRoute();
+
+    const activeName = ref<string | undefined>(undefined);
+    const selectedBlueprintId = ref<string | undefined>(undefined);
+
+    const activeTab = computed(() => {
+        return props.tabs.filter(tab => (props.embedActiveTab ?? route?.params?.tab) === tab.name)[0] || props.tabs[0];
+    });
+
+    const isEditorActiveTab = computed(() => {
+        const TAB = activeTab.value.name;
+        const ROUTE = route?.name as string;
+
+        if (["flows/update", "flows/create"].includes(ROUTE)) {
+            return TAB === "edit";
+        } else if (["namespaces/update", "namespaces/create"].includes(ROUTE)) {
+            if (TAB === "files") return true;
+        }
+
+        return false;
+    });
+
+    const attrsWithoutClass = computed(() => {
+        return Object.fromEntries(
+            Object.entries(attrs)
+                .filter(([key]) => key !== "class")
+        );
+    });
+
+    const namespaceToForward = computed(() => {
+        return activeTab.value.props?.namespace ?? props.namespace;
+        // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
+        // in this case this.props.namespace will be used
+    });
+
+    const containerClass = computed(() => getTabClasses(activeTab.value));
+
+    const embeddedTabChange = (tab: Tab) => {
+        emit("changed", tab);
+    };
+
+    const setActiveName = () => {
+        activeName.value = activeTab.value.name || "default";
+    };
+
+    const to = (tab: Tab) => {
+        if (activeTab.value === tab) {
+            setActiveName();
+            return route;
+        } else {
             return {
-                activeName: undefined,
-                selectedBlueprintId : undefined
-            }
-        },
-        watch: {
-            $route() {
-                this.setActiveName();
-            },
-            activeTab() {
-                this.$nextTick(() => {
-                    this.setActiveName();
-                });
-            }
-        },
-        mounted() {
-            this.setActiveName();
-        },
-        methods: {
-            embeddedTabChange(tab) {
-                this.$emit("changed", tab);
-            },
-            setActiveName() {
-                this.activeName = this.activeTab.name || "default";
-            },
-            click(tab) {
-                this.$router.push(this.to(this.tabs.filter(value => value.name === tab)[0]));
-            },
-            to(tab) {
-                if (this.activeTab === tab) {
-                    this.setActiveName()
-                    return this.$route;
-                } else {
-                    return {
-                        name: this.routeName || this.$route.name,
-                        params: {...this.$route.params, tab: tab.name},
-                        query: {...tab.query}
-                    };
-                }
-            },
-            getTabClasses(tab) {
-                if(tab.locked) return {"px-0": true};
-                return {"container": true, "mt-4": true};
-            }
-        },
-        computed: {
-            containerClass() {
-                return this.getTabClasses(this.activeTab);
-            },
-            activeTab() {
-                return this.tabs
-                    .filter(tab => (this.embedActiveTab ?? this.$route.params.tab) === tab.name)[0] || this.tabs[0];
-            },
-            isEditorActiveTab() {
-                const TAB = this.activeTab.name;
-                const ROUTE = this.$route.name;
-
-                if (["flows/update", "flows/create"].includes(ROUTE)) {
-                    return TAB === "edit";
-                } else if (
-                    ["namespaces/update", "namespaces/create"].includes(ROUTE)
-                ) {
-                    if (TAB === "files") return true;
-                }
-
-                return false;
-            },
-            // Those are passed to the rendered component
-            // We need to exclude class as it's already applied to this component root div
-            attrsWithoutClass() {
-                return Object.fromEntries(
-                    Object.entries(this.$attrs)
-                        .filter(([key]) => key !== "class")
-                );
-            },
-            namespaceToForward(){
-                return this.activeTab.props?.namespace ?? this.namespace;
-                // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
-                // in this case this.props.namespace will be used
-            }
+                name: props.routeName || route?.name,
+                params: {...route?.params, tab: tab.name},
+                query: {...tab.query}
+            };
         }
     };
+
+    const getTabClasses = (tab: Tab) => {
+        if (tab.locked) return {"px-0": true};
+        return {"container": true, "mt-4": true};
+    };
+
+    if (route) {
+        watch(route, () => {
+            setActiveName();
+        });
+    }
+
+    watch(activeTab, () => {
+        nextTick(() => {
+            setActiveName();
+        });
+    });
+
+    onMounted(() => {
+        setActiveName();
+    });
 </script>
 
 <style scoped lang="scss">
@@ -201,6 +203,10 @@ section.container.mt-4:has(> section.empty) {
     flex-grow: 1;
 }
 
+.no-overflow {
+    overflow: hidden;
+}
+
 .editor-splitter {
     height: 100%;
 
@@ -219,6 +225,22 @@ section.container.mt-4:has(> section.empty) {
 :deep(.el-tabs__nav-prev) {
     &.is-disabled {
         display: none;
+    }
+}
+
+.tab-label-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-badge {
+    :deep(.el-badge__content) {
+        transform: translateY(-1px);
+        position: static;
+        border: none;
+        margin-top: 0;
+        vertical-align: middle;
     }
 }
 </style>

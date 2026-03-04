@@ -1,7 +1,7 @@
 <template>
     <el-dialog
         v-model="isVisible"
-        :title="t('setup.titles.survey')"
+        :title="$t('setup.titles.survey')"
         width="550px"
         :showClose="true"
         :closeOnClickModal="false"
@@ -10,10 +10,8 @@
         customClass="hello-survey-dialog"
     >
         <div class="survey-content">
-            <h3>{{ t('setup.subtitles.survey') }}</h3>
-            
             <div class="question-section">
-                <h4>{{ t('setup.survey.company_size') }}</h4>
+                <h4>{{ $t('setup.survey.company_size') }}</h4>
                 <div class="company-size-options">
                     <el-radio-group v-model="companySize">
                         <el-radio 
@@ -21,7 +19,7 @@
                             :key="option.value" 
                             :value="option.value"
                         >
-                            {{ t(option.labelKey) }}
+                            {{ $t(option.labelKey) }}
                         </el-radio>
                     </el-radio-group>
                 </div>
@@ -30,7 +28,7 @@
             <el-divider />
             
             <div class="question-section">
-                <h4>{{ t('setup.survey.use_case') }}</h4>
+                <h4>{{ $t('setup.survey.use_case') }}</h4>
                 <div class="use-case-options">
                     <el-checkbox-group v-model="useCases">
                         <el-checkbox 
@@ -38,7 +36,7 @@
                             :key="option.value" 
                             :value="option.value"
                         >
-                            {{ t(option.labelKey) }}
+                            {{ $t(option.labelKey) }}
                         </el-checkbox>
                     </el-checkbox-group>
                 </div>
@@ -49,7 +47,7 @@
             
             <div class="newsletter-section">
                 <el-checkbox v-model="subscribeNewsletter">
-                    <span v-html="t('setup.survey.newsletter')" />
+                    <span v-html="$t('setup.survey.newsletter')" />
                 </el-checkbox>
             </div>
         </div>
@@ -57,10 +55,10 @@
         <template #footer>
             <div class="dialog-footer">
                 <el-button @click="handleSkip">
-                    {{ t('setup.survey.skip') }}
+                    {{ $t('setup.survey.skip') }}
                 </el-button>
                 <el-button type="primary" @click="handleSubmit">
-                    {{ t('setup.survey.continue') }}
+                    {{ $t('setup.survey.continue') }}
                 </el-button>
             </div>
         </template>
@@ -69,7 +67,6 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useApiStore} from "../stores/api"
     import {useMiscStore} from "override/stores/misc"
 
@@ -91,7 +88,6 @@
         }]
     }>()
 
-    const {t} = useI18n()
     const apiStore = useApiStore()
     const miscStore = useMiscStore()
 
@@ -200,14 +196,7 @@
 
 .survey-content {
     padding: 1rem;
-    h3 {
-        color: var(--ks-content-primary, #ffffff);
-        font-size: 18.4px;
-        font-weight: 600;
-        margin: 0 0 24px 0;
-        line-height: 1.4;
-    }
-    
+
     .question-section {
         margin-bottom: 32px;
         

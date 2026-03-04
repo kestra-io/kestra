@@ -4,13 +4,12 @@
             <span class="key">{{ filter.keyLabel }}</span>
             <span v-if="!hasValue(filter.value)" class="in">in</span>
             <span v-if="!hasValue(filter.value)" class="val">any</span>
-            <span v-else class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
+            <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <el-tooltip
                 v-if="hasValue(filter.value)"
                 :content="formatTooltipValue(filter.value)"
                 placement="top"
                 effect="light"
-                :disabled="!Array.isArray(filter.value) || filter.value.length <= 1"
             >
                 <component :is="renderValueResult" />
             </el-tooltip>
@@ -54,10 +53,13 @@
     }>();
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>();
-        
+
     const {getRelativeDateLabel} = useValues("executions");
 
     const shouldShowComparatorInPopper = computed(
+        () => (props.filterKey?.comparators?.length ?? 0) >= 2
+    );
+    const shouldShowComparatorLabel = computed(
         () => (props.filterKey?.comparators?.length ?? 0) >= 2
     );
 
@@ -70,7 +72,7 @@
         case value instanceof Date:
             return value.toLocaleDateString();
         case value && typeof value === "object" && "startDate" in value:
-            return `${value.startDate.toLocaleDateString()} - ${value.endDate.toLocaleDateString()}`;
+            return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`;
         case typeof value === "string" && /^P(T?\d+[HMD]|\d+[YMDW])/.test(value):
             return getRelativeDateLabel(value);
         default:
@@ -79,8 +81,8 @@
     };
 
     const formatTooltipValue = (value: FilterValueType) =>
-        Array.isArray(value) 
-            ? value.join(", ") 
+        Array.isArray(value)
+            ? value.join(", ")
             : String(formatValue(value));
 
     const hasValue = (value: FilterValueType) => {
@@ -105,7 +107,7 @@
         h("span", {class: "value"}, formatValue(props.filter.value))
     );
 
-    const isNegative = computed(() => 
+    const isNegative = computed(() =>
         props.filter.comparator === Comparators.NOT_EQUALS || props.filter.comparator === Comparators.NOT_IN
     );
 
@@ -127,17 +129,18 @@
     border-radius: 4px;
     cursor: pointer;
     max-width: 300px;
+    min-height: 32px;
     max-height: 32px;
     user-select: none;
 
     &:hover {
         background-color: var(--ks-button-background-secondary-hover);
     }
-    
+
     &.toggled {
         border-color: var(--ks-border-success);
     }
-    
+
     .content {
         display: flex;
         align-items: center;
@@ -153,6 +156,8 @@
             font-size: 12px;
             color: var(--ks-content-primary);
             white-space: nowrap;
+            display: flex;
+            align-items: center;
         }
         .value {
             font-weight: 700;
@@ -168,7 +173,7 @@
         .comparator {
             color: var(--ks-chart-success);
             text-transform: lowercase;
-            
+
             &.negative {
                 color: var(--ks-chart-failed);
             }
@@ -179,15 +184,17 @@
         background: none;
         cursor: pointer;
         padding: 0;
+        margin: 0;
         color: var(--ks-content-tertiary);
+        font-size: 1rem;
         &:hover {
             color: var(--ks-content-secondary);
         }
-        :deep(svg){
-            font-size: 14px;
+        :deep(svg) {
+            font-size: 1rem;
         }
     }
-    
+
     :deep(.el-tag) {
         background-color: var(--ks-tag-background);
         color: var(--ks-content-secondary);

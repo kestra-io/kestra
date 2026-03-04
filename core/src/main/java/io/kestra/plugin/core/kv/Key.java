@@ -17,14 +17,15 @@ import java.util.List;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-public class Key extends PurgeBehavior {
+public class Key extends KvPurgeBehavior {
     @NotNull
     @JsonInclude
     @Builder.Default
     protected String type = "key";
 
     @Schema(
-        title = "Delete only expired keys"
+        title = "Delete only expired keys",
+        description = "When true (default), purge removes entries whose `expirationDate` is in the past; otherwise all matched keys are purged."
     )
     @Builder.Default
     private boolean expiredOnly = true;

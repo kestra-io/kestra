@@ -25,7 +25,7 @@ export function setupTenantRouter(router: Router, app: App): void {
 
     router.beforeEach((to, from, next) => {
         // on login, prevent redirection to tenant
-        if (typeof to.name === "string" && ["login", "setup"].includes(to.name)) {
+        if (to.meta?.anonymous === true) {
             return next();
         }
         if (to.path !== "/" && !to.params.tenant) {

@@ -1,25 +1,20 @@
 package io.kestra.core.utils;
 
 import io.kestra.core.models.tasks.retrys.Constant;
-import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
 class RetryUtilsTest {
-    @Inject
-    RetryUtils retryUtils;
 
     private <T, E extends Throwable> RetryUtils.Instance<T, E> instance() {
-        return retryUtils.of(Constant.builder()
+        return RetryUtils.of(Constant.builder()
             .interval(Duration.ofMillis(10))
             .maxAttempts(3)
             .build());

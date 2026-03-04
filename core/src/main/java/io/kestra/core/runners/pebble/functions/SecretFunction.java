@@ -9,6 +9,7 @@ import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretService;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.NamespaceService;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -36,7 +37,7 @@ public class SecretFunction implements Function {
     private SecretService secretService;
 
     @Inject
-    private FlowService flowService;
+    private NamespaceService namespaceService;
 
     @Override
     public List<String> getArgumentNames() {
@@ -56,7 +57,7 @@ public class SecretFunction implements Function {
         if (namespace == null) {
             namespace = flowNamespace;
         } else {
-            flowService.checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
+            namespaceService.checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
         }
 
         try {

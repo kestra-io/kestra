@@ -5,7 +5,7 @@
         >
             <div class="info-block">
                 <p class="m-0 fs-6">
-                    <span class="fw-bold">{{ t("total_executions") }}</span>
+                    <span class="fw-bold">{{ $t("total_executions") }}</span>
                 </p>
                 <p class="m-0 fs-2">
                     <el-skeleton v-if="loading" :rows="0" />
@@ -23,7 +23,7 @@
                         inlinePrompt
                         :disabled="loading"
                     />
-                    <span class="d-flex align-items-center ps-2 fw-light small">{{ t("duration") }}</span>
+                    <span class="d-flex align-items-center ps-2 fw-light small">{{ $t("duration") }}</span>
                 </div>
                 <div id="executions" class="w-100" />
             </div>
@@ -46,7 +46,7 @@
 
 <script setup>
     import {ref} from "vue";
-    import {useI18n} from "vue-i18n";
+
     import CheckIcon from "vue-material-design-icons/Check.vue";
 
     import {useMediaQuery} from "@vueuse/core";
@@ -57,7 +57,6 @@
 
     import BarChart from "./BarChart.vue";
 
-    const {t} = useI18n({useScope: "global"});
     const duration = ref(true);
 
     const isSmallScreen = useMediaQuery("(max-width: 610px)");

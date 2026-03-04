@@ -33,11 +33,13 @@ public class ExecutionsDataFilterValidator implements ConstraintValidator<Execut
             }
         });
 
-        executionsDataFilter.getWhere().forEach(filter -> {
-            if (filter.getField() == Executions.Fields.LABELS && filter.getLabelKey() == null) {
-                violations.add("Label filters must have a `labelKey`.");
-            }
-        });
+        if (executionsDataFilter.getWhere() != null) {
+            executionsDataFilter.getWhere().forEach(filter -> {
+                if (filter.getField() == Executions.Fields.LABELS && filter.getLabelKey() == null) {
+                    violations.add("Label filters must have a `labelKey`.");
+                }
+            });
+        }
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();

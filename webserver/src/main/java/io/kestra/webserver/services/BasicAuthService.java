@@ -49,6 +49,13 @@ public class BasicAuthService {
     @Inject
     private ApplicationEventPublisher<OssAuthEvent> ossAuthEventPublisher;
 
+    public BasicAuthService(SettingRepositoryInterface settingRepository, BasicAuthConfiguration basicAuthConfiguration, InstanceService instanceService, ApplicationEventPublisher<OssAuthEvent> ossAuthEventPublisher) {
+        this.settingRepository = settingRepository;
+        this.basicAuthConfiguration = basicAuthConfiguration;
+        this.instanceService = instanceService;
+        this.ossAuthEventPublisher = ossAuthEventPublisher;
+    }
+
     public BasicAuthService() {}
 
     @VisibleForTesting

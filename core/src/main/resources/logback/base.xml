@@ -9,10 +9,14 @@
     <property name="pattern" value="%date{HH:mm:ss}.%ms %highlight(%-5.5level) %magenta(%-12.36thread) %cyan(%-12.36logger{36}) %msg%n" />
 
     <logger name="io.kestra" level="INFO" />
-    <logger name="flow" level="INFO" />
-    <logger name="task" level="INFO" />
-    <logger name="execution" level="INFO" />
-    <logger name="trigger" level="INFO" />
+
+    <!-- Flow execution logs - disabled by default -->
+    <logger name="flow" level="OFF" />
+
+    <!-- Server loggers -->
+    <logger name="worker" level="INFO" />
+    <logger name="executor" level="INFO" />
+    <logger name="scheduler" level="INFO" />
 
     <logger name="io.kestra.ee.runner.kafka.services.KafkaConsumerService" level="WARN" />
     <logger name="io.kestra.ee.runner.kafka.services.KafkaProducerService" level="WARN" />

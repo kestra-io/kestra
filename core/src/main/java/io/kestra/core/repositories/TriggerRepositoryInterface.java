@@ -16,8 +16,8 @@ import java.util.function.Function;
 public interface TriggerRepositoryInterface extends QueryBuilderInterface<Triggers.Fields> {
     Optional<Trigger> findLast(TriggerContext trigger);
 
-    Optional<Trigger> findByExecution(Execution execution);
-
+    Optional<Trigger> findByUid(String uid);
+    
     List<Trigger> findAll(String tenantId);
 
     List<Trigger> findAllForAllTenants();
@@ -39,13 +39,13 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
      * @param tenantId the tenant of the triggers
      * @return The count.
      */
-    int count(@Nullable String tenantId);
+    long countAll(@Nullable String tenantId);
 
     /**
      * Find all triggers that match the query, return a flux of triggers
-     * as the search is not paginated
      */
-    Flux<Trigger> find(String tenantId, List<QueryFilter> filters);
+    Flux<Trigger> findAsync(String tenantId, List<QueryFilter> filters);
+
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();

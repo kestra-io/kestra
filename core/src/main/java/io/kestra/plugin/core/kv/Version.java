@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @KvVersionBehaviorValidation
-public class Version extends PurgeBehavior {
+public class Version extends KvPurgeBehavior {
     @NotNull
     @JsonInclude
     @Builder.Default
@@ -39,7 +39,7 @@ public class Version extends PurgeBehavior {
 
     @Schema(
         title = "How much versions should be kept for each matching KV.",
-        description = "By default, every matching versions will be purged."
+        description = "By default, every matching version is eligible for purge; set `keepAmount` to retain the most recent N per key."
     )
     private Integer keepAmount;
 

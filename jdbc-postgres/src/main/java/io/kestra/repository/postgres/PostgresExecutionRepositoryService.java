@@ -2,10 +2,12 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 
 import java.util.*;
 
@@ -59,6 +61,17 @@ public abstract class PostgresExecutionRepositoryService {
             conditions.add(DSL.or(inConditions));
         }
         return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+    }
+
+    public static Condition statesFilter(List<State.Type> state) {
+        return DSL.or(state
+            .stream()
+            .map(Enum::name)
+            .map(s -> DSL.field("state_current")
+                .eq(DSL.field("CAST(? AS state_type)", SQLDataType.VARCHAR(50).getArrayType(), s)
+                ))
+            .toList()
+        );
     }
 
 }

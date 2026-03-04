@@ -355,7 +355,7 @@
                     autoRefreshInterval: 10
                 },
                 defaultPreferences: {
-                    theme: "light",
+                    theme: "syncWithSystem",
                     logsFontSize: 12,
                     editorFontFamily: "'Source Code Pro', monospace",
                     editorFontSize: 12,
@@ -404,7 +404,6 @@
                         formattedOffset: timezoneMoment.format("Z")
                     };
                 }).sort((a, b) => a.offset - b.offset),
-                guidedTour: undefined,
                 now: this.$moment(),
                 localeKey: this.$moment.locale(),
             };
@@ -420,7 +419,6 @@
             this.pendingSettings.timezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
-            this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
@@ -648,6 +646,7 @@
             },
             async saveAllSettings() {
                 let refreshWhenSaved = false
+                const previousDefaultNamespace = localStorage.getItem("defaultNamespace")
                 for (const key in this.pendingSettings){
                     const storedKey = this.settingsKeyMapping[key]
                     switch(key) {
@@ -706,10 +705,35 @@
                 this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
                 this.hasUnsavedChanges = false;
                 this.checkDefaultStates();
+
+                // Clear namespace filters from sessionStorage if default namespace changed/cleared
+                if (previousDefaultNamespace !== this.pendingSettings.defaultNamespace) {
+                    this.clearNamespaceFilters();
+                }
+
                 if(refreshWhenSaved){
                     document.location.assign(document.location.href)
                 }
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
+            },
+            clearNamespaceFilters() {
+                Object.keys(sessionStorage)
+                    .filter(key => key.includes("_restore_url"))
+                    .forEach(key => {
+                        const value = sessionStorage.getItem(key);
+                        if (!value) return;
+
+                        const filters = JSON.parse(value);
+                        const updated = Object.fromEntries(
+                            Object.entries(filters).filter(([k]) => k !== "namespace" && !k.startsWith("filters[namespace]"))
+                        );
+
+                        if (Object.keys(updated).length) {
+                            sessionStorage.setItem(key, JSON.stringify(updated));
+                        } else {
+                            sessionStorage.removeItem(key);
+                        }
+                    });
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
@@ -913,7 +937,7 @@
         },
     };
 </script>
-<style lang="scss">
+<style scoped lang="scss">
     .settings-wrapper .el-input-number {
         max-width: 20vw;
 

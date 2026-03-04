@@ -195,7 +195,7 @@ export default class Utils {
         return null; // Return null if no filename is found
     }
 
-    static switchTheme(miscStore: any, theme: string | undefined) {
+    static switchTheme(miscStore: any, theme?: string) {
         // default theme
         if (theme === undefined) {
             if (localStorage.getItem("theme")) {
@@ -289,12 +289,14 @@ export default class Utils {
         return obj;
     }
 
-    static getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput) {
-        if (!startDate || !endDate) {
+    static getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined) {
+        if ((!startDate || !endDate) && timeRange === undefined) {
             return "yyyy-MM-DD";
         }
 
-        const duration = moment.duration(moment(endDate).diff(moment(startDate)));
+        const duration = timeRange === undefined
+            ? moment.duration(moment(endDate).diff(moment(startDate)))
+            : moment.duration(timeRange);
 
         if (duration.asDays() > 365) {
             return "yyyy-MM";
@@ -307,6 +309,19 @@ export default class Utils {
         } else {
             return "yyyy-MM-DD:HH:mm";
         }
+    }
+
+    static getParentNamespaces(namespace: string): string[] {
+        if (!namespace) return [];
+
+        const parts = namespace.split(".");
+        const parents: string[] = [];
+
+        for (let i = 1; i <= parts.length; i++) {
+            parents.push(parts.slice(0, i).join("."));
+        }
+
+        return parents;
     }
 }
 

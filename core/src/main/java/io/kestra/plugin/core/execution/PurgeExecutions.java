@@ -9,7 +9,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -25,20 +24,29 @@ import java.util.List;
 @NoArgsConstructor
 @Schema(
     title = "Purge executions, logs, metrics, and storage files.",
-    description = "This task can be used to purge flow executions data for all flows, for a specific namespace, or for a specific flow."
+    description = """
+        Deletes historical execution data by namespace/flow, bounded by `startDate`/`endDate`, and optionally filtered by states. Each category can be toggled (`purgeExecution`, `purgeLog`, `purgeMetric`, `purgeStorage`).
+
+        Respects Namespace authorization checks (there must be purge rights on the target namespace); default batch size is 100. Irreversible — use carefully in production."""
 )
 @Plugin(
     examples = {
         @Example(
             title = "Purge all flow execution data for flows that ended more than one month ago.",
-            code = {
-                "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
-                "states: ",
-                " - KILLED",
-                " - FAILED",
-                " - WARNING",
-                " - SUCCESS"
-            }
+            code = """
+            id: purge_exections
+            namespace: system
+            
+            tasks:
+              - id: purge
+                type: io.kestra.plugin.core.execution.PurgeExecutions
+                endDate: "{{ now() | dateAdd(-1, 'MONTHS') }}"
+                states: 
+                  - KILLED
+                  - FAILED
+                  - WARNING
+                  - SUCCESS
+            """
         )
     },
     aliases = {"io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge"}
@@ -113,15 +121,14 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
     @Override
     public PurgeExecutions.Output run(RunContext runContext) throws Exception {
         ExecutionService executionService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionService.class);
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         if (renderedNamespace == null){
-            flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
+            runContext.acl().allowAllNamespaces().check();
         } else if (!renderedNamespace.equals(flowInfo.namespace())) {
-            flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
+            runContext.acl().allowNamespace(renderedNamespace).check();
         }
 
         ExecutionService.PurgeResult purgeResult = executionService.purge(

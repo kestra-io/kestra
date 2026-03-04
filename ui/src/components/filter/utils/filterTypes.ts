@@ -30,11 +30,14 @@ export interface FilterKeyConfig {
     showComparatorSelection?: boolean;
     valueProvider?: () => Promise<FilterValue[]>;
     valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
+    visibleByDefault?: boolean;
+    defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
 }
 
 export interface FilterValue {
     label: string;
     value: string;
+    color?: string;
     description?: string;
 }
 
@@ -43,7 +46,7 @@ export interface AppliedFilter {
     key: string;
     keyLabel: string;
     valueLabel: string;
-    persistent?: boolean;
+    isDefaultVisible?: boolean;
     comparator: Comparators;
     comparatorLabel: string;
     value: string | string[] | Date | {startDate: Date; endDate: Date};
@@ -55,7 +58,6 @@ export interface SavedFilter {
     createdAt: Date;
     global?: boolean;
     description?: string;
-    searchQuery?: string;
     filters: AppliedFilter[];
 }
 

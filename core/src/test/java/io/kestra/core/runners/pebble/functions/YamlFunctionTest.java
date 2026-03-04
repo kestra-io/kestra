@@ -3,13 +3,13 @@ package io.kestra.core.runners.pebble.functions;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class YamlFunctionTest {
     @Inject
     VariableRenderer variableRenderer;

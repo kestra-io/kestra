@@ -703,6 +703,10 @@
         "label": "Flow-ID"
       },
       "footer_apply": "Anwenden",
+      "group": {
+        "description": "Nach Gruppe filtern",
+        "label": "Gruppe"
+      },
       "hierarchy": {
         "all": "Standard",
         "child_description": "Nur verschachtelte/ausgelöste Ausführungen anzeigen",
@@ -935,6 +939,10 @@
         "label": "Trigger-Zustand"
       },
       "update": "Aktualisieren",
+      "username": {
+        "description": "Nach Benutzername filtern",
+        "label": "Benutzername"
+      },
       "value": "Wert",
       "workerId": {
         "description": "Nach Worker-ID filtern",

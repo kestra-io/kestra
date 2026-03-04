@@ -703,6 +703,10 @@
         "label": "ID de flow"
       },
       "footer_apply": "Appliquer",
+      "group": {
+        "description": "Filtrer par groupe",
+        "label": "Groupe"
+      },
       "hierarchy": {
         "all": "Par défaut",
         "child_description": "Afficher uniquement les exécutions imbriquées/activées",
@@ -935,6 +939,10 @@
         "label": "État du Trigger"
       },
       "update": "Mettre à jour",
+      "username": {
+        "description": "Filtrer par nom d'utilisateur",
+        "label": "Nom d'utilisateur"
+      },
       "value": "Valeur",
       "workerId": {
         "description": "Filtrer par ID de worker",

@@ -264,6 +264,18 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
             }
+        },
+        NAME("name") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        GROUP("groupList") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.IN, Op.EQUALS);
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -344,7 +356,7 @@ public record QueryFilter(
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME);
             }
         },
         SECRET_METADATA {

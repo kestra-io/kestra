@@ -628,6 +628,33 @@ paths:
             application/yaml:
               schema:
                 type: string
+  /api/v1/{tenant}/cluster/metrics/{serviceType}:
+    get:
+      tags:
+      - Services
+      summary: Get metrics for running services
+      operationId: metrics
+      parameters:
+      - name: serviceType
+        in: query
+        required: true
+        explode: false
+        schema:
+          $ref: "#/components/schemas/ServiceType"
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: metrics 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Metric"
   /api/v1/{tenant}/cluster/services/{id}:
     get:
       tags:
@@ -9702,7 +9729,7 @@ components:
           items:
             $ref: "#/components/schemas/Metric.Tag"
         value:
-          type: object
+          type: number
     Metric.Tag:
       type: object
       properties:

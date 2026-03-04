@@ -73,6 +73,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue";
     import {TaskIcon, isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {isPluginMatched} from "../../utils/pluginUtils";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import PluginUnified from "./PluginUnified.vue";
@@ -81,7 +82,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useScrollMemory} from "../../composables/useScrollMemory";
     import {capitalize, formatPluginTitle} from "../../utils/global";
-    import {useMiscStore} from "../../override/stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     interface Props {
         plugins: any[];
@@ -173,12 +174,7 @@
 
     const sortedPlugins = computed(() => {
         if (!searchQuery.value) return basePlugins.value;
-        const query = searchQuery.value.toLowerCase();
-        return basePlugins.value.filter(plugin =>
-            (getPluginDisplayName(plugin) ?? "").toLowerCase().includes(query) ||
-            (plugin.title ?? "").toLowerCase().includes(query) ||
-            getPluginElements(plugin).some(element => element.toLowerCase().includes(query))
-        );
+        return basePlugins.value.filter(plugin => isPluginMatched(plugin, searchQuery.value));
     });
 
     const loadPluginIcons = async () => {

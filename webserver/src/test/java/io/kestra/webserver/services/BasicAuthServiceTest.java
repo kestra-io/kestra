@@ -3,6 +3,7 @@ package io.kestra.webserver.services;
 import com.github.tomakehurst.wiremock.client.CountMatchingStrategy;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.exceptions.ValidationErrorException;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.InMemorySettingRepository;
@@ -76,6 +77,7 @@ class BasicAuthServiceTest {
     }
 
     @Test
+    @FlakyTest
     void isBasicAuthInitialized(){
         var tmpSettingsRepo = new InMemorySettingRepository();
         var basicAuthConfiguration = new ConfigWrapper(

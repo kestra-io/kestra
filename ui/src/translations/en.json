@@ -1838,6 +1838,10 @@
           "label": "Username",
           "description": "Filter by username"
         },
+      "name": {
+        "label": "Name",
+        "description": "Filter by name"
+      },
         "group": {
           "label": "Group",
           "description": "Filter by group"

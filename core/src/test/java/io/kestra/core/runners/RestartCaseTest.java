@@ -149,10 +149,10 @@ public class RestartCaseTest {
 
         assertThat(restartedExec.getId()).isNotEqualTo(firstExecution.getId());
         assertThat(restartedExec.getTaskRunList().get(1).getId()).isNotEqualTo(firstExecution.getTaskRunList().get(1).getId());
-        Execution finishedRestartedExecution = runnerUtils.awaitChildExecution(
+        Execution finishedRestartedExecution = runnerUtils.emitAndAwaitChildExecution(
             flow,
             firstExecution,
-            restartedExec,
+            restartedExec.withTenantId(MAIN_TENANT),
             Duration.ofSeconds(60)
         );
 
@@ -315,10 +315,10 @@ public class RestartCaseTest {
         assertThat(replayedExecution.getState().getCurrent()).isEqualTo(Type.RESTARTED);
         assertThat(replayedExecution.getId()).isNotEqualTo(firstExecution.getId());
 
-        Execution finalReplayedExecution = runnerUtils.awaitChildExecution(
+        Execution finalReplayedExecution = runnerUtils.emitAndAwaitChildExecution(
             flow,
             firstExecution,
-            replayedExecution,
+            replayedExecution.withTenantId(MAIN_TENANT),
             Duration.ofSeconds(60)
         );
         assertThat(finalReplayedExecution.getState().getCurrent()).isEqualTo(Type.FAILED);

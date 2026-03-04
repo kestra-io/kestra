@@ -1342,6 +1342,7 @@
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
     "no_file_choosen": "Aucun fichier choisi",
     "no_flow_outputs": "Aucune sortie disponible.",
+    "no_history": "Aucun historique disponible",
     "no_inputs": "Aucun input disponible.",
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Aucun log trouvé pour les filtres sélectionnés. <br> Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",

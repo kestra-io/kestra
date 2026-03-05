@@ -6,4 +6,4 @@ tasks:
     type: io.kestra.plugin.core.log.PurgeLogs
     endDate: "{{ now() | dateAdd(2, 'HOURS') }}"
     purgeExecutionLogs: false
-    purgeTriggerLogs: true
+    purgeNonExecutionLogs: true

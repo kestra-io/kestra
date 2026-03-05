@@ -29,38 +29,23 @@ public class ExecutionLogService {
     }
 
     /**
-     * Purges log entries matching the given criteria.
+     * Purges log entries matching the given criteria, with separate control over execution and non-execution logs.
      *
-     * @param tenantId    the tenant identifier
-     * @param namespace   the namespace of the flow
-     * @param flowId      the flow identifier
-     * @param executionId the execution identifier
-     * @param logLevels   the list of log levels to delete
-     * @param startDate   the start of the date range
-     * @param endDate     the end of the date range.
-     * @return the number of log entries deleted
+     * @return an array of two ints: [executionLogsDeleted, nonExecutionLogsDeleted]
      */
-    public int purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
-        return logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate);
-    }
-
-    /**
-     * Purges log entries matching the given criteria, with separate control over execution and trigger logs.
-     *
-     * @return an array of two ints: [executionLogsDeleted, triggerLogsDeleted]
-     */
-    public int[] purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeTriggerLogs) {
+    public int[] purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
         int executionLogsDeleted = 0;
-        int triggerLogsDeleted = 0;
+        int nonExecutionLogsDeleted = 0;
 
-        if (purgeExecutionLogs) {
+        if (purgeExecutionLogs && purgeNonExecutionLogs) {
+            executionLogsDeleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, true, true);
+        } else if (purgeExecutionLogs) {
             executionLogsDeleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, true, false);
-        }
-        if (purgeTriggerLogs) {
-            triggerLogsDeleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, false, true);
+        } else if (purgeNonExecutionLogs) {
+            nonExecutionLogsDeleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, false, true);
         }
 
-        return new int[]{executionLogsDeleted, triggerLogsDeleted};
+        return new int[]{executionLogsDeleted, nonExecutionLogsDeleted};
     }
 
 

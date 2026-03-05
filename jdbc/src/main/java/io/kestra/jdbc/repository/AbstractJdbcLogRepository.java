@@ -327,12 +327,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
-        return deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, null, null);
-    }
-
-    @Override
-    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, Boolean purgeExecutionLogs, Boolean purgeTriggerLogs) {
+    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -363,10 +358,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                     delete = delete.and(levelsCondition(logLevels));
                 }
 
-                if (Boolean.TRUE.equals(purgeExecutionLogs) && !Boolean.TRUE.equals(purgeTriggerLogs)) {
-                    delete = delete.and(field("trigger_id").isNull());
-                } else if (Boolean.TRUE.equals(purgeTriggerLogs) && !Boolean.TRUE.equals(purgeExecutionLogs)) {
-                    delete = delete.and(field("trigger_id").isNotNull());
+                if (purgeExecutionLogs && !purgeNonExecutionLogs) {
+                    delete = delete.and(field("execution_id").isNotNull());
+                } else if (purgeNonExecutionLogs && !purgeExecutionLogs) {
+                    delete = delete.and(field("execution_id").isNull());
                 }
 
                 return delete.execute();

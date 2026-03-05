@@ -107,17 +107,17 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
 
     @Schema(
         title = "Whether to purge execution logs",
-        description = "Execution logs are logs where the trigger ID is null. Default is true."
+        description = "If set to `true`, logs attached to an execution will be purged. Default is `true`."
     )
     @Builder.Default
     private Property<Boolean> purgeExecutionLogs = Property.ofValue(true);
 
     @Schema(
-        title = "Whether to purge trigger logs",
-        description = "Trigger logs are logs where the trigger ID is not null. Default is true."
+        title = "Whether to purge non-execution logs",
+        description = "If set to `true`, logs not attached to an execution (e.g. trigger logs) will be purged. Default is `true`."
     )
     @Builder.Default
-    private Property<Boolean> purgeTriggerLogs = Property.ofValue(true);
+    private Property<Boolean> purgeNonExecutionLogs = Property.ofValue(true);
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -134,7 +134,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
         var logLevelsRendered = runContext.render(this.logLevels).asList(Level.class);
         var renderedDate = runContext.render(startDate).as(String.class).orElse(null);
         boolean execLogs = runContext.render(purgeExecutionLogs).as(Boolean.class).orElse(true);
-        boolean trigLogs = runContext.render(purgeTriggerLogs).as(Boolean.class).orElse(true);
+        boolean nonExecLogs = runContext.render(purgeNonExecutionLogs).as(Boolean.class).orElse(true);
 
         int[] deleted = logService.purge(
             flowInfo.tenantId(),
@@ -145,13 +145,13 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
             renderedDate != null ? ZonedDateTime.parse(renderedDate) : null,
             ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
             execLogs,
-            trigLogs
+            nonExecLogs
         );
 
         return Output.builder()
             .count(deleted[0] + deleted[1])
             .executionLogsCount(deleted[0])
-            .triggerLogsCount(deleted[1])
+            .nonExecutionLogsCount(deleted[1])
             .build();
     }
 
@@ -170,8 +170,8 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
         private int executionLogsCount;
 
         @Schema(
-            title = "The count of deleted trigger logs"
+            title = "The count of deleted non-execution logs"
         )
-        private int triggerLogsCount;
+        private int nonExecutionLogsCount;
     }
 }

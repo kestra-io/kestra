@@ -55,25 +55,25 @@ class PurgeLogsTest {
     @Test
     @LoadFlows("flows/valids/purge_logs_execution_only.yaml")
     void run_purge_execution_logs_only() throws Exception {
-        // create an execution log (no triggerId)
+        // create an execution log (with executionId)
         logRepository.save(LogEntry.builder()
             .namespace("namespace")
             .flowId("flowId")
+            .executionId("exec-123")
             .tenantId(MAIN_TENANT)
             .timestamp(Instant.now())
             .level(Level.INFO)
             .message("Execution log")
             .build());
 
-        // create a trigger log (with triggerId)
+        // create a non-execution log (without executionId)
         logRepository.save(LogEntry.builder()
             .namespace("namespace")
             .flowId("flowId")
-            .triggerId("myTrigger")
             .tenantId(MAIN_TENANT)
             .timestamp(Instant.now())
             .level(Level.INFO)
-            .message("Trigger log")
+            .message("Non-execution log")
             .build());
 
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_execution_only");
@@ -81,31 +81,31 @@ class PurgeLogsTest {
         assertTrue(execution.getState().isSuccess());
         var outputs = execution.getTaskRunList().getFirst().getOutputs();
         assertThat((int) outputs.get("executionLogsCount")).isPositive();
-        assertThat((int) outputs.get("triggerLogsCount")).isZero();
+        assertThat((int) outputs.get("nonExecutionLogsCount")).isZero();
     }
 
     @Test
     @LoadFlows("flows/valids/purge_logs_trigger_only.yaml")
-    void run_purge_trigger_logs_only() throws Exception {
-        // create an execution log (no triggerId)
+    void run_purge_non_execution_logs_only() throws Exception {
+        // create an execution log (with executionId)
         logRepository.save(LogEntry.builder()
             .namespace("namespace")
             .flowId("flowId")
+            .executionId("exec-456")
             .tenantId(MAIN_TENANT)
             .timestamp(Instant.now())
             .level(Level.INFO)
             .message("Execution log")
             .build());
 
-        // create a trigger log (with triggerId)
+        // create a non-execution log (without executionId)
         logRepository.save(LogEntry.builder()
             .namespace("namespace")
             .flowId("flowId")
-            .triggerId("myTrigger")
             .tenantId(MAIN_TENANT)
             .timestamp(Instant.now())
             .level(Level.INFO)
-            .message("Trigger log")
+            .message("Non-execution log")
             .build());
 
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_trigger_only");
@@ -113,7 +113,7 @@ class PurgeLogsTest {
         assertTrue(execution.getState().isSuccess());
         var outputs = execution.getTaskRunList().getFirst().getOutputs();
         assertThat((int) outputs.get("executionLogsCount")).isZero();
-        assertThat((int) outputs.get("triggerLogsCount")).isPositive();
+        assertThat((int) outputs.get("nonExecutionLogsCount")).isPositive();
     }
 
     @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)

@@ -1,14 +1,6 @@
 package io.kestra.core.server;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +19,7 @@ public record Metric(
     String description,
     String baseUnit,
     List<Tag> tags,
-    Object value
+    Number value
 ) {
 
     /**
@@ -39,7 +31,7 @@ public record Metric(
     public static Metric of(final Meter meter) {
         Objects.requireNonNull(meter, "Cannot create Metric from null");
 
-        final AtomicReference<Object> value = new AtomicReference<>();
+        final AtomicReference<Number> value = new AtomicReference<>();
         meter.use(
             gauge -> value.set(gauge.value()),
             counter -> value.set(counter.count()),
@@ -62,7 +54,7 @@ public record Metric(
         );
     }
 
-    record Tag(String key, String value) {
+    public record Tag(String key, String value) {
 
         public static Tag of(final io.micrometer.core.instrument.Tag tag) {
             return new Tag(tag.getKey(), tag.getValue());

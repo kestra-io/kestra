@@ -50,7 +50,7 @@
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils";
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
     import isEqual from "lodash/isEqual";
-    import {useMiscStore} from "../../../override/stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     defineOptions({
         name: "TaskEditor",

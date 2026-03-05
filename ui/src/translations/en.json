@@ -1439,7 +1439,11 @@
     },
     "instance": "Instance",
     "something_went_wrong": {
-      "loading_execution": "Something went wrong while loading the execution"
+      "loading_execution": "Something went wrong while loading the execution",
+     "connection_lost": {
+        "title": "Connection interrupted",
+        "message": "We couldn't reach your Kestra instance. Make sure it's running, then refresh the page."
+      }
     },
     "debug": "Debug",
     "default": "Default",
@@ -1830,6 +1834,14 @@
             "label": "Namespace",
             "description": "Filter by namespace"
         },
+        "username": {
+          "label": "Username",
+          "description": "Filter by username"
+        },
+        "group": {
+          "label": "Group",
+          "description": "Filter by group"
+        },
         "kill_switch_type": {
             "label": "Type",
             "description": "Filter by kill switch type"
@@ -2045,6 +2057,7 @@
     "delete trigger error": "Error deleting trigger {id}",
     "revision deleted": "Revision {revision} has been deleted successfully",
     "delete revision confirm": "Are you sure you want to delete revision {revision}?",
-    "delete revision error": "Error deleting revision {revision} with error {error}"
+    "delete revision error": "Error deleting revision {revision} with error {error}",
+    "no_history": "No history available"
   }
 }

@@ -308,6 +308,17 @@ public abstract class AbstractJdbcRepository {
             return getEnabledCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.STATUS) {
+            return statusCondition(value, operation);
+        }
+        if (field == QueryFilter.Field.GROUP) {
+            return groupCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.NAME) {
+            return nameCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
             return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
@@ -421,6 +432,17 @@ public abstract class AbstractJdbcRepository {
             case NOT_IN, NOT_EQUALS -> DSL.not(statesFilter(stateList));
             default -> throw new InvalidQueryFiltersException("Unsupported operation for State.Type: " + operation);
         };
+    }
+
+    protected Condition statusCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
+    }
+    protected Condition groupCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition nameCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.NAME, value, operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

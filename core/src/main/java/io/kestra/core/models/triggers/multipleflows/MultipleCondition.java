@@ -23,12 +23,12 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
 
     /**
      * This conditions will only validate previously calculated value on
-     * io.kestra.executor.FlowTriggerService#computeExecutionsFromFlowTriggers(Execution, List, Optional) and {@link MultipleConditionStorageInterface#save(List)} by the executor.
+     * io.kestra.executor.FlowTriggerService#computeExecutionsFromFlowTriggers(Execution, List, Optional) and {@link MultipleConditionStateStore#save(List)} by the executor.
      * The real validation is done here.
      */
     @Override
     default boolean test(ConditionContext conditionContext) throws InternalException {
-        MultipleConditionStorageInterface multipleConditionStorage = conditionContext.getMultipleConditionStorage();
+        MultipleConditionStateStore multipleConditionStorage = conditionContext.getMultipleConditionStorage();
         Objects.requireNonNull(multipleConditionStorage);
 
         Optional<MultipleConditionWindow> triggerExecutionWindow = multipleConditionStorage.get(conditionContext.getFlow(), this.getId());

@@ -1,7 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.Condition;
@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcRepository implements MultipleConditionStorageInterface {
+public abstract class AbstractJdbcMultipleStateStore extends AbstractJdbcRepository implements MultipleConditionStateStore {
     protected io.kestra.jdbc.AbstractJdbcRepository<MultipleConditionWindow> jdbcRepository;
 
-    public AbstractJdbcMultipleConditionStorage(io.kestra.jdbc.AbstractJdbcRepository<MultipleConditionWindow> jdbcRepository) {
+    public AbstractJdbcMultipleStateStore(io.kestra.jdbc.AbstractJdbcRepository<MultipleConditionWindow> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 

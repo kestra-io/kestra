@@ -6,7 +6,7 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
@@ -53,7 +53,7 @@ public class FlowTriggerService {
     /**
      * This method computes executions to trigger from flow triggers from a given execution.
      * It only computes those depending on standard (non-multiple / non-preconditions) conditions, so it must be used
-     * in conjunction with {@link #computeExecutionsFromFlowTriggerPreconditions(Execution, Flow, MultipleConditionStorageInterface)}.
+     * in conjunction with {@link #computeExecutionsFromFlowTriggerPreconditions(Execution, Flow, MultipleConditionStateStore)}.
      */
     public List<Execution> computeExecutionsFromFlowTriggerConditions(Execution execution, Flow flow) {
         List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
@@ -85,7 +85,7 @@ public class FlowTriggerService {
      * It only computes those depending on multiple conditions and preconditions, so it must be used
      * in conjunction with {@link #computeExecutionsFromFlowTriggerConditions(Execution, Flow)}.
      */
-    public List<Execution> computeExecutionsFromFlowTriggerPreconditions(Execution execution, Flow flow, MultipleConditionStorageInterface multipleConditionStorage) {
+    public List<Execution> computeExecutionsFromFlowTriggerPreconditions(Execution execution, Flow flow, MultipleConditionStateStore multipleConditionStorage) {
         List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
             .stream()
             // we must filter on multiple conditions or preconditions to avoid evaluating two times triggers that only have standard conditions

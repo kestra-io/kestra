@@ -3,7 +3,7 @@ package io.kestra.core.models.conditions;
 import io.kestra.core.models.flows.FlowInterface;
 import lombok.*;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.runners.RunContext;
 
 import io.micronaut.core.annotation.Nullable;
@@ -31,5 +31,5 @@ public class ConditionContext {
     private final Map<String, Object> variables = new HashMap<>();
 
     @Nullable
-    private MultipleConditionStorageInterface multipleConditionStorage;
+    private MultipleConditionStateStore multipleConditionStorage;
 }

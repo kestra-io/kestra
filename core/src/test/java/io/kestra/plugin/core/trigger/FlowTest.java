@@ -5,7 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -26,7 +26,7 @@ class FlowTest {
     RunContextFactory runContextFactory;
 
     @Inject
-    Optional<MultipleConditionStorageInterface> multipleConditionStorage;
+    Optional<MultipleConditionStateStore> multipleConditionStorage;
 
     @Test
     void success() {

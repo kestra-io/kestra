@@ -7,7 +7,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Optional;
 
 import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESPACE;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;

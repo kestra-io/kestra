@@ -1,7 +1,6 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.TimeWindow;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -15,7 +14,7 @@ import java.util.Optional;
 
 import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
 
-public interface MultipleConditionStorageInterface {
+public interface MultipleConditionStateStore {
     Optional<MultipleConditionWindow> get(FlowId flow, String conditionId);
 
     List<MultipleConditionWindow> expired(String tenantId);

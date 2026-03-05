@@ -401,6 +401,12 @@ public record QueryFilter(
                 return List.of(Field.QUERY, Field.NAME);
             }
         },
+        BINDING {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE);
+            }
+        },
         SECURITY_INTEGRATION {
             @Override
             public List<Field> supportedField() {

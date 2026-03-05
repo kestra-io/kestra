@@ -9,7 +9,6 @@
                 type: model?.type,
             } : {id: fieldTitle}"
             typeFieldSchema="type"
-            :title="selectedValueTitle"
             @remove-element="removeElement()"
         />
     </div>
@@ -69,18 +68,6 @@
             }
         }
         return "Set a task"
-    })
-
-    const selectedValueTitle = computed(() => {
-        if(model.value?.type){
-            const fullPath = `#/definitions/${model.value.type}`
-            const plugin = getValueAtJsonPath(fullSchema.value,  fullPath);
-        
-            if(plugin?.title){
-                return plugin.title;
-            }
-        }
-        return undefined
     })
 
     const parentPathComplete = computed(() => {

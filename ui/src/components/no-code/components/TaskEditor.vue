@@ -26,6 +26,7 @@
             @update:model-value="onTaskInput"
             :schema
             :properties
+            filterType
         />
     </div>
 </template>

@@ -389,6 +389,12 @@ public record QueryFilter(
                 return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT);
             }
         },
+        GROUP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
+            }
+        },
         SECRET_METADATA {
             @Override
             public List<Field> supportedField() {

@@ -331,6 +331,27 @@ public class QueryFilterTest {
                 Set.of(
                     Op.EQUALS
                 )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.BINDING,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+
+            ),
+
+            buildQueryFiltersForOperations(Field.TYPE, Resource.BINDING,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
             )
         ).flatMap(s -> s);
     }
@@ -750,6 +771,26 @@ public class QueryFilterTest {
                     Op.PREFIX,
                     Op.NOT_EQUALS,
                     Op.IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.BINDING,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO
+                )
+
+            ),
+
+            buildQueryFiltersForOperations(Field.TYPE, Resource.BINDING,
+                Set.of(
+                    Op.PREFIX,
+                    Op.LESS_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO
                 )
             )
         ).flatMap(s -> s);

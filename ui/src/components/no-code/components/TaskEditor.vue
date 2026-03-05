@@ -123,8 +123,6 @@
         $ref: "",
     }));
 
-
-
     const properties = computed(() => {
         if(!resolvedProperties.value){
             return undefined;

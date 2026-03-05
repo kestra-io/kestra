@@ -3,33 +3,42 @@ import type {KestraSdkPlugin} from "./types";
 
 
 export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
-  const useRouteSymbol = plugin.symbol(
-    "useRoute", 
-    {
-        external: "vue-router"
-    });   
-  
   const addTenantToParametersSymbol = plugin.symbol("addTenantToParameters",{
         getFilePath: () => "sdk/ks-shared",
   });
 
-  const functionNode = $.func().generic("TParams")
+  const setGlobalTenantSymbol = plugin.symbol("setSelectedTenant",{
+    getFilePath: () => "sdk/ks-shared",
+  });
+
+  const globalTenantSymbol = plugin.symbol("globalTenant",{
+    getFilePath: () => "sdk/ks-shared",
+  });
+
+  const tenantNode = $.let(globalTenantSymbol).assign($.literal("main"))
+
+  plugin.node(tenantNode);
+
+  const setTenantFunctionNode = $.func().params(
+    $.param("newTenant").type($.type("string"))
+  ).do(
+    $(globalTenantSymbol).assign($.id("newTenant"))
+  );
+
+  plugin.node($.const(setGlobalTenantSymbol).export().assign(setTenantFunctionNode));
+
+  const addTenantToParametersNode = $.func().generic("TParams")
     .params(
       $.param("parameters").type($.type("TParams"))
     ).returns($.type.and($.type("TParams"), $.type.object().prop("tenant", (p) => p.type("string"))))
     .do(
-      // const tenant = useRouter().params.tenant
-      $.const("tenant").assign(
-        $(useRouteSymbol).call().attr("params").attr("tenant").optional().as($.type("string"))
-      ),
       $.return($.object()
-        .prop("tenant", "tenant")
+        .prop("tenant", $(globalTenantSymbol))
         .spread($.id("parameters"))
       )
     )
 
-  const exportedFunctionNode = $.const(addTenantToParametersSymbol).export().assign(functionNode);
-  plugin.node(exportedFunctionNode);
+  plugin.node($.const(addTenantToParametersSymbol).export().assign(addTenantToParametersNode));
 
   const operationsDict: Record<string, {symbol:ReturnType<typeof plugin.symbol>, methodName: string}[]> = {}
   

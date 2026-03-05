@@ -703,6 +703,10 @@
         "label": "ID del flow"
       },
       "footer_apply": "Applica",
+      "group": {
+        "description": "Filtra per gruppo",
+        "label": "Gruppo"
+      },
       "hierarchy": {
         "all": "Predefinito",
         "child_description": "Mostra solo esecuzioni nidificate/attivate",
@@ -935,6 +939,10 @@
         "label": "Stato del Trigger"
       },
       "update": "Aggiorna",
+      "username": {
+        "description": "Filtra per nome utente",
+        "label": "Nome utente"
+      },
       "value": "Valore",
       "workerId": {
         "description": "Filtra per ID worker",
@@ -1342,6 +1350,7 @@
     "no_data": "Sembra che non ci sia ancora nulla qui… per ora!<br/>Modifica i tuoi filtri o riprova!",
     "no_file_choosen": "Nessun file selezionato",
     "no_flow_outputs": "Nessun output disponibile.",
+    "no_history": "Nessuna cronologia disponibile",
     "no_inputs": "Nessun input disponibile.",
     "no_logs_data": "Nessun dato",
     "no_logs_data_description": "Nessun log trovato per i filtri selezionati. <br> Prova a modificare i filtri, cambiare l'intervallo di tempo o verifica se il flow è stato eseguito di recente.",
@@ -1860,6 +1869,10 @@
     "side-by-side": "affiancato",
     "slack support": "Fai qualsiasi domanda via Slack",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Non siamo riusciti a raggiungere la tua istanza di Kestra. Assicurati che sia in esecuzione, quindi aggiorna la pagina.",
+        "title": "Connessione interrotta"
+      },
       "loading_execution": "Si è verificato un errore durante il caricamento dell'esecuzione"
     },
     "source": "Fonte",

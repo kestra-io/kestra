@@ -48,63 +48,24 @@ dependencies {
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
 
-tasks.register('updateOpenapiVersion') {
-    dependsOn processResources
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+        "-Amicronaut.openapi.expand.version=${project.version}"
+    ]
+}
+tasks.register('generateOpenapiSpec', Copy) {
+    def compileJavaProvider = tasks.named('compileJava')
+    def openapiSpecPath = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
 
-    doLast {
-        def openapiFilePath = "${buildDir}/classes/java/main/META-INF/swagger/kestra.yml"
-        def openapiFile = file(openapiFilePath)
-
-        if (openapiFile.exists()) {
-            def originalText = openapiFile.text
-            def updatedText = originalText.replace('version: 1.0.0', "version: ${project.version}")
-
-            if (updatedText != originalText) {
-                openapiFile.text = updatedText
-                println "Successfully updated 'version' in $openapiFilePath to ${project.version}"
-            } else {
-                println "Warning: Did not find 'version: 1.0.0' to replace in $openapiFilePath. Check OpenAPI generator output."
-            }
-        } else {
-            println "Error: OpenAPI file not found at $openapiFilePath. Skipping version update."
-        }
-    }
-
-
+    from(compileJavaProvider.map(compileTask -> compileTask.outputs.files.filter{File f -> f == file(openapiSpecPath)}.singleFile))
+    into file("${project.getParent().projectDir}")
+    rename { 'openapi.yml' }
 }
 
-tasks.register('generateOpenapiSpec') {
-    dependsOn ':webserver:compileJava'
-    outputs.file("${project.getParent().projectDir}/openapi.yml")
-    doLast {
-        copyGeneratedOpenapiSpecToRoot()
-    }
-}
-
-tasks.named('jar') {
-    dependsOn updateOpenapiVersion
+tasks.named('jar', Jar) {
+    exclude '**/spring-configuration-metadata.json'
 }
 
 tasks.named('compileJava') {
-    outputs.file("${project.getParent().projectDir}/openapi.yml")
-    doLast {
-        copyGeneratedOpenapiSpecToRoot()
-    }
-}
-
-def copyGeneratedOpenapiSpecToRoot() {
-    def sourceFile = file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
-    def targetFile = file("${project.getParent().projectDir}/openapi.yml")
-
-    if (!sourceFile.exists()) {
-        throw new GradleException("OpenAPI file not found at ${sourceFile.absolutePath}")
-    }
-
-    copy {
-        from sourceFile
-        into project.getParent().projectDir
-        rename { 'openapi.yml' }
-    }
-
-    println "Copied OpenAPI spec to ${targetFile}"
+    outputs.file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
 }

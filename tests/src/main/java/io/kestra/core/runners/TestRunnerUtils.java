@@ -364,9 +364,12 @@ public class TestRunnerUtils {
         ), execution);
     }
 
-    public Execution awaitChildExecution(Flow flow, Execution parentExecution, Execution execution, Duration duration)
-        throws QueueException {
+    public Execution emitAndAwaitChildExecution(Flow flow, Execution parentExecution, Execution execution, Duration duration) throws QueueException {
         return this.emitAndAwaitExecution(isTerminatedChildExecution(parentExecution, flow), execution, duration);
+    }
+
+    public Execution awaitChildExecution(Flow flow, Execution parentExecution, Execution execution, Duration duration) {
+        return this.awaitExecution(isTerminatedChildExecution(parentExecution, flow), execution, duration);
     }
 
     private Predicate<Execution> isTerminatedExecution(Execution execution, Flow flow) {

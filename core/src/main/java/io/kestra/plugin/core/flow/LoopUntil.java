@@ -181,8 +181,13 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }
-
-        Instant creationDate = parentTaskRun.getState().getHistories().getFirst().getDate();
+        Instant creationDate = parentTaskRun.getState()
+            .getHistories()
+            .reversed()
+            .stream()
+            .filter(history -> history.getState().isCreated())
+            .findFirst().get()
+            .getDate();
         Optional<Duration> maxDuration = runContext.render(this.getCheckFrequency().getMaxDuration()).as(Duration.class);
         if (maxDuration.isPresent()
             && creationDate != null

@@ -2058,6 +2058,7 @@
     "revision deleted": "Revision {revision} has been deleted successfully",
     "delete revision confirm": "Are you sure you want to delete revision {revision}?",
     "delete revision error": "Error deleting revision {revision} with error {error}",
-    "no_history": "No history available"
+    "no_history": "No history available",
+    "export_as": "Export as .{format}"
   }
 }

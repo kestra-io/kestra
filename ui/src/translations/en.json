@@ -1377,7 +1377,8 @@
           "listeners": "Listeners",
           "taskDefaults": "Task Defaults",
           "workerGroup": "Worker Group",
-          "checks": "Checks"
+          "checks": "Checks",
+          "updated": "Updated"
         }
       },
       "select": {

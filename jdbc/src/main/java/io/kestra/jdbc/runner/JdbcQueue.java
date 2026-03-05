@@ -23,6 +23,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataException;
@@ -117,7 +118,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
+                throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
             }
         }
 
@@ -314,18 +315,25 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         Timer timer = this.metricRegistry
             .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
+        StackTraceElement[] parentStackTrace = Thread.currentThread().getStackTrace();
         return this.poll(() -> timer.record(() -> {
-            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
-                DSLContext ctx = DSL.using(configuration);
+            Result<Record> fetch;
+            try {
+                fetch = dslContextWrapper.transactionResult(configuration -> {
+                    DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
+                    Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
 
-                if (!result.isEmpty()) {
-                    maxOffset.set(result.getLast().get("offset", Integer.class));
-                }
+                    if (!result.isEmpty()) {
+                        maxOffset.set(result.getLast().get("offset", Integer.class));
+                    }
 
-                return result;
-            });
+                    return result;
+                });
+            } catch (Exception e) {
+                log.error("Error while receiving messages from JDBC queue. Thread stacktrace: {}", parentStackTrace, e);
+                throw e;
+            }
 
             this.send(fetch, consumer);
 
@@ -437,13 +445,14 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @SuppressWarnings("BusyWait")
     protected Runnable poll(Supplier<Integer> runnable) {
+        AtomicBoolean queriedToStop = new AtomicBoolean(false);
         AtomicBoolean running = new AtomicBoolean(true);
 
         poolExecutor.execute(() -> {
             List<Configuration.Step> steps = configuration.computeSteps();
             Duration sleep = configuration.minPollInterval;
             ZonedDateTime lastPoll = ZonedDateTime.now();
-            while (running.get() && !this.isClosed.get()) {
+            while (!queriedToStop.get() && !this.isClosed.get()) {
                 if (!this.isPaused.get()) {
                     try {
                         Integer count = runnable.get();
@@ -482,9 +491,21 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                     throw new RuntimeException(e);
                 }
             }
+
+            running.set(false);
         });
 
-        return () -> running.set(false);
+        return () -> {
+            queriedToStop.set(true);
+            try {
+                Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .pollInterval(Duration.ofMillis(10))
+                    .until(() -> !running.get());
+            } catch (Exception e) {
+                log.warn("Error while stopping polling", e);
+            }
+        };
     }
 
     protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {

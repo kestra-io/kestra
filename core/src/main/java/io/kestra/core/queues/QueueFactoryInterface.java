@@ -9,7 +9,7 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.*;
 
-public interface QueueFactoryInterface {
+public interface QueueFactoryInterface<DEPENDENCY> {
     String EXECUTION_NAMED = "executionQueue";
     String EXECUTOR_NAMED = "executorQueue";
     String WORKERJOB_NAMED = "workerJobQueue";
@@ -28,35 +28,35 @@ public interface QueueFactoryInterface {
     String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
     String MULTIPLE_CONDITION_EVENT_NAMED = "multipleConditionEventQueue";
 
-    QueueInterface<Execution> execution();
+    QueueInterface<Execution> execution(DEPENDENCY ignored);
 
-    QueueInterface<Executor> executor();
+    QueueInterface<Executor> executor(DEPENDENCY ignored);
 
-    WorkerJobQueueInterface workerJob();
+    WorkerJobQueueInterface workerJob(DEPENDENCY ignored);
 
-    QueueInterface<WorkerTaskResult> workerTaskResult();
+    QueueInterface<WorkerTaskResult> workerTaskResult(DEPENDENCY ignored);
 
-    QueueInterface<WorkerTriggerResult> workerTriggerResult();
+    QueueInterface<WorkerTriggerResult> workerTriggerResult(DEPENDENCY ignored);
 
-    QueueInterface<LogEntry> logEntry();
+    QueueInterface<LogEntry> logEntry(DEPENDENCY ignored);
 
-    QueueInterface<MetricEntry> metricEntry();
+    QueueInterface<MetricEntry> metricEntry(DEPENDENCY ignored);
 
-    QueueInterface<FlowInterface> flow();
+    QueueInterface<FlowInterface> flow(DEPENDENCY ignored);
 
-    QueueInterface<ExecutionKilled> kill();
+    QueueInterface<ExecutionKilled> kill(DEPENDENCY ignored);
 
-    QueueInterface<Template> template();
+    QueueInterface<Template> template(DEPENDENCY ignored);
 
-    QueueInterface<WorkerInstance> workerInstance();
+    QueueInterface<WorkerInstance> workerInstance(DEPENDENCY ignored);
 
-    QueueInterface<WorkerJobRunning> workerJobRunning();
+    QueueInterface<WorkerJobRunning> workerJobRunning(DEPENDENCY ignored);
 
-    QueueInterface<Trigger> trigger();
+    QueueInterface<Trigger> trigger(DEPENDENCY ignored);
 
-    QueueInterface<SubflowExecutionResult> subflowExecutionResult();
+    QueueInterface<SubflowExecutionResult> subflowExecutionResult(DEPENDENCY ignored);
 
-    QueueInterface<SubflowExecutionEnd> subflowExecutionEnd();
+    QueueInterface<SubflowExecutionEnd> subflowExecutionEnd(DEPENDENCY ignored);
 
-    QueueInterface<MultipleConditionEvent> multipleConditionEvent();
+    QueueInterface<MultipleConditionEvent> multipleConditionEvent(DEPENDENCY ignored);
 }

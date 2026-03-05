@@ -57,6 +57,7 @@ public class KestraTestExtension extends MicronautJunit5Extension {
             if (!runner.isRunning()){
                 runner.setSchedulerEnabled(kestraTest.startScheduler());
                 runner.setWorkerEnabled(kestraTest.startWorker());
+                runner.setWorkerControllerEnabled(kestraTest.startWorkerController());
                 runner.run();
             }
         }

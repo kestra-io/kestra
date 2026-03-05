@@ -28,6 +28,8 @@ public @interface KestraTest {
 
     boolean startWorker() default true;
 
+    boolean startWorkerController() default true;
+
     Class<?> application() default void.class;
 
     String[] environments() default {};

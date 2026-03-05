@@ -27,6 +27,7 @@ public class TestRunner implements Runnable, AutoCloseable {
     @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 4;
     @Setter private boolean schedulerEnabled = true;
     @Setter private boolean workerEnabled = true;
+    @Setter private boolean workerControllerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -52,11 +53,13 @@ public class TestRunner implements Runnable, AutoCloseable {
         servers.add(executor);
         poolExecutor.execute(executor);
 
-        if (workerEnabled) {
+        if (workerControllerEnabled) {
             Controller controller = applicationContext.getBean(Controller.class);
             poolExecutor.execute(controller::start);
             servers.add(controller);
-            
+        }
+
+        if (workerEnabled) {
             Worker worker = applicationContext.getBean(Worker.class);
             poolExecutor.execute(() -> worker.start(workerThread, null));
             servers.add(worker);

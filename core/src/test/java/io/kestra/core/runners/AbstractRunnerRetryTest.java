@@ -1,4 +1,4 @@
-package io.kestra.jdbc.runner;
+package io.kestra.core.runners;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
@@ -9,12 +9,11 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.plugin.core.flow.RetryCaseTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.util.concurrent.TimeoutException;
 
 @KestraTest(startRunner = true)
-public abstract class JdbcRunnerRetryTest {
+public abstract class AbstractRunnerRetryTest {
 
     @Inject
     private RetryCaseTest retryCaseTest;

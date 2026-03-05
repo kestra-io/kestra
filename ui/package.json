@@ -82,7 +82,7 @@
         "@codecov/vite-plugin": "^1.9.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@eslint/js": "^9.39.3",
-        "@hey-api/openapi-ts": "^0.93.1",
+        "@hey-api/openapi-ts": "^0.94.0",
         "@playwright/test": "^1.58.2",
         "@rushstack/eslint-patch": "^1.16.1",
         "@shikijs/markdown-it": "^4.0.1",

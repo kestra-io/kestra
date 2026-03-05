@@ -129,6 +129,16 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).hasSize(1);
         assertThat(list.getFirst()).isEqualTo(1);
+
+        // consume the remaining items from the queue
+        CountDownLatch remaining = new CountDownLatch(3);
+        subscriber = dispatchQueue
+            .subscriber()
+            .subscribe(e -> {
+                remaining.countDown();
+            });
+        assertThat(remaining.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)).isEqualTo(true);
+        subscriber.close();
     }
 
     @Test

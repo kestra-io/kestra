@@ -640,9 +640,10 @@ public class JdbcExecutor implements ExecutorInterface {
                         }
                         executor = executorService.process(executor);
 
-                        if (!executor.getNexts().isEmpty() && deduplicateNexts(execution, executorState, executor.getNexts())) {
+                        List<TaskRun> nexts = deduplicateNexts(execution, executorState, executor.getNexts());
+                        if (!nexts.isEmpty()) {
                             executor.withExecution(
-                                executorService.onNexts(executor.getExecution(), executor.getNexts()),
+                                executorService.onNexts(executor.getExecution(), nexts),
                                 "onNexts"
                             );
                         }
@@ -1460,10 +1461,10 @@ public class JdbcExecutor implements ExecutorInterface {
         });
     }
 
-    private boolean deduplicateNexts(Execution execution, ExecutorState executorState, List<TaskRun> taskRuns) {
+    private List<TaskRun> deduplicateNexts(Execution execution, ExecutorState executorState, List<TaskRun> taskRuns) {
         return taskRuns
             .stream()
-            .anyMatch(taskRun -> {
+            .filter(taskRun -> {
                 // As retry is now handled outside the worker,
                 // we now add the attempt size to the deduplication key
                 String deduplicationKey = taskRun.getParentTaskRunId() + "-" +
@@ -1479,7 +1480,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     executorState.getChildDeduplication().put(deduplicationKey, taskRun.getId());
                     return true;
                 }
-            });
+            }).toList();
     }
 
     private boolean deduplicateWorkerTask(Execution execution, ExecutorState executorState, TaskRun taskRun) {

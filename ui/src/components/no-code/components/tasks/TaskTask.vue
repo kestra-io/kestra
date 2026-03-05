@@ -9,6 +9,7 @@
                 type: model?.type,
             } : {id: fieldTitle}"
             typeFieldSchema="type"
+            :title="selectedValueTitle"
             @remove-element="removeElement()"
         />
     </div>
@@ -20,13 +21,12 @@
         PARENT_PATH_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
         CREATING_TASK_INJECTION_KEY,
-        BLOCK_SCHEMA_PATH_INJECTION_KEY
+        BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        FULL_SCHEMA_INJECTION_KEY
     } from "../../injectionKeys";
     import Element from "./taskList/Element.vue";
     import {getValueAtJsonPath} from "../../../../utils/utils";
-    import {usePluginsStore} from "../../../../stores/plugins";
 
-    const pluginsStore = usePluginsStore();
 
     const model = defineModel({
         type: Object,
@@ -40,16 +40,21 @@
         },
     });
 
+    defineOptions({
+        inheritAttrs: false
+    })
+
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}))
 
     const blockSchemaPath = computed(() => {
         return [blockSchemaPathInjected.value, "properties", props.root.split(".").pop()].join("/")
     })
 
-    const localSchema = computed(() => getValueAtJsonPath(pluginsStore.schemaType?.flow,  blockSchemaPath.value))
+    const localSchema = computed(() => getValueAtJsonPath(fullSchema.value,  blockSchemaPath.value))
 
     const fieldTitle = computed(() => {
         const schema = localSchema.value;
@@ -64,6 +69,18 @@
             }
         }
         return "Set a task"
+    })
+
+    const selectedValueTitle = computed(() => {
+        if(model.value?.type){
+            const fullPath = `#/definitions/${model.value.type}`
+            const plugin = getValueAtJsonPath(fullSchema.value,  fullPath);
+        
+            if(plugin?.title){
+                return plugin.title;
+            }
+        }
+        return undefined
     })
 
     const parentPathComplete = computed(() => {

@@ -382,7 +382,7 @@ public abstract class AbstractJdbcRepository {
         return applyDateCondition(dateTime, operation, dateColumn);
     }
 
-    private static Object primitiveOrToString(Object o) {
+    protected static Object primitiveOrToString(Object o) {
         if (o == null) return null;
 
         if (o instanceof Boolean

@@ -1295,6 +1295,7 @@
           "retry": "Ponów próbę",
           "sla": "SLA",
           "taskDefaults": "Domyślne ustawienia Task",
+          "updated": "Zaktualizowano",
           "variables": "Zmienne",
           "workerGroup": "Grupa Worker"
         },

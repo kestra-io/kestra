@@ -1138,7 +1138,7 @@
       "show_yaml": "Show YAML"
     },
     "secret": {
-      "add": "New secret",
+      "add": "Create",
       "update": "Update secret '{name}'",
       "isReadOnly": "Secret is read-only",
       "names": "Secrets",
@@ -1148,7 +1148,7 @@
     "kv": {
       "name": "KV Store",
       "type": "Type",
-      "add": "New Key-Value",
+      "add": "Create",
       "update": "Update value for key '{key}'",
       "duplicate": "This key already exists",
       "delete multiple": {

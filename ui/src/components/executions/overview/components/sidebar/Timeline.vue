@@ -9,10 +9,12 @@
                 <el-timeline-item
                     v-for="(activity, aIdx) in props.histories"
                     :key="aIdx"
-                    :timestamp="formatDate(activity.date)"
                     :color="getSchemeValue(activity.state)"
                 >
-                    {{ activity.state }}
+                    <div class="timeline-row">
+                        <span class="timestamp">{{ formatDate(activity.date) }}</span>
+                        <span class="state">{{ activity.state }}</span>
+                    </div>
                 </el-timeline-item>
             </el-timeline>
         </el-collapse-item>
@@ -67,7 +69,7 @@
 }
 
 .el-timeline {
-    padding-left: 50%;
+    padding-left: $spacer;
     margin-top: $spacer;
 
     & :deep(.el-timeline-item) {
@@ -83,22 +85,29 @@
         color: var(--ks-content-primary);
     }
 
-    & :deep(.el-timeline-item__timestamp) {
-        position: absolute;
-        top: 0;
-        left: -210px;
-        width: 190px;
-        margin-top: 0;
-        text-align: right;
-        color: var(--ks-content-tertiary);
-    }
-
     & :deep(.el-timeline-item__tail) {
         height: inherit;
         top: 40%;
         bottom: 10%;
         left: 4.5px;
         border-left-width: 1px;
+    }
+}
+
+.timeline-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc($spacer / 2);
+    align-items: baseline;
+
+    .timestamp {
+        color: var(--ks-content-tertiary);
+        white-space: nowrap;
+    }
+
+    .state {
+        color: var(--ks-content-primary);
+        white-space: nowrap;
     }
 }
 </style>

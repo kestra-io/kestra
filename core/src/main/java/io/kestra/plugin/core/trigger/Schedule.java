@@ -386,21 +386,13 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         // control conditions
         if (this.getConditions() != null) {
             try {
-                this.validateScheduleCondition(conditionContext);
-            } catch(InternalException ie) {
-                boolean conditionResults = this.validateScheduleCondition(conditionContext);
-                if (!conditionResults) {
-                    return Optional.empty();
-                }
+                scheduleDates = this.trueOutputWithCondition(executionTime, conditionContext, scheduleDates);
             } catch (InternalException ie) {
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
                 return Optional.of(SchedulableExecutionFactory.createFailedExecution(this, conditionContext, triggerContext));
             }
-
-            // recalculate true output for previous and next based on conditions
-            scheduleDates = this.trueOutputWithCondition(executionTime, conditionContext, scheduleDates);
         }
 
         Map<String, Object> variables;
@@ -567,26 +559,23 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
+        final ConditionContext finalConditionContext;
         if (!conditionContext.getVariables().containsKey("trigger") && conditionContext.getVariables().containsKey("schedule")) {
-            conditionContext = conditionContext.withVariables(
+            finalConditionContext = conditionContext.withVariables(
                 ImmutableMap.<String, Object>builder()
                     .putAll(conditionContext.getVariables())
                     .put("trigger", conditionContext.getVariables().get("schedule"))
                     .build()
             );
+        } else {
+            finalConditionContext = conditionContext;
         }
 
-        if (conditions != null && !conditions.isEmpty()) {
-            ConditionService conditionService = ((DefaultRunContext) conditionContext.getRunContext()).getApplicationContext().getBean(ConditionService.class);
-            return conditionService.isValid(
-                conditions.stream().filter(c -> c instanceof ScheduleCondition).map(c -> (ScheduleCondition) c).toList(),
-                conditionContext
-            );
         if (conditions != null) {
             return conditions.stream()
                 .filter(c -> c instanceof ScheduleCondition)
                 .map(c -> (ScheduleCondition) c)
-                .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
+                .allMatch(throwPredicate(condition -> condition.test(finalConditionContext)));
         }
 
         return true;

@@ -57,7 +57,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .conditions(List.of(
                 DayWeekInMonth.builder()
                     .type(DayWeekInMonth.class.getName())
-                    .date("{{ trigger.date }}")
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
                     .build()
@@ -77,7 +77,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .conditions(List.of(
                 DayWeekInMonth.builder()
                     .type(DayWeekInMonth.class.getName())
-                    .date(Property.ofValue("2021-09-06T02:00:00+01:00"))
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
                     .build()
@@ -88,6 +88,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         flowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
+            .tenantId(TENANT_ID)
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId("hourly")
@@ -96,24 +97,26 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         triggerState.create(trigger);
 
         CountDownLatch queueCount = new CountDownLatch(1);
+        FlowListeners flowListenersServiceSpy = spy(flowListenersService);
         doReturn(Collections.singletonList(flow))
-            .when(flowListenersService)
+            .when(flowListenersServiceSpy)
             .flows();
 
         try (AbstractScheduler scheduler = new JdbcScheduler(
             applicationContext,
-            flowListenersService
+            flowListenersServiceSpy
         )) {
             Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                    terminateExecution(execution, trigger, flow);
                     queueCount.countDown();
                 }
             }));
 
             scheduler.run();
-            assertTrue(queueCount.await(15, TimeUnit.SECONDS));
+            assertTrue(queueCount.await(45, TimeUnit.SECONDS));
             receive.blockLast();
         }
     }

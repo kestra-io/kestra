@@ -82,7 +82,7 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         Map<String, Object> vars = conditionContext.getVariables();
         RunContext runContext = conditionContext.getRunContext();
 
-        String render = runContext.render(this.date).as(String.class).orElseThrow();
+        String render = runContext.render(this.date).as(String.class, vars).orElseThrow();
         LocalDate currentDate = DateUtils.parseLocalDate(render);
         LocalDate computed;
 

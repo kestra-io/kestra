@@ -364,7 +364,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             (dslContext, eithers) -> {
                 eithers.forEach(consumer);
             },
-            false,
+            true,
             forUpdate
         );
     }
@@ -384,7 +384,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             (dslContext, eithers) -> {
                 consumer.accept(eithers);
             },
-            false,
+            true,
             forUpdate
         );
     }

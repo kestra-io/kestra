@@ -43,6 +43,7 @@ const AppTableBlockRender = () => ({
                     schema={schema}
                     modelValue={model.value}
                     onUpdate:modelValue={(value) => model.value = value}
+                    filterType
                 />
             </div>
             <div style={{width: "500px"}}>

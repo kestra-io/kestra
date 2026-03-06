@@ -1296,6 +1296,7 @@
           "retry": "Repetir",
           "sla": "SLA",
           "taskDefaults": "Padrões de Task",
+          "updated": "Atualizado",
           "variables": "Variáveis",
           "workerGroup": "Grupo de Worker"
         },

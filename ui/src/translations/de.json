@@ -1296,6 +1296,7 @@
           "retry": "Wiederholen",
           "sla": "SLA",
           "taskDefaults": "Standardwerte für Tasks",
+          "updated": "Aktualisiert",
           "variables": "Variablen",
           "workerGroup": "Worker-Gruppe"
         },

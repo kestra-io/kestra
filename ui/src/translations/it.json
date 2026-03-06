@@ -1296,6 +1296,7 @@
           "retry": "Riprova",
           "sla": "SLA",
           "taskDefaults": "Predefiniti Task",
+          "updated": "Aggiornato",
           "variables": "Variabili",
           "workerGroup": "Gruppo Worker"
         },

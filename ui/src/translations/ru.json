@@ -1296,6 +1296,7 @@
           "retry": "Повторить попытку",
           "sla": "SLA",
           "taskDefaults": "Значения по умолчанию для Task",
+          "updated": "Обновлено",
           "variables": "Переменные",
           "workerGroup": "Группа Worker"
         },

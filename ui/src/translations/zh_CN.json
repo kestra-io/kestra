@@ -1296,6 +1296,7 @@
           "retry": "重试",
           "sla": "SLA",
           "taskDefaults": "任务默认值",
+          "updated": "已更新",
           "variables": "变量",
           "workerGroup": "工作组"
         },

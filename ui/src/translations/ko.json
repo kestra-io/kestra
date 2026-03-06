@@ -1296,6 +1296,7 @@
           "retry": "재시도",
           "sla": "SLA",
           "taskDefaults": "작업 기본값",
+          "updated": "업데이트됨",
           "variables": "변수",
           "workerGroup": "작업자 그룹"
         },

@@ -136,7 +136,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
         boolean execLogs = runContext.render(purgeExecutionLogs).as(Boolean.class).orElse(true);
         boolean nonExecLogs = runContext.render(purgeNonExecutionLogs).as(Boolean.class).orElse(true);
 
-        int[] deleted = logService.purge(
+        var purgeResult = logService.purge(
             flowInfo.tenantId(),
             runContext.render(namespace).as(String.class).orElse(null),
             runContext.render(flowId).as(String.class).orElse(null),
@@ -149,9 +149,9 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
         );
 
         return Output.builder()
-            .count(deleted[0] + deleted[1])
-            .executionLogsCount(deleted[0])
-            .nonExecutionLogsCount(deleted[1])
+            .count(purgeResult.executionLogsDeleted() + purgeResult.nonExecutionLogsDeleted())
+            .executionLogsCount(purgeResult.executionLogsDeleted())
+            .nonExecutionLogsCount(purgeResult.nonExecutionLogsDeleted())
             .build();
     }
 

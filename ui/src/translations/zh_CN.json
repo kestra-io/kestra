@@ -703,6 +703,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "应用",
+      "group": {
+        "description": "按组筛选",
+        "label": "组"
+      },
       "hierarchy": {
         "all": "默认",
         "child_description": "仅显示嵌套/触发的执行",
@@ -935,6 +939,10 @@
         "label": "触发状态"
       },
       "update": "更新",
+      "username": {
+        "description": "按用户名筛选",
+        "label": "用户名"
+      },
       "value": "值",
       "workerId": {
         "description": "按worker ID筛选",

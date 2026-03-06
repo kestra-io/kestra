@@ -703,6 +703,10 @@
         "label": "Identyfikator flow"
       },
       "footer_apply": "Zastosuj",
+      "group": {
+        "description": "Filtruj według grupy",
+        "label": "Grupa"
+      },
       "hierarchy": {
         "all": "Domyślny",
         "child_description": "Pokaż tylko zagnieżdżone/wyzwolone wykonania",
@@ -935,6 +939,10 @@
         "label": "Stan Trigger"
       },
       "update": "Aktualizuj",
+      "username": {
+        "description": "Filtruj według nazwy użytkownika",
+        "label": "Nazwa użytkownika"
+      },
       "value": "Wartość",
       "workerId": {
         "description": "Filtruj według worker ID",

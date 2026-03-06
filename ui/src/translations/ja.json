@@ -703,6 +703,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "適用",
+      "group": {
+        "description": "グループでフィルター",
+        "label": "グループ"
+      },
       "hierarchy": {
         "all": "デフォルト",
         "child_description": "ネストされた/トリガーされた実行のみを表示",
@@ -935,6 +939,10 @@
         "label": "トリガー状態"
       },
       "update": "更新",
+      "username": {
+        "description": "ユーザー名でフィルター",
+        "label": "ユーザー名"
+      },
       "value": "値",
       "workerId": {
         "description": "ワーカーIDでフィルター",

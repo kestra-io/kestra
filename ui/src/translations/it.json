@@ -703,6 +703,10 @@
         "label": "ID del flow"
       },
       "footer_apply": "Applica",
+      "group": {
+        "description": "Filtra per gruppo",
+        "label": "Gruppo"
+      },
       "hierarchy": {
         "all": "Predefinito",
         "child_description": "Mostra solo esecuzioni nidificate/attivate",
@@ -935,6 +939,10 @@
         "label": "Stato del Trigger"
       },
       "update": "Aggiorna",
+      "username": {
+        "description": "Filtra per nome utente",
+        "label": "Nome utente"
+      },
       "value": "Valore",
       "workerId": {
         "description": "Filtra per ID worker",

@@ -703,6 +703,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "적용",
+      "group": {
+        "description": "그룹별 필터링",
+        "label": "그룹"
+      },
       "hierarchy": {
         "all": "기본",
         "child_description": "중첩/trigger된 실행만 표시",
@@ -935,6 +939,10 @@
         "label": "트리거 상태"
       },
       "update": "업데이트",
+      "username": {
+        "description": "사용자 이름으로 필터링",
+        "label": "사용자 이름"
+      },
       "value": "값",
       "workerId": {
         "description": "작업자 ID로 필터링",

@@ -703,6 +703,10 @@
         "label": "ID de Flow"
       },
       "footer_apply": "Aplicar",
+      "group": {
+        "description": "Filtrar por grupo",
+        "label": "Grupo"
+      },
       "hierarchy": {
         "all": "Predeterminado",
         "child_description": "Mostrar solo ejecuciones anidadas/disparadas",
@@ -935,6 +939,10 @@
         "label": "Estado del Trigger"
       },
       "update": "Actualizar",
+      "username": {
+        "description": "Filtrar por nombre de usuario",
+        "label": "Nombre de usuario"
+      },
       "value": "Valor",
       "workerId": {
         "description": "Filtrar por ID de worker",

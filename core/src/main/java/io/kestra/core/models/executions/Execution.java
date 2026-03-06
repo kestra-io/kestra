@@ -516,15 +516,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         resolvedErrors = removeDisabled(resolvedErrors);
         resolvedFinally = removeDisabled(resolvedFinally);
 
-        List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
         List<TaskRun> finallyFlow = this.findTaskRunByTasks(resolvedFinally, parentTaskRun);
-
-        // finally is already started, just continue these finally
+        // finally is already started, just continue it
         if (!finallyFlow.isEmpty()) {
             return resolvedFinally == null ? Collections.emptyList() : resolvedFinally;
         }
 
-        // check if the parent task should fail, and there is error tasks so we start them
+        List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
+        // check if the parent task should fail, and there are error tasks so we start them
         if (errorsFlow.isEmpty() && terminalState == State.Type.FAILED) {
             return resolvedErrors == null ? resolvedFinally == null ? Collections.emptyList() : resolvedFinally : resolvedErrors;
         }
@@ -573,15 +572,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return Collections.emptyList();
         }
 
+        // to avoid nested loops, we pre-compute a per-uid resolved task map for fast retrieval
+        Map<String, ResolvedTask> resolvedTaskMap = HashMap.newHashMap(resolvedTasks.size());
+        resolvedTasks.forEach(resolvedTask -> resolvedTaskMap.put(resolvedTask.uid(), resolvedTask));
         return this
             .getTaskRunList()
             .stream()
-            .filter(
-                t -> resolvedTasks
-                    .stream()
-                    .anyMatch(
-                        resolvedTask -> FlowableUtils.isTaskRunFor(resolvedTask, t, parentTaskRun)
-                    )
+            .filter(t -> resolvedTaskMap.containsKey(IdUtils.fromParts(t.getTaskId(), t.getValue()))
+                    && (parentTaskRun == null || parentTaskRun.getId().equals(t.getParentTaskRunId()))
             )
             .toList();
     }

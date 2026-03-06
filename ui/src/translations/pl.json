@@ -630,6 +630,7 @@
     "export": "Eksportuj",
     "export all flows": "Eksportuj wszystkie flows",
     "export all templates": "Eksportuj wszystkie szablony",
+    "export_as": "Eksportuj jako .{format}",
     "export_csv": "Eksportuj jako CSV",
     "exports": "Eksporty",
     "failed to export plugin defaults": "Nie udało się wyeksportować domyślnych ustawień wtyczki",

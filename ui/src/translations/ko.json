@@ -630,6 +630,7 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_as": ".{format}로 내보내기",
     "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
     "failed to export plugin defaults": "플러그인 기본값 내보내기에 실패했습니다.",

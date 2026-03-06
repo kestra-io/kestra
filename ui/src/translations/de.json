@@ -630,6 +630,7 @@
     "export": "Exportieren",
     "export all flows": "Alle Flows exportieren",
     "export all templates": "Alle Vorlagen exportieren",
+    "export_as": "Als .{format} exportieren",
     "export_csv": "Als CSV exportieren",
     "exports": "Exporte",
     "failed to export plugin defaults": "Fehler beim Exportieren der Plugin-Standardeinstellungen",

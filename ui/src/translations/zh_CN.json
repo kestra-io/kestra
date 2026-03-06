@@ -630,6 +630,7 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
+    "export_as": "导出为.{format}",
     "export_csv": "导出为CSV",
     "exports": "导出",
     "failed to export plugin defaults": "无法导出插件默认值",

@@ -630,6 +630,7 @@
     "export": "Esporta",
     "export all flows": "Esporta tutti i flows",
     "export all templates": "Esporta tutti i template",
+    "export_as": "Esporta come .{format}",
     "export_csv": "Esporta come CSV",
     "exports": "Esportazioni",
     "failed to export plugin defaults": "Impossibile esportare i valori predefiniti del plugin",

@@ -169,7 +169,7 @@ public abstract class AbstractRunnerTest {
 
     @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/restart_always_failed.yaml"})
-    void restartFailedThenFailureWithGlobalErrors() throws Exception {
+    protected void restartFailedThenFailureWithGlobalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithGlobalErrors();
     }
 
@@ -256,7 +256,7 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
         "flows/valids/flow-trigger-preconditions-flow-a.yaml",
         "flows/valids/flow-trigger-preconditions-flow-b.yaml"})
-    void flowTriggerPreconditionsMergeOutputs() throws Exception {
+    protected void flowTriggerPreconditionsMergeOutputs() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerPreconditionsMergeOutputs();
     }
 

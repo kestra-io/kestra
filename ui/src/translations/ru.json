@@ -630,6 +630,7 @@
     "export": "Экспорт",
     "export all flows": "Экспортировать все flows",
     "export all templates": "Экспортировать все шаблоны",
+    "export_as": "Экспортировать как .{format}",
     "export_csv": "Экспортировать как CSV",
     "exports": "Экспорты",
     "failed to export plugin defaults": "Не удалось экспортировать значения по умолчанию плагина",
@@ -703,6 +704,10 @@
         "label": "Идентификатор flow"
       },
       "footer_apply": "Применить",
+      "group": {
+        "description": "Фильтр по группе",
+        "label": "Группа"
+      },
       "hierarchy": {
         "all": "По умолчанию",
         "child_description": "Показать только вложенные/запущенные executions",
@@ -935,6 +940,10 @@
         "label": "Состояние Trigger"
       },
       "update": "Обновить",
+      "username": {
+        "description": "Фильтр по имени пользователя",
+        "label": "Имя пользователя"
+      },
       "value": "Значение",
       "workerId": {
         "description": "Фильтр по worker ID",

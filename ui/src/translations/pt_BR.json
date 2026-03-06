@@ -630,6 +630,7 @@
     "export": "Exportar",
     "export all flows": "Exportar todos os flows",
     "export all templates": "Exportar todos os templates",
+    "export_as": "Exportar como .{format}",
     "export_csv": "Exportar como CSV",
     "exports": "Exportações",
     "failed to export plugin defaults": "Falha ao exportar padrões do plugin",
@@ -703,6 +704,10 @@
         "label": "ID do Flow"
       },
       "footer_apply": "Aplicar",
+      "group": {
+        "description": "Filtrar por grupo",
+        "label": "Grupo"
+      },
       "hierarchy": {
         "all": "Padrão",
         "child_description": "Mostrar apenas execuções aninhadas/disparadas",
@@ -935,6 +940,10 @@
         "label": "Estado do Trigger"
       },
       "update": "Atualizar",
+      "username": {
+        "description": "Filtrar por nome de usuário",
+        "label": "Nome de Usuário"
+      },
       "value": "Valor",
       "workerId": {
         "description": "Filtrar por ID do worker",

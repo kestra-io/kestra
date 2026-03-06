@@ -630,6 +630,7 @@
     "export": "Esporta",
     "export all flows": "Esporta tutti i flows",
     "export all templates": "Esporta tutti i template",
+    "export_as": "Esporta come .{format}",
     "export_csv": "Esporta come CSV",
     "exports": "Esportazioni",
     "failed to export plugin defaults": "Impossibile esportare i valori predefiniti del plugin",
@@ -703,6 +704,10 @@
         "label": "ID del flow"
       },
       "footer_apply": "Applica",
+      "group": {
+        "description": "Filtra per gruppo",
+        "label": "Gruppo"
+      },
       "hierarchy": {
         "all": "Predefinito",
         "child_description": "Mostra solo esecuzioni nidificate/attivate",
@@ -935,6 +940,10 @@
         "label": "Stato del Trigger"
       },
       "update": "Aggiorna",
+      "username": {
+        "description": "Filtra per nome utente",
+        "label": "Nome utente"
+      },
       "value": "Valore",
       "workerId": {
         "description": "Filtra per ID worker",

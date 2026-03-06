@@ -1,9 +1,3 @@
-if (rootProject.name == "kestra") {
-    processResources {
-        dependsOn(':ui:assembleFrontend')
-    }
-}
-
 configurations {
     implementation.extendsFrom(micronaut)
 }

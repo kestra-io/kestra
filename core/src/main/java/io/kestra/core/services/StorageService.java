@@ -104,25 +104,42 @@ public abstract class StorageService {
     private static List<Path> partition(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, int partition) throws IOException {
         List<Path> files = new ArrayList<>();
         List<RandomAccessFile> writers = new ArrayList<>();
+        
+        try {
+            for (int i = 0; i < partition; i++) {
+                Path path = runContext.workingDir().createTempFile(extension);
+                files.add(path);
 
-        for (int i = 0; i < partition; i++) {
-            Path path = runContext.workingDir().createTempFile(extension);
-            files.add(path);
+                writers.add(new RandomAccessFile(path.toFile(), "rw"));
+            }
 
-            writers.add(new RandomAccessFile(path.toFile(), "rw"));
+            String row;
+            int index = 0;
+            while ((row = bufferedReader.readLine()) != null) {
+                writers.get(index).getChannel().write(ByteBuffer.wrap((row + separator).getBytes(StandardCharsets.UTF_8)));
+
+                index = index >= writers.size() - 1 ? 0 : index + 1;
+            }
+
+            return files.stream().filter(p -> p.toFile().length() > 0).toList();
+        } finally {
+            IOException first = null;
+            for (RandomAccessFile w : writers) {
+                try {
+                    w.close();
+                } catch (IOException e) {
+                    if (first == null) {
+                        first = e;
+                    }
+                    else {
+                        first.addSuppressed(e);
+                    }
+                }
+            }
+            if (first != null) {
+                throw first;
+            }
         }
-
-        String row;
-        int index = 0;
-        while ((row = bufferedReader.readLine()) != null) {
-            writers.get(index).getChannel().write(ByteBuffer.wrap((row + separator).getBytes(StandardCharsets.UTF_8)));
-
-            index = index >= writers.size() - 1 ? 0 : index + 1;
-        }
-
-        writers.forEach(throwConsumer(RandomAccessFile::close));
-
-        return files.stream().filter(p -> p.toFile().length() > 0).toList();
     }
 
     private static List<Path> splitByRegex(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, String regexPattern) throws IOException {

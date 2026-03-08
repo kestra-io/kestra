@@ -630,6 +630,7 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
+    "export_as": ".{format} के रूप में निर्यात करें",
     "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
     "failed to export plugin defaults": "प्लगइन डिफॉल्ट्स को निर्यात करने में विफल",
@@ -703,6 +704,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "लागू करें",
+      "group": {
+        "description": "समूह द्वारा फ़िल्टर करें",
+        "label": "समूह"
+      },
       "hierarchy": {
         "all": "डिफ़ॉल्ट",
         "child_description": "केवल नेस्टेड/ट्रिगर की गई Executions दिखाएं",
@@ -935,6 +940,10 @@
         "label": "ट्रिगर स्थिति"
       },
       "update": "अपडेट",
+      "username": {
+        "description": "उपयोगकर्ता नाम द्वारा फ़िल्टर करें",
+        "label": "उपयोगकर्ता नाम"
+      },
       "value": "मान",
       "workerId": {
         "description": "वर्कर ID द्वारा फ़िल्टर करें",
@@ -1287,6 +1296,7 @@
           "retry": "पुनः प्रयास करें",
           "sla": "SLA",
           "taskDefaults": "डिफ़ॉल्ट Task",
+          "updated": "अपडेट किया गया",
           "variables": "वेरिएबल्स",
           "workerGroup": "वर्कर ग्रुप"
         },

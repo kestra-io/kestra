@@ -630,6 +630,7 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_as": ".{format}로 내보내기",
     "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
     "failed to export plugin defaults": "플러그인 기본값 내보내기에 실패했습니다.",
@@ -703,6 +704,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "적용",
+      "group": {
+        "description": "그룹별 필터링",
+        "label": "그룹"
+      },
       "hierarchy": {
         "all": "기본",
         "child_description": "중첩/trigger된 실행만 표시",
@@ -935,6 +940,10 @@
         "label": "트리거 상태"
       },
       "update": "업데이트",
+      "username": {
+        "description": "사용자 이름으로 필터링",
+        "label": "사용자 이름"
+      },
       "value": "값",
       "workerId": {
         "description": "작업자 ID로 필터링",
@@ -1287,6 +1296,7 @@
           "retry": "재시도",
           "sla": "SLA",
           "taskDefaults": "작업 기본값",
+          "updated": "업데이트됨",
           "variables": "변수",
           "workerGroup": "작업자 그룹"
         },

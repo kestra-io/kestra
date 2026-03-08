@@ -304,6 +304,13 @@ public abstract class AbstractJdbcRepository {
             return getDateCondition(value, operation, dateColumn);
         }
 
+        if (field == QueryFilter.Field.ENABLED) {
+            return getEnabledCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.STATUS) {
+            return statusCondition(value, operation);
+        }
         if (field == QueryFilter.Field.GROUP) {
             return groupCondition(value, operation);
         }
@@ -338,6 +345,15 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
+
+        return defaultHandlers(field, value, operation);
+    }
+
+    private Condition defaultHandlers(
+        QueryFilter.Field field,
+        Object value,
+        QueryFilter.Op operation
+    ) {
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -366,7 +382,7 @@ public abstract class AbstractJdbcRepository {
         return applyDateCondition(dateTime, operation, dateColumn);
     }
 
-    private static Object primitiveOrToString(Object o) {
+    protected static Object primitiveOrToString(Object o) {
         if (o == null) return null;
 
         if (o instanceof Boolean
@@ -395,6 +411,10 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
+    protected Condition getEnabledCondition(Object value, Op operation) {
+        return defaultHandlers(QueryFilter.Field.ENABLED, value, operation);
+    }
+
     // Generate the condition for Field.STATE
     @SuppressWarnings("unchecked")
     private Condition generateStateCondition(Object value, QueryFilter.Op operation) {
@@ -414,12 +434,15 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
+    protected Condition statusCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
+    }
     protected Condition groupCondition(Object value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
     protected Condition nameCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+        return defaultHandlers(QueryFilter.Field.NAME, value, operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

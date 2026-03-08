@@ -672,7 +672,7 @@ class ExecutionControllerRunnerTest {
         runnerUtils.awaitChildExecution(
             flow.get(),
             parentExecution,
-            createdChidExec,
+            createdChidExec.withTenantId(TENANT_ID),
             Duration.ofSeconds(30));
     }
 

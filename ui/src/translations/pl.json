@@ -630,6 +630,7 @@
     "export": "Eksportuj",
     "export all flows": "Eksportuj wszystkie flows",
     "export all templates": "Eksportuj wszystkie szablony",
+    "export_as": "Eksportuj jako .{format}",
     "export_csv": "Eksportuj jako CSV",
     "exports": "Eksporty",
     "failed to export plugin defaults": "Nie udało się wyeksportować domyślnych ustawień wtyczki",
@@ -703,6 +704,10 @@
         "label": "Identyfikator flow"
       },
       "footer_apply": "Zastosuj",
+      "group": {
+        "description": "Filtruj według grupy",
+        "label": "Grupa"
+      },
       "hierarchy": {
         "all": "Domyślny",
         "child_description": "Pokaż tylko zagnieżdżone/wyzwolone wykonania",
@@ -935,6 +940,10 @@
         "label": "Stan Trigger"
       },
       "update": "Aktualizuj",
+      "username": {
+        "description": "Filtruj według nazwy użytkownika",
+        "label": "Nazwa użytkownika"
+      },
       "value": "Wartość",
       "workerId": {
         "description": "Filtruj według worker ID",
@@ -1287,6 +1296,7 @@
           "retry": "Ponów próbę",
           "sla": "SLA",
           "taskDefaults": "Domyślne ustawienia Task",
+          "updated": "Zaktualizowano",
           "variables": "Zmienne",
           "workerGroup": "Grupa Worker"
         },

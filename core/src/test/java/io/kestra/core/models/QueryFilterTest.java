@@ -302,6 +302,62 @@ public class QueryFilterTest {
                     Op.EQUALS,
                     Op.IN
                 )
+            ),
+
+            buildQueryFiltersForOperations(Field.EMAIL, Resource.INVITATION,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.STATUS, Resource.INVITATION,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.EXPIRED_AT, Resource.INVITATION,
+                Set.of()
+            ),
+
+            buildQueryFiltersForOperations(Field.ENABLED, Resource.SECURITY_INTEGRATION,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAME, Resource.ROLE,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAME, Resource.GROUP,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.BINDING,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+
+            ),
+
+            buildQueryFiltersForOperations(Field.TYPE, Resource.BINDING,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
             )
         ).flatMap(s -> s);
     }
@@ -636,6 +692,128 @@ public class QueryFilterTest {
                     Op.REGEX,
                     Op.PREFIX,
                     Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAME, Resource.ROLE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.CONTAINS,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.PREFIX,
+                    Op.NOT_EQUALS,
+                    Op.IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.EMAIL, Resource.INVITATION,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.STATUS, Resource.INVITATION,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.EXPIRED_AT, Resource.INVITATION,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.ENABLED, Resource.SECURITY_INTEGRATION,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAME, Resource.GROUP,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.CONTAINS,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.PREFIX,
+                    Op.NOT_EQUALS,
+                    Op.IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.BINDING,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO
+                )
+
+            ),
+
+            buildQueryFiltersForOperations(Field.TYPE, Resource.BINDING,
+                Set.of(
+                    Op.PREFIX,
+                    Op.LESS_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO
                 )
             )
         ).flatMap(s -> s);

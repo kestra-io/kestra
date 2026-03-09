@@ -1,10 +1,26 @@
 <template>
-    <section id="input">
+    <section id="filtering">
         <el-input
             v-model="search"
-            :placeholder="$t(props.subtype === ASSET ? 'dependency.search.asset_placeholder' : 'dependency.search.placeholder')"
+            :placeholder="$t(`dependency.search.placeholders.${props.subtype === ASSET ? 'asset' : 'default'}`)"
             clearable
         />
+
+        <el-select 
+            v-model="namespace"
+            :placeholder="$t('dependency.search.namespace.select')"
+            clearable
+            filterable
+        >
+            <el-option
+                v-for="item in namespaces"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+            />
+        </el-select>
+
+        <el-switch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
     </section>
 
     <el-table
@@ -70,6 +86,9 @@
     import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types";
     import type {Types, Node} from "../utils/types";
 
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
         elements: cytoscape.ElementDefinition[];
@@ -97,34 +116,66 @@
     );
 
     const search = ref("");
+    const namespace = ref<string | undefined>(undefined);
+    const flow = ref<boolean>(true);
+
+    const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__";
+
+    const namespaces = computed(() => {
+        const unique = new Set<string>(
+            props.elements
+                ?.filter(e => e?.data?.type === NODE && e?.data?.namespace)
+                .map(e => e.data.namespace)
+        );
+
+        return [
+            ...Array.from(unique).map((namespace) => ({
+                label: namespace,
+                value: namespace,
+            })),
+            ...(props.subtype === ASSET ?  [{
+                label: t("dependency.search.namespace.no_namespace"),
+                value: NO_NAMESPACE_VALUE,
+            }] : [])      
+        ];
+    });
+
     const results = computed(() => {
         const f = search.value.trim().toLowerCase();
 
-        const NODES = props.elements.filter(({data}) => data.type === NODE);
+        return props.elements
+            .filter(({data}) => data.type === NODE)
+            .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
+            .filter(({data}) => {
+                if (!namespace.value) return true;
 
-        if (!f) return NODES;
+                if (namespace.value === NO_NAMESPACE_VALUE) {
+                    return data.namespace === undefined;
+                }
 
-        return NODES.filter(({data}) => {
-            const {flow, namespace} = data;
+                return data.namespace === namespace.value;
+            })
+            .filter(({data}) => {
+                if (!f) return true;
 
-            return (
-                flow?.toLowerCase().includes(f) ||
-                namespace?.toLowerCase().includes(f)
-            );
-        });
+                return (
+                    data.flow?.toLowerCase().includes(f) ||
+                    data.namespace?.toLowerCase().includes(f)
+                );
+            });
     });
 </script>
 
 <style scoped lang="scss">
-section#input {
+section#filtering {
     position: sticky;
     top: 0;
     z-index: 10; // Keeps it above table rows
-    padding: 0.5rem;
+    padding: 1rem;
     background-color: var(--ks-background-input);
 
-    :deep(.el-input__wrapper) {
-        box-shadow: none !important;
+    :deep(.el-input__wrapper), :deep(.el-select__wrapper) {
+        margin-bottom: 0.5rem;
         font-size: var(--font-size-sm);
     }
 }
@@ -171,6 +222,7 @@ section#row {
 
         & > div#link {
             width: fit-content;
+            max-width: 100%;
         }
 
         & p.description {

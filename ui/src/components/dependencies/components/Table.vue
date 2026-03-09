@@ -92,6 +92,7 @@
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
         elements: cytoscape.ElementDefinition[];
+        highlightShown?: (nodeIDs: string[]) => void;
         selected: Node["id"] | undefined;
         subtype?: Types;
     }>();
@@ -163,6 +164,10 @@
                     data.namespace?.toLowerCase().includes(query)
                 );
             });
+
+        // Pass the IDs of the currently shown nodes to the parent component for highlighting in the graph.
+        const IDs = results.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []));
+        props.highlightShown?.(IDs);
 
         return results;
     });

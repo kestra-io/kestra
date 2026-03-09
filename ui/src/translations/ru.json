@@ -405,9 +405,18 @@
         "zoom_out": "Уменьшить масштаб"
       },
       "search": {
-        "asset_placeholder": "Поиск по asset, flow или namespace...",
+        "flow": {
+          "display": "Включить зависимости flow"
+        },
+        "namespace": {
+          "no_namespace": "Без namespace",
+          "select": "Выберите namespace"
+        },
         "no_results": "Результаты для {term} не найдены",
-        "placeholder": "Поиск по flow или namespace..."
+        "placeholders": {
+          "asset": "Поиск по asset, flow или namespace...",
+          "default": "Поиск по flow или namespace..."
+        }
       }
     },
     "dependency task": "Задача {taskId} является зависимостью другого задачи",

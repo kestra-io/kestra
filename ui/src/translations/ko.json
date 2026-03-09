@@ -405,9 +405,18 @@
         "zoom_out": "축소"
       },
       "search": {
-        "asset_placeholder": "자산, flow 또는 namespace로 검색...",
+        "flow": {
+          "display": "flow 종속성 포함"
+        },
+        "namespace": {
+          "no_namespace": "namespace 없음",
+          "select": "namespace 선택"
+        },
         "no_results": "{term}에 대한 결과가 없습니다.",
-        "placeholder": "flow 또는 namespace로 검색..."
+        "placeholders": {
+          "asset": "자산, flow 또는 namespace로 검색...",
+          "default": "flow 또는 namespace로 검색..."
+        }
       }
     },
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",

@@ -405,9 +405,18 @@
         "zoom_out": "缩小视图"
       },
       "search": {
-        "asset_placeholder": "按资产、flow或namespace搜索...",
+        "flow": {
+          "display": "包含flow依赖项"
+        },
+        "namespace": {
+          "no_namespace": "没有namespace",
+          "select": "选择一个namespace"
+        },
         "no_results": "未找到与 {term} 相关的结果",
-        "placeholder": "按flow或namespace搜索..."
+        "placeholders": {
+          "asset": "按资产、flow或namespace搜索...",
+          "default": "按flow或namespace搜索..."
+        }
       }
     },
     "dependency task": "任务 {taskId} 是另一个任务的依赖",

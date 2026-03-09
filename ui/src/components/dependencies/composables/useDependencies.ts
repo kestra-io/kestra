@@ -28,7 +28,7 @@ import Utils from "../../../utils/utils";
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {edgeColors, getStyle} from "../utils/style";
-const SELECTED = "selected", FADED = "faded", HOVERED = "hovered", EXECUTIONS = "executions";
+const SELECTED = "selected", FADED = "faded", DIMMED = "dimmed", HOVERED = "hovered", EXECUTIONS = "executions";
 
 const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & { elements?: Element[] } = {
     minZoom: 0.1,
@@ -165,9 +165,9 @@ const setExecutionEdgeColors = throttle(
  * @param subtype - The dependency subtype, either `FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`.
  *                  Edge styles are only reset when subtype is `EXECUTION`.
  * @param classes - An array of class names to remove from all elements.
- *                  Defaults to [`selected`, `faded`, `hovered`, `executions`].
+ *                  Defaults to [`selected`, `faded`, `dimmed`, `hovered`, `executions`].
  */
-export function clearClasses(cy: cytoscape.Core, subtype: Types, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
+export function clearClasses(cy: cytoscape.Core, subtype: Types, classes: string[] = [SELECTED, FADED, DIMMED, HOVERED, EXECUTIONS]): void {
     cy.elements().removeClass(classes.join(" "));
     if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
@@ -503,12 +503,38 @@ export function useDependencies(
                 fit(cy);
             },
             fit: () => fit(cy),
+            highlightShown: (nodeIDs: string[]) => {
+                if (!cy) return;
+
+                const shownNodeIDs = new Set(nodeIDs);
+                const allNodes = cy.nodes();
+
+                const isUnfiltered = shownNodeIDs.size >= allNodes.length;
+
+                // Reset interactive classes first so filtering owns the visual state.
+                clearClasses(cy, subtype, [SELECTED, DIMMED, HOVERED, EXECUTIONS]);
+
+                // Do not dim when there are no effective filtering results.
+                if (isUnfiltered) return;
+
+                // Dim everything, then restore full opacity for nodes that are shown in the table.
+                cy.elements().addClass(DIMMED);
+                allNodes
+                    .filter((node) => shownNodeIDs.has(node.id()))
+                    .removeClass(DIMMED);
+                cy.edges()
+                    .filter((edge) => {
+                        return shownNodeIDs
+                            .has(edge.source().id()) && shownNodeIDs.has(edge.target().id());
+                    })
+                    .removeClass(DIMMED);
+            },
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
                 if (!cy) return;
 
                 const options = {full: true, scale: 2, ...(type === "jpeg" && {bg: cssVariable("--ks-background-body")})};
                 const image = type === "jpeg" ? cy.jpg(options) : cy.png(options);
-                
+
                 const filename = `dependencies-${nodeID}-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.${type}`;
 
                 Utils.downloadUrl(image, filename);

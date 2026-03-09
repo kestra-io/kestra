@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @JsonSerialize(using = RunContextSerializer.class)
-public interface RunContext extends PropertyContext {
+public abstract class RunContext implements PropertyContext {
 
     /**
      * Returns the trigger execution id attached to this context.
@@ -30,7 +30,7 @@ public interface RunContext extends PropertyContext {
      * @throws IllegalStateException if trigger execution id is defined.
      */
     @JsonIgnore
-    String getTriggerExecutionId();
+    public abstract String getTriggerExecutionId();
 
     /**
      * Returns an immutable {@link Map} containing all the variables attached to this context.
@@ -38,65 +38,65 @@ public interface RunContext extends PropertyContext {
      * @return The map variables.
      */
     @JsonInclude
-    Map<String, Object> getVariables();
+    public abstract Map<String, Object> getVariables();
 
     /**
      * Returns the list of inputs of type SECRET.
      */
     @JsonInclude
-    List<String> getSecretInputs();
+    public abstract List<String> getSecretInputs();
 
     /**
      * OpenTelemetry trace parent
      */
     @JsonInclude
-    String getTraceParent();
+    public abstract String getTraceParent();
 
-    void setTraceParent(String traceParent);
+    public abstract void setTraceParent(String traceParent);
 
-    String render(String inline) throws IllegalVariableEvaluationException;
+    public abstract String render(String inline) throws IllegalVariableEvaluationException;
 
-    Object renderTyped(String inline) throws IllegalVariableEvaluationException;
+    public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
 
-    String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+    public abstract String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
-    <T> RunContextProperty<T> render(Property<T> inline);
+    public abstract <T> RunContextProperty<T> render(Property<T> inline);
 
-    List<String> render(List<String> inline) throws IllegalVariableEvaluationException;
+    public abstract List<String> render(List<String> inline) throws IllegalVariableEvaluationException;
 
-    List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+    public abstract List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
-    Set<String> render(Set<String> inline) throws IllegalVariableEvaluationException;
+    public abstract Set<String> render(Set<String> inline) throws IllegalVariableEvaluationException;
 
-    Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+    public abstract Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
-    Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException;
+    public abstract Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException;
 
-    Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+    public abstract Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
-    Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException;
+    public abstract Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException;
 
-    Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+    public abstract Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     /**
      * Validate a bean using Jakarta Bean Validation.
      */
-    <T> void validate(T bean);
+    public abstract <T> void validate(T bean);
 
-    String decrypt(String encrypted) throws GeneralSecurityException;
+    public abstract String decrypt(String encrypted) throws GeneralSecurityException;
 
     /**
      * Encrypt a plaintext string using the {@link EncryptionService} and the default encryption key.
      * If the key is not configured, it will log a WARNING and return the plaintext string as is.
      */
-    String encrypt(String plaintext) throws GeneralSecurityException;
+    public abstract String encrypt(String plaintext) throws GeneralSecurityException;
 
     /**
      * Gets the {@link Logger} attached to this {@link RunContext}.
      *
      * @return the {@link Logger}.
      */
-    Logger logger();
+    public abstract Logger logger();
 
     /**
      * Gets the log file URI inside the internal storage.
@@ -104,40 +104,40 @@ public interface RunContext extends PropertyContext {
      *
      * Warning: this method can be called only once for an attempt.
      */
-    URI logFileURI();
+    public abstract URI logFileURI();
 
     /**
      * Gets access to the Kestra's internal storage.
      *
      * @return a {@link Storage} object.
      */
-    Storage storage();
+    public abstract Storage storage();
 
-    List<AbstractMetricEntry<?>> metrics();
+    public abstract List<AbstractMetricEntry<?>> metrics();
 
-    <T> RunContext metric(AbstractMetricEntry<T> metricEntry);
+    public abstract <T> RunContext metric(AbstractMetricEntry<T> metricEntry);
 
-    void dynamicWorkerResult(List<WorkerTaskResult> workerTaskResults);
+    public abstract void dynamicWorkerResult(List<WorkerTaskResult> workerTaskResults);
 
-    List<WorkerTaskResult> dynamicWorkerResults();
+    public abstract List<WorkerTaskResult> dynamicWorkerResults();
 
     /**
      * Gets access to the working directory.
      *
      * @return The {@link WorkingDir}.
      */
-    WorkingDir workingDir();
+    public abstract WorkingDir workingDir();
 
     /**
      * Cleanup any temporary resources, files created through this context.
      * Also reset logs MDC so the logger should not be used after this point.
      */
-    void cleanup();
+    public abstract void cleanup();
 
 
-    TaskRunInfo taskRunInfo();
+    public abstract TaskRunInfo taskRunInfo();
 
-    FlowInfo flowInfo();
+    public abstract FlowInfo flowInfo();
 
     /**
      * Returns the value of the specified configuration property for the plugin type
@@ -147,7 +147,7 @@ public interface RunContext extends PropertyContext {
      * @param <T>  the type of the configuration property value.
      * @return the {@link Optional} configuration property value.
      */
-    <T> Optional<T> pluginConfiguration(String name);
+    public abstract <T> Optional<T> pluginConfiguration(String name);
 
     /**
      * Returns a map containing all the static configuration properties for the plugin type
@@ -155,31 +155,31 @@ public interface RunContext extends PropertyContext {
      *
      * @return an unmodifiable map of key/value properties.
      */
-    Map<String, Object> pluginConfigurations();
+    public abstract Map<String, Object> pluginConfigurations();
 
     /**
      * Gets the version of Kestra.
      *
      * @return the string version.
      */
-    String version();
+    public abstract String version();
 
     /**
      * Gets access to the Key-Value store for the given namespace.
      *
      * @return The {@link KVStore}.
      */
-    KVStore namespaceKv(String namespace);
+    public abstract KVStore namespaceKv(String namespace);
 
     /**
      * Get access to local paths of the host machine.
      */
-    LocalPath localPath();
+    public abstract LocalPath localPath();
 
-    record TaskRunInfo(String executionId, String taskId, String taskRunId, Object value) {
+    public record TaskRunInfo(String executionId, String taskId, String taskRunId, Object value) {
     }
 
-    record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
         public static FlowInfo from(Map<String, Object> flowInfoMap) {
             return new FlowInfo(
                 (String) flowInfoMap.get("tenantId"),
@@ -195,33 +195,33 @@ public interface RunContext extends PropertyContext {
      * Plugins are responsible for using the ACL checker when they access restricted resources, for example,
      * when Namespace ACLs are used (EE).
      */
-    AclChecker acl();
+    public abstract AclChecker acl();
 
     /**
      * Get access to the Assets handler.
      */
-    AssetEmitter assets() throws IllegalVariableEvaluationException;
+    public abstract AssetEmitter assets() throws IllegalVariableEvaluationException;
 
     /**
      * Clone this run context for a specific plugin.
      * @return a new run context with the plugin configuration of the given plugin.
      */
-    RunContext cloneForPlugin(Plugin plugin);
+    public abstract RunContext cloneForPlugin(Plugin plugin);
 
     /**
      * @return an InputAndOutput that can be used to work with inputs and outputs.
      */
-    InputAndOutput inputAndOutput();
+    public abstract InputAndOutput inputAndOutput();
 
     /**
      * Get access to the SDK handler which allows interacting easily with the Kestra API via the SDK.
      */
-    SDK sdk();
+    public abstract SDK sdk();
 
     /**
      * Retrieves the current task run output.
      * WARNING: as the run context is created before running a task, this is not available for most task run.
      * This is available only for flowable tasks as they are called multiple times, and for retried tasks (attempt > 1)
      */
-    Map<String, Object> currentOutput();
+    public abstract Map<String, Object> currentOutput();
 }

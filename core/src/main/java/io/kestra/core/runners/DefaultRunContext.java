@@ -49,7 +49,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Default and mutable implementation of {@link RunContext}.
  */
 @Introspected
-public class DefaultRunContext implements RunContext {
+public class DefaultRunContext extends RunContext {
     // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
     private VariableRenderer variableRenderer;

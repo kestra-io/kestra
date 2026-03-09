@@ -117,7 +117,7 @@ grpc:
     enabled: false
     health:
       enabled: false
-endpoints: 
+endpoints:
   all:
     port: 8081
     enabled: true
@@ -215,7 +215,11 @@ kestra:
         endpoints:
           - host: localhost
             port: ${kestra.controller.port}
-  
+  queue:
+    message-protection:
+      enabled: true
+      limit: 1048576
+
   jdbc:
     queues:
       min-poll-interval: 25ms

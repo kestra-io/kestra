@@ -23,7 +23,6 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.IgnoreExecutionService;
@@ -32,7 +31,6 @@ import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.worker.Controller;
 import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.worker.WorkerAgent;
 import io.kestra.worker.WorkerJobExecutor;
@@ -40,11 +38,9 @@ import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.WorkerIOSender;
 import io.kestra.worker.services.WorkerConnectionService;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Property;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -65,7 +61,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @KestraTest(environments =  {"test", "liveness"}, startRunner = true, startWorker = false, startScheduler = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
-@Property(name = "kestra.server-type", value = "EXECUTOR")
 public abstract class AbstractServiceLivenessCoordinatorTest {
 
     public static final String WORKER_GROUP_KEY = "workerGroupKey";
@@ -91,20 +86,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
 
-    private Controller controller;
-
     @BeforeAll
     void init() {
         // Simulate that executor and workers are not running on the same JVM.
         jdbcServiceLivenessHandler.setServerInstance(IdUtils.create());
-        
-        controller = applicationContext.createBean(Controller.class);
-        controller.start();
-    }
-    
-    @AfterAll
-    void afterAll() {
-        controller.close();
     }
 
     @ParameterizedTest
@@ -135,15 +120,15 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
         boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
-        
+
         // WHEN - stop first worker.
         worker.close(); // stop processing task
         Thread.sleep(Duration.ofSeconds(5).toMillis());
-        
+
         // WHEN - create second worker (this will revoke previously one).
         Worker newWorker = newWorker();
         newWorker.start(1, workerGroupKey);
-        
+
         // THEN - task should be re-emitted to the same worker group and processed successfully.
         assertThat(resubmitLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(workerTaskResult.get()).isNotNull();
@@ -221,7 +206,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         worker.start(1, workerGroupKey);
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), workerGroupKey);
-        
+
         CountDownLatch evaluatedLatch = new CountDownLatch(1);
         CountDownLatch receivedLatch = new CountDownLatch(1);
         triggerEventQueue.addListener(event -> {

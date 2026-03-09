@@ -52,15 +52,18 @@ import java.util.Optional;
                 inputs:
                   - id: token
                     type: STRING
+                    required: false
                     displayName: "API Token"
                   
                   - id: username
                     type: STRING
                     displayName: "Username"
+                    required: false
 
                   - id: password
                     type: STRING
                     displayName: "Password"
+                    required: false
 
                 tasks:
                   - id: compute_header

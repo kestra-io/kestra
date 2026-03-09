@@ -688,6 +688,10 @@
       "drag to reorder columns": "列をドラッグして並べ替え",
       "edit filter": "フィルターを編集",
       "empty": "まだ保存されたフィルターがありません。",
+      "enabled": {
+        "description": "有効でフィルター",
+        "label": "有効"
+      },
       "end_date": "終了日",
       "enter description": "フィルターの説明を入力してください",
       "enter label": "フィルターラベルを入力してください",
@@ -747,7 +751,6 @@
         "description": "メトリックタイプでフィルター",
         "label": "メトリック"
       },
-      "name": "名前",
       "namespace": {
         "description": "namespaceでフィルター",
         "label": "Namespace"

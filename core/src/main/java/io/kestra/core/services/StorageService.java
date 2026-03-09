@@ -123,21 +123,12 @@ public abstract class StorageService {
 
             return files.stream().filter(p -> p.toFile().length() > 0).toList();
         } finally {
-            IOException first = null;
             for (RandomAccessFile w : writers) {
                 try {
                     w.close();
                 } catch (IOException e) {
-                    if (first == null) {
-                        first = e;
-                    }
-                    else {
-                        first.addSuppressed(e);
-                    }
+                    runContext.logger().error("Failed to close partition writer", e);
                 }
-            }
-            if (first != null) {
-                throw first;
             }
         }
     }

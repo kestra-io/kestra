@@ -688,6 +688,10 @@
       "drag to reorder columns": "Spalten zum Neuordnen ziehen",
       "edit filter": "Filter bearbeiten",
       "empty": "Sie haben noch keinen gespeicherten Filter.",
+      "enabled": {
+        "description": "Nach aktiviert filtern",
+        "label": "Aktiviert"
+      },
       "end_date": "Enddatum",
       "enter description": "Filterbeschreibung eingeben",
       "enter label": "Filter-Label eingeben",
@@ -747,7 +751,6 @@
         "description": "Nach Metriktyp filtern",
         "label": "Metrik"
       },
-      "name": "Name",
       "namespace": {
         "description": "Nach namespace filtern",
         "label": "Namespace"

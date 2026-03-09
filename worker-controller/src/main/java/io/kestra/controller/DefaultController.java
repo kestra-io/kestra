@@ -107,6 +107,8 @@ public class DefaultController extends AbstractService implements Controller {
             LOG.info("Controller configured with maxConnectionAge={}ms", maxAgeMillis);
         }
 
+        serverBuilder.maxInboundMessageSize(grpcConfiguration.maxInboundMessageSize());
+
         for (WorkerControllerService service : workerControllerServices) {
             serverBuilder = serverBuilder.addService(service);
         }

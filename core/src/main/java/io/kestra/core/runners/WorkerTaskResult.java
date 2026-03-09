@@ -21,6 +21,7 @@ import lombok.With;
 @Builder
 public class WorkerTaskResult implements DispatchEvent, HasUID {
     @NotNull
+    @With
     TaskRun taskRun;
 
     List<TaskRun> dynamicTaskRuns;

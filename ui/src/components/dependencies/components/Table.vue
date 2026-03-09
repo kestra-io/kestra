@@ -141,9 +141,9 @@
     });
 
     const results = computed(() => {
-        const f = search.value.trim().toLowerCase();
+        const query = search.value.trim().toLowerCase();
 
-        return props.elements
+        const results = props.elements
             .filter(({data}) => data.type === NODE)
             .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
             .filter(({data}) => {
@@ -156,13 +156,15 @@
                 return data.namespace === namespace.value;
             })
             .filter(({data}) => {
-                if (!f) return true;
+                if (!query) return true;
 
                 return (
-                    data.flow?.toLowerCase().includes(f) ||
-                    data.namespace?.toLowerCase().includes(f)
+                    data.flow?.toLowerCase().includes(query) ||
+                    data.namespace?.toLowerCase().includes(query)
                 );
             });
+
+        return results;
     });
 </script>
 

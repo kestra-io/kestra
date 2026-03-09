@@ -1,3 +1,0 @@
-DROP TABLE IF EXISTS queues;
-DROP TYPE IF EXISTS queue_type;
-ALTER TABLE IF EXISTS queue RENAME TO queues;

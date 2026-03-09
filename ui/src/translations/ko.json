@@ -406,7 +406,7 @@
       },
       "search": {
         "flow": {
-          "display": "flow 노드 포함"
+          "display": "flow 종속성 포함"
         },
         "namespace": {
           "no_namespace": "namespace 없음",

@@ -406,7 +406,7 @@
       },
       "search": {
         "flow": {
-          "display": "Includi nodi del flow"
+          "display": "Includi dipendenze del flow"
         },
         "namespace": {
           "no_namespace": "Senza namespace",

@@ -406,7 +406,7 @@
       },
       "search": {
         "flow": {
-          "display": "包含flow节点"
+          "display": "包含flow依赖项"
         },
         "namespace": {
           "no_namespace": "没有namespace",

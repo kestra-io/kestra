@@ -32,13 +32,11 @@ import java.util.OptionalInt;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Make an HTTP API request to a specified URL and store the response as an output.",
+    title = "Send an HTTP request and capture the response.",
     description = """
-        This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
-        Kestra offers hundreds of plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
-        By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
-        Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead.
-        """
+        Generic HTTP client for APIs: renders URL, headers/body/form data, sends the request, and stores status/body/headers as task outputs.
+
+        Default max response size is 10 MB (raise via `options.maxContentLength`, up to 2 GB). For large payloads use `Download`. Prefer dedicated plugins when available for better ergonomics."""
 )
 @Plugin(
     examples = {

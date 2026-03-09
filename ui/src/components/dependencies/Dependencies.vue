@@ -34,15 +34,31 @@
                 >
                     <FitToScreenOutline />
                 </el-button>
+                <el-dropdown>
+                    <el-button size="small" :title="$t('export')">
+                        <Download />
+                    </el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item @click="handlers.exportAsImage('jpeg', selectedNodeID)">
+                                {{ $t("export_as", {format: "JPEG"}) }}
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handlers.exportAsImage('png', selectedNodeID)">
+                                {{ $t("export_as", {format: "PNG"}) }}
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </div>
         </el-splitter-panel>
 
         <el-splitter-panel id="table">
             <Table
                 :elements="getElements()"
-                @select="selectNode"
+                :highlightShown="handlers.highlightShown"
                 :selected="selectedNodeID"
                 :subtype="SUBTYPE"
+                @select="selectNode"
             />
         </el-splitter-panel>
     </el-splitter>
@@ -56,6 +72,7 @@
 
     import {useDependencies} from "./composables/useDependencies";
     import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";
+    import type {Types} from "./utils/types";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
 
@@ -66,6 +83,7 @@
     import Minus from "vue-material-design-icons/Minus.vue";
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
+    import Download from "vue-material-design-icons/Download.vue";
 
     const props = defineProps<{
         fetchAssetDependencies?: () => Promise<{
@@ -74,7 +92,7 @@
         }>;
     }>();
 
-    const SUBTYPE = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
+    const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
 
     const container = ref(null);
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);
@@ -117,7 +135,7 @@
             justify-content: flex-end;
             gap: 0.25rem;
 
-            & > button {
+            & button {
                 width: 2rem;
                 height: 2rem;
                 margin: 0;

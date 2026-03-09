@@ -243,6 +243,7 @@
     import Utils from "../../utils/utils";
     import * as LogUtils from "../../utils/logs";
     import throttle from "lodash/throttle";
+    import {useAxios} from "../../utils/axios";
 
     export default {
         name: "TaskRunDetails",
@@ -344,7 +345,8 @@
             },
             level: function () {
                 this.rawLogs = [];
-                this.loadLogs(this.followedExecution.id);
+                if(this.followedExecution) 
+                    this.loadLogs(this.followedExecution.id);
             },
             currentTaskRuns: {
                 handler(taskRuns) {
@@ -439,6 +441,12 @@
             }
 
             this.autoExpandBasedOnSettings();
+        },
+        setup(){
+            const $http = useAxios();
+            return {
+                $http
+            }
         },
         computed: {
             ...mapStores(useCoreStore, useExecutionsStore),

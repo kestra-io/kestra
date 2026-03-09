@@ -10,51 +10,9 @@
             </ul>
         </template>
     </Navbar>
-    <section
-        class="d-flex flex-column fill-height padding-bottom"
-        :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
-    >
-        <EmptyTemplate v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
-            <div class="no-secret-manager-block d-flex flex-column gap-6 mt-3">
-                <div class="header-block d-flex align-items-center">
-                    <div class="d-flex flex-column">
-                        <div class="d-flex flex-row gap-2">
-                            <div class="d-flex flex-column align-items-start justify-content-center">
-                                <h5 class="fw-bold">
-                                    {{ $t('demos.secrets.title') }}
-                                </h5>
-                                <p>{{ $t('demos.secrets.message') }}</p>
-                            </div>
-                            <img :src="sourceImg" :alt="$t('demos.secrets.title')" class="img-wrapper">
-                        </div>
-                        <div>
-                            <div v-if="isOnline" class="video-container">
-                                <iframe
-                                    src="https://www.youtube.com/embed/u0yuOYG-qMI"
-                                />
-                            </div>
-                            <DemoButtons />
-                        </div>
-                    </div>
-                </div>
-                <p class="mb-0">
-                    {{ $t('demos.secrets.detected_env') }}
-                </p>
-                <div v-if="hasData === false">
-                    <p class="text-tertiary mb-4">
-                        {{ $t('demos.secrets.empty_env') }}
-                    </p>
-                    <div class="text-secondary">
-                        <p class="bold mb-0">
-                            {{ $t('demos.secrets.add_env.intro') }}
-                        </p>
-                        <ul>
-                            <li v-html="$t('demos.secrets.add_env.first')" />
-                            <li v-html="$t('demos.secrets.add_env.second')" />
-                            <li v-html="$t('demos.secrets.add_env.third')" />
-                        </ul>
-                    </div>
-                </div>
+    <section class="d-flex flex-column fill-height padding-bottom container">
+        <div v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
+            <div class="oss-secrets-block d-flex flex-column gap-4">
                 <SecretsTable
                     v-show="hasData === true"
                     :filterable="false"
@@ -64,8 +22,46 @@
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
                 />
+                <div v-if="hasData === false" class="oss-secrets-hint">
+                    <h6 class="fw-bold mb-1">
+                        {{ $t('demos.secrets.add_env.intro') }}
+                    </h6>
+                    <ul class="mb-0">
+                        <li v-html="$t('demos.secrets.add_env.first')" />
+                        <li v-html="$t('demos.secrets.add_env.second')" />
+                        <li v-html="$t('demos.secrets.add_env.third')" />
+                    </ul>
+                </div>
             </div>
-        </EmptyTemplate>
+            <div class="secrets-divider my-4" />
+            <div class="no-secret-manager-block d-flex flex-column gap-6">
+                <div class="header-block d-flex align-items-center">
+                    <div class="ee-promo-layout">
+                        <div v-if="isOnline" class="video-container">
+                            <iframe
+                                src="https://www.youtube.com/embed/u0yuOYG-qMI"
+                            />
+                        </div>
+                        <div class="ee-promo-content d-flex flex-column">
+                            <div class="d-flex flex-row gap-2">
+                                <div class="d-flex flex-column align-items-start justify-content-center">
+                                    <div class="ee-tag-wrap">
+                                        <EnterpriseTag>
+                                            {{ $t('demos.enterprise_edition') }}
+                                        </EnterpriseTag>
+                                    </div>
+                                    <h5 class="fw-bold">
+                                        {{ $t('demos.secrets.title') }}
+                                    </h5>
+                                    <p>{{ $t('demos.secrets.message') }}</p>
+                                </div>
+                            </div>
+                            <DemoButtons />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <SecretsTable
             v-else
             filterable
@@ -87,9 +83,8 @@
     import {computed, ref} from "vue";
     import useRouteContext from "../../composables/useRouteContext";
     import {useMiscStore} from "override/stores/misc";
-    import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
+    import EnterpriseTag from "../EnterpriseTag.vue";
 
     const miscStore = useMiscStore();
 
@@ -101,7 +96,7 @@
     });
 
     const addSecretModalVisible = ref(false);
-    const hasData = ref(undefined);
+    const hasData = ref<boolean>();
 
     const {t} = useI18n({useScope: "global"});
     const routeInfo = computed(() => ({title: t("secret.names")}));
@@ -111,39 +106,31 @@
 
 <style scoped lang="scss">
     .no-secret-manager-block {
-        padding: 0 10.75rem;
+        padding: 0 0 1.5rem;
 
         *[style*="display: none"] { display: none !important }
 
         .header-block {
-            border-bottom: 1px solid var(--ks-border-primary);
-
             p {
                 font-size: .875rem;
             }
 
-            .img-wrapper {
-                width: 350px;
-                height: 300px;
-                overflow: visible;
-                direction: rtl;
-                flex-shrink: 0;
-            }
         }
 
-        .text-secondary {
-            color: var(--ks-content-secondary) !important;
+        .ee-promo-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
 
-            .bold {
-                font-weight: bold;
-            }
+        .ee-promo-content {
+            flex: 1;
         }
 
         .video-container {
             width: 100%;
-            max-width: 640px;
+            flex: 1;
             aspect-ratio: 16 / 9;
-            margin-bottom: 1rem;
             border-radius: 8px;
             border: 1px solid var(--ks-border-primary);
             overflow: hidden;
@@ -156,19 +143,12 @@
         }
 
         @media (max-width: 1200px) {
-            padding: 0 4rem;
-
-            .header-block {
-                .img-wrapper {
-                    width: 250px;
-                    height: 214px;
-                }
+            .ee-promo-layout {
+                flex-direction: column;
             }
         }
 
         @media (max-width: 992px) {
-            padding: 0 2rem;
-
             .header-block {
                 .d-flex.flex-row {
                     flex-direction: column !important;
@@ -179,18 +159,10 @@
                         align-items: center !important;
                     }
                 }
-
-                .img-wrapper {
-                    width: 200px;
-                    height: 171px;
-                    direction: ltr;
-                }
             }
         }
 
         @media (max-width: 768px) {
-            padding: 0 1.5rem;
-
             .header-block {
 
                 p {
@@ -204,8 +176,6 @@
         }
 
         @media (max-width: 576px) {
-            padding: 0 1rem;
-
             .header-block {
 
                 h5 {
@@ -216,6 +186,29 @@
                     font-size: 0.75rem;
                 }
             }
+        }
+    }
+
+    .oss-secrets-block {
+        padding: 0;
+    }
+
+    .oss-secrets-hint {
+        text-align: left;
+
+        ul,
+        li {
+            font-size: .875rem;
+        }
+    }
+
+    .secrets-divider {
+        border-top: 1px solid var(--ks-border-primary);
+    }
+
+    .ee-tag-wrap {
+        :deep(.enterprise-tag) {
+            margin: 0 0 0.5rem 0;
         }
     }
 </style>

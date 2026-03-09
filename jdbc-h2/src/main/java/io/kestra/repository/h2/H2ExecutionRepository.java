@@ -34,7 +34,7 @@ public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
         return H2ExecutionRepositoryService.findLabelCondition(input, operation);
     }
 

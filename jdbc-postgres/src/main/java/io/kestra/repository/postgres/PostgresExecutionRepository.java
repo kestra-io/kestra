@@ -41,7 +41,7 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     }
 
     @Override
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
         return PostgresExecutionRepositoryService.findLabelCondition(input, operation);
     }
 

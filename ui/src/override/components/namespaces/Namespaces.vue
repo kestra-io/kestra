@@ -154,7 +154,7 @@
 
         namespaces.value.forEach((item) => {
             const parts = item.id.split(".");
-            let currentLevel = map;
+            let currentLevel = map as any;
 
             parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
@@ -197,7 +197,7 @@
         return result;
     });
 
-    const namespaceLabel = (path) => {
+    const namespaceLabel = (path: string) => {
         const segments = path.split(".");
         return segments.length > 1 ? segments[segments.length - 1] : path;
     };

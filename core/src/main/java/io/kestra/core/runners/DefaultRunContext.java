@@ -61,6 +61,7 @@ public class DefaultRunContext extends RunContext {
     private WorkingDir workingDir;
     private Validator validator;
     private LocalPath localPath;
+    private SDK sdk;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -167,6 +168,7 @@ public class DefaultRunContext extends RunContext {
             this.validator = applicationContext.getBean(Validator.class);
             this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
             this.assetManagerFactory = applicationContext.getBean(AssetManagerFactory.class);
+            this.sdk = applicationContext.getBean(RunContextSDKFactory.class).create(applicationContext, this);
         }
     }
 
@@ -640,6 +642,11 @@ public class DefaultRunContext extends RunContext {
         return new InputAndOutputImpl(this.applicationContext, this);
     }
 
+    @Override
+    public SDK sdk() {
+        return this.sdk;
+    }
+
     /**
      * Builder class for constructing new {@link DefaultRunContext} objects.
      */
@@ -660,6 +667,7 @@ public class DefaultRunContext extends RunContext {
         private String triggerExecutionId;
         private RunContextLogger logger;
         private KVStoreService kvStoreService;
+        private AssetManagerFactory assetManagerFactory;
         private List<String> secretInputs;
         private Task task;
         private AbstractTrigger trigger;
@@ -682,6 +690,7 @@ public class DefaultRunContext extends RunContext {
             context.storage = storage;
             context.triggerExecutionId = triggerExecutionId;
             context.kvStoreService = kvStoreService;
+            context.assetManagerFactory = assetManagerFactory;
             context.secretInputs = secretInputs;
             context.task = task;
             context.trigger = trigger;

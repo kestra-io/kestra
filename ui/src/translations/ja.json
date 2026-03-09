@@ -7,23 +7,16 @@
     "Editor fontfamily": "エディターのフォントファミリー",
     "Editor fontsize": "エディターのフォントサイズ",
     "Editor theme": "エディターテーマ",
-    "Finish": "完了",
     "Fold auto": "エディター：複数行の自動折りたたみ",
     "Fold content lines": "複数行文字列を折りたたむ",
     "Hover description": "エディター: key または value にホバーするとフィールドの説明を表示",
     "Language": "言語",
-    "Next step": "次のステップ",
     "Per page": "ページごと",
-    "Previous step": "前のステップ",
-    "Reset guided tour": "ガイド付きツアーを再起動",
     "Set default page": "デフォルトページを設定",
     "Set labels": "ラベルを設定",
     "Set labels done": "実行のラベルが正常に設定されました",
     "Set labels to execution": "実行<code>{id}</code>のラベルを追加または更新",
     "Set labels tooltip": "実行にラベルを設定",
-    "Skip tour": "ツアーをスキップ",
-    "Skip tutorial": "チュートリアルをスキップ",
-    "Step": "ステップ",
     "Task Id already exist in the flow": "Task Id {taskId}はflow内ですでに存在します。",
     "Total": "合計",
     "Unfold content lines": "複数行文字列を展開する",
@@ -47,12 +40,20 @@
     "after": "後",
     "aggregation": "集計",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "データについて質問してください。例: 過去7日間のflowの成功率を教えてください。"
+      },
       "flow": {
         "enable_instructions": {
           "footer": "注意: 現時点では、オープンソース版のAIプロバイダーとしてGeminiのみがサポートされています。エンタープライズ版については、他のモデルプロバイダーの設定についてAI Copilotのドキュメントを参照してください。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
           "header": "<b>AI Copilotはまだ設定されていません。</b>\n\nAI Copilotを有効にするには、次のスニペットをKestraインスタンスの構成ファイル（例：<code>application.yml</code>）に追加し、<code>geminiApiKey</code>を実際のキーに置き換えてください。"
         },
-        "generating": "フローのYAMLを生成しています...",
+        "generating": {
+          "app": "アプリのYAMLを生成しています...",
+          "dashboard": "ダッシュボードのYAMLを生成しています...",
+          "flow": "フローのYAMLを生成しています...",
+          "test": "テストYAMLを生成しています..."
+        },
         "prompt_placeholder": "指示を入力してKestra flowを作成してください。例: 毎週月曜日の午前9時に実行されるflowを作成してください。",
         "title": "AIエージェント"
       }
@@ -62,7 +63,9 @@
     "api": "API",
     "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
-    "assets": "アセット",
+    "assets": {
+      "title": "アセット"
+    },
     "attempt": "試行",
     "attempts": "試行回数",
     "auditlogs": "Audit Logs",
@@ -369,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a></strong>",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
           "intro": "新しいSecretを作成するには：",
           "second": "`<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>`という名前の環境変数を上記の値で追加してください。",
           "third": "Kestraインスタンスを再起動する"
@@ -402,9 +405,18 @@
         "zoom_out": "ズームアウト"
       },
       "search": {
-        "asset_placeholder": "アセット、flow、またはnamespaceで検索...",
+        "flow": {
+          "display": "フローの依存関係を含める"
+        },
+        "namespace": {
+          "no_namespace": "namespaceなし",
+          "select": "namespaceを選択"
+        },
         "no_results": "{term} に対する結果が見つかりませんでした",
-        "placeholder": "flow または namespace で検索..."
+        "placeholders": {
+          "asset": "アセット、flow、またはnamespaceで検索...",
+          "default": "flow または namespace で検索..."
+        }
       }
     },
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
@@ -429,6 +441,7 @@
     "download": "ダウンロード",
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
+    "draft_available": "エディターでドラフト変更が利用可能です",
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "duration": "期間",
     "dynamic": "動的",
@@ -498,9 +511,17 @@
           "title": "現在、依存関係はありません。"
         }
       },
+      "kill_switches": {
+        "content": "キルスイッチ機能は、問題のある実行を停止するためのUIベースのメカニズムを提供します。これは、CLI専用の<code>--skip-executions</code>および<code>--skip-flows</code>コマンドを包括的な管理インターフェースに置き換えます。",
+        "title": "まだKill Switchがありません！"
+      },
       "panels": {
-        "content": "Flow CodeまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Namespace Context）を選択してください。",
+        "content": "フローのコードまたはノーコードを開いてフローの編集を開始するか、関連機能のために別のパネル（トポロジー、ドキュメント、Namespace Files、Blueprints、コンテキスト）を選択してください。",
         "title": "現在、パネルは開いていません。"
+      },
+      "pluginDefaults": {
+        "content": "プラグインデフォルトを使用すると、プラグインの設定を一元管理し、namespace内のすべてのflowと共有できます。",
+        "title": "プラグインのデフォルトがまだありません！"
       },
       "plugins": {
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
@@ -618,8 +639,11 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
+    "export_as": ".{format}としてエクスポート",
     "export_csv": "CSVとしてエクスポート",
     "exports": "エクスポート",
+    "failed to export plugin defaults": "プラグインのデフォルトのエクスポートに失敗しました",
+    "failed to import plugin defaults": "プラグインのデフォルトのインポートに失敗しました",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
     "feeds": {
@@ -629,8 +653,8 @@
     "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
     "files": "ファイル",
     "filter": {
-      "active key value pairs": "アクティブなkey/valueペア",
-      "add key value pair": "キー/バリュー ペアを追加",
+      "active key value pairs": "アクティブなKey/Valueペア",
+      "add key value pair": "キー/Valueペアを追加",
       "aggregation": {
         "description": "集約方法でフィルター",
         "label": "集計"
@@ -689,16 +713,25 @@
         "label": "Flow ID"
       },
       "footer_apply": "適用",
+      "group": {
+        "description": "グループでフィルター",
+        "label": "グループ"
+      },
       "hierarchy": {
         "all": "デフォルト",
         "child_description": "ネストされた/トリガーされた実行のみを表示",
         "parent_description": "トップレベル/ルートの実行のみを表示"
       },
       "key": "キー",
+      "kill_switch_type": {
+        "description": "キルスイッチタイプでフィルター",
+        "label": "タイプ"
+      },
       "kind": {
         "description": "実行種別でフィルター",
         "label": "種類"
       },
+      "kv_pair_selected": "{count} 個のKey/Valueペアが選択されました",
       "label": "ラベル",
       "labels": {
         "description": "ラベルでフィルター",
@@ -916,6 +949,10 @@
         "label": "トリガー状態"
       },
       "update": "更新",
+      "username": {
+        "description": "ユーザー名でフィルター",
+        "label": "ユーザー名"
+      },
       "value": "値",
       "workerId": {
         "description": "ワーカーIDでフィルター",
@@ -989,6 +1026,7 @@
     "fix_with_ai": "AIで修正",
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
+    "flow already exists message": "namespace <code>{namespace}</code> に flow <code>{id}</code> が既に存在します。新しいリビジョンを作成しますか？",
     "flow creation": "Flow作成",
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",
@@ -1096,7 +1134,6 @@
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line-by-line": "行ごと表示",
-    "live help": "ライブヘルプ",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
@@ -1268,6 +1305,7 @@
           "retry": "リトライ",
           "sla": "SLA",
           "taskDefaults": "タスクデフォルト",
+          "updated": "更新済み",
           "variables": "変数",
           "workerGroup": "ワーカーグループ"
         },
@@ -1323,6 +1361,7 @@
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "no_file_choosen": "ファイルが選択されていません",
     "no_flow_outputs": "出力は利用できません。",
+    "no_history": "履歴はありません",
     "no_inputs": "入力が利用できません。",
     "no_logs_data": "データなし",
     "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
@@ -1344,45 +1383,130 @@
     "of": "の",
     "ok": "OK",
     "onboarding": {
-      "finish": "完了",
-      "next": "次へ",
-      "no_flows": "チュートリアルnamespaceに利用可能なflowはありません。",
-      "previous": "前へ",
-      "skip": "プロダクトツアーをスキップ",
+      "actions": {
+        "cancel_tutorial": "チュートリアルをキャンセル",
+        "complete": "完了",
+        "edit_flow_to_continue": "右上の「Edit flow」をクリックしてください。",
+        "execute_to_continue": "1. 右上の「Execute」をクリックします。\n2. <strong>name</strong> に値を入力します。\n3. モーダルで再度「Execute」をクリックします。",
+        "finish_tutorial": "チュートリアルを終了",
+        "next": "次へ",
+        "save_to_continue": "右上の「Save」をクリックしてください。"
+      },
+      "cancel_modal": {
+        "confirm": "チュートリアルをキャンセル",
+        "description": "最初のフローチュートリアルをキャンセルしますか？",
+        "keep": "チュートリアルを続ける",
+        "title": "最初のフローチュートリアルをキャンセル"
+      },
+      "editor_hints": {
+        "build_intro": "ステップごとに最初のフローを作成しましょう。",
+        "step_1": "# 1) idを追加",
+        "step_2": "# 2) namespaceを追加",
+        "step_3": "# 3) 入力を追加",
+        "step_4": "# 4) タスクを追加し、最初のPythonタスクを作成",
+        "step_5": "# 5) cronトリガーを追加"
+      },
+      "finish_actions": {
+        "create_flow": "フローを作成",
+        "explore_blueprints": "ブループリントを見る"
+      },
       "steps": {
-        "0": {
-          "content": "ここに来てくれてとても嬉しいです。<br />最初のflowを作成しましょう。",
-          "primary": "さあ、始めましょう！",
-          "title": "Kestraへようこそ！"
+        "add_cron_trigger": {
+          "description": "Triggersはスケジュールや外部イベント（例：WebhookやMQTTメッセージ）に基づいて実行を開始できます。<br><br>このフローが5分ごとに実行されるように、cronスケジュールトリガーを追加してください。",
+          "title": "cronトリガーを追加"
         },
-        "1": {
-          "primary": "次へ",
-          "title": "ユースケースを選択<br />方法をお見せします！"
+        "add_id": {
+          "description": "IDはフローの一意な名前です。検索、実行、一貫した参照のために使用されます。<br><br>ルートレベルに <code>id</code> を追加してください。",
+          "title": "フローIDを追加"
         },
-        "2": {
-          "content": "あなたのflowは自動補完と構文検証を備えたYAMLで記述されています。とても簡単です！",
-          "primary": "次へ",
-          "title": "コードエディタ"
+        "add_input": {
+          "description": "Inputsはフローレベルのパラメータで、タスク内から参照し、実行時の動作を動的に制御できます。<br><br><code>name</code> という名前の入力を <code>STRING</code> 型で追加してください。",
+          "title": "入力を追加"
         },
-        "3": {
-          "content": "依存関係ビューはリアルタイムで更新されます。新しいtaskを追加してみてください！",
-          "primary": "次へ",
-          "title": "トポロジービュー"
+        "add_input_default": {
+          "description": "フローが自動的にトリガーされる場合でも、入力には実行時の値が必要です。<br><br><code>name</code> 入力は前のステップで作成済みなので、再度追加する必要はありません。既存の <code>name</code> 入力にデフォルト値を設定してください。",
+          "title": "入力のデフォルト値を設定"
         },
-        "4": {
-          "content": "フローを起動するには「Execute」をクリックしてください。",
-          "title": "実行する時が来ました。"
+        "add_log_task": {
+          "description": "Tasksはフローが実行する作業単位で、順序付けられたステップのリストとして定義されます。各タスクには一意の <code>id</code> と <code>type</code> が必要です。Kestraは外部システム向けに多くのタスクプラグインを提供していますが、ここではPython Scriptタスクを使用します。<br><br><code>&#123;&#123; ... &#125;&#125;</code> 構文はPebble式で、実行時に変数を動的に参照するために使用されます。例：<code>&#123;&#123; inputs.name &#125;&#125;</code>。<br><br><code>tasks</code> の下に、<code>id</code>、<code>type</code>、および挨拶を出力する <code>script</code> を含む最初のタスクを追加してください。",
+          "title": "最初のタスクを追加"
         },
-        "5": {
-          "content": "「Execute」をクリックして、フローを実行してください。",
-          "title": "確認して起動！"
+        "add_namespace": {
+          "description": "Namespaceはチーム、プロジェクト、環境ごとにフローを整理するフォルダのようなグループです。<br><br>ルートレベルに <code>namespace</code> を追加してください。",
+          "title": "ネームスペースを追加"
         },
-        "6": {
-          "content": "実行の進行状況を追跡するには、LogsタブとOutputsタブを確認してください。<br /><br />その後、Flowsページに移動して他のユースケースを探索してください。",
-          "primary": "新しいフローを作成",
-          "secondary": "他のフローを探索",
-          "title": "準備完了です！"
+        "background_runs_info": {
+          "description": "このフローは5分ごとにバックグラウンドで実行されます。<br><br>左側メニューの「Executions」概要から、スケジュール実行を確認できます。",
+          "title": "スケジュール実行"
+        },
+        "edit_flow_from_execution": {
+          "description": "実行画面から直接フロー定義に戻り、素早く編集できます。",
+          "title": "フローエディタに戻る"
+        },
+        "execute_flow": {
+          "description": "実行すると、入力値を指定してフローの実行が開始されます。",
+          "title": "フローを実行"
+        },
+        "finish": {
+          "description": "素晴らしいスタートです。フローの作成、実行、パラメータ化、スケジュール設定を行いました。<br><br>次に何をしますか？",
+          "title": "最初のフローチュートリアルを完了しました"
+        },
+        "flow_basics": {
+          "description": "Kestraでは、<code>flow</code> は中核となるオーケストレーション単位です。メタデータと順序付けられたタスクを含むYAMLで定義します。<br><br>以下のサンプル構造を確認し、ステップごとに作成していきましょう。",
+          "title": "フローの基本"
+        },
+        "save_flow": {
+          "description": "保存すると、フロー定義が永続化され、実行できるようになります。",
+          "title": "フローを保存"
+        },
+        "save_flow_again": {
+          "description": "これでフローにはスケジュールと自動実行用のデフォルト入力値が設定されました。",
+          "title": "フローを保存"
+        },
+        "view_logs_status": {
+          "description": "実行の詳細には、ステータス、実行時間、タスクごとの出力ログが表示されます。<br><br>実行詳細を開き、ガントチャート内の <code>greet</code> をクリックしてログを確認してください。",
+          "title": "実行を確認"
         }
+      },
+      "validation": {
+        "add_cron_trigger_cron": "cron式を追加してください。例：`\"*/5 * * * *\"`。",
+        "add_cron_trigger_section": "`triggers` セクションを作成し、スケジュールトリガーを追加してください。",
+        "add_cron_trigger_type": "トリガータイプを `io.kestra.plugin.core.trigger.Schedule` に設定してください。",
+        "add_id": "上部にフローIDを追加してください。例：`id: hello_flow`。",
+        "add_input_default_defaults": "`name` にデフォルト値を追加してください。例：`defaults: \"Kestra\"`。",
+        "add_input_default_id": "既存の入力IDを `name` のままにしてください。",
+        "add_input_default_section": "`inputs` に戻り、既存の `name` 入力をそのまま使用してください（2つ目の入力は追加しないでください）。",
+        "add_input_id": "`inputs` 内に `id: name` を追加してください。",
+        "add_input_section": "`inputs` セクションを作成し、1つの入力を追加してください。",
+        "add_input_type": "入力タイプを `STRING` に設定してください。",
+        "add_log_task_id": "タスクにIDを設定してください。例：`id: greet`。",
+        "add_log_task_message": "タスクに `script` フィールドを追加してください。",
+        "add_log_task_pebble": "スクリプト内でPebble式を使用し、入力値を参照してください（例：`inputs.name`）。",
+        "add_log_task_section": "`tasks` セクションを作成し、最初のタスクを追加してください。",
+        "add_log_task_type": "タスクタイプを `io.kestra.plugin.scripts.python.Script` に設定してください。",
+        "add_namespace": "上部にnamespaceを追加してください。例：`namespace: company.team`。",
+        "complete_step": "あと少しです。このステップを完了して続行してください。",
+        "edit_flow_from_execution": "上部バーの「Edit flow」をクリックして続行してください。",
+        "execute_flow": "続行するにはフローを一度実行してください。",
+        "fix_yaml": "YAMLの書式に小さな問題があります。修正してから続行してください。",
+        "save_flow": "続行するには「Save」をクリックしてください。",
+        "save_flow_again": "続行するには再度「Save」をクリックしてください。",
+        "view_logs_status": "実行詳細を開き、`greet` のログを確認してください。"
+      },
+      "welcome": {
+        "additional_help": "追加のヘルプ",
+        "badge": "チュートリアル",
+        "blueprints": "ブループリント",
+        "docs": "ドキュメント",
+        "guided_description": "ガイド付きステップで最初のフローを作成し、実行する方法を学びましょう。",
+        "guided_duration": "ほとんどのユーザーにおすすめ",
+        "guided_title": "最初のフローを作成",
+        "headline": "数分で最初のワークフローを作成して実行しましょう",
+        "self_serve_description": "エディタに直接移動して、自分のフローを作成します。",
+        "self_serve_note": "上級ユーザー向け",
+        "self_serve_title": "一からフローを作成",
+        "slack": "Slackコミュニティ",
+        "tutorial": "チュートリアル"
       }
     },
     "open": "開く",
@@ -1442,13 +1566,36 @@
       "toggle": "プレイグラウンド",
       "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
-    "pluginDefaults": "プラグインのデフォルト",
+    "plugin defaults exported": "プラグインのデフォルトがエクスポートされました",
+    "plugin defaults imported": "プラグインのデフォルトがインポートされました",
+    "plugin defaults not imported": "一部のプラグインデフォルトをインポートできませんでした",
+    "pluginDefaults": {
+      "add": "プラグインデフォルトを追加",
+      "add_subtitle": "新しいプラグインのデフォルトをそのプロパティで設定する",
+      "cancel": "キャンセル",
+      "custom": "カスタムプラグイン",
+      "custom_configure": "カスタムプラグインタイプ - YAMLを使用して構成",
+      "custom_placeholder": "プラグインタイプを入力",
+      "custom_type": "カスタムプラグインタイプ",
+      "edit": "プラグインデフォルトを編集",
+      "edit_subtitle": "既存のプラグインのデフォルト設定を変更する",
+      "form": "フォーム",
+      "predefined": "定義済みプラグイン",
+      "select_predefined": "定義済みプラグインを選択",
+      "show_yaml": "YAMLを表示",
+      "title": "プラグインのデフォルト",
+      "update": "プラグインデフォルトを更新",
+      "use_custom": "カスタムを使用",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML設定"
+    },
     "pluginPage": {
       "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
     },
+    "plugin_default_already_exists": "<code>{type}</code>のプラグインデフォルトはすでに存在します。",
     "plugins": {
       "name": "プラグイン",
       "names": "プラグイン",
@@ -1654,7 +1801,7 @@
       },
       "confirm": {
         "config_title": "設定が有効であることを確認してください",
-        "confirm": "確認",
+        "confirm": "管理者ユーザーを作成",
         "not_valid": "いいえ、有効ではありません。",
         "valid": "はい、有効です"
       },
@@ -1663,7 +1810,7 @@
         "firstName": "名",
         "lastName": "姓",
         "password": "パスワード",
-        "password_requirements": "パスワードは8文字以上で、少なくとも1つの大文字と1つの数字を含める必要があります。"
+        "password_requirements": "少なくとも8文字で、1つの大文字と1つの数字を含めてください。"
       },
       "login": "ログイン",
       "logout": "ログアウト",
@@ -1671,38 +1818,40 @@
         "complete": "Kestra UIを開始",
         "config": "設定を検証",
         "survey": "詳細を教えてください",
-        "user": "アカウントを作成する"
+        "user": "管理者ユーザーを作成"
       },
       "subtitles": {
         "complete": "セットアップが正常に完了しました！",
         "config": "こちらはあなたの設定の詳細です",
-        "survey": "Kestra Open Source Edition の改善にご協力ください",
-        "user": "アカウントを作成してインスタンスをセットアップする"
+        "survey": "申し訳ありませんが、翻訳するテキストが提供されていません。翻訳が必要なテキストを提供してください。",
+        "user": "インスタンスを保護して開始します。"
       },
       "success": {
         "subtitle": "準備完了です！",
         "title": "おめでとうございます！"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "個人使用",
-        "company_size": "御社の規模はどのくらいですか？",
+        "company_11_50": "個人プロジェクト",
+        "company_1_10": "学習 / 探索",
+        "company_250_plus": "本番デプロイメント",
+        "company_50_250": "私のチーム/会社のために評価中",
+        "company_personal": "その他",
+        "company_size": "Kestraを使用する主な目的は何ですか？",
         "continue": "続行",
-        "newsletter": "Kestraのニュースレターを購読して、最新の機能や変更を常に把握しましょう。",
+        "newsletter": "製品の更新情報をメールで受け取る。",
+        "newsletter_heading": "常に情報を把握",
         "skip": "スキップ",
-        "use_case": "主な使用ケースは何ですか？",
-        "use_case_business": "ビジネスプロセス",
+        "use_case": "何に使用する予定ですか？",
+        "use_case_business": "ビジネスワークフロー",
         "use_case_data": "データワークフロー",
         "use_case_infrastructure": "インフラストラクチャ自動化",
-        "use_case_ml": "ML/AI パイプライン",
-        "use_case_other": "その他"
+        "use_case_ml": "MLパイプライン",
+        "use_case_other": "その他",
+        "use_case_scheduling": "スケジューリングと定期ジョブ"
       },
       "titles": {
-        "survey": "詳細を教えてください",
-        "user": "アカウントを作成"
+        "survey": "Kestra OSSの改善にご協力ください",
+        "user": "管理者ユーザーを作成"
       },
       "troubleshooting": "パスワードをお忘れですか？",
       "validation": {
@@ -1731,6 +1880,10 @@
     "side-by-side": "並列表示",
     "slack support": "Slackで質問する",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Kestraインスタンスに接続できませんでした。実行中であることを確認し、ページを更新してください。",
+        "title": "接続が中断されました"
+      },
       "loading_execution": "実行の読み込み中に問題が発生しました。"
     },
     "source": "ソース",
@@ -1894,6 +2047,7 @@
         "text": "Slackコミュニティで質問してください。行き詰まった場合は、私たちがサポートします。✋",
         "title": "お困りですか？"
       },
+      "menu": "Welcome",
       "tour": {
         "text": "ユースケースを選択し、ステップバイステップガイドに従って、Kestraの機能と能力を学びましょう。❤️",
         "title": "製品ツアーを体験する"
@@ -1903,14 +2057,8 @@
         "title": "チュートリアル"
       }
     },
-    "welcome aboard": "🚀 Kestraへようこそ！",
-    "welcome aboard content": "ガイド付きツアーを利用して最初のflowを作成し、Blueprintsでさらに多くの例を見つけてください。",
-    "welcome button create": "プロダクトツアーを開始",
-    "welcome display require": "<strong>最初のflow</strong>を実行して始めましょう",
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
-      "start": "最初のworkflowを立ち上げましょう。",
-      "wel_text": "ようこそ！",
       "welcome": "Kestraへようこそ"
     },
     "wordmark_colors": "ワードマークの色は背景に応じて変化し、アイコンは暗い背景に配置された場合、背景なしで表示されます。",

@@ -25,7 +25,13 @@ import jakarta.validation.Valid;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(title = "Condition based on execution status.")
+@Schema(
+    title = "Match executions by status.",
+    description = """
+        Passes when the triggering execution’s current state is included in `in` and not present in `notIn`.
+
+        If a list is empty it is ignored, so provide at least one of them to avoid unintentionally matching everything."""
+)
 @Plugin(
     examples = {
         @Example(

@@ -28,16 +28,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Task runner that executes a task as a subprocess on the Kestra host.",
+    title = "Run tasks as local subprocesses on the worker.",
     description = """
-        To access the task's working directory, use the `{{workingDir}}` Pebble expression or the `WORKING_DIR` environment variable. Input files and namespace files will be available in this directory.
+        Executes task commands with the host OS process APIs. Working directory is exposed via `{{workingDir}}` expression / `WORKING_DIR` environment variables; if `outputFiles` are configured, write them to the same directory or use `{{outputDir}}` / `OUTPUT_DIR` when enabled. Input files and namespace files will be available in this directory.
 
-        To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
-
-        Note that:
-
-        - This task runner is independent of any Operating System. You can use it equally on Linux, Mac, or Windows without any additional configuration.
-        - When the Kestra Worker running this task is shut down, the process will be interrupted and re-created as soon as the worker is restarted."""
+        Platform-agnostic (Linux/macOS/Windows). If the worker stops, the process is interrupted and will be recreated on restart."""
 )
 @Plugin(
     examples = {

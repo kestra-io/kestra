@@ -1,6 +1,6 @@
 <template>
     <div class="button-wrapper">
-        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled" />
+        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled && !onboardingStore.isGuidedActive" />
 
         <ValidationError
             class="validation"
@@ -49,7 +49,8 @@
     import ValidationError from "../flows/ValidationError.vue";
 
     import localUtils from "../../utils/utils";
-    import {useFlowStore} from "../../stores/flow";
+    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import {useToast} from "../../utils/toast";
 
     defineProps<{
@@ -68,6 +69,7 @@
     };
 
     const flowStore = useFlowStore();
+    const onboardingStore = useOnboardingV2Store();
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
@@ -104,10 +106,13 @@
         try {
             // Save the isCreating before saving.
             // saveAll can change its value.
-            const isCreating = flowStore.isCreating
-            await flowStore.saveAll()
+            const isCreating = flowStore.isCreating;
+            const outcome = await flowStore.saveAll();
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                onboardingStore.recordSave();
+            }
 
-            if(isCreating){
+            if (isCreating && outcome === "redirect_to_update") {
                 await router.push({
                     name: "flows/update",
                     params: {

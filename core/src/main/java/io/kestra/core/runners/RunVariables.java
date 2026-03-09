@@ -332,7 +332,12 @@ public final class RunVariables {
                 }
 
                 if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
-                    builder.put("trigger", execution.getTrigger().getVariables());
+                    Map<String, Object> outputs = execution.getTrigger().getVariables();
+                    if (decryptVariables) {
+                        final Secret secret = new Secret(secretKey, logger);
+                        outputs = secret.decrypt(outputs);
+                    }
+                    builder.put("trigger", outputs);
 
                     // temporal hack to add back the `schedule`variables
                     // will be removed in 2.0
@@ -355,6 +360,10 @@ public final class RunVariables {
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
+            } else if (flow != null) {
+                // if the execution is null, we should add flow labels
+                // this is useful for triggers that don't have an execution
+                builder.put("labels", Label.toNestedMap(flow.getLabels()));
             }
 
             // variables
@@ -405,8 +414,10 @@ public final class RunVariables {
             } else if (inputs.containsKey(id)) {
                 try {
                     Map<String, String> encryptedString = (Map<String,String>) inputs.get(id);
-                    String decoded = secret.decrypt(encryptedString.get("value"));
-                    inputs.put(id, decoded);
+                    if (encryptedString != null) {
+                        String decoded = secret.decrypt(encryptedString.get("value"));
+                        inputs.put(id, decoded);
+                    }
                 } catch (GeneralSecurityException e) {
                     throw new RuntimeException(e);
                 }

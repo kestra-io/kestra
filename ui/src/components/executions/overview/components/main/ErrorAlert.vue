@@ -61,7 +61,7 @@
             flowId: props.execution.flowId,
             tab: "logs",
         },
-        query: {level: "ERROR"},
+        query: {"filters[level][EQUALS]": "ERROR"},
     };
 
     const logs = ref<Log[]>([]);

@@ -1,4 +1,8 @@
 
+<template>
+    <span class="d-none" />
+</template>
+
 <script setup lang="ts">
     import {ElNotification} from "element-plus";
     import {pageFromRoute} from "../utils/eventsRouter";

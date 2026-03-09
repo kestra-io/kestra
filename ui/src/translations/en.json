@@ -1731,8 +1731,17 @@
         "fit_view": "Fit to screen"
       },
       "search": {
-        "placeholder": "Search by flow or namespace...",
-        "asset_placeholder": "Search by asset or flow or namespace...",
+        "placeholders": {
+          "default": "Search by flow or namespace...",
+          "asset": "Search by asset, flow or namespace..."
+        },
+        "namespace": {
+          "select": "Select a namespace",
+          "no_namespace": "Without namespace"
+        },
+        "flow": {
+          "display": "Include flow dependencies"
+        },
         "no_results": "No results found for {term}"
       }
     },

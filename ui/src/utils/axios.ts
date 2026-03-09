@@ -1,19 +1,22 @@
-import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
+import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
-import {Router, useRouter} from "vue-router"
+import {inject} from "vue"
+import {Router, routerKey} from "vue-router"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
+import {useUnsavedChangesStore} from "../stores/unsavedChanges"
+import {client} from "kestra-api/client.gen"
 
 let pendingRoute = false
 let requestsTotal = 0
 let requestsCompleted = 0
 const latencyThreshold = 0
 
-const JWT_REFRESHED_QUERY = "__jwt_refreshed__"
+const REFRESHED_HEADER = "X-JWT-Refreshed"
 
 const progressComplete = () => {
     pendingRoute = false
@@ -71,7 +74,7 @@ interface QueueItem {
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void
 }
 
-export const createAxios = (
+const createAxios = (
     router: Router | undefined,
     oss: boolean
 ) => {
@@ -93,11 +96,12 @@ export const createAxios = (
     instance.interceptors.response.use(
         (response) => response,
         async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean}}) => {
+
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 const coreStore = useCoreStore()
                 coreStore.message = {
                     variant: "error",
-                    response: errorResponse,
+                    response: errorResponse.response,
                     content: errorResponse,
                 }
                 return Promise.reject(errorResponse)
@@ -149,7 +153,7 @@ export const createAxios = (
                     toRefreshQueue = []
 
                     document.body.classList.add("login")
-                    useCoreStore().unsavedChange = false
+                    useUnsavedChangesStore().unsavedChange = false
                     useLayoutStore().setTopNavbar(undefined)
                     BasicAuth.logout()
                     delete instance.defaults.headers.common["Authorization"]
@@ -168,13 +172,10 @@ export const createAxios = (
                 }
 
                 if (!refreshing) {
-                    const originalRequestData = typeof originalRequest.data === "string"
-                        ? JSON.parse(originalRequest.data || "{}")
-                        : (originalRequest.data ?? {})
 
                     // if we already tried refreshing the token,
                     // the user simply does not have access to this feature
-                    if (originalRequestData[JWT_REFRESHED_QUERY] === 1) {
+                    if (originalRequest.headers[REFRESHED_HEADER] === "1") {
                         return Promise.reject(errorResponse)
                     }
 
@@ -199,8 +200,7 @@ export const createAxios = (
                         refreshing = false
 
                         // Retry original request
-                        originalRequestData[JWT_REFRESHED_QUERY] = 1
-                        originalRequest.data = originalRequest.data ? JSON.stringify(originalRequestData) : undefined
+                        originalRequest.headers[REFRESHED_HEADER] = "1"
 
                         return instance(originalRequest)
 
@@ -211,7 +211,7 @@ export const createAxios = (
                         toRefreshQueue = []
 
                         document.body.classList.add("login")
-                        useCoreStore().unsavedChange = false
+                        useUnsavedChangesStore().unsavedChange = false
                         useLayoutStore().setTopNavbar(undefined)
                         BasicAuth.logout()
                         delete instance.defaults.headers.common["Authorization"]
@@ -282,28 +282,45 @@ export const createAxios = (
         }
     })
 
-    return instance;
+    client.setConfig({
+        axios: instance
+    })
+
+    return {client, instance};
 };
 
-export default (
-    callback: (instance: AxiosInstance) => void,
+let clientInstance: ReturnType<typeof createAxios> | null = null;
+
+function configureAxios(
+    callback: (clientInstance: ReturnType<typeof createAxios>["instance"]) => void,
     _store: any,
     ...args: Parameters<typeof createAxios>
-) => {
-    callback(createAxios(...args));
+) {
+    if (!clientInstance) {
+        clientInstance = createAxios(...args);
+    }
+    
+    callback(clientInstance.instance);
 }
 
-let axiosInstance: AxiosInstance | null = null;
+export default configureAxios
 
-export const useAxios = () => {
-    const router = useRouter();
+export function useClient(){
+    // for storybook tests we need to allow router to be undefined
+    const router = inject(routerKey, undefined as any) as Router | undefined;
 
     const miscStore = useMiscStore();
     const {edition} = miscStore.configs || {};
-        
-    if (!axiosInstance) {
-        axiosInstance = createAxios(router, edition === "OSS");
+
+    if (!clientInstance) {
+        clientInstance = createAxios(router, edition === "OSS");
     }
 
-    return axiosInstance;
+    return clientInstance;
+};
+
+export function useAxios(){
+    const axiosInstance = useClient();
+
+    return axiosInstance.instance;
 };

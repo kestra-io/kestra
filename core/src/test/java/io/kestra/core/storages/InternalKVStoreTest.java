@@ -1,7 +1,6 @@
 package io.kestra.core.storages;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.kv.InternalKVStore;
@@ -12,6 +11,7 @@ import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@KestraTest
+@MicronautTest
 class InternalKVStoreTest {
     private static final Instant date = Instant.now().truncatedTo(ChronoUnit.MILLIS);
     private static final Map<String, Object> complexValue = Map.of("some", "complex", "object", Map.of("with", "nested", "values", date));
@@ -212,17 +212,17 @@ class InternalKVStoreTest {
         // When
         Assertions.assertThrows(ResourceExpiredException.class, () -> kv.getValue(TEST_KV_KEY));
     }
-    
+
     @Test
     void shouldGetKVValueAndMetadata() throws IOException {
         // Given
         final InternalKVStore kv = kv();
         KVValueAndMetadata val = new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), complexValue);
         kv.put(TEST_KV_KEY, val);
-        
+
         // When
         Optional<KVValueAndMetadata> result = kv.findMetadataAndValue(TEST_KV_KEY);
-        
+
         // Then
         Assertions.assertEquals(val.value(), result.get().value());
         Assertions.assertEquals(val.metadata().getDescription(), result.get().metadata().getDescription());
@@ -265,6 +265,25 @@ class InternalKVStoreTest {
         assertThat(illegalArgumentException.getMessage()).isEqualTo(expectedErrorMessage);
 
         Assertions.assertDoesNotThrow(() -> KVStore.validateKey("AN_UPPER.CASE-key"));
+    }
+
+    @Test
+    void should_purge_entries() throws IOException {
+        InternalKVStore kv = kv();
+        String key = IdUtils.create();
+
+        kv.put(key, new KVValueAndMetadata(null, "value1"));
+        kv.put(key, new KVValueAndMetadata(null, "value2"));
+        kv.put(key, new KVValueAndMetadata(null, "value3"));
+
+        kv.purge(List.of(
+            new KVEntry(kv.namespace(), key, 1, null, Instant.now(), Instant.now(), null),
+            new KVEntry(kv.namespace(), key, 3, null, Instant.now(), Instant.now(), null)
+        ));
+
+        List<KVEntry> kvEntries = kv.listAll();
+        assertThat(kvEntries).hasSize(1);
+        assertThat(kvEntries.getFirst().version()).isEqualTo(2);
     }
 
     private InternalKVStore kv() {

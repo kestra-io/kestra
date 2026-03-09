@@ -54,6 +54,10 @@ abstract public class TestsUtils {
         queueConsumersCancellations.get().clear();
     }
 
+    public static String randomPassword() {
+        return IdUtils.create() + "Aa1!";
+    }
+
     public static String randomNamespace(String... prefix) {
         return TestsUtils.randomString(prefix);
     }
@@ -74,13 +78,13 @@ abstract public class TestsUtils {
      * @param prefix
      * @return
      */
-    private static String randomString(String... prefix) {
+    public static String randomString(String... prefix) {
         if (prefix.length == 0) {
             prefix = new String[]{String.join("-", stackTraceToParts())};
         }
         var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
         var validTenantPrefixes = Arrays.stream(prefix)
-            .map(s -> s.replace(".", "-").replace("$", "-"))
+            .map(s -> s.replaceAll("[.$<>]", "-"))
             .map(String::toLowerCase)
             .peek(p -> {
                 if (!p.matches(tenantRegex)) {
@@ -158,10 +162,14 @@ abstract public class TestsUtils {
     }
 
     private static Flow mockFlow(StackTraceElement caller) {
+        return mockFlow(MAIN_TENANT, caller);
+    }
+
+    private static Flow mockFlow(String tenant, StackTraceElement caller) {
         return Flow.builder()
             .namespace(caller.getClassName().toLowerCase())
             .id(caller.getMethodName().toLowerCase())
-            .tenantId(MAIN_TENANT)
+            .tenantId(tenant)
             .revision(1)
             .build();
     }
@@ -220,13 +228,21 @@ abstract public class TestsUtils {
     }
 
     public static RunContext mockRunContext(RunContextFactory runContextFactory, Task task, Map<String, Object> inputs) {
+        return mockRunContext(MAIN_TENANT, runContextFactory, task, inputs);
+    }
+
+    public static RunContext mockRunContext(String tenant, RunContextFactory runContextFactory, Task task, Map<String, Object> inputs) {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
 
-        Flow flow = TestsUtils.mockFlow(caller);
+        Flow flow = TestsUtils.mockFlow(tenant, caller);
         Execution execution = TestsUtils.mockExecution(flow, inputs, null);
         TaskRun taskRun = TestsUtils.mockTaskRun(execution, task);
 
-        return runContextFactory.of(flow, task, execution, taskRun);
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+
+        runContextFactory.initializer().forExecutor((DefaultRunContext) runContext);
+
+        return runContext;
     }
 
     public static <T> Flux<T> receive(QueueInterface<T> queue) {

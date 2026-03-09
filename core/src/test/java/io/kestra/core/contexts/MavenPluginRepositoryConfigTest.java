@@ -1,8 +1,7 @@
 package io.kestra.core.contexts;
 
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +9,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest(environments = "maven")
+@MicronautTest(environments = "maven")
 class MavenPluginRepositoryConfigTest {
 
     @Inject

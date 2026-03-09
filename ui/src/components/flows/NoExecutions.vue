@@ -10,7 +10,7 @@
                 {{ $t("no-executions-view.title") }}
             </h2>
             <p class="desc">
-                {{ $t("no-executions-view.sub_title") }}
+                {{ isNamespace ? $t("no-executions-view.namespace_sub_title") : $t("no-executions-view.sub_title") }}
             </p>
             <div v-if="flow && !flow.deleted" class="trigger">
                 <TriggerFlow
@@ -23,9 +23,9 @@
             </div>
         </div>
         <el-divider>
-            {{ $t("welcome_page.guide") }}
+            {{ isNamespace ? $t("no-executions-view.namespace_guidance_desc") : $t("welcome_page.guide") }}
         </el-divider>
-        <OverviewBottom class="bottom" />
+        <OverviewBottom class="bottom" :isNamespace />
     </EmptyTemplate>
 </template>
 <script setup lang="ts">
@@ -37,8 +37,9 @@
     //@ts-expect-error no declaration file
     import TriggerFlow from "../flows/TriggerFlow.vue"
 
-    withDefaults(defineProps<{topbar?: boolean}>(), {
+    withDefaults(defineProps<{topbar?: boolean; isNamespace?: boolean}>(), {
         topbar: true,
+        isNamespace: false,
     })
 
     const flowStore = useFlowStore();

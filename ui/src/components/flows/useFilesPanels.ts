@@ -4,7 +4,7 @@ import TypeIcon from "../utils/icons/Type.vue";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue";
 import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
-import {useNamespacesStore} from "../../override/stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces";
 import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
 import {useFlowStore} from "../../stores/flow";
 
@@ -100,8 +100,22 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
         const uid = generateUid(tab)
         for(const panel of panels.value){
-            if(panel.tabs.some(e => e.uid === uid)){
-                panel.tabs = panel.tabs.filter(e => e.uid !== uid);
+            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid));
+            
+            if (tabIndex > -1) {
+                // if the closed tab is the active one, 
+                // we need to set a new active tab
+                panel.tabs.splice(tabIndex, 1);
+                if (panel.tabs.length === 0) {
+                    // if no tabs left, remove the panel
+                    continue
+                }
+                panel.activeTab = panel.tabs[
+                    Math.min(
+                        tabIndex, 
+                        panel.tabs.length - 1
+                    )
+                ];
             }
         }
     })
@@ -125,24 +139,38 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
 
     const namespacesStore = useNamespacesStore();
 
-    // on save all files, save all files
+    // on save all files, save all namespace files
     // and set all tabs as not dirty
     provide(FILES_SAVE_ALL_INJECTION_KEY, async () => {
+        const files:{
+            file: Parameters<typeof namespacesStore.saveOrCreateFile>[0]
+            tab: TabLiveWithContent
+        }[] = [];
         for(const panel of panels.value){
             for(const tab of panel.tabs as TabLiveWithContent[]){
-                if(!tab.content || !tab.path){
+                if(!tab.uid.startsWith(`${CODE_PREFIX}-`) || !tab.content || !tab.path || !tab.dirty){
                     continue
                 }
                 if(namespace.value === undefined){
                     throw new Error(`Cannot save file "${tab.path}": namespace is undefined`)
                 }
-                await namespacesStore.createFile({
-                    namespace: namespace.value,
-                    path: tab.path,
-                    content: tab.content
+                files.push({
+                    file:{
+                        namespace: namespace.value,
+                        path: tab.path,
+                        content: tab.content
+                    },
+                    tab
                 });
-                tab.dirty = false;
             }
+        }
+        if(files.length > 0){
+            // parallelize saving of files
+            await Promise.all(
+                files.map(file => namespacesStore.saveOrCreateFile(file.file)
+                    // only remove the dirty flag once the file was saved
+                    .then(() => file.tab.dirty = false))
+            );
         }
     });
 

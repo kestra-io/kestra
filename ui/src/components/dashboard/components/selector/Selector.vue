@@ -1,8 +1,8 @@
 <template>
     <el-dropdown trigger="click" hideOnClick placement="bottom-end">
-        <el-button :icon="Menu" class="selected">
-            <span class="text-truncate">
-                {{ selected ?? t("dashboards.default") }}
+        <el-button :icon="ChartLineVariant" class="selected">
+            <span v-if="!verticalLayout" class="text-truncate">
+                {{ selected?.title ?? $t('dashboards.default') }}
             </span>
         </el-button>
 
@@ -15,15 +15,17 @@
                     :to="{name: 'dashboards/create', query}"
                     class="w-100"
                 >
-                    <small>{{ t("dashboards.creation.label") }}</small>
+                    <small>{{ $t("dashboards.creation.label") }}</small>
                 </el-button>
 
                 <Item
                     :dashboard="{
-                        id: filtered.filter(d => d.title === selected)?.[0]?.id ?? 'default',
-                        title: selected ?? t('dashboards.default')
+                        id: filtered.filter(d => d.id === selected?.id)?.[0]?.id ?? 'default',
+                        title: (selected?.title ?? $t('dashboards.default')),
+                        isDefault: filtered.filter(d => d.id === selected?.id)?.[0]?.isDefault
                     }"
                     :edit="edit"
+                    :setAsDefault="setAsTenantDefault"
                     class="mt-3"
                 />
 
@@ -31,7 +33,7 @@
 
                 <el-input
                     v-model="search"
-                    :placeholder="t('search')"
+                    :placeholder="$t('search')"
                     :prefixIcon="Magnify"
                     clearable
                     class="my-1 mb-3 search"
@@ -44,10 +46,11 @@
                         :dashboard
                         :edit="edit"
                         :remove="remove"
+                        :setAsDefault="setAsTenantDefault"
                         @click="select(dashboard)"
                     />
                     <span v-if="!filtered.length" class="empty">
-                        {{ t("dashboards.empty") }}
+                        {{ $t("dashboards.empty") }}
                     </span>
                 </div>
             </el-dropdown-menu>
@@ -71,53 +74,61 @@
     import {useDashboardStore} from "../../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
 
-    import {getDashboard} from "../../composables/useDashboards";
 
     import Item from "./Item.vue";
 
-    import Menu from "vue-material-design-icons/Menu.vue";
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
+
     const emits = defineEmits(["dashboard"]);
 
+    const rootName = computed(() => ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home");
     const query = computed(() => {
         return {
-            name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
+            name: rootName.value,
             params: JSON.stringify({...route.params, dashboard: undefined}),
         };
     });
 
     const search = ref("");
-    const dashboards = ref<{ id: string; title: string }[]>([]);
-    const filtered = computed(() => {
-        const DEFAULT = {id: "default", title: t("dashboards.default")};
-
-        return [DEFAULT, ...dashboards.value].filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
+    const dashboards = ref<{ id: string; title: string, isDefault: boolean }[]>([]);
+    const filtered = computed<{id: string, title: string, isDefault: boolean}[]>(() => {
+        return dashboards.value.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
     });
 
-    const STORAGE_KEY = getDashboard(route, "key");
-    
-    const selected = ref<string | null>(null);
-    const select = (dashboard: any) => {
-        selected.value = dashboard?.title;
 
-        if (STORAGE_KEY) {
-            if (dashboard?.id) {
-                localStorage.setItem(STORAGE_KEY, dashboard.id);
-            } else {
-                localStorage.removeItem(STORAGE_KEY);
-            }
+    const selected = computed(() => {
+        if(dashboardStore.activeDashboard){
+            return {id: dashboardStore.activeDashboard.id, title:dashboardStore.activeDashboard.title ?? dashboardStore.activeDashboard.id}
+        } else {
+            return undefined
         }
+    });
 
+    const select = (dashboard: {id: string}) => {
         emits("dashboard", dashboard.id);
+    };
+
+    const setAsTenantDefault = async (id: string) => {
+        switch (rootName.value){
+        case "flows/update": await dashboardStore.saveDefaults({defaultFlowOverviewDashboard: id}); break;
+        case "namespaces/update": await dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break;
+        default: await dashboardStore.saveDefaults({defaultHomeDashboard: id});
+        }
+        dashboards.value = []
+        await fetchDashboards()
     };
 
     const edit = (id: string) => {
         router.push({name: "dashboards/update", params: {dashboard: id}});
     };
 
-    const remove = (dashboard: any) => {
+    const remove = (dashboard: {title: string, id: string}) => {
         toast.confirm(t("dashboards.deletion.confirmation", {title: dashboard.title}), () => {
             return dashboardStore.delete(dashboard.id).then(() => {
                 dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
@@ -126,33 +137,13 @@
         });
     };
 
-    const getStoredDashboard = () => STORAGE_KEY ? localStorage.getItem(STORAGE_KEY) : null;
-    const fetchDashboards = () => {
-        dashboardStore
-            .list({})
-            .then((response: { results: { id: string; title: string }[] }) => {
-                dashboards.value = response.results;
-
-                const creation = Boolean(route.query.created);
-                const lastSelected = creation 
-                    ? (route.params?.dashboard ?? getStoredDashboard()) 
-                    : (getStoredDashboard() ?? route.params?.dashboard);
-
-                if (lastSelected) {
-                    const dashboard = dashboards.value.find((d) => d.id === lastSelected);
-
-                    if (dashboard) {
-                        selected.value = dashboard.title;
-                        emits("dashboard", dashboard.id);
-                    } else {
-                        selected.value = null;
-                        emits("dashboard", "default");
-                    }
-                }
-            });
+    const fetchDashboards = async () => {
+        dashboards.value = await dashboardStore.list({}, route) ;
     };
 
-    onBeforeMount(() => fetchDashboards());
+    onBeforeMount(() => {
+        fetchDashboards();
+    });
 
     const tenant = ref();
     watch(() => route.params.tenant, (t) => {
@@ -162,11 +153,7 @@
         }
     }, {immediate: true});
 
-    watch(() => route.params?.dashboard, (val) => {
-        if(route.name === "home" && STORAGE_KEY) {
-            localStorage.setItem(STORAGE_KEY, val as string);
-        }
-    }, {immediate: true});
+
 </script>
 
 <style scoped lang="scss">

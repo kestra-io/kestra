@@ -2,7 +2,6 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
@@ -93,6 +92,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     );
 
     Flux<Execution> findAllAsync(@Nullable String tenantId);
+
+    Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters);
 
     Execution delete(Execution execution);
 

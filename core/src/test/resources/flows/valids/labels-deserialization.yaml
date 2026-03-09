@@ -1,0 +1,17 @@
+id: labels-deserialization
+namespace: io.kestra.tests
+labels:
+  key1: 123
+
+#triggers:
+#- type: schedule
+#  expression: 42 4 1 * *
+#  backfill:
+#    start: 2018-01-01
+#    depend-on-past: false
+#
+
+tasks:
+  - id: t1
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ task.id }}"

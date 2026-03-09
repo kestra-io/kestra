@@ -10,7 +10,7 @@
             <KSFilter
                 :configuration="pluginFilter"
                 :buttons="{
-                    savedFilters: {shown: false}, 
+                    savedFilters: {shown: false},
                     tableOptions: {shown: false}
                 }"
                 :searchInputFullWidth="true"
@@ -31,14 +31,14 @@
                             :key="elementType"
                         >
                             <p
-                                v-if="elements.filter(t => t.toLowerCase().includes(searchInput)).length > 0"
+                                v-if="elements.length > 0"
                                 class="mb-0"
                             >
                                 {{ $t(elementType) }}
                             </p>
                             <ul>
                                 <li
-                                    v-for="element in elements.filter(t => t.toLowerCase().includes(searchInput))"
+                                    v-for="element in elements"
                                     :key="element"
                                 >
                                     <span @click="openPlugin(element)">{{ element }}</span>
@@ -62,20 +62,22 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onBeforeMount} from "vue";
+    import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
+    import {isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {usePluginFilter} from "../filter/configurations";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
     import {usePluginsStore} from "../../stores/plugins";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
 
     const route = useRoute();
     const router = useRouter();
     const pluginsStore = usePluginsStore();
-    
+
     const pluginFilter = usePluginFilter();
 
     const props = withDefaults(defineProps<{
@@ -85,13 +87,23 @@
         embed: false
     });
 
+    const {saveRestoreUrl} = useRestoreUrl();
+
     const icons = ref<Record<string, any>>({});
     const searchText = ref("");
 
     const handleSearch = (query: string) => {
         searchText.value = query;
+        const newQuery: Record<string, any> = {...route.query};
+        if (query !== undefined && query !== null && String(query).trim() !== "") {
+            newQuery.q = query;
+        } else {
+            // remove an empty `q=` in the URL on plugins/view
+            delete newQuery.q;
+        }
+
         router.push({
-            query: {...route.query, q: query || undefined}
+            query: newQuery
         });
     };
 
@@ -112,10 +124,7 @@
             .filter((plugin, index, self) =>
                 index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
             )
-            .filter(plugin =>
-                plugin.title.toLowerCase().includes(searchInput.value) ||
-                allElements(plugin).some(e => e.toLowerCase().includes(searchInput.value))
-            )
+            .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => isVisible(plugin))
             .sort((a, b) => {
                 const nameA = a.manifest["X-Kestra-Title"].toLowerCase();
@@ -177,6 +186,11 @@
         loadPluginIcons();
         searchText.value = String(route.query?.q ?? "");
     });
+
+    watch(() => route.query.q, (newQ) => {
+        searchText.value = String(newQ ?? "");
+        saveRestoreUrl();
+    });
 </script>
 
 <style scoped lang="scss">
@@ -231,3 +245,4 @@
         width: 2em;
     }
 </style>
+

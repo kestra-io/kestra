@@ -173,7 +173,7 @@
 </template>
 
 <script>
-    import Restart from "./Restart.vue";
+    import Restart from "./overview/components/actions/Restart.vue";
     import Metrics from "./Metrics.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import ChangeStatus from "./ChangeStatus.vue";
@@ -270,9 +270,12 @@
                 return Object.fromEntries(this.currentTaskRuns.map(taskRun => [taskRun.id, taskRun]));
             },
             logsWithIndexByAttemptUid() {
-                const indexedLogs = this?.logs
+                let indexedLogs = this?.logs
                     .filter(logLine => (logLine?.message ?? "").toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
                     .map((logLine, index) => ({...logLine, index}));
+            
+                // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
+                indexedLogs = Array.from(new Set(indexedLogs))
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
             },
@@ -375,13 +378,13 @@
                 const attemptNumber = this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0;
                 const attemptUid = this.attemptUid(taskRun.id, attemptNumber);
                 const logs = this.logsWithIndexByAttemptUid[attemptUid] ?? [];
-                const errorLine = (() => {
-                    const lastError = [...logs].reverse().find(l => (l.level || "").toString().toUpperCase() === "ERROR");
-                    if (lastError?.message) return lastError.message;
+                const errorLines = (() => {
+                    const errors = logs.filter(l => (l.level || "").toString().toUpperCase() === "ERROR" && (l.message ?? "").length > 0);
+                    if (errors.length > 0) return errors.map(l => l.message).join("\n");
                     const last = [...logs].reverse().find(l => (l.message ?? "").length > 0);
                     return last?.message ?? "";
                 })();
-                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLine}`;
+                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLines}`;
                 try {
                     window.sessionStorage.setItem("kestra-ai-prompt", prompt);
                 } catch (err) {

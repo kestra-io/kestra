@@ -2,12 +2,12 @@ import {Component, computed, Ref} from "vue";
 import {useRoute} from "vue-router";
 import {useI18n} from "vue-i18n";
 
-import BlueprintsBrowser from "../../../override/components/flows/blueprints/BlueprintsBrowser.vue";
-import Dashboard from "../../../components/dashboard/Dashboard.vue";
+import BlueprintsBrowser from "../../flows/blueprints/BlueprintsBrowser.vue";
 import Flows from "../../../components/flows/Flows.vue";
 import Executions from "../../../components/executions/Executions.vue";
 import Dependencies from "../../../components/dependencies/Dependencies.vue";
 import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue";
+import NamespaceOverview from "../../../components/namespaces/components/NamespaceOverview.vue";
 
 export interface Tab {
     locked?: boolean;
@@ -16,8 +16,8 @@ export interface Tab {
     name: string;
     title: string;
     component: Component;
-
     props?: Record<string, any>;
+    count?: number;
 }
 
 export interface Breadcrumb {
@@ -45,6 +45,8 @@ export const ORDER = [
     "executions",
     "dependencies",
     "secrets",
+    "credentials",
+    "assets",
     "variables",
     "plugin-defaults",
     "kv",
@@ -92,14 +94,18 @@ export function useHelpers() {
         {
             name: "overview",
             title: t("overview"),
-            component: Dashboard,
+            component: NamespaceOverview,
             props: {isNamespace: true, header: false},
         },
         {
             name: "flows",
             title: t("flows"),
             component: Flows,
-            props: {namespace: namespace.value, topbar: false},
+            props: {
+                namespace: namespace.value,
+                topbar: false,
+                defaultScopeFilter: false,
+            },
         },
         {
             name: "executions",
@@ -110,6 +116,7 @@ export function useHelpers() {
                 topbar: false,
                 visibleCharts: true,
                 embed: false,
+                defaultScopeFilter: false,
             },
         },
         {

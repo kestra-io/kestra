@@ -4,12 +4,16 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.plugin.core.dashboard.data.Flows;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
+import reactor.core.publisher.Flux;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fields> {
@@ -22,6 +26,24 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     Optional<Flow> findByIdWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision);
 
+    /**
+     * Checks whether a given namespace exists. 
+     * <p>
+     * A namespace is considered existing if at least one Flow is within the namespace or a parent namespace.
+     *
+     * @param tenant        The tenant ID
+     * @param namespace     The namespace - cannot be null.
+     * @return  {@code true} if the namespace exist. Otherwise {@link false}.
+     */
+    default boolean isNamespaceExists(String tenant, String namespace) {
+        Objects.requireNonNull(namespace, "namespace cannot be null");
+        List<String> namespaces = findDistinctNamespace(tenant).stream()
+            .map(NamespaceInterface::asTree)
+            .flatMap(Collection::stream)
+            .toList();
+        return namespaces.stream().anyMatch(ns -> ns.equals(namespace) || ns.startsWith(namespace));
+    }
+    
     /**
      * Used only if result is used internally and not exposed to the user.
      * It is useful when we want to restart/resume a flow.
@@ -96,7 +118,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     Optional<FlowWithSource> findByIdWithSourceWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision);
 
-    List<FlowWithSource> findRevisions(String tenantId, String namespace, String id);
+    List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted);
+
+    List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
 
     Integer lastRevision(String tenantId, String namespace, String id);
 
@@ -158,11 +182,15 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
             .toList();
     }
 
+    Flux<Flow> findAsync(String tenantId, List<QueryFilter> filters);
+
     FlowWithSource create(GenericFlow flow);
 
     FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException;
 
     FlowWithSource delete(FlowInterface flow);
+
+    void deleteRevisions(String tenantId, String namespace, String id, List<Integer> revisions);
 
     Boolean existAnyNoAcl(String tenantId);
 }

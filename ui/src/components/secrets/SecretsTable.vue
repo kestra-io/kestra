@@ -57,7 +57,7 @@
                                     type="info"
                                     class="namespace-tag"
                                 >
-                                    <DotsSquare />
+                                    <FolderOpenOutline />
                                     {{ scope.row?.namespace }}
                                 </el-tag>
                             </template>
@@ -91,13 +91,13 @@
 
                     <el-table-column columnKey="copy" className="row-action">
                         <template #default="scope">
-                            <el-tooltip :content="$t('copy_to_clipboard')">
-                                <el-button 
-                                    :icon="ContentCopy" 
-                                    link
-                                    @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
-                                />
-                            </el-tooltip>
+                            <IconButton
+                                :tooltip="$t('copy_to_clipboard')"
+                                placement="left"
+                                @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
+                            >
+                                <ContentCopy />
+                            </IconButton>
                         </template>
                     </el-table-column>
 
@@ -107,12 +107,14 @@
                         className="row-action"
                     >
                         <template #default="scope">
-                            <el-button 
+                            <IconButton
                                 v-if="canUpdate(scope.row)"
-                                :icon="FileDocumentEdit"
-                                link
+                                :tooltip="$t('update')"
+                                placement="left"
                                 @click="updateSecretModal(scope.row)"
-                            />
+                            >
+                                <FileDocumentEdit />
+                            </IconButton>
                         </template>
                     </el-table-column>
 
@@ -122,12 +124,14 @@
                         className="row-action"
                     >
                         <template #default="scope">
-                            <el-button 
+                            <IconButton
                                 v-if="canDelete(scope.row)"
-                                :icon="Delete"
-                                link
+                                :tooltip="$t('delete')"
+                                placement="left"
                                 @click="removeSecret(scope.row)"
-                            />
+                            >
+                                <Delete />
+                            </IconButton>
                         </template>
                     </el-table-column>
                 </SelectTable>
@@ -156,7 +160,7 @@
                 <el-form-item :label="$t('secret.key')" prop="key">
                     <el-input v-model="secret.key" :disabled="secret.update" required />
                 </el-form-item>
-                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value">
+                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
                     <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
                 </el-form-item>
                 <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
@@ -199,7 +203,7 @@
                             />
                         </el-button-group>
                     </el-row>
-                    <el-button :icon="Plus" @click="addSecretTag" type="primary">
+                    <el-button :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
                     </el-button>
                 </el-form-item>
@@ -225,18 +229,18 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import PencilOff from "vue-material-design-icons/PencilOff.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
     import Id from "../Id.vue";
+    import IconButton from "../IconButton.vue";
     import Drawer from "../Drawer.vue";
     import Labels from "../layout/Labels.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import DataTable from "../layout/DataTable.vue";
-    //@ts-expect-error no declaration
     import SelectTable from "../layout/SelectTable.vue";
     import MultilineSecret from "./MultilineSecret.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
@@ -279,13 +283,15 @@
         keyOnly?: boolean;
         paneView?: boolean;
         namespaceColumn?: boolean;
+        includeInherited?: boolean;
     }>(), {
         addSecretModalVisible: false,
         namespace: undefined,
         filterable: true,
         keyOnly: false,
         paneView: false,
-        namespaceColumn: undefined
+        namespaceColumn: undefined,
+        includeInherited: false
     });
 
     const emit = defineEmits<{
@@ -303,7 +309,6 @@
 
     const form = ref<FormInstance>();
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
-    const selectTable = ref<InstanceType<typeof SelectTable>>();
 
     const total = ref(0);
     const hasData = ref<boolean>();
@@ -465,11 +470,35 @@
 
             emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
             
-            hasData.value = (secretsResponse.results?.length ?? 0) !== 0
+            let allSecrets = secretsResponse.results ?? [];
 
+            if (props.includeInherited && props.namespace) {
+                const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
+                
+                for (const parentNs of parentNamespaces) {
+                    const parentSecretsResponse = await secretsStore.find(loadQuery({
+                        filters: {
+                            namespace: {
+                                EQUALS: parentNs
+                            }
+                        }
+                    }));
+
+                    const parentSecrets = parentSecretsResponse?.results ?? [];
+                    if (parentSecrets.length > 0) {
+                        const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean));
+                        const newSecrets = parentSecrets.filter(
+                            (s: any) => s?.key && !currentKeys.has(s.key)
+                        );
+                        allSecrets.push(...newSecrets);
+                    }
+                }
+            }
+
+            hasData.value = (allSecrets.length ?? 0) !== 0;
             areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
-            secrets.value = secretsResponse.results;
-            total.value = secretsResponse.total;
+            secrets.value = allSecrets;
+            total.value = allSecrets.length;
         } finally {
             if (callback) callback();
         }

@@ -1,23 +1,23 @@
 <template>
     <div class="button-wrapper">
-        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled" />
+        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled && !onboardingStore.isGuidedActive" />
 
         <ValidationError
             class="validation"
             tooltipPlacement="bottom-start"
-            :errors="flowErrors"
+            :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
-            :infos="flowInfos"
+            :infos="flowStore.flowInfos"
         />
 
         <EditorButtons
             :isCreating="flowStore.isCreating"
-            :isReadOnly="isReadOnly"
+            :isReadOnly="flowStore.isReadOnly"
             :canDelete="true"
-            :isAllowedEdit="isAllowedEdit"
+            :isAllowedEdit="flowStore.isAllowedEdit"
             :haveChange="haveChange"
-            :flowHaveTasks="Boolean(flowHaveTasks)"
-            :errors="flowErrors"
+            :flowHaveTasks="Boolean(flowStore.flowHaveTasks)"
+            :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
             @save="save"
             @copy="
@@ -41,7 +41,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, inject, InjectionKey} from "vue";
+    import {computed, inject, InjectionKey} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
@@ -49,8 +49,9 @@
     import ValidationError from "../flows/ValidationError.vue";
 
     import localUtils from "../../utils/utils";
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {useFlowStore} from "../../stores/flow";
+    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
+    import {useToast} from "../../utils/toast";
 
     defineProps<{
         haveChange: boolean;
@@ -68,26 +69,19 @@
     };
 
     const flowStore = useFlowStore();
+    const onboardingStore = useOnboardingV2Store();
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
 
-    const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
-
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
 
-    const isReadOnly = computed(() => flowStore.isReadOnly)
-    const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
-    const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
-    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
-    const flowInfos = computed(() => flowStore.flowInfos)
-    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const toast = useToast();
     const flowWarnings = computed(() => {
-
         const outdatedWarning =
             flowStore.flowValidation?.outdated && !flowStore.isCreating
-                ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
+                ? flowStore.flowValidation?.constraints?.split(", ") ?? []
                 : [];
 
         const deprecationWarnings =
@@ -112,10 +106,13 @@
         try {
             // Save the isCreating before saving.
             // saveAll can change its value.
-            const isCreating = flowStore.isCreating
-            await flowStore.saveAll()
+            const isCreating = flowStore.isCreating;
+            const outcome = await flowStore.saveAll();
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                onboardingStore.recordSave();
+            }
 
-            if(isCreating){
+            if (isCreating && outcome === "redirect_to_update") {
                 await router.push({
                     name: "flows/update",
                     params: {
@@ -161,5 +158,11 @@
         align-items: center;
         margin: .5rem;
         gap: .5rem;
+    }
+    @media screen and (max-width: 768px) {
+        .button-wrapper {
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
     }
 </style>

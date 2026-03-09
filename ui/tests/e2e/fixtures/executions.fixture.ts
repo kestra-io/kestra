@@ -27,6 +27,7 @@ export const test = base.extend<ExecutionsFixtures>({
 
         // Clean up
         await executionsApi.removeExecutionsViaApi();
+        await flowsApi.removeFlowsViaApi();
     },
     executionsPage: async ({page}, use) => {
         const executionsPage = new ExecutionsPage(page);

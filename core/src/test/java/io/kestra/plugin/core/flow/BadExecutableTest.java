@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class BadExecutableTest {
 
     @Test
-    @ExecuteFlow("flows/valids/executable-fail.yml")
+    @ExecuteFlow(value = "flows/valids/executable-fail.yml", tenantId = "badexecutable")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);

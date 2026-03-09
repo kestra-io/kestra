@@ -7,6 +7,7 @@ import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpSseEvent;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.http.client.configurations.ProxyConfiguration;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -33,7 +34,6 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Builder;
-import lombok.Value;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -449,6 +449,47 @@ class HttpClientTest {
         }
     }
 
+    @Test
+    void testSseRequestWithText() throws Exception {
+        List<HttpSseEvent<String>> consumedEvents = new CopyOnWriteArrayList<>();
+
+        try (HttpClient client = client()) {
+            HttpResponse<Void> response = client.sseRequest(
+                HttpRequest.of(URI.create(embeddedServerUri + "/http/sse/simple")),
+                String.class,
+                consumedEvents::add
+            );
+
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.contentType()).isEqualTo("text/event-stream");
+            assertThat(consumedEvents).hasSize(3);
+            assertThat(consumedEvents.get(0).data()).isEqualTo("Event 1");
+            assertThat(consumedEvents.get(1).data()).isEqualTo("Event 2");
+            assertThat(consumedEvents.get(2).data()).isEqualTo("Event 3");
+        }
+    }
+
+    @Test
+    void testSseRequestWithJson() throws Exception {
+        List<HttpSseEvent<CustomObject>> consumedEvents = new CopyOnWriteArrayList<>();
+
+        try (HttpClient client = client()) {
+            HttpResponse<Void> response = client.sseRequest(
+                HttpRequest.of(URI.create(embeddedServerUri + "/http/sse/json")),
+                CustomObject.class,
+                consumedEvents::add
+            );
+
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.contentType()).isEqualTo("text/event-stream");
+            assertThat(consumedEvents).hasSize(2);
+            assertThat(consumedEvents.get(0).data().id()).isEqualTo("1");
+            assertThat(consumedEvents.get(0).data().name()).isEqualTo("Hello");
+            assertThat(consumedEvents.get(1).data().id()).isEqualTo("2");
+            assertThat(consumedEvents.get(1).data().name()).isEqualTo("World");
+        }
+    }
+
     @Controller("/http/")
     public static class ClientTestController {
         @SuppressWarnings("JsonStandardCompliance")
@@ -528,12 +569,28 @@ class HttpClientTest {
 
             return io.micronaut.http.HttpResponse.ok(result);
         }
+
+        @Get(uri = "sse/simple", produces = MediaType.TEXT_EVENT_STREAM)
+        public Flux<String> sseSimple() {
+            return Flux.just(
+                "data: Event 1\n\n",
+                "data: Event 2\n\n",
+                "data: Event 3\n\n"
+            );
+        }
+
+        @Get(uri = "sse/json", produces = MediaType.TEXT_EVENT_STREAM)
+        public Flux<String> sseJson() {
+            return Flux.just(
+                "data: {\"name\": \"Hello\", \"id\": 1}\n\n",
+                "data: {\"name\": \"World\", \"id\": 2}\n\n"
+            );
+        }
     }
 
     @Builder
-    @Value
-    public static class CustomObject {
-        String id;
-        String name;
+    public record CustomObject(
+        String id,
+        String name) {
     }
 }

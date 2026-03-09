@@ -3,6 +3,8 @@ import Utils from "../../../utils/utils";
 import {cssVariable, State} from "@kestra-io/ui-libs";
 import {getSchemeValue} from "../../../utils/scheme";
 
+import {useMiscStore} from "override/stores/misc";
+
 export function tooltip(tooltipModel: {
     title?: string[];
     body?: { lines: string[] }[];
@@ -45,7 +47,7 @@ export function defaultConfig(override: {
 
     return _merge(
         {
-            animation: false,
+            animation: false as const,
             responsive: true,
             maintainAspectRatio: false,
             layout: {
@@ -88,7 +90,7 @@ export function defaultConfig(override: {
                     display: false,
                 },
                 tooltip: {
-                    mode: "index",
+                    mode: "index" as const,
                     intersect: false,
                     enabled: false,
                     boxPadding: 5,
@@ -115,7 +117,7 @@ export function extractState(value: any) {
     return value;
 }
 
-export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label") {
+export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label", filters: Record<string, any> = {}) {
     const query: Record<string, any> = {};
 
     if (elements && parsedData) {
@@ -192,7 +194,11 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
             params: {
                 tenant: route.params.tenant,
             },
-            query: query,
+            query: {
+                ...query,
+                ...filters,
+                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"
+            },
         });
     }
 }
@@ -221,7 +227,7 @@ export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     }
 
     hex = getSchemeValue(result as any, "logs");
-    if (hex) {
+    if (hex && hex !== "transparent") {
         return hex;
     }
 

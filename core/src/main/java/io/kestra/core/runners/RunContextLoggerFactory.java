@@ -4,7 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -46,19 +46,19 @@ public class RunContextLoggerFactory {
         );
     }
 
-    public RunContextLogger create(TriggerContext triggerContext, AbstractTrigger trigger, ExecutionKind executionKind) {
+    public RunContextLogger create(TriggerContext triggerContext, AbstractTrigger trigger) {
         return new RunContextLogger(
             logQueue,
-            LogEntry.of(triggerContext, trigger, executionKind),
+            LogEntry.of(triggerContext, trigger),
             trigger.getLogLevel(),
             trigger.isLogToFile()
         );
     }
 
-    public RunContextLogger create(Flow flow, AbstractTrigger trigger, ExecutionKind executionKind) {
+    public RunContextLogger create(FlowInterface flow, AbstractTrigger trigger) {
         return new RunContextLogger(
             logQueue,
-            LogEntry.of(flow, trigger, executionKind),
+            LogEntry.of(flow, trigger),
             trigger.getLogLevel(),
             trigger.isLogToFile()
         );

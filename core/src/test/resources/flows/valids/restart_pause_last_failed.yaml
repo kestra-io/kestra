@@ -10,7 +10,7 @@ tasks:
   message: "{{ task.id }}"
 - id: pause
   type: io.kestra.plugin.core.flow.Pause
-  delay: PT1S
+  pauseDuration: PT1S
   tasks:
   - id: c
     type: io.kestra.plugin.core.log.Log

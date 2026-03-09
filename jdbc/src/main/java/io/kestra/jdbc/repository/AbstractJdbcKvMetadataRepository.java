@@ -17,14 +17,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcRepository implements KvMetadataRepositoryInterface {
-    protected final io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository;
+public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudRepository<PersistedKvMetadata> implements KvMetadataRepositoryInterface {
 
-    @SuppressWarnings("unchecked")
     public AbstractJdbcKvMetadataRepository(
         io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository
     ) {
-        this.jdbcRepository = jdbcRepository;
+        super(jdbcRepository);
     }
 
     private static Condition lastCondition(boolean isLast) {
@@ -44,38 +42,22 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcRepos
 
     @Override
     public Optional<PersistedKvMetadata> findByName(String tenantId, String namespace, String name) {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                Select<Record1<Object>> from = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, true))
-                    .and(field("namespace").eq(namespace))
-                    .and(field("name").eq(name))
-                    .and(lastCondition());
-                return this.jdbcRepository.fetchOne(from);
-            });
+        var condition = field("namespace").eq(namespace)
+            .and(field("name").eq(name))
+            .and(lastCondition());
+        return findOne(tenantId, condition, true);
     }
 
-    private SelectConditionStep<Record1<Object>> findSelect(
-        DSLContext context,
-        @Nullable String tenantId,
+    private Condition findSelect(
         @Nullable List<QueryFilter> filters,
-        boolean allowDeleted,
         boolean allowExpired,
         FetchVersion fetchBehavior
     ) {
-        SelectConditionStep<Record1<Object>> condition = context
-            .select(field("value"))
-            .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter(tenantId, allowDeleted))
-            .and(allowExpired ? DSL.trueCondition() : DSL.or(
-                field("expiration_date").greaterThan(Instant.now()),
-                field("expiration_date").isNull()
-            ))
-            .and(this.filter(filters, "updated", QueryFilter.Resource.KV_METADATA));
+        var condition = allowExpired ? DSL.trueCondition() : DSL.or(
+            field("expiration_date").greaterThan(Instant.now()),
+            field("expiration_date").isNull());
+
+        condition = condition.and(this.filter(filters, "updated", QueryFilter.Resource.KV_METADATA));
 
         switch (fetchBehavior) {
             case LATEST -> condition = condition.and(lastCondition());
@@ -87,22 +69,8 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcRepos
 
     @Override
     public ArrayListTotal<PersistedKvMetadata> find(Pageable pageable, String tenantId, List<QueryFilter> filters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = this.findSelect(
-                    context,
-                    tenantId,
-                    filters,
-                    allowDeleted,
-                    allowExpired,
-                    fetchBehavior
-                );
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
-            });
+        var condition = findSelect(filters, allowExpired, fetchBehavior);
+        return this.findPage(pageable, tenantId, condition, allowDeleted);
     }
 
     @Override

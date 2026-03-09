@@ -3,6 +3,16 @@
         class="filter-container"
         :class="{'filter-shrink': filter.searchInputFullWidth.value}"
     >
+        <el-button
+            v-if="filter.tableOptions.value?.refresh?.shown"
+            @click="filter.refreshData"
+            :icon="Refresh"
+            :size="'default'"
+            class="refresh-button"
+        >
+            {{ $t("filter.refresh") }}
+        </el-button>
+
         <SaveFilters
             v-if="!filter.searchInputFullWidth.value"
             :disabled="
@@ -52,9 +62,13 @@
             />
         </el-popover>
 
-        <el-tooltip :content="$t('filter.show data options tooltip')" placement="top" effect="light">
+        <el-tooltip
+            v-if="filter.buttons.value?.tableOptions?.shown !== false"
+            :content="$t('filter.show data options tooltip')"
+            placement="top"
+            effect="light"
+        >
             <el-button
-                v-if="filter.buttons.value?.tableOptions?.shown !== false"
                 type="default"
                 size="default"
                 @click="filter.toggleOptions"
@@ -69,7 +83,7 @@
 
 <script setup lang="ts">
     import {ref, inject} from "vue";
-    import {ChevronDown, BookmarkCheckOutline} from "../utils/icons";
+    import {ChevronDown, BookmarkCheckOutline, Refresh} from "../utils/icons";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
     
     import SaveFilters from "../segments/SaveFilters.vue";
@@ -83,8 +97,7 @@
         filter.saveFilter(
             name,
             description,
-            filter.appliedFilters.value,
-            filter.searchQuery.value
+            filter.appliedFilters.value
         );
     };
 
@@ -145,6 +158,23 @@
         border-radius: 0.25rem;
         font-size: 1rem;
         color: var(--ks-content-primary) !important;
+    }
+
+    .refresh-button {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        padding: 0.25rem 0.5rem;
+        font-size: 12px;
+
+        :deep(svg) {
+            color: var(--ks-content-tertiary);
+        }
+
+        &:hover {
+            background-color: var(--ks-tag-background);
+        }
     }
 }
 </style>

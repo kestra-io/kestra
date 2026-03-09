@@ -1,9 +1,11 @@
 package io.kestra.plugin.core.flow;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -54,10 +56,10 @@ class SwitchTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "third")
+    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "switchthird")
     void switchThird() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            "third",
+            "switchthird",
             "io.kestra.tests",
             "switch",
             null,
@@ -72,10 +74,10 @@ class SwitchTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "switchdefault")
     void switchDefault() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "switchdefault",
             "io.kestra.tests",
             "switch",
             null,
@@ -88,10 +90,10 @@ class SwitchTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/switch-impossible.yaml"})
+    @LoadFlows(value = {"flows/valids/switch-impossible.yaml"}, tenantId = "switchimpossible")
     void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "switchimpossible",
             "io.kestra.tests",
             "switch-impossible",
             null,
@@ -99,5 +101,15 @@ class SwitchTest {
         );
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    @ExecuteFlow(value = "flows/valids/switch-in-concurrent-loop.yaml", tenantId = "switchinconcurrentloop")
+    void switchInConcurrentLoop(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        // we check that OOMCRM_EB_DD_000 and OOMCRM_EB_DD_001 have been processed once
+        assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_000")).count()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_001")).count()).isEqualTo(1);
     }
 }

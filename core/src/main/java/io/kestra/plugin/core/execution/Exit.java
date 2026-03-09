@@ -31,8 +31,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Terminate an execution in the state defined by the property state.",
-    description = "Note that if this execution has running tasks, for example in a parallel branch, the tasks will not be terminated except if `state` is set to `KILLED`."
+    title = "Terminate the current execution with a chosen state.",
+    description = """
+        Updates the execution to `SUCCESS`, `WARNING`, `FAILED`, `CANCELED`, or `KILLED`. When set to `KILLED`, an out-of-band kill event is sent so running task runs are stopped; other states simply mark the execution and parent task runs as finished.
+
+        Use with care inside parallel branches: only `KILLED` stops sibling tasks."""
 )
 @Plugin(
     examples = {
@@ -105,7 +108,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
                     Execution newExecution = execution.withTaskRun(newTaskRun);
                     // ends all parents
                     while (newTaskRun.getParentTaskRunId() != null) {
-                        newTaskRun = newExecution.findTaskRunByTaskRunId(newTaskRun.getParentTaskRunId()).withState(exitState);
+                        newTaskRun = newExecution.findTaskRunByTaskRunId(newTaskRun.getParentTaskRunId()).withStateAndAttempt(exitState);
                         newExecution = newExecution.withTaskRun(newTaskRun);
                     }
                     return newExecution;
@@ -130,11 +133,11 @@ public class Exit extends Task implements ExecutionUpdatableTask {
             case WARNING -> State.Type.WARNING;
             case KILLED -> State.Type.KILLED;
             case FAILED -> State.Type.FAILED;
-            case CANCELED -> State.Type.CANCELLED;
+            case CANCELED, CANCELLED -> State.Type.CANCELLED;
         };
     }
 
     public enum ExitState {
-        SUCCESS, WARNING, KILLED, FAILED, CANCELED
+        SUCCESS, WARNING, KILLED, FAILED, @Deprecated(since = "1.3", forRemoval = true) CANCELED, CANCELLED
     }
 }

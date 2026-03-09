@@ -58,7 +58,8 @@ kestra:
       purge:
         initial-delay: 1h
         fixed-delay: 1d
-        retention: 30d
+        retention: 30dPeriod
+    termination-grace-period: 5s
 
   anonymous-usage-report:
     enabled: false

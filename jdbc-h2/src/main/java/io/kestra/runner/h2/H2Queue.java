@@ -22,6 +22,14 @@ public class H2Queue<T> extends JdbcQueue<T> {
     }
 
     @Override
+    protected Condition buildConsumerCondition(Class<?> queueType) {
+        return DSL.or(List.of(
+            AbstractJdbcRepository.field("consumers").isNull(),
+            DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", queueName(queueType))
+        ))  ;
+    }
+
+    @Override
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate) {
         var select =  ctx.select(
                 AbstractJdbcRepository.field("value"),
@@ -55,7 +63,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+    protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
         var update = ctx.update(DSL.table(table.getName()))
             .set(
                 AbstractJdbcRepository.field("consumers"),

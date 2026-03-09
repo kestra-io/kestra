@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
@@ -28,7 +27,7 @@ public interface SchedulerTriggerStateInterface {
 
     Trigger update(Trigger trigger);
 
-    Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) throws Exception;
+    Trigger update(FlowWithSource flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) throws Exception;
 
     /**
      * QueueException required for Kafka implementation

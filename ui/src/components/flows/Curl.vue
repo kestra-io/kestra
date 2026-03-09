@@ -5,7 +5,7 @@
         <CopyToClipboard :text="curlCommand" />
 
         <el-alert class="mt-3" type="info" showIcon :closable="false">
-            {{ t('curl.note') }}
+            {{ $t('curl.note') }}
         </el-alert>
     </div>
 </template>
@@ -14,7 +14,6 @@
     import {computed, ref} from "vue";
     import {baseUrl, basePath, apiUrl} from "override/utils/route";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
-    import {useI18n} from "vue-i18n";
     import moment from "moment";
     import {Flow} from "../../stores/flow";
     import {Label} from "../../stores/executions";
@@ -29,8 +28,6 @@
         executionLabels: () => [],
         verbose: true
     });
-
-    const {t} = useI18n();
 
     const exampleFileName = ref("kestra.json");
 

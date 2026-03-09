@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.http
+name: "http"
+title: "HTTP"
+description: "Tasks that interact with HTTP endpoints."
+body: "Perform requests, downloads, or webhook triggers with configurable methods, headers, authentication, and payloads; provide the target URI plus any body or query parameters, and use response handling options to store results for downstream tasks."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

@@ -18,8 +18,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a flow namespace.",
-    description = "Use `io.kestra.plugin.core.condition.ExecutionNamespace` instead."
+    title = "Match a flow namespace (deprecated).",
+    description = """
+        Checks the current flow’s namespace, with optional prefix matching.
+
+        Deprecated; prefer `io.kestra.plugin.core.condition.ExecutionNamespace`, which evaluates against executions in Flow triggers."""
 )
 @Plugin(
     examples = {

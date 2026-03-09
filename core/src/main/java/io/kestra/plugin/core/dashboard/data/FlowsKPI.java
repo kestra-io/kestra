@@ -28,17 +28,16 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display count of Flows.",
             full = true,
-            code = { """
-            charts:
-              - id: kpi
+            code = """
+                charts:
+                  - id: kpi
                     type: io.kestra.plugin.core.dashboard.chart.KPI
                     data:
                       type: io.kestra.plugin.core.dashboard.data.FlowsKPI
                       columns:
                         field: ID
                         agg: COUNT
-            """
-          }
+                """
         )
     }
 )

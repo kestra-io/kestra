@@ -40,4 +40,11 @@ class SequentialTest {
         assertThat(execution.getTaskRunList()).hasSize(6);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/sequential-with-disabled.yaml")
+    void sequentialWithDisabled(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
@@ -15,6 +16,7 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.DagTaskValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,10 +38,11 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @DagTaskValidation
 @Schema(
-    title = "Create a DAG of tasks without explicitly specifying the order in which the tasks must run.",
-    description = "List your tasks and their dependencies, and Kestra will figure out the execution sequence.\n" +
-        "Each task can only depend on other tasks from the DAG task.\n" +
-        "For technical reasons, low-code interaction via UI forms is disabled for now when using this task."
+    title = "Define tasks as a DAG with explicit dependencies.",
+    description = """
+        Declare tasks and their `dependsOn` links; Kestra derives the execution order and parallelism (bounded by `concurrent`). Tasks may only reference peers inside this DAG block.
+
+        UI low-code forms are disabled for now with DAG tasks."""
 )
 @Plugin(
     examples = {
@@ -173,6 +176,22 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
             parentTaskRun,
             runContext.render(this.concurrent).as(Integer.class).orElseThrow(),
             this.tasks
+        );
+    }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+
+        return FlowableUtils.resolveSequentialState(
+            execution,
+            childTasks,
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            parentTaskRun,
+            runContext,
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 

@@ -15,6 +15,11 @@ flyway:
       # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
       ignore-migration-patterns: "*:missing,*:future"
       out-of-order: true
+      properties:
+        flyway:
+          postgresql:
+            transactional:
+              lock: false
 
 kestra:
   server-type: STANDALONE
@@ -40,6 +45,7 @@ kestra:
   server:
     liveness:
       enabled: false
+    termination-grace-period: 5s
     service:
       purge:
         initial-delay: 1h

@@ -17,8 +17,7 @@ import java.util.List;
 public class MysqlKvMetadataRepository extends AbstractJdbcKvMetadataRepository {
     @Inject
     public MysqlKvMetadataRepository(
-        @Named("kvMetadata") MysqlRepository<PersistedKvMetadata> repository
-    ) {
+        @Named("kvMetadata") MysqlRepository<PersistedKvMetadata> repository) {
         super(repository);
     }
 

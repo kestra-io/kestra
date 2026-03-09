@@ -12,7 +12,13 @@ export const useLayoutStore = defineStore("layout", {
         topNavbar: undefined,
         envName: localStorage.getItem("envName") || undefined,
         envColor: localStorage.getItem("envColor") || undefined,
-        sideMenuCollapsed: localStorage.getItem("menuCollapsed") === "true",
+        sideMenuCollapsed: (() => {
+            if (typeof window === "undefined") {
+                return false;
+            }
+
+            return localStorage.getItem("menuCollapsed") === "true" || window.matchMedia("(max-width: 768px)").matches;
+        })(),
     }),
     getters: {},
     actions: {

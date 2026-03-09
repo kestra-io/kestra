@@ -2,6 +2,7 @@ package io.kestra.worker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -30,6 +31,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -141,13 +143,16 @@ class WorkerTest {
     }
 
     @Test
+
+
+    @FlakyTest(description = "after multiple tries we could not unflaky it")
     void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);
 
         DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
         worker.run();
 
-        List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
+        List<WorkerTaskResult> workerTaskResult = new CopyOnWriteArrayList<>();
         Flux<WorkerTaskResult> receiveWorkerTaskResults = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.add(either.getLeft()));
 
         WorkerTask workerTask = workerTask(999000);

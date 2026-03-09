@@ -19,6 +19,7 @@ kestra:
   server:
     liveness:
       enabled: false
+    termination-grace-period: 5s
     service:
       purge:
         initial-delay: 1h

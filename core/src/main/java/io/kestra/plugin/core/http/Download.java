@@ -20,6 +20,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -32,8 +34,9 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Download a file from an HTTP server.",
-    description = "This task connects to a HTTP server and copies a file to Kestra's internal storage."
+    title = "Download a file over HTTP(S) to Kestra storage.",
+    description = """
+        Performs an HTTP request and streams the response body into internal storage. Validates Content-Length when present and can fail on empty responses (`failOnEmptyResponse`, unless `options.allowFailed` allows it). Filename is taken from `saveAs`, `Content-Disposition`, or derived from the URI."""
 )
 @Plugin(
     examples = {
@@ -123,7 +126,11 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                     String contentDisposition = response.getHeaders().firstValue("Content-Disposition").orElseThrow();
                     rFilename = filenameFromHeader(runContext, contentDisposition);
                     if (rFilename != null) {
+                        URLEncoder.encode(rFilename, StandardCharsets.UTF_8);
                         rFilename = rFilename.replace(' ', '+');
+                        // brackets are IPv6 reserved characters
+                        rFilename = rFilename.replace("[", "%5B");
+                        rFilename = rFilename.replace("]", "%5D");
                     }
                 }
             }

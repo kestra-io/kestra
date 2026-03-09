@@ -1,14 +1,15 @@
 import {v4 as uuid} from "uuid";
 
 import {State} from "@kestra-io/ui-libs";
-import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Element} from "../../../src/components/dependencies/utils/types";
+import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../../../src/components/dependencies/utils/types";
+import type {Types, Node, Edge, Element} from "../../../src/components/dependencies/utils/types";
 
 type DependencyOptions = {
     roots?: number;
     depth?: number;
     childrenRange?: [number, number];
     total?: number;
-    subtype?: typeof FLOW | typeof EXECUTION | typeof NAMESPACE;
+    subtype?: Types;
 };
 
 import {getRandomID} from "../../../scripts/id";
@@ -48,10 +49,10 @@ function getRandomNamespace(): string {
 /**
  * Creates a random node with either Flow, Execution or Namespace metadata.
  *
- * @param subtype - The type of node to create (`FLOW`, `EXECUTION` or `NAMESPACE`).
+ * @param subtype - The type of node to create (`FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`).
  * @returns A randomly generated Node object.
  */
-function createNode(subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Node {
+function createNode(subtype: Types): Node {
     return {
         id: uuid(),
         type: NODE,
@@ -72,7 +73,7 @@ function createNode(subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE):
  * @param options.depth - Hierarchy depth levels (default 5).
  * @param options.childrenRange - Min and max children per node (default [2, 20]).
  * @param options.total - Maximum total nodes to generate (default 100).
- * @param options.subtype - The type of dependency graph to generate (`FLOW`, `EXECUTION` or `NAMESPACE`, default `FLOW`).
+ * @param options.subtype - The type of dependency graph to generate (`FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`, default `FLOW`).
  * @returns An array of cytoscape compatible elements (nodes and edges).
  *
  * @throws Will throw an error if `total` is less than `roots`.

@@ -30,28 +30,27 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with a Executions per Namespace broken out by State.",
             full = true,
-            code = { """
-            charts:
-              - id: executions_per_namespace_bars
-                type: io.kestra.plugin.core.dashboard.chart.Bar
-                chartOptions:
-                  displayName: Executions (per namespace)
-                  description: Executions count per namespace
-                  legend:
-                    enabled: true
-                  column: namespace
-                data
-                  type: io.kestra.plugin.core.dashboard.data.Executions
-                  columns:
-                    namespace:
-                      field: NAMESPACE
-                    state:
-                      field: STATE
-                    total:
-                      displayName: Executions
-                      agg: COUNT
-            """
-          }
+            code = """
+                charts:
+                  - id: executions_per_namespace_bars
+                    type: io.kestra.plugin.core.dashboard.chart.Bar
+                    chartOptions:
+                      displayName: Executions (per namespace)
+                      description: Executions count per namespace
+                      legend:
+                        enabled: true
+                      column: namespace
+                    data
+                      type: io.kestra.plugin.core.dashboard.data.Executions
+                      columns:
+                        namespace:
+                          field: NAMESPACE
+                        state:
+                          field: STATE
+                        total:
+                          displayName: Executions
+                          agg: COUNT
+                """
         )
     }
 )

@@ -8,13 +8,13 @@
         <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
             <MenuRight />
         </el-icon>
-        <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
             <div
                 class="header"
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
             >
+                <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
                 <span class="header-badge text-secondary">
                     {{ Filters.date(log.timestamp, "iso") }}
                 </span>
@@ -165,18 +165,20 @@
 
     // Initial markdown render
     (async () => {
-        renderedMarkdown.value = await Markdown.render(message.value, {onlyLink: true, html: true});
+        renderedMarkdown.value = (await Markdown.render(message.value, {onlyLink: true, html: true})).trim();
     })();
 </script>
 <style scoped lang="scss">
 div.line {
     position: relative;
     cursor: text;
-    white-space: pre-wrap;
+    white-space: pre-line;
     word-break: break-all;
     display: flex;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    min-height: 2rem;
+
 
     border-left-width: 2px !important;
     border-left-style: solid;
@@ -199,13 +201,23 @@ div.line {
 
     .log-level {
         padding: .25rem;
-        margin-top: 0.25rem;
-        align-self: center;
+        margin-top: 0;
+        display: inline-flex;
+        vertical-align: middle;
     }
 
     .log-content {
-        // prevent Firefox word breaks
-        flex-grow: 1;
+        display: inline-block;
+        vertical-align: middle;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        min-width: 0;
+
+        .header {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
 
         .header > * + * {
             margin-left: 1rem;
@@ -221,7 +233,8 @@ div.line {
         text-align: center;
         white-space: nowrap;
         vertical-align: baseline;
-        width: 40px;
+        width: auto;
+        min-width: 40px;
 
         span:first-child {
             margin-right: 6px;
@@ -245,6 +258,8 @@ div.line {
 
     .message {
         line-height: 1.8;
+        display: inline-block;
+        vertical-align: middle;
     }
 
     p, :deep(.log-content p) {
@@ -262,6 +277,8 @@ div.line {
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.15s ease-in-out;
+        top: 0.5rem;
+        right: 0.5rem;
     }
 
     &:hover :deep(.clipboard) {

@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 
 /**
@@ -52,7 +53,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return an InputStream to read the object's contents
      * @throws IOException if the object cannot be read
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     InputStream get(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -64,7 +65,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return an InputStream to read the object's contents
      * @throws IOException if the object cannot be read
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     InputStream getInstanceResource(@Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -76,7 +77,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the storage object with metadata
      * @throws IOException if the object cannot be retrieved
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     StorageObject getWithMetadata(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -89,7 +90,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return a list of matching object URIs
      * @throws IOException if the listing fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     List<URI> allByPrefix(String tenantId, @Nullable String namespace, URI prefix, boolean includeDirectories) throws IOException;
 
     /**
@@ -101,7 +102,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return a list of file attributes
      * @throws IOException if the listing fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     List<FileAttributes> list(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -113,7 +114,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return a list of file attributes
      * @throws IOException if the listing fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     List<FileAttributes> listInstanceResource(@Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -159,7 +160,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the file attributes
      * @throws IOException if the attributes cannot be retrieved
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     FileAttributes getAttributes(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -171,7 +172,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the file attributes
      * @throws IOException if the attributes cannot be retrieved
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     FileAttributes getInstanceAttributes(@Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -288,7 +289,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the URI of the moved object
      * @throws IOException if moving fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException;
 
     /**

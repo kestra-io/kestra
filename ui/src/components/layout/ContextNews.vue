@@ -1,5 +1,5 @@
 <template>
-    <ContextInfoContent ref="contextInfoRef" :title="t('feeds.title')">
+    <ContextInfoContent ref="contextInfoRef" :title="$t('feeds.title')">
         <div
             class="post"
             :class="{
@@ -26,11 +26,11 @@
                     @click="expanded[feed.id] = !expanded[feed.id]"
                 >
                     <MenuDown class="expandIcon" />
-                    {{ expanded[feed.id] ? t("showLess") : t("showMore") }}
+                    {{ expanded[feed.id] ? $t("showLess") : $t("showMore") }}
                 </el-button>
                 <el-button
                     v-if="feed.href"
-                    :title="t('open in new tab')"
+                    :title="$t('open in new tab')"
                     tag="a"
                     type="primary"
                     target="_blank"
@@ -47,7 +47,6 @@
 
 <script setup lang="ts">
     import {computed, onMounted, reactive, ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core"
     import {useScrollMemory} from "../../composables/useScrollMemory"
 
@@ -61,7 +60,6 @@
     import {useApiStore} from "../../stores/api";
 
     const apiStore = useApiStore();
-    const {t} = useI18n({useScope: "global"});
 
     const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null);
     const feeds = computed(() => apiStore.feeds);

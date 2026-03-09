@@ -1,12 +1,17 @@
 package io.kestra.executor;
 
+import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.assets.AssetIdentifier;
+import io.kestra.core.models.assets.AssetUser;
+import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
@@ -20,6 +25,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.LoopUntil;
@@ -62,12 +68,6 @@ public class ExecutorService {
     private ConditionService conditionService;
 
     @Inject
-    private LogService logService;
-
-    @Inject
-    private FlowInputOutput flowInputOutput;
-
-    @Inject
     private WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
     @Inject
@@ -98,6 +98,12 @@ public class ExecutorService {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
 
+    @Inject
+    private AssetService assetService;
+
+    @Inject
+    private RunContextInitializer runContextInitializer;
+
     protected FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
         if (this.flowExecutorInterface == null) {
@@ -112,7 +118,7 @@ public class ExecutorService {
         if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
-                    logService.logExecution(
+                    Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
                         "Execution is queued due to concurrency limit exceeded, {} running(s)",
@@ -124,20 +130,19 @@ public class ExecutorService {
                         .withExecution(newExecution)
                         .withConcurrencyState(ExecutionRunning.ConcurrencyState.QUEUED);
                 }
-                case CANCEL ->
-                    executionRunning
-                        .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
-                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+                case CANCEL -> executionRunning
+                    .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
+                    .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
                 case FAIL -> {
                     var failedExecution = executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded"));
                     try {
-                        logQueue.emitAsync(failedExecution.getLogs());
+                        logQueue.emitAsync(failedExecution.logs());
                     } catch (QueueException ex) {
                         // fail silently
                     }
                     yield executionRunning
-                        .withExecution(failedExecution.getExecution())
-                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+                        .withExecution(failedExecution.execution())
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.FAILED);
                 }
 
             };
@@ -198,7 +203,7 @@ public class ExecutorService {
 
     public Execution onNexts(Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
-            logService.logExecution(
+            Logs.logExecution(
                 execution,
                 Level.TRACE,
                 "Found {} next(s) {}",
@@ -225,7 +230,7 @@ public class ExecutorService {
                 .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
                 .increment();
 
-            logService.logExecution(
+            Logs.logExecution(
                 execution,
                 Level.INFO,
                 "Flow started"
@@ -237,7 +242,7 @@ public class ExecutorService {
         return newExecution;
     }
 
-    private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws InternalException {
+    private Optional<WorkerTaskResult> childWorkerTaskResult(FlowWithSource flow, Execution execution, TaskRun parentTaskRun) throws InternalException {
         Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask<?> flowableParent) {
@@ -247,7 +252,7 @@ public class ExecutorService {
             // first find the normal ended child tasks and send result
             Optional<State.Type> state;
             try {
-                 state = flowableParent.resolveState(runContext, execution, parentTaskRun);
+                state = flowableParent.resolveState(runContext, execution, parentTaskRun);
             } catch (Exception e) {
                 // This will lead to the next task being still executed, but at least Kestra will not crash.
                 // This is the best we can do, Flowable task should not fail, so it's a kind of panic mode.
@@ -263,26 +268,30 @@ public class ExecutorService {
                 WorkerTaskResult workerTaskResult = endedTask.get();
                 // Compute outputs for the parent Flowable task if a terminated state was resolved
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
+                    Variables variables;
                     try {
                         // as flowable tasks can save outputs during iterative execution, we must merge the maps here
                         Output outputs = flowableParent.outputs(runContext);
                         Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
-                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
-                        /// flowable attempt state transition to terminated
-                            List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-                                .map(ArrayList::new)
-                                .orElseGet(ArrayList::new);
-                            State.Type endedState=endedTask.get().getTaskRun().getState().getCurrent();
-                            TaskRunAttempt updated = attempts.getLast().withState(endedState);
-                            attempts.set( attempts.size() - 1, updated);
-                        return Optional.of(new WorkerTaskResult(workerTaskResult
-                            .getTaskRun()
-                            .withOutputs(variables)
-                            .withAttempts(attempts)
-                        ));
+                        variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
+                        variables = Variables.empty();
                     }
+
+                    // flowable attempt state transition to terminated
+                    List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
+                        .map(ArrayList::new)
+                        .orElseGet(ArrayList::new);
+                    State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
+                    TaskRunAttempt updated = attempts.getLast().withState(endedState);
+                    attempts.set(attempts.size() - 1, updated);
+
+                    return Optional.of(new WorkerTaskResult(workerTaskResult
+                        .getTaskRun()
+                        .withOutputs(variables)
+                        .withAttempts(attempts)
+                    ));
                 }
                 return endedTask;
             }
@@ -393,20 +402,21 @@ public class ExecutorService {
     }
 
     private Executor onEnd(Executor executor) {
-        final Flow flow = executor.getFlow();
+        final FlowWithSource flow = executor.getFlow();
 
         Execution newExecution = executor.getExecution()
             .withState(executor.getExecution().guessFinalState(flow));
 
         if (flow.getOutputs() != null) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+            var inputAndOutput = runContext.inputAndOutput();
 
             try {
-                Map<String, Object> outputs = FlowInputOutput.renderFlowOutputs(flow.getOutputs(), runContext);
-                outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
+                Map<String, Object> outputs = inputAndOutput.renderOutputs(flow.getOutputs());
+                outputs = inputAndOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
             } catch (Exception e) {
-                logService.logExecution(
+                Logs.logExecution(
                     executor.getExecution(),
                     Level.ERROR,
                     "Failed to render output values",
@@ -417,7 +427,7 @@ public class ExecutorService {
             }
         }
 
-        logService.logExecution(
+        Logs.logExecution(
             newExecution,
             Level.INFO,
             "Flow completed with state {} in {}",
@@ -435,7 +445,7 @@ public class ExecutorService {
 
         metricRegistry
             .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION_DESCRIPTION, metricRegistry.tags(newExecution))
-            .record(newExecution.getState().getDuration());
+            .record(newExecution.getState().getDurationOrComputeIt());
 
         return executor.withExecution(newExecution, "onEnd");
     }
@@ -471,7 +481,7 @@ public class ExecutorService {
             .toList();
 
         // Remove functional style to avoid (class io.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
 
         for (TaskRun taskRun : running) {
             result.addAll(this.childNextsTaskRun(executor, taskRun));
@@ -522,8 +532,7 @@ public class ExecutorService {
                     nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                         taskRun.nextRetryDate(retry, executor.getExecution()) :
                         taskRun.nextRetryDate(retry);
-                }
-                else {
+                } else {
                     // Case parent task has a retry
                     AbstractRetry retry = searchForParentRetry(taskRun, executor);
                     if (retry != null) {
@@ -569,11 +578,8 @@ public class ExecutorService {
                     Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
                     TaskRun updatedTaskRun = taskRun.withOutputs(variables);
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
-                    List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
-                    if (next.isEmpty()) {
-                        return executor;
-                    } else if (nextDate != null) {
+                    if (nextDate != null) {
                         executionDelays.add(ExecutionDelay.builder()
                             .taskRunId(taskRun.getId())
                             .executionId(executor.getExecution().getId())
@@ -688,7 +694,7 @@ public class ExecutorService {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                         Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
                         Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        Pause.Behavior behavior  = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
+                        Pause.Behavior behavior = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
                         if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
                             // if duration is set, we use it, and we use the Pause behavior as a state
                             // if no duration, we use the standard timeout property and use FAILED as the target state
@@ -801,7 +807,7 @@ public class ExecutorService {
             .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
             .increment();
 
-        logService.logExecution(
+        Logs.logExecution(
             executor.getExecution(),
             Level.INFO,
             "Flow restarted"
@@ -859,7 +865,7 @@ public class ExecutorService {
                                 return workerTask;
                             } else {
                                 WorkerGroup.Fallback fallback = workerGroup.map(wg -> wg.getFallback()).orElse(WorkerGroup.Fallback.WAIT);
-                                return switch(fallback) {
+                                return switch (fallback) {
                                     case FAIL -> {
                                         runContext.logger()
                                             .error("No workers are available for worker group '{}', failing the task.", workerGroupKey);
@@ -893,23 +899,41 @@ public class ExecutorService {
         // mock WorkerTaskResult for mocked execution
         // submit TaskRun when receiving created, must be done after the state execution store
         boolean hasMockedWorkerTask = false;
-        record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {}
+        record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {
+        }
         if (executor.getExecution().getFixtures() != null) {
-            RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+            RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of(
+                executor.getFlow(),
+                executor.getExecution()
+            ));
             List<WorkerTaskResult> workerTaskResults = executor.getExecution()
                 .getTaskRunList()
                 .stream()
                 .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
                 .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
-                .map(throwFunction(fixtureAndTaskRun -> WorkerTaskResult.builder()
-                    .taskRun(fixtureAndTaskRun.taskRun()
-                        .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                        .withOutputs(
-                            variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun),
-                                fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
-                        )
-                    )
-                    .build()
+                .map(throwFunction(fixtureAndTaskRun -> {
+                        AssetsDeclaration assetsDeclaration = executor.getFlow().findTaskByTaskId(fixtureAndTaskRun.taskRun.getTaskId()).getAssets();
+                        return WorkerTaskResult.builder()
+                            .taskRun(fixtureAndTaskRun.taskRun()
+                                .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
+                                .withOutputs(
+                                    variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun),
+                                        fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
+                                )
+                                .withAssets(new AssetsInOut(
+                                    Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
+                                        .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
+                                        .stream()
+                                        .flatMap(Collection::stream)
+                                        .map(throwFunction(assetIdentifier -> assetIdentifier.withTenantId(executor.getFlow().getTenantId())))
+                                        .toList(),
+                                    fixtureAndTaskRun.fixture().getAssets() == null ? null : fixtureAndTaskRun.fixture().getAssets().stream()
+                                        .map(asset -> asset.withTenantId(executor.getFlow().getTenantId()))
+                                        .toList()
+                                ))
+                            )
+                            .build();
+                    }
                 ))
                 .toList();
 
@@ -941,7 +965,7 @@ public class ExecutorService {
                 ).toList();
                 Execution newExecution = executor.getExecution().withTaskRunList(newTaskRuns).withState(State.Type.BREAKPOINT);
                 executorToReturn = executorToReturn.withExecution(newExecution, "handleBreakpoint");
-                logService.logExecution(
+                Logs.logExecution(
                     newExecution,
                     Level.INFO,
                     "Flow is suspended at a breakpoint."
@@ -973,7 +997,7 @@ public class ExecutorService {
 
     private boolean shouldSuspend(TaskRun taskRun, List<Breakpoint> breakpoints) {
         return taskRun.getState().getCurrent().isCreated() && breakpoints.stream()
-                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
+            .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
     }
 
     private Executor handleExecutableTask(final Executor executor) {
@@ -1003,7 +1027,7 @@ public class ExecutorService {
                         executor.withExecution(
                             executor
                                 .getExecution()
-                                .withTaskRun(executableTaskRun.withState(State.Type.SKIPPED)),
+                                .withTaskRun(executableTaskRun.withState(State.Type.SKIPPED).addAttempt(TaskRunAttempt.builder().state(new State().withState(State.Type.SKIPPED)).build())),
                             "handleExecutableTaskSkipped"
                         );
                         return false;
@@ -1083,7 +1107,7 @@ public class ExecutorService {
                         executor.withExecution(
                             executor
                                 .getExecution()
-                                .withTaskRun(workerTask.getTaskRun().withState(State.Type.SKIPPED)),
+                                .withTaskRun(workerTask.getTaskRun().withState(State.Type.SKIPPED).addAttempt(TaskRunAttempt.builder().state(new State().withState(State.Type.SKIPPED)).build())),
                             "handleExecutionUpdatingTaskSkipped"
                         );
                         return false;
@@ -1134,7 +1158,7 @@ public class ExecutorService {
         }
     }
 
-    public void addWorkerTaskResult(Executor executor, Supplier<Flow> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    public void addWorkerTaskResult(Executor executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
         // dynamic tasks
         Execution newExecution = this.addDynamicTaskRun(
             executor.getExecution(),
@@ -1170,13 +1194,61 @@ public class ExecutorService {
                     MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
                     metricRegistry.tags(workerTaskResult)
                 )
-                .record(taskRun.getState().getDuration());
+                .record(taskRun.getState().getDurationOrComputeIt());
+
+            ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
+            if (
+                taskRun.getAssets() != null &&
+                    (!taskRun.getAssets().getInputs().isEmpty() || !taskRun.getAssets().getOutputs().isEmpty())
+                    && executionKind != ExecutionKind.TEST
+            ) {
+                AssetUser assetUser = new AssetUser(
+                    taskRun.getTenantId(),
+                    taskRun.getNamespace(),
+                    taskRun.getFlowId(),
+                    newExecution.getFlowRevision(),
+                    taskRun.getExecutionId(),
+                    taskRun.getTaskId(),
+                    taskRun.getId(),
+                    taskRun.getState().getCurrent(),
+                    taskRun.getState().getStartDate(),
+                    taskRun.getState().getEndDate().orElse(null)
+                );
+
+                List<AssetIdentifier> outputIdentifiers = taskRun.getAssets().getOutputs().stream()
+                    .map(asset -> asset.withTenantId(taskRun.getTenantId()))
+                    .map(AssetIdentifier::of)
+                    .toList();
+                List<AssetIdentifier> inputAssets = taskRun.getAssets().getInputs().stream()
+                    .map(assetIdentifier -> assetIdentifier.withTenantId(taskRun.getTenantId()))
+                    .toList();
+                try {
+                    assetService.assetLineage(
+                        assetUser,
+                        inputAssets,
+                        outputIdentifiers
+                    );
+                } catch (QueueException e) {
+                    log.warn("Unable to submit asset lineage event for {} -> {}", inputAssets, outputIdentifiers, e);
+                }
+
+                // don't update output asserts if task fail
+                if (!taskRun.getState().isFailed()) {
+                    taskRun.getAssets().getOutputs().forEach(asset -> {
+                        try {
+                            assetService.asyncUpsert(assetUser, asset);
+                        } catch (QueueException e) {
+                            log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
+                        }
+                    });
+                }
+            }
         }
     }
 
     // Note: as the flow is only used in an error branch and it can take time to load, we pass it thought a Supplier
-    private Execution addDynamicTaskRun(Execution execution, Supplier<Flow> flow, WorkerTaskResult workerTaskResult) throws InternalException {
-        ArrayList<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
+    private Execution addDynamicTaskRun(Execution execution, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+        List<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
 
         // declared dynamic tasks
         if (!ListUtils.isEmpty(workerTaskResult.getDynamicTaskRuns())) {
@@ -1308,6 +1380,7 @@ public class ExecutorService {
     /**
      * Handle flow ExecutionChangedSLA on an executor.
      * If there are SLA violations, it will take care of updating the execution based on the SLA behavior.
+     *
      * @see #processViolation(RunContext, Executor, Violation)
      * <p>
      * WARNING: ATM, only the first violation will update the execution.

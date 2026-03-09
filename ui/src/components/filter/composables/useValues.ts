@@ -92,7 +92,11 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
                 value: "TEST",
             }]),
         ],
-        LEVELS: buildFromArray(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]),
+        LEVELS: ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"].map(level => ({
+            label: level,
+            value: level,
+            color: `var(--ks-log-border-${level.toLowerCase()})`,
+        })),
         TYPES: auditLogTypes,
         PERMISSIONS: buildFromObject(permission),
         ACTIONS: buildFromObject({
@@ -103,6 +107,10 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE,
+        TRIGGER_STATES:[
+        {label: t("filter.triggerState.enabled"), value: "enabled"},
+        {label: t("filter.triggerState.disabled"), value: "disabled"}
+    ]
     };
 
     return {VALUES, getRelativeDateLabel};

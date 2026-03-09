@@ -14,7 +14,7 @@
                 <div v-if="data.value && data.children">
                     <code>
                         {{ data.children.length }}
-                        {{ data.children.length === 1 ? t("item") : t("items") }}
+                        {{ data.children.length === 1 ? $t("item") : $t("items") }}
                     </code>
                 </div>
             </div>
@@ -26,9 +26,6 @@
     import {onMounted, ref} from "vue";
 
     import VarValue from "../executions/VarValue.vue";
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
 
     const isFile = (data: any) => typeof data === "string" && (data.startsWith("kestra:///") || data.startsWith("file://") || data.startsWith("nsfile://"));
 

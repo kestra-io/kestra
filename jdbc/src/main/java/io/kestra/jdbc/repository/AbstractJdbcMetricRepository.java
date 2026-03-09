@@ -5,6 +5,7 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
@@ -20,8 +21,6 @@ import lombok.Getter;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -31,15 +30,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
-    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
-    protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
+public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepository<MetricEntry> implements MetricRepositoryInterface {
+    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
                                         JdbcFilterService filterService) {
-        this.jdbcRepository = jdbcRepository;
+        super(jdbcRepository);
 
         this.filterService = filterService;
     }
@@ -52,7 +49,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         Metrics.Fields.NAMESPACE, "namespace",
         Metrics.Fields.FLOW_ID, "flow_id",
         Metrics.Fields.TASK_ID, "task_id",
-        Metrics.Fields.EXECUTION_ID, "execution_d",
+        Metrics.Fields.EXECUTION_ID, "execution_id",
         Metrics.Fields.TASK_RUN_ID, "taskrun_id",
         Metrics.Fields.NAME, "metric_name",
         Metrics.Fields.VALUE, "metric_value",
@@ -71,52 +68,31 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-            , pageable
         );
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-                .and(field("task_id").eq(taskId)),
-            pageable
+                .and(field("task_id").eq(taskId))
         );
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-                .and(field("taskrun_id").eq(taskRunId)),
-            pageable
+                .and(field("taskrun_id").eq(taskRunId))
         );
-    }
-
-    @Override
-    public Flux<MetricEntry> findAllAsync(@io.micronaut.core.annotation.Nullable String tenantId) {
-        return Flux.create(emitter -> this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
-                    stream.map((Record record) -> jdbcRepository.map(record))
-                        .forEach(emitter::next);
-                } finally {
-                    emitter.complete();
-                }
-            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override
@@ -199,23 +175,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public MetricEntry save(MetricEntry metric) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(metric);
-        this.jdbcRepository.persist(metric, fields);
-
-        return metric;
-    }
-
-    @Override
-    public int saveBatch(List<MetricEntry> items) {
-        if (ListUtils.isEmpty(items)) {
-            return 0;
-        }
-
-        return this.jdbcRepository.persistBatch(items);
-    }
-
-    @Override
     public Integer purge(Execution execution) {
         return this.jdbcRepository
 
@@ -224,10 +183,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).eq(execution.getId()))
+                    .where(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
     }
@@ -240,12 +196,19 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
+                    .where(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
                     .execute();
             });
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
     }
 
     private List<String> queryDistinct(String tenantId, Condition condition, String field) {
@@ -261,22 +224,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 select = select.and(condition);
 
                 return select.fetch().map(record -> record.get(field, String.class));
-            });
-    }
-
-    private ArrayListTotal<MetricEntry> query(String tenantId, Condition condition, Pageable pageable) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                select = select.and(condition);
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 
@@ -396,7 +343,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Metrics.Fields> columnDescriptor = dataFilter.getColumns();
-            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
                 field = filterService.buildAggregation(field, columnDescriptor.getAgg());
@@ -417,7 +363,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 filterService,
                 filters,
                 getFieldsMapping()
-            );
+            ).and(NORMAL_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {
@@ -463,7 +409,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping)
+                    .and(NORMAL_KIND_CONDITION);
 
                 List<? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)

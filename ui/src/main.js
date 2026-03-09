@@ -1,5 +1,4 @@
 import {createApp} from "vue"
-import VueAxios from "vue-axios";
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -10,7 +9,6 @@ import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
 import {useMiscStore} from "override/stores/misc";
 
-import {shouldShowWelcome, isDashboardRoute} from "./utils/welcomeGuard";
 
 const app = createApp(App)
 
@@ -25,10 +23,6 @@ const handleAuthError = (error, to) => {
 
 initApp(app, routes, null, en).then(({router, piniaStore}) => {
     router.beforeEach(async (to, from, next) => {
-        if (["login", "setup"].includes(to.name)) {
-            return next();
-        }
-
         if(to.path === from.path && to.query === from.query) {
             return next(); // Prevent navigation if the path and query are the same
         }
@@ -45,11 +39,26 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
                 if (validationErrors?.length > 0) {
                     // Creds exist in config but failed validation
                     // Route to login to show errors
+                    if (to.name === "login") {
+                        return next();
+                    }
+
                     return next({name: "login"})
                 } else {
                     // No creds in config - redirect to set it up
+                    if (to.name === "setup") {
+                        return next();
+                    }
+
                     return next({name: "setup"})
                 }
+            }
+
+            if (to.meta?.anonymous === true) {
+                if (to.name === "setup") {
+                    return next({name: "login"});
+                }
+                return next();
             }
 
             const hasCredentials = BasicAuth.isLoggedIn()
@@ -65,13 +74,6 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
                 return next({name: "setup"})
             }
 
-            if (isDashboardRoute(to.name) && await shouldShowWelcome()) {
-                return next({
-                    name: "welcome",
-                    params: {tenant: to.params.tenant}
-                });
-            } 
-
             return next();
         } catch (error) {
             console.error("Error during authentication check:", error);
@@ -84,14 +86,11 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
 
     // axios
     configureAxios((instance) => {
-        app.use(VueAxios, instance);
-        app.provide("axios", instance);
         piniaStore.use(({store: piniaStoreLocal}) => {
             piniaStoreLocal.$http = instance;
         });
     }, null, router, true);
 
     // mount
-    app.mount("#app")
+    router.isReady().then(() => app.mount("#app"))
 });
-

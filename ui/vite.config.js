@@ -42,6 +42,7 @@ export default defineConfig({
     resolve: {
         alias: {
             "override": path.resolve(__dirname, "src/override/"),
+            "kestra-api": path.resolve(__dirname, "src/generated/kestra-api/"),
             "#imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
@@ -72,7 +73,7 @@ export default defineConfig({
         devSourcemap: true,
         preprocessorOptions: {
             scss: {
-                silenceDeprecations: ["color-functions", "global-builtin", "import"]
+                silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
             },
         }
     },
@@ -86,7 +87,6 @@ export default defineConfig({
             "debug",
             "@braintree/sanitize-url",
             "monaco-yaml/yaml.worker",
-            "vue-axios",
             "lodash-es",
             "nprogress"
         ],

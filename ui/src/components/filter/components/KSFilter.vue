@@ -45,6 +45,8 @@
         searchInputFullWidth?: boolean;
         legacyQuery?: boolean;
         readOnly?: boolean;
+        defaultScope?: boolean;
+        defaultTimeRange?: boolean;
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -53,7 +55,9 @@
         showSearchInput: true,
         searchInputFullWidth: false,
         legacyQuery: false,
-        readOnly: false
+        readOnly: false,
+        defaultScope: undefined,
+        defaultTimeRange: undefined,
     });
 
     const emits = defineEmits<{
@@ -65,6 +69,7 @@
 
     const {
         appliedFilters,
+        hasDismissedDefaultVisibleKeys,
         searchQuery,
         addFilter,
         removeFilter,
@@ -75,7 +80,9 @@
     } = useFilters(
         props.configuration,
         props.showSearchInput,
-        props.legacyQuery
+        props.legacyQuery,
+        props.defaultScope,
+        props.defaultTimeRange,
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
@@ -99,8 +106,6 @@
         savedFilter.filters.forEach((filter) => {
             addFilter(filter);
         });
-
-        searchQuery.value = savedFilter.searchQuery ?? "";
     };
 
     const refreshData = () => {
@@ -116,6 +121,7 @@
         editingFilter,
         hasFilterKeys,
         hasAppliedFilters,
+        hasDismissedDefaultVisibleKeys,
         buttons: computed(() => props.buttons),
         readOnly: computed(() => props.readOnly),
         properties: computed(() => props.properties),
@@ -166,6 +172,7 @@
     watch(appliedFilters, (newFilters) => {
         emits("filter", newFilters);
     }, {deep: true});
+    
 </script>
 
 <style lang="scss" scoped>
@@ -180,9 +187,14 @@
         display: flex;
         align-items: flex-start;
         flex-wrap: nowrap;
+        gap: 0.5rem;
         
         &.options {
             padding-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            flex-wrap: wrap;
         }
     }
 }

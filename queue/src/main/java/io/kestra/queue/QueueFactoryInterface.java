@@ -18,36 +18,36 @@ import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
 
-public interface QueueFactoryInterface {
-    DispatchQueueInterface<Execution> executionQueue();
+public interface QueueFactoryInterface<D> {
+    DispatchQueueInterface<Execution> executionQueue(D dependencies);
 
-    DispatchQueueInterface<ExecutionCommand> executionCommandQueue();
+    DispatchQueueInterface<ExecutionCommand> executionCommandQueue(D dependencies);
 
-    DispatchQueueInterface<ExecutionEvent> executionEventQueue();
+    DispatchQueueInterface<ExecutionEvent> executionEventQueue(D dependencies);
 
-    BroadcastQueueInterface<ExecutionKilled> killQueue();
+    BroadcastQueueInterface<ExecutionKilled> killQueue(D dependencies);
 
-    DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue();
+    DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue(D dependencies);
 
-    DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue();
+    DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue(D dependencies);
 
-    DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue();
+    DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue(D dependencies);
 
-    BroadcastQueueInterface<FlowInterface> flowQueue();
+    BroadcastQueueInterface<FlowInterface> flowQueue(D dependencies);
 
-    BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue();
+    BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue(D dependencies);
 
-    VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue();
+    VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue(D dependencies);
 
-    DispatchQueueInterface<MetricEntry> metricQueue();
+    DispatchQueueInterface<MetricEntry> metricQueue(D dependencies);
 
-    BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue();
+    BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue(D dependencies);
 
-    DispatchQueueInterface<LogEntry> logEntryQueue();
+    DispatchQueueInterface<LogEntry> logEntryQueue(D dependencies);
 
-    BroadcastQueueInterface<FollowLogEvent> followLogEventQueue();
+    BroadcastQueueInterface<FollowLogEvent> followLogEventQueue(D dependencies);
 
-    KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue();
+    KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue(D dependencies);
 
-    DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue();
+    DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue(D dependencies);
 }

@@ -53,13 +53,22 @@ tasks.withType(JavaCompile).configureEach {
         "-Amicronaut.openapi.expand.version=${project.version}"
     ]
 }
-tasks.register('generateOpenapiSpec', Copy) {
+tasks.register('generateOpenapiSpec') {
     def compileJavaProvider = tasks.named('compileJava')
     def openapiSpecPath = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
+    def outputFile = project.getParent().layout.projectDirectory.file("openapi.yml")
 
-    from(compileJavaProvider.map(compileTask -> compileTask.outputs.files.filter{File f -> f == file(openapiSpecPath)}.singleFile))
-    into file("${project.getParent().projectDir}")
-    rename { 'openapi.yml' }
+    dependsOn(compileJavaProvider)
+    inputs.file(openapiSpecPath)
+    outputs.file(outputFile)
+
+    doLast {
+        copy {
+            from(openapiSpecPath)
+            into(outputFile.asFile.parentFile)
+            rename { outputFile.asFile.name }
+        }
+    }
 }
 
 tasks.named('jar', Jar) {

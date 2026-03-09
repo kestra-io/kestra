@@ -12,9 +12,14 @@ class TenantServiceTest {
     private TenantService tenantService;
 
     @Test
-    void test() {
+    void resolveTenant() {
         var tenant = tenantService.resolveTenant();
         assertThat(tenant).isEqualTo("main");
     }
 
+     @Test
+    void listTenants() {
+        var tenants = tenantService.listTenants();
+        assertThat(tenants).containsExactly("main");
+    }
 }

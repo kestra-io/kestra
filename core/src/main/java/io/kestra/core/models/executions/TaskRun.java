@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.flows.State;
@@ -7,6 +8,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -68,6 +70,16 @@ public class TaskRun implements TenantInterface {
     @With
     Boolean forceExecution;
 
+    /**
+     * @deprecated should not be used anymore, but we keep it to be able to read the existing outputs from V1 inside the migration script.
+     */
+    @Hidden
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    @Nullable
+    @Schema(implementation = Object.class)
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    Variables outputs;
+
     public TaskRun withState(State.Type state) {
         return new TaskRun(
             this.tenantId,
@@ -83,7 +95,8 @@ public class TaskRun implements TenantInterface {
             this.state.withState(state),
             this.iteration,
             this.dynamic,
-            this.forceExecution
+            this.forceExecution,
+            this.outputs
         );
     }
     public TaskRun withStateAndAttempt(State.Type state) {
@@ -110,7 +123,8 @@ public class TaskRun implements TenantInterface {
             this.state.withState(state),
             this.iteration,
             this.dynamic,
-            this.forceExecution
+            this.forceExecution,
+            this.outputs
         );
     }
 
@@ -133,7 +147,8 @@ public class TaskRun implements TenantInterface {
             this.state.withState(State.Type.FAILED),
             this.iteration,
             this.dynamic,
-            this.forceExecution
+            this.forceExecution,
+            this.outputs
         );
     }
 

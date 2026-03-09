@@ -1740,7 +1740,7 @@
           "no_namespace": "Without namespace"
         },
         "flow": {
-          "display": "Include flow nodes"
+          "display": "Include flow dependencies"
         },
         "no_results": "No results found for {term}"
       }

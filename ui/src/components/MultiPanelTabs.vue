@@ -137,10 +137,10 @@
                     @dragleave.prevent="removeAllPotentialTabs"
                     @dragenter.prevent
                 >
-                    <KeepAlive v-if="panel.activeTab">
+                    <KeepAlive v-if="panel.activeTab" :include="accessibleTabsKeys">
                         <component
                             :key="panel.activeTab.uid"
-                            :is="panel.activeTab.component"
+                            :is="createUniqueComponent(panel.activeTab.component, panel.activeTab.uid)"
                             :panelIndex="panelIndex"
                             :tabIndex="panel.tabs.findIndex(t => t.uid === panel.activeTab.uid)"
                         />
@@ -178,7 +178,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed} from "vue";
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw} from "vue";
 
     import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
@@ -211,6 +211,33 @@
             }
         }
     }
+
+    const ComponentCache = new Map<string, any>();
+
+    const createUniqueComponent = (component: any, key: string) => {
+        if(ComponentCache.has(key)){
+            return ComponentCache.get(key);
+        }
+        const uniqueComponent = markRaw(
+            defineComponent({
+                name: makeNoCodeComponentName(key),
+                inheritAttrs: true,
+                render() {
+                    return h(component)
+                }
+            })
+        )
+        ComponentCache.set(key, uniqueComponent);
+        return uniqueComponent;
+    }
+
+    function makeNoCodeComponentName(key: string){
+        return `KsNoCode-${key}`;
+    }
+
+    const accessibleTabsKeys = computed<string[]>(() => {
+        return panels.value.flatMap(panel => panel.tabs.map(tab => makeNoCodeComponentName(tab.uid)));
+    })
 
     interface TabInfo {
         panelIndex: number,

@@ -159,7 +159,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private static final CronDefinitionBuilder CRON_DEFINITION_BUILDER = CronDefinitionBuilder.defineCron()
         .withMinutes().withValidRange(0, 59).withStrictRange().and()
         .withHours().withValidRange(0, 23).withStrictRange().and()
-        .withDayOfMonth().withValidRange(1, 31).withStrictRange().and()
+        .withDayOfMonth().withValidRange(1, 31).supportsL().withStrictRange().and()
         .withMonth().withValidRange(1, 12).withStrictRange().and()
         .withDayOfWeek().withValidRange(0, 7).withMondayDoWValue(1).withIntMapping(7, 0).withStrictRange().and()
         .withSupportedNicknameYearly()

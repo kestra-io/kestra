@@ -740,4 +740,33 @@ class ScheduleTest {
         Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
         assertThat(result).isNotEmpty();
     }
+
+    @Test
+    void testLastDayCron() throws Exception {
+        Schedule trigger = Schedule.builder()
+        .id("schedule")
+        .type(Schedule.class.getName())
+        .cron("0 12 L * *")
+        .build();
+
+        ZonedDateTime now = ZonedDateTime.now()
+            .withHour(12)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS);
+
+        ZonedDateTime expected = now
+            .withDayOfMonth(now.toLocalDate().lengthOfMonth());
+
+        ZonedDateTime next = trigger.nextEvaluationDate(
+            conditionContext(trigger),
+            Optional.of(triggerContext(now, trigger))
+        );
+
+        assertThat(next).isNotNull();
+        assertThat(next.getDayOfMonth()).isEqualTo(expected.getDayOfMonth());
+        assertThat(next.getHour()).isEqualTo(12);
+        assertThat(next.getMinute()).isEqualTo(0);
+        assertThat(next.getSecond()).isEqualTo(0);
+    }
 }

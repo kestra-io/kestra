@@ -405,9 +405,18 @@
         "zoom_out": "ズームアウト"
       },
       "search": {
-        "asset_placeholder": "アセット、flow、またはnamespaceで検索...",
+        "flow": {
+          "display": "フローの依存関係を含める"
+        },
+        "namespace": {
+          "no_namespace": "namespaceなし",
+          "select": "namespaceを選択"
+        },
         "no_results": "{term} に対する結果が見つかりませんでした",
-        "placeholder": "flow または namespace で検索..."
+        "placeholders": {
+          "asset": "アセット、flow、またはnamespaceで検索...",
+          "default": "flow または namespace で検索..."
+        }
       }
     },
     "dependency task": "Task {taskId}は他のtaskの依存関係です",

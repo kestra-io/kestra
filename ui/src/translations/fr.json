@@ -405,9 +405,18 @@
         "zoom_out": "Dézoomer"
       },
       "search": {
-        "asset_placeholder": "Rechercher par asset, flow ou namespace...",
+        "flow": {
+          "display": "Inclure les dépendances de flow"
+        },
+        "namespace": {
+          "no_namespace": "Sans namespace",
+          "select": "Sélectionner un namespace"
+        },
         "no_results": "Aucun résultat trouvé pour {term}",
-        "placeholder": "Rechercher par flow ou namespace..."
+        "placeholders": {
+          "asset": "Rechercher par asset, flow ou namespace...",
+          "default": "Rechercher par flow ou namespace..."
+        }
       }
     },
     "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",

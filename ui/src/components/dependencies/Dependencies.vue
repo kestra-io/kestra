@@ -55,9 +55,10 @@
         <el-splitter-panel id="table">
             <Table
                 :elements="getElements()"
-                @select="selectNode"
+                :highlightShown="handlers.highlightShown"
                 :selected="selectedNodeID"
                 :subtype="SUBTYPE"
+                @select="selectNode"
             />
         </el-splitter-panel>
     </el-splitter>

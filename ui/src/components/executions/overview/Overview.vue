@@ -48,7 +48,11 @@
 
                 <el-divider />
                 <div class="metadata">
-                    <Row :rows="metadata" />
+                    <Row :rows="[property]" v-for="property in metadata" :key="property.label">
+                        <template v-if="property.value instanceof Date" #value>
+                            <DateAgo :date="property.value" format="L LTS" />
+                        </template>
+                    </Row>
                 </div>
 
                 <el-divider />
@@ -191,6 +195,7 @@
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
 
+    import DateAgo from "../../layout/DateAgo.vue";
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
     import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
@@ -283,14 +288,14 @@
             {
                 icon: CalendarMonth,
                 label: t("created date"),
-                value: moment(execution.value.state.histories![0].date).fromNow(),
+                value: moment(execution.value.state.histories![0].date).toDate(),
             },
             ...(execution.value.scheduleDate
                 ? [
                     {
                         icon: CalendarClock,
                         label: t("scheduleDate"),
-                        value: moment(execution.value.scheduleDate).fromNow(),
+                        value: moment(execution.value.scheduleDate).toDate(),
                     },
                 ]
                 : []),
@@ -301,7 +306,7 @@
                     State.isRunning(execution.value.state.current)
                         ? undefined // Defaults to current date
                         : execution.value.state.histories?.at(-1)?.date,
-                ).fromNow(),
+                ).toDate(),
             },
             {
                 icon: TimerSand,

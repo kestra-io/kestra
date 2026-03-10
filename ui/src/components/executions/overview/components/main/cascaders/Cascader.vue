@@ -33,6 +33,9 @@
                                     <code>{{ itemsCount(data) }}</code>
                                 </div>
                             </div>
+                            <div v-if="isFile(data.value)" class="node buttons">
+                                <VarValue :value="data.value" :execution />
+                            </div>
                         </template>
                     </el-cascader-panel>
                 </el-splitter-panel>
@@ -55,6 +58,9 @@
                             <code>{{ itemsCount(data) }}</code>
                         </div>
                     </div>
+                    <div v-if="isFile(data.value)" class="node buttons">
+                        <VarValue :value="data.value" :execution />
+                    </div>
                 </template>
             </el-cascader-panel>
         </template>
@@ -67,6 +73,8 @@
     import {onMounted, nextTick, computed, ref} from "vue";
 
     import DebugPanel from "./DebugPanel.vue";
+
+    import VarValue from "../../../../VarValue.vue";
 
     import {Execution} from "../../../../../../stores/executions";
 
@@ -99,6 +107,10 @@
     >();
 
     const path = ref<string>("");
+
+    const isFile = (value: unknown): value is string => {
+        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+    };
 
     const formatted = ref<Node[]>([]);
     const format = (obj: Record<string, any>): Node[] => {
@@ -217,13 +229,17 @@
             display: flex;
             justify-content: space-between;
 
+            &.buttons {
+                margin: 0.75rem 0;
+            }
+
             & > div {
                 overflow-x: auto;
             }
         }
 
         & .el-cascader-node {
-            height: 36px;
+            height: min-content;
             line-height: 36px;
             font-size: $font-size-sm;
             color: var(--ks-content-primary);

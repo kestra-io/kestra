@@ -60,8 +60,11 @@ public class PurgeCurrentExecutionFiles extends Task implements RunnableTask<Pur
 
     @Override
     public PurgeCurrentExecutionFiles.Output run(RunContext runContext) throws Exception {
+        boolean purgeChildExecutions = runContext.render(includeChildExecutions).as(Boolean.class).orElse(false);
+        boolean purgeStates = runContext.render(includeStates).as(Boolean.class).orElse(false);
+
         return Output.builder()
-            .uris(runContext.storage().deleteExecutionFiles())
+            .uris(runContext.storage().deleteExecutionFiles(purgeChildExecutions, purgeStates))
             .build();
     }
 

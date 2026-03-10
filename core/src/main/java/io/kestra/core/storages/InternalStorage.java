@@ -14,6 +14,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -139,7 +140,31 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public List<URI> deleteExecutionFiles() throws IOException {
-        return this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI());
+        return deleteExecutionFiles(false, false);
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<URI> deleteExecutionFiles(boolean includeChildExecutions, boolean includeStates) throws IOException {
+        List<URI> deleted = new ArrayList<>(this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI()));
+
+        if (includeStates) {
+            String flowStatePrefix = context.getStateStorePrefix(null, false, null);
+            try {
+                URI stateUri = URI.create("/" + flowStatePrefix);
+                deleted.addAll(this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), stateUri));
+            } catch (java.net.URISyntaxException e) {
+                throw new IOException("Invalid state store URI prefix", e);
+            }
+        }
+
+        if (includeChildExecutions) {
+            logger.warn("includeChildExecutions is not yet supported for deleteExecutionFiles");
+        }
+
+        return deleted;
     }
 
     /**

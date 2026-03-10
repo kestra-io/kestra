@@ -70,7 +70,19 @@ public interface Storage {
      * @return The URIs of the deleted files.
      * @throws IOException if an error happened while deleting files.
      */
-    List<URI> deleteExecutionFiles() throws IOException;
+    default List<URI> deleteExecutionFiles() throws IOException {
+        return deleteExecutionFiles(false,false)
+    }
+
+    /**
+     * Deletes files for the current execution with options to include child executions and state files.
+     *
+     * @param includeChildExecutions if {@code true}, also deletes files from child executions (subflows).
+     * @param includeStates          if {@code true}, also deletes state files created by state tasks.
+     * @return The URIs of the deleted files.
+     * @throws IOException if an error happened while deleting files.
+     */
+    List<URI> deleteExecutionFiles(boolean includeChildExecutions, boolean includeStates) throws IOException;
 
     /**
      * Gets the storage base URI for the current context.

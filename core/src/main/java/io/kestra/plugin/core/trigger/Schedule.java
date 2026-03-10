@@ -159,7 +159,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private static final CronDefinitionBuilder CRON_DEFINITION_BUILDER = CronDefinitionBuilder.defineCron()
         .withMinutes().withValidRange(0, 59).withStrictRange().and()
         .withHours().withValidRange(0, 23).withStrictRange().and()
-        .withDayOfMonth().withValidRange(1, 31).withStrictRange().and()
+        .withDayOfMonth().withValidRange(1, 31).supportsL().withStrictRange().and()
         .withMonth().withValidRange(1, 12).withStrictRange().and()
         .withDayOfWeek().withValidRange(0, 7).withMondayDoWValue(1).withIntMapping(7, 0).withStrictRange().and()
         .withSupportedNicknameYearly()
@@ -386,19 +386,13 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         // control conditions
         if (this.getConditions() != null) {
             try {
-                boolean conditionResults = this.validateScheduleCondition(conditionContext);
-                if (!conditionResults) {
-                    return Optional.empty();
-                }
+                scheduleDates = this.trueOutputWithCondition(executionTime, conditionContext, scheduleDates);
             } catch (InternalException ie) {
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
                 return Optional.of(SchedulableExecutionFactory.createFailedExecution(this, conditionContext, triggerContext));
             }
-
-            // recalculate true output for previous and next based on conditions
-            scheduleDates = this.trueOutputWithCondition(executionTime, conditionContext, scheduleDates);
         }
 
         Map<String, Object> variables;
@@ -484,10 +478,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(output.getDate());
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), true)
+        this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), true)
             .ifPresent(outputBuilder::next);
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), false)
+        this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), false)
             .ifPresent(outputBuilder::previous);
 
         return outputBuilder.build();
@@ -516,12 +510,23 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
             ConditionContext currentConditionContext = this.conditionContext(conditionContext, currentOutput.get());
 
+            if (!currentConditionContext.getVariables().containsKey("trigger")) {
+                currentConditionContext = currentConditionContext.withVariables(
+                    ImmutableMap.<String, Object>builder()
+                        .putAll(currentConditionContext.getVariables())
+                        .put("trigger", currentOutput.get().toMap())
+                        .build()
+                );
+            }
+
             boolean conditionResults = this.validateScheduleCondition(currentConditionContext);
             if (conditionResults) {
                 return currentDate;
             }
 
-            toTestDate = currentDate.get();
+            toTestDate = next
+                ? currentDate.get().plusSeconds(1)
+                : currentDate.get().minusSeconds(1);
         }
 
         return Optional.empty();
@@ -537,7 +542,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         }
 
         while (
-            (output.getDate().getYear() < ZonedDateTime.now().getYear() + 10) ||
+            (output.getDate().getYear() < ZonedDateTime.now().getYear() + 10) &&
                 (output.getDate().getYear() > ZonedDateTime.now().getYear() - 10)
         ) {
             if (output.getDate().plus(this.lateMaximumDelay).compareTo(ZonedDateTime.now()) < 0) {
@@ -554,11 +559,23 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
+        final ConditionContext finalConditionContext;
+        if (!conditionContext.getVariables().containsKey("trigger") && conditionContext.getVariables().containsKey("schedule")) {
+            finalConditionContext = conditionContext.withVariables(
+                ImmutableMap.<String, Object>builder()
+                    .putAll(conditionContext.getVariables())
+                    .put("trigger", conditionContext.getVariables().get("schedule"))
+                    .build()
+            );
+        } else {
+            finalConditionContext = conditionContext;
+        }
+
         if (conditions != null) {
             return conditions.stream()
                 .filter(c -> c instanceof ScheduleCondition)
                 .map(c -> (ScheduleCondition) c)
-                .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
+                .allMatch(throwPredicate(condition -> condition.test(finalConditionContext)));
         }
 
         return true;

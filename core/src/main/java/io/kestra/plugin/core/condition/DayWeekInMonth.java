@@ -67,8 +67,7 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = Property.ofExpression("{{ trigger.date }}");
 
     @NotNull
     @Schema(title = "The day of week.")
@@ -83,23 +82,26 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         Map<String, Object> vars = conditionContext.getVariables();
         RunContext runContext = conditionContext.getRunContext();
 
-        String render = runContext.render(date, vars);
+        String render = runContext.render(this.date).as(String.class, vars).orElseThrow();
         LocalDate currentDate = DateUtils.parseLocalDate(render);
         LocalDate computed;
 
         DayOfWeek renderedDayOfWeek = runContext.render(this.dayOfWeek).as(DayOfWeek.class, vars).orElseThrow();
         DayWeekInMonth.DayInMonth renderedDayInMonth = runContext.render(this.dayInMonth).as(DayWeekInMonth.DayInMonth.class, vars).orElseThrow();
 
-        if (renderedDayInMonth.equals(DayInMonth.FIRST)) {
+        if (renderedDayInMonth == DayInMonth.FIRST) {
             computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.LAST)) {
+        } else if (renderedDayInMonth == DayInMonth.SECOND) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                          .plusWeeks(1);
+        } else if (renderedDayInMonth == DayInMonth.THIRD) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                          .plusWeeks(2);
+        } else if (renderedDayInMonth == DayInMonth.FOURTH) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                          .plusWeeks(3);
+        } else if (renderedDayInMonth == DayInMonth.LAST) {
             computed = currentDate.with(TemporalAdjusters.lastInMonth(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.SECOND)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.THIRD)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.FOURTH)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
         } else {
             throw new IllegalArgumentException("Invalid dayInMonth");
         }

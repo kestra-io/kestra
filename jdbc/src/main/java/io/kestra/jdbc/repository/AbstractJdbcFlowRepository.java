@@ -942,7 +942,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     columnsWithoutDate,
                     dateFields,
                     this.getFieldsMapping(),
-                    this.jdbcRepository.getTable(),
+                    fromLastRevision(true),
                     tenantId
                 );
 
@@ -985,7 +985,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
             SelectConditionStep selectStep = context
                 .select(field)
-                .from(this.jdbcRepository.getTable())
+                .from(fromLastRevision(true))
                 .where(this.defaultFilter(tenantId));
 
             var selectConditionStep = where(

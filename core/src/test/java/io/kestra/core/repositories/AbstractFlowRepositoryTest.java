@@ -10,6 +10,8 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.dashboards.AggregationType;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.*;
@@ -23,6 +25,8 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.dashboard.data.Flows;
+import io.kestra.plugin.core.dashboard.data.FlowsKPI;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
@@ -859,6 +863,77 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
 
+
+    @Test
+    protected void dashboard_fetchData_shouldNotReturnDuplicateFlowRevisions() throws Exception {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var flowId = IdUtils.create();
+
+        // Create flow with revision 1
+        FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+        // Update to create revision 2
+        FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+        // Update to create revision 3
+        FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+
+        try {
+            var now = ZonedDateTime.now();
+            ArrayListTotal<Map<String, Object>> data = flowRepository.fetchData(
+                tenant,
+                Flows.<ColumnDescriptor<Flows.Fields>>builder()
+                    .type(Flows.class.getName())
+                    .columns(Map.of(
+                        "id", ColumnDescriptor.<Flows.Fields>builder().field(Flows.Fields.ID).build(),
+                        "namespace", ColumnDescriptor.<Flows.Fields>builder().field(Flows.Fields.NAMESPACE).build()
+                    ))
+                    .build(),
+                now.minusHours(1),
+                now,
+                null
+            );
+
+            // Should return only 1 row (latest revision), not 3
+            assertThat(data.getTotal()).isEqualTo(1L);
+            assertThat(data).hasSize(1);
+        } finally {
+            deleteFlow(revision3);
+        }
+    }
+
+    @Test
+    protected void dashboard_fetchValue_shouldNotCountDuplicateFlowRevisions() throws Exception {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var flowId = IdUtils.create();
+
+        // Create flow with revision 1
+        FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+        // Update to create revision 2
+        FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+        // Update to create revision 3
+        FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+
+        try {
+            var now = ZonedDateTime.now();
+            Double value = flowRepository.fetchValue(
+                tenant,
+                FlowsKPI.<ColumnDescriptor<FlowsKPI.Fields>>builder()
+                    .type(FlowsKPI.class.getName())
+                    .columns(ColumnDescriptor.<FlowsKPI.Fields>builder()
+                        .field(FlowsKPI.Fields.ID)
+                        .agg(AggregationType.COUNT)
+                        .build())
+                    .build(),
+                now.minusHours(1),
+                now,
+                false
+            );
+
+            // Should count only 1 flow (latest revision), not 3
+            assertEquals(1.0, value);
+        } finally {
+            deleteFlow(revision3);
+        }
+    }
 
     private static Flow createTestFlowForNamespace(String tenantId, String namespace) {
         return Flow.builder()

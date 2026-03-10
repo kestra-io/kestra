@@ -152,12 +152,8 @@ public class InternalStorage implements Storage {
 
         if (includeStates) {
             String flowStatePrefix = context.getStateStorePrefix(null, false, null);
-            try {
-                URI stateUri = URI.create("/" + flowStatePrefix);
-                deleted.addAll(this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), stateUri));
-            } catch (java.net.URISyntaxException e) {
-                throw new IOException("Invalid state store URI prefix", e);
-            }
+            URI stateUri = URI.create("/" + flowStatePrefix);
+            deleted.addAll(this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), stateUri));
         }
 
         if (includeChildExecutions) {

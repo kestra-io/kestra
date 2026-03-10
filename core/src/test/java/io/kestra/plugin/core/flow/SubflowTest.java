@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.runners.Services;
 import io.kestra.core.services.VariablesService;
 import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +52,10 @@ class SubflowTest {
         Mockito.when(applicationContext.getBean(VariablesService.class)).thenReturn(new VariablesService());
         Mockito.when(runContext.logger()).thenReturn(LOG);
         Mockito.when(runContext.getApplicationContext()).thenReturn(applicationContext);
+
+        Services services = Mockito.mock(Services.class);
+        Mockito.when(services.variablesService()).thenReturn(new VariablesService());
+        Mockito.when(runContext.services()).thenReturn(services);
     }
 
     @Test

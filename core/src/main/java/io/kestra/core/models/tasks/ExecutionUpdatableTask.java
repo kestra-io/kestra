@@ -11,6 +11,10 @@ import java.util.Optional;
  * Interface for tasks that modify the execution at runtime.
  */
 public interface ExecutionUpdatableTask {
+    /**
+     * Update the execution.
+     * If the returned execution is in the KILLED state, the executor will then send a killing event.
+     */
     Execution update(Execution execution, RunContext runContext) throws Exception;
 
     /**

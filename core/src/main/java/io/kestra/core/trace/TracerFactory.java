@@ -34,6 +34,13 @@ public class TracerFactory {
             new DefaultTracer(openTelemetry.get(), tracer.get(), spanNamePrefix, level, attributes);
     }
 
+    /**
+     * Get access to the underlying {@link OpenTelemetry} instrumentation for low level usage.
+     */
+    public Optional<OpenTelemetry> getOpenTelemetry() {
+        return openTelemetry;
+    }
+
     private TraceLevel levelFromConfiguration(String name) {
         if (name == null) {
             return tracesConfiguration.root();

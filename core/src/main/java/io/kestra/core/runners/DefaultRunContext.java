@@ -580,6 +580,14 @@ public class DefaultRunContext extends RunContext {
     }
 
     /**
+     * Get access to Kestra internal services.
+     * WARNING: this should only be used for very specific needs, plugins should try to avoid using an Kestra internal service.
+     */
+    public Services services() {
+        return new Services(this.applicationContext);
+    }
+
+    /**
      * Builder class for constructing new {@link DefaultRunContext} objects.
      */
     @NoArgsConstructor

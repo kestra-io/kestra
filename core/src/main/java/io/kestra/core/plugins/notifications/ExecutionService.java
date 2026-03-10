@@ -84,7 +84,7 @@ public final class ExecutionService {
 
     public static Map<String, Object> executionMap(RunContext runContext, ExecutionInterface executionInterface) throws IllegalVariableEvaluationException {
         Execution execution = findExecution(runContext, executionInterface.getExecutionId());
-        UriProvider uriProvider = ((DefaultRunContext) runContext).getApplicationContext().getBean(UriProvider.class);
+        UriProvider uriProvider = ((DefaultRunContext) runContext).services().uriProvider();
 
         Map<String, Object> templateRenderMap = new HashMap<>();
         templateRenderMap.put("duration", execution.getState().humanDuration());

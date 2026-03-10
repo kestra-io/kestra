@@ -30,17 +30,17 @@ export default [
             // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
             // but both were more complex and fragile than this simple check.
             const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
-            if (to.name === "home" && !to.params.dashboard) {
-                next({
-                    ...to,
-                    params: {
-                        ...to.params,
-                        dashboard: "default",
-                    },
-                    query,
-                });
-                return;
-            }
+if (to.name === "home" && !to.params.dashboard) {
+    next({
+        ...to,
+        params: {
+            ...to.params,
+            dashboard: "default",
+        },
+        query,
+    });
+    return;
+}
 
             if (change) {
                 next({

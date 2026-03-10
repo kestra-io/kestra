@@ -213,7 +213,7 @@
                 if (!logResults.length) {
                     return [];
                 }
-                
+
                 const filtered = logResults.filter(log => {
                     if (!this.filter) return true;
                     return log.message?.toLowerCase().includes(this.filter.toLowerCase());

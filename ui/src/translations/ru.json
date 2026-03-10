@@ -405,9 +405,18 @@
         "zoom_out": "Уменьшить масштаб"
       },
       "search": {
-        "asset_placeholder": "Поиск по asset, flow или namespace...",
+        "flow": {
+          "display": "Включить зависимости flow"
+        },
+        "namespace": {
+          "no_namespace": "Без namespace",
+          "select": "Выберите namespace"
+        },
         "no_results": "Результаты для {term} не найдены",
-        "placeholder": "Поиск по flow или namespace..."
+        "placeholders": {
+          "asset": "Поиск по asset, flow или namespace...",
+          "default": "Поиск по flow или namespace..."
+        }
       }
     },
     "dependency task": "Задача {taskId} является зависимостью другого задачи",
@@ -630,6 +639,7 @@
     "export": "Экспорт",
     "export all flows": "Экспортировать все flows",
     "export all templates": "Экспортировать все шаблоны",
+    "export_as": "Экспортировать как .{format}",
     "export_csv": "Экспортировать как CSV",
     "exports": "Экспорты",
     "failed to export plugin defaults": "Не удалось экспортировать значения по умолчанию плагина",
@@ -703,6 +713,10 @@
         "label": "Идентификатор flow"
       },
       "footer_apply": "Применить",
+      "group": {
+        "description": "Фильтр по группе",
+        "label": "Группа"
+      },
       "hierarchy": {
         "all": "По умолчанию",
         "child_description": "Показать только вложенные/запущенные executions",
@@ -935,6 +949,10 @@
         "label": "Состояние Trigger"
       },
       "update": "Обновить",
+      "username": {
+        "description": "Фильтр по имени пользователя",
+        "label": "Имя пользователя"
+      },
       "value": "Значение",
       "workerId": {
         "description": "Фильтр по worker ID",
@@ -1287,6 +1305,7 @@
           "retry": "Повторить попытку",
           "sla": "SLA",
           "taskDefaults": "Значения по умолчанию для Task",
+          "updated": "Обновлено",
           "variables": "Переменные",
           "workerGroup": "Группа Worker"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "Похоже, здесь пока ничего нет…<br/>Измените фильтры или попробуйте снова!",
     "no_file_choosen": "Файл не выбран",
     "no_flow_outputs": "Нет доступных output.",
+    "no_history": "История недоступна",
     "no_inputs": "Нет доступных input.",
     "no_logs_data": "Нет данных",
     "no_logs_data_description": "Для выбранных фильтров логи не найдены. <br> Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",

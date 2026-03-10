@@ -98,5 +98,9 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     void deleteByFilters(String tenantId, List<QueryFilter> filters);
 
-    int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate);
+    default int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, true, true);
+    }
+
+    int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeNonExecutionLogs);
 }

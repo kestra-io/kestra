@@ -405,9 +405,18 @@
         "zoom_out": "축소"
       },
       "search": {
-        "asset_placeholder": "자산, flow 또는 namespace로 검색...",
+        "flow": {
+          "display": "flow 종속성 포함"
+        },
+        "namespace": {
+          "no_namespace": "namespace 없음",
+          "select": "namespace 선택"
+        },
         "no_results": "{term}에 대한 결과가 없습니다.",
-        "placeholder": "flow 또는 namespace로 검색..."
+        "placeholders": {
+          "asset": "자산, flow 또는 namespace로 검색...",
+          "default": "flow 또는 namespace로 검색..."
+        }
       }
     },
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
@@ -630,6 +639,7 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_as": ".{format}로 내보내기",
     "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
     "failed to export plugin defaults": "플러그인 기본값 내보내기에 실패했습니다.",
@@ -703,6 +713,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "적용",
+      "group": {
+        "description": "그룹별 필터링",
+        "label": "그룹"
+      },
       "hierarchy": {
         "all": "기본",
         "child_description": "중첩/trigger된 실행만 표시",
@@ -935,6 +949,10 @@
         "label": "트리거 상태"
       },
       "update": "업데이트",
+      "username": {
+        "description": "사용자 이름으로 필터링",
+        "label": "사용자 이름"
+      },
       "value": "값",
       "workerId": {
         "description": "작업자 ID로 필터링",
@@ -1287,6 +1305,7 @@
           "retry": "재시도",
           "sla": "SLA",
           "taskDefaults": "작업 기본값",
+          "updated": "업데이트됨",
           "variables": "변수",
           "workerGroup": "작업자 그룹"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "no_file_choosen": "파일이 선택되지 않음",
     "no_flow_outputs": "출력 없음.",
+    "no_history": "기록 없음",
     "no_inputs": "입력값이 없습니다.",
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "선택한 필터에 대한 로그가 없습니다. <br> 필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",

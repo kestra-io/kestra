@@ -23,12 +23,14 @@ import {State, cssVariable} from "@kestra-io/ui-libs";
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../utils/types";
 import type {Types, Node, Edge, Element} from "../utils/types";
 
+import Utils from "../../../utils/utils";
+
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {edgeColors, getStyle} from "../utils/style";
-const SELECTED = "selected", FADED = "faded", HOVERED = "hovered", EXECUTIONS = "executions";
+const SELECTED = "selected", FADED = "faded", DIMMED = "dimmed", HOVERED = "hovered", EXECUTIONS = "executions";
 
-const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & {elements?: Element[]} = {
+const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & { elements?: Element[] } = {
     minZoom: 0.1,
     maxZoom: 2,
     wheelSensitivity: 0.025,
@@ -43,9 +45,9 @@ const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
 
     // Physical forces
-    nodeRepulsion: 10_000_000,
+    nodeRepulsion: 400_000,
     edgeElasticity: 100,
-    idealEdgeLength: 250,
+    idealEdgeLength: 50,
 
     // Gravity settings
     gravity: 0.05,
@@ -57,7 +59,7 @@ const layout: cytoscape.CoseLayoutOptions = {
 
     // Spacing and padding
     padding: 50,
-    componentSpacing: 200,
+    componentSpacing: 50,
 
     // Node sizing
     nodeDimensionsIncludeLabels: true,
@@ -163,9 +165,9 @@ const setExecutionEdgeColors = throttle(
  * @param subtype - The dependency subtype, either `FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`.
  *                  Edge styles are only reset when subtype is `EXECUTION`.
  * @param classes - An array of class names to remove from all elements.
- *                  Defaults to [`selected`, `faded`, `hovered`, `executions`].
+ *                  Defaults to [`selected`, `faded`, `dimmed`, `hovered`, `executions`].
  */
-export function clearClasses(cy: cytoscape.Core, subtype: Types, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
+export function clearClasses(cy: cytoscape.Core, subtype: Types, classes: string[] = [SELECTED, FADED, DIMMED, HOVERED, EXECUTIONS]): void {
     cy.elements().removeClass(classes.join(" "));
     if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
@@ -371,7 +373,7 @@ export function useDependencies(
             cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
         } else if (!isTesting && elements.value.data.length > 0) {
             await nextTick(); // Wait for the container to be available in the DOM
-            
+
             if (!container.value) return;
 
             cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
@@ -409,7 +411,7 @@ export function useDependencies(
             selectHandler(cy, node, selectedNodeID, subtype);
         });
 
-        cy.on("layoutstop", () => {           
+        cy.on("layoutstop", () => {
             // Reveal nodes after layout rendering completes
             isRendering.value = false;
             cy.nodes().style("display", "element");
@@ -501,6 +503,42 @@ export function useDependencies(
                 fit(cy);
             },
             fit: () => fit(cy),
+            highlightShown: (nodeIDs: string[]) => {
+                if (!cy) return;
+
+                const shownNodeIDs = new Set(nodeIDs);
+                const allNodes = cy.nodes();
+
+                const isUnfiltered = shownNodeIDs.size >= allNodes.length;
+
+                // Reset interactive classes first so filtering owns the visual state.
+                clearClasses(cy, subtype, [SELECTED, DIMMED, HOVERED, EXECUTIONS]);
+
+                // Do not dim when there are no effective filtering results.
+                if (isUnfiltered) return;
+
+                // Dim everything, then restore full opacity for nodes that are shown in the table.
+                cy.elements().addClass(DIMMED);
+                allNodes
+                    .filter((node) => shownNodeIDs.has(node.id()))
+                    .removeClass(DIMMED);
+                cy.edges()
+                    .filter((edge) => {
+                        return shownNodeIDs
+                            .has(edge.source().id()) && shownNodeIDs.has(edge.target().id());
+                    })
+                    .removeClass(DIMMED);
+            },
+            exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
+                if (!cy) return;
+
+                const options = {full: true, scale: 2, ...(type === "jpeg" && {bg: cssVariable("--ks-background-body")})};
+                const image = type === "jpeg" ? cy.jpg(options) : cy.png(options);
+
+                const filename = `dependencies-${nodeID}-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.${type}`;
+
+                Utils.downloadUrl(image, filename);
+            },
         },
     };
 }
@@ -513,7 +551,7 @@ export function useDependencies(
  * @param subtype - The node subtype, either `FLOW`, `EXECUTION`, `NAMESPACE` or `ASSET`.
  * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: {nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[];}, subtype: Types): Element[] {
+export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[]; }, subtype: Types): Element[] {
     const nodes: Node[] = response.nodes.map((node) => ({
         id: node.uid,
         type: NODE,

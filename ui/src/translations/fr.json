@@ -405,9 +405,18 @@
         "zoom_out": "Dézoomer"
       },
       "search": {
-        "asset_placeholder": "Rechercher par asset, flow ou namespace...",
+        "flow": {
+          "display": "Inclure les dépendances de flow"
+        },
+        "namespace": {
+          "no_namespace": "Sans namespace",
+          "select": "Sélectionner un namespace"
+        },
         "no_results": "Aucun résultat trouvé pour {term}",
-        "placeholder": "Rechercher par flow ou namespace..."
+        "placeholders": {
+          "asset": "Rechercher par asset, flow ou namespace...",
+          "default": "Rechercher par flow ou namespace..."
+        }
       }
     },
     "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
@@ -630,6 +639,7 @@
     "export": "Exporter",
     "export all flows": "Exporter tous les flows",
     "export all templates": "Exporter tous les templates",
+    "export_as": "Exporter en .{format}",
     "export_csv": "Exporter en CSV",
     "exports": "Exporter",
     "failed to export plugin defaults": "Échec de l'exportation des paramètres par défaut du plugin",
@@ -703,6 +713,10 @@
         "label": "ID de flow"
       },
       "footer_apply": "Appliquer",
+      "group": {
+        "description": "Filtrer par groupe",
+        "label": "Groupe"
+      },
       "hierarchy": {
         "all": "Par défaut",
         "child_description": "Afficher uniquement les exécutions imbriquées/activées",
@@ -935,6 +949,10 @@
         "label": "État du Trigger"
       },
       "update": "Mettre à jour",
+      "username": {
+        "description": "Filtrer par nom d'utilisateur",
+        "label": "Nom d'utilisateur"
+      },
       "value": "Valeur",
       "workerId": {
         "description": "Filtrer par ID de worker",
@@ -1287,6 +1305,7 @@
           "retry": "Réessayer",
           "sla": "SLA",
           "taskDefaults": "Paramètres par défaut des Tasks",
+          "updated": "Mis à jour",
           "variables": "Variables",
           "workerGroup": "Groupe de Workers"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
     "no_file_choosen": "Aucun fichier choisi",
     "no_flow_outputs": "Aucune sortie disponible.",
+    "no_history": "Aucun historique disponible",
     "no_inputs": "Aucun input disponible.",
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Aucun log trouvé pour les filtres sélectionnés. <br> Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",

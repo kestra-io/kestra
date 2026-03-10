@@ -405,9 +405,18 @@
         "zoom_out": "缩小视图"
       },
       "search": {
-        "asset_placeholder": "按资产、flow或namespace搜索...",
+        "flow": {
+          "display": "包含flow依赖项"
+        },
+        "namespace": {
+          "no_namespace": "没有namespace",
+          "select": "选择一个namespace"
+        },
         "no_results": "未找到与 {term} 相关的结果",
-        "placeholder": "按flow或namespace搜索..."
+        "placeholders": {
+          "asset": "按资产、flow或namespace搜索...",
+          "default": "按flow或namespace搜索..."
+        }
       }
     },
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
@@ -630,6 +639,7 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
+    "export_as": "导出为.{format}",
     "export_csv": "导出为CSV",
     "exports": "导出",
     "failed to export plugin defaults": "无法导出插件默认值",
@@ -703,6 +713,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "应用",
+      "group": {
+        "description": "按组筛选",
+        "label": "组"
+      },
       "hierarchy": {
         "all": "默认",
         "child_description": "仅显示嵌套/触发的执行",
@@ -935,6 +949,10 @@
         "label": "触发状态"
       },
       "update": "更新",
+      "username": {
+        "description": "按用户名筛选",
+        "label": "用户名"
+      },
       "value": "值",
       "workerId": {
         "description": "按worker ID筛选",
@@ -1287,6 +1305,7 @@
           "retry": "重试",
           "sla": "SLA",
           "taskDefaults": "任务默认值",
+          "updated": "已更新",
           "variables": "变量",
           "workerGroup": "工作组"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_file_choosen": "未选择文件",
     "no_flow_outputs": "没有可用的output。",
+    "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",

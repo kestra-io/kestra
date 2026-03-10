@@ -10395,6 +10395,7 @@ components:
       - PATH
       - PARENT_PATH
       - VERSION
+      - ENABLED
       - USERNAME
       - NAME
       - GROUP

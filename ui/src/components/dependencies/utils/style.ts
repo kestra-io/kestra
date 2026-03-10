@@ -80,6 +80,17 @@ export const getStyle = (): cytoscape.StylesheetJson => [
         },
     },
     {
+        selector: "node.dimmed",
+        style: {
+            ...nodeBase(),
+            ...nodeColors("faded"),
+            opacity: 0.25,
+            "background-opacity": 0.35,
+            "border-opacity": 0.35,
+            "text-opacity": 0.35,
+        },
+    },
+    {
         selector: "node.selected",
         style: {...nodeBase(), ...nodeColors("selected")},
     },
@@ -97,7 +108,11 @@ export const getStyle = (): cytoscape.StylesheetJson => [
     },
     {
         selector: "edge.faded",
-        style: {...edgeBase, ...edgeColors("faded")},
+        style: {...edgeBase, ...edgeColors("faded"), opacity: 0.35},
+    },
+    {
+        selector: "edge.dimmed",
+        style: {...edgeBase, ...edgeColors("faded"), opacity: 0.1},
     },
     {
         selector: "edge.selected",

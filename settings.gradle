@@ -3,16 +3,6 @@ plugins {
     id("com.gradle.common-custom-user-data-gradle-plugin") version "2.4.0"
 }
 def isCI = System.getenv('CI') != null
-// TODO do not merge
-buildCache {
-    local { enabled = false }                     // must be false for this experiment
-    remote(develocity.buildCache) {
-        enabled = false                              // must be true for this experiment
-        allowUntrustedServer = true                 // set to false if a trusted certificate is configured for the Develocity server
-        path = "cache/exp5-2026-march06-take1"        // update 'exp4-2021-dec31-take1' for each new run of the experiment
-    }}
-// TODO end do not merge
-
 develocity {
     server = "https://develocity.kestra.io"
     buildScan {

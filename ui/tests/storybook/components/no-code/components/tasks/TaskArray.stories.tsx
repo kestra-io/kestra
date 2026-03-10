@@ -82,7 +82,7 @@ export const EmptyArray: Story = {
         const canvas = within(canvasElement);
         await fireEvent.click(await canvas.findByText("+ Add a new value", undefined, {timeout: 4000}));
         await waitFor(() => {
-            expect(canvas.getByTestId("result").textContent).toContain("[]");
+            expect(canvas.getByTestId("result").textContent).toContain("[\n  \"\"\n]");
         });
     },
 };

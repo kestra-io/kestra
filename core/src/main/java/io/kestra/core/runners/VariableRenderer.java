@@ -60,6 +60,34 @@ public class VariableRenderer {
         return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering(), false);
     }
 
+    /**
+     * Render a string expression while preserving semantic {@code null} for single-expression templates.
+     * <p>
+     * For expressions that render to non-string objects, this method stringifies the typed result
+     * using the same writer used by regular string rendering.
+     */
+    public String renderNullableString(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        Object typedValue;
+        try {
+            typedValue = this.renderTyped(inline, variables);
+        } catch (IllegalArgumentException e) {
+            // Typed rendering cannot concatenate complex types with literals.
+            // Fall back to standard string rendering for those mixed templates.
+            return this.render(inline, variables);
+        }
+        if (typedValue == null) {
+            return null;
+        }
+
+        if (typedValue instanceof String typedString) {
+            return typedString;
+        }
+
+        JsonWriter writer = new JsonWriter();
+        writer.write(typedValue);
+        return (String) writer.output();
+    }
+
     public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         return (String) this.render(inline, variables, recursive, true);
     }

@@ -74,6 +74,31 @@ class VariableRendererTest {
     }
 
     @Test
+    void shouldRenderNullableStringAsNull() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.renderNullableString("{{ null }}", Map.of())).isNull();
+        assertThat(variableRenderer.renderNullableString("{{ true ? null : 'work' }}", Map.of())).isNull();
+    }
+
+    @Test
+    void shouldRenderNullableStringAsString() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.renderNullableString("{{ false ? null : 'work' }}", Map.of())).isEqualTo("work");
+        assertThat(variableRenderer.renderNullableString("{{ 42 }}", Map.of())).isEqualTo("42");
+        assertThat(variableRenderer.renderNullableString("{{ true }}", Map.of())).isEqualTo("true");
+    }
+
+    @Test
+    void shouldRenderNullableStringForComplexTypes() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.renderNullableString("{{ {'a': 1} }}", Map.of())).isEqualTo("{\"a\":1}");
+        assertThat(variableRenderer.renderNullableString("{{ [1, 2, 3] }}", Map.of())).isEqualTo("[1,2,3]");
+    }
+
+    @Test
+    void shouldFallbackToStringRenderingForMixedComplexTemplate() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.renderNullableString("prefix {{ {'a': 1} }}", Map.of()))
+            .isEqualTo("prefix {\"a\":1}");
+    }
+
+    @Test
     void shouldKeepKeyOrderWhenRenderingMap() throws IllegalVariableEvaluationException {
         final Map<String, Object> input = new LinkedHashMap<>();
         input.put("foo-1", "A");

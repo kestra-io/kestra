@@ -59,6 +59,8 @@ public abstract class RunContext implements PropertyContext {
 
     public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
 
+    public abstract String renderNullableString(String inline) throws IllegalVariableEvaluationException;
+
     public abstract String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     public abstract <T> RunContextProperty<T> render(Property<T> inline);

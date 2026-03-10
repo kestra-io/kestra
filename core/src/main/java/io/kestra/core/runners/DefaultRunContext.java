@@ -270,6 +270,11 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
+    public String renderNullableString(String inline) throws IllegalVariableEvaluationException {
+        return variableRenderer.renderNullableString(inline, this.variables);
+    }
+
+    @Override
     public <T> RunContextProperty<T> render(Property<T> inline) {
         return new RunContextProperty<>(inline, this);
     }

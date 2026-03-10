@@ -26,6 +26,7 @@
             @update:model-value="onTaskInput"
             :schema
             :properties
+            filterType
         />
     </div>
 </template>
@@ -122,8 +123,6 @@
         $ref: "",
     }));
 
-
-
     const properties = computed(() => {
         if(!resolvedProperties.value){
             return undefined;
@@ -207,7 +206,19 @@
                         }
                     }
 
-                    const typeAsConst = resolvedItem?.properties?.type?.const
+                    const typeField = resolvedItem?.properties?.type
+                    if(!typeField){
+                        return acc;
+                    }
+
+                    if(typeField.enum){
+                        for(const typeAsEnum of typeField.enum){
+                            acc[typeAsEnum] = acc[typeAsEnum] || [];
+                            acc[typeAsEnum].push(removeRefPrefix(item.$ref));
+                        }
+                    }
+
+                    const typeAsConst = typeField?.const
 
                     if (typeAsConst) {
                         acc[typeAsConst] = acc[typeAsConst] || [];

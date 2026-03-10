@@ -378,13 +378,13 @@
                 const attemptNumber = this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0;
                 const attemptUid = this.attemptUid(taskRun.id, attemptNumber);
                 const logs = this.logsWithIndexByAttemptUid[attemptUid] ?? [];
-                const errorLine = (() => {
-                    const lastError = [...logs].reverse().find(l => (l.level || "").toString().toUpperCase() === "ERROR");
-                    if (lastError?.message) return lastError.message;
+                const errorLines = (() => {
+                    const errors = logs.filter(l => (l.level || "").toString().toUpperCase() === "ERROR" && (l.message ?? "").length > 0);
+                    if (errors.length > 0) return errors.map(l => l.message).join("\n");
                     const last = [...logs].reverse().find(l => (l.message ?? "").length > 0);
                     return last?.message ?? "";
                 })();
-                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLine}`;
+                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLines}`;
                 try {
                     window.sessionStorage.setItem("kestra-ai-prompt", prompt);
                 } catch (err) {

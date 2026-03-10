@@ -5,19 +5,20 @@
         </div>
 
         <div class="flex-grow-1 label">
-            {{ identifier }}
+            {{ title ?? identifier }}
         </div>
 
         <button v-if="playgroundStore.enabled && element.id && isTask" @click.stop="playgroundStore.runUntilTask(element.id)" type="button" class="playground-run-task">
             <PlayIcon />
         </button>
 
-        <el-button
+        <button
+            class="delete-element"
+            type="button"
             @click.prevent.stop="emits('removeElement')"
-            :icon="DeleteOutline"
-            size="small"
-            class="border-0"
-        />
+        >
+            <DeleteOutline />
+        </button>
         <div v-if="elementIndex !== undefined" class="d-flex flex-column">
             <ChevronUp @click.prevent.stop="emits('moveElement', 'up')" />
             <ChevronDown @click.prevent.stop="emits('moveElement', 'down')" />
@@ -56,6 +57,7 @@
         elementIndex?: number;
         typeFieldSchema: "on" | "type";
         moved?: boolean;
+        title?: string
     }>();
 
     const pluginsStore = usePluginsStore();
@@ -122,12 +124,9 @@
         border: none;
     }
 
-    :deep(.el-button) {
+    .delete-element {        color: $base-white;
+        border: none;
         background-color: transparent;
-
-        &:hover {
-            color: var(--ks-content-alert);
-        }
     }
 }
 </style>

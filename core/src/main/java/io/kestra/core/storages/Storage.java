@@ -71,7 +71,7 @@ public interface Storage {
      * @throws IOException if an error happened while deleting files.
      */
     default List<URI> deleteExecutionFiles() throws IOException {
-        return deleteExecutionFiles(false,false)
+        return deleteExecutionFiles(false,false);
     }
 
     /**

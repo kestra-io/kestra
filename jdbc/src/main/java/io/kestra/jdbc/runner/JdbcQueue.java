@@ -75,8 +75,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     private final boolean immediateRepoll;
 
-    private final AtomicBoolean isClosed = new AtomicBoolean(false);
-    private final AtomicBoolean isPaused = new AtomicBoolean(false);
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final AtomicBoolean paused = new AtomicBoolean(false);
 
     private final Counter bigMessageCounter;
 
@@ -315,25 +316,18 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         Timer timer = this.metricRegistry
             .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
-        StackTraceElement[] parentStackTrace = Thread.currentThread().getStackTrace();
         return this.poll(() -> timer.record(() -> {
-            Result<Record> fetch;
-            try {
-                fetch = dslContextWrapper.transactionResult(configuration -> {
-                    DSLContext ctx = DSL.using(configuration);
+            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
+                DSLContext ctx = DSL.using(configuration);
 
-                    Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
+                Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
 
-                    if (!result.isEmpty()) {
-                        maxOffset.set(result.getLast().get("offset", Integer.class));
-                    }
+                if (!result.isEmpty()) {
+                    maxOffset.set(result.getLast().get("offset", Integer.class));
+                }
 
-                    return result;
-                });
-            } catch (Exception e) {
-                log.error("Error while receiving messages from JDBC queue. Thread stacktrace: {}", parentStackTrace, e);
-                throw e;
-            }
+                return result;
+            });
 
             this.send(fetch, consumer);
 
@@ -445,15 +439,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @SuppressWarnings("BusyWait")
     protected Runnable poll(Supplier<Integer> runnable) {
-        AtomicBoolean queriedToStop = new AtomicBoolean(false);
-        AtomicBoolean running = new AtomicBoolean(true);
-
         poolExecutor.execute(() -> {
             List<Configuration.Step> steps = configuration.computeSteps();
             Duration sleep = configuration.minPollInterval;
             ZonedDateTime lastPoll = ZonedDateTime.now();
-            while (!queriedToStop.get() && !this.isClosed.get()) {
-                if (!this.isPaused.get()) {
+            while (this.running.get()) {
+                if (!this.paused.get()) {
                     try {
                         Integer count = runnable.get();
                         if (count > 0) {
@@ -485,23 +476,25 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                     }
                 }
 
-                try {
-                    Thread.sleep(sleep);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                if (this.running.get()) {
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
 
-            running.set(false);
+            stopped.set(true);
         });
 
         return () -> {
-            queriedToStop.set(true);
+            running.set(false);
             try {
                 Awaitility.await()
                     .atMost(Duration.ofSeconds(30))
                     .pollInterval(Duration.ofMillis(10))
-                    .until(() -> !running.get());
+                    .until(stopped::get);
             } catch (Exception e) {
                 log.warn("Error while stopping polling", e);
             }
@@ -526,18 +519,25 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void pause() {
-        this.isPaused.set(true);
+        this.paused.set(true);
     }
 
     @Override
     public void resume() {
-        this.isPaused.set(false);
+        this.paused.set(false);
     }
 
     @Override
     public void close() throws IOException {
-        if (!this.isClosed.compareAndSet(false, true)) {
-            return;
+        if (this.running.compareAndSet(true, false)) {
+            try {
+                Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .pollInterval(Duration.ofMillis(10))
+                    .until(stopped::get);
+            } catch (Exception e) {
+                log.warn("Error while stopping polling", e);
+            }
         }
         this.poolExecutor.shutdown();
         this.asyncPoolExecutor.shutdown();

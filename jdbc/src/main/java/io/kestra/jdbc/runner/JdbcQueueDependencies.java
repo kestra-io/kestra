@@ -6,5 +6,5 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @JdbcRunnerEnabled
-public record JdbcQueueDependencies(@Nullable JooqDSLContextWrapper jooqDSLContextWrapper) {
+public record JdbcQueueDependencies(JooqDSLContextWrapper jooqDSLContextWrapper) {
 }

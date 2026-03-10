@@ -9,7 +9,8 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.*;
 
-public interface QueueFactoryInterface<DEPENDENCY> {
+// We provide a generic <D> type that allows to pass to each queue bean method the required dependencies to make sure Micronaut dependency tree is built correctly so we have a proper bean shutdown order.
+public interface QueueFactoryInterface<D> {
     String EXECUTION_NAMED = "executionQueue";
     String EXECUTOR_NAMED = "executorQueue";
     String WORKERJOB_NAMED = "workerJobQueue";
@@ -28,35 +29,35 @@ public interface QueueFactoryInterface<DEPENDENCY> {
     String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
     String MULTIPLE_CONDITION_EVENT_NAMED = "multipleConditionEventQueue";
 
-    QueueInterface<Execution> execution(DEPENDENCY ignored);
+    QueueInterface<Execution> execution(D dependencies);
 
-    QueueInterface<Executor> executor(DEPENDENCY ignored);
+    QueueInterface<Executor> executor(D dependencies);
 
-    WorkerJobQueueInterface workerJob(DEPENDENCY ignored);
+    WorkerJobQueueInterface workerJob(D dependencies);
 
-    QueueInterface<WorkerTaskResult> workerTaskResult(DEPENDENCY ignored);
+    QueueInterface<WorkerTaskResult> workerTaskResult(D dependencies);
 
-    QueueInterface<WorkerTriggerResult> workerTriggerResult(DEPENDENCY ignored);
+    QueueInterface<WorkerTriggerResult> workerTriggerResult(D dependencies);
 
-    QueueInterface<LogEntry> logEntry(DEPENDENCY ignored);
+    QueueInterface<LogEntry> logEntry(D dependencies);
 
-    QueueInterface<MetricEntry> metricEntry(DEPENDENCY ignored);
+    QueueInterface<MetricEntry> metricEntry(D dependencies);
 
-    QueueInterface<FlowInterface> flow(DEPENDENCY ignored);
+    QueueInterface<FlowInterface> flow(D dependencies);
 
-    QueueInterface<ExecutionKilled> kill(DEPENDENCY ignored);
+    QueueInterface<ExecutionKilled> kill(D dependencies);
 
-    QueueInterface<Template> template(DEPENDENCY ignored);
+    QueueInterface<Template> template(D dependencies);
 
-    QueueInterface<WorkerInstance> workerInstance(DEPENDENCY ignored);
+    QueueInterface<WorkerInstance> workerInstance(D dependencies);
 
-    QueueInterface<WorkerJobRunning> workerJobRunning(DEPENDENCY ignored);
+    QueueInterface<WorkerJobRunning> workerJobRunning(D dependencies);
 
-    QueueInterface<Trigger> trigger(DEPENDENCY ignored);
+    QueueInterface<Trigger> trigger(D dependencies);
 
-    QueueInterface<SubflowExecutionResult> subflowExecutionResult(DEPENDENCY ignored);
+    QueueInterface<SubflowExecutionResult> subflowExecutionResult(D dependencies);
 
-    QueueInterface<SubflowExecutionEnd> subflowExecutionEnd(DEPENDENCY ignored);
+    QueueInterface<SubflowExecutionEnd> subflowExecutionEnd(D dependencies);
 
-    QueueInterface<MultipleConditionEvent> multipleConditionEvent(DEPENDENCY ignored);
+    QueueInterface<MultipleConditionEvent> multipleConditionEvent(D dependencies);
 }

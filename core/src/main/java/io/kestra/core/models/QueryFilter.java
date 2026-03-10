@@ -175,6 +175,18 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        STATUS("status") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
+        EMAIL("email") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
         TIME_RANGE("timeRange") {
             @Override
             public List<Op> supportedOp() {
@@ -259,10 +271,34 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
         },
+        ENABLED("enabled") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
         USERNAME("username") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
+            }
+        },
+        NAME("name") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        GROUP("groupList") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.IN, Op.EQUALS);
+            }
+        },
+        EXPIRED_AT("expired_at") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of();
             }
         };
 
@@ -344,7 +380,37 @@ public record QueryFilter(
         USER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.USERNAME);
+                return List.of(Field.QUERY, Field.USERNAME, Field.GROUP, Field.NAME);
+            }
+        },
+        ROLE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
+            }
+        },
+        INVITATION {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT);
+            }
+        },
+        GROUP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
+            }
+        },
+        BINDING {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE);
+            }
+        },
+        SECURITY_INTEGRATION {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.ENABLED);
             }
         },
         SECRET_METADATA {

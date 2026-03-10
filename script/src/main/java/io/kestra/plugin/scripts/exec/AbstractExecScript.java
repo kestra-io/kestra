@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.runners.TargetOS;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.runner.Process;
+import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.plugin.scripts.runner.docker.PullPolicy;
@@ -101,6 +102,33 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
         title = "The task runner container image, only used if the task runner is container-based."
     )
     public abstract Property<String> getContainerImage();
+
+    /**
+     * @deprecated use {@link #injectDefaults(RunContext, DockerOptions)}
+     */
+    @Deprecated(forRemoval = true, since = "0.21")
+    protected DockerOptions injectDefaults(@NotNull DockerOptions original) {
+        return original;
+    }
+
+    /**
+     * Allow setting Docker options defaults values.
+     * To make it work, it is advised to set the 'docker' field like:
+     *
+     * <pre>{@code
+     *     @Schema(
+     *         title = "Docker options when using the `DOCKER` runner",
+     *         defaultValue = "{image=python, pullPolicy=ALWAYS}"
+     *     )
+     *     @PluginProperty
+     *     @Builder.Default
+     *     protected DockerOptions docker = DockerOptions.builder().build();
+     * }</pre>
+     */
+    protected DockerOptions injectDefaults(RunContext runContext, @NotNull DockerOptions original) throws IllegalVariableEvaluationException {
+        // FIXME to keep backward compatibility, we call the old method from the new one by default
+        return injectDefaults(original);
+    }
 
     protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
         Map<String, String> renderedEnv = runContext.render(this.getEnv()).asMap(String.class, String.class);

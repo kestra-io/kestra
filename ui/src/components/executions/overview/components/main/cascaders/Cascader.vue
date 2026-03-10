@@ -13,40 +13,31 @@
         </div>
 
         <template v-if="props.elements">
-            <el-splitter
-                v-if="props.includeDebug"
-                :layout="verticalLayout ? 'vertical' : 'horizontal'"
-                lazy
-            >
-                <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
-                    <el-cascader-panel
-                        :options="filteredOptions"
-                        @expand-change="(p: string[]) => (path = p.join('.'))"
-                        class="debug"
-                    >
-                        <template #default="{data}">
-                            <div class="node">
-                                <div :title="data.label">
-                                    {{ data.label }}
-                                </div>
-                                <div v-if="data.value && data.children">
-                                    <code>{{ itemsCount(data) }}</code>
-                                </div>
+            <template v-if="props.includeDebug">
+                <el-cascader-panel
+                    :options="filteredOptions"
+                    @expand-change="(p: string[]) => (path = p.join('.'))"
+                >
+                    <template #default="{data}">
+                        <div class="node">
+                            <div :title="data.label">
+                                {{ data.label }}
                             </div>
-                            <div v-if="isFile(data.value)" class="node buttons">
-                                <VarValue :value="data.value" :execution />
+                            <div v-if="data.value && data.children">
+                                <code>{{ itemsCount(data) }}</code>
                             </div>
-                        </template>
-                    </el-cascader-panel>
-                </el-splitter-panel>
-                <el-splitter-panel>
-                    <DebugPanel
-                        :property="props.includeDebug"
-                        :execution
-                        :path
-                    />
-                </el-splitter-panel>
-            </el-splitter>
+                        </div>
+                        <div v-if="isFile(data.value)" class="node buttons">
+                            <VarValue :value="data.value" :execution />
+                        </div>
+                    </template>
+                </el-cascader-panel>
+                <DebugPanel
+                    :property="props.includeDebug"
+                    :execution
+                    :path
+                />
+            </template>
 
             <el-cascader-panel v-else :options="filteredOptions">
                 <template #default="{data}">
@@ -77,8 +68,6 @@
     import VarValue from "../../../../VarValue.vue";
 
     import {Execution} from "../../../../../../stores/executions";
-
-    import {verticalLayout} from "../../../utils/layout";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -199,12 +188,7 @@
 
     .el-cascader-panel {
         overflow: auto;
-
-        &.debug {
-            min-height: -webkit-fill-available;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
+        width: 100%;
     }
 
     .empty {
@@ -215,6 +199,10 @@
     :deep(.el-cascader-menu) {
         min-width: 300px;
         max-width: 300px;
+
+        &:last-child {
+            max-width: none;
+        }
 
         .el-cascader-menu__list {
             padding: 0;

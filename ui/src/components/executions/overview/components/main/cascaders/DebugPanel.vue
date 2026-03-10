@@ -141,6 +141,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    margin-top: calc($spacer / 2);
     padding: calc($spacer / 2) $spacer;
     border: 1px solid var(--el-border-color-light);
 
@@ -159,7 +160,6 @@
         display: inline-flex;
 
         & :deep(.el-button) {
-            width: 100%;
             margin-bottom: $spacer;
             padding: $spacer;
             font-size: $font-size-sm;

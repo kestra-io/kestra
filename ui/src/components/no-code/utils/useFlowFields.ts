@@ -68,7 +68,7 @@ export function useFlowFields(flowSource: ComputedRef<string>){
 
     const fieldsFromSchemaRest = computed(() => {
         return Object.keys(pluginsStore.flowRootProperties ?? {})
-            .filter((key) => !MAIN_KEYS.includes(key) && !HIDDEN_FIELDS.includes(key))
+            .filter((key) => !MAIN_KEYS.includes(key) && !HIDDEN_FIELDS.includes(key) && (!pluginsStore.flowRootProperties?.[key]?.$deprecated || parsedFlow.value[key]))
             .map((key) => getFieldFromKey(key, "general")).sort((a, b) => {
                 const indexA = SECTIONS_IDS.indexOf(a.fieldKey as typeof SECTIONS_IDS[number]);
                 const indexB = SECTIONS_IDS.indexOf(b.fieldKey as typeof SECTIONS_IDS[number]);

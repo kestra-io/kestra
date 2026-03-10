@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.utils.CaseUtils.camelToSnake;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
 
 public abstract class AbstractJdbcRepository<T> {
@@ -273,7 +274,8 @@ public abstract class AbstractJdbcRepository<T> {
                 .getSort()
                 .getOrderBy()
                 .forEach(order -> {
-                    Field<Object> field = field(order.getProperty());
+                    String column = camelToSnake(order.getProperty());
+                    Field<Object> field = DSL.field(DSL.name(column));
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());
                 });

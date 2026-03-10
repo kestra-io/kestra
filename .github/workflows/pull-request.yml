@@ -36,13 +36,11 @@ jobs:
 
       - name: Java - Setup
         uses: actions/setup-java@v4
-        if: inputs.java-enabled == 'true'
         with:
           distribution: ${{ inputs.java-distribution }}
           java-version: ${{ inputs.java-version }}
 
       - name: Java - Setup gradle
-        if: inputs.java-enabled == 'true'
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: 'true'

@@ -809,9 +809,14 @@
         display: flex;
         flex-grow: 1;
 
+        // For regular editors (not single-line inputs), reserve space for footer overlay
+        &:not(.single-line) .editor-wrapper {
+            padding-bottom: 4rem;
+        }
+
         &.single-line {
             min-height: var(--el-component-size);
-            padding: 1px 11px;
+            padding: 7px 11px;
             background-color: var(
                 --el-input-bg-color,
                 var(--el-fill-color-blank)
@@ -822,7 +827,6 @@
             );
             transition: var(--el-transition-box-shadow);
             box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
-            padding-top: 7px;
 
             &.custom-dark-vs-theme {
                 background-color: var(--ks-background-input);
@@ -847,7 +851,6 @@
         .editor-wrapper {
             min-width: 75%;
             width: 100%;
-            padding-bottom: 4rem; // reserve space for footer-row overlay
 
             .monaco-hover-content {
                 h4 {

@@ -405,9 +405,18 @@
         "zoom_out": "Alejar"
       },
       "search": {
-        "asset_placeholder": "Buscar por asset, flow o namespace...",
+        "flow": {
+          "display": "Incluir dependencias del flow"
+        },
+        "namespace": {
+          "no_namespace": "Sin namespace",
+          "select": "Seleccione un namespace"
+        },
         "no_results": "No se encontraron resultados para {term}",
-        "placeholder": "Buscar por flow o namespace..."
+        "placeholders": {
+          "asset": "Buscar por asset, flow o namespace...",
+          "default": "Buscar por flow o namespace..."
+        }
       }
     },
     "dependency task": "Task {taskId} es una dependencia de otra task",
@@ -630,6 +639,7 @@
     "export": "Exportar",
     "export all flows": "Exportar todos los flows",
     "export all templates": "Exportar todas las plantillas",
+    "export_as": "Exportar como .{format}",
     "export_csv": "Exportar como CSV",
     "exports": "Exportaciones",
     "failed to export plugin defaults": "Error al exportar los valores predeterminados del plugin",
@@ -703,6 +713,10 @@
         "label": "ID de Flow"
       },
       "footer_apply": "Aplicar",
+      "group": {
+        "description": "Filtrar por grupo",
+        "label": "Grupo"
+      },
       "hierarchy": {
         "all": "Predeterminado",
         "child_description": "Mostrar solo ejecuciones anidadas/disparadas",
@@ -935,6 +949,10 @@
         "label": "Estado del Trigger"
       },
       "update": "Actualizar",
+      "username": {
+        "description": "Filtrar por nombre de usuario",
+        "label": "Nombre de usuario"
+      },
       "value": "Valor",
       "workerId": {
         "description": "Filtrar por ID de worker",
@@ -1287,6 +1305,7 @@
           "retry": "Reintentar",
           "sla": "SLA",
           "taskDefaults": "Predeterminados de Task",
+          "updated": "Actualizado",
           "variables": "Variables",
           "workerGroup": "Grupo de Worker"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "no_file_choosen": "No se ha elegido archivo",
     "no_flow_outputs": "No hay outputs disponibles.",
+    "no_history": "No hay historial disponible",
     "no_inputs": "No hay inputs disponibles.",
     "no_logs_data": "Sin datos",
     "no_logs_data_description": "No se encontraron logs para los filtros seleccionados. <br> Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",

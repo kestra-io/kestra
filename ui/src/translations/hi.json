@@ -405,9 +405,18 @@
         "zoom_out": "ज़ूम आउट"
       },
       "search": {
-        "asset_placeholder": "एसेट, flow या namespace द्वारा खोजें...",
+        "flow": {
+          "display": "flow निर्भरताओं को शामिल करें"
+        },
+        "namespace": {
+          "no_namespace": "बिना namespace",
+          "select": "कृपया एक namespace चुनें"
+        },
         "no_results": "{term} के लिए कोई परिणाम नहीं मिला",
-        "placeholder": "flow या namespace द्वारा खोजें..."
+        "placeholders": {
+          "asset": "एसेट, flow या namespace द्वारा खोजें...",
+          "default": "flow या namespace द्वारा खोजें..."
+        }
       }
     },
     "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
@@ -630,6 +639,7 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
+    "export_as": ".{format} के रूप में निर्यात करें",
     "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
     "failed to export plugin defaults": "प्लगइन डिफॉल्ट्स को निर्यात करने में विफल",
@@ -703,6 +713,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "लागू करें",
+      "group": {
+        "description": "समूह द्वारा फ़िल्टर करें",
+        "label": "समूह"
+      },
       "hierarchy": {
         "all": "डिफ़ॉल्ट",
         "child_description": "केवल नेस्टेड/ट्रिगर की गई Executions दिखाएं",
@@ -935,6 +949,10 @@
         "label": "ट्रिगर स्थिति"
       },
       "update": "अपडेट",
+      "username": {
+        "description": "उपयोगकर्ता नाम द्वारा फ़िल्टर करें",
+        "label": "उपयोगकर्ता नाम"
+      },
       "value": "मान",
       "workerId": {
         "description": "वर्कर ID द्वारा फ़िल्टर करें",
@@ -1287,6 +1305,7 @@
           "retry": "पुनः प्रयास करें",
           "sla": "SLA",
           "taskDefaults": "डिफ़ॉल्ट Task",
+          "updated": "अपडेट किया गया",
           "variables": "वेरिएबल्स",
           "workerGroup": "वर्कर ग्रुप"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
     "no_flow_outputs": "कोई output उपलब्ध नहीं है।",
+    "no_history": "कोई इतिहास उपलब्ध नहीं है",
     "no_inputs": "कोई input उपलब्ध नहीं है।",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले। <br> कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",

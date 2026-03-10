@@ -405,9 +405,18 @@
         "zoom_out": "Oddal"
       },
       "search": {
-        "asset_placeholder": "Szukaj według asset, flow lub namespace...",
+        "flow": {
+          "display": "Uwzględnij zależności flow"
+        },
+        "namespace": {
+          "no_namespace": "Bez namespace",
+          "select": "Wybierz namespace"
+        },
         "no_results": "Nie znaleziono wyników dla {term}",
-        "placeholder": "Szukaj według flow lub namespace..."
+        "placeholders": {
+          "asset": "Szukaj według asset, flow lub namespace...",
+          "default": "Szukaj według flow lub namespace..."
+        }
       }
     },
     "dependency task": "Task {taskId} jest zależnością innego task",
@@ -630,6 +639,7 @@
     "export": "Eksportuj",
     "export all flows": "Eksportuj wszystkie flows",
     "export all templates": "Eksportuj wszystkie szablony",
+    "export_as": "Eksportuj jako .{format}",
     "export_csv": "Eksportuj jako CSV",
     "exports": "Eksporty",
     "failed to export plugin defaults": "Nie udało się wyeksportować domyślnych ustawień wtyczki",
@@ -703,6 +713,10 @@
         "label": "Identyfikator flow"
       },
       "footer_apply": "Zastosuj",
+      "group": {
+        "description": "Filtruj według grupy",
+        "label": "Grupa"
+      },
       "hierarchy": {
         "all": "Domyślny",
         "child_description": "Pokaż tylko zagnieżdżone/wyzwolone wykonania",
@@ -935,6 +949,10 @@
         "label": "Stan Trigger"
       },
       "update": "Aktualizuj",
+      "username": {
+        "description": "Filtruj według nazwy użytkownika",
+        "label": "Nazwa użytkownika"
+      },
       "value": "Wartość",
       "workerId": {
         "description": "Filtruj według worker ID",
@@ -1287,6 +1305,7 @@
           "retry": "Ponów próbę",
           "sla": "SLA",
           "taskDefaults": "Domyślne ustawienia Task",
+          "updated": "Zaktualizowano",
           "variables": "Zmienne",
           "workerGroup": "Grupa Worker"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
     "no_file_choosen": "Nie wybrano pliku",
     "no_flow_outputs": "Brak dostępnych outputów.",
+    "no_history": "Brak dostępnej historii",
     "no_inputs": "Brak dostępnych inputów.",
     "no_logs_data": "Brak danych",
     "no_logs_data_description": "Nie znaleziono logów dla wybranych filtrów. <br> Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",

@@ -405,9 +405,18 @@
         "zoom_out": "Rauszoomen"
       },
       "search": {
-        "asset_placeholder": "Suche nach Asset, flow oder namespace...",
+        "flow": {
+          "display": "Flow-Abhängigkeiten einbeziehen"
+        },
+        "namespace": {
+          "no_namespace": "Ohne namespace",
+          "select": "Wählen Sie ein namespace aus"
+        },
         "no_results": "Keine Ergebnisse gefunden für {term}",
-        "placeholder": "Suche nach flow oder namespace..."
+        "placeholders": {
+          "asset": "Suche nach Asset, flow oder namespace...",
+          "default": "Suche nach flow oder namespace..."
+        }
       }
     },
     "dependency task": "Task {taskId} ist eine Abhängigkeit eines anderen Tasks",
@@ -630,6 +639,7 @@
     "export": "Exportieren",
     "export all flows": "Alle Flows exportieren",
     "export all templates": "Alle Vorlagen exportieren",
+    "export_as": "Als .{format} exportieren",
     "export_csv": "Als CSV exportieren",
     "exports": "Exporte",
     "failed to export plugin defaults": "Fehler beim Exportieren der Plugin-Standardeinstellungen",
@@ -703,6 +713,10 @@
         "label": "Flow-ID"
       },
       "footer_apply": "Anwenden",
+      "group": {
+        "description": "Nach Gruppe filtern",
+        "label": "Gruppe"
+      },
       "hierarchy": {
         "all": "Standard",
         "child_description": "Nur verschachtelte/ausgelöste Ausführungen anzeigen",
@@ -935,6 +949,10 @@
         "label": "Trigger-Zustand"
       },
       "update": "Aktualisieren",
+      "username": {
+        "description": "Nach Benutzername filtern",
+        "label": "Benutzername"
+      },
       "value": "Wert",
       "workerId": {
         "description": "Nach Worker-ID filtern",
@@ -1287,6 +1305,7 @@
           "retry": "Wiederholen",
           "sla": "SLA",
           "taskDefaults": "Standardwerte für Tasks",
+          "updated": "Aktualisiert",
           "variables": "Variablen",
           "workerGroup": "Worker-Gruppe"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
     "no_file_choosen": "Keine Datei ausgewählt",
     "no_flow_outputs": "Keine Outputs verfügbar.",
+    "no_history": "Keine Historie verfügbar",
     "no_inputs": "Keine Inputs verfügbar.",
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Keine Logs für die ausgewählten Filter gefunden. <br> Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",

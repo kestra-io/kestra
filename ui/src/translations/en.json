@@ -1377,7 +1377,8 @@
           "listeners": "Listeners",
           "taskDefaults": "Task Defaults",
           "workerGroup": "Worker Group",
-          "checks": "Checks"
+          "checks": "Checks",
+          "updated": "Updated"
         }
       },
       "select": {
@@ -1730,8 +1731,17 @@
         "fit_view": "Fit to screen"
       },
       "search": {
-        "placeholder": "Search by flow or namespace...",
-        "asset_placeholder": "Search by asset or flow or namespace...",
+        "placeholders": {
+          "default": "Search by flow or namespace...",
+          "asset": "Search by asset, flow or namespace..."
+        },
+        "namespace": {
+          "select": "Select a namespace",
+          "no_namespace": "Without namespace"
+        },
+        "flow": {
+          "display": "Include flow dependencies"
+        },
         "no_results": "No results found for {term}"
       }
     },
@@ -1833,6 +1843,14 @@
         "namespace": {
             "label": "Namespace",
             "description": "Filter by namespace"
+        },
+        "username": {
+          "label": "Username",
+          "description": "Filter by username"
+        },
+        "group": {
+          "label": "Group",
+          "description": "Filter by group"
         },
         "kill_switch_type": {
             "label": "Type",
@@ -2049,6 +2067,8 @@
     "delete trigger error": "Error deleting trigger {id}",
     "revision deleted": "Revision {revision} has been deleted successfully",
     "delete revision confirm": "Are you sure you want to delete revision {revision}?",
-    "delete revision error": "Error deleting revision {revision} with error {error}"
+    "delete revision error": "Error deleting revision {revision} with error {error}",
+    "no_history": "No history available",
+    "export_as": "Export as .{format}"
   }
 }

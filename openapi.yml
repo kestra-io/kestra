@@ -4,7 +4,7 @@ info:
   license:
     name: Apache 2.0
     url: https://raw.githubusercontent.com/kestra-io/kestra/master/LICENSE
-  version: 1.0.0
+  version: 1.4.0-SNAPSHOT
 tags:
 - name: Flows
   description: Flows API
@@ -206,6 +206,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocumentationWithSchema"
+  /api/v1/plugins/pluginUiManifest:
+    post:
+      tags:
+      - Plugins
+      summary: Get plugins group by subgroups
+      operationId: getPluginUiManifest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/TaskWithVersion"
+        required: true
+      responses:
+        "200":
+          description: getPluginUiManifest 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginUiManifest"
   /api/v1/plugins/properties/{type}:
     get:
       tags:
@@ -342,6 +363,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocumentationWithSchema"
+  /api/v1/plugins/{group}/pluginUi/{path}:
+    get:
+      tags:
+      - Plugins
+      summary: Get plugins group by subgroups
+      operationId: getPluginUi
+      parameters:
+      - name: group
+        in: path
+        description: The plugin group
+        required: true
+        schema:
+          type: string
+      - name: path
+        in: path
+        description: The file path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getPluginUi 200 response
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
   /api/v1/tenants/main/settings/default-dashboards:
     post:
       tags:
@@ -580,6 +628,33 @@ paths:
             application/yaml:
               schema:
                 type: string
+  /api/v1/{tenant}/cluster/metrics/{serviceType}:
+    get:
+      tags:
+      - Services
+      summary: Get metrics for running services
+      operationId: metrics
+      parameters:
+      - name: serviceType
+        in: query
+        required: true
+        explode: false
+        schema:
+          $ref: "#/components/schemas/ServiceType"
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: metrics 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Metric"
   /api/v1/{tenant}/cluster/services/{id}:
     get:
       tags:
@@ -712,7 +787,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedResults_Dashboard_"
+                $ref: "#/components/schemas/PagedResults_DashboardController.DashboardResponse_"
     post:
       tags:
       - Dashboards
@@ -737,7 +812,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dashboard"
+                $ref: "#/components/schemas/DashboardController.DashboardResponse"
   /api/v1/{tenant}/dashboards/charts/export/to-csv:
     post:
       tags:
@@ -884,7 +959,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dashboard"
+                $ref: "#/components/schemas/DashboardController.DashboardResponse"
     put:
       tags:
       - Dashboards
@@ -915,7 +990,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dashboard"
+                $ref: "#/components/schemas/DashboardController.DashboardResponse"
     delete:
       tags:
       - Dashboards
@@ -8622,12 +8697,16 @@ components:
         count:
           type: integer
           format: int64
-    Dashboard:
+    DashboardController.DashboardResponse:
       required:
+      - deleted
       - id
       - title
       type: object
       properties:
+        tenantId:
+          pattern: "^[a-z0-9][a-z0-9_-]*"
+          type: string
         id:
           minLength: 1
           type: string
@@ -8642,6 +8721,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Chart_ChartOption_"
+        deleted:
+          type: boolean
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+        sourceCode:
+          type: string
     DashboardController.PreviewRequest:
       required:
       - chart
@@ -9654,7 +9743,7 @@ components:
           items:
             $ref: "#/components/schemas/Metric.Tag"
         value:
-          type: object
+          type: number
     Metric.Tag:
       type: object
       properties:
@@ -9861,7 +9950,7 @@ components:
         total:
           type: integer
           format: int64
-    PagedResults_Dashboard_:
+    PagedResults_DashboardController.DashboardResponse_:
       required:
       - results
       - total
@@ -9870,7 +9959,7 @@ components:
         results:
           type: array
           items:
-            $ref: "#/components/schemas/Dashboard"
+            $ref: "#/components/schemas/DashboardController.DashboardResponse"
         total:
           type: integer
           format: int64
@@ -10173,6 +10262,30 @@ components:
       - BUSINESS
       - DATA
       - INFRASTRUCTURE
+    PluginUiManifest:
+      type: object
+      properties:
+        manifest:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/PluginUiModuleWithGroup"
+    PluginUiModuleWithGroup:
+      type: object
+      properties:
+        uiModule:
+          type: string
+        group:
+          type: string
+        staticInfo:
+          type: object
+          additionalProperties:
+            type: object
+        styles:
+          type: array
+          items:
+            type: string
     Property_Boolean_:
       type: object
       properties:
@@ -10266,6 +10379,8 @@ components:
       - END_DATE
       - EXPIRATION_DATE
       - STATE
+      - STATUS
+      - EMAIL
       - TIME_RANGE
       - TRIGGER_EXECUTION_ID
       - TRIGGER_ID
@@ -10280,7 +10395,11 @@ components:
       - PATH
       - PARENT_PATH
       - VERSION
+      - ENABLED
       - USERNAME
+      - NAME
+      - GROUP
+      - EXPIRED_AT
       x-type: String
     QueryFilter.Op:
       type: string
@@ -10738,6 +10857,13 @@ components:
           type: string
           format: uri
           nullable: true
+    TaskWithVersion:
+      type: object
+      properties:
+        cls:
+          type: string
+        version:
+          type: string
     TenantController.SetTenantDefaultDashboardsRequest:
       type: object
       properties:

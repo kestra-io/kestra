@@ -1,5 +1,7 @@
 package io.kestra.jdbc;
 
+import static io.kestra.core.utils.CaseUtils.camelToSnake;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
@@ -74,7 +76,7 @@ public abstract class AbstractJdbcRepository<T> {
             .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), MAPPER.writeValueAsString(entity))
         );
     }
-    
+
     public int count(Condition condition) {
         return getDslContextWrapper()
             .transactionResult(configuration -> DSL
@@ -85,7 +87,7 @@ public abstract class AbstractJdbcRepository<T> {
                 .fetchOne(0, Integer.class)
             );
     }
-    
+
     public void persist(T entity) {
         this.persist(entity, null);
     }
@@ -262,9 +264,10 @@ public abstract class AbstractJdbcRepository<T> {
                 .getSort()
                 .getOrderBy()
                 .forEach(order -> {
-                    Field<Object> field = io.kestra.jdbc.repository.AbstractJdbcRepository.field(order.getProperty());
+                    String column = camelToSnake(order.getProperty());
+                    Field<Object> field = DSL.field(DSL.name(column));
 
-                    select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc() : field.desc());
+                    select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());
                 });
         }
 

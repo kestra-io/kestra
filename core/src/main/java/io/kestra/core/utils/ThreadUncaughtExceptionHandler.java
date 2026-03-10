@@ -22,10 +22,11 @@ public final class ThreadUncaughtExceptionHandler implements UncaughtExceptionHa
             System.err.println(e.getMessage());
             System.err.println(errorInLogging.getMessage());
         } finally {
-            KestraContext.getContext().shutdown();
-
             if (!isTest) {
+                KestraContext.getContext().shutdown();
                 Runtime.getRuntime().exit(1);
+            } else {
+                throw new RuntimeException(e);
             }
         }
     }

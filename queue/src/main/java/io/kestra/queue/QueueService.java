@@ -20,8 +20,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Singleton
@@ -50,6 +51,14 @@ public class QueueService {
     @PreDestroy
     void close() {
         this.executorService.shutdown();
+        try {
+            if (!this.executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                this.executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            log.error("Unexpected error while trying to shutdown the queue executor service", e);
+            this.executorService.shutdownNow();
+        }
     }
 
     public void execute(Runnable runnable) {

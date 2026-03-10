@@ -169,7 +169,9 @@ public abstract class KestraContext {
         public void shutdown() {
             if (isShutdown.compareAndSet(false, true)) {
                 log.info("Kestra server - Shutdown initiated");
-                applicationContext.close();
+                if (applicationContext.isRunning()) {
+                    applicationContext.close();
+                }
                 log.info("Kestra server - Shutdown completed");
             }
         }

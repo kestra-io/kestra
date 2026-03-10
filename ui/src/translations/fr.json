@@ -405,9 +405,18 @@
         "zoom_out": "Dézoomer"
       },
       "search": {
-        "asset_placeholder": "Rechercher par asset, flow ou namespace...",
+        "flow": {
+          "display": "Inclure les dépendances de flow"
+        },
+        "namespace": {
+          "no_namespace": "Sans namespace",
+          "select": "Sélectionner un namespace"
+        },
         "no_results": "Aucun résultat trouvé pour {term}",
-        "placeholder": "Rechercher par flow ou namespace..."
+        "placeholders": {
+          "asset": "Rechercher par asset, flow ou namespace...",
+          "default": "Rechercher par flow ou namespace..."
+        }
       }
     },
     "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
@@ -630,6 +639,7 @@
     "export": "Exporter",
     "export all flows": "Exporter tous les flows",
     "export all templates": "Exporter tous les templates",
+    "export_as": "Exporter en .{format}",
     "export_csv": "Exporter en CSV",
     "exports": "Exporter",
     "failed to export plugin defaults": "Échec de l'exportation des paramètres par défaut du plugin",
@@ -1095,7 +1105,7 @@
     "killed confirm": "Êtes-vous sur de vouloir arrêter l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
-      "add": "Nouveau couple de clé/valeur",
+      "add": "Créer",
       "delete multiple": {
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
@@ -1295,6 +1305,7 @@
           "retry": "Réessayer",
           "sla": "SLA",
           "taskDefaults": "Paramètres par défaut des Tasks",
+          "updated": "Mis à jour",
           "variables": "Variables",
           "workerGroup": "Groupe de Workers"
         },
@@ -1692,7 +1703,7 @@
     "searching": "Recherche en cours...",
     "seconds": "Secondes",
     "secret": {
-      "add": "Nouveau secret",
+      "add": "Créer",
       "inherited": "Secrets hérités",
       "isReadOnly": "Le secret est en lecture seule",
       "names": "Secrets",

@@ -405,9 +405,18 @@
         "zoom_out": "Уменьшить масштаб"
       },
       "search": {
-        "asset_placeholder": "Поиск по asset, flow или namespace...",
+        "flow": {
+          "display": "Включить зависимости flow"
+        },
+        "namespace": {
+          "no_namespace": "Без namespace",
+          "select": "Выберите namespace"
+        },
         "no_results": "Результаты для {term} не найдены",
-        "placeholder": "Поиск по flow или namespace..."
+        "placeholders": {
+          "asset": "Поиск по asset, flow или namespace...",
+          "default": "Поиск по flow или namespace..."
+        }
       }
     },
     "dependency task": "Задача {taskId} является зависимостью другого задачи",
@@ -630,6 +639,7 @@
     "export": "Экспорт",
     "export all flows": "Экспортировать все flows",
     "export all templates": "Экспортировать все шаблоны",
+    "export_as": "Экспортировать как .{format}",
     "export_csv": "Экспортировать как CSV",
     "exports": "Экспорты",
     "failed to export plugin defaults": "Не удалось экспортировать значения по умолчанию плагина",
@@ -1095,7 +1105,7 @@
     "killed confirm": "Вы уверены, что хотите убить выполнение <code>{id}</code>?",
     "killed done": "Выполнение поставлено в очередь на убийство",
     "kv": {
-      "add": "Новый Key-Value",
+      "add": "Создать",
       "delete multiple": {
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
@@ -1295,6 +1305,7 @@
           "retry": "Повторить попытку",
           "sla": "SLA",
           "taskDefaults": "Значения по умолчанию для Task",
+          "updated": "Обновлено",
           "variables": "Переменные",
           "workerGroup": "Группа Worker"
         },
@@ -1692,7 +1703,7 @@
     "searching": "Поиск...",
     "seconds": "Секунды",
     "secret": {
-      "add": "Новый секрет",
+      "add": "Создать",
       "inherited": "Унаследованные секреты",
       "isReadOnly": "Секрет доступен только для чтения",
       "names": "Cекреты",

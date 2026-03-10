@@ -405,9 +405,18 @@
         "zoom_out": "축소"
       },
       "search": {
-        "asset_placeholder": "자산, flow 또는 namespace로 검색...",
+        "flow": {
+          "display": "flow 종속성 포함"
+        },
+        "namespace": {
+          "no_namespace": "namespace 없음",
+          "select": "namespace 선택"
+        },
         "no_results": "{term}에 대한 결과가 없습니다.",
-        "placeholder": "flow 또는 namespace로 검색..."
+        "placeholders": {
+          "asset": "자산, flow 또는 namespace로 검색...",
+          "default": "flow 또는 namespace로 검색..."
+        }
       }
     },
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
@@ -630,6 +639,7 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_as": ".{format}로 내보내기",
     "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
     "failed to export plugin defaults": "플러그인 기본값 내보내기에 실패했습니다.",
@@ -1095,7 +1105,7 @@
     "killed confirm": "실행 <code>{id}</code>을(를) 종료하시겠습니까?",
     "killed done": "종료 중입니다.",
     "kv": {
-      "add": "새 Key-Value",
+      "add": "생성",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
@@ -1295,6 +1305,7 @@
           "retry": "재시도",
           "sla": "SLA",
           "taskDefaults": "작업 기본값",
+          "updated": "업데이트됨",
           "variables": "변수",
           "workerGroup": "작업자 그룹"
         },
@@ -1692,7 +1703,7 @@
     "searching": "검색 중...",
     "seconds": "초",
     "secret": {
-      "add": "새 비밀",
+      "add": "생성",
       "inherited": "상속된 비밀",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",

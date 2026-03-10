@@ -235,7 +235,7 @@
         }
 
         @media (max-width: 768px) {
-            padding: 0.4rem 0.75rem;
+            padding: 0.75rem;
 
             .mycontainer {
                 display: grid;
@@ -246,7 +246,7 @@
             }
         }
         @media (max-width: 664px) {
-            padding: 0.3rem 0.5rem;
+            padding: 0.75rem 0.5rem;
             
             .mycontainer {
                 display: grid;

@@ -405,9 +405,18 @@
         "zoom_out": "ズームアウト"
       },
       "search": {
-        "asset_placeholder": "アセット、flow、またはnamespaceで検索...",
+        "flow": {
+          "display": "フローの依存関係を含める"
+        },
+        "namespace": {
+          "no_namespace": "namespaceなし",
+          "select": "namespaceを選択"
+        },
         "no_results": "{term} に対する結果が見つかりませんでした",
-        "placeholder": "flow または namespace で検索..."
+        "placeholders": {
+          "asset": "アセット、flow、またはnamespaceで検索...",
+          "default": "flow または namespace で検索..."
+        }
       }
     },
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
@@ -630,6 +639,7 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
+    "export_as": ".{format}としてエクスポート",
     "export_csv": "CSVとしてエクスポート",
     "exports": "エクスポート",
     "failed to export plugin defaults": "プラグインのデフォルトのエクスポートに失敗しました",
@@ -1095,7 +1105,7 @@
     "killed confirm": "実行<code>{id}</code>をキルしてもよろしいですか？",
     "killed done": "実行はキルのためにキューに入れられました",
     "kv": {
-      "add": "新しいKey-Value",
+      "add": "作成",
       "delete multiple": {
         "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
         "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
@@ -1295,6 +1305,7 @@
           "retry": "リトライ",
           "sla": "SLA",
           "taskDefaults": "タスクデフォルト",
+          "updated": "更新済み",
           "variables": "変数",
           "workerGroup": "ワーカーグループ"
         },
@@ -1692,7 +1703,7 @@
     "searching": "検索中...",
     "seconds": "秒",
     "secret": {
-      "add": "新しいシークレット",
+      "add": "作成",
       "inherited": "継承されたsecrets",
       "isReadOnly": "シークレットは読み取り専用です",
       "names": "Secrets",

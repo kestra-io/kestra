@@ -405,9 +405,18 @@
         "zoom_out": "Oddal"
       },
       "search": {
-        "asset_placeholder": "Szukaj według asset, flow lub namespace...",
+        "flow": {
+          "display": "Uwzględnij zależności flow"
+        },
+        "namespace": {
+          "no_namespace": "Bez namespace",
+          "select": "Wybierz namespace"
+        },
         "no_results": "Nie znaleziono wyników dla {term}",
-        "placeholder": "Szukaj według flow lub namespace..."
+        "placeholders": {
+          "asset": "Szukaj według asset, flow lub namespace...",
+          "default": "Szukaj według flow lub namespace..."
+        }
       }
     },
     "dependency task": "Task {taskId} jest zależnością innego task",
@@ -630,6 +639,7 @@
     "export": "Eksportuj",
     "export all flows": "Eksportuj wszystkie flows",
     "export all templates": "Eksportuj wszystkie szablony",
+    "export_as": "Eksportuj jako .{format}",
     "export_csv": "Eksportuj jako CSV",
     "exports": "Eksporty",
     "failed to export plugin defaults": "Nie udało się wyeksportować domyślnych ustawień wtyczki",
@@ -1095,7 +1105,7 @@
     "killed confirm": "Czy na pewno chcesz zakończyć wykonanie <code>{id}</code>?",
     "killed done": "Wykonanie jest w kolejce do zakończenia",
     "kv": {
-      "add": "Nowy Key-Value",
+      "add": "Utwórz",
       "delete multiple": {
         "confirm": "Czy na pewno chcesz usunąć: <code>{name}</code> kv?",
         "warning": "Nie masz uprawnień do tych namespace, więc zostaną pominięte: <code>{namespaces}</code>"
@@ -1295,6 +1305,7 @@
           "retry": "Ponów próbę",
           "sla": "SLA",
           "taskDefaults": "Domyślne ustawienia Task",
+          "updated": "Zaktualizowano",
           "variables": "Zmienne",
           "workerGroup": "Grupa Worker"
         },
@@ -1692,7 +1703,7 @@
     "searching": "Szukanie...",
     "seconds": "Sekundy",
     "secret": {
-      "add": "Nowy sekret",
+      "add": "Utwórz",
       "inherited": "Dziedziczone secrets",
       "isReadOnly": "Sekret jest tylko do odczytu",
       "names": "Secrets",

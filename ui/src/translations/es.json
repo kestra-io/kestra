@@ -405,9 +405,18 @@
         "zoom_out": "Alejar"
       },
       "search": {
-        "asset_placeholder": "Buscar por asset, flow o namespace...",
+        "flow": {
+          "display": "Incluir dependencias del flow"
+        },
+        "namespace": {
+          "no_namespace": "Sin namespace",
+          "select": "Seleccione un namespace"
+        },
         "no_results": "No se encontraron resultados para {term}",
-        "placeholder": "Buscar por flow o namespace..."
+        "placeholders": {
+          "asset": "Buscar por asset, flow o namespace...",
+          "default": "Buscar por flow o namespace..."
+        }
       }
     },
     "dependency task": "Task {taskId} es una dependencia de otra task",
@@ -630,6 +639,7 @@
     "export": "Exportar",
     "export all flows": "Exportar todos los flows",
     "export all templates": "Exportar todas las plantillas",
+    "export_as": "Exportar como .{format}",
     "export_csv": "Exportar como CSV",
     "exports": "Exportaciones",
     "failed to export plugin defaults": "Error al exportar los valores predeterminados del plugin",
@@ -1095,7 +1105,7 @@
     "killed confirm": "¿Estás seguro de terminar la ejecución <code>{id}</code>?",
     "killed done": "La ejecución está en cola para ser terminada",
     "kv": {
-      "add": "Nuevo Key-Value",
+      "add": "Crear",
       "delete multiple": {
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
@@ -1295,6 +1305,7 @@
           "retry": "Reintentar",
           "sla": "SLA",
           "taskDefaults": "Predeterminados de Task",
+          "updated": "Actualizado",
           "variables": "Variables",
           "workerGroup": "Grupo de Worker"
         },
@@ -1692,7 +1703,7 @@
     "searching": "Buscando...",
     "seconds": "Segundos",
     "secret": {
-      "add": "Nuevo secreto",
+      "add": "Crear",
       "inherited": "Secrets heredados",
       "isReadOnly": "El secreto es de solo lectura",
       "names": "Secrets",

@@ -405,9 +405,18 @@
         "zoom_out": "ज़ूम आउट"
       },
       "search": {
-        "asset_placeholder": "एसेट, flow या namespace द्वारा खोजें...",
+        "flow": {
+          "display": "flow निर्भरताओं को शामिल करें"
+        },
+        "namespace": {
+          "no_namespace": "बिना namespace",
+          "select": "कृपया एक namespace चुनें"
+        },
         "no_results": "{term} के लिए कोई परिणाम नहीं मिला",
-        "placeholder": "flow या namespace द्वारा खोजें..."
+        "placeholders": {
+          "asset": "एसेट, flow या namespace द्वारा खोजें...",
+          "default": "flow या namespace द्वारा खोजें..."
+        }
       }
     },
     "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
@@ -630,6 +639,7 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
+    "export_as": ".{format} के रूप में निर्यात करें",
     "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
     "failed to export plugin defaults": "प्लगइन डिफॉल्ट्स को निर्यात करने में विफल",
@@ -1095,7 +1105,7 @@
     "killed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को समाप्त करना चाहते हैं?",
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "kv": {
-      "add": "नया Key-Value",
+      "add": "बनाएँ",
       "delete multiple": {
         "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
@@ -1295,6 +1305,7 @@
           "retry": "पुनः प्रयास करें",
           "sla": "SLA",
           "taskDefaults": "डिफ़ॉल्ट Task",
+          "updated": "अपडेट किया गया",
           "variables": "वेरिएबल्स",
           "workerGroup": "वर्कर ग्रुप"
         },
@@ -1692,7 +1703,7 @@
     "searching": "खोज जारी है...",
     "seconds": "सेकंड्स",
     "secret": {
-      "add": "नया secret",
+      "add": "बनाएं",
       "inherited": "Inherited secrets",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
       "names": "Secrets",

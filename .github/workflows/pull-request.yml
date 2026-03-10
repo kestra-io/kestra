@@ -37,14 +37,13 @@ jobs:
       - name: Java - Setup
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ inputs.java-distribution }}
-          java-version: ${{ inputs.java-version }}
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Java - Setup gradle
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: 'true'
-          #        develocity-injection-enabled: ${{ inputs.java-enable-develocity-injection && secrets.DEVELOCITY_ACCESS_KEY }}
           develocity-url: https://develocity.kestra.io/
           develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
           dependency-graph: disabled

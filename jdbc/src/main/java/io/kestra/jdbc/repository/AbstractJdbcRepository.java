@@ -304,6 +304,10 @@ public abstract class AbstractJdbcRepository {
             return getDateCondition(value, operation, dateColumn);
         }
 
+        if (field == QueryFilter.Field.ENABLED) {
+            return getEnabledCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.STATUS) {
             return statusCondition(value, operation);
         }
@@ -341,6 +345,7 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
+
         return defaultHandlers(field, value, operation);
     }
 
@@ -377,7 +382,7 @@ public abstract class AbstractJdbcRepository {
         return applyDateCondition(dateTime, operation, dateColumn);
     }
 
-    private static Object primitiveOrToString(Object o) {
+    protected static Object primitiveOrToString(Object o) {
         if (o == null) return null;
 
         if (o instanceof Boolean
@@ -404,6 +409,10 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition findMetadataCondition(Map<?, ?> metadata, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition getEnabledCondition(Object value, Op operation) {
+        return defaultHandlers(QueryFilter.Field.ENABLED, value, operation);
     }
 
     // Generate the condition for Field.STATE

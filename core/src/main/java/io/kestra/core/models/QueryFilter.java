@@ -271,6 +271,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
         },
+        ENABLED("enabled") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
         USERNAME("username") {
             @Override
             public List<Op> supportedOp() {
@@ -387,6 +393,24 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT);
+            }
+        },
+        GROUP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
+            }
+        },
+        BINDING {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAMESPACE, Field.TYPE);
+            }
+        },
+        SECURITY_INTEGRATION {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.ENABLED);
             }
         },
         SECRET_METADATA {

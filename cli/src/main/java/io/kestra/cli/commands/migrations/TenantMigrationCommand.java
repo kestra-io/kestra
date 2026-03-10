@@ -26,6 +26,9 @@ public class TenantMigrationCommand extends AbstractCommand {
     @Option(names = "--dry-run", description = "Preview only, do not update")
     boolean dryRun;
 
+    @Option(names = "--restore-queue", description = "Should it restore the queue after tenant migration", defaultValue = "true")
+    boolean restoreQueue = true;
+
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -36,7 +39,7 @@ public class TenantMigrationCommand extends AbstractCommand {
 
         TenantMigrationService migrationService = this.applicationContext.getBean(TenantMigrationService.class);
         try {
-            migrationService.migrateTenant(tenantId, tenantName, dryRun);
+            migrationService.migrateTenant(tenantId, tenantName, dryRun, restoreQueue);
             System.out.println("✅ Tenant migration complete.");
         } catch (Exception e) {
             System.err.println("❌ Tenant migration failed: " + e.getMessage());

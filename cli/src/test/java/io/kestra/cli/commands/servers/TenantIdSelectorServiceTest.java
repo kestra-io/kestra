@@ -1,32 +1,21 @@
 package io.kestra.cli.commands.servers;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.kestra.cli.App;
-import io.micronaut.configuration.picocli.PicocliRunner;
+import io.kestra.cli.services.TenantIdSelectorService;
+import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import org.junit.jupiter.api.Test;
 
 public class TenantIdSelectorServiceTest {
-
     @Test
-    void should_fail_without_tenant_id() {
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(err));
-
+    void shouldFailWithTenantIdSpecified() {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            String[] start = {
-                "server", "standalone",
-                "-f", "unused",
-                "--tenant", "wrong_tenant"
-            };
-            PicocliRunner.call(App.class, ctx, start);
-
-            assertThat(err.toString()).contains("Tenant id can only be 'main'");
-            err.reset();
+            assertThatThrownBy(() -> ctx.getBean(TenantIdSelectorService.class).getTenantId(IdUtils.create()))
+                .isInstanceOf(KestraRuntimeException.class)
+                .hasMessageContaining("Tenant id can only be 'main'");
         }
     }
 

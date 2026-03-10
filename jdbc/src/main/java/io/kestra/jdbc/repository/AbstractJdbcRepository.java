@@ -19,7 +19,6 @@ import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -302,10 +301,26 @@ public abstract class AbstractJdbcRepository {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
-            OffsetDateTime dateTime = (value instanceof ZonedDateTime)
-                ? ((ZonedDateTime) value).toOffsetDateTime()
-                : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
-            return applyDateCondition(dateTime, operation, dateColumn);
+            return getDateCondition(value, operation, dateColumn);
+        }
+
+        if (field == QueryFilter.Field.ENABLED) {
+            return getEnabledCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.STATUS) {
+            return statusCondition(value, operation);
+        }
+        if (field == QueryFilter.Field.GROUP) {
+            return groupCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.NAME) {
+            return nameCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.EXPIRATION_DATE) {
+            return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
 
         if (field == QueryFilter.Field.SCOPE) {
@@ -330,6 +345,15 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
+
+        return defaultHandlers(field, value, operation);
+    }
+
+    private Condition defaultHandlers(
+        QueryFilter.Field field,
+        Object value,
+        QueryFilter.Op operation
+    ) {
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -351,7 +375,14 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
-    private static Object primitiveOrToString(Object o) {
+    private Condition getDateCondition(Object value, Op operation, String dateColumn) {
+        OffsetDateTime dateTime = (value instanceof ZonedDateTime)
+            ? ((ZonedDateTime) value).toOffsetDateTime()
+            : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
+        return applyDateCondition(dateTime, operation, dateColumn);
+    }
+
+    protected static Object primitiveOrToString(Object o) {
         if (o == null) return null;
 
         if (o instanceof Boolean
@@ -380,6 +411,10 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
+    protected Condition getEnabledCondition(Object value, Op operation) {
+        return defaultHandlers(QueryFilter.Field.ENABLED, value, operation);
+    }
+
     // Generate the condition for Field.STATE
     @SuppressWarnings("unchecked")
     private Condition generateStateCondition(Object value, QueryFilter.Op operation) {
@@ -397,6 +432,17 @@ public abstract class AbstractJdbcRepository {
             case NOT_IN, NOT_EQUALS -> DSL.not(statesFilter(stateList));
             default -> throw new InvalidQueryFiltersException("Unsupported operation for State.Type: " + operation);
         };
+    }
+
+    protected Condition statusCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
+    }
+    protected Condition groupCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition nameCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.NAME, value, operation);
     }
 
     protected Condition statesFilter(List<State.Type> state) {

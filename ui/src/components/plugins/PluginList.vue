@@ -18,7 +18,7 @@
             >
                 <a
                     v-if="index < navigationStack.length - 1"
-                    href="#" 
+                    href="#"
                     @click.prevent="goToStep(index)"
                 >
                     {{ item.title }}
@@ -26,11 +26,11 @@
                 <span v-else>{{ item.title }}</span>
             </el-breadcrumb-item>
         </el-breadcrumb>
-        <SearchField 
-            v-if="navigationStack.length === 0" 
-            class="search-field" 
-            :router="false" 
-            @search="value => searchQuery = value" 
+        <SearchField
+            v-if="navigationStack.length === 0"
+            class="search-field"
+            :router="false"
+            @search="value => searchQuery = value"
         />
     </div>
 
@@ -64,7 +64,7 @@
     </div>
 
     <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]" ref="docRef">
-        <PluginDocumentation 
+        <PluginDocumentation
             :plugin="currentDocumentationPlugin"
         />
     </div>
@@ -73,6 +73,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue";
     import {TaskIcon, isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {isPluginMatched} from "../../utils/pluginUtils";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import PluginUnified from "./PluginUnified.vue";
@@ -81,7 +82,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useScrollMemory} from "../../composables/useScrollMemory";
     import {capitalize, formatPluginTitle} from "../../utils/global";
-    import {useMiscStore} from "../../override/stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     interface Props {
         plugins: any[];
@@ -123,12 +124,12 @@
         navigationStack.value.push({title, type, data});
     };
 
-    const getPluginElements = (plugin: any): string[] => 
+    const getPluginElements = (plugin: any): string[] =>
         Object.entries(plugin ?? {})
             .filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
-            .flatMap(([, elements]) => 
-                Array.isArray(elements) 
-                    ? elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls) 
+            .flatMap(([, elements]) =>
+                Array.isArray(elements)
+                    ? elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls)
                     : []
             );
 
@@ -141,16 +142,6 @@
         return getPluginElements(plugin).length > 0;
     };
 
-    const removeDuplicatePlugins = (plugins: any[]) => {
-        const seen = new Set();
-        return plugins.filter(plugin => {
-            const key = `${plugin.title || plugin.group}-${plugin.group}-${plugin.subGroup}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-        });
-    };
-
     const resetToListView = () => {
         currentView.value = "list";
         navigationStack.value = [];
@@ -159,22 +150,31 @@
         currentDocumentationPlugin.value = null;
     };
 
-    const basePlugins = computed(() => 
-        removeDuplicatePlugins(
-            (props.plugins ?? [])
-                .filter(plugin => plugin && (plugin.group || plugin.subGroup))
-        )
+    const basePlugins = computed(() => {
+        const grouped = (props.plugins ?? []).reduce((acc: Record<string, any[]>, plugin: any) => {
+            (acc[plugin.group] ??= []).push(plugin);
+            return acc;
+        }, {});
+
+        const filtered = Object.values(grouped).flatMap(group =>
+            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup)
+        );
+
+        return filtered
+            .filter((plugin, index, self) =>
+                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
+            )
             .filter(isPluginVisible)
-            .sort((a, b) => (getPluginDisplayName(a) ?? "").toLowerCase().localeCompare((getPluginDisplayName(b) ?? "").toLowerCase()))
-    );
+            .sort((a, b) => {
+                const nameA = (getPluginDisplayName(a) ?? "").toLowerCase();
+                const nameB = (getPluginDisplayName(b) ?? "").toLowerCase();
+                return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+            });
+    });
 
     const sortedPlugins = computed(() => {
         if (!searchQuery.value) return basePlugins.value;
-        const query = searchQuery.value.toLowerCase();
-        return basePlugins.value.filter(plugin => 
-            (getPluginDisplayName(plugin) ?? "").toLowerCase().includes(query) ||
-            (plugin.title ?? "").toLowerCase().includes(query)
-        );
+        return basePlugins.value.filter(plugin => isPluginMatched(plugin, searchQuery.value));
     });
 
     const loadPluginIcons = async () => {
@@ -236,7 +236,7 @@
     };
 
     const getSubgroupTitle = (group: string, subgroup: string): string => {
-        const subgroupPlugin = props.plugins.find(p => 
+        const subgroupPlugin = props.plugins.find(p =>
             p.group === group && (p.subGroup === subgroup || p.subGroup?.endsWith(`.${subgroup}`))
         );
         return formatPluginTitle(subgroupPlugin?.title) ?? formatPluginTitle(subgroup) ?? subgroup;

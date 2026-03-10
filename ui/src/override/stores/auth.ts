@@ -36,7 +36,7 @@ export class Me {
 
 export const useAuthStore = defineStore("auth", {
     state: () => ({
-        user: new Me(),
+        user: new Me() as Me | undefined,
         isLogged: true,
     }),
     actions: {

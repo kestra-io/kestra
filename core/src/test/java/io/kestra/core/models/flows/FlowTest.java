@@ -138,10 +138,19 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(11);
 
         assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
-        assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be `ARRAY");
+        assertThat(validate.get().getMessage()).contains("array1: `itemType` cannot be ARRAY");
+        assertThat(validate.get().getMessage()).contains("array2: `itemType` cannot be SECRET");
+        assertThat(validate.get().getMessage()).contains("array3: `itemType` cannot be MULTISELECT");
+        assertThat(validate.get().getMessage()).contains("array4: `itemType` cannot be SELECT");
+        assertThat(validate.get().getMessage()).contains("array5: `itemType` cannot be ENUM");
+        assertThat(validate.get().getMessage()).contains("multiselect1: `itemType` cannot be ARRAY");
+        assertThat(validate.get().getMessage()).contains("multiselect2: `itemType` cannot be SECRET");
+        assertThat(validate.get().getMessage()).contains("multiselect3: `itemType` cannot be MULTISELECT");
+        assertThat(validate.get().getMessage()).contains("multiselect4: `itemType` cannot be SELECT");
+        assertThat(validate.get().getMessage()).contains("multiselect5: `itemType` cannot be ENUM");
     }
 
     // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.

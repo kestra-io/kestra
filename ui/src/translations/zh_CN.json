@@ -7,23 +7,16 @@
     "Editor fontfamily": "编辑器字体家族",
     "Editor fontsize": "编辑器字体大小",
     "Editor theme": "编辑器主题",
-    "Finish": "完成",
     "Fold auto": "编辑器：自动折叠多行",
     "Fold content lines": "折叠多行字符串",
     "Hover description": "编辑器：当鼠标悬停在key或value上时显示字段描述",
     "Language": "语言",
-    "Next step": "下一步",
     "Per page": "每页",
-    "Previous step": "上一步",
-    "Reset guided tour": "重置引导游览",
     "Set default page": "设置默认页面",
     "Set labels": "设置标签",
     "Set labels done": "标签设置成功",
     "Set labels to execution": "为执行 <code>{id}</code> 添加或更新标签",
     "Set labels tooltip": "设置执行标签",
-    "Skip tour": "跳过游览",
-    "Skip tutorial": "跳过教程",
-    "Step": "步骤",
     "Task Id already exist in the flow": "流程中已存在任务ID {taskId}。",
     "Total": "总计",
     "Unfold content lines": "展开多行字符串",
@@ -47,12 +40,20 @@
     "after": "之后",
     "aggregation": "聚合",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "询问有关您数据的问题。示例提示：显示我过去7天内的flow成功率。"
+      },
       "flow": {
         "enable_instructions": {
           "footer": "注意：目前，开源版仅支持Gemini作为AI提供商。对于企业版，请参阅AI Copilot文档以获取其他模型提供商的配置。\n\n保存配置后，重新启动您的Kestra实例。",
           "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件中（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
         },
-        "generating": "正在为您生成Flow YAML...",
+        "generating": {
+          "app": "正在为您生成应用程序 YAML...",
+          "dashboard": "正在为您生成Dashboard YAML...",
+          "flow": "正在为您生成Flow YAML...",
+          "test": "正在为您生成测试 YAML..."
+        },
         "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
         "title": "AI代理"
       }
@@ -62,7 +63,9 @@
     "api": "API",
     "appBlocks": "应用模块",
     "apps": "应用程序",
-    "assets": "资产",
+    "assets": {
+      "title": "资产"
+    },
     "attempt": "尝试",
     "attempts": "尝试",
     "auditlogs": "审计日志",
@@ -402,9 +405,18 @@
         "zoom_out": "缩小视图"
       },
       "search": {
-        "asset_placeholder": "按资产、flow或namespace搜索...",
+        "flow": {
+          "display": "包含flow依赖项"
+        },
+        "namespace": {
+          "no_namespace": "没有namespace",
+          "select": "选择一个namespace"
+        },
         "no_results": "未找到与 {term} 相关的结果",
-        "placeholder": "按flow或namespace搜索..."
+        "placeholders": {
+          "asset": "按资产、flow或namespace搜索...",
+          "default": "按flow或namespace搜索..."
+        }
       }
     },
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
@@ -429,6 +441,7 @@
     "download": "下载",
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
+    "draft_available": "编辑器中有可用的草稿更改",
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "duration": "持续时间",
     "dynamic": "动态",
@@ -503,7 +516,7 @@
         "title": "您还没有 Kill Switches！"
       },
       "panels": {
-        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
+        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、Namespace Files、Blueprints、上下文）以获取相关功能。",
         "title": "当前没有打开的面板。"
       },
       "pluginDefaults": {
@@ -626,6 +639,7 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
+    "export_as": "导出为.{format}",
     "export_csv": "导出为CSV",
     "exports": "导出",
     "failed to export plugin defaults": "无法导出插件默认值",
@@ -639,8 +653,8 @@
     "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
     "files": "文件",
     "filter": {
-      "active key value pairs": "活动的key/value对",
-      "add key value pair": "添加key/value对",
+      "active key value pairs": "活动的Key/Value对",
+      "add key value pair": "添加Key/Value对",
       "aggregation": {
         "description": "按聚合方法筛选",
         "label": "聚合"
@@ -699,6 +713,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "应用",
+      "group": {
+        "description": "按组筛选",
+        "label": "组"
+      },
       "hierarchy": {
         "all": "默认",
         "child_description": "仅显示嵌套/触发的执行",
@@ -713,6 +731,7 @@
         "description": "按执行类型筛选",
         "label": "种类"
       },
+      "kv_pair_selected": "{count} 个 Key/Value 对已选择",
       "label": "标签",
       "labels": {
         "description": "按标签筛选",
@@ -930,6 +949,10 @@
         "label": "触发状态"
       },
       "update": "更新",
+      "username": {
+        "description": "按用户名筛选",
+        "label": "用户名"
+      },
       "value": "值",
       "workerId": {
         "description": "按worker ID筛选",
@@ -1111,7 +1134,6 @@
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line-by-line": "逐行",
-    "live help": "实时帮助",
     "loaded x dependencies": "已加载 {count} 个依赖项",
     "log expand setting": "日志默认显示",
     "logExporters": "日志导出器",
@@ -1283,6 +1305,7 @@
           "retry": "重试",
           "sla": "SLA",
           "taskDefaults": "任务默认值",
+          "updated": "已更新",
           "variables": "变量",
           "workerGroup": "工作组"
         },
@@ -1338,6 +1361,7 @@
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_file_choosen": "未选择文件",
     "no_flow_outputs": "没有可用的output。",
+    "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
@@ -1359,45 +1383,130 @@
     "of": "的",
     "ok": "确定",
     "onboarding": {
-      "finish": "完成",
-      "next": "下一步",
-      "no_flows": "教程命名空间下没有可用的流程。",
-      "previous": "上一步",
-      "skip": "跳过产品指南",
+      "actions": {
+        "cancel_tutorial": "取消教程",
+        "complete": "完成",
+        "edit_flow_to_continue": "请在顶部右侧点击“Edit flow”。",
+        "execute_to_continue": "1. 在顶部右侧点击“Execute”。\n2. 为 <strong>name</strong> 提供一个值。\n3. 在弹窗中再次点击“Execute”。",
+        "finish_tutorial": "完成教程",
+        "next": "下一步",
+        "save_to_continue": "请在顶部右侧点击“Save”。"
+      },
+      "cancel_modal": {
+        "confirm": "取消教程",
+        "description": "您确定要取消“第一个 Flow”教程吗？",
+        "keep": "继续教程",
+        "title": "取消“第一个 Flow”教程"
+      },
+      "editor_hints": {
+        "build_intro": "逐步构建您的第一个 Flow。",
+        "step_1": "# 1) 添加 id",
+        "step_2": "# 2) 添加 namespace",
+        "step_3": "# 3) 添加输入参数",
+        "step_4": "# 4) 添加 tasks 并创建第一个 Python 任务",
+        "step_5": "# 5) 添加 Cron 触发器"
+      },
+      "finish_actions": {
+        "create_flow": "创建 Flow",
+        "explore_blueprints": "浏览蓝图"
+      },
       "steps": {
-        "0": {
-          "content": "我们很高兴你在这里。<br />让我们创建你的第一个流程。",
-          "primary": "开始吧！",
-          "title": "欢迎使用Kestra！"
+        "add_cron_trigger": {
+          "description": "Triggers 可以根据计划或外部事件（例如 Webhook 或 MQTT 消息）启动运行。<br><br>现在添加一个 Cron 计划触发器，使该 Flow 每 5 分钟运行一次。",
+          "title": "添加 Cron 触发器"
         },
-        "1": {
-          "primary": "下一步",
-          "title": "选择一个用例<br />我们将向你展示如何完成！"
+        "add_id": {
+          "description": "ID 是您的 Flow 的唯一名称，方便您查找、运行和一致地引用它。<br><br>现在在根级别添加 <code>id</code>。",
+          "title": "添加 Flow ID"
         },
-        "2": {
-          "content": "你的流程用YAML编写，带有自动完成和语法验证。非常简单！",
-          "primary": "下一步",
-          "title": "代码编辑器"
+        "add_input": {
+          "description": "Inputs 是 Flow 级别的参数，可在任务中引用，以在运行时动态控制行为。<br><br>现在添加一个名为 <code>name</code> 且类型为 <code>STRING</code> 的输入参数。",
+          "title": "添加输入参数"
         },
-        "3": {
-          "content": "依赖关系视图实时更新。尝试添加新任务看看！",
-          "primary": "下一步",
-          "title": "拓扑视图"
+        "add_input_default": {
+          "description": "当 Flow 被自动触发时，输入参数仍然需要在运行时提供值。<br><br><code>name</code> 输入已在上一步创建，无需再次添加。只需为现有的 <code>name</code> 输入设置默认值。",
+          "title": "设置输入的默认值"
         },
-        "4": {
-          "content": "点击\"执行\"来启动你的流程。",
-          "title": "是时候运行了。"
+        "add_log_task": {
+          "description": "Tasks 是 Flow 执行的工作单元，定义为按顺序排列的步骤列表。每个任务都需要唯一的 <code>id</code> 和 <code>type</code>。Kestra 提供了许多用于外部系统的任务插件；这里我们使用一个 Python Script 任务。<br><br><code>&#123;&#123; ... &#125;&#125;</code> 语法是 Pebble 表达式，用于在运行时动态引用变量，例如来自 Flow 输入的 <code>&#123;&#123; inputs.name &#125;&#125;</code>。<br><br>现在在 <code>tasks</code> 下添加第一个任务，包括 <code>id</code>、<code>type</code> 和一个输出问候语的 <code>script</code>。",
+          "title": "添加第一个任务"
         },
-        "5": {
-          "content": "点击\"执行\"并查看你的流程运行。",
-          "title": "确认并启动！"
+        "add_namespace": {
+          "description": "Namespace 是类似文件夹的分组，用于按团队、项目或环境组织 Flow。<br><br>现在在根级别添加 <code>namespace</code>。",
+          "title": "添加命名空间"
         },
-        "6": {
-          "content": "查看日志和输出标签来跟踪你的执行进度。<br /><br />然后，前往流程页面探索其他用例。",
-          "primary": "创建新流程",
-          "secondary": "探索其他流程",
-          "title": "你已经完成了！"
+        "background_runs_info": {
+          "description": "此 Flow 现在将每 5 分钟在后台执行一次。<br><br>您可以通过左侧菜单进入“Executions”概览页面以监控计划运行。",
+          "title": "计划运行"
+        },
+        "edit_flow_from_execution": {
+          "description": "您可以直接从执行页面跳转回 Flow 定义，以便快速迭代。",
+          "title": "返回 Flow 编辑器"
+        },
+        "execute_flow": {
+          "description": "执行将使用运行时输入值启动一次 Flow 运行。",
+          "title": "执行 Flow"
+        },
+        "finish": {
+          "description": "很好的开始。您已创建、执行、参数化并安排了一个 Flow。<br><br>请选择接下来要执行的操作 ...",
+          "title": "您已完成“第一个 Flow”教程"
+        },
+        "flow_basics": {
+          "description": "在 Kestra 中，<code>flow</code> 是核心的编排单元。您使用 YAML 定义它，包括元数据和按顺序排列的任务。<br><br>请查看下面的示例结构，然后逐步构建它。",
+          "title": "Flow 基础"
+        },
+        "save_flow": {
+          "description": "保存后，您的 Flow 定义将被持久化，以便执行。",
+          "title": "保存 Flow"
+        },
+        "save_flow_again": {
+          "description": "现在您的 Flow 已包含计划任务和自动运行所需的默认输入值。",
+          "title": "保存 Flow"
+        },
+        "view_logs_status": {
+          "description": "执行详情会显示运行状态、耗时以及任务级输出日志。<br><br>现在打开执行详情，并在甘特图中点击 <code>greet</code> 查看日志。",
+          "title": "查看执行情况"
         }
+      },
+      "validation": {
+        "add_cron_trigger_cron": "添加一个 Cron 表达式，例如：`\"*/5 * * * *\"`。",
+        "add_cron_trigger_section": "创建一个包含计划触发器的 `triggers` 部分。",
+        "add_cron_trigger_type": "将触发器类型设置为 `io.kestra.plugin.core.trigger.Schedule`。",
+        "add_id": "请在顶部添加一个 Flow ID。例如：`id: hello_flow`。",
+        "add_input_default_defaults": "为 `name` 添加默认值，例如：`defaults: \"Kestra\"`。",
+        "add_input_default_id": "保持现有输入 ID 为 `name`。",
+        "add_input_default_section": "返回 `inputs`，保留一个名为 `name` 的现有输入（不要添加第二个输入）。",
+        "add_input_id": "在 `inputs` 中添加 `id: name`。",
+        "add_input_section": "请创建一个包含一个输入参数的 `inputs` 部分。",
+        "add_input_type": "将输入类型设置为 `STRING`。",
+        "add_log_task_id": "为任务设置一个 ID，例如：`id: greet`。",
+        "add_log_task_message": "为任务添加一个 `script` 字段。",
+        "add_log_task_pebble": "在脚本中使用 Pebble 表达式以使用输入值（例如：`inputs.name`）。",
+        "add_log_task_section": "请创建一个 `tasks` 部分并添加第一个任务。",
+        "add_log_task_type": "将任务类型设置为 `io.kestra.plugin.scripts.python.Script`。",
+        "add_namespace": "请在顶部添加一个 namespace。例如：`namespace: company.team`。",
+        "complete_step": "快完成了。请完成此步骤以继续。",
+        "edit_flow_from_execution": "点击顶部栏中的“Edit flow”以继续。",
+        "execute_flow": "请运行一次 Flow 以继续。",
+        "fix_yaml": "YAML 格式存在小问题。请修复后继续。",
+        "save_flow": "点击“Save”以继续。",
+        "save_flow_again": "再次点击“Save”以继续。",
+        "view_logs_status": "打开执行详情并检查 `greet` 的日志。"
+      },
+      "welcome": {
+        "additional_help": "更多帮助",
+        "badge": "教程",
+        "blueprints": "蓝图",
+        "docs": "文档",
+        "guided_description": "通过引导步骤学习如何创建并运行您的第一个 Flow。",
+        "guided_duration": "推荐大多数用户使用",
+        "guided_title": "构建您的第一个 Flow",
+        "headline": "几分钟内构建并运行您的第一个工作流",
+        "self_serve_description": "直接进入编辑器并创建您自己的 Flow。",
+        "self_serve_note": "适合有经验的用户",
+        "self_serve_title": "从零开始创建 Flow",
+        "slack": "Slack 社区",
+        "tutorial": "教程"
       }
     },
     "open": "打开",
@@ -1692,7 +1801,7 @@
       },
       "confirm": {
         "config_title": "确认配置有效",
-        "confirm": "确认",
+        "confirm": "创建管理员用户",
         "not_valid": "不，这无效",
         "valid": "是的，它是有效的"
       },
@@ -1701,7 +1810,7 @@
         "firstName": "名字",
         "lastName": "姓氏",
         "password": "密码",
-        "password_requirements": "密码必须至少包含8个字符，并且至少包含1个大写字母和1个数字。"
+        "password_requirements": "至少8个字符，包含1个大写字母和1个数字。"
       },
       "login": "登录",
       "logout": "注销",
@@ -1709,38 +1818,40 @@
         "complete": "启动 Kestra UI",
         "config": "验证配置",
         "survey": "请告诉我们更多信息",
-        "user": "创建您的账户"
+        "user": "创建管理员用户"
       },
       "subtitles": {
         "complete": "设置成功完成！",
         "config": "以下是您的配置详情",
-        "survey": "帮助我们改进 Kestra Open Source Edition",
-        "user": "通过创建账户来设置您的实例"
+        "survey": "I'm sorry, but it seems there is no text provided after the \"----------\" for translation. Could you please provide the text you would like translated?",
+        "user": "保护您的实例以开始使用。"
       },
       "success": {
         "subtitle": "一切准备就绪！",
         "title": "恭喜！"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "个人使用",
-        "company_size": "您的公司规模是多少？",
+        "company_11_50": "个人项目",
+        "company_1_10": "学习 / 探索",
+        "company_250_plus": "生产部署",
+        "company_50_250": "为我的团队/公司评估",
+        "company_personal": "其他",
+        "company_size": "您使用 Kestra 的主要目标是什么？",
         "continue": "继续",
-        "newsletter": "订阅 Kestra 新闻通讯 – 及时了解最新功能和更改。",
+        "newsletter": "通过电子邮件获取产品更新。",
+        "newsletter_heading": "保持关注",
         "skip": "跳过",
-        "use_case": "您的主要使用案例是什么？",
-        "use_case_business": "业务流程",
+        "use_case": "你计划用它来做什么？",
+        "use_case_business": "业务工作流",
         "use_case_data": "数据工作流",
         "use_case_infrastructure": "基础设施自动化",
-        "use_case_ml": "ML/AI 管道",
-        "use_case_other": "其他"
+        "use_case_ml": "ML 管道",
+        "use_case_other": "其他",
+        "use_case_scheduling": "调度和重复作业"
       },
       "titles": {
-        "survey": "告诉我们更多信息",
-        "user": "创建账户"
+        "survey": "帮助我们改进 Kestra OSS",
+        "user": "创建管理员用户"
       },
       "troubleshooting": "忘记密码？",
       "validation": {
@@ -1769,6 +1880,10 @@
     "side-by-side": "并排",
     "slack support": "通过Slack提问",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "无法连接到您的Kestra实例。请确保它正在运行，然后刷新页面。",
+        "title": "连接中断"
+      },
       "loading_execution": "加载执行时出现问题"
     },
     "source": "来源",
@@ -1932,6 +2047,7 @@
         "text": "在我们的Slack社区中提问。如果您遇到困难，我们会帮助您。✋",
         "title": "需要帮助吗？"
       },
+      "menu": "Welcome",
       "tour": {
         "text": "选择您的用例，并按照分步指南学习 Kestra 的功能和能力。❤️",
         "title": "开始产品导览"
@@ -1941,14 +2057,8 @@
         "title": "教程"
       }
     },
-    "welcome aboard": "🚀 欢迎使用 Kestra!",
-    "welcome aboard content": "使用我们的引导游览来创建你的第一个流程，并查看蓝图以找到更多示例。",
-    "welcome button create": "开始产品导览",
-    "welcome display require": "运行你的 <strong>第一个流程</strong> 以开始",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",
-      "start": "让我们启动并运行您的第一个workflow。",
-      "wel_text": "欢迎！",
       "welcome": "欢迎使用 Kestra"
     },
     "wordmark_colors": "字标的颜色会根据背景进行调整，而图标在深色背景上时则保持无背景。",

@@ -1,20 +1,26 @@
 package io.kestra.webserver.controllers.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.TimeWindow;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.settings.DashboardSettings;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
@@ -43,12 +49,15 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -72,38 +81,41 @@ public class DashboardController {
     protected TenantService tenantService;
 
     @Inject
+    protected SettingRepositoryInterface settingRepository;
+
+    @Inject
     protected ModelValidator modelValidator;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get
     @Operation(tags = {"Dashboards"}, summary = "Search for dashboards")
-    public PagedResults<Dashboard> searchDashboards(
+    public PagedResults<DashboardResponse> searchDashboards(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The filter query") @Nullable @QueryValue String q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort
     ) throws ConstraintViolationException {
-        return PagedResults.of(dashboardRepository.list(PageableUtils.from(page, size, sort), tenantService.resolveTenant(), q));
+        return PagedResults.of(dashboardRepository.list(PageableUtils.from(page, size, sort), tenantService.resolveTenant(), q).map(DashboardResponse::new));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{id}")
     @Operation(tags = {"Dashboards"}, summary = "Get a dashboard")
-    public Dashboard getDashboard(
+    public DashboardResponse getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException {
         return dashboardRepository.get(tenantService.resolveTenant(), id).map(d -> {
             if (!DASHBOARD_ID_PATTERN.matcher(d.getSourceCode()).find()) {
-                return d.toBuilder().sourceCode("id: " + d.getId() + "\n" + d.getSourceCode()).build();
+                d = d.toBuilder().sourceCode("id: " + d.getId() + "\n" + d.getSourceCode()).build();
             }
-            return d;
+            return new DashboardResponse(d);
         }).orElse(null);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Dashboards"}, summary = "Create a dashboard from yaml source")
-    public HttpResponse<Dashboard> createDashboard(
+    public HttpResponse<DashboardResponse> createDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
     ) throws ConstraintViolationException {
         Dashboard dashboardParsed = parseDashboard(dashboard);
@@ -124,7 +136,7 @@ public class DashboardController {
             )));
         }
 
-        return HttpResponse.ok(this.save(null, dashboardParsed, dashboard));
+        return HttpResponse.ok(new DashboardResponse(this.save(null, dashboardParsed, dashboard)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -156,7 +168,7 @@ public class DashboardController {
     @Put(uri = "{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Dashboards"}, summary = "Update a dashboard")
-    public HttpResponse<Dashboard> updateDashboard(
+    public HttpResponse<DashboardResponse> updateDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
     ) throws ConstraintViolationException {
@@ -176,7 +188,7 @@ public class DashboardController {
         }
         modelValidator.validate(dashboardToSave);
 
-        return HttpResponse.ok(this.save(existingDashboard.get(), dashboardToSave, dashboard));
+        return HttpResponse.ok(new DashboardResponse(this.save(existingDashboard.get(), dashboardToSave, dashboard)));
     }
 
     private Dashboard parseDashboard(String dashboard) {
@@ -195,11 +207,56 @@ public class DashboardController {
     public HttpResponse<Void> deleteDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException {
-        if (dashboardRepository.delete(tenantService.resolveTenant(), id) != null) {
+        String tenantId = tenantService.resolveTenant();
+        if (dashboardRepository.delete(tenantId, id) != null) {
+            removeDefaultDashboardReferences(id);
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
+    }
+
+    private void removeDefaultDashboardReferences(String dashboardId) {
+        settingRepository.findByKey(OSS_DASHBOARD_SETTINGS)
+            .map(Setting::getValue)
+            .map(value -> JacksonMapper.ofJson(false).convertValue(value, DashboardSettings.class))
+            .ifPresent(settings -> {
+                var builder = settings.toBuilder();
+
+                if (dashboardId.equals(settings.getDefaultHomeDashboard())) {
+                    builder.defaultHomeDashboard(null);
+                }
+                if (dashboardId.equals(settings.getDefaultFlowOverviewDashboard())) {
+                    builder.defaultFlowOverviewDashboard(null);
+                }
+                if (dashboardId.equals(settings.getDefaultNamespaceOverviewDashboard())) {
+                    builder.defaultNamespaceOverviewDashboard(null);
+                }
+
+                DashboardSettings updated = builder.build();
+                if (updated.equals(settings)) {
+                    return;
+                }
+
+                settingRepository.save(Setting.builder()
+                    .key(OSS_DASHBOARD_SETTINGS)
+                    .value(updated)
+                    .build());
+            });
+    }
+
+    public static final String OSS_DASHBOARD_SETTINGS = "kestra.oss.dashboard-settings";
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Dashboards"}, summary = "Get default dashboards")
+    @Get(uri = "/settings/default-dashboards")
+    public HttpResponse<DashboardSettings> getDefaultDashboards(
+    ) {
+        return settingRepository.findByKey(OSS_DASHBOARD_SETTINGS)
+            .map(Setting::getValue)
+            .map(value -> JacksonMapper.ofJson(false).convertValue(value, DashboardSettings.class))
+            .map(HttpResponse::ok)
+            .orElse(HttpResponse.ok());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -437,4 +494,50 @@ public class DashboardController {
         @Parameter(description = "The chart") @NotBlank String chart,
         @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Nullable ChartFiltersOverrides globalFilter) {}
 
+    @Getter
+    public static class DashboardResponse {
+        @jakarta.validation.constraints.Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+        private final String tenantId;
+        @NotNull
+        @NotBlank
+        private final String id;
+        @NotNull
+        @NotBlank
+        private final String title;
+        private final String description;
+        private final TimeWindow timeWindow;
+        private final List<Chart<?>> charts;
+        @NotNull
+        private final boolean deleted;
+        private final Instant created;
+        private final Instant updated;
+        private final String sourceCode;
+
+        public DashboardResponse(Dashboard dashboard) {
+            this.tenantId = dashboard.getTenantId();
+            this.id = dashboard.getId();
+            this.title = dashboard.getTitle();
+            this.description = dashboard.getDescription();
+            this.timeWindow = dashboard.getTimeWindow();
+            this.charts = dashboard.getCharts();
+            this.deleted = dashboard.isDeleted();
+            this.created = dashboard.getCreated();
+            this.updated = dashboard.getUpdated();
+            this.sourceCode = dashboard.getSourceCode();
+        }
+
+        @JsonCreator
+        public DashboardResponse(String tenantId, String id, String title, String description, TimeWindow timeWindow, List<Chart<?>> charts, boolean deleted, Instant created, Instant updated, String sourceCode) {
+            this.tenantId = tenantId;
+            this.id = id;
+            this.title = title;
+            this.description = description;
+            this.timeWindow = timeWindow;
+            this.charts = charts;
+            this.deleted = deleted;
+            this.created = created;
+            this.updated = updated;
+            this.sourceCode = sourceCode;
+        }
+    }
 }

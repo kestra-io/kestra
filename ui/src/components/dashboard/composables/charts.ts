@@ -47,7 +47,7 @@ export function defaultConfig(override: {
 
     return _merge(
         {
-            animation: false,
+            animation: false as const,
             responsive: true,
             maintainAspectRatio: false,
             layout: {
@@ -90,7 +90,7 @@ export function defaultConfig(override: {
                     display: false,
                 },
                 tooltip: {
-                    mode: "index",
+                    mode: "index" as const,
                     intersect: false,
                     enabled: false,
                     boxPadding: 5,

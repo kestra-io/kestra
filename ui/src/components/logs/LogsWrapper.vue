@@ -12,6 +12,7 @@
                             columns: {shown: false}
                         }"
                         :defaultScope="false"
+                        @filter="onFilterRouteSync"
                     />
                 </template>
 
@@ -57,7 +58,21 @@
     import LogLine from "../logs/LogLine.vue";
     import NoData from "../layout/NoData.vue";
     import {storageKeys} from "../../utils/constants";
-    import {decodeSearchParams} from "../filter/utils/helpers";
+    import {
+        decodeSearchParams,
+        encodeFiltersToQuery,
+        getUniqueFilters,
+        isValidFilter,
+        keyOfComparator
+    } from "../filter/utils/helpers";
+    import {AppliedFilter} from "../filter/utils/filterTypes";
+    import {
+        hasUnsupportedRouteLevelComparator,
+        normalizeRouteLevelFilter,
+        readAppliedLevelFilter,
+        readRouteLevelFilter
+    } from "../filter/utils/logLevelQuery";
+    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";
@@ -70,13 +85,18 @@
         showFilters?: boolean;
         filters?: Record<string, any>;
         reloadLogs?: number;
+        namespace?: string | null;
+        restoreurl?: boolean;
     }>(), {
         embed: false,
         showFilters: false,
         filters: undefined,
         logLevel: undefined,
-        reloadLogs: undefined
+        reloadLogs: undefined,
+        namespace: undefined,
+        restoreurl: undefined
     });
+    defineEmits(["expand-subflow", "go-to-detail", "goToDetail"]);
 
     const route = useRoute();
     const {t} = useI18n();
@@ -95,15 +115,59 @@
 
     const isFlowEdit = computed(() => route.name === "flows/update");
     const isNamespaceEdit = computed(() => route.name === "namespaces/update");
-    const selectedLogLevel = computed(() => {
+    const hasLevelFilterUI = computed(() => !props.embed || props.showFilters);
+    const defaultLogLevel = computed(() =>
+        typeof window !== "undefined"
+            ? localStorage.getItem("defaultLogLevel") || "INFO"
+            : "INFO"
+    );
+    const {
+        effectiveValue: effectiveLogLevel,
+        syncFromAppliedFilters: syncLevelFromAppliedFilters
+    } = useRouteFilterPolicy<string>({
+        enabled: () => !props.filters && hasLevelFilterUI.value,
+        explicitValue: () => props.logLevel,
+        defaultValue: () => defaultLogLevel.value,
+        applyDefaultIfMissing: () => true,
+        fallbackValue: () => undefined,
+        readFromRoute: readRouteLevelFilter,
+        writeToRoute: normalizeRouteLevelFilter,
+        hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
+        readFromAppliedFilters: readAppliedLevelFilter,
+        shouldSyncFromAppliedFilters: (filters, routeQuery) => {
+            const encodedFilters = encodeFiltersToQuery(
+                getUniqueFilters(filters.filter(isValidFilter)),
+                keyOfComparator
+            );
+
+            return !Object.entries(encodedFilters).some(
+                ([key, value]) =>
+                    !key.startsWith("filters[level][") &&
+                    routeQuery[key] !== value
+            );
+        }
+    });
+    const selectedTimeRange = computed(() => {
+        if (route.query.timeRange) {
+            return route.query.timeRange as string;
+        }
+
         const decodedParams = decodeSearchParams(route.query);
-        const levelFilters = decodedParams.filter(item => item?.field === "level");
-        const decoded = levelFilters.length > 0 ? levelFilters[0]?.value : "INFO";
-        return props.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
+        const timeRangeFilter = decodedParams.find(item => item?.field === "timeRange");
+        const rawValue = timeRangeFilter?.value;
+
+        if (Array.isArray(rawValue)) {
+            return rawValue[0];
+        }
+
+        return rawValue as string | undefined;
     });
     const endDate = computed(() => {
         if (route.query.endDate) {
             return route.query.endDate;
+        }
+        if (selectedTimeRange.value) {
+            return moment().toISOString(true);
         }
         return undefined;
     });
@@ -114,15 +178,15 @@
         if (route.query.startDate && lastRefreshDate.value) {
             return route.query.startDate;
         }
-        if (route.query.timeRange) {
-            return moment().subtract(moment.duration(route.query.timeRange as string).as("milliseconds")).toISOString(true);
+        if (selectedTimeRange.value) {
+            return moment().subtract(moment.duration(selectedTimeRange.value).as("milliseconds")).toISOString(true);
         }
 
         // the default is PT30D
         return moment().subtract(7, "days").toISOString(true);
     });
     const flowId = computed(() => route.params.id);
-    const namespace = computed(() => route.params.namespace ?? route.params.id);
+    const routeNamespace = computed(() => route.params.namespace ?? route.params.id);
     const charts = computed(() => [
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
     ]);
@@ -131,10 +195,15 @@
         let queryFilter = props.filters ?? queryWithFilter();
 
         if (isFlowEdit.value) {
-            queryFilter["filters[namespace][EQUALS]"] = namespace.value;
+            queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value;
             queryFilter["filters[flowId][EQUALS]"] = flowId.value;
         } else if (isNamespaceEdit.value) {
-            queryFilter["filters[namespace][EQUALS]"] = namespace.value;
+            queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value;
+        }
+
+        // Level filter is a minimum threshold. Always normalize to a single EQUALS query.
+        if (!props.filters) {
+            queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value);
         }
 
         if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
@@ -153,13 +222,21 @@
         logsStore.findLogs(loadQuery({
             page: parseInt(route.query?.page as string ?? "1"),
             size: parseInt(route.query?.size as string ?? "25"),
-            minLevel: props.filters ? null : selectedLogLevel.value,
+            minLevel: props.filters ? null : effectiveLogLevel.value,
             sort: "timestamp:desc"
         }))
             .finally(() => {
                 isLoading.value = false;
                 if (callback) callback();
             });
+    };
+
+    const onFilterRouteSync = (filters: AppliedFilter[]) => {
+        if (props.filters || !hasLevelFilterUI.value) {
+            return;
+        }
+
+        syncLevelFromAppliedFilters(filters);
     };
 
     const {onPageChanged, queryWithFilter, internalPageNumber, internalPageSize, ready} = useDataTableActions({
@@ -183,10 +260,6 @@
         }
         loadData();
     };
-
-    watch(() => route.query, () => {
-        loadData();
-    }, {deep: true});
 
     watch(() => props.reloadLogs, (newValue) => {
         if (newValue) refresh();

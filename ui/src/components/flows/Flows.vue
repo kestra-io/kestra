@@ -171,7 +171,7 @@
                                 />
 
                                 <el-table-column
-                                    v-else-if="colProp === 'state.startDate' && user.hasAny(permission.EXECUTION)"
+                                    v-else-if="colProp === 'state.startDate' && user?.hasAny(permission.EXECUTION)"
                                     prop="state.startDate"
                                     :label="$t('last execution date')"
                                 >
@@ -194,7 +194,7 @@
                                 </el-table-column>
 
                                 <el-table-column
-                                    v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
+                                    v-else-if="colProp === 'state.current' && user?.hasAny(permission.EXECUTION)"
                                     prop="state.current"
                                     :label="$t('last execution status')"
                                 >
@@ -221,7 +221,7 @@
                                 </el-table-column>
 
                                 <el-table-column
-                                    v-else-if="colProp === 'state' && user.hasAny(permission.EXECUTION)"
+                                    v-else-if="colProp === 'state' && user?.hasAny(permission.EXECUTION)"
                                     prop="state"
                                     :label="$t('execution statistics')"
                                     className="row-graph"
@@ -252,7 +252,11 @@
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <IconButton :tooltip="t('execute')" @click="openExecuteModal(scope.row)">
+                                        <IconButton 
+                                            v-if="canExecute(scope.row)"
+                                            :tooltip="t('execute')"
+                                            @click="openExecuteModal(scope.row)"
+                                        >
                                             <Play />
                                         </IconButton>
                                         <IconButton
@@ -423,10 +427,12 @@
 
     const user = computed(() => authStore.user);
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value);
-    const canCreate = computed(() => user.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
-    const canRead = computed(() => user.value?.isAllowed(permission.FLOW, action.READ, route.query.namespace));
-    const canDelete = computed(() => user.value?.isAllowed(permission.FLOW, action.DELETE, route.query.namespace));
-    const canUpdate = computed(() => user.value?.isAllowed(permission.FLOW, action.UPDATE, route.query.namespace));
+    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
+    const routeNamespace = computed(() => route.query.namespace as string | undefined);
+    const canRead = computed(() => user?.value?.isAllowed(permission.FLOW, action.READ, routeNamespace.value));
+    const canDelete = computed(() => user?.value?.isAllowed(permission.FLOW, action.DELETE, routeNamespace.value));
+    const canUpdate = computed(() => user?.value?.isAllowed(permission.FLOW, action.UPDATE, routeNamespace.value));
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.namespace);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 

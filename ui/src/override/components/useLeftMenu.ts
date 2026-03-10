@@ -11,7 +11,6 @@ import {useI18n} from "vue-i18n";
 
 import {useMiscStore} from "override/stores/misc";
 
-import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 import {shouldShowWelcome} from "../../utils/welcomeGuard";
 
 // Main icons
@@ -55,6 +54,8 @@ export type MenuItem = {
         locked?: boolean;
     };
     hidden?: boolean;
+    disabled?: boolean;
+    "class"?: string;
 };
 
 export function useLeftMenu() {
@@ -111,7 +112,7 @@ export function useLeftMenu() {
     const menu = computed<MenuItem[]>(() => {
         const generated = [
             {
-                title: t("product_tour"),
+                title: t("welcome.menu"),
                 routes: routeStartWith("welcome"),
                 href: {
                     name: "welcome",
@@ -125,12 +126,6 @@ export function useLeftMenu() {
                 title: t("dashboards.labels.plural"),
                 href: {
                     name: "home",
-                    params: {
-                        dashboard: getDashboard({
-                            ...$route,
-                            name: "home"
-                        }, "id"),
-                    },
                 },
                 icon: {
                     element: ChartLineVariant,

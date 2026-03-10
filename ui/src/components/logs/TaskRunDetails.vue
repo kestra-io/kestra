@@ -469,7 +469,7 @@
                 let params = {minLevel: this.level};
 
                 if (this.taskRunId) {
-                    params.taskId = this.taskRunById[this.taskRunId]?.taskId; // Fix #13024: Only fetch logs for this specific task
+                    params.taskId = this.taskRunById[this.taskRunId]?.taskId;
 
                     if (this.forcedAttemptNumber) {
                         params.attempt = this.forcedAttemptNumber;
@@ -883,11 +883,9 @@
                         },
                     })
                     .then((logs) => {
-                        // loadLogs returns a paginated response {results, total};
-                        // rawLogs must be an array of log lines
+                        // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.
                         this.rawLogs = logs?.results ?? logs ?? [];
-                        // Discard any buffered SSE logs to prevent duplicates
-                        // after the full REST fetch replaces rawLogs
+                        // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
                         this.logsBuffer = [];
                     });
             },
@@ -959,15 +957,18 @@
             },
 
             _deduplicateLogs(logs) {
-                const seen = new Set();
+                const list = new Set();
+
                 return logs.filter((log) => {
-                    // Use the server-assigned index when present as it is the most
-                    // stable unique identifier per log line per attempt.
+                    // Use the server-assigned index when present as it is the most stable unique identifier per log line per attempt.
                     const key = log.index !== undefined
                         ? `${log.taskRunId}-${log.attemptNumber}-${log.index}`
                         : `${log.taskRunId}-${log.attemptNumber}-${log.timestamp}-${log.message}`;
-                    if (seen.has(key)) return false;
-                    seen.add(key);
+
+                    if (list.has(key)) return false;
+
+                    list.add(key);
+
                     return true;
                 });
             },

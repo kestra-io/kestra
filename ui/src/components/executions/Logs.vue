@@ -208,8 +208,9 @@
                 return State
             },
             temporalLogs() {
-                const logResults = this.executionsStore.logs?.results;
-                if (!logResults?.length) {
+                const logResults = this.executionsStore.logs?.results ?? [];
+
+                if (!logResults.length) {
                     return [];
                 }
                 
@@ -217,6 +218,7 @@
                     if (!this.filter) return true;
                     return log.message?.toLowerCase().includes(this.filter.toLowerCase());
                 });
+
                 return filtered.map((logLine, index) => ({
                     ...logLine,
                     index,

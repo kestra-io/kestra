@@ -13,6 +13,14 @@
         <el-row justify="center">
             <el-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
                 <AiCopilot :flow :conversationId />
+
+                <el-tag
+                    v-for="(label, index) in labels"
+                    :key="index"
+                    @click="flow = flows[label]"
+                >
+                    {{ label }}
+                </el-tag>
             </el-col>
         </el-row>
     </section>
@@ -24,7 +32,7 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import AiCopilot from "../ai/AiCopilot.vue";
 
-    import flows from "./flows";
+    import {flows, labels} from "./flows/index";
 
     import permission from "../../models/permission";
     import action from "../../models/action";

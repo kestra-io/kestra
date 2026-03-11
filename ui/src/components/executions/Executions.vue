@@ -148,7 +148,7 @@
                                 </el-button>
                             </template>
 
-                            <el-form>
+                            <el-form labelPosition="top">
                                 <ElFormItem :label="$t('execution labels')">
                                     <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>

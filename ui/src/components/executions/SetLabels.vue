@@ -28,8 +28,8 @@
 
         <p v-html="t('Set labels to execution', {id: execution.id})" />
 
-        <el-form>
-            <el-form-item :label="t('execution labels')">
+        <el-form labelPosition="top">
+            <el-form-item :label="$t('execution labels')">
                 <LabelInput
                     v-model:labels="executionLabels"
                     :existingLabels="executionLabels"

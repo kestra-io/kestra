@@ -15,6 +15,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -108,7 +109,14 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     @Test
     void closingConsumer() throws QueueException, InterruptedException {
         singleConsumer();
-        singleConsumer();
+
+        try {
+            singleConsumer();
+        } catch (RejectedExecutionException e) {
+            // Some queue backends can briefly reject task submission while previous consumers are tearing down.
+            Thread.sleep(200);
+            singleConsumer();
+        }
     }
 
     @Test

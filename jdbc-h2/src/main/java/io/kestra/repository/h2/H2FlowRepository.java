@@ -1,14 +1,15 @@
 package io.kestra.repository.h2;
 
+import io.kestra.core.events.CrudEvent;
 import java.util.Map;
 
 import org.jooq.Condition;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.RepositoryBean;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
 

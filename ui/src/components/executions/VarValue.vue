@@ -56,6 +56,7 @@
     import FilePreview from "./FilePreview.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
+    import {useAxios} from "../../utils/axios";
     import Utils from "../../utils/utils";
 
     interface Execution {
@@ -105,7 +106,7 @@
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
             return true;
         }
-        
+
         if (typeof value === "string") {
             try {
                 const parsed = JSON.parse(value);
@@ -114,7 +115,7 @@
                 return false;
             }
         }
-        
+
         return false;
     };
 
@@ -122,7 +123,7 @@
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
             return value;
         }
-        
+
         if (typeof value === "string") {
             try {
                 const parsed = JSON.parse(value);
@@ -133,7 +134,7 @@
                 return value;
             }
         }
-        
+
         return value;
     };
 
@@ -141,16 +142,13 @@
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
     };
 
+    const axios = useAxios();
+
     const getFileSize = async (): Promise<void> => {
         if (isFile(props.value) && props.execution?.id) {
             try {
-                const response = await fetch(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`, {
-                    method: "GET"
-                });
-                if (response.ok) {
-                    const data: FileMetadata = await response.json();
-                    humanSize.value = Utils.humanFileSize(data.size);
-                }
+                const response = await axios.get<FileMetadata>(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`);
+                humanSize.value = Utils.humanFileSize(response.data.size);
             } catch (error) {
                 console.error("Failed to fetch file size:", error);
             }

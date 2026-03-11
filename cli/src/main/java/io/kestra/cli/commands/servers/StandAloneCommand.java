@@ -18,9 +18,9 @@ import io.kestra.core.runners.Worker;
 import io.kestra.core.services.IgnoreExecutionService;
 import org.awaitility.Awaitility;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import io.kestra.core.utils.Await;
@@ -34,10 +34,19 @@ public class StandAloneCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private IgnoreExecutionService ignoreExecutionService;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private StartExecutorService startExecutorService;
+
+    @Inject
+    private TenantIdSelectorService tenantIdSelectorService;
+
+    @Inject
+    private LocalFlowRepositoryLoader localFlowRepositoryLoader;
+
+    @Inject
+    private Provider<StandAloneRunner> standAloneRunnerProvider;
 
     @Inject
     @Nullable
@@ -102,14 +111,11 @@ public class StandAloneCommand extends AbstractServerCommand {
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
         if (tenantId != null) {
-            TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
             tenantIdSelectorService.createTenant(tenantId);
         }
 
         if (flowPath != null) {
             try {
-                LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
                 localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
@@ -118,7 +124,7 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         super.call();
 
-        try (StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class)) {
+        try (StandAloneRunner standAloneRunner = standAloneRunnerProvider.get()) {
 
             if (this.workerThread == 0) {
                 standAloneRunner.setWorkerEnabled(false);

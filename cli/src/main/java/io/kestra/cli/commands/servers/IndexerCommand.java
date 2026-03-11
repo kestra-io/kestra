@@ -22,7 +22,7 @@ import io.kestra.core.utils.Await;
 )
 public class IndexerCommand extends AbstractServerCommand {
     @Inject
-    private ApplicationContext applicationContext;
+    private Indexer indexer;
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
 
@@ -46,7 +46,6 @@ public class IndexerCommand extends AbstractServerCommand {
 
         super.call();
 
-        Indexer indexer = applicationContext.getBean(Indexer.class);
         indexer.run();
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());

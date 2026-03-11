@@ -22,9 +22,9 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
     @SuppressWarnings("unchecked")
     public AbstractJdbcSettingRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Setting> jdbcRepository,
-        ApplicationContext applicationContext) {
+        ApplicationEventPublisher<CrudEvent<Setting>> eventPublisher) {
         super(jdbcRepository);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        this.eventPublisher = eventPublisher;
     }
 
     public Boolean isTaskRunEnabled() {

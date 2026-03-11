@@ -41,7 +41,19 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     private ExecutorsUtils executorsUtils;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private DefaultExecutor defaultExecutor;
+
+    @Inject
+    private Controller controller;
+
+    @Inject
+    private Worker worker;
+
+    @Inject
+    private Scheduler scheduler;
+
+    @Inject
+    private Indexer indexer;
 
     @Value("${kestra.server.standalone.running.timeout:PT1M}")
     private Duration runningTimeout;
@@ -57,28 +69,24 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-        poolExecutor.execute(applicationContext.getBean(DefaultExecutor.class));
+        poolExecutor.execute(defaultExecutor);
 
         if (controllerEnabled) {
-            Controller controller = applicationContext.getBean(Controller.class);
             poolExecutor.execute(controller::start);
             servers.add(controller);
         }
 
         if (workerEnabled) {
-            Worker worker = applicationContext.getBean(Worker.class);
             poolExecutor.execute(() -> worker.start(workerThread, null));
             servers.add(worker);
         }
 
         if (schedulerEnabled) {
-            Scheduler scheduler = applicationContext.getBean(Scheduler.class);
             poolExecutor.execute(scheduler);
             servers.add(scheduler);
         }
 
         if (indexerEnabled) {
-            Indexer indexer = applicationContext.getBean(Indexer.class);
             poolExecutor.execute(indexer);
             servers.add(indexer);
         }

@@ -53,9 +53,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public class ExecutorService {
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private RunContextFactory runContextFactory;
 
     @Inject
@@ -96,10 +93,13 @@ public class ExecutorService {
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private Provider<FlowMetaStoreInterface> flowMetaStoreInterfaceProvider;
+
     private FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
         if (this.flowExecutorInterface == null) {
-            this.flowExecutorInterface = applicationContext.getBean(FlowMetaStoreInterface.class);
+            this.flowExecutorInterface = flowMetaStoreInterfaceProvider.get();
         }
 
         return this.flowExecutorInterface;

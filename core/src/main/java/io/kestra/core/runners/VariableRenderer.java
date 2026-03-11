@@ -29,10 +29,6 @@ public class VariableRenderer {
     private final VariableConfiguration variableConfiguration;
 
     @Inject
-    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
-        this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
-    }
-
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
         this.pebbleEngine = pebbleEngineFactory.create();

@@ -25,7 +25,7 @@ public class ControllerCommand extends AbstractServerCommand {
     private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Controller controller;
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
@@ -43,7 +43,6 @@ public class ControllerCommand extends AbstractServerCommand {
 
         super.call();
 
-        Controller controller = applicationContext.getBean(Controller.class);
         controller.start();
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());

@@ -20,7 +20,7 @@ import io.kestra.core.utils.Await;
 public class WorkerCommand extends AbstractServerCommand {
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Worker worker;
 
     @Option(names = { "-t", "--thread" }, description = "The max number of worker threads, defaults to eight times the number of available processors")
     private int thread = Worker.defaultNumThreads();
@@ -44,7 +44,6 @@ public class WorkerCommand extends AbstractServerCommand {
             throw new IllegalArgumentException("The --worker-group option must match the [a-zA-Z0-9_-]+ pattern");
         }
 
-        Worker worker = applicationContext.getBean(Worker.class);
         worker.start(this.thread, this.workerGroupKey);
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());

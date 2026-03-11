@@ -22,6 +22,9 @@ import io.kestra.core.utils.Await;
 @Slf4j
 public class SchedulerCommand extends AbstractServerCommand {
     @Inject
+    private Scheduler scheduler;
+
+    @Inject
     private ApplicationContext applicationContext;
 
     @CommandLine.Option(names = { "-t", "--max-threads" }, description = "The maximum number of threads used by the scheduler for evaluating triggers.")
@@ -37,6 +40,7 @@ public class SchedulerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
+
 
         Scheduler scheduler = applicationContext.getBean(Scheduler.class);
         scheduler.start(Optional.ofNullable(this.maxThread).orElse(Scheduler.defaultMaxNumThreads()));

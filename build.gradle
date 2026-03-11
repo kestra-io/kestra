@@ -401,7 +401,6 @@ tasks.register('flakyTest') {
 
 tasks.named('testCodeCoverageReport') {
     dependsOn ':core:copyGradleProperties'
-    dependsOn ':ui:assembleFrontend'
 }
 
 /**********************************************************************************************************************\

@@ -266,4 +266,12 @@ public class TaskOutputService {
     public int purge(List<Execution> executions) {
         return this.outputRepository.purgeByExecutionIds(executions.stream().map(Execution::getId).toList());
     }
+
+    public void copyOutputs(TaskRun originalTaskRun, TaskRun newTaskRun) {
+        var previousOutput = outputRepository.findById(originalTaskRun.getTenantId(), originalTaskRun.getId());
+        if (previousOutput.isPresent()) {
+            var newOutput = new TaskOutput(newTaskRun.getId(), newTaskRun.getTenantId(), newTaskRun.getExecutionId(), previousOutput.get().value(), previousOutput.get().uri());
+            outputRepository.save(newOutput);
+        }
+    }
 }

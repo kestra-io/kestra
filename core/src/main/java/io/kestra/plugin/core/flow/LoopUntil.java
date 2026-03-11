@@ -19,6 +19,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -240,14 +241,13 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public LoopUntil.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
-       Map<String, Object> outputs = (Map<String, Object>) runContext.getVariables().get("outputs");
-        if (outputs != null && outputs.get(this.id) != null) {
-            return Output.builder().iterationCount((Integer) ((Map<String, Object>) outputs.get(this.id)).get("iterationCount")).build();
+       Map<String, Object> outputs = runContext.currentOutput();
+        if (!MapUtils.isEmpty(outputs)) {
+            return Output.builder().iterationCount((Integer) outputs.get("iterationCount")).build();
         }
-        return LoopUntil.Output.builder()
+        return Output.builder()
             .iterationCount(INITIAL_LOOP_VALUE)
             .build();
     }

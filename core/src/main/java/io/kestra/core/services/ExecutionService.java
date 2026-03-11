@@ -282,14 +282,17 @@ public class ExecutionService {
             newTaskRuns.addAll(
                 execution.getTaskRunList()
                     .stream()
-                    .map(throwFunction(originalTaskRun -> this.mapTaskRun(
-                        flow,
-                        originalTaskRun,
-                        mappingTaskRunId,
-                        newExecutionId,
-                        State.Type.RESTARTED,
-                        taskRunToRestart.contains(originalTaskRun.getId()))
-                    ))
+                    .map(throwFunction(originalTaskRun -> {
+                        TaskRun newTaskRun = this.mapTaskRun(
+                                flow,
+                                originalTaskRun,
+                                mappingTaskRunId,
+                                newExecutionId,
+                                State.Type.RESTARTED,
+                                taskRunToRestart.contains(originalTaskRun.getId()));
+                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        return newTaskRun;
+                    }))
                     .toList()
             );
 

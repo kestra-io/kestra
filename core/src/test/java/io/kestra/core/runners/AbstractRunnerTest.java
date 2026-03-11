@@ -160,9 +160,21 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart-each.yaml"})
+    @LoadFlows({"flows/valids/replay.yaml"})
     void replay() throws Exception {
         restartCaseTest.replay();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/replay.yaml"})
+    void replayFromTaskId() throws Exception {
+        restartCaseTest.replayFromTaskId();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/restart-each.yaml"})
+    void replayEach() throws Exception {
+        restartCaseTest.replayEach();
     }
 
     @Test

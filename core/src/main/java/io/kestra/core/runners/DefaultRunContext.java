@@ -621,7 +621,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     public Map<String, Object> currentOutput() {
         Map<?, ?> allOutputs = (Map<?, ?>) variables.get("outputs");
-        Map<?, ?> outputs = (Map<?, ?>) allOutputs.get(taskRunInfo().taskId());
+        Map<?, ?> outputs = (Map<?, ?>) MapUtils.emptyOnNull(allOutputs).get(taskRunInfo().taskId());
         List<Map<?, ?>> parents = (List<Map<?, ?>>) variables.get("parents");
         if (!ListUtils.isEmpty(parents) && !MapUtils.isEmpty(outputs)) {
             Collections.reverse(parents);

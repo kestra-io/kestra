@@ -37,7 +37,7 @@
                     type="textarea"
                     :disabled="waitingForReply"
                     :autosize="{minRows: 2, maxRows: 6}"
-                    :placeholder="$t(`ai.${generationType}.prompt_placeholder`)"
+                    :placeholder="props.onboarding ? $t('welcome_copilot.placeholder_prompt') : $t(`ai.${generationType}.prompt_placeholder`)"
                     @keydown.exact.enter.prevent="submitPrompt"
                     @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
                     class="ai-custom-textarea"
@@ -137,7 +137,6 @@
     const apiStore = useApiStore();
 
     const promptInput = ref<InputInstance>();
-    const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
     const initialPromptBeforeListening = ref("");
     const waitingForReply = ref(false);
 
@@ -146,16 +145,18 @@
         generatedYaml: [string];
     }>();
 
-    watch(prompt, (newValue) => {
-        sessionStorage.setItem("kestra-ai-prompt", newValue);
-    });
-
     const props = defineProps<{
         flow: string,
         conversationId: string,
         generationType?: AiGenerationType,
-        namespace?: string
+        namespace?: string,
+        onboarding?: boolean,
+        initialPrompt?: string,
     }>();
+
+    const prompt = ref(
+        props.onboarding ? props.initialPrompt ?? "" : sessionStorage.getItem("kestra-ai-prompt") ?? "",
+    );
 
     const error = ref<string | undefined>(undefined);
 
@@ -419,7 +420,24 @@
         stopAudioAnalysis();
     });
 
-    watch(prompt, (v) => sessionStorage.setItem("kestra-ai-prompt", v));
+    watch(
+        () => [props.onboarding, props.initialPrompt] as const,
+        ([onboarding, initialPrompt]) => {
+            if (onboarding) {
+                prompt.value = initialPrompt ?? "";
+            }
+        },
+        {immediate: true},
+    );
+
+    watch(
+        prompt,
+        (value) => {
+            if (!props.onboarding) {
+                sessionStorage.setItem("kestra-ai-prompt", value);
+            }
+        },
+    );
 </script>
 
 <style scoped lang="scss">

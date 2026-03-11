@@ -21,7 +21,7 @@
         <el-option label="welcome" value="welcome">
             <RouterLink :to="{name: 'welcome'}" class="menu-item">
                 <RocketLaunchOutline class="menu-icon" />
-                {{ $t("welcome.menu") }}
+                {{ $t("product_tour") }}
             </RouterLink>
         </el-option>
         <el-option label="Settings" value="settings">

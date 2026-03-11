@@ -67,10 +67,12 @@ public class AuthenticationFilter implements HttpServerFilter {
                     .or(() -> fromAuthorizationHeader(request))
                     .map(BasicAuth::from);
 
-                if (basicAuth.isEmpty() || basicAuthConfiguration.credentials() == null ||
-                    !basicAuth.get().username().equals(basicAuthConfiguration.credentials().getUsername()) ||
-                    !AuthUtils.encodePassword(basicAuthConfiguration.credentials().getSalt(),
-                        basicAuth.get().password()).equals(basicAuthConfiguration.credentials().getPassword())
+                var credentials = basicAuthService.credentials();
+
+                if (basicAuth.isEmpty() || credentials == null ||
+                    !basicAuth.get().username().equals(credentials.getUsername()) ||
+                    !AuthUtils.encodePassword(credentials.getSalt(),
+                        basicAuth.get().password()).equals(credentials.getPassword())
                 ) {
                     Boolean isFromLoginPage = Optional.ofNullable(request.getHeaders().get("Referer")).map(referer -> referer.split("\\?")[0].endsWith("/login")).orElse(false);
 

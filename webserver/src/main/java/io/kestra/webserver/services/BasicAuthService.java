@@ -41,6 +41,7 @@ public class BasicAuthService {
     private SettingRepositoryInterface settingRepository;
 
     @Inject
+    @VisibleForTesting
     BasicAuthConfiguration basicAuthConfiguration;
 
     @Inject
@@ -109,7 +110,7 @@ public class BasicAuthService {
             throw new ValidationErrorException(validationErrors);
         }
 
-        var previousConfiguredCredentials = this.configuration().credentials();
+        var previousConfiguredCredentials = this.credentials();
         String salt = previousConfiguredCredentials == null
             ? null
             : previousConfiguredCredentials.getSalt();
@@ -147,19 +148,22 @@ public class BasicAuthService {
     }
 
     public ConfiguredBasicAuth configuration() {
-        var credentials = settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY)
+        return new ConfiguredBasicAuth(this.basicAuthConfiguration != null ? this.basicAuthConfiguration.realm : null, this.basicAuthConfiguration != null ? this.basicAuthConfiguration.openUrls : null);
+    }
+
+    public SaltedBasicAuthCredentials credentials() {
+        return settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY)
             .map(Setting::getValue)
             .map(value -> JacksonMapper.ofJson(false).convertValue(value, SaltedBasicAuthCredentials.class))
             .orElse(null);
-        return new ConfiguredBasicAuth(this.basicAuthConfiguration != null ? this.basicAuthConfiguration.realm : null, this.basicAuthConfiguration != null ? this.basicAuthConfiguration.openUrls : null, credentials);
     }
 
     public boolean isBasicAuthInitialized(){
-        var configuration = configuration();
+        var credentials = credentials();
 
-        return configuration.credentials() != null &&
-            !StringUtils.isBlank(configuration.credentials().getUsername()) &&
-            !StringUtils.isBlank(configuration.credentials().getPassword());
+        return credentials != null &&
+            !StringUtils.isBlank(credentials.getUsername()) &&
+            !StringUtils.isBlank(credentials.getPassword());
     }
 
     @Getter
@@ -190,8 +194,7 @@ public class BasicAuthService {
 
     public record ConfiguredBasicAuth(
         String realm,
-        List<String> openUrls,
-        SaltedBasicAuthCredentials credentials
+        List<String> openUrls
     ) {
     }
 

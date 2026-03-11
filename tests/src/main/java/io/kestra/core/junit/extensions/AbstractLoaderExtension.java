@@ -1,9 +1,6 @@
 package io.kestra.core.junit.extensions;
 
-import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
-
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -11,13 +8,16 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.jupiter.api.extension.ExtensionContext;
+
+import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 
 public abstract class AbstractLoaderExtension {
 
@@ -68,7 +68,7 @@ public abstract class AbstractLoaderExtension {
             .filter(flow -> flowIds.contains(flow.getId()))
             .filter(flow -> tenantId.equals(flow.getTenantId()))
             .forEach(flow -> {
-                flowRepository.delete(FlowWithSource.of(flow, "unused"));
+                flowRepository.deleteWithoutAcl(flow);
                 executionRepository.findByFlowId(tenantId, flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                     .forEach(executionRepository::delete);
             });

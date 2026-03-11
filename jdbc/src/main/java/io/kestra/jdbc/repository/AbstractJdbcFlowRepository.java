@@ -755,6 +755,25 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @SneakyThrows
     @Override
+    public FlowWithSource deleteWithoutAcl(FlowInterface flow) {
+        Optional<FlowWithSource> existing = this.findByIdWithSourceWithoutAcl(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.ofNullable(flow.getRevision()));
+        FlowWithSource existingFlow = existing
+            .orElseThrow(() -> new IllegalStateException("Flow " + flow.getId() + " doesn't exists"));
+
+        Optional<FlowWithSource> last = this.findByIdWithSourceWithoutAcl(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty());
+        if (last.isEmpty()) {
+            throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
+        }
+
+        if (!last.get().getRevision().equals(existingFlow.getRevision())) {
+            throw new IllegalStateException("Trying to deleted old revision, wanted " + existingFlow.getRevision() + ", last revision is " + last.get().getRevision());
+        }
+
+        return deleteFlow(flow, existingFlow);
+    }
+
+    @SneakyThrows
+    @Override
     public void deleteRevisions(String tenantId, String namespace, String id, List<Integer> revisions) {
         List<FlowWithSource> flows = findRevisions(tenantId, namespace, id, true, revisions);
         Integer last = lastRevision(tenantId, namespace, id);

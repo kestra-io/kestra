@@ -29,7 +29,7 @@ public class FlowLoaderWithTenantExtension extends AbstractLoaderExtension imple
     @Override
     public Object resolveParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
-        String tenantId = TestsUtils.randomTenant();
+        String tenantId = TestsUtils.randomTenant("test");
         ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
         store.put(KEY_TENANT_ID, tenantId);
         LoadFlowsWithTenant loadFlows = getLoadFlows(extensionContext);

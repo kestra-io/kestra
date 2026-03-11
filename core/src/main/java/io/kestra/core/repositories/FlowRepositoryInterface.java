@@ -202,6 +202,12 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
      */
     FlowWithSource delete(FlowInterface flow);
 
+    /**
+     * Delete a flow bypassing ACL checks.
+     * Used only for internal/test cleanup operations where no user context is available.
+     */
+    FlowWithSource deleteWithoutAcl(FlowInterface flow);
+
     void deleteRevisions(String tenantId, String namespace, String id, List<Integer> revisions);
 
     Boolean existAnyNoAcl(String tenantId);

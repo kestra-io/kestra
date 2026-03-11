@@ -25,7 +25,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -89,13 +88,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     @SuppressWarnings("unchecked")
     public AbstractJdbcExecutionRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
-        ApplicationContext applicationContext,
+        ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
+        KestraConfig kestraConfig,
         JdbcFilterService filterService
     ) {
         super(jdbcRepository);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.kestraConfig = applicationContext.getBean(KestraConfig.class);
-
+        this.eventPublisher = eventPublisher;
+        this.kestraConfig = kestraConfig;
         this.filterService = filterService;
     }
 

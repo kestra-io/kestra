@@ -24,6 +24,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.net.URI;
@@ -88,9 +89,12 @@ public class RunContextFactory {
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private Provider<RunContextInitializer> runContextInitializerProvider;
+
     // hacky
     public RunContextInitializer initializer() {
-        return applicationContext.getBean(RunContextInitializer.class);
+        return runContextInitializerProvider.get();
     }
 
     public RunContext of(FlowInterface flow, Execution execution) {

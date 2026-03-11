@@ -3,9 +3,9 @@ package io.kestra.core.worker.models;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import io.kestra.core.runners.Worker;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 /**
  * Provides information about the current worker.
@@ -14,10 +14,10 @@ import jakarta.inject.Inject;
 public class WorkerInfo {
 
     private final Supplier<String> workerId;
-    
+
     @Inject
-    public WorkerInfo(ApplicationContext applicationContext) {
-        workerId = Suppliers.memoize(() -> applicationContext.getBean(Worker.class).getId());
+    public WorkerInfo(Provider<Worker> workerProvider) {
+        workerId = Suppliers.memoize(() -> workerProvider.get().getId());
     }
 
     /**

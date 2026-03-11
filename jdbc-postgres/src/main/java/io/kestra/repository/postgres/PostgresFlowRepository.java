@@ -2,9 +2,12 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
-import io.micronaut.context.ApplicationContext;
+import io.kestra.core.services.PluginDefaultService;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -17,9 +20,11 @@ import java.util.Map;
 public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
     @Inject
     public PostgresFlowRepository(@Named("flows") PostgresRepository<FlowInterface> repository,
-                                  ApplicationContext applicationContext,
+                                  ModelValidator modelValidator,
+                                  ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher,
+                                  PluginDefaultService pluginDefaultService,
                                   JdbcFilterService filterService) {
-        super(repository, applicationContext, filterService);
+        super(repository, modelValidator, eventPublisher, pluginDefaultService, filterService);
     }
 
     @Override

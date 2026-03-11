@@ -11,7 +11,6 @@ import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.body.DefaultMessageBodyHandlerRegistry;
@@ -24,6 +23,7 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
@@ -53,10 +53,10 @@ public class HttpFunction<T> implements Function {
     };
 
     @Inject
-    private ApplicationContext applicationContext;
+    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
 
     @Inject
-    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
+    private Provider<RunContextFactory> runContextFactoryProvider;
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
@@ -69,7 +69,7 @@ public class HttpFunction<T> implements Function {
             .collect(HashMap::new, (m, k) -> m.put(k, context.getVariable(k)), HashMap::putAll);
 
         // We need late injection otherwise there is a circular dependency issue between Extension and VariableRenderer from RunContextFactory
-        RunContextFactory runContextFactory = applicationContext.getBean(RunContextFactory.class);
+        RunContextFactory runContextFactory = runContextFactoryProvider.get();
         RunContext runContext = runContextFactory.of(pebbleVariables);
 
         URI uri = args.get("uri") instanceof URI uriObject

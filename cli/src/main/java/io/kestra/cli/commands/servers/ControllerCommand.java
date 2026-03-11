@@ -3,7 +3,6 @@ package io.kestra.cli.commands.servers;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.utils.Await;
 import io.kestra.core.worker.Controller;
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
 
@@ -16,7 +15,7 @@ import java.util.Map;
 public class ControllerCommand extends AbstractServerCommand {
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Controller controller;
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
@@ -29,7 +28,6 @@ public class ControllerCommand extends AbstractServerCommand {
     public Integer call() throws Exception {
         super.call();
 
-        Controller controller = applicationContext.getBean(Controller.class);
         controller.start();
 
         Await.until(() -> !this.applicationContext.isRunning());

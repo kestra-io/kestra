@@ -29,7 +29,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Flows;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -69,13 +68,15 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @SuppressWarnings("unchecked")
     public AbstractJdbcFlowRepository(
         io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository,
-        ApplicationContext applicationContext,
+        ModelValidator modelValidator,
+        ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher,
+        PluginDefaultService pluginDefaultService,
         JdbcFilterService filterService
     ) {
         this.jdbcRepository = jdbcRepository;
-        this.modelValidator = applicationContext.getBean(ModelValidator.class);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
+        this.modelValidator = modelValidator;
+        this.eventPublisher = eventPublisher;
+        this.pluginDefaultService = pluginDefaultService;
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
             String namespace = record.get("namespace", String.class);

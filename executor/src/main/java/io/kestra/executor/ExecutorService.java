@@ -33,7 +33,6 @@ import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.queues.BroadcastQueueInterface;
-import io.micronaut.context.ApplicationContext;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -47,6 +46,7 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import jakarta.inject.Provider;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -55,9 +55,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @Slf4j
 public class ExecutorService {
-    @Inject
-    private ApplicationContext applicationContext;
-
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -99,10 +96,13 @@ public class ExecutorService {
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private Provider<FlowMetaStoreInterface> flowMetaStoreInterfaceProvider;
+
     private FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
         if (this.flowExecutorInterface == null) {
-            this.flowExecutorInterface = applicationContext.getBean(FlowMetaStoreInterface.class);
+            this.flowExecutorInterface = flowMetaStoreInterfaceProvider.get();
         }
 
         return this.flowExecutorInterface;

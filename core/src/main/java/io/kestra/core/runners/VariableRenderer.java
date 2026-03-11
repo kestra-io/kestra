@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.pebble.*;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
@@ -27,19 +26,15 @@ public class VariableRenderer {
     private final VariableConfiguration variableConfiguration;
 
     @Inject
-    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
-        this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
-    }
-    
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
         this.pebbleEngine = pebbleEngineFactory.create();
     }
-    
+
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
         this.pebbleEngine = pebbleEngine;
     }
-    
+
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
         if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(

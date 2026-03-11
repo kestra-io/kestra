@@ -4,7 +4,6 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.SneakyThrows;
 import org.jooq.*;
@@ -20,10 +19,10 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
     @SuppressWarnings("unchecked")
     public AbstractJdbcSettingRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Setting> jdbcRepository,
-        ApplicationContext applicationContext
+        ApplicationEventPublisher<CrudEvent<Setting>> eventPublisher
     ) {
         super(jdbcRepository);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        this.eventPublisher = eventPublisher;
     }
 
     public Boolean isTaskRunEnabled() {

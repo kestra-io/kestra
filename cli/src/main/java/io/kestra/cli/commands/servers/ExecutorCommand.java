@@ -8,7 +8,6 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
@@ -27,13 +26,19 @@ public class ExecutorCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private IgnoreExecutionService ignoreExecutionService;
 
     @Inject
     private StartExecutorService startExecutorService;
+
+    @Inject
+    private LocalFlowRepositoryLoader localFlowRepositoryLoader;
+
+    @Inject
+    private TenantIdSelectorService tenantIdSelectorService;
+
+    @Inject
+    private Executor executorService;
 
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
@@ -95,15 +100,12 @@ public class ExecutorCommand extends AbstractServerCommand {
 
         if (flowPath != null) {
             try {
-                LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
                 localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
 
-        Executor executorService = applicationContext.getBean(Executor.class);
         executorService.run();
 
         Await.until(() -> !this.applicationContext.isRunning());

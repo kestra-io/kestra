@@ -48,6 +48,13 @@ class VariableRendererTest {
     }
 
     @Test
+    void shouldRenderMixedTypeInString() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        Object render = renderer.renderTyped("{\"a\": {{[1,2,3 ]}} }", Map.of());
+        Assertions.assertEquals(Map.of("a", List.of(1, 2, 3)), render);
+    }
+
+    @Test
     void shouldRenderContactTypedNumberExpression() throws IllegalVariableEvaluationException {
         TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
         Object render = renderer.renderTyped("{{ prefix }}{{ suffix }}", Map.of("prefix", 10, "suffix", 42L));

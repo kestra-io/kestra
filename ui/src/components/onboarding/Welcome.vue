@@ -8,12 +8,23 @@
             </router-link>
         </template>
     </TopNavBar>
+
+    <section class="container">
+        <el-row justify="center">
+            <el-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
+                <AiCopilot :flow :conversationId />
+            </el-col>
+        </el-row>
+    </section>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, ref} from "vue";
 
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import AiCopilot from "../ai/AiCopilot.vue";
+
+    import flows from "./flows";
 
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -31,6 +42,8 @@
     import useRestoreUrl from "../../composables/useRestoreUrl";
     import useRouteContext from "../../composables/useRouteContext";
 
+    import Utils from "../../utils/utils";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n();
 
@@ -38,6 +51,9 @@
 
     const routeInfo = computed(() => ({title: t("ai.flow.title")}));
     useRouteContext(routeInfo);
+
+    const flow = ref<string>(flows.initial);
+    const conversationId = ref<string>(Utils.uid());
 </script>
 
 <style scoped lang="scss"></style>

@@ -24,7 +24,7 @@ dependencies {
     def jacksonVersion = "2.21.1"
     def jacksonAnnotationsVersion = "2.21"
     def jugVersion = "5.2.0"
-    def langchain4jVersion = "1.11.0"
+    def langchain4jVersion = "1.12.2"
     def langchain4jCommunityVersion = "1.11.0-beta19"
     def jettyVersion = "12.0.31" // Wiremock uses an older version as Micronaut
 

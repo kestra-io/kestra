@@ -1,12 +1,12 @@
 package io.kestra.repository.postgres;
 
+import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
-import io.kestra.core.services.PluginDefaultService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;

@@ -10,6 +10,6 @@ abstract public class TruthUtils {
     }
 
     public static boolean isFalsy(String condition) {
-        return condition != null && FALSE_VALUES.contains(condition.trim());
+        return condition == null || FALSE_VALUES.contains(condition.trim());
     }
 }

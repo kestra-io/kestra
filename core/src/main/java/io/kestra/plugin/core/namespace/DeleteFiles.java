@@ -3,6 +3,7 @@ package io.kestra.plugin.core.namespace;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -26,6 +27,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -109,9 +111,16 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
 
         List<String> renderedFiles;
         if (files instanceof String filesString) {
-            renderedFiles = List.of(runContext.render(filesString));
+            String renderedFile = runContext.render(filesString);
+            if (renderedFile == null) {
+                throw new IllegalVariableEvaluationException("Unable to delete files: rendered file pattern is null");
+            }
+            renderedFiles = List.of(renderedFile);
         } else if (files instanceof List<?> filesList) {
             renderedFiles = runContext.render((List<String>) filesList);
+            if (renderedFiles.stream().anyMatch(Objects::isNull)) {
+                throw new IllegalVariableEvaluationException("Unable to delete files: one or more rendered file patterns are null");
+            }
         } else {
             throw new IllegalArgumentException("Files must be a String or a list of String");
         }

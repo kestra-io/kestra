@@ -1062,7 +1062,7 @@ public abstract class AbstractScheduler implements Scheduler {
                 // Check if the worker group exist
                 String tenantId = flowWithTrigger.getFlow().getTenantId();
                 RunContext runContext = flowWithTrigger.conditionContext.getRunContext();
-                String workerGroupKey = runContext.renderNullableString(workerGroup.get().getKey());
+                String workerGroupKey = runContext.render(workerGroup.get().getKey());
                 if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                     // Check whether at-least one worker is available
                     if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {

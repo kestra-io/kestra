@@ -407,7 +407,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         @Override
         public ForEachItemSplit.Output run(RunContext runContext) throws Exception {
             var renderedUri = runContext.render(this.items);
-            if (!renderedUri.startsWith("kestra://")) {
+            if (renderedUri == null || !renderedUri.startsWith("kestra://")) {
                 var errorMessage = "Unable to split the items from " + renderedUri + ", this is not an internal storage URI!";
                 runContext.logger().error(errorMessage);
                 throw new IllegalArgumentException(errorMessage);

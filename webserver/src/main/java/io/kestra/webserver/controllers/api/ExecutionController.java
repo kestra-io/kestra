@@ -581,8 +581,8 @@ public class ExecutionController {
             .filter(w -> {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
-                    String webhookKey = runContext.render(w.getKey()).trim();
-                    return webhookKey.equals(key);
+                    String webhookKey = runContext.render(w.getKey());
+                    return webhookKey != null && webhookKey.trim().equals(key);
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook
                     log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);

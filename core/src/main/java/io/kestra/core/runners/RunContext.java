@@ -12,6 +12,7 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.kv.KVStore;
+import io.micronaut.core.annotation.Nullable;
 import org.slf4j.Logger;
 
 import java.net.URI;
@@ -55,12 +56,12 @@ public abstract class RunContext implements PropertyContext {
 
     public abstract void setTraceParent(String traceParent);
 
+    @Nullable
     public abstract String render(String inline) throws IllegalVariableEvaluationException;
 
     public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
 
-    public abstract String renderNullableString(String inline) throws IllegalVariableEvaluationException;
-
+    @Nullable
     public abstract String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     public abstract <T> RunContextProperty<T> render(Property<T> inline);

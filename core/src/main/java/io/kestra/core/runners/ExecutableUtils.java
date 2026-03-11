@@ -167,7 +167,16 @@ public final class ExecutableUtils {
 
             List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
             if (labels != null) {
-                labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
+                labels.forEach(throwConsumer(label -> {
+                    String renderedKey = runContext.render(label.key());
+                    String renderedValue = runContext.render(label.value());
+                    if (renderedKey == null || renderedValue == null) {
+                        runContext.logger().warn("Skipping subflow label '{}' because key or value rendered to null", label.key());
+                        return;
+                    }
+
+                    newLabels.add(new Label(renderedKey, renderedValue));
+                }));
             }
 
             var variables = ImmutableMap.<String, Object>builder().putAll(Map.of(

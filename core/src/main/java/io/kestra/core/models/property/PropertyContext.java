@@ -2,6 +2,7 @@ package io.kestra.core.models.property;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
+import io.micronaut.core.annotation.Nullable;
 
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import java.util.Map;
  */
 public interface PropertyContext {
     
+    @Nullable
     String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
     
     Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
@@ -25,6 +27,7 @@ public interface PropertyContext {
     static PropertyContext create(final VariableRenderer renderer) {
         return new PropertyContext() {
             @Override
+            @Nullable
             public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
                 return renderer.render(inline, variables);
             }

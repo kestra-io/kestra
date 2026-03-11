@@ -99,7 +99,8 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         Map<String, String> labelsAsMap;
         if (labels instanceof String labelStr) {
             try {
-                labelsAsMap = MAPPER.readValue(runContext.render(labelStr), MAP_TYPE_REFERENCE);
+                String renderedLabels = runContext.render(labelStr);
+                labelsAsMap = renderedLabels == null ? Map.of() : MAPPER.readValue(renderedLabels, MAP_TYPE_REFERENCE);
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
@@ -107,9 +108,14 @@ public class Labels extends Task implements ExecutionUpdatableTask {
             labelsAsMap = labelsList.stream()
                 .map(throwFunction(label -> {
                         if (label instanceof Map<?, ?> labelMap) {
+                            String key = runContext.render((String) labelMap.get("key"));
+                            String value = runContext.render((String) labelMap.get("value"));
+                            if (key == null || value == null) {
+                                throw new IllegalVariableEvaluationException("Label key and value cannot render to null");
+                            }
                             return Map.entry(
-                                runContext.render((String) labelMap.get("key")),
-                                runContext.render((String) labelMap.get("value"))
+                                key,
+                                value
                             );
                         } else {
                             throw new IllegalVariableEvaluationException("Unknown value type: " + label.getClass());
@@ -123,7 +129,14 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         } else if (labels instanceof Map<?, ?> map) {
             labelsAsMap = map.entrySet()
                 .stream()
-                .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), runContext.render((String) entry.getValue()))))
+                .map(throwFunction(entry -> {
+                    String key = runContext.render((String) entry.getKey());
+                    String value = runContext.render((String) entry.getValue());
+                    if (key == null || value == null) {
+                        throw new IllegalVariableEvaluationException("Label key and value cannot render to null");
+                    }
+                    return Map.entry(key, value);
+                }))
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
                     Map.Entry::getValue

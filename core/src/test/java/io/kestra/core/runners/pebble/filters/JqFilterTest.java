@@ -125,7 +125,7 @@ class JqFilterTest {
         assertThat(variableRenderer.render("{{ vars | jq(\".int\") | first | className }}", vars)).isEqualTo("java.lang.Integer");
         assertThat(variableRenderer.render("{{ vars | jq(\".float\") | first | className }}", vars)).isEqualTo("java.lang.Float");
         assertThat(variableRenderer.render("{{ vars | jq(\".bool\") | first | className }}", vars)).isEqualTo("java.lang.Boolean");
-        assertThat(variableRenderer.render("{{ vars | jq(\".null\") | first | className }}", vars)).isEqualTo("");
+        assertThat(variableRenderer.render("{{ vars | jq(\".null\") | first | className }}", vars)).isNull();
     }
 
     @Test

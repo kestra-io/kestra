@@ -32,6 +32,7 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -134,10 +135,19 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 HashMap<String, Object> multipart = new HashMap<>();
 
                 for (Map.Entry<String, Object> e : renderedFormData.entrySet()) {
+                    if (e.getKey() == null) {
+                        throw new IllegalVariableEvaluationException("HTTP formData key cannot be null");
+                    }
                     String key = runContext.render(e.getKey());
+                    if (key == null) {
+                        throw new IllegalVariableEvaluationException("HTTP formData key cannot render to null");
+                    }
 
                     if (e.getValue() instanceof String stringValue) {
                         String render = runContext.render(stringValue);
+                        if (render == null) {
+                            continue;
+                        }
 
                         if (render.startsWith("kestra://")) {
                             File tempFile = runContext.workingDir().createTempFile().toFile();
@@ -153,6 +163,9 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                     } else if (e.getValue() instanceof Map mapValue && ((Map<String, String>) mapValue).containsKey("name") && ((Map<String, String>) mapValue).containsKey("content")) {
                         String name = runContext.render(((Map<String, String>) mapValue).get("name"));
                         String content = runContext.render(((Map<String, String>) mapValue).get("content"));
+                        if (name == null || content == null) {
+                            throw new IllegalVariableEvaluationException("HTTP multipart form file entry requires non-null name and content");
+                        }
 
                         File tempFile = runContext.workingDir().createTempFile().toFile();
                         File renamedFile = new File(Files.move(tempFile.toPath(), tempFile.toPath().resolveSibling(name)).toUri());
@@ -187,16 +200,31 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
 
         var renderedHeader = runContext.render(this.headers).asMap(CharSequence.class, CharSequence.class);
         if (!renderedHeader.isEmpty()) {
+            var headerEntries = renderedHeader
+                .entrySet()
+                .stream()
+                .map(throwFunction(e -> {
+                    if (e.getKey() == null) {
+                        throw new IllegalVariableEvaluationException("HTTP header key cannot be null");
+                    }
+                    if (e.getValue() == null) {
+                        return null;
+                    }
+                    String renderedValue = runContext.render(e.getValue().toString());
+                    if (renderedValue == null) {
+                        return null;
+                    }
+
+                    return new AbstractMap.SimpleEntry<>(
+                        e.getKey().toString(),
+                        renderedValue
+                    );
+                }))
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(AbstractMap.SimpleEntry::getKey, Collectors.mapping(AbstractMap.SimpleEntry::getValue, Collectors.toList())));
+
             request.headers(HttpHeaders.of(
-                renderedHeader
-                    .entrySet()
-                    .stream()
-                    .map(throwFunction(e -> new AbstractMap.SimpleEntry<>(
-                            e.getKey().toString(),
-                            runContext.render(e.getValue().toString())
-                        ))
-                    )
-                    .collect(Collectors.groupingBy(AbstractMap.SimpleEntry::getKey, Collectors.mapping(AbstractMap.SimpleEntry::getValue, Collectors.toList()))),
+                headerEntries,
                 (a, b) -> true)
             );
         }

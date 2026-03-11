@@ -98,8 +98,11 @@ public class Data {
 
         if (from instanceof String str) {
             var renderedString = runContext.render(str);
+            if (renderedString == null) {
+                return Flux.empty();
+            }
             if (URIFetcher.supports(renderedString)) {
-                var uri = URIFetcher.of(runContext.render(str));
+                var uri = URIFetcher.of(renderedString);
                 try {
                     var reader = new BufferedReader(new InputStreamReader(uri.fetch(runContext)), FileSerde.BUFFER_SIZE);
                     return FileSerde.readAll(reader, clazz)

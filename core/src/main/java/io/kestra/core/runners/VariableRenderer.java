@@ -57,42 +57,19 @@ public class VariableRenderer {
     }
 
     public Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering(), false);
+        return this.renderInternal(inline, variables, this.variableConfiguration.getRecursiveRendering(), false);
     }
 
-    /**
-     * Render a string expression while preserving semantic {@code null} for single-expression templates.
-     * <p>
-     * For expressions that render to non-string objects, this method stringifies the typed result
-     * using the same writer used by regular string rendering.
-     */
-    public String renderNullableString(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        Object typedValue;
-        try {
-            typedValue = this.renderTyped(inline, variables);
-        } catch (IllegalArgumentException e) {
-            // Typed rendering cannot concatenate complex types with literals.
-            // Fall back to standard string rendering for those mixed templates.
-            return this.render(inline, variables);
-        }
-        if (typedValue == null) {
-            return null;
-        }
-
-        if (typedValue instanceof String typedString) {
-            return typedString;
-        }
-
-        JsonWriter writer = new JsonWriter();
-        writer.write(typedValue);
-        return (String) writer.output();
-    }
-
+    @Nullable
     public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
-        return (String) this.render(inline, variables, recursive, true);
+        return (String) this.renderInternal(inline, variables, recursive, true);
     }
 
     public Object render(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify) throws IllegalVariableEvaluationException {
+        return this.renderInternal(inline, variables, recursive, stringify);
+    }
+
+    private Object renderInternal(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -186,7 +163,7 @@ public class VariableRenderer {
         }
 
         Object result = this.renderOnce(inline, variables, stringify);
-        if (result.equals(inline)) {
+        if (Objects.equals(result, inline)) {
             return result;
         }
 
@@ -202,7 +179,7 @@ public class VariableRenderer {
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
             String key = this.render(r.getKey(), variables);
-            Object value = renderObject(r.getValue(), variables, recursive).orElse(r.getValue());
+            Object value = renderObject(r.getValue(), variables, recursive).orElse(null);
 
             map.putIfAbsent(
                 key,
@@ -226,7 +203,7 @@ public class VariableRenderer {
         } else if (object instanceof Set set) {
             return Optional.of(this.render(set, variables, recursive));
         } else if (object instanceof String string) {
-            return Optional.of(this.render(string, variables, recursive));
+            return Optional.ofNullable(this.render(string, variables, recursive));
         }
 
         // Return the given object if it cannot be rendered.
@@ -241,7 +218,7 @@ public class VariableRenderer {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            result.add(this.renderObject(inline, variables, recursive).orElse(inline));
+            result.add(this.renderObject(inline, variables, recursive).orElse(null));
         }
 
         return result;

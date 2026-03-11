@@ -146,10 +146,16 @@ abstract public class PluginUtilsService {
         String realFlowId;
         if (executionId != null) {
             realExecutionId = runContext.render(executionId);
+            if (realExecutionId == null) {
+                throw new IllegalVariableEvaluationException("Unable to resolve executionId: rendered value is null");
+            }
 
             if (namespace != null && flowId != null) {
                 realNamespace = runContext.render(namespace);
                 realFlowId = runContext.render(flowId);
+                if (realNamespace == null || realFlowId == null) {
+                    throw new IllegalVariableEvaluationException("Unable to resolve namespace/flowId: rendered value is null");
+                }
                 // validate that the flow exists: a.k.a access is authorized by this namespace
                 runContext.acl().allowNamespace(realNamespace).check();
             } else if (namespace != null || flowId != null) {
@@ -178,6 +184,9 @@ abstract public class PluginUtilsService {
         if (inputFiles != null && !inputFiles.isEmpty()) {
             for (String fileName : inputFiles.keySet()) {
                 String finalFileName = runContext.render(fileName);
+                if (finalFileName == null) {
+                    throw new IllegalVariableEvaluationException("Unable to create input file: rendered file name is null");
+                }
 
                 PluginUtilsService.validFilename(finalFileName);
 
@@ -203,7 +212,11 @@ abstract public class PluginUtilsService {
                     rFile = inputFiles.get(fileName);
                 }
 
-                if (URIFetcher.supports(rFile)) {
+                if (rFile == null) {
+                    if (!new File(filePath).createNewFile()) {
+                        throw new IOException("Unable to create the file: " + filePath);
+                    }
+                } else if (URIFetcher.supports(rFile)) {
                     var uri = URIFetcher.of(rFile);
                     try (
                         InputStream inputStream = new BufferedInputStream(uri.fetch(runContext));

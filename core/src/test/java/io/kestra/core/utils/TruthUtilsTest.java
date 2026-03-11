@@ -15,6 +15,7 @@ class TruthUtilsTest {
 
     @Test
     void isFalsy() {
+        assertThat(TruthUtils.isFalsy(null)).isTrue();
         assertThat(TruthUtils.isFalsy("false")).isTrue();
         assertThat(TruthUtils.isFalsy("     false ")).isTrue();
         assertThat(TruthUtils.isFalsy("0")).isTrue();

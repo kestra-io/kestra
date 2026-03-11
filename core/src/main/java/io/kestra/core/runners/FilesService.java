@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.kestra.core.serializers.FileSerde;
@@ -33,7 +34,12 @@ public abstract class FilesService {
 
          inputFiles
              .forEach(throwBiConsumer((fileName, input) -> {
-                 var file = new File(runContext.workingDir().path().toString(), runContext.render(fileName, additionalVars));
+                 String renderedFileName = runContext.render(fileName, additionalVars);
+                 if (renderedFileName == null) {
+                     throw new IllegalVariableEvaluationException("Unable to create input file: rendered file name is null");
+                 }
+
+                 var file = new File(runContext.workingDir().path().toString(), renderedFileName);
 
                  if (!file.getParentFile().exists()) {
                      //noinspection ResultOfMethodCallIgnored
@@ -66,6 +72,9 @@ public abstract class FilesService {
 
     public static Map<String, URI> outputFiles(RunContext runContext, List<String> outputs) throws Exception {
         List<String> renderedOutputs = outputs != null ? runContext.render(outputs) : null;
+        if (renderedOutputs != null && renderedOutputs.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalVariableEvaluationException("Unable to capture output files: one or more rendered output patterns are null");
+        }
         List<Path> allFilesMatching = runContext.workingDir().findAllFilesMatching(renderedOutputs);
         var outputFiles = allFilesMatching.stream()
             .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(

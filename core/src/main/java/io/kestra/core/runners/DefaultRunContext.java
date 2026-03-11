@@ -22,6 +22,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -40,7 +41,6 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -257,6 +257,7 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
+    @Nullable
     public String render(String inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
@@ -270,11 +271,6 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
-    public String renderNullableString(String inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.renderNullableString(inline, this.variables);
-    }
-
-    @Override
     public <T> RunContextProperty<T> render(Property<T> inline) {
         return new RunContextProperty<>(inline, this);
     }
@@ -284,6 +280,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     @SuppressWarnings("unchecked")
+    @Nullable
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
     }
@@ -346,14 +343,20 @@ public class DefaultRunContext extends RunContext {
         }
 
         Map<String, Object> allVariables = mergeWithNullableValues(this.variables, decryptVariables(variables));
-        return inline
-            .entrySet()
-            .stream()
-            .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), allVariables),
-                this.render(entry.getValue(), allVariables)
-            )))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, String> rendered = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : inline.entrySet()) {
+            String renderedKey = this.render(entry.getKey(), allVariables);
+            if (renderedKey == null) {
+                throw new IllegalVariableEvaluationException("Unable to render map: key rendered to null");
+            }
+
+            String renderedValue = this.render(entry.getValue(), allVariables);
+            if (renderedValue != null) {
+                rendered.put(renderedKey, renderedValue);
+            }
+        }
+
+        return rendered;
     }
 
     @Override

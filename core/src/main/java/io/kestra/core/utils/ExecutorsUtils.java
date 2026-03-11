@@ -99,4 +99,27 @@ public class ExecutorsUtils {
         );
     }
 
+    /**
+     * Gracefully shutdown the given {@link ExecutorService} and wait for its termination within the specified timeout.
+     *
+     * @param name             the name of the executor service, used for logging purposes.
+     * @param executorService  the executor service to shutdown.
+     * @param awaitTermination the duration to wait for the executor service to terminate before forcing shutdown.
+     */
+    public static void closeExecutorService(String name, ExecutorService executorService, Duration awaitTermination) {
+        executorService.shutdown();
+        if (executorService.isTerminated()) {
+            return;
+        }
+        try {
+            if (!executorService.awaitTermination(awaitTermination.toMillis(), TimeUnit.MILLISECONDS)) {
+                log.warn("Executor service [{}] did not terminate within timeout, forcing shutdown", name);
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            log.debug("Interrupted while shutting down executor service [{}]", name, e);
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 }

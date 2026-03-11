@@ -1105,7 +1105,7 @@
     "killed confirm": "Вы уверены, что хотите убить выполнение <code>{id}</code>?",
     "killed done": "Выполнение поставлено в очередь на убийство",
     "kv": {
-      "add": "Новый Key-Value",
+      "add": "Создать",
       "delete multiple": {
         "confirm": "Вы уверены, что хотите удалить: <code>{name}</code> kv store?",
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
@@ -1703,7 +1703,7 @@
     "searching": "Поиск...",
     "seconds": "Секунды",
     "secret": {
-      "add": "Новый секрет",
+      "add": "Создать",
       "inherited": "Унаследованные секреты",
       "isReadOnly": "Секрет доступен только для чтения",
       "names": "Cекреты",

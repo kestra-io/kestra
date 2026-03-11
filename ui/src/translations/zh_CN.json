@@ -1105,7 +1105,7 @@
     "killed confirm": "确定要终止执行 <code>{id}</code> 吗？",
     "killed done": "执行已排队终止",
     "kv": {
-      "add": "新建键值",
+      "add": "创建",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
@@ -1703,7 +1703,7 @@
     "searching": "搜索中...",
     "seconds": "秒钟",
     "secret": {
-      "add": "新密钥",
+      "add": "创建",
       "inherited": "继承的秘密",
       "isReadOnly": "Secret 是只读的",
       "names": "秘密",

@@ -1105,7 +1105,7 @@
     "killed confirm": "Êtes-vous sur de vouloir arrêter l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
-      "add": "Nouveau couple de clé/valeur",
+      "add": "Créer",
       "delete multiple": {
         "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
@@ -1703,7 +1703,7 @@
     "searching": "Recherche en cours...",
     "seconds": "Secondes",
     "secret": {
-      "add": "Nouveau secret",
+      "add": "Créer",
       "inherited": "Secrets hérités",
       "isReadOnly": "Le secret est en lecture seule",
       "names": "Secrets",

@@ -43,7 +43,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: rgba(30,32,42,0.95);
+        background: var(--ks-background-panel);
         padding: .75rem 1rem;
         box-shadow: 0 -4px 18px rgba(2,6,23,0.45);
     }
@@ -56,10 +56,6 @@
         display: flex;
         gap: .5rem;
         align-items: center;
-    }
-
-    html.light & .bar-content {
-        background: rgba(18,18,18,0.9);
     }
 }
 

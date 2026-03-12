@@ -273,6 +273,7 @@
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
+        createFlowDirectly: [string];
     }>();
 
     const props = defineProps<{
@@ -282,6 +283,8 @@
         namespace?: string,
         onboarding?: boolean,
         initialPrompt?: string,
+        redirectOnUnchangedPrompt?: boolean,
+        selectedFromTag?: boolean,
     }>();
 
     const prompt = ref(
@@ -289,6 +292,7 @@
     );
 
     const error = ref<string | undefined>(undefined);
+    const onboardingPromptEdited = ref(false);
 
     const speechSupported = ref(false);
     const isListening = ref(false);
@@ -414,6 +418,19 @@
     async function submitPrompt() {
         if (!prompt.value.trim()) return;
         error.value = undefined;
+
+        if (
+            props.onboarding &&
+            props.selectedFromTag &&
+            props.redirectOnUnchangedPrompt &&
+            !onboardingPromptEdited.value
+        ) {
+            waitingForReply.value = true;
+            await nextTick();
+            emit("createFlowDirectly", props.flow);
+            return;
+        }
+
         waitingForReply.value = true;
         apiStore.posthogEvents({
             type: "AI_COPILOT",
@@ -555,6 +572,7 @@
         ([onboarding, initialPrompt]) => {
             if (onboarding) {
                 prompt.value = initialPrompt ?? "";
+                onboardingPromptEdited.value = false;
             }
         },
         {immediate: true},
@@ -565,6 +583,10 @@
         (value) => {
             if (!props.onboarding) {
                 sessionStorage.setItem("kestra-ai-prompt", value);
+            }
+
+            if (props.onboarding) {
+                onboardingPromptEdited.value = value.trim() !== (props.initialPrompt ?? "").trim();
             }
         },
     );

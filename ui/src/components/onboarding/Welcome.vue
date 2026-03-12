@@ -16,7 +16,11 @@
                     :flow="selectedExample.flow"
                     :conversationId="conversationId"
                     :onboarding="true"
-                    :initialPrompt="t(selectedExample.promptKey)"
+                    :initialPrompt="te(selectedExample.promptKey) ? t(selectedExample.promptKey) : undefined"
+                    :generationType="aiGenerationTypes.FLOW"
+                    :selectedFromTag="selectedLabel !== undefined"
+                    :redirectOnUnchangedPrompt="selectedLabel !== undefined"
+                    @create-flow-directly="createFlowFromSelectedExample"
                 />
 
                 <div class="mt-2 welcome-copilot-tags">
@@ -82,6 +86,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
+    import {useRouter} from "vue-router";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
@@ -91,6 +96,7 @@
     import SlackLogo from "./components/SlackLogo.vue";
 
     import {flowExamples, initialFlow, labels} from "./flows/index";
+    import {aiGenerationTypes} from "../../utils/constants";
 
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -111,7 +117,8 @@
     import Utils from "../../utils/utils";
 
     import {useI18n} from "vue-i18n";
-    const {t} = useI18n();
+    const {t, te} = useI18n();
+    const router = useRouter();
 
     useRestoreUrl();
 
@@ -135,6 +142,14 @@
     const visibleLabels = computed(() => {
         return allLabelsShown.value ? labels : labels.slice(0, 5);
     });
+
+    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset";
+
+    async function createFlowFromSelectedExample(flowSource: string) {
+        sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
+        await new Promise(resolve => window.setTimeout(resolve, 1500));
+        void router.push({name: "flows/create", query: {onboardingPreset: "true"}});
+    }
 
     const helpItems = [
         {

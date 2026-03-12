@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.data.model.Pageable;
@@ -13,7 +14,6 @@ import reactor.core.publisher.FluxSink;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Base JDBC repository for CRUD operations.
@@ -108,8 +108,14 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
                     .where(KEY_FIELD.eq(uid))
                     .execute();
 
-                return current;
-            });
+            return current;
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    public void deleteWithoutAcl(T item) {
+        T deleted = (T) ((SoftDeletable<?>) item).toDeleted();
+        this.jdbcRepository.persist(deleted);
     }
 
     /**

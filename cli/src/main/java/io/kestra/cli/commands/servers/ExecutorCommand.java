@@ -38,7 +38,7 @@ public class ExecutorCommand extends AbstractServerCommand {
     private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
 
     @Inject
-    private TenantIdSelectorService tenantIdSelectorService;
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
 
     @Inject
     private Provider<Executor> executorService;
@@ -86,7 +86,7 @@ public class ExecutorCommand extends AbstractServerCommand {
 
         if (flowPath != null) {
             try {
-                localFlowRepositoryLoader.get().load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }

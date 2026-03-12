@@ -8,8 +8,8 @@ import io.kestra.core.services.VersionService;
 import io.kestra.core.utils.EditionProvider;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;

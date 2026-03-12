@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
@@ -89,7 +90,7 @@ public class FlowService {
 
     @Inject
     public FlowService(ExecutorsUtils executorsUtils) {
-        this.executorService = executorsUtils.maxCachedThreadPool(Runtime.getRuntime().availableProcessors(), "flow-service");
+        this.executorService = executorsUtils.maxCachedThreadPool(KestraContext.getContext().getAllocatedCpuCores(), "flow-service");
     }
 
     @PreDestroy

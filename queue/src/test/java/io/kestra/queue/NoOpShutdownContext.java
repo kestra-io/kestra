@@ -47,6 +47,8 @@ public class NoOpShutdownContext extends KestraContext {
     }
 
     @Override public ServerType getServerType() { return delegate != null ? delegate.getServerType() : null; }
+
+    @Override public int getAllocatedCpuCores() {return delegate != null ? delegate.getAllocatedCpuCores() : Runtime.getRuntime().availableProcessors();}
     @Override public Optional<Integer> getWorkerMaxNumThreads() { return delegate != null ? delegate.getWorkerMaxNumThreads() : Optional.empty(); }
     @Override public Optional<String> getWorkerGroupKey() { return delegate != null ? delegate.getWorkerGroupKey() : Optional.empty(); }
     @Override public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) { if (delegate != null) delegate.injectWorkerConfigs(maxNumThreads, workerGroupKey); }

@@ -17,12 +17,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T> {
-    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors();
     private static final Logger LOG = LoggerFactory.getLogger(AbstractQueue.class);
 
     protected final Class<T> cls;
     protected final QueueService queueService;
-
     protected final ExecutorService asyncPoolExecutor;
     protected final Counter emitCounter;
     private final List<Consumer<T>> listeners = new CopyOnWriteArrayList<>();
@@ -30,7 +28,8 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
     AbstractQueue(Class<T> cls, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         this.cls = cls;
         this.queueService = queueService;
-        this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(MAX_ASYNC_THREADS, "queue-async-" + queueName());
+        int maxAsyncThreads = Math.max(4, executorsUtils.getAllocatedCpuCores());
+        this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(maxAsyncThreads, "queue-async-" + queueName());
         this.emitCounter = metricRegistry.counter(MetricRegistry.METRIC_QUEUE_EMIT_COUNT, MetricRegistry.METRIC_QUEUE_EMIT_COUNT_DESCRIPTION, MetricRegistry.TAG_QUEUE_NAME, queueName());
 
         if (LOG.isDebugEnabled()) {

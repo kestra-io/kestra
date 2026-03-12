@@ -1,5 +1,6 @@
 package io.kestra.queue;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
@@ -59,32 +60,32 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             Either<T, DeserializationException> event = this.queueService.deserialize(this.cls, message);
             if (log.isDebugEnabled()) {
                 if (event.isLeft()) {
-                    log.debug("[{}] receive a message with key {}", cls.getSimpleName(), event.getLeft().key());
+                    log.debug("{} received message with key '{}'", logPrefix, event.getLeft().key());
                 } else {
-                    log.debug("[{}] receive a message with a deserialization error: {}", cls.getSimpleName(), event.getRight().getMessage());
+                    log.debug("{} received message with deserialization error: {}", logPrefix, event.getRight().getMessage());
                 }
             }
 
             try {
                 consumer.accept(event);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 if (event.isLeft()) {
                     log.error(
-                        "[{}] message with id '{}' fail and was resubmitted to active queue",
-                        cls.getSimpleName(),
+                        "{} failed to process message with key '{}'. Message will be redelivered.",
+                        logPrefix,
                         event.getLeft().key(),
                         e
                     );
                     log.debug(new String(message));
                 } else {
                     log.error(
-                        "[{}] message fail and was resubmitted to active queue, it was a deserialization error message",
-                        cls.getSimpleName(),
+                        "{} failed to process message (deserialization error). Message will be redelivered.",
+                        logPrefix,
                         e
                     );
                     log.debug(new String(message));
                 }
-                throw e; // TODO check if it would not be better to markEnd()
+                throw e;
             }
         });
     }
@@ -101,7 +102,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         batchTimer.record(() -> {
             List<Either<T, DeserializationException>> events = messages.stream().map(message -> this.queueService.deserialize(this.cls, message)).toList();
             if (log.isDebugEnabled()) {
-                log.debug("[{}] receive a batch of {} message", cls.getSimpleName(), events.size());
+                log.debug("{} received batch of {} messages", logPrefix, events.size());
             }
 
             try {
@@ -205,6 +206,25 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         }
         this.active.set(false);
         this.stopped.countDown();
+    }
+
+    /**
+     * Marks the subscriber as stopped due to a fatal error, then initiates application shutdown.
+     * <p>
+     * This should be called when the subscriber encounters an unrecoverable processing error.
+     * The message should NOT be acknowledged before calling this method, so it can be redelivered
+     * to another instance after restart.
+     *
+     * @param cause the exception that caused the subscriber to stop
+     */
+    protected void markEnd(Throwable cause) {
+        log.error("{} fatal error while consuming messages. Initiating application shutdown.", logPrefix, cause);
+        this.markEnd();
+        try {
+            KestraContext.getContext().shutdown();
+        } catch (Exception e) {
+            log.warn("{} failed to initiate shutdown.", logPrefix, e);
+        }
     }
 
     /** {@inheritDoc} */

@@ -79,8 +79,7 @@ public abstract class AbstractPollingSubscriber<T extends Event> extends Abstrac
                             // we ignore a transaction creation error as it is either Kestra shutting down or some other place that will fail
                             log.debug("Can't poll on receive", e);
                         } else {
-                            log.error("Unexpected error while polling messages. Stopping.", e);
-                            this.markEnd();
+                            this.markEnd(e);
                         }
                     }
                 }

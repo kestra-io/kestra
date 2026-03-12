@@ -1,10 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.webserver.models.ai.DashboardGenerationPrompt;
-import io.kestra.webserver.models.ai.FlowGenerationPrompt;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
-import io.kestra.core.tenant.TenantService;
+import io.kestra.webserver.services.ai.UserInfo;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Body;
@@ -18,6 +18,7 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -45,9 +46,9 @@ public class AiController {
         @RequestBody(description = "Prompt and context required for flow generation") @Body FlowGenerationPrompt flowGenerationPrompt,
         HttpRequest<?> httpRequest
     ) {
-        AiServiceInterface service = aiServiceManager.getAiService(flowGenerationPrompt.providerId());
+        AiServiceInterface service = aiServiceManager.getAiService(flowGenerationPrompt.getProviderId());
 
-        return service.generateFlow(httpClientAddressResolver.resolve(httpRequest), flowGenerationPrompt, tenantService.resolveTenant());
+        return service.generateFlow(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), flowGenerationPrompt, tenantService.resolveTenant());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -57,9 +58,9 @@ public class AiController {
         @RequestBody(description = "Prompt and context required for dashboard generation") @Body DashboardGenerationPrompt dashboardGenerationPrompt,
         HttpRequest<?> httpRequest
     ) {
-        AiServiceInterface service = aiServiceManager.getAiService(dashboardGenerationPrompt.providerId());
+        AiServiceInterface service = aiServiceManager.getAiService(dashboardGenerationPrompt.getProviderId());
 
-        return service.generateDashboard(httpClientAddressResolver.resolve(httpRequest), dashboardGenerationPrompt);
+        return service.generateDashboard(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), dashboardGenerationPrompt);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -77,4 +78,27 @@ public class AiController {
     public record AiProviderResponse(String id, String displayName, boolean isDefault) {
     }
 
+    @Getter
+    public static class FlowGenerationPrompt extends io.kestra.libs.copilot.models.in.FlowGenerationPrompt {
+        private final String providerId;
+
+        @JsonCreator
+        public FlowGenerationPrompt(String conversationId, String userPrompt, String yaml, String namespace, String providerId) {
+            super(conversationId, userPrompt, yaml, namespace);
+
+            this.providerId = providerId;
+        }
+    }
+
+    @Getter
+    public static class DashboardGenerationPrompt extends io.kestra.libs.copilot.models.in.DashboardGenerationPrompt {
+        private final String providerId;
+
+        @JsonCreator
+        public DashboardGenerationPrompt(String conversationId, String userPrompt, String yaml, String providerId) {
+            super(conversationId, userPrompt, yaml);
+
+            this.providerId = providerId;
+        }
+    }
 }

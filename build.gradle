@@ -95,6 +95,7 @@ allprojects {
 
         repositories {
             mavenCentral()
+            mavenLocal()
         }
 
         // micronaut

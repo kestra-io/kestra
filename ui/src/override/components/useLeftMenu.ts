@@ -123,6 +123,7 @@ export function useLeftMenu() {
             },
             {
                 title: t("dashboards.labels.plural"),
+                routes: routeStartWith("home"),
                 href: {
                     name: "home",
                 },

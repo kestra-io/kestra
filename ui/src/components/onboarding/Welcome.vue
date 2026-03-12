@@ -57,29 +57,7 @@
                         {{ $t("welcome_copilot.need_help") }}
                     </p>
 
-                    <div class="welcome-help-list">
-                        <component
-                            :is="item.href ? 'a' : 'router-link'"
-                            v-for="item in helpItems"
-                            :key="item.titleKey"
-                            class="welcome-help-item"
-                            :href="item.href"
-                            :to="item.to"
-                            :target="item.href ? '_blank' : undefined"
-                            :rel="item.href ? 'noreferrer' : undefined"
-                        >
-                            <div class="welcome-help-item__icon" :class="item.iconClass">
-                                <component :is="item.icon" />
-                            </div>
-
-                            <div class="welcome-help-item__content">
-                                <h3>{{ $t(item.titleKey) }}</h3>
-                                <p>{{ $t(item.descriptionKey) }}</p>
-                            </div>
-
-                            <ChevronRight class="welcome-help-item__arrow" />
-                        </component>
-                    </div>
+                    <OnboardingResourceList :items="welcomeResources" />
                 </div>
             </el-col>
         </el-row>
@@ -88,14 +66,12 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {useRouter} from "vue-router";
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import {useRoute, useRouter} from "vue-router";
 
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import AiCopilot from "../ai/AiCopilot.vue";
-    import SlackLogo from "./components/SlackLogo.vue";
+    import OnboardingResourceList from "./OnboardingResourceList.vue";
+    import {useOnboardingResources} from "./useOnboardingResources";
 
     import {flowExamples, initialFlow, labels} from "./flows/index";
     import {aiGenerationTypes} from "../../utils/constants";
@@ -120,6 +96,7 @@
 
     import {useI18n} from "vue-i18n";
     const {t, te} = useI18n();
+    const route = useRoute();
     const router = useRouter();
 
     useRestoreUrl();
@@ -146,41 +123,19 @@
     });
 
     const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset";
+    const {onboardingResources} = useOnboardingResources();
+    const welcomeResources = computed(() => onboardingResources.value.slice(0, 3));
 
     async function createFlowFromSelectedExample(flowSource: string) {
         sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
         await new Promise(resolve => window.setTimeout(resolve, 1000));
-        void router.push({name: "flows/create", query: {onboardingPreset: "true"}});
+        void router.push({name: "flows/create", query: {onboardingPreset: "true"}, params: {tenant: route.params.tenant}});
     }
 
     async function createFlowFromGeneratedPrompt(flowSource: string) {
         sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
-        void router.push({name: "flows/create", query: {onboardingPreset: "true"}});
+        void router.push({name: "flows/create", query: {onboardingPreset: "true"}, params: {tenant: route.params.tenant}});
     }
-
-    const helpItems = [
-        {
-            titleKey: "welcome_copilot.help.tutorial.title",
-            descriptionKey: "welcome_copilot.help.tutorial.description",
-            icon: PlayBoxMultiple,
-            iconClass: "is-tutorial",
-            to: {name: "flows/create", query: {onboarding: "guided", reset: "true"}},
-        },
-        {
-            titleKey: "welcome_copilot.help.blueprints.title",
-            descriptionKey: "welcome_copilot.help.blueprints.description",
-            icon: BookOpenVariant,
-            iconClass: "is-blueprints",
-            to: {name: "blueprints", params: {kind: "flow", tab: "all"}},
-        },
-        {
-            titleKey: "welcome_copilot.help.slack.title",
-            descriptionKey: "welcome_copilot.help.slack.description",
-            icon: SlackLogo,
-            iconClass: "is-slack",
-            href: "https://kestra.io/slack",
-        },
-    ] as const;
 </script>
 
 <style scoped lang="scss">
@@ -248,80 +203,5 @@ section#welcome {
         font-size: $font-size-sm;
     }
 
-    .welcome-help-list {
-        overflow: hidden;
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 14px;
-        background: var(--ks-background-card);
-    }
-
-    .welcome-help-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 1.25rem;
-        color: inherit;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background-color 0.15s ease;
-
-        &:not(:last-child) {
-            border-bottom: 1px solid var(--ks-border-primary);
-        }
-
-        &:hover {
-            background: var(--ks-button-background-secondary);
-            text-decoration: none;
-        }
-    }
-
-    .welcome-help-item__icon {
-        display: grid;
-        place-items: center;
-        width: 28px;
-        height: 28px;
-        flex-shrink: 0;
-
-        &:deep(svg) {
-            width: 22px;
-            height: 22px;
-        }
-
-        &.is-tutorial {
-            color: #4dabf7;
-        }
-
-        &.is-blueprints {
-            color: #8b5cf6;
-        }
-
-        &.is-slack {
-            color: #22c55e;
-        }
-    }
-
-    .welcome-help-item__content {
-        flex: 1;
-        min-width: 0;
-
-        h3 {
-            margin: 0 0 0.25rem;
-            color: var(--ks-content-primary);
-            font-size: $font-size-sm;
-            font-weight: 600;
-        }
-
-        p {
-            margin: 0;
-            color: var(--ks-content-secondary);
-            font-size: $font-size-sm;
-            line-height: 1.4;
-        }
-    }
-
-    .welcome-help-item__arrow {
-        color: var(--ks-content-tertiary);
-        flex-shrink: 0;
-    }
 }
 </style>

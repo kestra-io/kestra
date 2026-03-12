@@ -4,6 +4,7 @@ import CompassOutline from "vue-material-design-icons/CompassOutline.vue";
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 import Youtube from "vue-material-design-icons/Youtube.vue";
 import Slack from "vue-material-design-icons/Slack.vue";
+import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
 
 export function useOnboardingResources() {
     const route = useRoute();
@@ -46,7 +47,7 @@ export function useOnboardingResources() {
         {
             titleKey: "welcome_copilot.success_page.items.demo.title",
             descriptionKey: "welcome_copilot.success_page.items.demo.description",
-            icon: ShapePlusOutline,
+            icon: CalendarMonth,
             iconClass: "is-demo",
             href: "https://kestra.io/demo",
         },

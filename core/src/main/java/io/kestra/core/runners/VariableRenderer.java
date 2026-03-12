@@ -22,17 +22,29 @@ public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    private PebbleEngine pebbleEngine;
+    private volatile PebbleEngine pebbleEngine;
+    private final PebbleEngineFactory pebbleEngineFactory;
     private final VariableConfiguration variableConfiguration;
 
     @Inject
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
+        this.pebbleEngineFactory = pebbleEngineFactory;
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
-        this.pebbleEngine = pebbleEngineFactory.create();
     }
 
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
         this.pebbleEngine = pebbleEngine;
+    }
+
+    private PebbleEngine pebbleEngine() {
+        if (this.pebbleEngine == null) {
+            synchronized (this) {
+                if (this.pebbleEngine == null) {
+                    this.pebbleEngine = pebbleEngineFactory.create();
+                }
+            }
+        }
+        return this.pebbleEngine;
     }
 
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
@@ -91,7 +103,7 @@ public class VariableRenderer {
         }
 
         try {
-            PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate((String) result);
+            PebbleTemplate compiledTemplate = this.pebbleEngine().getLiteralTemplate((String) result);
 
             OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
             compiledTemplate.evaluate(writer, variables);

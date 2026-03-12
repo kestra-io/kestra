@@ -9,6 +9,7 @@ import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -26,19 +27,19 @@ public class ExecutorCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private StartExecutorService startExecutorService;
+    private Provider<StartExecutorService> startExecutorService;
 
     @Inject
-    private LocalFlowRepositoryLoader localFlowRepositoryLoader;
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
 
     @Inject
     private TenantIdSelectorService tenantIdSelectorService;
 
     @Inject
-    private Executor executorService;
+    private Provider<Executor> executorService;
 
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
@@ -89,24 +90,24 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(skipExecutions != null ? skipExecutions : ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(skipFlows != null ? skipFlows : ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
+        this.ignoreExecutionService.get().setIgnoredExecutions(skipExecutions != null ? skipExecutions : ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(skipFlows != null ? skipFlows : ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
 
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+        this.startExecutorService.get().applyOptions(startExecutors, notStartExecutors);
 
         super.call();
 
         if (flowPath != null) {
             try {
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
 
-        executorService.run();
+        executorService.get().run();
 
         Await.until(() -> !this.applicationContext.isRunning());
 

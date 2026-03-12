@@ -7,6 +7,7 @@ import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.webserver.services.FlowAutoLoaderService;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
@@ -44,10 +45,10 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     private io.kestra.core.utils.VersionProvider versionProvider;
 
     @Inject
-    private Optional<EmbeddedServer> embeddedServer;
+    private BeanProvider<EmbeddedServer> embeddedServer;
 
     @Inject
-    private Optional<FlowAutoLoaderService> flowAutoLoaderService;
+    private BeanProvider<FlowAutoLoaderService> flowAutoLoaderService;
 
     @Inject
     protected Provider<PluginRegistry> pluginRegistryProvider;
@@ -149,8 +150,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
             return;
         }
 
-        embeddedServer
-            .ifPresent(server -> {
+        embeddedServer.ifPresent(server -> {
                 server.start();
 
                 if (this.endpointConfiguration.getPort().isPresent()) {

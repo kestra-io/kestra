@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -26,37 +27,40 @@ class VariableRendererTest {
     @Inject
     VariableRenderer variableRenderer;
 
+    @Inject
+    private PebbleEngineFactory pebbleEngineFactory;
+
     @Test
     void shouldRenderUsingAlternativeRendering() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         String render = renderer.render("{{ dummy }}", Map.of());
         Assertions.assertEquals("result", render);
     }
 
     @Test
     void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         String render = renderer.render("{{ prefix }}.kestra.{{ suffix }}", Map.of("prefix", "io", "suffix", "unittest"));
         Assertions.assertEquals("io.kestra.unittest", render);
     }
 
     @Test
     void shouldRenderContactTypedStringExpression() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         Object render = renderer.renderTyped("{{ prefix }}.kestra.{{ suffix }}", Map.of("prefix", "io", "suffix", "unittest"));
         Assertions.assertEquals("io.kestra.unittest", render);
     }
 
     @Test
     void shouldRenderContactTypedNumberExpression() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         Object render = renderer.renderTyped("{{ prefix }}{{ suffix }}", Map.of("prefix", 10, "suffix", 42L));
         Assertions.assertEquals("1042", render);
     }
 
     @Test
     void shouldRenderTypedValueExpression() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         for (Object o : List.of(
             42,                         // Integer
             3.14,                       // Double
@@ -95,9 +99,9 @@ class VariableRendererTest {
 
     public static class TestVariableRenderer extends VariableRenderer {
 
-        public TestVariableRenderer(ApplicationContext applicationContext,
+        public TestVariableRenderer(PebbleEngineFactory pebbleEngineFactory,
                                     VariableConfiguration variableConfiguration) {
-            super(applicationContext, variableConfiguration);
+            super(pebbleEngineFactory, variableConfiguration);
         }
 
         @Override

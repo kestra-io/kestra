@@ -32,16 +32,16 @@ public class StandAloneCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private StartExecutorService startExecutorService;
+    private Provider<StartExecutorService> startExecutorService;
 
     @Inject
-    private TenantIdSelectorService tenantIdSelectorService;
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
 
     @Inject
-    private LocalFlowRepositoryLoader localFlowRepositoryLoader;
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
 
     @Inject
     private Provider<StandAloneRunner> standAloneRunnerProvider;
@@ -123,22 +123,22 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(skipExecutions != null ? skipExecutions : ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(skipFlows != null ? skipFlows : ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
-        this.ignoreExecutionService.setIgnoredIndexerRecords(skipIndexerRecords != null ? skipIndexerRecords : ignoreIndexerRecords);
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+        this.ignoreExecutionService.get().setIgnoredExecutions(skipExecutions != null ? skipExecutions : ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(skipFlows != null ? skipFlows : ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
+        this.ignoreExecutionService.get().setIgnoredIndexerRecords(skipIndexerRecords != null ? skipIndexerRecords : ignoreIndexerRecords);
+        this.startExecutorService.get().applyOptions(startExecutors, notStartExecutors);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
         if (tenantId != null) {
-            tenantIdSelectorService.createTenant(tenantId);
+            tenantIdSelectorService.get().createTenant(tenantId);
         }
 
         if (flowPath != null) {
             try {
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }

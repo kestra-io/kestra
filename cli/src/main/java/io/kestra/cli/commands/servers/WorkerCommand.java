@@ -5,6 +5,7 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -17,7 +18,7 @@ import java.util.Map;
 public class WorkerCommand extends AbstractServerCommand {
 
     @Inject
-    private Worker worker;
+    private Provider<Worker> workerProvider;
 
     @Option(names = {"-t", "--thread"}, description = "The max number of worker threads, defaults to eight times the number of available processors")
     private int thread = Worker.defaultNumThreads();
@@ -41,7 +42,7 @@ public class WorkerCommand extends AbstractServerCommand {
             throw new IllegalArgumentException("The --worker-group option must match the [a-zA-Z0-9_-]+ pattern");
         }
 
-        worker.start(this.thread, this.workerGroupKey);
+        workerProvider.get().start(this.thread, this.workerGroupKey);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

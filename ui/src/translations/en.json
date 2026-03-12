@@ -2073,9 +2073,24 @@
     "welcome_copilot": {      
         "button_cta": "Create flow from scratch",
         "title": "Turn your idea into a workflow",
+        "need_help": "Need Help?",
         "placeholder_prompt": "Send me a daily greeting message at 9am.",
         "show_more": "Show more prompts",
         "show_less": "Show less prompts",
+        "help": {
+          "tutorial": {
+            "title": "Start a Tutorial",
+            "description": "Learn how to create and run your first flow with guidet steps."
+          },
+          "blueprints": {
+            "title": "Blueprints",
+            "description": "Explore ready-to-use examples and templates for common workflow patterns."
+          },
+          "slack": {
+            "title": "Slack Community",
+            "description": "Join us to share ideas and best practices, and get help with technical questions."
+          }
+        },
         "flows": {
           "jsonApiToDuckdb": {
             "label": "JSON API to DuckDB",

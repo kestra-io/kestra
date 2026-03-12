@@ -686,6 +686,7 @@
 
 .ai-onboarding-composer {
     width: 100%;
+    height: 152px;
     border: 1px solid transparent;
     border-radius: 20px;
     background: color-mix(in srgb, var(--ks-background-card) 92%, white 8%);
@@ -693,6 +694,8 @@
         0 10px 24px rgba(15, 23, 42, 0.04),
         0 28px 60px rgba(15, 23, 42, 0.06),
         0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
@@ -718,8 +721,10 @@
 }
 
 .ai-voice-pill-onboarding {
-    min-height: 188px;
-    padding: 18px 24px;
+    flex: 1;
+    min-height: 0;
+    justify-content: center;
+    padding: 12px 24px;
     border: none;
     border-radius: 0;
     background: transparent;
@@ -744,6 +749,10 @@
     }
 }
 
+.ai-voice-pill-onboarding .ai-waves-track {
+    max-width: calc(100% - 12px);
+}
+
 .ai-input-container {
     width: 100%;
 
@@ -755,6 +764,8 @@
 }
 
 .ai-input-container-onboarding {
+    flex: 1;
+    min-height: 0;
     padding: 14px 18px 0;
     display: flex;
     flex-direction: column;
@@ -775,9 +786,15 @@
 }
 
 .ai-custom-textarea-onboarding {
+    flex: 1;
+
+    :deep(.el-textarea) {
+        height: 100%;
+    }
+
     :deep(.el-textarea__inner) {
-        min-height: 114px !important;
-        height: 114px !important;
+        min-height: 100% !important;
+        height: 100% !important;
         padding: 16px 14px 8px;
         border: none;
         border-radius: 0;
@@ -904,8 +921,6 @@
 
     .ai-custom-textarea-onboarding {
         :deep(.el-textarea__inner) {
-            min-height: 114px !important;
-            height: 114px !important;
             font-size: $font-size-md;
 
             &::placeholder {

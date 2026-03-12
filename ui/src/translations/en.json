@@ -2072,6 +2072,7 @@
     "export_as": "Export as .{format}",
     "welcome_copilot": {      
         "button_cta": "Create flow from scratch",
+        "title": "Turn your idea into a workflow",
         "placeholder_prompt": "Send me a daily greeting message at 9am.",
         "show_more": "Show more prompts",
         "show_less": "Show less prompts",

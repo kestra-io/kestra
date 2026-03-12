@@ -19,7 +19,7 @@
                     :initialPrompt="t(selectedExample.promptKey)"
                 />
 
-                <div class="mt-3">
+                <div class="mt-3 welcome-copilot-tags">
                     <el-tag
                         v-for="label in visibleLabels"
                         :key="label"
@@ -105,6 +105,13 @@
 
 <style scoped lang="scss">
 section#welcome {
+    .welcome-copilot-tags {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
     .el-tag {
         cursor: pointer;
         height: 30px;

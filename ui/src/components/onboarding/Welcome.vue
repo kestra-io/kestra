@@ -21,6 +21,7 @@
                     :generationType="aiGenerationTypes.FLOW"
                     :selectedFromTag="selectedLabel !== undefined"
                     :redirectOnUnchangedPrompt="selectedLabel !== undefined"
+                    @generated-yaml="createFlowFromGeneratedPrompt"
                     @create-flow-directly="createFlowFromSelectedExample"
                 />
 
@@ -149,6 +150,11 @@
     async function createFlowFromSelectedExample(flowSource: string) {
         sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
         await new Promise(resolve => window.setTimeout(resolve, 1500));
+        void router.push({name: "flows/create", query: {onboardingPreset: "true"}});
+    }
+
+    async function createFlowFromGeneratedPrompt(flowSource: string) {
+        sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
         void router.push({name: "flows/create", query: {onboardingPreset: "true"}});
     }
 

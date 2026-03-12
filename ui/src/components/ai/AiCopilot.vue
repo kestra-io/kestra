@@ -100,10 +100,23 @@
 
                         <div class="footer-right">
                             <template v-if="waitingForReply">
-                                <span class="generating-label">
-                                    <el-icon class="is-loading"><Loading /></el-icon>
-                                    {{ $t(`ai.flow.generating.${generationType}`) }}
-                                </span>
+                                <template v-if="props.onboarding">
+                                    <el-button
+                                        type="primary"
+                                        class="send-btn send-btn-onboarding"
+                                        disabled
+                                    >
+                                        <el-icon class="is-loading">
+                                            <Loading />
+                                        </el-icon>
+                                    </el-button>
+                                </template>
+                                <template v-else>
+                                    <span class="generating-label">
+                                        <el-icon class="is-loading"><Loading /></el-icon>
+                                        {{ $t(`ai.flow.generating.${generationType}`) }}
+                                    </span>
+                                </template>
                             </template>
                             <template v-else-if="isListening">
                                 <el-button

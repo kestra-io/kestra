@@ -4,6 +4,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.VNodeDispatchEvent;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.queue.*;
 import io.kestra.queue.jdbc.client.JdbcDispatchSubscriber;
@@ -19,12 +20,14 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends AbstractVNodeDispatchQueue<T> {
     private final JdbcQueueClient jdbcQueueClient;
     private final MetricRegistry metricRegistry;
+    private final IgnoreExecutionService ignoreExecutionService;
 
-    public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+    public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.metricRegistry = metricRegistry;
+        this.ignoreExecutionService = ignoreExecutionService;
     }
 
     @Override
@@ -62,7 +65,8 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
                 .stream()
                 .map(this::vNodeRoutingKey)
                 .toList(),
-            metricRegistry
+            metricRegistry,
+            ignoreExecutionService
         );
     }
 }

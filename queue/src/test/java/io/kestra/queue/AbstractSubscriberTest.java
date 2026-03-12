@@ -5,6 +5,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Either;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,17 +26,19 @@ class AbstractSubscriberTest {
 
     private QueueService queueService;
     private MetricRegistry metricRegistry;
+    private IgnoreExecutionService ignoreExecutionService;
 
     @BeforeEach
     void setUp() {
         queueService = mock(QueueService.class);
         metricRegistry = mock(MetricRegistry.class);
+        ignoreExecutionService = mock(IgnoreExecutionService.class);
         when(metricRegistry.timer(anyString(), anyString(), anyString(), anyString()))
             .thenReturn(mock(io.micrometer.core.instrument.Timer.class));
     }
 
     private TestSubscriber createSubscriber() {
-        return new TestSubscriber(queueService, metricRegistry);
+        return new TestSubscriber(queueService, metricRegistry, ignoreExecutionService);
     }
 
     @Test
@@ -489,8 +492,8 @@ class AbstractSubscriberTest {
      */
     static class TestSubscriber extends AbstractSubscriber<TestEvent> {
 
-        TestSubscriber(QueueService queueService, MetricRegistry metricRegistry) {
-            super(TestEvent.class, "test-queue", queueService, metricRegistry);
+        TestSubscriber(QueueService queueService, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
+            super(TestEvent.class, "test-queue", queueService, metricRegistry, ignoreExecutionService);
         }
 
         @Override

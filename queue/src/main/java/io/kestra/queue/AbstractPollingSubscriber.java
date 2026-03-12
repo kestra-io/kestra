@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Either;
 import io.kestra.queue.poller.QueuePoller;
 import io.kestra.queue.poller.QueuePollerConfiguration;
@@ -24,8 +25,8 @@ import static org.awaitility.Awaitility.await;
 public abstract class AbstractPollingSubscriber<T extends Event> extends AbstractSubscriber<T> {
     private final QueuePollerConfiguration configuration;
 
-    public AbstractPollingSubscriber(Class<T> cls, String queueName, QueueService queueService, MetricRegistry metricRegistry, QueuePollerConfiguration configuration) {
-        super(cls, queueName, queueService, metricRegistry);
+    public AbstractPollingSubscriber(Class<T> cls, String queueName, QueueService queueService, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService, QueuePollerConfiguration configuration) {
+        super(cls, queueName, queueService, metricRegistry, ignoreExecutionService);
 
         this.configuration = configuration;
     }

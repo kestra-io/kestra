@@ -3,6 +3,7 @@ package io.kestra.queue.jdbc;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.event.BroadcastEvent;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.queue.AbstractBroadcastQueue;
@@ -18,12 +19,14 @@ import java.util.List;
 public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadcastQueue<T> {
     private final JdbcQueueClient jdbcQueueClient;
     private final MetricRegistry metricRegistry;
+    private final IgnoreExecutionService ignoreExecutionService;
 
-    public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+    public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.metricRegistry = metricRegistry;
+        this.ignoreExecutionService = ignoreExecutionService;
     }
 
     @Override
@@ -33,7 +36,8 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
             queueService,
             jdbcQueueClient,
             queueName(),
-            metricRegistry
+            metricRegistry,
+            ignoreExecutionService
         );
     }
 

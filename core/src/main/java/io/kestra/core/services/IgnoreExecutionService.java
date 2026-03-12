@@ -25,6 +25,7 @@ public class IgnoreExecutionService {
     private volatile List<NamespaceId> ignoredNamespaces = Collections.emptyList();
     private volatile List<String> ignoredTenants = Collections.emptyList();
     private volatile List<String> ignoredIndexerRecords = Collections.emptyList();
+    private volatile List<String> ignoredQueueRecords = Collections.emptyList();
 
     public synchronized void setIgnoredExecutions(List<String> ignoredExecutions) {
         this.ignoredExecutions = ignoredExecutions == null ? Collections.emptyList() : ignoredExecutions;
@@ -44,6 +45,10 @@ public class IgnoreExecutionService {
 
     public synchronized void setIgnoredIndexerRecords(List<String> ignoredIndexerRecords) {
         this.ignoredIndexerRecords = ignoredIndexerRecords == null ? Collections.emptyList() : ignoredIndexerRecords;
+    }
+
+    public synchronized void setIgnoredQueueRecords(List<String> ignoredQueueRecords) {
+        this.ignoredQueueRecords = ignoredQueueRecords == null ? Collections.emptyList() : ignoredQueueRecords;
     }
 
     /**
@@ -89,6 +94,14 @@ public class IgnoreExecutionService {
      */
     public boolean ignoreIndexerRecord(@Nullable String key) {
         return key != null && ignoredIndexerRecords.contains(key);
+    }
+
+    /**
+     * Ignore a queue record based on its key.
+     * @param key the record key as computed by <code>QueueService.key(record)</code>, can be null
+     */
+    public boolean ignoreQueueRecord(@Nullable String key) {
+        return key != null && ignoredQueueRecords.contains(key);
     }
 
     @VisibleForTesting

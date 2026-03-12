@@ -5,6 +5,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Either;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +30,16 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     protected final Class<T> cls;
     protected final QueueService queueService;
+    protected final IgnoreExecutionService ignoreExecutionService;
     protected final String logPrefix;
     protected final Timer timer;
     protected final Timer batchTimer;
 
-    public AbstractSubscriber(Class<T> cls, String queueName, QueueService queueService, MetricRegistry metricRegistry) {
+    public AbstractSubscriber(Class<T> cls, String queueName, QueueService queueService, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
         this.cls = cls;
         this.logPrefix = "[%s]".formatted(this.cls.getSimpleName());
         this.queueService = queueService;
+        this.ignoreExecutionService = ignoreExecutionService;
         this.timer = metricRegistry.timer(
             MetricRegistry.METRIC_QUEUE_CONSUME_DURATION,
             MetricRegistry.METRIC_QUEUE_CONSUME_DURATION_DESCRIPTION,
@@ -58,6 +61,12 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
     protected void processMessage(byte[] message, Consumer<Either<T, DeserializationException>> consumer) {
         timer.record(() -> {
             Either<T, DeserializationException> event = this.queueService.deserialize(this.cls, message);
+
+            if (event.isLeft() && ignoreExecutionService.ignoreQueueRecord(event.getLeft().key())) {
+                log.warn("{} ignoring queue message with key {}", logPrefix, event.getLeft().key());
+                return;
+            }
+
             if (log.isDebugEnabled()) {
                 if (event.isLeft()) {
                     log.debug("{} received message with key '{}'", logPrefix, event.getLeft().key());
@@ -100,7 +109,17 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
      */
     protected void processBatchMessages(List<byte[]> messages, Consumer<List<Either<T, DeserializationException>>> consumer) {
         batchTimer.record(() -> {
-            List<Either<T, DeserializationException>> events = messages.stream().map(message -> this.queueService.deserialize(this.cls, message)).toList();
+            List<Either<T, DeserializationException>> events = messages.stream()
+                .map(message -> this.queueService.deserialize(this.cls, message))
+                .filter(event -> {
+                    if (event.isLeft() && ignoreExecutionService.ignoreQueueRecord(event.getLeft().key())) {
+                        log.warn("{} ignoring queue message with key {}", logPrefix, event.getLeft().key());
+                        return false;
+                    }
+                    return true;
+                })
+                .toList();
+
             if (log.isDebugEnabled()) {
                 log.debug("{} received batch of {} messages", logPrefix, events.size());
             }

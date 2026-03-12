@@ -19,7 +19,9 @@
             :flowHaveTasks="Boolean(flowStore.flowHaveTasks)"
             :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
+            :showSaveAndExecute="showSaveAndExecute"
             @save="save"
+            @save-and-execute="saveAndExecute"
             @copy="
                 () =>
                     router.push({
@@ -55,6 +57,7 @@
 
     defineProps<{
         haveChange: boolean;
+        showSaveAndExecute?: boolean;
     }>();
 
     const {t} = useI18n();
@@ -129,6 +132,40 @@
             if (error?.status === 401) {
                 toast.error("401 Unauthorized", undefined, {duration: 2000});
                 return;
+            }
+        }
+    }
+
+    async function saveAndExecute() {
+        try {
+            const isCreating = flowStore.isCreating;
+            const outcome = await flowStore.saveAll();
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                onboardingStore.recordSave();
+            }
+
+            if (isCreating && outcome === "redirect_to_update") {
+                await router.push({
+                    name: "flows/update",
+                    params: {
+                        id: flowStore.flow?.id,
+                        namespace: flowStore.flow?.namespace,
+                        tab: "edit",
+                        tenant: routeParams.value.tenant,
+                    },
+                });
+            }
+
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                window.setTimeout(() => {
+                    flowStore.executeFlow = true;
+                }, 300);
+            }
+
+            onSaveAll?.();
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000});
             }
         }
     }

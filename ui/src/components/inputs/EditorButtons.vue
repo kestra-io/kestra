@@ -40,13 +40,14 @@
         <el-button
             v-if="isNamespace || isAllowedEdit"
             :icon="ContentSave"
-            @click="forwardEvent('save', $event)"
+            @click="forwardEvent(showSaveAndExecute ? 'save-and-execute' : 'save', $event)"
             :type="playgroundStore.enabled ? undefined : 'primary'"
             :class="{'el-button--playground': playgroundStore.enabled}"
             :disabled="hasErrors || !canSave"
             class="edit-flow-save-button"
+            :id="showSaveAndExecute ? 'execute-button' : undefined"
         >
-            {{ $t("save") }}
+            {{ $t(showSaveAndExecute ? "save_and_execute" : "save") }}
         </el-button>
     </div>
 </template>
@@ -73,12 +74,14 @@
         errors: string[] | undefined;
         warnings: string[] | undefined;
         isNamespace: boolean;
+        showSaveAndExecute?: boolean;
     }>()
 
     const forwardEvent = defineEmits([
         "delete-flow",
         "copy",
         "save",
+        "save-and-execute",
         "export"
     ])
 

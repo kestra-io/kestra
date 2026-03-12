@@ -2070,6 +2070,7 @@
     "delete revision error": "Error deleting revision {revision} with error {error}",
     "no_history": "No history available",
     "export_as": "Export as .{format}",
+    "save_and_execute": "Save & Execute",
     "welcome_copilot": {      
         "button_cta": "Create flow from scratch",
         "title": "Turn your idea into a workflow",
@@ -2077,6 +2078,10 @@
         "placeholder_prompt": "Send me a daily greeting message at 9am.",
         "show_more": "Show more prompts",
         "show_less": "Show less prompts",
+        "execute_hint": {
+          "title": "Save & Execute your flow",
+          "description": "Click to save your workflow and run it immediately."
+        },
         "help": {
           "tutorial": {
             "title": "Start a Tutorial",

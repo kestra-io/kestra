@@ -869,7 +869,7 @@
 .ai-footer-onboarding {
     justify-content: flex-end;
     gap: 8px;
-    padding: 2px 12px 4px;
+    padding: 2px 12px 8px;
     margin-top: -2px;
 }
 

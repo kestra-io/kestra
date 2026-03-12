@@ -130,10 +130,14 @@ class BasicAuthServiceTest {
         assertThat(tmpBasicAuthService.configuration())
             .as("Default configured realm and openUrls should not have been discarded after creating the basic auth user")
             .satisfies(configuration -> {
-                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
-                assertThat(configuration.credentials().getPassword()).isNotBlank();
                 assertThat(configuration.realm()).isEqualTo("Kestra2");
                 assertThat(configuration.openUrls()).isEqualTo(List.of("/api/v1/main/executions/webhook/"));
+            });
+
+        assertThat(tmpBasicAuthService.credentials())
+            .satisfies(credential -> {
+                assertThat(credential.getUsername()).isEqualTo("username1@example.com");
+                assertThat(credential.getPassword()).isNotBlank();
             });
     }
 
@@ -155,10 +159,14 @@ class BasicAuthServiceTest {
         assertThat(tmpBasicAuthService.configuration())
             .as("Default configured realm and openUrls should not have been discarded after creating the basic auth user")
             .satisfies(configuration -> {
-                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
-                assertThat(configuration.credentials().getPassword()).isNotBlank();
                 assertThat(configuration.realm()).isEqualTo("Kestra2");
                 assertThat(configuration.openUrls()).isEqualTo(List.of("/api/v1/main/executions/webhook/"));
+            });
+
+        assertThat(tmpBasicAuthService.credentials())
+            .satisfies(credential -> {
+                assertThat(credential.getUsername()).isEqualTo("username1@example.com");
+                assertThat(credential.getPassword()).isNotBlank();
             });
     }
 
@@ -175,10 +183,14 @@ class BasicAuthServiceTest {
         assertThat(tmpBasicAuthService.configuration())
             .as("Default configured realm and openUrls should not have been discarded after creating the basic auth user")
             .satisfies(configuration -> {
-                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
-                assertThat(configuration.credentials().getPassword()).isNotBlank();
                 assertThat(configuration.realm()).isEqualTo("Kestra2");
                 assertThat(configuration.openUrls()).isEqualTo(List.of("/api/v1/main/executions/webhook/"));
+            });
+
+        assertThat(tmpBasicAuthService.credentials())
+            .satisfies(credential -> {
+                assertThat(credential.getUsername()).isEqualTo("username1@example.com");
+                assertThat(credential.getPassword()).isNotBlank();
             });
     }
 
@@ -213,10 +225,14 @@ class BasicAuthServiceTest {
         assertThat(tmpBasicAuthService.configuration())
             .as("should be able to fetch deserialize legacy configuration that contained 'realm' and 'openUrls', we do not persist these fields anymore")
             .satisfies(configuration -> {
-                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
-                assertThat(configuration.credentials().getPassword()).isNotBlank();
                 assertThat(configuration.realm()).isEqualTo("NewRealmFromConf");
                 assertThat(configuration.openUrls()).isEqualTo(List.of("NewOpenurl-fromConf"));
+            });
+
+        assertThat(tmpBasicAuthService.credentials())
+            .satisfies(credential -> {
+                assertThat(credential.getUsername()).isEqualTo("username1@example.com");
+                assertThat(credential.getPassword()).isNotBlank();
             });
     }
 
@@ -241,7 +257,7 @@ class BasicAuthServiceTest {
         var tmpSettingsRepo = new InMemorySettingRepository();
         var basicAuthService = new BasicAuthService(tmpSettingsRepo, configWrapper.config, instanceService, ApplicationEventPublisher.noOp());
         basicAuthService.init();
-        assertThat(basicAuthService.configuration().credentials()).isNull();
+        assertThat(basicAuthService.credentials()).isNull();
     }
 
     static Stream<ConfigWrapper> getConfigs() {
@@ -310,7 +326,7 @@ class BasicAuthServiceTest {
     }
 
     private void assertConfigurationMatchesApplicationYaml(BasicAuthService basicAuthService, SettingRepositoryInterface settingRepositoryInterface) {
-        var actualConfiguration = basicAuthService.configuration().credentials();
+        var actualConfiguration = basicAuthService.credentials();
         var applicationYamlConfiguration = BasicAuthService.SaltedBasicAuthCredentials.salt(
             actualConfiguration.getSalt(),
             basicAuthService.basicAuthConfiguration.getUsername(),

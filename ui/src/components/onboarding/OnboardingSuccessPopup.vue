@@ -16,12 +16,13 @@
                     <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
 
                     <div class="onboarding-success-card__actions">
-                        <router-link
+                        <button
                             class="el-button"
-                            :to="tutorialRoute"
+                            type="button"
+                            @click="goToTutorial"
                         >
                             {{ $t("welcome_copilot.success_popup.tutorial") }}
-                        </router-link>
+                        </button>
                         <router-link
                             class="el-button el-button--primary"
                             :to="successRoute"
@@ -36,14 +37,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useRoute} from "vue-router";
+    import {computed, nextTick} from "vue";
+    import {useRoute, useRouter} from "vue-router";
 
-    defineProps<{
+    const props = defineProps<{
         modelValue: boolean;
+    }>();
+    const emit = defineEmits<{
+        "update:modelValue": [boolean];
     }>();
 
     const route = useRoute();
+    const router = useRouter();
     const tutorialRoute = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
@@ -53,6 +58,17 @@
         name: "welcome/success",
         params: {tenant: route.params.tenant},
     }));
+
+    async function goToTutorial() {
+        if (!props.modelValue) {
+            return;
+        }
+
+        emit("update:modelValue", false);
+        await nextTick();
+        await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)));
+        window.location.assign(router.resolve(tutorialRoute.value).href);
+    }
 </script>
 
 <style scoped lang="scss">

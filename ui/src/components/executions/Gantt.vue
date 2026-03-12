@@ -117,7 +117,10 @@
                 </template>
             </el-card>
         </div>
-        <OnboardingSuccessPopup :modelValue="showOnboardingSuccessPopup" />
+        <OnboardingSuccessPopup
+            :modelValue="showOnboardingSuccessPopup"
+            @update:model-value="showOnboardingSuccessPopup = $event"
+        />
     </template>
 </template>
 

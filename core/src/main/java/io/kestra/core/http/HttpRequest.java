@@ -288,7 +288,7 @@ public class HttpRequest {
 
         @Override
         public Object getContent() {
-            return "[omitted]";
+            throw new UnsupportedOperationException();
         }
 
         @Override

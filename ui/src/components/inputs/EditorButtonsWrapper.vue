@@ -53,6 +53,7 @@
     import localUtils from "../../utils/utils";
     import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
+    import {useExecutionsStore} from "../../stores/executions";
     import {useToast} from "../../utils/toast";
 
     defineProps<{
@@ -72,6 +73,7 @@
     };
 
     const flowStore = useFlowStore();
+    const executionsStore = useExecutionsStore();
     const onboardingStore = useOnboardingV2Store();
     const router = useRouter()
     const route = useRoute()
@@ -140,8 +142,41 @@
         try {
             const isCreating = flowStore.isCreating;
             const outcome = await flowStore.saveAll();
+            const hasInputs = Array.isArray(flowStore.flowParsed?.inputs) && flowStore.flowParsed.inputs.length > 0;
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 onboardingStore.recordSave();
+            }
+
+            if (
+                isSuccessfulFlowSaveOutcome(outcome) &&
+                !hasInputs &&
+                flowStore.flow?.id &&
+                flowStore.flow?.namespace
+            ) {
+                const response = await executionsStore.triggerExecution({
+                    namespace: flowStore.flow.namespace,
+                    id: flowStore.flow.id,
+                    formData: undefined,
+                    kind: "NORMAL",
+                    labels: ["system.from:ui"],
+                });
+
+                executionsStore.execution = response.data;
+                onboardingStore.recordExecution();
+
+                await router.push({
+                    name: "executions/update",
+                    params: {
+                        namespace: response.data.namespace,
+                        flowId: response.data.flowId,
+                        id: response.data.id,
+                        tab: "gantt",
+                        tenant: routeParams.value.tenant,
+                    },
+                });
+
+                onSaveAll?.();
+                return;
             }
 
             if (isCreating && outcome === "redirect_to_update") {

@@ -33,99 +33,110 @@
                 </h2>
             </div>
 
-            <div class="ai-onboarding-composer">
-                <template v-if="isListening">
-                    <div class="ai-voice-pill ai-voice-pill-onboarding">
-                        <div class="ai-waves-track" ref="wavesContainer">
-                            <span
-                                v-for="(val, i) in volumeBuffer"
-                                :key="i"
-                                class="ai-wave-bar"
-                                :style="{
-                                    height: barHeight(val) + 'px',
-                                }"
-                            />
-                        </div>
-                    </div>
-                </template>
-
-                <div v-else class="ai-input-container ai-input-container-onboarding">
-                    <el-input
-                        ref="promptInput"
-                        v-if="configured"
-                        v-model="prompt"
-                        type="textarea"
-                        :disabled="waitingForReply"
-                        :autosize="{minRows: 4, maxRows: 8}"
-                        :placeholder="$t('welcome_copilot.placeholder_prompt')"
-                        @keydown.exact.enter.prevent="submitPrompt"
-                        @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
-                        class="ai-custom-textarea ai-custom-textarea-onboarding"
-                    />
-                    <template v-else>
-                        <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
-                        <div class="mt-2" v-html="highlightedAiConfiguration" />
-                        <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
-                    </template>
-                    <el-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
-                        {{ error }}
-                    </el-text>
+            <div class="ai-onboarding-composer-wrap" :class="{'has-warning': !!error}">
+                <div v-if="error" class="ai-onboarding-warning" role="alert">
+                    <span class="ai-onboarding-warning-content">
+                        <el-icon class="ai-onboarding-warning-icon">
+                            <AlertBox />
+                        </el-icon>
+                        <span>{{ error }}</span>
+                    </span>
                 </div>
 
-                <div v-if="configured" class="ai-footer ai-footer-onboarding">
-                    <el-select
-                        v-if="providers.length > 1"
-                        class="ai-provider-select"
-                        :modelValue="selectedProvider"
-                        @update:model-value="onProviderChange"
-                        :placeholder="$t('ai.flow.select_provider')"
-                    >
-                        <el-option
-                            v-for="p in providers"
-                            :key="p.id"
-                            :label="p.displayName"
-                            :value="p.id"
+                <div class="ai-onboarding-composer" :class="{'has-error': !!error}">
+                    <template v-if="isListening">
+                        <div class="ai-voice-pill ai-voice-pill-onboarding">
+                            <div class="ai-waves-track" ref="wavesContainer">
+                                <span
+                                    v-for="(val, i) in volumeBuffer"
+                                    :key="i"
+                                    class="ai-wave-bar"
+                                    :style="{
+                                        height: barHeight(val) + 'px',
+                                    }"
+                                />
+                            </div>
+                        </div>
+                    </template>
+
+                    <div v-else class="ai-input-container ai-input-container-onboarding">
+                        <el-input
+                            ref="promptInput"
+                            v-if="configured"
+                            v-model="prompt"
+                            type="textarea"
+                            :disabled="waitingForReply"
+                            :autosize="{minRows: 4, maxRows: 8}"
+                            :placeholder="$t('welcome_copilot.placeholder_prompt')"
+                            @keydown.exact.enter.prevent="submitPrompt"
+                            @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
+                            class="ai-custom-textarea ai-custom-textarea-onboarding"
                         />
-                    </el-select>
-
-                    <div class="footer-right">
-                        <template v-if="waitingForReply">
-                            <span class="generating-label">
-                                <el-icon class="is-loading"><Loading /></el-icon>
-                                {{ $t(`ai.flow.generating.${generationType}`) }}
-                            </span>
-                        </template>
-                        <template v-else-if="isListening">
-                            <el-button
-                                class="no-bg-btn"
-                                @click="cancelVoice"
-                            >
-                                <Close />
-                            </el-button>
-                            <el-button
-                                class="no-bg-btn"
-                                @click="stopAndValidateVoice"
-                            >
-                                <Check />
-                            </el-button>
-                        </template>
                         <template v-else>
-                            <el-button
-                                class="no-bg-btn"
-                                @click="toggleVoiceInput"
-                            >
-                                <Microphone />
-                            </el-button>
-
-                            <el-button
-                                type="primary"
-                                class="send-btn send-btn-onboarding"
-                                :disabled="!prompt.trim()"
-                                @click="submitPrompt"
-                            >
-                                <ArrowUp />
-                            </el-button>
+                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                            <div class="mt-2" v-html="highlightedAiConfiguration" />
+                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
+                        <el-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
+                            {{ error }}
+                        </el-text>
+                    </div>
+
+                    <div v-if="configured" class="ai-footer ai-footer-onboarding">
+                        <el-select
+                            v-if="providers.length > 1"
+                            class="ai-provider-select"
+                            :modelValue="selectedProvider"
+                            @update:model-value="onProviderChange"
+                            :placeholder="$t('ai.flow.select_provider')"
+                        >
+                            <el-option
+                                v-for="p in providers"
+                                :key="p.id"
+                                :label="p.displayName"
+                                :value="p.id"
+                            />
+                        </el-select>
+
+                        <div class="footer-right">
+                            <template v-if="waitingForReply">
+                                <span class="generating-label">
+                                    <el-icon class="is-loading"><Loading /></el-icon>
+                                    {{ $t(`ai.flow.generating.${generationType}`) }}
+                                </span>
+                            </template>
+                            <template v-else-if="isListening">
+                                <el-button
+                                    class="no-bg-btn"
+                                    @click="cancelVoice"
+                                >
+                                    <Close />
+                                </el-button>
+                                <el-button
+                                    class="no-bg-btn"
+                                    @click="stopAndValidateVoice"
+                                >
+                                    <Check />
+                                </el-button>
+                            </template>
+                            <template v-else>
+                                <el-button
+                                    class="no-bg-btn"
+                                    @click="toggleVoiceInput"
+                                >
+                                    <Microphone />
+                                </el-button>
+
+                                <el-button
+                                    type="primary"
+                                    class="send-btn send-btn-onboarding"
+                                    :disabled="!prompt.trim()"
+                                    @click="submitPrompt"
+                                >
+                                    <ArrowUp />
+                                </el-button>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,6 +250,7 @@
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
     import {Loading} from "@element-plus/icons-vue";
+    import AlertBox from "vue-material-design-icons/AlertBox.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import Check from "vue-material-design-icons/Check.vue";
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue";
@@ -634,11 +646,47 @@
     font-size: $font-size-2xl;
     line-height: 1.08;
     font-weight: 600;
+    margin-bottom: 3rem;
+}
+
+.ai-onboarding-warning {
+    position: absolute;
+    top: -30px;
+    left: 16px;
+    right: 16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    padding: 4px 14px;
+    border: 1px solid var(--ks-border-warning);
+    border-radius: 12px;
+    background: var(--ks-background-warning);
+    color: var(--ks-content-warning);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.ai-onboarding-warning-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: $font-size-sm;
+}
+
+.ai-onboarding-warning-icon {
+    color: var(--ks-content-warning);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.ai-onboarding-composer-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1120px;
 }
 
 .ai-onboarding-composer {
     width: 100%;
-    max-width: 1120px;
+    border: 1px solid transparent;
     border-radius: 20px;
     background: color-mix(in srgb, var(--ks-background-card) 92%, white 8%);
     box-shadow:
@@ -646,6 +694,10 @@
         0 28px 60px rgba(15, 23, 42, 0.06),
         0 0 0 1px rgba(255, 255, 255, 0.3) inset;
     overflow: hidden;
+}
+
+.ai-onboarding-composer.has-error {
+    border-color: var(--ks-border-warning);
 }
 
 :global(html.dark) .ai-onboarding-composer {
@@ -843,6 +895,11 @@
 
     .ai-onboarding-composer {
         border-radius: 18px;
+    }
+
+    .ai-onboarding-warning {
+        left: 12px;
+        right: 12px;
     }
 
     .ai-custom-textarea-onboarding {

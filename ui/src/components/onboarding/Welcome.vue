@@ -113,7 +113,13 @@ section#welcome {
         margin: 0 auto;
     }
 
-    @media (min-width: 992px) {
+    @media (min-width: 1200px) {
+        .welcome-copilot-tags {
+            width: 80%;
+        }
+    }
+
+     @media (min-width: 1920px) {
         .welcome-copilot-tags {
             width: 60%;
         }

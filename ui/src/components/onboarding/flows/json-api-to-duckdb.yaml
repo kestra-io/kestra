@@ -1,5 +1,6 @@
 id: data-engineering-pipeline
-namespace: tutorial
+namespace: company.team
+
 labels:
   name: Data Engineering Pipeline
 

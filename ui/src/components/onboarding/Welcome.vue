@@ -15,6 +15,7 @@
                 <AiCopilot
                     :flow="selectedExample.flow"
                     :conversationId="conversationId"
+                    namespace="tutorial"
                     :onboarding="true"
                     :initialPrompt="te(selectedExample.promptKey) ? t(selectedExample.promptKey) : undefined"
                     :generationType="aiGenerationTypes.FLOW"

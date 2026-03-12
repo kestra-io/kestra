@@ -1,5 +1,5 @@
 id: initial
-namespace: kestra.onboarding
+namespace: company.team
 
 tasks:
   - id: hello

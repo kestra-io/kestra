@@ -1,5 +1,7 @@
 <template>
     <div class="button-wrapper">
+        <SaveExecuteAnimation :modelValue="showSaveExecuteAnimation" />
+
         <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled && !onboardingStore.isGuidedActive" />
 
         <ValidationError
@@ -43,12 +45,13 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, inject, InjectionKey} from "vue";
+    import {computed, inject, InjectionKey, ref} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
     import FlowPlaygroundToggle from "./FlowPlaygroundToggle.vue";
     import ValidationError from "../flows/ValidationError.vue";
+    import SaveExecuteAnimation from "./SaveExecuteAnimation.vue";
 
     import localUtils from "../../utils/utils";
     import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
@@ -56,7 +59,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {useToast} from "../../utils/toast";
 
-    defineProps<{
+    const props = defineProps<{
         haveChange: boolean;
         showSaveAndExecute?: boolean;
     }>();
@@ -78,6 +81,7 @@
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
+    const showSaveExecuteAnimation = ref(false);
 
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
@@ -140,6 +144,14 @@
 
     async function saveAndExecute() {
         try {
+            const minimumAnimationDelay = props.showSaveAndExecute
+                ? new Promise(resolve => window.setTimeout(resolve, 1800))
+                : Promise.resolve();
+
+            if (props.showSaveAndExecute) {
+                showSaveExecuteAnimation.value = true;
+            }
+
             const isCreating = flowStore.isCreating;
             const outcome = await flowStore.saveAll();
             const hasInputs = Array.isArray(flowStore.flowParsed?.inputs) && flowStore.flowParsed.inputs.length > 0;
@@ -163,6 +175,7 @@
 
                 executionsStore.execution = response.data;
                 onboardingStore.recordExecution();
+                await minimumAnimationDelay;
 
                 await router.push({
                     name: "executions/update",
@@ -184,6 +197,7 @@
             }
 
             if (isCreating && outcome === "redirect_to_update") {
+                await minimumAnimationDelay;
                 await router.push({
                     name: "flows/update",
                     params: {
@@ -196,13 +210,20 @@
             }
 
             if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await minimumAnimationDelay;
+                showSaveExecuteAnimation.value = false;
                 window.setTimeout(() => {
                     flowStore.executeFlow = true;
                 }, 300);
             }
+            else {
+                await minimumAnimationDelay;
+                showSaveExecuteAnimation.value = false;
+            }
 
             onSaveAll?.();
         } catch (error: any) {
+            showSaveExecuteAnimation.value = false;
             if (error?.status === 401) {
                 toast.error("401 Unauthorized", undefined, {duration: 2000});
             }

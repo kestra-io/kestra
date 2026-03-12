@@ -122,6 +122,7 @@
     import {ref, computed, watch, onUnmounted} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
     // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {State} from "@kestra-io/ui-libs";
@@ -209,6 +210,7 @@
 
     // Composables
     const {t} = useI18n();
+    const route = useRoute();
     const executionsStore = useExecutionsStore();
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
     const ganttExecutionFilter = useGanttExecutionFilter();
@@ -235,6 +237,7 @@
     const selectedStatesComparator = ref<Comparators | undefined>(undefined);
     const selectedTaskRunId = ref<string | undefined>(undefined);
     const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined);
+    const expandedFromRoute = ref(false);
 
     // Log level filter policy
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO");
@@ -545,6 +548,17 @@
             }
         },
         {immediate: true}
+    );
+
+    watch(
+        execution,
+        (newExecution) => {
+            if (route.query.autoExpandGantt === "true" && newExecution?.taskRunList && !expandedFromRoute.value) {
+                selectedTaskRuns.value = newExecution.taskRunList.map(taskRun => taskRun.id);
+                expandedFromRoute.value = true;
+            }
+        },
+        {immediate: true},
     );
 
     // Lifecycle

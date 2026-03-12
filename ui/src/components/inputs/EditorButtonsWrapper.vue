@@ -173,6 +173,9 @@
                         tab: "gantt",
                         tenant: routeParams.value.tenant,
                     },
+                    query: {
+                        autoExpandGantt: "true",
+                    },
                 });
 
                 onSaveAll?.();

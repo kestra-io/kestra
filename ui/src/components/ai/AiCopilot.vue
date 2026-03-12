@@ -842,6 +842,21 @@
             font-style: normal;
             font-size: $font-size-md;
         }
+
+        &:disabled {
+            background: transparent !important;
+            color: var(--ks-content-primary) !important;
+            -webkit-text-fill-color: var(--ks-content-primary) !important;
+            opacity: 1;
+            cursor: default;
+        }
+    }
+
+    :deep(.el-textarea.is-disabled .el-textarea__inner) {
+        background: transparent !important;
+        color: var(--ks-content-primary) !important;
+        -webkit-text-fill-color: var(--ks-content-primary) !important;
+        opacity: 1;
     }
 }
 

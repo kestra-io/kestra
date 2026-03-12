@@ -1,5 +1,13 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +39,19 @@ class VariableRendererTest {
     @Inject
     VariableRenderer.VariableConfiguration variableConfiguration;
 
+    @Inject
+    VariableRenderer variableRenderer;
+
+    @Inject
+    private PebbleEngineFactory pebbleEngineFactory;
+
+    @Test
+    void shouldRenderUsingAlternativeRendering() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
+        String render = renderer.render("{{ dummy }}", Map.of());
+        Assertions.assertEquals("result", render);
+    }
+
     @Test
     void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ prefix }}.kestra.{{ suffix }}", Map.of("prefix", "io", "suffix", "unittest"));
@@ -57,6 +78,7 @@ class VariableRendererTest {
 
     @Test
     void shouldRenderTypedValueExpression() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         for (Object o : List.of(
             42, // Integer
             3.14, // Double
@@ -110,4 +132,18 @@ class VariableRendererTest {
         final Map<String, Object> result_value3 = (Map<String, Object>) result.get("foo-3");
         assertThat(result_value3.keySet()).containsExactly("bar-1", "bar-2", "bar-3");
     }
+
+    public static class TestVariableRenderer extends VariableRenderer {
+
+        public TestVariableRenderer(PebbleEngineFactory pebbleEngineFactory,
+            VariableConfiguration variableConfiguration) {
+            super(pebbleEngineFactory, variableConfiguration);
+        }
+
+        @Override
+        protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+            return "result";
+        }
+    }
+
 }

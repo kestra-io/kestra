@@ -34,16 +34,16 @@ public class StandAloneCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private StartExecutorService startExecutorService;
+    private Provider<StartExecutorService> startExecutorService;
 
     @Inject
-    private TenantIdSelectorService tenantIdSelectorService;
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
 
     @Inject
-    private LocalFlowRepositoryLoader localFlowRepositoryLoader;
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
 
     @Inject
     private Provider<StandAloneRunner> standAloneRunnerProvider;
@@ -101,22 +101,22 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
-        this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
+        this.ignoreExecutionService.get().setIgnoredIndexerRecords(ignoreIndexerRecords);
         this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
         if (tenantId != null) {
-            tenantIdSelectorService.createTenant(tenantId);
+            tenantIdSelectorService.get().createTenant(tenantId);
         }
 
         if (flowPath != null) {
             try {
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }

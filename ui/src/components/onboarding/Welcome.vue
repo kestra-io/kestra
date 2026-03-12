@@ -149,7 +149,7 @@
 
     async function createFlowFromSelectedExample(flowSource: string) {
         sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
-        await new Promise(resolve => window.setTimeout(resolve, 1500));
+        await new Promise(resolve => window.setTimeout(resolve, 1000));
         void router.push({name: "flows/create", query: {onboardingPreset: "true"}});
     }
 

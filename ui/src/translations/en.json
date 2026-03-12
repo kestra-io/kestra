@@ -2082,6 +2082,39 @@
           "title": "Save & Execute your flow",
           "description": "Click to save your workflow and run it immediately."
         },
+        "success_popup": {
+          "title": "Congratulations!",
+          "description": "You've successfully executed your first flow! You're on your way to becoming a Kestra pro.",
+          "tutorial": "Deep Dive Tutorial",
+          "explore": "Explore More"
+        },
+        "success_page": {
+          "title": "You're all set!",
+          "description": "You've learned the basics of Kestra. Here are some resources to help you continue your journey.",
+          "restart": "Restart Tutorial",
+          "items": {
+            "tutorial": {
+              "title": "Start a Tutorial",
+              "description": "Interactive walkthrough of all Kestra features"
+            },
+            "blueprints": {
+              "title": "Blueprints",
+              "description": "Pre-built workflow templates for common use cases"
+            },
+            "slack": {
+              "title": "Slack Community",
+              "description": "Connect with other users and get help from the community"
+            },
+            "videos": {
+              "title": "Videos Tutorials",
+              "description": "Step-by-step video guides for advanced features"
+            },
+            "demo": {
+              "title": "Get a Demo",
+              "description": "Explore Kestra Enterprise Edition with a personalized demo"
+            }
+          }
+        },
         "help": {
           "tutorial": {
             "title": "Start a Tutorial",

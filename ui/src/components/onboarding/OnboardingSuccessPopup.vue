@@ -1,0 +1,148 @@
+<template>
+    <Teleport to="body">
+        <Transition name="onboarding-success-fade">
+            <div
+                v-if="modelValue"
+                class="onboarding-success-overlay"
+            >
+                <div class="onboarding-success-rings">
+                    <div class="onboarding-success-ring ring-1" />
+                    <div class="onboarding-success-ring ring-2" />
+                    <div class="onboarding-success-ring ring-3" />
+                </div>
+
+                <div class="onboarding-success-card">
+                    <h3>{{ $t("welcome_copilot.success_popup.title") }}</h3>
+                    <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
+
+                    <div class="onboarding-success-card__actions">
+                        <router-link
+                            class="el-button"
+                            :to="tutorialRoute"
+                        >
+                            {{ $t("welcome_copilot.success_popup.tutorial") }}
+                        </router-link>
+                        <router-link
+                            class="el-button el-button--primary"
+                            :to="successRoute"
+                        >
+                            {{ $t("welcome_copilot.success_popup.explore") }}
+                        </router-link>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+    </Teleport>
+</template>
+
+<script setup lang="ts">
+    import {computed} from "vue";
+    import {useRoute} from "vue-router";
+
+    defineProps<{
+        modelValue: boolean;
+    }>();
+
+    const route = useRoute();
+    const tutorialRoute = computed(() => ({
+        name: "flows/create",
+        query: {onboarding: "guided", reset: "true"},
+        params: {tenant: route.params.tenant},
+    }));
+    const successRoute = computed(() => ({
+        name: "welcome/success",
+        params: {tenant: route.params.tenant},
+    }));
+</script>
+
+<style scoped lang="scss">
+@import "@kestra-io/ui-libs/src/scss/_variables.scss";
+
+    .onboarding-success-overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        z-index: 2000;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.18);
+    }
+
+    .onboarding-success-rings {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+    }
+
+    .onboarding-success-ring {
+        position: absolute;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 999px;
+
+        &.ring-1 {
+            width: 320px;
+            height: 320px;
+        }
+
+        &.ring-2 {
+            width: 460px;
+            height: 460px;
+        }
+
+        &.ring-3 {
+            width: 620px;
+            height: 620px;
+        }
+    }
+
+    .onboarding-success-card {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 360px);
+        padding: 2rem 1.75rem 1.5rem;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 14px;
+        background: var(--ks-background-card);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+        text-align: center;
+
+        h3 {
+            margin: 0 0 0.75rem;
+            color: var(--ks-content-primary);
+            font-size: $font-size-lg;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        p {
+            margin: 0 0 1.5rem;
+            color: var(--ks-content-secondary);
+            font-size: $font-size-md;
+            line-height: 1.5;
+        }
+    }
+
+    .onboarding-success-card__actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+
+        .el-button {
+            min-width: 132px;
+            margin: 0;
+            text-decoration: none;
+        }
+    }
+
+    .onboarding-success-fade-enter-active,
+    .onboarding-success-fade-leave-active {
+        transition: opacity 0.2s ease;
+    }
+
+    .onboarding-success-fade-enter-from,
+    .onboarding-success-fade-leave-to {
+        opacity: 0;
+    }
+</style>

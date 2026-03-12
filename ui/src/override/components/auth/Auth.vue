@@ -19,7 +19,7 @@
             </el-option>
         </template>
         <el-option label="welcome" value="welcome">
-            <RouterLink :to="{name: 'welcome'}" class="menu-item">
+            <RouterLink :to="tutorialRoute" class="menu-item">
                 <RocketLaunchOutline class="menu-icon" />
                 {{ $t("product_tour") }}
             </RouterLink>
@@ -48,7 +48,8 @@
 </template>
 
 <script setup lang="ts">
-    import {RouterLink, useRouter} from "vue-router";
+    import {computed} from "vue";
+    import {RouterLink, useRoute, useRouter} from "vue-router";
 
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
@@ -59,8 +60,14 @@
     import * as BasicAuth from "../../../utils/basicAuth";
     import {useAxios} from "../../../utils/axios";
 
+    const route = useRoute();
     const router = useRouter();
     const axios = useAxios();
+    const tutorialRoute = computed(() => ({
+        name: "flows/create",
+        query: {onboarding: "guided", reset: "true"},
+        params: {tenant: route.params.tenant},
+    }));
 
     const logout = () => {
         BasicAuth.logout();

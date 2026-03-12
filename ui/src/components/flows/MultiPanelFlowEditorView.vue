@@ -96,7 +96,7 @@
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
     const showExecuteHint = ref(true);
     const isOnboardingCreate = computed(() =>
-        route.name === "flows/create" && (route.query.onboardingPreset === "true" || route.query.onboarding === "guided"),
+        route.name === "flows/create" && route.query.onboardingPreset === "true",
     );
 
     onMounted(() => {
@@ -210,7 +210,7 @@
 
     .onboarding-execute-hint-wrap {
         position: absolute;
-        top: 3rem;
+        top: 5rem;
         right: 1rem;
         z-index: 20;
         display: flex;

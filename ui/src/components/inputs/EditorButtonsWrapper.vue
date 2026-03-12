@@ -175,6 +175,7 @@
                     },
                     query: {
                         autoExpandGantt: "true",
+                        onboardingSuccess: "true",
                     },
                 });
 

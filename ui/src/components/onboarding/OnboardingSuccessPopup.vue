@@ -5,12 +5,6 @@
                 v-if="modelValue"
                 class="onboarding-success-overlay"
             >
-                <div class="onboarding-success-rings">
-                    <div class="onboarding-success-ring ring-1" />
-                    <div class="onboarding-success-ring ring-2" />
-                    <div class="onboarding-success-ring ring-3" />
-                </div>
-
                 <div class="onboarding-success-card">
                     <h3>{{ $t("welcome_copilot.success_popup.title") }}</h3>
                     <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
@@ -82,35 +76,6 @@
         z-index: 2000;
         overflow: hidden;
         background: rgba(15, 23, 42, 0.18);
-    }
-
-    .onboarding-success-rings {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        pointer-events: none;
-    }
-
-    .onboarding-success-ring {
-        position: absolute;
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        border-radius: 999px;
-
-        &.ring-1 {
-            width: 320px;
-            height: 320px;
-        }
-
-        &.ring-2 {
-            width: 460px;
-            height: 460px;
-        }
-
-        &.ring-3 {
-            width: 620px;
-            height: 620px;
-        }
     }
 
     .onboarding-success-card {

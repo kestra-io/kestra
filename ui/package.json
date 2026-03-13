@@ -137,12 +137,12 @@
         "vue-tsc": "^3.2.5"
     },
     "optionalDependencies": {
-        "@esbuild/darwin-arm64": "^0.27.3",
-        "@esbuild/darwin-x64": "^0.27.2",
-        "@esbuild/linux-x64": "^0.27.2",
-        "@rolldown/binding-darwin-arm64": "^1.0.0-rc.8",
-        "@rolldown/binding-darwin-x64": "^1.0.0-rc.8",
-        "@rolldown/binding-linux-x64-gnu": "^1.0.0-rc.8",
+        "@esbuild/darwin-arm64": "^0.27.4",
+        "@esbuild/darwin-x64": "^0.27.4",
+        "@esbuild/linux-x64": "^0.27.4",
+        "@rolldown/binding-darwin-arm64": "^1.0.0-rc.9",
+        "@rolldown/binding-darwin-x64": "^1.0.0-rc.9",
+        "@rolldown/binding-linux-x64-gnu": "^1.0.0-rc.9",
         "@rollup/rollup-darwin-arm64": "^4.59.0",
         "@rollup/rollup-darwin-x64": "^4.59.0",
         "@rollup/rollup-linux-x64-gnu": "^4.59.0",

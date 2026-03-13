@@ -9,7 +9,7 @@
         </template>
     </TopNavBar>
 
-    <section id="welcome" class="container">
+    <section id="welcome" class="container mt-0">
         <el-row justify="center">
             <el-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
                 <AiCopilot
@@ -142,12 +142,19 @@
 @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
 section#welcome {
+    position: relative;
+    overflow: hidden;
+    background: url("./assets/background.svg") center top / cover no-repeat;
+    min-height: calc(100vh - 60px);
+
     .welcome-copilot-tags {
         display: flex;
         justify-content: center;
         align-items: center;
         flex-wrap: wrap;
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
     }
 
     @media (min-width: 1200px) {
@@ -189,6 +196,8 @@ section#welcome {
         width: calc(100% - 48px);
         max-width: 1120px;
         margin: 1rem auto 0;
+        position: relative;
+        z-index: 1;
     }
 
     @media (max-width: 768px) {
@@ -201,6 +210,11 @@ section#welcome {
         margin: 0 0 0.875rem;
         color: var(--ks-content-secondary);
         font-size: $font-size-sm;
+    }
+
+    :deep(.el-row) {
+        position: relative;
+        z-index: 1;
     }
 
 }

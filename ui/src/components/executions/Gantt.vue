@@ -121,6 +121,11 @@
             :modelValue="showOnboardingSuccessPopup"
             @update:model-value="showOnboardingSuccessPopup = $event"
         />
+        <SaveExecuteAnimation
+            :modelValue="showSaveExecuteAnimation"
+            @update:model-value="showSaveExecuteAnimation = $event"
+            @finished="onSaveExecuteAnimationFinished"
+        />
     </template>
 </template>
 
@@ -146,6 +151,7 @@
     import Warning from "vue-material-design-icons/Alert.vue";
     import ExecutionPending from "./ExecutionPending.vue";
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue";
+    import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {Comparators, type AppliedFilter} from "../filter/utils/filterTypes";
     import {useGanttExecutionFilter} from "../filter/configurations";
@@ -246,6 +252,8 @@
     const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined);
     const expandedFromRoute = ref(false);
     const showOnboardingSuccessPopup = ref(false);
+    const showSaveExecuteAnimation = ref(false);
+    const onboardingAnimationPlayed = ref(false);
 
     // Log level filter policy
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO");
@@ -568,13 +576,19 @@
 
             if (
                 route.query.onboardingSuccess === "true" &&
-                newExecution?.state?.current === "SUCCESS"
+                newExecution?.state?.current === "SUCCESS" &&
+                !onboardingAnimationPlayed.value
             ) {
-                showOnboardingSuccessPopup.value = true;
+                onboardingAnimationPlayed.value = true;
+                showSaveExecuteAnimation.value = true;
             }
         },
         {immediate: true},
     );
+
+    function onSaveExecuteAnimationFinished() {
+        showOnboardingSuccessPopup.value = true;
+    }
 
     // Lifecycle
     onUnmounted(() => {

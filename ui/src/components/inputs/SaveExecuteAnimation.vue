@@ -72,6 +72,10 @@
     }>(), {
         text: "Flow Executed!",
     });
+    const emit = defineEmits<{
+        "update:modelValue": [boolean];
+        finished: [];
+    }>();
 
     const wrapEl = ref<HTMLElement | null>(null);
     const aura1El = ref<HTMLElement | null>(null);
@@ -323,6 +327,18 @@
                 });
             });
         }, 700);
+
+        queueTimeout(() => {
+            wrap.style.transition = "opacity .5s, transform .5s ease-in";
+            wrap.style.opacity = "0";
+            wrap.style.transform = "scale(1.3)";
+            successText.style.opacity = "0";
+        }, 2000);
+
+        queueTimeout(() => {
+            emit("update:modelValue", false);
+            emit("finished");
+        }, 2600);
     }
 
     watch(

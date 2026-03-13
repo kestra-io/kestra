@@ -66,4 +66,15 @@ export const flowExamples = {
     },
 } as const;
 
-export const labels = Object.keys(flowExamples) as Array<keyof typeof flowExamples>;
+export const labels: Array<keyof typeof flowExamples> = [
+    "jsonApiToDuckdb",
+    "installNginxViaAnsible",
+    "buildDbtPipeline",
+    "etlWorkflow",
+    "microservicesApis",
+    "buildDockerImageAndRunIt",
+    "manualApproval",
+    "convertCsvToExcel",
+    "scheduledPdfReports",
+    "weeklySalesKpisToSlack",
+];

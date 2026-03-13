@@ -724,7 +724,7 @@
     height: 152px;
     border: 1px solid transparent;
     border-radius: 20px;
-    background: color-mix(in srgb, var(--ks-background-card) 92%, white 8%);
+    background: var(--ks-background-input);
     box-shadow:
         0 10px 24px rgba(15, 23, 42, 0.04),
         0 28px 60px rgba(15, 23, 42, 0.06),
@@ -739,7 +739,6 @@
 }
 
 :global(html.dark) .ai-onboarding-composer {
-    background: color-mix(in srgb, var(--ks-background-card) 88%, black 12%);
     border-color: color-mix(in srgb, var(--ks-border-primary) 72%, black 28%);
 }
 

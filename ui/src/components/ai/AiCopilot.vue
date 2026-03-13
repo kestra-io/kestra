@@ -824,6 +824,15 @@
 
     :deep(.el-textarea) {
         height: 100%;
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+    }
+
+    :deep(.el-textarea:focus-within) {
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
     }
 
     :deep(.el-textarea__inner) {
@@ -849,6 +858,14 @@
             opacity: 1;
             cursor: default;
         }
+
+        &:focus,
+        &:focus-visible,
+        &:active {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
     }
 
     :deep(.el-textarea.is-disabled .el-textarea__inner) {
@@ -856,6 +873,12 @@
         color: var(--ks-content-primary) !important;
         -webkit-text-fill-color: var(--ks-content-primary) !important;
         opacity: 1;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    :deep(.el-textarea__inner:hover) {
+        box-shadow: none !important;
     }
 }
 

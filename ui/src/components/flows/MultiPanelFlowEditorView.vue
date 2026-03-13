@@ -219,17 +219,30 @@
     }
 
     .onboarding-execute-hint {
+        --border-angle: 0turn;
+        --hint-gradient: conic-gradient(
+            from calc(var(--border-angle) + 50.37deg) at 50% 50%,
+            #3991ff 0deg,
+            #8c4bff 124.62deg,
+            #a396ff 205.96deg,
+            #3991ff 299.42deg,
+            #e0e0ff 342.69deg,
+            #3991ff 360deg
+        );
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
         gap: 1rem;
         width: min(100%, 360px);
-        padding: 1.75rem 1.75rem 1.5rem;
-        border: 1px solid var(--ks-border-primary);
+        padding: calc(1.75rem - 1px) calc(1.75rem - 1px) calc(1.5rem - 1px);
+        border: 1px solid transparent;
         border-radius: 12px;
-        background: var(--ks-background-card);
+        background:
+            linear-gradient(var(--ks-background-card), var(--ks-background-card)) padding-box,
+            var(--hint-gradient) border-box;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         pointer-events: auto;
+        animation: onboardingHintBorderSpin 3s linear infinite;
     }
 
     .onboarding-execute-hint__content {
@@ -293,5 +306,17 @@
     .onboarding-hint-fade-leave-to {
         opacity: 0;
         transform: translateY(-6px);
+    }
+
+    @keyframes onboardingHintBorderSpin {
+        to {
+            --border-angle: 1turn;
+        }
+    }
+
+    @property --border-angle {
+        syntax: "<angle>";
+        inherits: true;
+        initial-value: 0turn;
     }
 </style>

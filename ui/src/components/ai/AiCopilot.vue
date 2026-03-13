@@ -65,7 +65,8 @@
                             v-if="configured"
                             v-model="prompt"
                             type="textarea"
-                            :disabled="waitingForReply"
+                            :disabled="!props.onboarding && waitingForReply"
+                            :readonly="props.onboarding && waitingForReply"
                             :autosize="{minRows: 4, maxRows: 8}"
                             :placeholder="$t('welcome_copilot.placeholder_prompt')"
                             @keydown.exact.enter.prevent="submitPrompt"
@@ -431,6 +432,9 @@
     async function submitPrompt() {
         if (!prompt.value.trim()) return;
         error.value = undefined;
+        // Blur before disabling to avoid the textarea focus ring flashing on submit.
+        const activeElement = document.activeElement as HTMLElement | null;
+        activeElement?.blur?.();
 
         if (
             props.onboarding &&
@@ -731,14 +735,11 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    outline: none !important;
 }
 
 .ai-onboarding-composer.has-error {
     border-color: var(--ks-border-info);
-}
-
-:global(html.dark) .ai-onboarding-composer {
-    border-color: color-mix(in srgb, var(--ks-border-primary) 72%, black 28%);
 }
 
 /* Voice waveform container — matches the textarea look */
@@ -802,6 +803,9 @@
     padding: 14px 18px 0;
     display: flex;
     flex-direction: column;
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
 .ai-custom-textarea {
@@ -820,28 +824,48 @@
 
 .ai-custom-textarea-onboarding {
     flex: 1;
+    --el-disabled-bg-color: transparent;
+    --el-disabled-text-color: var(--ks-content-primary);
+    --el-fill-color-light: transparent;
+    --el-fill-color-blank: transparent;
+    --el-input-border-color: transparent;
+    --el-input-hover-border-color: transparent;
+    --el-input-focus-border-color: transparent;
+    --el-border-color: transparent;
+    --el-input-focus-border: transparent;
+    --el-input-box-shadow: none;
 
     :deep(.el-textarea) {
         height: 100%;
         box-shadow: none !important;
         outline: none !important;
         border: none !important;
+        background: transparent !important;
     }
 
     :deep(.el-textarea:focus-within) {
         box-shadow: none !important;
         outline: none !important;
         border: none !important;
+        background: transparent !important;
+    }
+
+    :deep(.el-textarea.is-disabled) {
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+        background: transparent !important;
     }
 
     :deep(.el-textarea__inner) {
         min-height: 100% !important;
         height: 100% !important;
         padding: 16px 14px 8px;
-        border: none;
+        border: none !important;
         border-radius: 0;
-        background: transparent;
-        box-shadow: none;
+        background: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
         font-size: $font-size-md;
         line-height: 1.45;
 
@@ -869,6 +893,7 @@
 
     :deep(.el-textarea.is-disabled .el-textarea__inner) {
         background: transparent !important;
+        background-color: transparent !important;
         color: var(--ks-content-primary) !important;
         -webkit-text-fill-color: var(--ks-content-primary) !important;
         opacity: 1;
@@ -878,6 +903,12 @@
 
     :deep(.el-textarea__inner:hover) {
         box-shadow: none !important;
+        border: none !important;
+        outline: none !important;
+    }
+
+    :deep(.el-textarea__inner::-webkit-focus-inner) {
+        border: 0;
     }
 }
 

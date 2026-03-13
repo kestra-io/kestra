@@ -163,12 +163,6 @@ section#welcome {
         }
     }
 
-     @media (min-width: 1920px) {
-        .welcome-copilot-tags {
-            width: 60%;
-        }
-    }
-
     .el-tag {
         cursor: pointer;
         height: 30px;

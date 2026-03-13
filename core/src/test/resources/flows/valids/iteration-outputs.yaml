@@ -1,4 +1,4 @@
-id: prefix_sum
+id: iteration-outputs
 namespace: io.kestra.tests
 
 tasks:
@@ -17,9 +17,18 @@ tasks:
               {% if idx == 0 %}
                 {{ taskrun.value | trim | number + parents[0].taskrun.value | trim |number }}
               {% elseif idx is even %}
-                {{ (outputFromIteration(idx - 2) | trim | number + taskrun.value | trim | number + parents[0].taskrun.value | trim |number) }}
+                {{ (iterationOutputs(idx - 2, 'inner_even_indices_sum') | trim | number + taskrun.value | trim | number + parents[0].taskrun.value | trim |number) }}
               {% else %}
-                {{ outputFromIteration(idx - 1) | trim | number }}
+                {{ iterationOutputs(idx - 1) | trim | number }}
+              {% endif %}
+          - id: iteration_output_sibling
+            type: io.kestra.plugin.core.debug.Return
+            format: >-
+              {% set idx = taskrun.iteration %}
+              {% if idx <= 1 %}
+                {{ taskrun.value | trim | number + parents[0].taskrun.value | trim | number }}
+              {% else %}
+                {{ iterationOutputs(idx - 2, 'inner_even_indices_sum') | trim | number }}
               {% endif %}
       - id: outer_prefix_sum
         type: io.kestra.plugin.core.debug.Return
@@ -28,6 +37,6 @@ tasks:
           {% if idx == 0 %}
             {{ taskrun.value | trim | number }}
           {% else %}
-            {{ outputFromIteration(idx - 1) | trim | number + taskrun.value | trim | number}}
+            {{ iterationOutputs(idx - 1) | trim | number + taskrun.value | trim | number}}
           {% endif %}
 

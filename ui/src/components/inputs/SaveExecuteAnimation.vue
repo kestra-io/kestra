@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onBeforeUnmount, ref, watch} from "vue";
+    import {nextTick, onBeforeUnmount, ref, watch, type ComponentPublicInstance} from "vue";
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
@@ -91,7 +91,11 @@
     let timeouts: number[] = [];
     let running = false;
 
-    function setSparkRef(el: Element | null, index: number) {
+    function setSparkRef(el: Element | ComponentPublicInstance | null, index: number) {
+        if (el && "$el" in el) {
+            sparkEls.value[index] = el.$el as HTMLElement | null;
+            return;
+        }
         sparkEls.value[index] = el as HTMLElement | null;
     }
 

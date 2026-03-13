@@ -34,7 +34,7 @@
                     </div>
                 </template>
                 <template #default>
-                    <DynamicScroller
+                    <DynamicScrollerAny
                         :items="filteredSeries"
                         :minItemSize="40"
                         keyField="id"
@@ -42,7 +42,7 @@
                         :updateInterval="0"
                     >
                         <template #default="{item, index, active}">
-                            <DynamicScrollerItem
+                            <DynamicScrollerItemAny
                                 :item="item"
                                 :active="active"
                                 :data-index="index"
@@ -111,9 +111,9 @@
                                         />
                                     </div>
                                 </div>
-                            </DynamicScrollerItem>
+                            </DynamicScrollerItemAny>
                         </template>
-                    </DynamicScroller>
+                    </DynamicScrollerAny>
                 </template>
             </el-card>
         </div>
@@ -140,10 +140,9 @@
     // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
-    // @ts-expect-error no types yet
+    // @ts-expect-error JS module without declarations
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
-    // @ts-expect-error no types yet
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
@@ -162,6 +161,9 @@
     } from "../filter/utils/logLevelQuery";
     import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
     import {useExecutionsStore, type Execution} from "../../stores/executions";
+
+    const DynamicScrollerAny = DynamicScroller as any;
+    const DynamicScrollerItemAny = DynamicScrollerItem as any;
 
     interface TaskRun {
         id: string;

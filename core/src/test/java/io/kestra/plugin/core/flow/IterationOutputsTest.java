@@ -57,10 +57,22 @@ public class IterationOutputsTest {
         assertThat(outerOutput.get("value").toString().trim()).isEqualTo("600");
 
 
-        var defaultSumOutput = (Map<?,?>) execution.outputs().get("default_prefix_sum");
-        var defaultOutput = (Map<?,?>) defaultSumOutput.get("300");
+        var defaultSumOutput = (Map<?,?>) execution.outputs().get("default_all_prefix_sum");
+        var allDefaultOutput = (Map<?,?>) defaultSumOutput.get("300");
 
-        assertThat(defaultOutput.get("value").toString().trim()).isEqualTo("600");
+        assertThat(allDefaultOutput.get("value").toString().trim()).isEqualTo("1100");
+
+
+        var iterationDefaultSumOutput = (Map<?,?>) execution.outputs().get("default_iteration_prefix_sum");
+        var iterationDefaultOutput = (Map<?,?>) iterationDefaultSumOutput.get("300");
+
+        assertThat(iterationDefaultOutput.get("value").toString().trim()).isEqualTo("600");
+
+
+        var taskIdDefaultSumOutput = (Map<?,?>) execution.outputs().get("default_task_id_prefix_sum");
+        var taskIdDefaultOutput = (Map<?,?>) taskIdDefaultSumOutput.get("300");
+
+        assertThat(taskIdDefaultOutput.get("value").toString().trim()).isEqualTo("600");
 
     }
 }

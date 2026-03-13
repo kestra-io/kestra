@@ -39,13 +39,32 @@ tasks:
           {% else %}
             {{ iterationOutputs(idx - 1) | trim | number + taskrun.value | trim | number}}
           {% endif %}
-      - id: default_prefix_sum
+      - id: default_all_prefix_sum
         type: io.kestra.plugin.core.debug.Return
         format: >-
           {% set idx = taskrun.iteration %}
           {% if idx == 0 %}
             {{ taskrun.value | trim | number }}
           {% else %}
-            {{ iterationOutputs() | trim | number + taskrun.value | trim | number}}
+            {{ iterationOutputs() | trim | number + iterationOutputs(null, null) | trim | number + taskrun.value | trim | number}}
           {% endif %}
 
+      - id: default_iteration_prefix_sum
+        type: io.kestra.plugin.core.debug.Return
+        format: >-
+          {% set idx = taskrun.iteration %}
+          {% if idx == 0 %}
+            {{ taskrun.value | trim | number }}
+          {% else %}
+            {{ iterationOutputs(null, 'default_iteration_prefix_sum') | trim | number + taskrun.value | trim | number}}
+          {% endif %}
+
+      - id: default_task_id_prefix_sum
+        type: io.kestra.plugin.core.debug.Return
+        format: >-
+          {% set idx = taskrun.iteration %}
+          {% if idx == 0 %}
+            {{ taskrun.value | trim | number }}
+          {% else %}
+            {{ iterationOutputs(idx-1, null) | trim | number + taskrun.value | trim | number}}
+          {% endif %}

@@ -168,6 +168,10 @@ public abstract class KestraContext {
         @Override
         public void shutdown() {
             if (isShutdown.compareAndSet(false, true)) {
+                if (!applicationContext.isRunning()) {
+                    log.info("Kestra server - Shutdown already in progress, skipping");
+                    return;
+                }
                 log.info("Kestra server - Shutdown initiated");
                 applicationContext.close();
                 log.info("Kestra server - Shutdown completed");

@@ -11,13 +11,19 @@ import org.jooq.TransactionalRunnable;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.function.Predicate;
+import javax.sql.DataSource;
 
 @Singleton
 public class JooqDSLContextWrapper {
     private final DSLContext dslContext;
 
+    /**
+     * @param dataSource explicit dependency to ensure Micronaut destroys this bean before the DataSource.
+     *                   Without it, the @EachBean-derived DSLContext/Configuration may be destroyed
+     *                   together with the DataSource, leaving this wrapper with a stale DSLContext.
+     */
     @Inject
-    public JooqDSLContextWrapper(DSLContext dslContext) {
+    public JooqDSLContextWrapper(DSLContext dslContext, DataSource dataSource) {
         this.dslContext = dslContext;
     }
 

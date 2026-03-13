@@ -14,7 +14,7 @@ import {useMiscStore} from "override/stores/misc";
 import {shouldShowWelcome} from "../../utils/welcomeGuard";
 
 // Main icons
-import AiIcon from "../../components/ai/AiIcon.vue";
+import AiMenuIcon from "../../components/ai/AiMenuIcon.vue";
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
@@ -118,7 +118,7 @@ export function useLeftMenu() {
                     name: "welcome",
                 },
                 icon: {
-                    element: AiIcon,
+                    element: AiMenuIcon,
                 },
             },
             {

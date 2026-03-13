@@ -693,10 +693,10 @@
     display: flex;
     align-items: center;
     padding: 4px 14px;
-    border: 1px solid var(--ks-border-warning);
+    border: 1px solid var(--ks-border-info);
     border-radius: 12px;
-    background: var(--ks-background-warning);
-    color: var(--ks-content-warning);
+    background: var(--ks-background-info);
+    color: var(--ks-content-info);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
@@ -708,7 +708,7 @@
 }
 
 .ai-onboarding-warning-icon {
-    color: var(--ks-content-warning);
+    color: var(--ks-content-info);
     font-size: 16px;
     flex-shrink: 0;
 }
@@ -735,7 +735,7 @@
 }
 
 .ai-onboarding-composer.has-error {
-    border-color: var(--ks-border-warning);
+    border-color: var(--ks-border-info);
 }
 
 :global(html.dark) .ai-onboarding-composer {

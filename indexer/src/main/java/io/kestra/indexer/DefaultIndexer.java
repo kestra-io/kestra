@@ -41,7 +41,6 @@ public class DefaultIndexer implements Indexer {
     private final MetricRepositoryInterface metricRepository;
     private final DispatchQueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
-    private final List<Runnable> receiveCancellations = new ArrayList<>();
     private final List<QueueSubscriber<?>> subscribers = new ArrayList<>();
 
     private final String id = IdUtils.create();
@@ -149,7 +148,7 @@ public class DefaultIndexer implements Indexer {
             if (log.isDebugEnabled()) {
                 log.debug("Terminating");
             }
-            this.receiveCancellations.forEach(Runnable::run);
+            this.subscribers.forEach(QueueSubscriber::close);
             setState(ServiceState.TERMINATED_GRACEFULLY);
         }
     }

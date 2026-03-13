@@ -31,11 +31,15 @@ public class IterationOutputsFunction implements Function {
         Object iterationObj = args.get("iteration");
         Object taskIdObj = args.get("taskId");
 
+        Map<?, ?> currentTaskRun = (Map<?, ?>) context.getVariable("taskrun");
+        if(!currentTaskRun.containsKey("iteration")){
+            throw new PebbleException(null, " 'iterationOutputs()' function should be used inside iterative tasks only", lineNumber, self.getName());
+        }
+
         int iteration;
         if (iterationObj == null) {
             // when no iteration is provided, the default iteration is the previous iteration
-            Map<?, ?> taskrun = (Map<?, ?>) context.getVariable("taskrun");
-            iteration = (Integer) taskrun.get("iteration") - 1;
+            iteration = (Integer) currentTaskRun.get("iteration") - 1;
         }
         else {
             try {
@@ -43,12 +47,11 @@ public class IterationOutputsFunction implements Function {
             } catch (NumberFormatException e) {
                 throw new PebbleException(e, "The 'iteration' argument for 'iterationOutputs' must be an integer, but got: " + iterationObj, lineNumber, self.getName());
             }
-
-            if (iteration < 0) {
-                throw new PebbleException(null, "Cannot fetch iteration " + iteration + ": no previous iteration exists.", lineNumber, self.getName());
-            }
         }
 
+        if (iteration < 0) {
+            throw new PebbleException(null, "Cannot fetch iteration " + iteration + ": no previous iteration exists.", lineNumber, self.getName());
+        }
         String taskId;
         if (taskIdObj == null) {
             // when no taskId is provided, the default taskId is the current task
@@ -64,6 +67,9 @@ public class IterationOutputsFunction implements Function {
 
         Map<?,?> targetOutputs = (Map<?, ?>) outputs.get(taskId);
 
+        if(targetOutputs == null)
+            throw new PebbleException(null, "The provided task with taskId = " + taskId + " has no execution outputs", lineNumber, self.getName());
+
         List<Map<?, ?>> parents = (List<Map<?, ?>>) context.getVariable("parents");
         if (parents != null && !parents.isEmpty()) {
             Collections.reverse(parents);
@@ -74,7 +80,7 @@ public class IterationOutputsFunction implements Function {
                         targetOutputs = (Map<?, ?>) targetOutputs.get(taskrun.get("value"));
                     }
                     else{
-                        throw new PebbleException(null, "The provided task with taskId = " + taskId + " has no execution outputs for the current 'ForEach' path", lineNumber, self.getName());
+                        throw new PebbleException(null, "The provided task with taskId = " + taskId + " has no execution outputs for the current iterative task runs path", lineNumber, self.getName());
                     }
                 }
             }

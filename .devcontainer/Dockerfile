@@ -46,7 +46,7 @@ RUN case "$BUILDPLATFORM" in \
   wget "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.2%2B10/OpenJDK25U-jdk_${OS_ARCHITECTURE}_hotspot_25.0.2_10.tar.gz" && \
   mv OpenJDK25U-jdk_${OS_ARCHITECTURE}_hotspot_25.0.2_10.tar.gz openjdk-25.0.2.tar.gz
 RUN tar -xzvf openjdk-25.0.2.tar.gz && \
-  mv jdk-25.0.2+10 jdk-21 && \
+  mv jdk-25.0.2+10 jdk-25 && \
   mv jdk-25 /usr/java/
 ENV JAVA_HOME=/usr/java/jdk-25
 ENV PATH="$PATH:$JAVA_HOME/bin"

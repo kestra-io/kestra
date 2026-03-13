@@ -31,13 +31,27 @@ public class IterationOutputsFunction implements Function {
         Object iterationObj = args.get("iteration");
         Object taskIdObj = args.get("taskId");
 
+        int iteration;
         if (iterationObj == null) {
-            throw new PebbleException(null, "The 'iterationOutputs' function requires an argument named 'iteration'.", lineNumber, self.getName());
+            // when no iteration is provided, the default iteration is the previous iteration
+            Map<?, ?> taskrun = (Map<?, ?>) context.getVariable("taskrun");
+            iteration = (Integer) taskrun.get("iteration") - 1;
+        }
+        else {
+            try {
+                iteration = Integer.parseInt(iterationObj.toString());
+            } catch (NumberFormatException e) {
+                throw new PebbleException(e, "The 'iteration' argument for 'iterationOutputs' must be an integer, but got: " + iterationObj, lineNumber, self.getName());
+            }
+
+            if (iteration < 0) {
+                throw new PebbleException(null, "Cannot fetch iteration " + iteration + ": no previous iteration exists.", lineNumber, self.getName());
+            }
         }
 
         String taskId;
-        // when no taskId provided the default is the current task
         if (taskIdObj == null) {
+            // when no taskId is provided, the default taskId is the current task
             Map<?, ?> taskMetaData = (Map<?, ?>) context.getVariable("task");
             taskId = (String) taskMetaData.get("id");
         }
@@ -45,16 +59,6 @@ public class IterationOutputsFunction implements Function {
             taskId = (String) taskIdObj;
         }
 
-        int iteration;
-        try {
-            iteration = Integer.parseInt(iterationObj.toString());
-        } catch (NumberFormatException e) {
-            throw new PebbleException(e, "The 'iteration' argument for 'iterationOutputs' must be an integer, but got: " + iterationObj, lineNumber, self.getName());
-        }
-
-        if (iteration < 0) {
-            throw new PebbleException(null, "Cannot fetch iteration " + iteration + ": no previous iteration exists.", lineNumber, self.getName());
-        }
 
         Map<?, ?> outputs = (Map<?, ?>) context.getVariable("outputs");
 
@@ -76,7 +80,7 @@ public class IterationOutputsFunction implements Function {
             }
 
         }
-        //  output of current or future iterations can't occur in current iteration
+        // the output of current or future iterations can't occur at the current iteration
         if (iteration == targetOutputs.size()) {
             throw new PebbleException(null,
                     "The provided index (" + iteration + ") refers to the current iteration, "

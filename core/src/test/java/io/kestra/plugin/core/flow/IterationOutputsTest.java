@@ -14,7 +14,7 @@ public class IterationOutputsTest {
 
     @Test
     @ExecuteFlow("flows/valids/iteration-outputs.yaml")
-    void iterationOutputsPrefixSumSdkdk(Execution execution){
+    void iterationOutputsPrefixSum(Execution execution){
         var innerSumOutput = (Map<?,?>) execution.outputs().get("inner_even_indices_sum");
         var firstOuterIteration = (Map<?,?>) innerSumOutput.get("100");
         var lastInnerOutput1 = (Map<?,?>) firstOuterIteration.get("14");
@@ -55,5 +55,12 @@ public class IterationOutputsTest {
         var outerOutput = (Map<?,?>) outerSumOutput.get("300");
 
         assertThat(outerOutput.get("value").toString().trim()).isEqualTo("600");
+
+
+        var defaultSumOutput = (Map<?,?>) execution.outputs().get("default_prefix_sum");
+        var defaultOutput = (Map<?,?>) defaultSumOutput.get("300");
+
+        assertThat(defaultOutput.get("value").toString().trim()).isEqualTo("600");
+
     }
 }

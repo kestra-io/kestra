@@ -39,4 +39,13 @@ tasks:
           {% else %}
             {{ iterationOutputs(idx - 1) | trim | number + taskrun.value | trim | number}}
           {% endif %}
+      - id: default_prefix_sum
+        type: io.kestra.plugin.core.debug.Return
+        format: >-
+          {% set idx = taskrun.iteration %}
+          {% if idx == 0 %}
+            {{ taskrun.value | trim | number }}
+          {% else %}
+            {{ iterationOutputs() | trim | number + taskrun.value | trim | number}}
+          {% endif %}
 

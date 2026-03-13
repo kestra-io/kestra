@@ -4,7 +4,7 @@
             <span class="key">{{ filter.keyLabel }}</span>
             <span v-if="!hasValue(filter.value)" class="in">in</span>
             <span v-if="!hasValue(filter.value)" class="val">any</span>
-            <span v-else class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
+            <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <el-tooltip
                 v-if="hasValue(filter.value)"
                 :content="formatTooltipValue(filter.value)"
@@ -57,6 +57,9 @@
     const {getRelativeDateLabel} = useValues("executions");
 
     const shouldShowComparatorInPopper = computed(
+        () => (props.filterKey?.comparators?.length ?? 0) >= 2
+    );
+    const shouldShowComparatorLabel = computed(
         () => (props.filterKey?.comparators?.length ?? 0) >= 2
     );
 
@@ -126,6 +129,7 @@
     border-radius: 4px;
     cursor: pointer;
     max-width: 300px;
+    min-height: 32px;
     max-height: 32px;
     user-select: none;
 
@@ -180,12 +184,14 @@
         background: none;
         cursor: pointer;
         padding: 0;
+        margin: 0;
         color: var(--ks-content-tertiary);
+        font-size: 1rem;
         &:hover {
             color: var(--ks-content-secondary);
         }
-        :deep(svg){
-            font-size: 14px;
+        :deep(svg) {
+            font-size: 1rem;
         }
     }
 

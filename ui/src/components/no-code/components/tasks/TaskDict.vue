@@ -11,6 +11,7 @@
         <Wrapper v-for="(item, index) in currentValue" :key="index" class="item-wrapper">
             <template #tasks>
                 <InputText
+                    :ref="el => { if (el) keyInputRefs[index] = el }"
                     :modelValue="item[0]"
                     @update:model-value="onKey(index, $event)"
                     margin="m-0"
@@ -41,6 +42,7 @@
         <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
             <el-col :span="6">
                 <InputText
+                    :ref="el => { if (el) keyInputRefs[index] = el }"
                     :modelValue="item[0]"
                     @update:model-value="onKey(index, $event)"
                     margin="m-0"
@@ -67,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, useTemplateRef, watch} from "vue";
+    import {computed, ref, watch, nextTick} from "vue";
     import {useI18n} from "vue-i18n";
     import {DeleteOutline} from "../../utils/icons";
 
@@ -84,8 +86,6 @@
     defineOptions({
         inheritAttrs: false,
     });
-
-    const valueComponent = useTemplateRef<any[]>("valueComponent");
 
     const props = withDefaults(defineProps<{
         modelValue?: Record<string, any>;
@@ -109,6 +109,7 @@
     });
 
     const currentValue = ref<[string, any][]>([])
+    const keyInputRefs: Record<number, any> = {};
 
     // this flag will avoid updating the modelValue when the
     // change was initiated in the component itself
@@ -181,7 +182,15 @@
             return;
         }
         currentValue.value.push(["", undefined]);
+        const newIndex = currentValue.value.length - 1;
         emitUpdate()
+        
+        // Focus the key input field after the new row is rendered
+        nextTick(() => {
+            setTimeout(() => {
+                keyInputRefs[newIndex]?.focus();
+            }, 100);
+        });
     }
 
     const addButtonDisabled = computed(() => {

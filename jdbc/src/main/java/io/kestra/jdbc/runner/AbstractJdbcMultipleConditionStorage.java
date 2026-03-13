@@ -1,10 +1,10 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record1;
@@ -31,7 +31,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(
                         field("namespace").eq(flow.getNamespace())
@@ -46,21 +46,23 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
 
     @Override
     public List<MultipleConditionWindow> expired(String tenantId) {
-        Instant now = Instant.now();
-
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        field("end_date").lt(Timestamp.from(now)).and(buildTenantCondition(tenantId))
+                        getEndDataCondition().and(buildTenantCondition(tenantId))
                     );
 
                 return this.jdbcRepository.fetch(select);
             });
+    }
+
+    protected Condition getEndDataCondition(){
+        return field("end_date").lt(Timestamp.from(Instant.now()));
     }
 
     @Override

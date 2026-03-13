@@ -31,6 +31,7 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
+import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
@@ -52,7 +53,8 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.*;
-import java.time.*;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -66,7 +68,6 @@ import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 @Slf4j
 public class JsonSchemaGenerator {
 
-    private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
     private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
@@ -368,10 +369,6 @@ public class JsonSchemaGenerator {
                     return List.of(
                         javaType.getTypeParameters().getFirst()
                     );
-                } else if (isAssignableFromResolvedAsString(erasedType)) {
-                    return List.of(
-                        javaType.getTypeParameters().getFirst()
-                    );
                 } else {
                     return List.of(
                         javaType.getTypeParameters().getFirst(),
@@ -395,6 +392,9 @@ public class JsonSchemaGenerator {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
                 if (pluginPropertyAnnotation.beta()) {
                     memberAttributes.put("$beta", true);
+                }
+                if (pluginPropertyAnnotation.language() != MonacoLanguages.NONE) {
+                    memberAttributes.put("$language", pluginPropertyAnnotation.language().toString());
                 }
                 if (pluginPropertyAnnotation.internalStorageURI()) {
                     memberAttributes.put("$internalStorageURI", true);
@@ -595,9 +595,46 @@ public class JsonSchemaGenerator {
             if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
-                    properties.set("type", context.getGeneratorConfig().createObjectNode()
-                        .put("const", pluginType.getName())
-                    );
+                    LinkedHashSet<String> allowedTypeValues = new LinkedHashSet<>();
+                    allowedTypeValues.add(pluginType.getName());
+
+                    try {
+                        Set<String> annotationAliases = io.kestra.core.models.Plugin.getAliases(pluginType);
+                        if (annotationAliases != null) {
+                            allowedTypeValues.addAll(annotationAliases.stream().filter(Objects::nonNull).toList());
+                        }
+                    } catch (Exception ignored) {
+                    }
+
+                    if (this.pluginRegistry != null) {
+                        for (RegisteredPlugin rp : this.getRegisteredPlugins()) {
+                            if (rp.getAliases() == null || rp.getAliases().isEmpty()) {
+                                continue;
+                            }
+
+                            for (Map.Entry<String, Class<?>> aliasEntry : rp.getAliases().values()) {
+                                if (aliasEntry == null || aliasEntry.getValue() == null || aliasEntry.getKey() == null) {
+                                    continue;
+                                }
+                                if (aliasEntry.getValue().equals(pluginType)) {
+                                    allowedTypeValues.add(aliasEntry.getKey());
+                                }
+                            }
+                        }
+                    }
+
+                    if (allowedTypeValues.size() == 1) {
+                        properties.set("type", context.getGeneratorConfig().createObjectNode()
+                            .put("const", allowedTypeValues.iterator().next())
+                        );
+                    } else {
+                        ArrayNode enumNode = context.getGeneratorConfig().createArrayNode();
+                        allowedTypeValues.forEach(enumNode::add);
+
+                        ObjectNode typeNode = context.getGeneratorConfig().createObjectNode();
+                        typeNode.set("enum", enumNode);
+                        properties.set("type", typeNode);
+                    }
                 }
             }
         });
@@ -656,15 +693,6 @@ public class JsonSchemaGenerator {
                 .put("const", defaultValue)
             );
         });
-    }
-
-    private boolean isAssignableFromResolvedAsString(Class<?> declaredType) {
-        for (Class<?> clazz : TYPES_RESOLVED_AS_STRING) {
-            if (clazz.isAssignableFrom(declaredType)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {
@@ -858,7 +886,7 @@ public class JsonSchemaGenerator {
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
             // we must retrieve the instance class that leads to this field in this abstract class.
-            // there is no direct way, so we use the hierarchy of classes and get the first one that is not a mixin (not overriden)
+            // there is no direct way, so we use the hierarchy of classes and get the first one that is not a mixin (not overridden)
             Optional<HierarchicType> concreteCls = target.getDeclaringTypeMembers().mainTypeAndOverrides()
                 .stream()
                 .filter(type -> !type.isMixin())
@@ -929,6 +957,9 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("$beta")) {
             objectNode.set("$beta", mainClassDef.get("$beta"));
+        }
+        if (mainClassDef.has("$language")) {
+            objectNode.set("$language", mainClassDef.get("$language"));
         }
     }
 

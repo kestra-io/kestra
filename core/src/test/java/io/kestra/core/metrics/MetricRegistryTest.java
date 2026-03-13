@@ -11,12 +11,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @MicronautTest
+@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 class MetricRegistryTest {
     @Inject
     private MetricRegistry metricRegistry;

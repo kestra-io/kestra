@@ -70,8 +70,12 @@
     import action from "../../models/action";
     import {State, Status} from "@kestra-io/ui-libs"
     import * as ExecutionUtils from "../../utils/executionUtils";
-    import {shallowRef} from "vue";
+    import {shallowRef, ref} from "vue";
     import {useAuthStore} from "override/stores/auth"
+    import {useAxios} from "../../utils/axios";
+    import {useRoute, useRouter} from "vue-router";
+    import {useToast} from "../../utils/toast";
+    import {useI18n} from "vue-i18n";
 
     export default {
         components: {StateMachine, Status},
@@ -96,46 +100,61 @@
             }
         },
         emits: ["follow"],
-        methods: {
-            changeStatus() {
-                this.visible = false;
+        setup(props, {emit}) {
+            const visible = ref(false);
 
-                this.executionsStore
+            const {t} = useI18n();
+
+            const executionsStore = useExecutionsStore();
+            const $http = useAxios();
+            const router = useRouter();
+            const route = useRoute();
+            const toast = useToast();
+
+            function changeStatus() {
+                visible.value = false;
+
+                executionsStore
                     .changeStatus({
-                        executionId: this.execution.id,
-                        taskRunId: this.taskRun.id,
+                        executionId: props.execution.id,
+                        taskRunId: props.taskRun.id,
                         state: this.selectedStatus
                     })
                     .then(response => {
-                        if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(this.$http, response.data);
+                        if (response.data.id === props.execution.id) {
+                            return ExecutionUtils.waitForState($http, response.data);
                         } else {
                             return response.data;
                         }
                     })
                     .then((execution) => {
-                        this.executionsStore.execution = execution;
-                        if (execution.id === this.execution.id) {
-                            this.$emit("follow")
+                        executionsStore.execution = execution;
+                        if (execution.id === props.execution.id) {
+                            emit("follow")
                         } else {
-                            this.$router.push({
+                            router.push({
                                 name: "executions/update",
                                 params: {
                                     namespace: execution.namespace,
                                     flowId: execution.flowId,
                                     id: execution.id,
                                     tab: "gantt",
-                                    tenant: this.$route.params.tenant
+                                    tenant: route.params.tenant
                                 }
                             });
                         }
 
-                        this.$toast().success(this.$t("change state done"));
+                        toast.success(t("change state done"));
                     })
-            },
+            }
+
+            return {
+                visible,
+                changeStatus
+            }
         },
         computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
+            ...mapStores(useAuthStore),
             uuid() {
                 return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
             },
@@ -183,7 +202,6 @@
         data() {
             return {
                 selectedStatus: undefined,
-                visible: false,
                 icon: {StateMachine: shallowRef(StateMachine)}
             };
         },

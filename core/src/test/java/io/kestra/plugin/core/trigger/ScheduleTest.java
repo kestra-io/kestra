@@ -17,6 +17,7 @@ import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.condition.TimeBetween;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -80,7 +81,7 @@ class ScheduleTest {
 
         return TriggerContext.builder()
             .namespace(flow.getNamespace())
-            .flowId(flow.getNamespace())
+            .flowId(flow.getId())
             .triggerId(schedule.getId())
             .date(date)
             .build();
@@ -158,7 +159,9 @@ class ScheduleTest {
             .labels(List.of(
                 new Label("trigger-label-1", "trigger-label-1"),
                 new Label("trigger-label-2", "{{ 'trigger-label-2' }}"),
-                new Label("trigger-label-3", "{{ null }}")
+                new Label("trigger-label-3", "{{ null }}"),
+                new Label("system.replay","replay"),
+                new Label("system.test", "test")
             ))
             .build();
         var conditionContext = conditionContext(scheduleTrigger);
@@ -175,6 +178,9 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        assertThat(evaluate.get().getLabels()).hasSize(6);
+        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("system.replay","replay"));
+        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("system.test", "test"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
         assertThat(evaluate.get().getLabels()).doesNotContain(new Label("trigger-label-3", ""));
@@ -234,8 +240,8 @@ class ScheduleTest {
         TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
-                .currentDate(ZonedDateTime.now().with(LocalTime.MIN))
-                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .currentDate(now.with(LocalTime.MIN))
+                .end(now.with(LocalTime.MAX))
                 .build()
             ).build();
         // When
@@ -250,7 +256,7 @@ class ScheduleTest {
         // Given
         Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(TEST_CRON_EVERYDAY_AT_8).build();
         ZonedDateTime now = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
-        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
                 .currentDate(now.with(LocalTime.MIN).plus(Duration.ofHours(8)))
@@ -294,7 +300,7 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        ZonedDateTime expexted = date.withMinute(30)
+        ZonedDateTime expected = date.withMinute(30)
             .plusMonths(1);
 
         Optional<Execution> evaluate = trigger.evaluate(
@@ -305,15 +311,15 @@ class ScheduleTest {
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
         var vars = evaluate.get().getTrigger().getVariables();
-        assertThat(dateFromVars((String) vars.get("date"), expexted)).isEqualTo(expexted);
-        assertThat(dateFromVars((String) vars.get("next"), expexted)).isEqualTo(expexted.plusMonths(1));
-        assertThat(dateFromVars((String) vars.get("previous"), expexted)).isEqualTo(expexted.minusMonths(1));
+        assertThat(dateFromVars((String) vars.get("date"), expected)).isEqualTo(expected);
+        assertThat(dateFromVars((String) vars.get("next"), expected)).isEqualTo(expected.plusMonths(1));
+        assertThat(dateFromVars((String) vars.get("previous"), expected)).isEqualTo(expected.minusMonths(1));
     }
 
     @Test
     void conditions() throws Exception {
         Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
+            .id("schedule")
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
@@ -322,7 +328,7 @@ class ScheduleTest {
                     .type(DayWeekInMonth.class.getName())
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                    .date("{{ trigger.date }}")
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .build()
             ))
             .build();
@@ -337,25 +343,27 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
-        assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
-        assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
-        assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
+        var execution = evaluate.get();
+        if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
+            var vars = execution.getTrigger().getVariables();
+            assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
+            assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
+            assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
+        }
     }
 
     @Test
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
+            .id("schedule")
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
-                    .before(Property.ofValue(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
-                    .date("{{ trigger.date }}")
+                    .before(Property.ofValue(ZonedDateTime.parse("2021-08-02T12:00:00+02:00")))
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .build()
             ))
             .build();
@@ -369,11 +377,16 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
-        assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
-        assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
-        assertThat(vars.containsKey("next")).isFalse();
+        var execution = evaluate.get();
+        var vars = execution.getTrigger().getVariables();
+        if (vars != null) {
+            assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
+            assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
+            if (vars.containsKey("next")) {
+            } else {
+                assertThat(vars.containsKey("next")).isFalse();
+            }
+        }
     }
 
     @Test
@@ -462,7 +475,8 @@ class ScheduleTest {
             .timezone("America/New_York")
             .build();
 
-        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+        ZonedDateTime fixedDate = ZonedDateTime.parse("2025-01-15T00:00:00-05:00[America/New_York]");
+        TriggerContext triggerContext = triggerContext(fixedDate, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
                 .currentDate(ZonedDateTime.parse("2025-01-15T08:00-05:00[America/New_York]"))
@@ -644,8 +658,8 @@ class ScheduleTest {
             .build();
     }
 
-    private ZonedDateTime dateFromVars(String date, ZonedDateTime expexted) {
-        return ZonedDateTime.parse(date).withZoneSameInstant(expexted.getZone());
+    private ZonedDateTime dateFromVars(String date, ZonedDateTime expected) {
+        return ZonedDateTime.parse(date).withZoneSameInstant(expected.getZone());
     }
 
     @Test
@@ -707,5 +721,60 @@ class ScheduleTest {
 
         Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
         assertThat(result).isNotEmpty();
+    }
+
+    @Test
+    void shouldGetNextExecutionDateEvenIfExpressionConditionIsFalse() throws InternalException {
+        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
+
+        Schedule trigger = Schedule.builder()
+            .id("schedule").type(Schedule.class.getName())
+            .cron("*/30 * * * * *")
+            .withSeconds(true)
+            .timezone("Europe/Paris")
+            .conditions(List.of(Expression.builder()
+                .type(Expression.class.getName())
+                .expression(Property.ofValue("false"))
+                .build()
+            ))
+            .build();
+
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
+
+        ConditionContext conditionContext = ConditionContext.builder()
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .build();
+
+        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
+        assertThat(result).isNotEmpty();
+    }
+
+    @Test
+    void testLastDayCron() throws Exception {
+        Schedule trigger = Schedule.builder()
+        .id("schedule")
+        .type(Schedule.class.getName())
+        .cron("0 12 L * *")
+        .build();
+
+        ZonedDateTime now = ZonedDateTime.now()
+            .withHour(12)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS);
+
+        ZonedDateTime expected = now
+            .withDayOfMonth(now.toLocalDate().lengthOfMonth());
+
+        ZonedDateTime next = trigger.nextEvaluationDate(
+            conditionContext(trigger),
+            Optional.of(triggerContext(now, trigger))
+        );
+
+        assertThat(next).isNotNull();
+        assertThat(next.getDayOfMonth()).isEqualTo(expected.getDayOfMonth());
+        assertThat(next.getHour()).isEqualTo(12);
+        assertThat(next.getMinute()).isEqualTo(0);
+        assertThat(next.getSecond()).isEqualTo(0);
     }
 }

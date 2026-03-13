@@ -18,6 +18,12 @@
                 </div>
             </el-option>
         </template>
+        <el-option label="welcome" value="welcome">
+            <RouterLink :to="{name: 'welcome'}" class="menu-item">
+                <RocketLaunchOutline class="menu-icon" />
+                {{ $t("welcome.menu") }}
+            </RouterLink>
+        </el-option>
         <el-option label="Settings" value="settings">
             <RouterLink :to="{name: 'settings'}" class="menu-item">
                 <CogOutline class="menu-icon" />
@@ -48,6 +54,7 @@
     import Slack from "vue-material-design-icons/Slack.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Logout from "vue-material-design-icons/Logout.vue";
+    import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
 
     import * as BasicAuth from "../../../utils/basicAuth";
     import {useAxios} from "../../../utils/axios";

@@ -58,16 +58,18 @@
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
-                        <el-button
-                            :icon="buttonIcon"
-                            :disabled="!flowCanBeExecuted || hasBlockingChecks()"
-                            :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
-                            type="primary"
-                            nativeType="submit"
-                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
-                        >
-                            {{ $t(buttonText) }}
-                        </el-button>
+                        <span data-onboarding-target="flow-execute-confirm-button">
+                            <el-button
+                                :icon="buttonIcon"
+                                :disabled="!flowCanBeExecuted || hasBlockingChecks()"
+                                class="flow-run-trigger-button"
+                                type="primary"
+                                nativeType="submit"
+                                @click.prevent="onSubmit($refs.form); executeClicked = true;"
+                            >
+                                {{ $t(buttonText) }}
+                            </el-button>
+                        </span>
                         <el-text v-if="haveBadLabels" type="danger" size="small">
                             {{ $t('wrong labels') }}
                         </el-text>
@@ -80,19 +82,20 @@
 
 <script setup>
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 </script>
 
 <script>
     import moment from "moment-timezone";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useApiStore} from "../../stores/api";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
-    import Inputs from "../../utils/inputs";
+    import {normalize} from "../../utils/inputs";
     import Curl from "./Curl.vue";
     import WebhookCurl from "./WebhookCurl.vue";
     import InputsForm from "../../components/inputs/InputsForm.vue";
@@ -111,7 +114,7 @@
             replaySubmit: {type: Function, default: null},
             selectedTrigger: {type: Object, default: undefined},
             buttonText: {type: String, default: "launch execution"},
-            buttonIcon: {type: [Object, Function], default: () => LightningBolt},
+            buttonIcon: {type: [Object, Function], default: () => Play},
             buttonTestId: {type: String, default: "execute-dialog-button"},
         },
         data() {
@@ -130,7 +133,7 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
+            ...mapStores(useApiStore, useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
             flow() {
                 return this.executionsStore.flow
             },
@@ -185,11 +188,15 @@
                     .filter(input => nonEmptyInputNames.includes(input.id))
                     .forEach(input => {
                         let value = this.execution.inputs[input.id];
-                        this.inputs[input.id] = Inputs.normalize(input.type, value);
+                        this.inputs[input.id] = normalize(input.type, value);
                     });
             },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
+                    this.apiStore.posthogEvents({
+                        type: "FLOW_EXECUTION",
+                        action: "submit",
+                    });
                     this.checks = [];
                     this.executeClicked = false;
                     this.coreStore.message = null;

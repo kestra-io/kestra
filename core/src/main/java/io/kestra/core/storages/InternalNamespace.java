@@ -7,9 +7,9 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,9 +30,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * @see Storage#namespace()
  * @see Storage#namespace(String)
  */
+@Slf4j
 public class InternalNamespace implements Namespace {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InternalNamespace.class);
 
     private final String namespace;
     private final String tenant;
@@ -47,7 +46,7 @@ public class InternalNamespace implements Namespace {
      * @param storage   The storage.
      */
     public InternalNamespace(@Nullable final String tenant, final String namespace, final StorageInterface storage, final NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository) {
-        this(LOG, tenant, namespace, storage, namespaceFileMetadataRepository);
+        this(log, tenant, namespace, storage, namespaceFileMetadataRepository);
     }
 
     /**
@@ -128,7 +127,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFileMetadata> children(String parentPath, boolean recursive) throws IOException {
-        final String normalizedParentPath = NamespaceFile.normalize(Path.of(parentPath), true).toString();
+        final String normalizedParentPath = NamespaceFile.normalize(Path.of(parentPath)).toString();
 
         return namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, List.of(
             QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
@@ -142,8 +141,8 @@ public class InternalNamespace implements Namespace {
 
     @Override
     public List<Pair<NamespaceFile, NamespaceFile>> move(Path source, Path target) throws Exception {
-        final Path normalizedSource = NamespaceFile.normalize(source, true);
-        final Path normalizedTarget = NamespaceFile.normalize(target, true);
+        final Path normalizedSource = NamespaceFile.normalize(source);
+        final Path normalizedTarget = NamespaceFile.normalize(target);
 
         if (findByPath(normalizedTarget).isPresent()) {
             throw new IOException(String.format(
@@ -192,7 +191,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public NamespaceFile get(Path path) throws IOException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         int version = findByPath(normalizedPath).map(NamespaceFileMetadata::getVersion).orElse(1);
 
@@ -210,7 +209,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> findAllFilesMatching(final Predicate<Path> predicate) throws IOException {
-        return all().stream().filter(it -> predicate.test(it.path(true))).toList();
+        return all().stream().filter(it -> predicate.test(it.filePath())).toList();
     }
 
     /**
@@ -218,7 +217,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public InputStream getFileContent(Path path, @Nullable Integer version) throws IOException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         // Throw if file not found OR if it's deleted
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, version).orElseThrow(() -> fileNotFound(normalizedPath, version));
@@ -229,7 +228,7 @@ public class InternalNamespace implements Namespace {
 
     @Override
     public FileAttributes getFileMetadata(Path path) throws IOException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         return findByPath(normalizedPath).map(NamespaceFileAttributes::new).orElseThrow(() -> fileNotFound(normalizedPath, null));
     }
@@ -239,7 +238,7 @@ public class InternalNamespace implements Namespace {
     }
 
     private Optional<NamespaceFileMetadata> findByPath(Path path, boolean allowDeleted, @Nullable Integer version) throws IOException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         if (version != null) {
             return namespaceFileMetadataRepository.find(Pageable.from(1, 1), tenant, List.of(
@@ -266,7 +265,7 @@ public class InternalNamespace implements Namespace {
 
     @Override
     public boolean exists(Path path) throws IOException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         return findByPath(normalizedPath).isPresent();
     }
@@ -276,7 +275,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> putFile(final Path path, final InputStream content, final Conflicts onAlreadyExist) throws IOException, URISyntaxException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         Optional<NamespaceFileMetadata> inRepository = findByPath(normalizedPath, true);
         int currentVersion = inRepository.map(NamespaceFileMetadata::getVersion).orElse(0);
@@ -374,7 +373,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public NamespaceFile createDirectory(Path path) throws IOException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         NamespaceFileMetadata nsFileMetadata = namespaceFileMetadataRepository.save(
             NamespaceFileMetadata.builder()
@@ -394,7 +393,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> delete(Path path) throws IOException {
-        final Path normalizedPath = NamespaceFile.normalize(path, true);
+        final Path normalizedPath = NamespaceFile.normalize(path);
 
         Optional<NamespaceFileMetadata> maybeNamespaceFileMetadata = namespaceFileMetadataRepository.find(Pageable.from(1, 1), tenant, List.of(
             QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
@@ -433,7 +432,7 @@ public class InternalNamespace implements Namespace {
             .count();
 
         if (actualDeletedEntries != purgedMetadataCount) {
-            LOG.warn("Namespace Files Metadata purge reported {} deleted entries, but {} values were actually deleted from storage", purgedMetadataCount, actualDeletedEntries);
+            log.warn("Namespace Files Metadata purge reported {} deleted entries, but {} values were actually deleted from storage", purgedMetadataCount, actualDeletedEntries);
         }
 
         return purgedMetadataCount;

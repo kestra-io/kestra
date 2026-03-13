@@ -14,6 +14,7 @@ public abstract class AbstractRunnerConcurrencyTest {
     protected FlowConcurrencyCaseTest flowConcurrencyCaseTest;
 
     @Test
+    @FlakyTest
     @LoadFlows(value = {"flows/valids/flow-concurrency-cancel.yml"}, tenantId = "concurrency-cancel")
     void concurrencyCancel() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyCancel("concurrency-cancel");

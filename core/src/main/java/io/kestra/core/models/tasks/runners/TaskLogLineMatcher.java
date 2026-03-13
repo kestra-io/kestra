@@ -2,12 +2,13 @@ package io.kestra.core.models.tasks.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.AssetEmit;
 import io.kestra.core.runners.AssetEmitter;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import org.slf4j.spi.LoggingEventBuilder;
@@ -31,6 +32,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
  * ::{"outputs":{"key":"value"}}::
  * }</pre>
  */
+@Singleton
 public class TaskLogLineMatcher {
 
     protected static final Pattern LOG_DATA_SYNTAX = Pattern.compile("^::(\\{.*})::$");
@@ -84,7 +86,7 @@ public class TaskLogLineMatcher {
         if (match.assets() != null) {
             try {
                 AssetEmitter assetEmitter = runContext.assets();
-                match.assets().forEach(throwConsumer(assetEmitter::upsert));
+                assetEmitter.emit(match.assets());
             } catch (IllegalVariableEvaluationException e) {
                 logger.warn("Unable to get asset emitter for log '{}'", data, e);
             } catch (QueueException e) {
@@ -106,12 +108,13 @@ public class TaskLogLineMatcher {
      * @param outputs a map of extracted output key-value pairs
      * @param metrics a list of captured metric entries, typically used for reporting or monitoring
      * @param logs    additional log lines derived from the matched line, if any
+     * @param assets    assets emitted through the matched line, if any
      */
     public record TaskLogMatch(
         Map<String, Object> outputs,
         List<AbstractMetricEntry<?>> metrics,
         List<LogLine> logs,
-        List<Asset> assets
+        AssetEmit assets
         ) {
         @Override
         public Map<String, Object> outputs() {

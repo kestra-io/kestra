@@ -48,6 +48,12 @@ export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-inje
  */
 export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
 /**
+ * Indicates if the task editor is being rendered inline (e.g., within a list or as a nested object).
+ * When true, specialized inline components (like TaskObjectListInline or TaskObjectTaskInline) are used.
+ * Primarily used in the Namespace > PluginDefaults tab to show nested schemas directly in the form.
+ */
+export const INLINE_TASK_MODE_INJECTION_KEY = Symbol("inline-task-mode-injection-key") as InjectionKey<boolean>
+/**
  * Call this when closing a task, when the user clicks on the close button
  */
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>

@@ -689,8 +689,7 @@
 
     async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
         if (selectedFiles.value.length <= 1 && node) {
-            const path = filesStore.getPath(node.data.id)
-            selectedFiles.value = path ? [path] : [];
+            selectedNodes.value = [node.data.id];
         }
         const nodes = selectedFiles.value.map((filePath) => {
             return filesStore.findNodeByPath(filePath);
@@ -959,7 +958,7 @@
     width: 20%;
 
     :deep(.revision-history-dialog-body) {
-        // We substract the dialog margins and title height (78px)
+        // We subtract the dialog margins and title height (78px)
         height: calc(100vh - (var(--el-dialog-margin-top) * 2) - 78px);
     }
 

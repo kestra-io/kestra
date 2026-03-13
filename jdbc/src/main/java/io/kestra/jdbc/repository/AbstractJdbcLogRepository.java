@@ -9,7 +9,6 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
@@ -35,9 +34,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     private static final String DATE_COLUMN = "timestamp";
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
-                                     QueueService queueService,
                                      JdbcFilterService filterService) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
 
         this.filterService = filterService;
     }
@@ -257,10 +255,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).eq(execution.getId()))
+                    .where(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
     }
@@ -273,10 +268,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
+                    .where(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
                     .execute();
             });
     }
@@ -335,7 +327,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -364,6 +356,12 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
                 if (logLevels != null) {
                     delete = delete.and(levelsCondition(logLevels));
+                }
+
+                if (purgeExecutionLogs && !purgeNonExecutionLogs) {
+                    delete = delete.and(field("execution_id").isNotNull());
+                } else if (purgeNonExecutionLogs && !purgeExecutionLogs) {
+                    delete = delete.and(field("execution_id").isNull());
                 }
 
                 return delete.execute();
@@ -429,7 +427,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 filterService,
                 filters,
                 getFieldsMapping()
-            );
+            ).and(NORMAL_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {
@@ -474,7 +472,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping());
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping())
+                    .and(NORMAL_KIND_CONDITION);
 
                 List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -494,6 +493,16 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 // Fetch and paginate if provided
                 return fetchSeekStep(selectSeekStep, pageable);
             });
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);

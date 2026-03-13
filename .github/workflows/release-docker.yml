@@ -18,6 +18,11 @@ on:
         required: true
         type: boolean
         default: false
+      java-version:
+        description: "Java version"
+        type: string
+        default: '25'
+        required: false
 
 jobs:
   publish-docker:
@@ -28,6 +33,7 @@ jobs:
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
       dry-run: ${{ inputs.dry-run }}
+      java-version: ${{ inputs.java-version }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

@@ -42,12 +42,9 @@
     import action from "../../../models/action";
     import {useAuthStore} from "override/stores/auth";
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges";
+    import {useDashboardStore} from "../../../stores/dashboard.ts";
 
-    const onSelectDashboard = (value: any) => {
-        router.replace({
-            params: {...route.params, dashboard: value}
-        });
-    };
+
 
     const unsavedChangesStore = useUnsavedChangesStore();
     const flowStore = useFlowStore();
@@ -59,6 +56,15 @@
     const tab = computed(() => route.params?.tab as string);
 
     const authStore = useAuthStore();
+    const dashboardStore = useDashboardStore();
+
+    const onSelectDashboard = (value: any) => {
+        const key = dashboardStore.getUserDashboardStorageKey(route);
+        localStorage.setItem(key, value)
+        router.replace({
+            params: {...route.params, dashboard: value}
+        });
+    };
 
     const canExecute = computed(() =>
         flow.value && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)

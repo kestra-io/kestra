@@ -31,7 +31,7 @@ public class FileSizeFunction extends AbstractFileFunction {
             case Namespace.NAMESPACE_FILE_SCHEME  -> {
                 FileAttributes fileAttributes = namespaceFactory
                     .of(tenantId, namespace, storageInterface)
-                    .getFileMetadata(NamespaceFile.normalize(Path.of(path.getPath()), true));
+                    .getFileMetadata(NamespaceFile.normalize(Path.of(path.getPath())));
                 yield fileAttributes.getSize();
             }
             default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));

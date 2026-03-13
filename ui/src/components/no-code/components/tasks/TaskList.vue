@@ -10,7 +10,7 @@
                 <template #icon>
                     <Creation
                         :parentPathComplete
-                        :refPath="elements?.length ? elements.length - 1 : undefined"
+                        :refPath="elements?.length ? elements.length - 1 : -1"
                         :blockSchemaPath
                     />
                 </template>
@@ -170,15 +170,15 @@
             movedIndex.value = -1;
         }, 200);
 
-        updateYaml(
-            YAML_UTILS.swapBlocks({
-                source:flow.value,
-                section: SECTIONS_MAP[section.value.toLowerCase() as keyof typeof SECTIONS_MAP],
-                key1:elementID,
-                key2:items[newIndex][keyName],
-                keyName,
-            })
-        );
+        const newYaml = YAML_UTILS.swapBlocks({
+            source: flow.value,
+            section: (SECTIONS_MAP[section.value.toLowerCase() as keyof typeof SECTIONS_MAP] ?? section.value) as string,
+            key1: elementID,
+            key2: items[newIndex][keyName],
+            keyName,
+        })
+
+        updateYaml(newYaml);
     };
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));

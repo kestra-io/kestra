@@ -86,6 +86,7 @@
         required?: boolean;
         schema?: Schema;
         root?: string;
+        filterType?: boolean;
     }>();
 
     const emit = defineEmits<{
@@ -145,12 +146,9 @@
 
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
-        const isOutputsContext = props.root?.startsWith("outputs[") || false;
         return propertiesProc
             ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
-                // Allow "type" field for outputs context, filter it out for other contexts
-                const shouldFilterType = key === "type" && !isOutputsContext;
-                return !shouldFilterType && !Array.isArray(value);
+                return value && !(props.filterType && key === "type") && !Array.isArray(value);
             })
             : [];
     });
@@ -222,6 +220,7 @@
 
 <style lang="scss">
     .el-form-item__content {
+        display: block !important;
         .el-form-item {
             width: 100%;
         }

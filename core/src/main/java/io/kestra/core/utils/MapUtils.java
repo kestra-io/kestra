@@ -80,23 +80,28 @@ public class MapUtils {
             Object valueB = entry.getValue();
             Object valueA = result.get(key);
 
-            Object mergedValue;
-            if (valueB == null) {
-                mergedValue = valueA;
-            } else if (valueA == null) {
-                mergedValue = valueB;
-            } else if (valueA instanceof Map<?, ?> mapA && valueB instanceof Map<?, ?> mapB) {
-                mergedValue = deepMerge(castMap(mapA), castMap(mapB));
-            } else if (valueA instanceof Collection<?> colA && valueB instanceof Collection<?> colB) {
-                mergedValue = mergeCollections(colA, colB);
-            } else {
-                mergedValue = valueB;
-            }
+            Object mergedValue = mergeValues(valueA, valueB);
 
             result.put(key, mergedValue);
         }
 
         return result;
+    }
+
+    private static Object mergeValues(Object valueA, Object valueB) {
+        Object mergedValue;
+        if (valueB == null) {
+            mergedValue = valueA;
+        } else if (valueA == null) {
+            mergedValue = valueB;
+        } else if (valueA instanceof Map<?, ?> mapA && valueB instanceof Map<?, ?> mapB) {
+            mergedValue = deepMerge(castMap(mapA), castMap(mapB));
+        } else if (valueA instanceof Collection<?> colA && valueB instanceof Collection<?> colB) {
+            mergedValue = mergeCollections(colA, colB);
+        } else {
+            mergedValue = valueB;
+        }
+        return mergedValue;
     }
 
     private static Map<String, Object> deepCloneMap(Map<String, Object> original) {
@@ -144,16 +149,21 @@ public class MapUtils {
 
     /**
      * Utility method for merging multiple {@link Map}s that can contains nullable values.
-     * Note that the maps provided are assumed to be flat, so this method does not perform a recursive merge.
      *
      * @param maps  The Map to be merged.
      * @return     the merged Map.
      */
+    @SafeVarargs
     public static Map<String, Object> mergeWithNullableValues(final Map<String, Object>...maps) {
         return Arrays.stream(maps)
             .flatMap(map -> map.entrySet().stream())
             // https://bugs.openjdk.org/browse/JDK-8148463
-            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+            .collect(HashMap::new, (m, v) -> {
+                Object mergedValue = m.compute(v.getKey(), (k, existing) -> mergeValues(existing, v.getValue()));
+                if (mergedValue == null) {
+                    m.put(v.getKey(), null);
+                }
+            }, HashMap::putAll);
     }
 
     /**
@@ -180,7 +190,7 @@ public class MapUtils {
      * @throws IllegalArgumentException if the given map contains conflicting keys.
      */
     public static Map<String, Object> flattenToNestedMap(@NotNull Map<String, ?> flatMap) {
-        Map<String, Object> result = new TreeMap<>();
+        Map<String, Object> result = new HashMap<>();
 
         for (Map.Entry<String, ?> entry : flatMap.entrySet()) {
             String[] keys = entry.getKey().split("\\.");
@@ -214,7 +224,7 @@ public class MapUtils {
      * @return the flattened map.
      */
     public static Map<String, Object> nestedToFlattenMap(@NotNull Map<String, Object> nestedMap) {
-        Map<String, Object> result = new TreeMap<>();
+        Map<String, Object> result = new HashMap<>();
 
         for (Map.Entry<String, Object> entry : nestedMap.entrySet()) {
             if (entry.getValue() instanceof Map<?, ?> map) {
@@ -228,7 +238,7 @@ public class MapUtils {
     }
 
     private static Map<String, Object> flattenEntry(String key, Map<String, Object> value) {
-        Map<String, Object> result = new TreeMap<>();
+        Map<String, Object> result = new HashMap<>();
 
         for (Map.Entry<String, Object> entry : value.entrySet()) {
             String newKey = key + "." + entry.getKey();

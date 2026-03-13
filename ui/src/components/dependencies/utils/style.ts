@@ -4,7 +4,7 @@ import {cssVariable} from "@kestra-io/ui-libs";
 
 import {States} from "./types";
 
-const VARIABLES: {node: { background: States; border: States }; edge: States;} = {
+const VARIABLES: {node: { background: States; border: States }; edge: Omit<States, "assets">;} = {
     node: {
         background: {
             default: "--ks-dependencies-node-background-default",
@@ -58,7 +58,7 @@ function nodeColors(type: keyof States = "default"): Partial<cytoscape.Css.Node>
     };
 }
 
-export function edgeColors(type: keyof States = "default"): Partial<cytoscape.Css.Edge> {
+export function edgeColors(type: keyof Omit<States, "assets"> = "default"): Partial<cytoscape.Css.Edge> {
     return {
         "line-color": cssVariable(VARIABLES.edge[type])!,
         "target-arrow-color": cssVariable(VARIABLES.edge[type])!,
@@ -80,6 +80,17 @@ export const getStyle = (): cytoscape.StylesheetJson => [
         },
     },
     {
+        selector: "node.dimmed",
+        style: {
+            ...nodeBase(),
+            ...nodeColors("faded"),
+            opacity: 0.25,
+            "background-opacity": 0.35,
+            "border-opacity": 0.35,
+            "text-opacity": 0.35,
+        },
+    },
+    {
         selector: "node.selected",
         style: {...nodeBase(), ...nodeColors("selected")},
     },
@@ -97,7 +108,11 @@ export const getStyle = (): cytoscape.StylesheetJson => [
     },
     {
         selector: "edge.faded",
-        style: {...edgeBase, ...edgeColors("faded")},
+        style: {...edgeBase, ...edgeColors("faded"), opacity: 0.35},
+    },
+    {
+        selector: "edge.dimmed",
+        style: {...edgeBase, ...edgeColors("faded"), opacity: 0.1},
     },
     {
         selector: "edge.selected",

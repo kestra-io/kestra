@@ -8,10 +8,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Streams;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.SoftDeletable;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
@@ -53,7 +53,7 @@ import java.util.zip.CRC32;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Execution implements DeletedInterface, TenantInterface {
+public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID {
 
     @With
     @Hidden
@@ -129,6 +129,12 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Nullable
     List<Breakpoint> breakpoints;
 
+    @Override
+    @JsonIgnore
+    public String uid() {
+        return id;
+    }
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
      *
@@ -157,6 +163,25 @@ public class Execution implements DeletedInterface, TenantInterface {
         final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
         final List<Label> labels,
         final Optional<ZonedDateTime> scheduleDate) {
+        return newExecution(flow, inputs, labels, scheduleDate, null);
+    }
+
+    /**
+     * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and
+     * inputs.
+     *
+     * @param flow The Flow.
+     * @param inputs The Flow's inputs.
+     * @param labels The Flow labels.
+     * @param kind The ExecutionKind.
+     *
+     * @return a new {@link Execution}.
+     */
+    public static Execution newExecution(final FlowInterface flow,
+                                         final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
+                                         final List<Label> labels,
+                                         final Optional<ZonedDateTime> scheduleDate,
+                                         @Nullable final ExecutionKind kind) {
         Execution execution = builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -166,9 +191,10 @@ public class Execution implements DeletedInterface, TenantInterface {
             .state(new State())
             .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
             .variables(flow.getVariables())
+            .kind(kind)
             .build();
 
-        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
+        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
         if (labels != null) {
             executionLabels.addAll(labels);
         }
@@ -276,7 +302,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
-        ArrayList<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
+        List<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
             newTaskRunList,
@@ -339,6 +365,15 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.kind,
             newBreakpoints
         );
+    };
+
+    public Execution addLabel(Label label) {
+        List<Label> existingLabel = this.labels == null ? new ArrayList<>(1) : new ArrayList<>(this.labels);
+        if (existingLabel.stream().noneMatch(l -> l.key().equals(label.key()))) {
+            existingLabel.add(label);
+        }
+
+        return withLabels(existingLabel);
     }
 
     public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList,
@@ -475,7 +510,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
         List<TaskRun> finallyFlow = this.findTaskRunByTasks(resolvedFinally, parentTaskRun);
 
-        // finally is already started, just continue theses finally
+        // finally is already started, just continue these finally
         if (!finallyFlow.isEmpty()) {
             return resolvedFinally == null ? Collections.emptyList() : resolvedFinally;
         }
@@ -508,13 +543,10 @@ public class Execution implements DeletedInterface, TenantInterface {
         return resolvedTasks;
     }
 
-    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks) {
-        resolvedTasks = removeDisabled(resolvedTasks);
-
-        return resolvedTasks;
-    }
-
-    private List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
+    /**
+     * Remove disabled tasks from the list of resolved tasks.
+     */
+    public List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
         if (tasks == null) {
             return null;
         }
@@ -563,50 +595,65 @@ public class Execution implements DeletedInterface, TenantInterface {
             .findFirst();
     }
 
+    /*
+     * Using reversed().findFirst() is intended for better performance,
+     * as these methods are used heavily.
+     * Do not replace it with Streams.findLast() in these methods,
+     * as Streams.findLast() performs worse.
+     *
+     * See: @see <a href="https://github.com/kestra-io/kestra/pull/14385">KESTRA#14385</a>
+     */
     public Optional<TaskRun> findLastNotTerminated() {
         if (this.taskRunList == null) {
             return Optional.empty();
         }
 
-        return Streams.findLast(this.taskRunList
+        return this.taskRunList
+            .reversed()
             .stream()
             .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
-        );
+            .findFirst();
     }
 
+
     public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastCreated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isCreated())
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastRunning(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isRunning())
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastTerminated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isTerminated())
-        );
+            .findFirst();
     }
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks) {
@@ -791,7 +838,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     /**
      * Convert an exception on Executor and add log to the current {@code RUNNING} taskRun, on the
      * lastAttempts. If no Attempt is found, we create one (must be nominal case). The executor will
-     * catch the {@code FAILED} taskRun emitted and will failed the execution. In the worst case, we
+     * catch the {@code FAILED} taskRun emitted and will fail the execution. In the worst case, we
      * FAILED the execution (only from {@link io.kestra.plugin.core.trigger.Flow}).
      *
      * @param e the exception throw from Executor
@@ -823,8 +870,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()),
-                        t.getLogs()
+                        this.withTaskRun(t.taskRun()),
+                        t.logs()
                     );
                 } catch (InternalException ex) {
                     return null;
@@ -894,19 +941,14 @@ public class Execution implements DeletedInterface, TenantInterface {
         );
     }
 
-    @Value
-    public static class FailedTaskRunWithLog {
-
-        private TaskRun taskRun;
-        private List<LogEntry> logs;
+    public record FailedTaskRunWithLog(
+        TaskRun taskRun,
+        List<LogEntry> logs) {
     }
 
-    @Value
-    @Builder
-    public static class FailedExecutionWithLog {
-
-        private Execution execution;
-        private List<LogEntry> logs;
+    public record FailedExecutionWithLog(
+        Execution execution,
+        List<LogEntry> logs) {
     }
 
     /**
@@ -1009,7 +1051,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         Collections.reverse(parents);
 
         for (TaskRun childTaskRun : parents) {
-            HashMap<String, Object> current = new HashMap<>();
+            Map<String, Object> current = HashMap.newHashMap(2);
 
             if (childTaskRun.getValue() != null) {
                 current.put("taskrun", Map.of("value", childTaskRun.getValue()));
@@ -1040,7 +1082,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             return Collections.emptyList();
         }
 
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
         boolean ended = false;
         while (!ended) {
             final TaskRun finalTaskRun = taskRun;
@@ -1072,7 +1114,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             return Collections.emptyList();
         }
 
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
         boolean ended = false;
         while (!ended) {
             final TaskRun finalTaskRun = taskRun;
@@ -1111,7 +1153,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .toList();
     }
 
-
+    @Override
     public Execution toDeleted() {
         return this.toBuilder()
             .deleted(true)

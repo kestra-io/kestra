@@ -24,7 +24,8 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Sleep task, wait for a specified duration before proceeding."
+    title = "Pause execution for a duration.",
+    description = "Renders an ISO-8601 duration (e.g., `PT5S`) and sleeps before continuing. Useful for backoff, pacing, or demo timing."
 )
 @Plugin(
     examples = {

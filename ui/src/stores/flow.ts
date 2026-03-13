@@ -17,6 +17,8 @@ import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
+import {TUTORIAL_NAMESPACE} from "../utils/constants";
+import Markdown from "../components/layout/Markdown.vue"
 
 const textYamlHeader = {
     headers: {
@@ -34,9 +36,10 @@ interface Trigger {
     };
 }
 
-interface Task {
+export interface Task {
     id: string,
     type: string
+    tasks?: Task[]
 }
 
 export interface Input {
@@ -69,6 +72,20 @@ export interface Flow {
         limit: number;
         behavior: string;
     };
+    tasks?: Task[];
+}
+
+export type FlowSaveOutcome =
+    | "saved"
+    | "redirect_to_update"
+    | "confirmOutdatedSaveDialog"
+    | "blocked"
+    | "no_op";
+
+export function isSuccessfulFlowSaveOutcome(
+    outcome: FlowSaveOutcome | null | undefined,
+): outcome is "saved" | "redirect_to_update" {
+    return outcome === "saved" || outcome === "redirect_to_update";
 }
 
 export const useFlowStore = defineStore("flow", () => {
@@ -120,14 +137,18 @@ export const useFlowStore = defineStore("flow", () => {
         unsavedChangesStore.unsavedChange = newValue;
     });
 
-    async function saveAll() {
+    async function saveAll(): Promise<FlowSaveOutcome> {
         if ((!haveChange.value && !isCreating.value) || flowErrors.value?.length) {
-            return;
+            return (!haveChange.value && !isCreating.value) ? "no_op" : "blocked";
         }
 
-        if (!flow.value) return;
-        flowYamlOrigin.value = flowYaml.value;
-        return saveWithoutRevisionGuard();
+        if (!flow.value) return "blocked";
+        const source = flowYaml.value;
+        const outcome = await saveWithoutRevisionGuard();
+        if (isSuccessfulFlowSaveOutcome(outcome)) {
+            flowYamlOrigin.value = source;
+        }
+        return outcome;
     }
 
     const route = useRoute();
@@ -136,31 +157,34 @@ export const useFlowStore = defineStore("flow", () => {
         return route.query.namespace || defaultNamespace();
     }
 
-    async function save() {
+    async function save(): Promise<FlowSaveOutcome> {
         if (flowErrors.value?.length) {
-            return;
+            return "blocked";
         }
 
         const source = flowYaml.value;
 
         if (source) {
-            return onEdit({source}).then((validation: any) => {
-                if (validation?.outdated && !isCreating.value) {
-                    return "confirmOutdatedSaveDialog";
-                }
-                const res = saveWithoutRevisionGuard();
+            const validation = await onEdit({source});
+            if (validation?.outdated && !isCreating.value) {
+                return "confirmOutdatedSaveDialog";
+            }
+            const outcome = await saveWithoutRevisionGuard();
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
                 flowYamlOrigin.value = source;
+            }
 
-                return res
-            });
+            return outcome;
         }
+
+        return "no_op";
     }
 
     async function onEdit({source, topologyVisible}: {
         source: string,
         editorViewType?: string,
         topologyVisible?: boolean
-    }) {
+    }): Promise<FlowValidations | undefined> {
         const flowBeforeEdit = flow.value;
         const flowOnValidation = flowParsed.value;
 
@@ -195,7 +219,7 @@ export const useFlowStore = defineStore("flow", () => {
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
         })
-            .then((value: {constraints?: string}) => {
+            .then((value: FlowValidations) => {
                 if (
                     topologyVisible &&
                     flowHaveTasks.value &&
@@ -212,7 +236,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     const toast = makeToast(t);
 
-    async function saveWithoutRevisionGuard() {
+    async function saveWithoutRevisionGuard(): Promise<FlowSaveOutcome> {
         const flowSource = flowYaml.value ?? "";
 
         if (flowParsed.value === undefined) {
@@ -222,7 +246,7 @@ export const useFlowStore = defineStore("flow", () => {
                 message: t("invalid yaml"),
             };
 
-            return;
+            return "blocked";
         }
 
         let overrideFlow = false;
@@ -253,11 +277,37 @@ export const useFlowStore = defineStore("flow", () => {
 
         const isCreatingBackup = isCreating.value;
         if (isCreating.value && !overrideFlow) {
-            await createFlow({flow: flowSource ?? ""})
-                .then((response: Flow) => {
-                    toast.saved(response.id);
-                    isCreating.value = false;
-                });
+            try {
+                const response = await createFlow({flow: flowSource ?? ""});
+                toast.saved(response.id);
+                isCreating.value = false;
+            } catch (error: any) {
+                if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
+                    const shouldRedirect = await ElMessageBox({
+                        title: t("confirmation"),
+                        message: () => h(Markdown, {source: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
+                        type: "warning",
+                        showCancelButton: true,
+                    }).then(async () => {
+                        const response = await saveFlow({flow: flowSource});
+                        toast.saved(response.id);
+                        isCreating.value = false;
+                        return true;
+                    })
+
+                    return shouldRedirect ? "redirect_to_update" : "blocked";
+                }
+
+                if (error.response?.data) {
+                    coreStore.message = {
+                        variant: "error",
+                        response: error.response,
+                        content: error.response.data
+                    }
+                }
+                
+                throw error;
+            }
         } else {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
@@ -272,6 +322,8 @@ export const useFlowStore = defineStore("flow", () => {
         await validateFlow({
             flow: (isCreatingBackup ? flowSource : yamlWithNextRevision.value) ?? ""
         });
+
+        return "saved";
     }
 
     function fetchGraph() {
@@ -315,7 +367,7 @@ export const useFlowStore = defineStore("flow", () => {
             else {
                 flows.value = response.data.results
                 total.value = response.data.total
-                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
+                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
 
                 return response.data;
             }
@@ -340,9 +392,9 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
+    async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
         const httpClient = options.httpClient ?? axios
-        return httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
+        const response: {data:Flow & {exception?: string}} = await httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
             {
                 params: {
                     revision: options.revision,
@@ -353,32 +405,38 @@ export const useFlowStore = defineStore("flow", () => {
                     return options.deleted ? status === 200 || status === 404 : status === 200;
                 }
             })
-            .then((response: any) => {
-                if (response.data.exception) {
-                    coreStore.message = {
-                        title: "Invalid source code",
-                        message: response.data.exception,
-                        variant: "error"
-                    };
-                    // add this error to the list of errors
-                    flowValidation.value = {
-                        constraints: response.data.exception,
-                        outdated: false,
-                        infos: []
-                    };
-                    delete response.data.exception;
-                }
-                if (options.store === false) {
-                    return response.data;
-                }
 
-                flow.value = response.data;
-                flowYaml.value = response.data.source;
-                flowYamlOrigin.value = response.data.source;
-                overallTotal.value = 1;
+        if (response.data.exception) {
+            coreStore.message = {
+                title: "Invalid source code",
+                message: response.data.exception,
+                variant: "error"
+            };
 
-                return response.data;
-            })
+            // add this error to the list of errors
+            flowValidation.value = {
+                constraints: response.data.exception,
+                outdated: false,
+                infos: []
+            };
+            delete response.data.exception;
+        }
+
+        validateFlow({
+            flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`
+        });
+
+        if (options.store === false) {
+            return response.data;
+        }
+
+        flow.value = response.data;
+        flowYaml.value = response.data.source;
+        flowYamlOrigin.value = response.data.source;
+        overallTotal.value = 1;
+
+        return response.data;
+        
     }
     function loadTask(options: { namespace: string, id: string, taskId: string, revision?: string }) {
         return axios.get(
@@ -432,7 +490,8 @@ export const useFlowStore = defineStore("flow", () => {
     function createFlow(options: { flow: string }) {
         return axios.post(`${apiUrl()}/flows`, options.flow, {
             ...textYamlHeader,
-            ...VALIDATE
+            ...VALIDATE,
+            showMessageOnError: false
         }).then(response => {
             if (response.status >= 300) {
                 return Promise.reject(response)
@@ -625,9 +684,11 @@ function deleteFlowAndDependencies() {
         window.URL.revokeObjectURL(url);
     }
 
-    function importFlows(options: { file: File, namespace: string, override?: boolean }) {
-        return axios.post(`${apiUrl()}/flows/import`, Utils.toFormData(options), {
-            headers: {"Content-Type": "multipart/form-data"}
+    function importFlows(options: { file: FormData,  failOnError: boolean }) {
+         const {file, failOnError} = options;
+        return axios.post(`${apiUrl()}/flows/import`, file, {
+            headers: {"Content-Type": "multipart/form-data"},
+            params: {failOnError}
         }).then(response => {
             return response;
         });
@@ -657,7 +718,7 @@ function deleteFlowAndDependencies() {
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata(options.flow);
-            if(authStore.user && !authStore.user.isAllowed(
+            if(authStore.user && !authStore.user?.isAllowed(
                 permission.FLOW,
                 action.CREATE,
                 namespace,
@@ -665,13 +726,22 @@ function deleteFlowAndDependencies() {
                 flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
             }
         }
+        
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
-                const constraintsArray = [response?.data[0]?.constraints, flowValidationIssues.constraints].filter(Boolean)
-                flowValidation.value = constraintsArray.length === 0 ? {} : {
-                    constraints: constraintsArray.join(", ")
-                };
-                return flowValidation.value
+                const validResults = response.data[0] ?? {};
+
+                const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
+
+                if (constraintsArray.length) {
+                    validResults.constraints = constraintsArray.join(", ");
+                } else {
+                    delete validResults.constraints;
+                }
+
+                flowValidation.value = validResults;
+                
+                return validResults
             })
     }
 
@@ -774,8 +844,8 @@ function deleteFlowAndDependencies() {
             return false;
         }
 
-        return (isCreating.value && authStore.user.hasAnyAction(permission.FLOW, action.UPDATE))
-         || authStore.user.isAllowed(
+        return (isCreating.value && authStore.user?.hasAnyAction(permission.FLOW, action.UPDATE))
+         || authStore.user?.isAllowed(
             permission.FLOW,
             action.UPDATE,
             flow.value?.namespace,

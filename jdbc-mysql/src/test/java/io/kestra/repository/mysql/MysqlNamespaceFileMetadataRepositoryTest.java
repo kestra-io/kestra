@@ -1,6 +1,6 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.jdbc.repository.AbstractJdbcNamespaceFileMetadataRepositoryTest;
+import io.kestra.core.repositories.AbstractNamespaceFileMetadataRepositoryTest;
 
-public class MysqlNamespaceFileMetadataRepositoryTest extends AbstractJdbcNamespaceFileMetadataRepositoryTest {
+public class MysqlNamespaceFileMetadataRepositoryTest extends AbstractNamespaceFileMetadataRepositoryTest {
 }

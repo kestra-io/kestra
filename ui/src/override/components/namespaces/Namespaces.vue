@@ -3,7 +3,7 @@
         <template #additional-right>
             <Action
                 v-if="!isOSS && canCreate"
-                :label="t('create')"
+                :label="$t('create')"
                 :to="{name: 'namespaces/create', params: {tab: 'edit'}}"
             />
         </template>
@@ -26,7 +26,7 @@
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
-            <span>{{ t("no_namespaces") }}</span>
+            <span>{{ $t("no_namespaces") }}</span>
         </el-col>
 
         <el-col
@@ -60,7 +60,7 @@
                             </span>
                             <slot name="description" :namespace="data" />
                             <span v-if="data.system" class="system">
-                                {{ t("system_namespace") }}
+                                {{ $t("system_namespace") }}
                             </span>
                         </div>
                         <el-button size="small">
@@ -154,7 +154,7 @@
 
         namespaces.value.forEach((item) => {
             const parts = item.id.split(".");
-            let currentLevel = map;
+            let currentLevel = map as any;
 
             parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
@@ -197,7 +197,7 @@
         return result;
     });
 
-    const namespaceLabel = (path) => {
+    const namespaceLabel = (path: string) => {
         const segments = path.split(".");
         return segments.length > 1 ? segments[segments.length - 1] : path;
     };

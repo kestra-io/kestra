@@ -18,16 +18,17 @@
                             <el-option
                                 v-for="item in leftOptions"
                                 :key="item.value"
-                                :label="t('revision') + ' '+ item.text"
+                                :label="$t('revision') + ' '+ item.text"
                                 :value="item.value"
                                 class="revision-option"
                             >
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span> {{ t("revision") + " " + item.text }}</span>
+                                    <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
-                                        v-if="currentRevision != item.value"
+                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                     />
                                 </div>
                             </el-option>
@@ -39,7 +40,7 @@
                                 @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
                                 data-testid="restore-left"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ t("restore") }}</span>
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
                             </el-button>
                         </el-button-group>
                     </div>
@@ -53,16 +54,17 @@
                             <el-option
                                 v-for="item in rightOptions"
                                 :key="item.value"
-                                :label="t('revision') + ' '+ item.text"
+                                :label="$t('revision') + ' '+ item.text"
                                 :value="item.value"
                                 class="revision-option"
                             >
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span> {{ t("revision") + " " + item.text }}</span>
+                                    <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
-                                        v-if="currentRevision != revisionNumber(item.value)"
+                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                     />
                                 </div>
                             </el-option>
@@ -74,7 +76,7 @@
                                 @click="restoreRevision(revisionRightIndex, revisionRightText)"
                                 data-testid="restore-right"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ t("restore") }}</span>
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
                             </el-button>
                         </el-button-group>
                     </div>
@@ -100,7 +102,7 @@
     </div>
     <div v-else>
         <el-alert class="mb-0" showIcon :closable="false">
-            {{ t("no revisions found") }}
+            {{ $t("no revisions found") }}
         </el-alert>
     </div>
 </template>
@@ -112,6 +114,7 @@
     import Restore from "vue-material-design-icons/Restore.vue";
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue";
     import Editor from "../../components/inputs/Editor.vue";
+    import moment from "moment";
 
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
@@ -120,6 +123,7 @@
 
     export interface Revision {
         revision: number;
+        updated?: string;  // ISO datetime string
         source?: string;
     }
 
@@ -140,13 +144,14 @@
     ];
 
     const emit = defineEmits<{
-        restore: [source: string]
+        restore: [source: string],
+        deleted: [revision: number]
     }>();
 
     const props = withDefaults(defineProps<{
         lang: string,
         revisions: Revision[],
-        revisionSource: (revisionNumber: number) => Promise<string>,
+        revisionSource: (revisionNumber: number) => Promise<string | undefined>,
         editRouteQuery?: boolean
     }>(), {editRouteQuery: true});
 
@@ -167,6 +172,7 @@
             );
             if (
                 !route.query.revisionLeft &&
+                revisionRightIndex.value !== undefined &&
                 revisionRightIndex.value > 0
             ) {
                 revisionLeftIndex.value = revisionRightIndex.value - 1;
@@ -179,15 +185,15 @@
             revisionLeftIndex.value = revisionIndex(
                 route.query.revisionLeft.toString()
             );
-        } else if (revisionRightIndex.value && revisionRightIndex.value > 0) {
+        } else if (revisionRightIndex.value !== undefined && revisionRightIndex.value > 0) {
             revisionLeftIndex.value = revisionRightIndex.value - 1;
         }
     }
 
     function revisionIndex(revision: string) {
         const revisionInt = parseInt(revision);
-
-        return sortedRevisions.value.findIndex(rev => rev.revision === revisionInt);
+        const idx = sortedRevisions.value.findIndex(rev => rev.revision === revisionInt);
+        return idx === -1 ? undefined : idx;
     }
 
     function revisionNumber(index: number) {
@@ -217,13 +223,35 @@
         }
     }
 
+    function formatTimestamp(updatedDate?: string): string {
+        if (!updatedDate) return "";
+
+        return moment(updatedDate).format("YYYY-MM-DD HH:mm");
+    }
+
+    function formatRevisionText(revision: number): string {
+        let text = revision.toString();
+
+        if (currentRevisionWithSource.value.revision === revision) {
+            text += ` (${t("current")})`;
+        }
+
+        return text;
+    }
+
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision}) => ({
-                value: revisionIndex(revision.toString()),
-                text: revision + (currentRevisionWithSource.value.revision === revision ? ` (${t("current")})` : "")
-            }));
+            .map(({revision, updated}) => {
+                const isCurrent = currentRevisionWithSource.value.revision === revision;
+                return {
+                    value: revisionIndex(revision.toString()),
+                    revision: revision,
+                    timestamp: formatTimestamp(updated),
+                    isCurrent: isCurrent,
+                    text: formatRevisionText(revision)
+                };
+            });
     }
 
     const leftOptions = computed(() => {
@@ -264,7 +292,8 @@
                     revision: revisionToDelete.toString()
                 });
                 toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}));
-                load()
+                emit("deleted", revisionToDelete);
+                load();
             } catch (error: any) {
                 toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}));
             }
@@ -350,11 +379,27 @@
 
     .revision-option {
         padding-right: 0.5rem;
-        min-width: 300px;
+        min-width: 350px;
+    }
+
+    .revision-number {
+        font-weight: 500;
+    }
+
+    .revision-timestamp {
+        color: #888;
+        font-size: 0.85em;
     }
 
     .display-select {
         width: 10%;
+    }
+
+    .revision-timestamp {
+        color: #888;
+        font-size: 0.85em;
+        text-align: right;
+        flex-shrink: 0;
     }
 
 </style>

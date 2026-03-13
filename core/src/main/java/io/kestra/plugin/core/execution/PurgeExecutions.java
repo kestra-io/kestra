@@ -24,20 +24,29 @@ import java.util.List;
 @NoArgsConstructor
 @Schema(
     title = "Purge executions, logs, metrics, and storage files.",
-    description = "This task can be used to purge flow executions data for all flows, for a specific namespace, or for a specific flow."
+    description = """
+        Deletes historical execution data by namespace/flow, bounded by `startDate`/`endDate`, and optionally filtered by states. Each category can be toggled (`purgeExecution`, `purgeLog`, `purgeMetric`, `purgeStorage`).
+
+        Respects Namespace authorization checks (there must be purge rights on the target namespace); default batch size is 100. Irreversible — use carefully in production."""
 )
 @Plugin(
     examples = {
         @Example(
             title = "Purge all flow execution data for flows that ended more than one month ago.",
-            code = {
-                "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
-                "states: ",
-                "  - KILLED",
-                "  - FAILED",
-                "  - WARNING",
-                "  - SUCCESS"
-            }
+            code = """
+            id: purge_exections
+            namespace: system
+            
+            tasks:
+              - id: purge
+                type: io.kestra.plugin.core.execution.PurgeExecutions
+                endDate: "{{ now() | dateAdd(-1, 'MONTHS') }}"
+                states: 
+                  - KILLED
+                  - FAILED
+                  - WARNING
+                  - SUCCESS
+            """
         )
     },
     aliases = {"io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge"}

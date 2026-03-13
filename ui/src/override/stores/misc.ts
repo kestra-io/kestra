@@ -4,6 +4,8 @@ import {useApiStore} from "../../stores/api";
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue";
 import {useAxios} from "../../utils/axios";
+import {initPosthogIfEnabled} from "../../utils/posthog";
+import {ensureUid} from "../../utils/uid";
 
 
 
@@ -19,6 +21,8 @@ export const useMiscStore = defineStore("misc", () => {
     async function loadConfigs() {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`);
         configs.value = response.data;
+        // Best-effort: flush any queued analytics events once configs are known.
+        void useApiStore().flushQueuedEvents()
         return response.data;
     }
 
@@ -36,18 +40,19 @@ export const useMiscStore = defineStore("misc", () => {
     }
 
     async function addBasicAuth(options: {
-        firstName: string;
-        lastName: string;
         username: string;
         password: string;
     }) {
         const email = options.username;
+        const analyticsEnabled = configs.value?.isUiAnonymousUsageEnabled === true;
+        const uid = ensureUid();
 
-        localStorage.setItem("firstName", options.firstName);
-        localStorage.setItem("lastName", options.lastName);
+        if (analyticsEnabled) {
+            void initPosthogIfEnabled(configs.value)
+        }
 
         await axios.post(`${apiUrl()}/basicAuth`, {
-            uid: localStorage.getItem("uid"),
+            uid,
             username: email,
             password: options.password,
         });
@@ -57,7 +62,7 @@ export const useMiscStore = defineStore("misc", () => {
         return apiStore.posthogEvents({
             type: "ossauth",
             iid: configs.value?.uuid,
-            uid: localStorage.getItem("uid"),
+            uid,
             date: new Date().toISOString(),
             counter: 0,
             email: email

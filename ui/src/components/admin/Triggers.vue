@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title">
         <template #additional-right>
             <el-button :icon="Download" @click="exportTriggersAsStream()">
-                {{ t('export_csv') }}
+                {{ $t('export_csv') }}
             </el-button>
         </template>
     </TopNavBar>
@@ -199,30 +199,27 @@
                         </el-table-column>
 
                         <el-table-column
-                            v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                            v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                             columnKey="action"
                             className="row-action"
                         >
                             <template #default="scope">
                                 <div class="action-container">
-                                    <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
-                                        <Kicon
-                                            :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
-                                            placement="left"
-                                            @click="triggerToUnlock = scope.row"
-                                        >
-                                            <LockOff />
-                                        </Kicon>
-                                    </el-button>
-                                    <el-button>
-                                        <Kicon
-                                            :tooltip="$t('delete trigger')"
-                                            placement="left"
-                                            @click="confirmDeleteTrigger(scope.row)"
-                                        >
-                                            <Delete />
-                                        </Kicon>
-                                    </el-button>
+                                    <IconButton
+                                        v-if="scope.row.executionId || scope.row.evaluateRunningDate"
+                                        :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
+                                        placement="left"
+                                        @click="triggerToUnlock = scope.row"
+                                    >
+                                        <LockOff />
+                                    </IconButton>
+                                    <IconButton
+                                        :tooltip="$t('delete trigger')"
+                                        placement="left"
+                                        @click="confirmDeleteTrigger(scope.row)"
+                                    >
+                                        <Delete />
+                                    </IconButton>
                                 </div>
                             </template>
                         </el-table-column>
@@ -244,7 +241,7 @@
 
                                     <el-button
                                         :icon="CalendarCollapseHorizontalOutline"
-                                        v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                        v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="setBackfillModal(scope.row, true)"
                                         size="small"
                                         type="primary"
@@ -372,7 +369,7 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -380,7 +377,6 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    //@ts-expect-error No declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import KSFilter from "../filter/components/KSFilter.vue";

@@ -7,7 +7,7 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.cli.StandAloneRunner;
-import io.kestra.core.services.SkipExecutionService;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
@@ -33,7 +33,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     private ApplicationContext applicationContext;
 
     @Inject
-    private SkipExecutionService skipExecutionService;
+    private IgnoreExecutionService ignoreExecutionService;
 
     @Inject
     private StartExecutorService startExecutorService;
@@ -51,20 +51,40 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to eight times the number of available processors. Set it to 0 to avoid starting a worker.")
     private int workerThread = defaultWorkerThread();
 
-    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting only")
-    private List<String> skipExecutions = Collections.emptyList();
+    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "deprecated - use '--ignore-executions' instead")
+    @Deprecated
+    private List<String> skipExecutions;
 
-    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to skip, separated by a coma; for troubleshooting only")
-    private List<String> skipFlows = Collections.emptyList();
+    @CommandLine.Option(names = {"--ignore-executions"}, split=",", description = "a list of execution identifiers to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreExecutions = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only")
-    private List<String> skipNamespaces = Collections.emptyList();
+    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "deprecated - use '--ignore-flows' instead")
+    @Deprecated
+    private List<String> skipFlows;
+
+    @CommandLine.Option(names = {"--ignore-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreFlows = Collections.emptyList();
+
+    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "deprecated - use 'ignore-namespaces' instead")
+    @Deprecated
+    private List<String> skipNamespaces;
+
+    @CommandLine.Option(names = {"--ignore-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only")
+    private List<String> ignoreNamespaces = Collections.emptyList();
 
     @CommandLine.Option(names = {"--skip-tenants"}, split=",", description = "a list of tenants to skip, separated by a coma; for troubleshooting only")
-    private List<String> skipTenants = Collections.emptyList();
+    @Deprecated
+    private List<String> skipTenants;
 
-    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "a list of indexer record keys, separated by a coma; for troubleshooting only")
-    private List<String> skipIndexerRecords = Collections.emptyList();
+    @CommandLine.Option(names = {"--ignore-tenants"}, split=",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreTenants = Collections.emptyList();
+
+    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "deprecated - use '--ignore-indexer-record' instead")
+    @Deprecated
+    private List<String> skipIndexerRecords;
+
+    @CommandLine.Option(names = {"--ignore-indexer-records"}, split=",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreIndexerRecords = Collections.emptyList();
 
     @CommandLine.Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
     boolean tutorialsDisabled = false;
@@ -92,16 +112,19 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.skipExecutionService.setSkipExecutions(skipExecutions);
-        this.skipExecutionService.setSkipFlows(skipFlows);
-        this.skipExecutionService.setSkipNamespaces(skipNamespaces);
-        this.skipExecutionService.setSkipTenants(skipTenants);
-        this.skipExecutionService.setSkipIndexerRecords(skipIndexerRecords);
+        this.ignoreExecutionService.setIgnoredExecutions(skipExecutions != null ? skipExecutions : ignoreExecutions);
+        this.ignoreExecutionService.setIgnoredFlows(skipFlows != null ? skipFlows : ignoreFlows);
+        this.ignoreExecutionService.setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
+        this.ignoreExecutionService.setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
+        this.ignoreExecutionService.setIgnoredIndexerRecords(skipIndexerRecords != null ? skipIndexerRecords : ignoreIndexerRecords);
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
-        super.call();
+        if (tenantId != null) {
+            TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
+            tenantIdSelectorService.createTenant(tenantId);
+        }
 
         if (flowPath != null) {
             try {
@@ -112,6 +135,8 @@ public class StandAloneCommand extends AbstractServerCommand {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
+
+        super.call();
 
         try (StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class)) {
 

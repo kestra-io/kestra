@@ -92,14 +92,18 @@ public class FlowService {
         return flowRepository
             .orElseThrow(() -> new IllegalStateException("Cannot perform operation on flow. Cause: No FlowRepository"));
     }
+
     private static String formatValidationError(String message) {
         if (message.startsWith("Illegal flow source:")) {
             // Already formatted by YamlParser, return as-is
             return message;
+        } else if (message.startsWith(":")) {
+            message = message.substring(1);
         }
         // For other validation errors, provide context
         return "Validation error: " + message;
     }
+
     /**
      * Evaluates all checks defined in the given flow using the provided inputs.
      * <p>
@@ -132,9 +136,9 @@ public class FlowService {
                     );
                     falseConditions.add(Check
                         .builder()
-                            .message("Failed to evaluate check condition. Cause: " + e.getMessage())
-                            .behavior(Check.Behavior.BLOCK_EXECUTION)
-                            .style(Check.Style.ERROR)
+                        .message("Failed to evaluate check condition. Cause: " + e.getMessage())
+                        .behavior(Check.Behavior.BLOCK_EXECUTION)
+                        .style(Check.Style.ERROR)
                         .build()
                     );
                 }
@@ -145,62 +149,62 @@ public class FlowService {
     }
 
     /**
-     * Validates the given flow source.
-     * <p>
-     * the YAML source can contain one or many objects.
+     * Validates the given flow sources.
      *
-     * @param tenantId  The tenant identifier.
-     * @param flows     The YAML source.
-     * @return  The list validation constraint violations.
+     * @param tenantId    The tenant identifier.
+     * @param flowSources The flow sources to validate.
+     * @return The list of validation constraint violations.
      */
-    public List<ValidateConstraintViolation> validate(final String tenantId, final String flows) {
+    public List<ValidateConstraintViolation> validate(final String tenantId, final List<FlowSource> flowSources) {
         AtomicInteger index = new AtomicInteger(0);
-        return Stream
-            .of(flows.split("\\n+---\\n*?"))
-            .map(source -> {
-                ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
-                validateConstraintViolationBuilder.index(index.getAndIncrement());
+        List<ValidateConstraintViolation> constraints = new ArrayList<>();
+        flowSources.forEach(flowSource -> {
+            ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> constraintsBuilder = ValidateConstraintViolation.builder();
+            constraintsBuilder.index(index.getAndIncrement());
+            constraintsBuilder.filename(flowSource.filename());
 
-                try {
-                    FlowWithSource flow = pluginDefaultService.parseFlowWithVersionDefaults(tenantId, source, true);
-                    Integer sentRevision = flow.getRevision();
-                    if (sentRevision != null) {
-                        Integer lastRevision = Optional.ofNullable(repository().lastRevision(tenantId, flow.getNamespace(), flow.getId()))
-                            .orElse(0);
-                        validateConstraintViolationBuilder.outdated(!sentRevision.equals(lastRevision + 1));
-                    }
+            try {
+                String source = flowSource.content();
+                FlowWithSource flow = pluginDefaultService.parseFlowWithVersionDefaults(tenantId, source, true);
 
-                    validateConstraintViolationBuilder.deprecationPaths(deprecationPaths(flow));
-                    validateConstraintViolationBuilder.warnings(warnings(flow, tenantId));
-                    validateConstraintViolationBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
-                    validateConstraintViolationBuilder.flow(flow.getId());
-                    validateConstraintViolationBuilder.namespace(flow.getNamespace());
-
-                    // Do not perform a strict parsing validation to ignore unknown
-                    // properties that might be injecting through default values.
-                    modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
-
-                } catch (ConstraintViolationException e) {
-                    String friendlyMessage = formatValidationError(e.getMessage());
-                    validateConstraintViolationBuilder.constraints(friendlyMessage);
-                } catch (FlowProcessingException e) {
-                    if (e.getCause() instanceof ConstraintViolationException cve) {
-                        String friendlyMessage = formatValidationError(cve.getMessage());
-                        validateConstraintViolationBuilder.constraints(friendlyMessage);
-                    } else {
-                        Throwable cause = e.getCause() != null ? e.getCause() : e;
-                        validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
-                    }
-                } catch (RuntimeException re) {
-                    // In case of any error, we add a validation violation so the error is displayed in the UI.
-                    // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
-                    // in dev like incompatible plugin versions.
-                    log.error("Unable to validate the flow", re);
-                    validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + re.getMessage());
+                Integer sentRevision = flow.getRevision();
+                if (sentRevision != null) {
+                    Integer lastRevision = Optional.ofNullable(repository().lastRevision(tenantId, flow.getNamespace(), flow.getId())).orElse(0);
+                    constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                 }
-                return validateConstraintViolationBuilder.build();
-            })
-            .collect(Collectors.toList());
+
+                constraintsBuilder.deprecationPaths(deprecationPaths(flow));
+                constraintsBuilder.warnings(warnings(flow, tenantId));
+                constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
+                constraintsBuilder.flow(flow.getId());
+                constraintsBuilder.namespace(flow.getNamespace());
+
+                // Do not perform a strict parsing validation to ignore unknown
+                // properties that might be injecting through default values.
+                modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
+            } catch (ConstraintViolationException e) {
+                String friendlyMessage = formatValidationError(e.getMessage());
+                constraintsBuilder.constraints(friendlyMessage);
+            } catch (FlowProcessingException e) {
+                if (e.getCause() instanceof ConstraintViolationException cve) {
+                    String friendlyMessage = formatValidationError(cve.getMessage());
+                    constraintsBuilder.constraints(friendlyMessage);
+                } else {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    constraintsBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
+                }
+            } catch (RuntimeException e) {
+                // In case of any error, we add a validation violation so the error is displayed in the UI.
+                // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+                // in dev like incompatible plugin versions.
+                log.error("Unable to validate the flow", e);
+                constraintsBuilder.constraints("Unable to validate the flow: " + e.getMessage());
+            }
+
+            constraints.add(constraintsBuilder.build());
+        });
+
+        return constraints;
     }
 
     public FlowWithSource importFlow(String tenantId, String source) throws FlowProcessingException {
@@ -208,7 +212,6 @@ public class FlowService {
     }
 
     public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
-
         final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
 
         Optional<FlowWithSource> maybeExisting = repository().findByIdWithSource(
@@ -221,7 +224,7 @@ public class FlowService {
 
         // Inject default plugin 'version' props before converting
         // to flow to correctly resolve all plugin type.
-        FlowWithSource flowToImport = pluginDefaultService.injectVersionDefaults(flow, false);
+        FlowWithSource flowToImport = pluginDefaultService.injectVersionDefaults(flow, false, true);
 
         if (dryRun) {
             return maybeExisting
@@ -544,7 +547,7 @@ public class FlowService {
             throw new IllegalStateException("Requested Flow is disabled.");
         }
 
-        if (flow instanceof FlowWithException fwe ) {
+        if (flow instanceof FlowWithException fwe) {
             throw new IllegalStateException("Requested Flow is not valid. Error: " + fwe.getException());
         }
         return flow;

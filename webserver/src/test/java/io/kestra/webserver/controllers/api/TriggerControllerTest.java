@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
@@ -12,7 +13,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
@@ -21,6 +21,7 @@ import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.tenants.TenantValidationFilter;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -29,8 +30,9 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -44,30 +46,13 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @KestraTest(startRunner = true, startScheduler = true)
 class TriggerControllerTest {
-    public static final String TENANT_ID = TenantService.MAIN_TENANT;
-    public static final String TRIGGER_PATH = "/api/v1/main/triggers";
+    public static final String TRIGGER_PATH = "/api/v1/%s/triggers";
 
-    public static final Trigger TRIGGER = Trigger.builder()
-        .flowId(IdUtils.create())
-        .namespace("io.kestra.unit-test")
-        .tenantId(MAIN_TENANT)
-        .triggerId(IdUtils.create())
-        .executionId(IdUtils.create())
-        .date(ZonedDateTime.now())
-        .evaluateRunningDate(ZonedDateTime.now())
-        .build();
-
-    public static final Flow FLOW = Flow.builder()
-        .id(TRIGGER.getFlowId())
-        .namespace("io.kestra.unit-test")
-        .tenantId(MAIN_TENANT)
-        .revision(1)
-        .tasks(Collections.singletonList(Log.builder().id("test").type(Log.class.getName()).message("{{ parent.outputs.args['my-forward'] }}").build()))
-        .triggers(List.of(Schedule.builder().id(TRIGGER.getTriggerId()).type(Schedule.class.getName()).cron("* * * * *").build()))
-        .build();
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -78,28 +63,33 @@ class TriggerControllerTest {
     @Inject
     AbstractJdbcTriggerRepository jdbcTriggerRepository;
 
+    @MockBean(TenantService.class)
+    public TenantService getTenantService(){
+        return mock(TenantService.class);
+    }
     @Inject
-    private JdbcTestUtils jdbcTestUtils;
+    private TenantService tenantService;
 
-    @BeforeEach
-    protected void setup() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
+    @MockBean(TenantValidationFilter.class)
+    public TenantValidationFilter getTenantValidationFilter(){
+        return mock(TenantValidationFilter.class);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void search() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         String triggerFlowId = "schedule-trigger-search";
         String triggerNamespace = "io.kestra.tests.schedule";
 
-        Flow flow = generateFlow(triggerFlowId);
+        Flow flow = generateFlow(tenant, triggerFlowId);
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(triggerFlowId)
             .namespace(triggerNamespace)
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId("trigger-nextexec-schedule")
             .date(ZonedDateTime.now())
             .build();
@@ -108,7 +98,7 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(trigger.toBuilder().triggerId("trigger-nextexec-polling").build());
 
         PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
-            HttpRequest.GET(TRIGGER_PATH
+            HttpRequest.GET(TRIGGER_PATH.formatted(tenant)
                 + "/search?filters[q][EQUALS]=schedule-trigger-search&filters[namespace][STARTS_WITH]=io.kestra.tests&sort=triggerId:asc"),
             Argument.of(PagedResults.class, TriggerController.Triggers.class)
         );
@@ -125,7 +115,7 @@ class TriggerControllerTest {
                 tuple("trigger-nextexec-polling", triggerNamespace, triggerFlowId)
             );
         PagedResults<TriggerController.Triggers> triggers_oldParameters = client.toBlocking().retrieve(
-            HttpRequest.GET(TRIGGER_PATH
+            HttpRequest.GET(TRIGGER_PATH.formatted(tenant)
                 + "/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"),
             Argument.of(PagedResults.class, TriggerController.Triggers.class)
         );
@@ -145,17 +135,19 @@ class TriggerControllerTest {
 
     @Test
     void unlockTrigger() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         Trigger trigger = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace(TestsUtils.randomNamespace())
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId(IdUtils.create())
             .executionId(IdUtils.create())
             .build();
 
         jdbcTriggerRepository.save(trigger);
 
-        trigger = client.toBlocking().retrieve(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+        trigger = client.toBlocking().retrieve(HttpRequest.POST((TRIGGER_PATH.formatted(tenant) + "/%s/%s/%s/unlock").formatted(
             trigger.getNamespace(),
             trigger.getFlowId(),
             trigger.getTriggerId()
@@ -170,7 +162,7 @@ class TriggerControllerTest {
         assertThat(unlockedTrigger.getEvaluateRunningDate()).isNull();
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH.formatted(tenant) + "/%s/%s/%s/unlock").formatted(
                 unlockedTrigger.getNamespace(),
                 unlockedTrigger.getFlowId(),
                 unlockedTrigger.getTriggerId()
@@ -180,7 +172,7 @@ class TriggerControllerTest {
         assertThat(e.getMessage()).isEqualTo("Illegal state: Trigger is not locked");
 
         e = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH.formatted(tenant) + "/%s/%s/%s/unlock").formatted(
                 "bad.namespace",
                 "some-flow-id",
                 "some-trigger-id"
@@ -192,13 +184,15 @@ class TriggerControllerTest {
 
     @Test
     void updated() {
-        Flow flow = generateFlow("flow-with-triggers-updated");
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = generateFlow(tenant, "flow-with-triggers-updated");
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId("trigger-nextexec-schedule")
             .executionId(IdUtils.create())
             .disabled(true)
@@ -213,7 +207,7 @@ class TriggerControllerTest {
             .tenantId(null)
             .build();
 
-        Trigger afterUpdated = client.toBlocking().retrieve(HttpRequest.PUT(TRIGGER_PATH, updatedBad), Trigger.class);
+        Trigger afterUpdated = client.toBlocking().retrieve(HttpRequest.PUT(TRIGGER_PATH.formatted(tenant), updatedBad), Trigger.class);
 
         // Assert that executionId cannot be edited
         assertThat(afterUpdated.getExecutionId()).isNotEqualTo("hello");
@@ -223,13 +217,15 @@ class TriggerControllerTest {
 
     @Test
     void restartTrigger() {
-        Flow flow = generateFlow("flow-with-triggers");
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = generateFlow(tenant, "flow-with-triggers");
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId("trigger-to-restart")
             .executionId(IdUtils.create())
             .disabled(true)
@@ -237,20 +233,22 @@ class TriggerControllerTest {
 
         jdbcTriggerRepository.create(trigger);
 
-        HttpResponse<?> restarted = client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH
+        HttpResponse<?> restarted = client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH.formatted(tenant)
             + "/io.kestra.tests.schedule/flow-with-triggers/trigger-to-restart/restart"), null));
         assertThat(restarted.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST((
-            TRIGGER_PATH + "/notfound/notfound/notfound/restart"), null)));
+            TRIGGER_PATH.formatted(tenant) + "/notfound/notfound/notfound/restart"), null)));
     }
 
     @Test
     void unlockTriggerByTriggers() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         Trigger triggerLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace(TestsUtils.randomNamespace())
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId(IdUtils.create())
             .executionId(IdUtils.create())
             .build();
@@ -258,7 +256,7 @@ class TriggerControllerTest {
         Trigger triggerNotLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace(TestsUtils.randomNamespace())
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId(IdUtils.create())
             .build();
 
@@ -268,18 +266,20 @@ class TriggerControllerTest {
         List<Trigger> triggers = List.of(triggerLock, triggerNotLock);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/unlock/by-triggers", triggers), BulkResponse.class);
+            TRIGGER_PATH.formatted(tenant) + "/unlock/by-triggers", triggers), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(1);
     }
 
     @Test
     void unlockTriggerByQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         String namespace = TestsUtils.randomNamespace();
         Trigger triggerLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace(namespace)
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId(IdUtils.create())
             .executionId(IdUtils.create())
             .build();
@@ -287,7 +287,7 @@ class TriggerControllerTest {
         Trigger triggerNotLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace(namespace)
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .triggerId(IdUtils.create())
             .build();
 
@@ -295,19 +295,18 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(triggerNotLock);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/unlock/by-query?namespace=" + namespace, null), BulkResponse.class);
+            TRIGGER_PATH.formatted(tenant) + "/unlock/by-query?namespace=" + namespace, null), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(1);
     }
 
     @Test
     void enableByTriggers() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
-
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
+        Flow flow1 = generateFlowWithTrigger(tenant, namespace);
+        Flow flow2 = generateFlowWithTrigger(tenant, namespace);
 
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
@@ -315,10 +314,14 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(triggerDisabled);
         jdbcTriggerRepository.save(triggerNotDisabled);
 
+        jdbcFlowRepository.create(GenericFlow.of(flow1));
+        jdbcFlowRepository.create(GenericFlow.of(flow2));
+
+
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
+            TRIGGER_PATH.formatted(tenant) + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
         assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
@@ -326,12 +329,11 @@ class TriggerControllerTest {
 
     @Test
     void enableByQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
-
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
+        Flow flow1 = generateFlowWithTrigger(tenant, namespace);
+        Flow flow2 = generateFlowWithTrigger(tenant, namespace);
 
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
@@ -339,18 +341,25 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(triggerDisabled);
         jdbcTriggerRepository.save(triggerNotDisabled);
 
+        jdbcFlowRepository.create(GenericFlow.of(flow1));
+        jdbcFlowRepository.create(GenericFlow.of(flow2));
+
+
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=false".formatted(namespace), null), BulkResponse.class);
+            TRIGGER_PATH.formatted(tenant) + "/set-disabled/by-query?namespace=%s&disabled=false".formatted(namespace), null), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
         assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
     }
 
     @Test
+    @FlakyTest
     void disableByTriggers() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
+        Flow flow1 = generateFlowWithTrigger(tenant, namespace);
+        Flow flow2 = generateFlowWithTrigger(tenant, namespace);
 
         jdbcFlowRepository.create(GenericFlow.of(flow1));
         jdbcFlowRepository.create(GenericFlow.of(flow2));
@@ -364,7 +373,7 @@ class TriggerControllerTest {
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
+            TRIGGER_PATH.formatted(tenant) + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
         assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isTrue();
@@ -372,9 +381,11 @@ class TriggerControllerTest {
 
     @Test
     void disableByTriggersBadRequest() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.POST(
-                    TRIGGER_PATH + "/set-disabled/by-triggers", new SetDisabledRequest(null, null)),
+                    TRIGGER_PATH.formatted(tenant) + "/set-disabled/by-triggers", new SetDisabledRequest(null, null)),
                 BulkResponse.class));
 
 
@@ -383,9 +394,11 @@ class TriggerControllerTest {
 
     @Test
     void disableByQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
         String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
+        Flow flow1 = generateFlowWithTrigger(tenant, namespace);
+        Flow flow2 = generateFlowWithTrigger(tenant, namespace);
 
         jdbcFlowRepository.create(GenericFlow.of(flow1));
         jdbcFlowRepository.create(GenericFlow.of(flow2));
@@ -397,7 +410,7 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(triggerNotDisabled);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=true".formatted(namespace), null), BulkResponse.class);
+            TRIGGER_PATH.formatted(tenant) + "/set-disabled/by-query?namespace=%s&disabled=true".formatted(namespace), null), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
         assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isTrue();
@@ -405,25 +418,27 @@ class TriggerControllerTest {
 
     @Test
     void nextExecutionDate() throws TimeoutException {
-        Flow flow = generateFlow("flow-with-triggers");
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = generateFlow(tenant, "flow-with-triggers");
         jdbcFlowRepository.create(GenericFlow.of(flow));
         Await.until(
             () -> client.toBlocking().retrieve(HttpRequest.GET(
-                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
+                TRIGGER_PATH.formatted(tenant) + "/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
             Duration.ofMillis(100),
             Duration.ofSeconds(20)
         );
         PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET(
-            TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
+            TRIGGER_PATH.formatted(tenant) + "/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
         assertThat(triggers.getResults().getFirst().getTriggerContext().getNextExecutionDate()).isNotNull();
         assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate()).isNotNull();
     }
 
-    private Flow generateFlow(String flowId) {
+    private Flow generateFlow(String tenant, String flowId) {
         return Flow.builder()
             .id(flowId)
             .namespace("io.kestra.tests.schedule")
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")
                 .type(Return.class.getName())
@@ -443,10 +458,10 @@ class TriggerControllerTest {
             .build();
     }
 
-    private Flow generateFlowWithTrigger(String namespace) {
+    private Flow generateFlowWithTrigger(String tenant, String namespace) {
         return Flow.builder()
             .id(IdUtils.create())
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .namespace(namespace)
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")
@@ -476,11 +491,13 @@ class TriggerControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void testGetTrigger() {
-        Flow flow = createTestFlow();
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = createTestFlow(tenant);
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .triggerId("test-trigger")
@@ -490,7 +507,7 @@ class TriggerControllerTest {
 
         PagedResults<Trigger> response = client.toBlocking()
             .retrieve(
-                HttpRequest.GET(TRIGGER_PATH + "/" + flow.getNamespace() + "/" + flow.getId()),
+                HttpRequest.GET(TRIGGER_PATH.formatted(tenant) + "/" + flow.getNamespace() + "/" + flow.getId()),
                 Argument.of(PagedResults.class, Trigger.class)
             );
 
@@ -504,25 +521,27 @@ class TriggerControllerTest {
 
     @Test
     void testDeleteTriggersByQuery() {
-        Flow flow = createTestFlow();
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = createTestFlow(tenant);
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .triggerId("delete-test-trigger")
             .build();
 
         Trigger triggerByQuery1 = Trigger.builder()
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .triggerId("query-test-trigger-1")
             .build();
 
         Trigger triggerByQuery2 = Trigger.builder()
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .triggerId("query-test-trigger-2")
@@ -532,31 +551,31 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(triggerByQuery1);
         jdbcTriggerRepository.save(triggerByQuery2);
 
-        List<Trigger> allBeforeDelete = jdbcTriggerRepository.find(Pageable.UNPAGED, TENANT_ID, filtersForFlow(flow));
+        List<Trigger> allBeforeDelete = jdbcTriggerRepository.find(Pageable.UNPAGED, tenant, filtersForFlow(flow));
         assertThat(allBeforeDelete.size()).isEqualTo(3);
 
         HttpResponse<BulkResponse> firstDeleteResponse = client.toBlocking()
             .exchange(
-                HttpRequest.DELETE(TRIGGER_PATH + "/delete/by-query?filters[namespace][EQUALS]=" + flow.getNamespace() + "&filters[flowId][EQUALS]=" + flow.getId() + "&filters[triggerId][EQUALS]=delete-test-trigger"),
+                HttpRequest.DELETE(TRIGGER_PATH.formatted(tenant) + "/delete/by-query?filters[namespace][EQUALS]=" + flow.getNamespace() + "&filters[flowId][EQUALS]=" + flow.getId() + "&filters[triggerId][EQUALS]=delete-test-trigger"),
                 BulkResponse.class
             );
 
         assertThat(firstDeleteResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(firstDeleteResponse.body().getCount()).isEqualTo(1);
 
-        List<Trigger> remainingAfterFirstDelete = jdbcTriggerRepository.find(Pageable.UNPAGED, TENANT_ID, filtersForFlow(flow));
+        List<Trigger> remainingAfterFirstDelete = jdbcTriggerRepository.find(Pageable.UNPAGED, tenant, filtersForFlow(flow));
         assertThat(remainingAfterFirstDelete.size()).isEqualTo(2);
 
         HttpResponse<BulkResponse> secondDeleteResponse = client.toBlocking()
             .exchange(
-                HttpRequest.DELETE(TRIGGER_PATH + "/delete/by-query?filters[namespace][EQUALS]=" + flow.getNamespace() + "&filters[flowId][EQUALS]=" + flow.getId()),
+                HttpRequest.DELETE(TRIGGER_PATH.formatted(tenant) + "/delete/by-query?filters[namespace][EQUALS]=" + flow.getNamespace() + "&filters[flowId][EQUALS]=" + flow.getId()),
                 BulkResponse.class
             );
 
         assertThat(secondDeleteResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(secondDeleteResponse.body().getCount()).isEqualTo(2);
 
-        List<Trigger> finalRemaining = jdbcTriggerRepository.find(Pageable.UNPAGED, TENANT_ID, filtersForFlow(flow));
+        List<Trigger> finalRemaining = jdbcTriggerRepository.find(Pageable.UNPAGED, tenant, filtersForFlow(flow));
         assertThat(finalRemaining.size()).isEqualTo(0);
 
         Optional<Trigger> deletedTrigger = jdbcTriggerRepository.findLast(TriggerContext.builder()
@@ -584,12 +603,14 @@ class TriggerControllerTest {
 
     @Test
     void testDeleteTriggerById() {
-        Flow flow = createTestFlow();
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = createTestFlow(tenant);
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
         String triggerId = "delete-by-id-trigger";
         Trigger trigger = Trigger.builder()
-            .tenantId(TENANT_ID)
+            .tenantId(tenant)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .triggerId(triggerId)
@@ -599,7 +620,7 @@ class TriggerControllerTest {
 
         HttpResponse<Void> response = client.toBlocking()
             .exchange(
-                HttpRequest.DELETE(TRIGGER_PATH + "/" + flow.getNamespace() + "/" + flow.getId() + "/" + triggerId),
+                HttpRequest.DELETE(TRIGGER_PATH.formatted(tenant) + "/" + flow.getNamespace() + "/" + flow.getId() + "/" + triggerId),
                 Void.class
             );
 
@@ -615,15 +636,18 @@ class TriggerControllerTest {
 
     @Test
     void exportTriggers() {
-        jdbcFlowRepository.create(GenericFlow.of(FLOW));
-
-        Trigger t1 = TRIGGER.toBuilder().triggerId(IdUtils.create()).build();
-        Trigger t2 = TRIGGER.toBuilder().triggerId(IdUtils.create()).build();
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String flowId = IdUtils.create();
+        Trigger t1 = createTrigger(tenant, IdUtils.create(), flowId);
+        Trigger t2 = createTrigger(tenant, IdUtils.create(), flowId);
         jdbcTriggerRepository.save(t1);
         jdbcTriggerRepository.save(t2);
+        jdbcFlowRepository.create(GenericFlow.of(createFlowWithTrigger(t1)));
+
 
         HttpResponse<byte[]> response = client.toBlocking().exchange(
-            HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),
+            HttpRequest.GET(TRIGGER_PATH.formatted(tenant) + "/export/by-query/csv"),
             byte[].class
         );
 
@@ -636,12 +660,37 @@ class TriggerControllerTest {
         assertThat(csv).contains(t2.getTriggerId());
     }
 
-    private Flow createTestFlow() {
+    private static Flow createTestFlow(String tenant) {
         return Flow.builder()
+            .tenantId(tenant)
             .id("trigger-test-flow")
             .namespace(TestsUtils.randomNamespace())
             .revision(1)
             .tasks(List.of())
+            .build();
+    }
+
+    private static Trigger createTrigger(String tenant, String triggerId, String flowId){
+        return Trigger.builder()
+            .triggerId(triggerId)
+            .flowId(flowId)
+            .namespace("io.kestra.unit-test")
+            .tenantId(tenant)
+            .triggerId(IdUtils.create())
+            .executionId(IdUtils.create())
+            .date(ZonedDateTime.now())
+            .evaluateRunningDate(ZonedDateTime.now())
+            .build();
+    }
+
+    private static Flow createFlowWithTrigger(Trigger trigger) {
+        return Flow.builder()
+            .id(trigger.getFlowId())
+            .namespace("io.kestra.unit-test")
+            .tenantId(MAIN_TENANT)
+            .revision(1)
+            .tasks(Collections.singletonList(Log.builder().id("test").type(Log.class.getName()).message("{{ parent.outputs.args['my-forward'] }}").build()))
+            .triggers(List.of(Schedule.builder().id(trigger.getTriggerId()).type(Schedule.class.getName()).cron("* * * * *").build()))
             .build();
     }
 }

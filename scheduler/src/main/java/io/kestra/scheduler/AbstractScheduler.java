@@ -5,7 +5,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
-import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -27,7 +26,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
@@ -73,8 +71,6 @@ public abstract class AbstractScheduler implements Scheduler {
     private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final QueueInterface<LogEntry> logQueue;
-    @SuppressWarnings("rawtypes")
-    private final Optional<QueueInterface> clusterEventQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
@@ -125,7 +121,6 @@ public abstract class AbstractScheduler implements Scheduler {
         this.workerJobQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
-        this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
         this.logQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
@@ -303,7 +298,18 @@ public abstract class AbstractScheduler implements Scheduler {
         ));
 
         // listen to cluster events
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(((QueueInterface<ClusterEvent>) clusterEventQueueInterface).receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(this.maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                AbstractScheduler.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                AbstractScheduler.this.exitMaintenance();
+            }
+        })::dispose);
+
         if (this.maintenanceService.isInMaintenanceMode()) {
             enterMaintenance();
         } else {
@@ -412,20 +418,6 @@ public abstract class AbstractScheduler implements Scheduler {
         }
 
         this.isReady = true;
-    }
-
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
-        }
     }
 
     private void enterMaintenance() {
@@ -784,7 +776,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     if (abstractTrigger.isAllowConcurrent()) {
                         trigger = trigger.toBuilder().executionId(null).build();
                     }
-                
+
                     // Worker triggers result is evaluated in another thread with the workerTriggerResultQueue.
                     // We can then update the trigger directly.
                     this.saveLastTriggerAndEmitExecution(executionWithTrigger.getExecution(), trigger, triggerToSave -> this.triggerState.update(triggerToSave));
@@ -806,7 +798,7 @@ public abstract class AbstractScheduler implements Scheduler {
         if (result.getExecution().getState().getCurrent() == State.Type.FAILED) {
             trigger = trigger.resetExecution(State.Type.FAILED);
         }
-        
+
         // if the trigger is allowed to run concurrently we do not attached the executio-id to the trigger state
         // i.e., the trigger will not be locked
         if (((AbstractTrigger)schedule).isAllowConcurrent()) {
@@ -844,11 +836,11 @@ public abstract class AbstractScheduler implements Scheduler {
     private Execution fail(Execution message, Exception e) {
         var failedExecution = message.failedExecutionFromExecutor(e);
         try {
-            logQueue.emitAsync(failedExecution.getLogs());
+            logQueue.emitAsync(failedExecution.logs());
         } catch (QueueException ex) {
             // fail silently
         }
-        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
+        return failedExecution.execution().getState().isFailed() ? failedExecution.execution() :  failedExecution.execution().withState(State.Type.FAILED);
     }
 
     private void executionMonitor() {
@@ -990,7 +982,7 @@ public abstract class AbstractScheduler implements Scheduler {
             .namespace(flowWithTrigger.getTriggerContext().getNamespace())
             .flowId(flowWithTrigger.getTriggerContext().getFlowId())
             .flowRevision(flowWithTrigger.getFlow().getRevision())
-            .labels(LabelService.labelsExcludingSystem(flowWithTrigger.getFlow()))
+            .labels(LabelService.labelsExcludingSystem(flowWithTrigger.getFlow().getLabels()))
             .state(new State().withState(State.Type.FAILED))
             .build();
         Logger logger = runContextFactory.of(flowWithTrigger.getFlow(), execution).logger();

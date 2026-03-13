@@ -36,8 +36,11 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks in parallel.",
-    description = "This task runs all child tasks in parallel."
+    title = "Run child tasks in parallel.",
+    description = """
+        Starts all child tasks concurrently, bounded by `concurrent` if set (0 = no cap). Each branch can contain its own sequences or nested flows.
+
+        Use when independent steps can run at the same time to shorten wall-clock duration."""
 )
 @Plugin(
     examples = {

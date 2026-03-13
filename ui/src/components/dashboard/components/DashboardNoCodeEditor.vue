@@ -116,7 +116,7 @@
         const type = elt?.type;
         dashboardStore.loadChart(elt);
         if(type){
-            pluginsStore.updateDocumentation({type});
+            pluginsStore.updateDocumentation({cls: type});
         }else{
             pluginsStore.updateDocumentation(); 
         }

@@ -4,41 +4,23 @@ import {trackPluginDocumentationView} from "../utils/tabTracking";
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
-import {Schemas} from "../components/no-code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
-import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type JSONSchema} from "@kestra-io/ui-libs";
 import {useAxios} from "../utils/axios";
 
 export interface PluginComponent {
     icon?: string;
     cls?: string;
+    title?: string;
     deprecated?: boolean;
     version?: string;
     description?: string;
     properties?: Record<string, any>;
-    schema: {
-        properties: Schemas;
-        outputs: Schemas;
-    };
+    schema: JSONSchema;
     markdown?: string;
 }
 
-export interface Plugin {
-    tasks: PluginComponent[];
-    triggers: PluginComponent[];
-    conditions: PluginComponent[];
-    controllers: PluginComponent[];
-    storages: PluginComponent[];
-    taskRunners: PluginComponent[];
-    charts: PluginComponent[];
-    dataFilters: PluginComponent[];
-    dataFiltersKPI: PluginComponent[];
-    aliases: PluginComponent[];
-    logExporters: PluginComponent[];
-    apps: PluginComponent[];
-    appBlocks: PluginComponent[];
-    additionalPlugins: PluginComponent[];
-}
+export type {Plugin} from "@kestra-io/ui-libs";
 
 interface LoadOptions {
     cls: string;
@@ -142,12 +124,12 @@ export const usePluginsStore = defineStore("plugins", () => {
     const allTypes = computed(() => {
         return plugins.value?.flatMap(plugin => Object.entries(plugin))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-            ?.flatMap(([, value]: [string, PluginComponent[]]) => value.map(({cls}) => cls!)) ?? [];
+            ?.flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)) ?? [];
     });
     const deprecatedTypes = computed(() => {
         return plugins.value?.flatMap(plugin => Object.entries(plugin))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-            ?.flatMap(([, value]: [string, PluginComponent[]]) => value.filter(({deprecated}) => deprecated === true).map(({cls}) => cls!)) ?? [];
+            ?.flatMap(([, value]) => (value as PluginElement[]).filter(({deprecated}) => deprecated === true).map(({cls}) => cls)) ?? [];
     });
 
     function resolveRef(obj: JsonSchemaDef): JsonSchemaDef {
@@ -188,7 +170,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             ...Object.fromEntries(excludedElements.map(e => [e, undefined]))
         })).filter(p => Object.entries(p)
                 .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-                .some(([, value]: [string, PluginComponent[]]) => value.length !== 0))
+                .some(([, value]) => (value as PluginElement[]).length !== 0))
     }
 
     async function list() {

@@ -48,7 +48,11 @@
 
                 <el-divider />
                 <div class="metadata">
-                    <Row :rows="metadata" />
+                    <Row :rows="[property]" v-for="property in metadata" :key="property.label">
+                        <template v-if="property.value instanceof Date" #value>
+                            <DateAgo :date="property.value" format="L LTS" />
+                        </template>
+                    </Row>
                 </div>
 
                 <el-divider />
@@ -164,6 +168,7 @@
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
+    import {watchDebounced} from "@vueuse/core";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -190,6 +195,7 @@
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
 
+    import DateAgo from "../../layout/DateAgo.vue";
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
     import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
@@ -282,14 +288,14 @@
             {
                 icon: CalendarMonth,
                 label: t("created date"),
-                value: moment(execution.value.state.histories![0].date).fromNow(),
+                value: moment(execution.value.state.histories![0].date).toDate(),
             },
             ...(execution.value.scheduleDate
                 ? [
                     {
                         icon: CalendarClock,
                         label: t("scheduleDate"),
-                        value: moment(execution.value.scheduleDate).fromNow(),
+                        value: moment(execution.value.scheduleDate).toDate(),
                     },
                 ]
                 : []),
@@ -300,7 +306,7 @@
                     State.isRunning(execution.value.state.current)
                         ? undefined // Defaults to current date
                         : execution.value.state.histories?.at(-1)?.date,
-                ).fromNow(),
+                ).toDate(),
             },
             {
                 icon: TimerSand,
@@ -340,9 +346,7 @@
                             )?.value ?? "-",
                     },
                 ]),
-            ...(execution.value.trigger?.type ===
-                "io.kestra.plugin.core.flow.Subflow" &&
-                execution.value.trigger?.variables?.executionId
+            ...(execution.value.trigger?.variables?.executionId
                 ? [
                     {
                         icon: History,
@@ -471,6 +475,17 @@
         if (!route.params.id) return;
         loadExecution(route.params.id as string);
     });
+
+    // Refresh the chart when execution ID or timerange changes.
+    // Debounce to avoid flooding the dashboard generator on rapid SSE updates.
+    watchDebounced(
+        () => [execution.value?.id, timerange.value],
+        () => {
+            if (!chartRef.value || !execution.value) return;
+            chartRef.value?.refresh(filters.value as any);
+        },
+        {debounce: 500, maxWait: 1000}
+    );
 
     defineOptions({inheritAttrs: false});
 </script>

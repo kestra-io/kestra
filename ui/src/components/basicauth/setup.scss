@@ -1,9 +1,10 @@
 $step-icon-size: 43px;
 $checkbox-size: 18px;
-$radio-size: 24px;
+$radio-size: 18px;
 $step-line-offset: 21px;
 $checkbox-border-color: #918BA9;
 $checkbox-checked-color: #8405FF;
+$survey-group-spacing: 0.75rem;
 
 %flexcol {
   display: flex;
@@ -95,8 +96,16 @@ $checkbox-checked-color: #8405FF;
     font-size: 24px;
     line-height: 36px;
   }
+
+  .header-subtitle {
+    @extend %text-primary;
+    display: block;
+    margin-top: 0.5rem;
+    font-weight: 400;
+  }
 }
 
+.username-requirements,
 .password-requirements {
   margin-top: -8px;
 
@@ -104,6 +113,14 @@ $checkbox-checked-color: #8405FF;
     color: var(--ks-content-tertiary);
     font-size: 12px;
   }
+}
+
+.survey-divider {
+  margin: $survey-group-spacing 0;
+}
+
+:deep(.newsletter-form-item.el-form-item) {
+  margin-bottom: 0;
 }
 
 .el-step {
@@ -140,16 +157,36 @@ $checkbox-checked-color: #8405FF;
 }
 
 .survey-radio-group {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $survey-group-spacing;
+  margin-top: $survey-group-spacing;
+
+  @media screen and (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 
   :deep(.el-radio) {
     margin: 0 !important;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+
+    .el-radio__input {
+      margin-right: 8px;
+      align-self: center;
+    }
 
     .el-radio__label {
       font-size: 14px;
+      padding-left: 0;
+      line-height: 1.4;
+      align-self: center;
       @extend %text-primary;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .el-radio__inner {
@@ -172,12 +209,16 @@ $checkbox-checked-color: #8405FF;
 }
 
 .use-case-checkboxes {
-  margin-top: 10px;
+  margin-top: $survey-group-spacing;
 
   :deep(.el-checkbox-group) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $survey-group-spacing;
+
+    @media screen and (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   .survey-checkbox {
@@ -186,11 +227,13 @@ $checkbox-checked-color: #8405FF;
     @extend %border-reset;
     cursor: pointer;
     margin: 0;
+    width: 100%;
+    min-width: 0;
   }
 }
 
 .newsletter-checkbox {
-  margin-top: 1rem;
+  margin-top: $survey-group-spacing;
   display: flex;
   column-gap: 8px;
   align-items: center;
@@ -244,6 +287,9 @@ $checkbox-checked-color: #8405FF;
     line-height: 1.4;
     align-self: center;
     @extend %text-primary;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }
 

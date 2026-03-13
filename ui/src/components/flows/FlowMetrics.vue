@@ -45,216 +45,215 @@
 </template>
 
 <script setup lang="ts">
-    import {useFlowMetricFilter} from "../filter/configurations";
-
-    const flowMetricFilter = useFlowMetricFilter();
-</script>
-
-<script lang="ts">
-    import {defineComponent} from "vue";
+    import {ref, computed, watch} from "vue";
+    import {useRoute, useRouter} from "vue-router";
     import {Bar} from "vue-chartjs";
-    import {mapStores} from "pinia";
+    import moment from "moment";
+    import {useI18n} from "vue-i18n";
     import {useMiscStore} from "override/stores/misc";
     import {useFlowStore} from "../../stores/flow";
-    import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
     import KSFilter from "../filter/components/KSFilter.vue";
+    import {useFlowMetricFilter} from "../filter/configurations";
 
-    export default defineComponent({
+    defineOptions({
         name: "FlowMetrics",
-        components: {
-            Bar,
-            KSFilter,
-        },
-        created() {
-            this.loadMetrics();
-        },
-        computed: {
-            ...mapStores(useMiscStore, useFlowStore),
-            xGrid() {
-                return this.miscStore.theme === "light"
-                    ? {}
-                    : {
-                        borderColor: "#404559",
-                        color: "#404559",
-                    };
-            },
-            yGrid() {
-                return this.miscStore.theme === "light"
-                    ? {}
-                    : {
-                        borderColor: "#404559",
-                        color: "#404559",
-                    };
-            },
-            chartData() {
-                return {
-                    labels: this.flowStore.aggregatedMetrics.aggregations.map((e) =>
-                        moment(e.date).format(
-                            getFormat(this.flowStore.aggregatedMetrics.groupBy),
-                        ),
-                    ),
-                    datasets: [
-                        !this.display
-                            ? []
-                            : {
-                                label: `${this.$t([this.$route.query.aggregation].flat()[0]?.toLowerCase())} ${this.$t("of")} ${this.$route.query.metric}`,
-                                backgroundColor:
-                                    cssVariable("--el-color-success"),
-                                borderRadius: 4,
-                                data: this.flowStore.aggregatedMetrics.aggregations.map(
-                                    (e) => (e.value ? e.value : 0),
-                                ),
-                            },
-                    ],
-                };
-            },
-            options() {
-                const darken =
-                    this.miscStore.theme === "light"
-                        ? cssVariable("--bs-gray-700")
-                        : cssVariable("--bs-gray-800");
-                const lighten =
-                    this.miscStore.theme === "light"
-                        ? cssVariable("--bs-gray-200")
-                        : cssVariable("--bs-gray-400");
+        inheritAttrs: false,
+    });
 
-                return defaultConfig(
-                    {
-                        plugins: {
-                            tooltip: {
-                                external: (context) => {
-                                    this.tooltipContent = tooltip(context.tooltip);
-                                },
-                            },
-                        },
-                        scales: {
-                            x: {
-                                display: true,
-                                grid: {
-                                    borderColor: lighten,
-                                    color: lighten,
-                                    drawTicks: false,
-                                },
-                                ticks: {
-                                    color: darken,
-                                    autoSkip: true,
-                                    minRotation: 0,
-                                    maxRotation: 0,
-                                },
-                            },
-                            y: {
-                                display: true,
-                                grid: {
-                                    borderColor: lighten,
-                                    color: lighten,
-                                    drawTicks: false,
-                                },
-                                ticks: {
-                                    color: darken,
-                                },
-                            },
+    const route = useRoute();
+    const router = useRouter();
+    const {t} = useI18n();
+
+    const flowMetricFilter = useFlowMetricFilter();
+    const miscStore = useMiscStore();
+    const flowStore = useFlowStore();
+
+    const tooltipContent = ref("");
+    const isLoading = ref(false);
+
+    interface MetricAggregation {
+        date: string;
+        value?: number;
+    }
+
+    const display = computed(() => {
+        return route.query.metric && route.query.aggregation;
+    });
+
+    const chartData = computed(() => {
+        const aggregations = (flowStore.aggregatedMetrics?.aggregations ?? []) as MetricAggregation[];
+        const groupBy = flowStore.aggregatedMetrics?.groupBy;
+        
+        const aggregationQuery = route.query.aggregation;
+        const aggregationValue = Array.isArray(aggregationQuery) 
+            ? aggregationQuery[0] 
+            : aggregationQuery;
+        const aggregationLabel = aggregationValue?.toLowerCase() ?? "";
+        
+        return {
+            labels: aggregations.map((e: MetricAggregation) =>
+                moment(e.date).format(getFormat(groupBy)),
+            ),
+            datasets: [
+                !display.value
+                    ? {data: [] as number[], label: "", backgroundColor: ""}
+                    : {
+                        label: `${t(aggregationLabel)} ${t("of")} ${route.query.metric}`,
+                        backgroundColor: cssVariable("--el-color-success"),
+                        borderRadius: 4,
+                        data: aggregations.map(
+                            (e: MetricAggregation) => (e.value ? e.value : 0),
+                        ),
+                    },
+            ],
+        };
+    });
+
+    const options = computed(() => {
+        const darken =
+            miscStore.theme === "light"
+                ? cssVariable("--bs-gray-700")
+                : cssVariable("--bs-gray-800");
+        const lighten =
+            miscStore.theme === "light"
+                ? cssVariable("--bs-gray-200")
+                : cssVariable("--bs-gray-400");
+
+        return defaultConfig(
+            {
+                plugins: {
+                    tooltip: {
+                        external: (context: { tooltip: any }) => {
+                            tooltipContent.value = tooltip(context.tooltip) ?? "";
                         },
                     },
-                    this.miscStore.theme,
-                );
-            },
-            display() {
-                return this.$route.query.metric && this.$route.query.aggregation;
-            },
-        },
-        data() {
-            return {
-                tooltipContent: undefined,
-                isLoading: false,
-            };
-        },
-        methods: {
-            loadQuery(base) {
-                return {
-                    ...base
-                };
-            },
-            loadMetrics() {
-                this.flowStore.loadTasksWithMetrics({
-                    ...this.$route.params,
-                });
-                this.flowStore[this.$route.query.task ? "loadTaskMetrics" : "loadFlowMetrics"](
-                    this.loadQuery({
-                        ...this.$route.params,
-                        taskId: this.$route.query.task,
-                    }),
-                ).then(() => {
-                    if ((this.flowStore.metrics?.length ?? -1) > 0) {
-                        if (
-                            this.$route.query.metric &&
-                            !this.flowStore.metrics?.includes(this.$route.query.metric)
-                        ) {
-                            let query = {...this.$route.query};
-                            delete query.metric;
-
-                            this.$router
-                                .push({query: query})
-                                .then(() => this.loadAggregatedMetrics());
-                        } else {
-                            this.loadAggregatedMetrics();
-                        }
-                    }
-                });
-            },
-            loadAggregatedMetrics() {
-                this.isLoading = true;
-
-                if (this.display) {
-                    this.flowStore[this.$route.query?.task ? "loadTaskAggregatedMetrics" : "loadFlowAggregatedMetrics"](
-                        this.loadQuery({
-                            ...this.$route.params,
-                            ...this.$route.query,
-                            metric: this.$route.query.metric,
-                            aggregation: [this.$route.query.aggregation].flat().map(item => item.toLowerCase()),
-                            taskId: this.$route.query.task,
-                            startDate: this.$route.query.startDate,
-                            endDate: this.$route.query.endDate
-                        }),
-                    );
-                } else {
-                    this.flowStore.aggregatedMetrics = undefined;
-                }
-                this.isLoading = false;
-            },
-            updateQuery(queryParam) {
-                let query = {...this.$route.query};
-                for (const [key, value] of Object.entries(queryParam)) {
-                    if (value === undefined || value === "" || value === null) {
-                        delete query[key];
-                    } else {
-                        query[key] = value;
-                    }
-                }
-
-                this.$router.push({query: query}).then(this.load);
-            },
-            load() {
-                if (!this.$route.query.metric) {
-                    this.loadMetrics();
-                } else {
-                    this.loadAggregatedMetrics();
-                }
-            },
-        },
-        watch: {
-            "$route.query": {
-                handler(query) {
-                    if (!query.metric) {
-                        this.loadMetrics();
-                    } else {
-                        this.loadAggregatedMetrics();
-                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        grid: {
+                            borderColor: lighten,
+                            color: lighten,
+                            drawTicks: false,
+                        },
+                        ticks: {
+                            color: darken,
+                            autoSkip: true,
+                            minRotation: 0,
+                            maxRotation: 0,
+                        },
+                    },
+                    y: {
+                        display: true,
+                        grid: {
+                            borderColor: lighten,
+                            color: lighten,
+                            drawTicks: false,
+                        },
+                        ticks: {
+                            color: darken,
+                        },
+                    },
                 },
             },
-        },
+            miscStore.theme,
+        );
     });
+
+    function loadMetrics(): void {
+        const params = route.params as { namespace: string; id: string };
+        
+        flowStore.loadTasksWithMetrics({
+            namespace: params.namespace,
+            id: params.id,
+        });
+        
+        const taskId = route.query.task as string | undefined;
+        
+        if (taskId) {
+            flowStore.loadTaskMetrics({
+                namespace: params.namespace,
+                id: params.id,
+                taskId: taskId,
+            }).then(handleMetricsLoaded);
+        } else {
+            flowStore.loadFlowMetrics({
+                namespace: params.namespace,
+                id: params.id,
+            }).then(handleMetricsLoaded);
+        }
+    }
+    
+    function handleMetricsLoaded(): void {
+        if ((flowStore.metrics?.length ?? -1) > 0) {
+            if (
+                route.query.metric &&
+                !flowStore.metrics?.includes(route.query.metric as string)
+            ) {
+                const query = {...route.query};
+                delete query.metric;
+
+                router
+                    .push({query: query})
+                    .then(() => loadAggregatedMetrics());
+            } else {
+                loadAggregatedMetrics();
+            }
+        }
+    }
+
+    function loadAggregatedMetrics(): void {
+        isLoading.value = true;
+
+        if (display.value) {
+            const params = route.params as { namespace: string; id: string };
+            const metric = route.query.metric as string;
+            const taskId = route.query.task as string | undefined;
+            
+            if (taskId) {
+                flowStore.loadTaskAggregatedMetrics({
+                    namespace: params.namespace,
+                    id: params.id,
+                    taskId: taskId,
+                    metric: metric,
+                });
+            } else {
+                flowStore.loadFlowAggregatedMetrics({
+                    namespace: params.namespace,
+                    id: params.id,
+                    metric: metric,
+                });
+            }
+        } else {
+            flowStore.aggregatedMetrics = undefined;
+        }
+        isLoading.value = false;
+    }
+
+    function load(): void {
+        if (!route.query.metric) {
+            loadMetrics();
+        } else {
+            loadAggregatedMetrics();
+        }
+    }
+
+    // Watch for route query changes
+    watch(
+        () => route.query,
+        (query) => {
+            if (!query.metric) {
+                loadMetrics();
+            } else {
+                loadAggregatedMetrics();
+            }
+        },
+    );
+
+    // Initial load (equivalent to created hook)
+    loadMetrics();
 </script>
 
 <style scoped>

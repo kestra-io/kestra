@@ -23,4 +23,8 @@ public class TenantIdSelectorService {
         }
         return MAIN_TENANT;
     }
+
+    public void createTenant(String tenantId) {
+        //for override purpose
+    }
 }

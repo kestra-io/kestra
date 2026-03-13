@@ -726,9 +726,8 @@
     border-radius: 20px;
     background: var(--ks-background-input);
     box-shadow:
-        0 10px 24px rgba(15, 23, 42, 0.04),
-        0 28px 60px rgba(15, 23, 42, 0.06),
-        0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+        0 8px 20px rgba(15, 23, 42, 0.035),
+        0 22px 44px rgba(15, 23, 42, 0.05);
     display: flex;
     flex-direction: column;
     overflow: hidden;

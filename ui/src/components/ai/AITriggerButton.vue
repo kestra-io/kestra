@@ -1,13 +1,13 @@
 <template>
     <div class="ai-trigger-box" v-if="show">
-        <el-button 
+        <ks-button
             v-if="!opened"
-            class="ai-trigger-button" 
-            :icon="AiIcon" 
+            class="ai-trigger-button"
+            :icon="AiIcon"
             @click="handleClick"
         >
             {{ $t("ai.flow.title") }}
-        </el-button>
+        </ks-button>
     </div>
 </template>
 

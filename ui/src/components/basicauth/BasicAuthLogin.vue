@@ -47,7 +47,7 @@
                 </el-input>
             </el-form-item>
             <el-form-item>
-                <el-button
+                <ks-button
                     type="primary"
                     class="w-100"
                     size="large"
@@ -57,17 +57,17 @@
                     :loading="isLoading"
                 >
                     {{ $t("setup.login") }}
-                </el-button>
+                </ks-button>
             </el-form-item>
             <el-form-item>
-                <el-button
+                <ks-button
                     type="default"
                     class="w-100"
                     size="large"
                     @click="openTroubleshootingGuide"
                 >
                     {{ $t("setup.troubleshooting") }}
-                </el-button>
+                </ks-button>
             </el-form-item>
         </el-form>
     </div>

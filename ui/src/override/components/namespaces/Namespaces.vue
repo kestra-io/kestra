@@ -63,9 +63,9 @@
                                 {{ $t("system_namespace") }}
                             </span>
                         </div>
-                        <el-button size="small">
+                        <ks-button size="small">
                             <TextSearch />
-                        </el-button>
+                        </ks-button>
                     </router-link>
                 </template>
             </el-tree>

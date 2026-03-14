@@ -51,15 +51,15 @@
             <div class="bottom-buttons" v-if="!embed">
                 <div class="left-align">
                     <el-form-item>
-                        <el-button v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
+                        <ks-button v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
                             {{ $t('prefill inputs') }}
-                        </el-button>
+                        </ks-button>
                     </el-form-item>
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
                         <span data-onboarding-target="flow-execute-confirm-button">
-                            <el-button
+                            <ks-button
                                 :icon="buttonIcon"
                                 :disabled="!flowCanBeExecuted || hasBlockingChecks()"
                                 class="flow-run-trigger-button"
@@ -68,7 +68,7 @@
                                 @click.prevent="onSubmit($refs.form); executeClicked = true;"
                             >
                                 {{ $t(buttonText) }}
-                            </el-button>
+                            </ks-button>
                         </span>
                         <el-text v-if="haveBadLabels" type="danger" size="small">
                             {{ $t('wrong labels') }}

@@ -9,10 +9,10 @@
         />
 
         <div class="buttons">
-            <el-button type="primary" :icon="Refresh" @click="onRender">
+            <ks-button type="primary" :icon="Refresh" @click="onRender">
                 {{ $t("eval.render") }}
-            </el-button>
-            <el-button
+            </ks-button>
+            <ks-button
                 :disabled="!result && !error"
                 :icon="CloseCircleOutline"
                 @click="clearAll"

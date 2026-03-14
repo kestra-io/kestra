@@ -1,8 +1,8 @@
 <template>
     <div class="docsMenuWrapper">
-        <el-button @click="menuOpen = !menuOpen" class="menuOpener">
+        <ks-button @click="menuOpen = !menuOpen" class="menuOpener">
             {{ $t("documentationMenu") }} <MenuDown class="expandIcon" />
-        </el-button>
+        </ks-button>
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">
                 <li v-for="{section, children} in sectionsWithChildren" :key="section" :class="{'active-section': isCurrentSection(section)}">

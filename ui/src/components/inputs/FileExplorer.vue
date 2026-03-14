@@ -24,7 +24,7 @@
                     @click.prevent.stop="chooseSearchResults(item)"
                 />
             </ks-select>
-            <el-button-group class="d-flex">
+            <ks-button-group class="d-flex">
                 <el-tooltip
                     effect="light"
                     :content="$t('namespace files.create.file')"
@@ -33,9 +33,9 @@
                     :persistent="false"
                     popperClass="text-base"
                 >
-                    <el-button class="px-2" @click="toggleDialog(true, 'file')">
+                    <ks-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
-                    </el-button>
+                    </ks-button>
                 </el-tooltip>
                 <el-tooltip
                     effect="light"
@@ -45,12 +45,12 @@
                     :persistent="false"
                     popperClass="text-base"
                 >
-                    <el-button
+                    <ks-button
                         class="px-2"
                         @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
-                    </el-button>
+                    </ks-button>
                 </el-tooltip>
                 <input
                     ref="filePicker"
@@ -71,9 +71,9 @@
                     @change="importFiles"
                 >
                 <el-dropdown>
-                    <el-button>
+                    <ks-button>
                         <PlusBox />
-                    </el-button>
+                    </ks-button>
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item @click="filePicker?.click()">
@@ -95,11 +95,11 @@
                     :persistent="false"
                     popperClass="text-base"
                 >
-                    <el-button class="px-2" @click="exportFiles()">
+                    <ks-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
-                    </el-button>
+                    </ks-button>
                 </el-tooltip>
-            </el-button-group>
+            </ks-button-group>
         </div>
 
         <el-tree
@@ -264,16 +264,16 @@
             </ks-select>
             <template #footer>
                 <div>
-                    <el-button @click="toggleDialog(false)">
+                    <ks-button @click="toggleDialog(false)">
                         {{ $t("cancel") }}
-                    </el-button>
-                    <el-button
+                    </ks-button>
+                    <ks-button
                         type="primary"
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
-                    </el-button>
+                    </ks-button>
                 </div>
             </template>
         </el-dialog>
@@ -298,16 +298,16 @@
             />
             <template #footer>
                 <div>
-                    <el-button @click="toggleRenameDialog(false)">
+                    <ks-button @click="toggleRenameDialog(false)">
                         {{ $t("cancel") }}
-                    </el-button>
-                    <el-button
+                    </ks-button>
+                    <ks-button
                         type="primary"
                         :disabled="!renameDialog.name"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
-                    </el-button>
+                    </ks-button>
                 </div>
             </template>
         </el-dialog>
@@ -321,12 +321,12 @@
             <span class="py-3" v-html="confirmationLabels.message" />
             <template #footer>
                 <div>
-                    <el-button @click="confirmation.visible = false">
+                    <ks-button @click="confirmation.visible = false">
                         {{ $t("cancel") }}
-                    </el-button>
-                    <el-button type="primary" @click="removeItems()">
+                    </ks-button>
+                    <ks-button type="primary" @click="removeItems()">
                         {{ $t("namespace files.dialog.deletion.confirm") }}
-                    </el-button>
+                    </ks-button>
                 </div>
             </template>
         </el-dialog>

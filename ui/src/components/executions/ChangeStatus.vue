@@ -47,16 +47,16 @@
             </template>
 
             <template #footer>
-                <el-button @click="visible = false">
+                <ks-button @click="visible = false">
                     {{ $t('cancel') }}
-                </el-button>
-                <el-button
+                </ks-button>
+                <ks-button
                     type="primary"
                     @click="changeStatus()"
                     :disabled="selectedStatus === taskRun.state.current || selectedStatus === null"
                 >
                     {{ $t('ok') }}
-                </el-button>
+                </ks-button>
             </template>
         </el-dialog>
     </component>

@@ -33,16 +33,16 @@
                                 </div>
                             </ks-option>
                         </ks-select>
-                        <el-button-group>
-                            <el-button
+                        <ks-button-group>
+                            <ks-button
                                 :icon="Restore"
                                 :disabled="revisionLeftText === currentRevisionWithSource.source"
                                 @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
                                 data-testid="restore-left"
                             >
                                 <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
-                            </el-button>
-                        </el-button-group>
+                            </ks-button>
+                        </ks-button-group>
                     </div>
                     <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
                 </div>
@@ -69,16 +69,16 @@
                                 </div>
                             </ks-option>
                         </ks-select>
-                        <el-button-group>
-                            <el-button
+                        <ks-button-group>
+                            <ks-button
                                 :icon="Restore"
                                 :disabled="revisionRightText === currentRevisionWithSource.source"
                                 @click="restoreRevision(revisionRightIndex, revisionRightText)"
                                 data-testid="restore-right"
                             >
                                 <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
-                            </el-button>
-                        </el-button-group>
+                            </ks-button>
+                        </ks-button-group>
                     </div>
                     <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
                 </div>

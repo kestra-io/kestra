@@ -27,9 +27,9 @@
                         <el-text v-if="activeStep === 0" class="header-subtitle">
                             {{ $t('setup.subtitles.user') }}
                         </el-text>
-                        <el-button v-if="activeStep === 1" class="skip-button" @click="handleSurveySkip()">
+                        <ks-button v-if="activeStep === 1" class="skip-button" @click="handleSurveySkip()">
                             {{ $t('setup.survey.skip') }}
-                        </el-button>
+                        </ks-button>
                     </div>
                 </template>
 
@@ -71,9 +71,9 @@
                             </div>
                         </el-form>
                         <div class="d-flex justify-content-end gap-1">
-                            <el-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
+                            <ks-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
                                 {{ $t("setup.confirm.confirm") }}
-                            </el-button>
+                            </ks-button>
                         </div>
                     </div>
 
@@ -118,9 +118,9 @@
                         </el-form>
 
                         <div class="d-flex justify-content-end">
-                            <el-button type="primary" @click="handleSurveyContinue()">
+                            <ks-button type="primary" @click="handleSurveyContinue()">
                                 {{ $t("setup.survey.continue") }}
-                            </el-button>
+                            </ks-button>
                         </div>
                     </div>
 
@@ -134,9 +134,9 @@
                                 {{ $t('setup.success.subtitle') }}
                             </p>
                         </div>
-                        <el-button @click="completeSetup()" type="primary" class="success-button">
+                        <ks-button @click="completeSetup()" type="primary" class="success-button">
                             {{ $t('setup.steps.complete') }}
-                        </el-button>
+                        </ks-button>
                     </div>
                 </div>
             </el-card>

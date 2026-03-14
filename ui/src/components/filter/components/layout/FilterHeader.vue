@@ -4,7 +4,7 @@
             <label class="filter-label">{{ label }}</label>
             <small v-if="description" class="filter-description">{{ description }}</small>
         </div>
-        <el-button
+        <ks-button
             link
             size="small"
             :icon="Close"

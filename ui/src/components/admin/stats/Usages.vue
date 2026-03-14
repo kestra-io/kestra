@@ -15,7 +15,7 @@
                     {{ item.value }}
                 </el-text>
                 <router-link v-if="$route.params.type !== 'instance'" :to="{name: item.route}">
-                    <el-button class="wh-15" :icon="TextSearchVariant" link />
+                    <ks-button class="wh-15" :icon="TextSearchVariant" link />
                 </router-link>
             </div>
             <slot name="additional-usages" />

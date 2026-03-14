@@ -38,12 +38,12 @@
             <br>
             <el-input-number v-model="newRunningCount" />
             <template #footer>
-                <el-button @click="editRunning = false">
+                <ks-button @click="editRunning = false">
                     {{ $t("cancel") }}
-                </el-button>
-                <el-button type="primary" @click="saveEditRunning()">
+                </ks-button>
+                <ks-button type="primary" @click="saveEditRunning()">
                     {{ $t("save") }}
-                </el-button>
+                </ks-button>
             </template>
         </el-dialog>
     </section>

@@ -54,12 +54,12 @@
         
         <template #footer>
             <div class="dialog-footer">
-                <el-button @click="handleSkip">
+                <ks-button @click="handleSkip">
                     {{ $t('setup.survey.skip') }}
-                </el-button>
-                <el-button type="primary" @click="handleSubmit">
+                </ks-button>
+                <ks-button type="primary" @click="handleSubmit">
                     {{ $t('setup.survey.continue') }}
-                </el-button>
+                </ks-button>
             </div>
         </template>
     </el-dialog>

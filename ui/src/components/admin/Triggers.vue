@@ -1,9 +1,9 @@
 <template>
     <TopNavBar :title="routeInfo.title">
         <template #additional-right>
-            <el-button :icon="Download" @click="exportTriggersAsStream()">
+            <ks-button :icon="Download" @click="exportTriggersAsStream()">
                 {{ $t('export_csv') }}
-            </el-button>
+            </ks-button>
         </template>
     </TopNavBar>
     <section class="container" v-if="ready">
@@ -67,27 +67,27 @@
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
-                                <el-button @click="setDisabledTriggers(false)">
+                                <ks-button @click="setDisabledTriggers(false)">
                                     {{ $t("enable") }}
-                                </el-button>
-                                <el-button @click="setDisabledTriggers(true)">
+                                </ks-button>
+                                <ks-button @click="setDisabledTriggers(true)">
                                     {{ $t("disable") }}
-                                </el-button>
-                                <el-button @click="unlockTriggers()">
+                                </ks-button>
+                                <ks-button @click="unlockTriggers()">
                                     {{ $t("unlock") }}
-                                </el-button>
-                                <el-button @click="pauseBackfills()">
+                                </ks-button>
+                                <ks-button @click="pauseBackfills()">
                                     {{ $t("pause backfills") }}
-                                </el-button>
-                                <el-button @click="unpauseBackfills()">
+                                </ks-button>
+                                <ks-button @click="unpauseBackfills()">
                                     {{ $t("continue backfills") }}
-                                </el-button>
-                                <el-button @click="deleteBackfills()">
+                                </ks-button>
+                                <ks-button @click="deleteBackfills()">
                                     {{ $t("delete backfills") }}
-                                </el-button>
-                                <el-button @click="deleteTriggers()">
+                                </ks-button>
+                                <ks-button @click="deleteTriggers()">
                                     {{ $t("delete triggers") }}
-                                </el-button>
+                                </ks-button>
                             </BulkSelect>
                         </template>
                         <el-table-column
@@ -229,7 +229,7 @@
                                         </el-tooltip>
                                     </span>
 
-                                    <el-button
+                                    <ks-button
                                         :icon="CalendarCollapseHorizontalOutline"
                                         v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="setBackfillModal(scope.row, true)"
@@ -238,7 +238,7 @@
                                         :disabled="scope.row.disabled || scope.row.codeDisabled"
                                     >
                                         {{ $t("backfill executions") }}
-                                    </el-button>
+                                    </ks-button>
                                 </div>
                             </template>
                         </el-table-column>
@@ -275,9 +275,9 @@
                 </template>
                 {{ $t("unlock trigger.warning") }}
                 <template #footer>
-                    <el-button :icon="LockOff" @click="unlock" type="primary">
+                    <ks-button :icon="LockOff" @click="unlock" type="primary">
                         {{ $t("unlock trigger.button") }}
-                    </el-button>
+                    </ks-button>
                 </template>
             </el-dialog>
 
@@ -317,13 +317,13 @@
                     :embed="true"
                 />
                 <template #footer>
-                    <el-button
+                    <ks-button
                         type="primary"
                         @click="postBackfill()"
                         :disabled="checkBackfill"
                     >
                         {{ $t("execute backfill") }}
-                    </el-button>
+                    </ks-button>
                 </template>
             </el-dialog>
         </div>

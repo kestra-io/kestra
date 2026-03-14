@@ -1,8 +1,8 @@
 <template>
     <el-dropdown v-if="enabled" placement="bottom-end" class="kill-dropdown">
-        <el-button :icon="Circle" @click="kill(true)">
+        <ks-button :icon="Circle" @click="kill(true)">
             {{ $t("kill") }}
-        </el-button>
+        </ks-button>
         <template #dropdown>
             <el-dropdown-menu class="m-dropdown-menu">
                 <el-dropdown-item

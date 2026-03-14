@@ -16,7 +16,7 @@
                     <h4 class="mb-0 plugin-name">
                         {{ pluginName }}
                     </h4>
-                    <el-button
+                    <ks-button
                         v-if="releaseNotesUrl"
                         size="small"
                         class="release-notes-btn d-none d-md-inline-flex"
@@ -24,7 +24,7 @@
                         @click="openReleaseNotes"
                     >
                         {{ $t('plugins.release') }}
-                    </el-button>
+                    </ks-button>
                 </div>
                 <div class="versions" v-if="(pluginsStore.versions?.length ?? 0) > 0">
                     <ks-select
@@ -46,14 +46,14 @@
                         />
                     </ks-select>
                     <div class="release-notes-mobile d-inline-flex d-md-none" v-if="releaseNotesUrl">
-                        <el-button
+                        <ks-button
                             size="small"
                             class="release-notes-btn"
                             :icon="GitHub"
                             @click="openReleaseNotes"
                         >
                             {{ $t('plugins.release') }}
-                        </el-button>
+                        </ks-button>
                     </div>
                 </div>
             </div>

@@ -165,13 +165,13 @@
                             {{ item }}
                         </el-tag>
                     </div>
-                    <el-button
+                    <ks-button
                         class="p-3"
                         @click="toggleArrayEdit(input.id)"
                         :icon="Pencil"
                     >
                         {{ $t('edit') }}
-                    </el-button>
+                    </ks-button>
                 </div>
 
                 <div v-else class="edit_input">
@@ -181,28 +181,28 @@
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
                             />
-                            <el-button @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
+                            <ks-button @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
                             <div class="d-flex flex-column controls-input">
                                 <ChevronUp @click="moveArrayItem(input, 'up', index)" />
                                 <ChevronDown @click="moveArrayItem(input, 'down', index)" />
                             </div>
                         </div>
                     </div>
-                    <el-button
+                    <ks-button
                         class="add-new mt-1 border-0"
                         @click="addNewArrayItem(input)"
                         :icon="Plus"
                     >
                         {{ $t('add_new_item') }}
-                    </el-button>
+                    </ks-button>
                     <div class="d-flex justify-content-end mt-2">
-                        <el-button
+                        <ks-button
                             @click="toggleArrayEdit(input.id)"
                             type="primary"
                             :icon="ContentSave"
                         >
                             {{ $t('save') }}
-                        </el-button>
+                        </ks-button>
                     </div>
                 </div>
             </div>

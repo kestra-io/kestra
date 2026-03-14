@@ -196,23 +196,23 @@
                         <el-col :span="12">
                             <el-input required v-model="tag.value" :placeholder="$t('value')" />
                         </el-col>
-                        <el-button-group class="d-flex flex-nowrap">
-                            <el-button
+                        <ks-button-group class="d-flex flex-nowrap">
+                            <ks-button
                                 :icon="Delete"
                                 @click="removeSecretTag(index)"
                             />
-                        </el-button-group>
+                        </ks-button-group>
                     </el-row>
-                    <el-button :icon="Plus" @click="addSecretTag" type="default">
+                    <ks-button :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
-                    </el-button>
+                    </ks-button>
                 </el-form-item>
             </el-form>
 
             <template #footer>
-                <el-button :icon="ContentSave" @click="saveSecret(form)" type="primary">
+                <ks-button :icon="ContentSave" @click="saveSecret(form)" type="primary">
                     {{ $t('save') }}
-                </el-button>
+                </ks-button>
             </template>
         </Drawer>
     </div>

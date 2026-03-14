@@ -1,9 +1,9 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <el-button v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
+        <ks-button v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
             <CheckBoldIcon class="text-success" />
-        </el-button>
+        </ks-button>
 
         <!-- Errors -->
         <el-tooltip
@@ -28,9 +28,9 @@
                     <el-main v-for="error in errors" :key="error">{{ error }}</el-main>
                 </el-container>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
+            <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
                 <AlertCircle class="text-danger" />
-            </el-button>
+            </ks-button>
         </el-tooltip>
 
         <!-- Warnings -->
@@ -64,9 +64,9 @@
                     </el-main>
                 </el-container>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
+            <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
                 <Alert class="text-warning" />
-            </el-button>
+            </ks-button>
         </el-tooltip>
 
         <!-- Infos -->
@@ -92,10 +92,10 @@
                     <el-main>{{ infos.join("<\n") }}</el-main>
                 </el-container>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
+            <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
                 <Alert class="text-info" />
                 <span class="text-info label">{{ $t("informative notice") }}</span>
-            </el-button>
+            </ks-button>
         </el-tooltip>
     </span>
 </template>

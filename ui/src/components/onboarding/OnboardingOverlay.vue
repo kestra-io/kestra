@@ -40,27 +40,27 @@
                 class="feedback"
             />
             <div v-if="!isFinishStep" class="actions">
-                <el-button @click="cancelTour">
+                <ks-button @click="cancelTour">
                     {{ t("onboarding.actions.cancel_tutorial") }}
-                </el-button>
+                </ks-button>
                 <div class="actions-right">
                     <span v-if="showStepCompleteBadge && isStepComplete && !isFinishStep" class="step-complete">
                         <CheckCircle :size="16" />
                         {{ t("onboarding.actions.complete") }}
                     </span>
-                    <el-button v-if="showNextButton" type="primary" @click="nextStep">
+                    <ks-button v-if="showNextButton" type="primary" @click="nextStep">
                         {{ nextLabel }}
-                    </el-button>
+                    </ks-button>
                 </div>
             </div>
             <div v-else class="actions finish-footer">
                 <div class="actions-right">
-                    <el-button @click="goToBlueprints">
+                    <ks-button @click="goToBlueprints">
                         {{ t("onboarding.finish_actions.explore_blueprints") }}
-                    </el-button>
-                    <el-button type="primary" :icon="Plus" @click="goToCreateFlow">
+                    </ks-button>
+                    <ks-button type="primary" :icon="Plus" @click="goToCreateFlow">
                         {{ t("onboarding.finish_actions.create_flow") }}
-                    </el-button>
+                    </ks-button>
                 </div>
             </div>
         </div>

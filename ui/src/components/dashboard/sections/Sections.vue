@@ -29,7 +29,7 @@
                                 v-if="isTableChart(chart.type)"
                                 :tooltip="$t('dashboards.export')"
                             >
-                                <el-button
+                                <ks-button
                                     @click="dashboardStore.export(dashboard, chart, {filters})"
                                     :icon="Download"
                                     link
@@ -41,7 +41,7 @@
                                 v-if="props.dashboard?.id !== 'default'"
                                 :tooltip="$t('dashboards.edition.chart')"
                             >
-                                <el-button
+                                <ks-button
                                     tag="router-link"
                                     :to="{
                                         name: 'dashboards/update',

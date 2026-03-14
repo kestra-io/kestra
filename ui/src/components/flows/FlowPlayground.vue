@@ -11,7 +11,7 @@
                     :execution="executionsStore.execution"
                 />
                 <el-dropdown trigger="click" placement="bottom-end">
-                    <el-button :icon="DotsVertical" link class="tab-icon" />
+                    <ks-button :icon="DotsVertical" link class="tab-icon" />
                     <template #dropdown>
                         <el-dropdown-menu class="m-2">
                             <el-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
@@ -23,7 +23,7 @@
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
-                <el-button
+                <ks-button
                     :icon="CloseIcon"
                     link
                     class="tab-icon"

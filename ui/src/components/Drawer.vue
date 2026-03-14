@@ -14,9 +14,9 @@
                 {{ title }}
                 <slot name="header" />
             </span>
-            <el-button link class="full-screen">
+            <ks-button link class="full-screen">
                 <Fullscreen :title="$t('toggle fullscreen')" @click="toggleFullScreen" />
-            </el-button>
+            </ks-button>
         </template>
 
         <template #footer>

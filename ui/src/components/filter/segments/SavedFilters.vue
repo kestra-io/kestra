@@ -4,7 +4,7 @@
             <h6>
                 {{ $t("filter.saved filters") }}
             </h6>
-            <el-button
+            <ks-button
                 link
                 :icon="Close"
                 @click="$emit('close')"
@@ -27,7 +27,7 @@
                 </div>
                 <div class="action-buttons">
                     <el-tooltip :content="$t('filter.edit filter')" placement="top" effect="light">
-                        <el-button
+                        <ks-button
                             link
                             size="small"
                             class="edit-button"
@@ -36,7 +36,7 @@
                         />
                     </el-tooltip>
                     <el-tooltip :content="$t('filter.delete filter')" placement="top" effect="light">
-                        <el-button
+                        <ks-button
                             link
                             size="small"
                             class="delete-button"

@@ -6,9 +6,9 @@
             placement="left"
             :autoClose="2000"
         >
-            <el-button :icon="ContentCopy" type="default" :link @click="copyText">
+            <ks-button :icon="ContentCopy" type="default" :link @click="copyText">
                 <span v-if="label">{{ label }}</span>
-            </el-button>
+            </ks-button>
         </el-tooltip>
 
         <slot name="right" />

@@ -1,11 +1,11 @@
 <template>
-    <el-button
+    <ks-button
         v-if="enabled"
         :icon="Play"
         @click="click"
     >
         {{ $t('resume') }}
-    </el-button>
+    </ks-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -15,9 +15,9 @@
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
         </el-form>
         <template #footer>
-            <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
+            <ks-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
                 {{ $t('resume') }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 </template>

@@ -1,5 +1,5 @@
 <template>
-    <el-button
+    <ks-button
         size="small"
         type="primary"
         :icon="EyeOutline"
@@ -7,7 +7,7 @@
         :disabled="isZipFile"
     >
         {{ $t("preview.label") }}
-    </el-button>
+    </ks-button>
     <Drawer
         v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
@@ -86,7 +86,7 @@
                                 placement="bottom"
                                 :autoClose="2000"
                             >
-                                <el-button
+                                <ks-button
                                     :icon="Wrap"
                                     type="default"
                                     @click="wordWrap = !wordWrap"

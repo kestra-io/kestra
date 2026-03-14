@@ -10,15 +10,15 @@
 
         <div class="action-buttons">
             <el-tooltip :content="$t('filter.reset_tooltip')" placement="top" effect="light">
-                <el-button size="small" :icon="Restore" @click="emits('reset')" />
+                <ks-button size="small" :icon="Restore" @click="emits('reset')" />
             </el-tooltip>
-            <el-button
+            <ks-button
                 type="primary"
                 size="small"
                 @click="emits('apply')"
             >
                 {{ $t("filter.footer_apply") }}
-            </el-button>
+            </ks-button>
         </div>
     </div>
 </template>

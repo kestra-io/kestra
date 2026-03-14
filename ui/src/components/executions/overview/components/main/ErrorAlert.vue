@@ -22,9 +22,9 @@
             </div>
             <div v-if="logs.length > 3" class="link">
                 <router-link :to>
-                    <el-button>
+                    <ks-button>
                         {{ $t("errorLogs") }}
-                    </el-button>
+                    </ks-button>
                 </router-link>
             </div>
         </div>

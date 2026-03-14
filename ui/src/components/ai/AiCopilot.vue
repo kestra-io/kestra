@@ -11,7 +11,7 @@
                 <span class="d-inline-flex title align-items-center">
                     <AiIcon />&nbsp;<span>{{ $t("ai.flow.title") }}</span>
                 </span>
-                <el-button
+                <ks-button
                     class="ai-close-button"
                     :icon="Close"
                     @click.stop="emit('close')"
@@ -226,35 +226,35 @@
                         </span>
                     </template>
                     <template v-else-if="isListening">
-                        <el-button
+                        <ks-button
                             class="no-bg-btn"
                             @click="cancelVoice"
                         >
                             <Close />
-                        </el-button>
-                        <el-button
+                        </ks-button>
+                        <ks-button
                             class="no-bg-btn"
                             @click="stopAndValidateVoice"
                         >
                             <Check />
-                        </el-button>
+                        </ks-button>
                     </template>
                     <template v-else>
-                        <el-button
+                        <ks-button
                             class="no-bg-btn"
                             @click="toggleVoiceInput"
                         >
                             <Microphone />
-                        </el-button>
+                        </ks-button>
 
-                        <el-button
+                        <ks-button
                             type="primary"
                             class="send-btn"
                             :disabled="!prompt.trim()"
                             @click="submitPrompt"
                         >
                             <ArrowUp />
-                        </el-button>
+                        </ks-button>
                     </template>
                 </div>
             </div>

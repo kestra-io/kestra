@@ -20,10 +20,10 @@
             />
         </div>
         <div class="flex-shrink-1">
-            <el-button-group class="d-flex">
-                <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" />
-            </el-button-group>
+            <ks-button-group class="d-flex">
+                <ks-button :icon="Plus" @click="addItem" />
+                <ks-button :icon="Minus" @click="removeItem(index)" />
+            </ks-button-group>
         </div>
     </div>
 </template>

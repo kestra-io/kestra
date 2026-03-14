@@ -6,38 +6,38 @@
             <div v-loading="isRendering" ref="container" />
 
             <div class="controls">
-                <el-button
+                <ks-button
                     size="small"
                     :title="$t('dependency.controls.zoom_in')"
                     @click="handlers.zoomIn"
                 >
                     <Plus />
-                </el-button>
-                <el-button
+                </ks-button>
+                <ks-button
                     size="small"
                     :title="$t('dependency.controls.zoom_out')"
                     @click="handlers.zoomOut"
                 >
                     <Minus />
-                </el-button>
-                <el-button
+                </ks-button>
+                <ks-button
                     size="small"
                     :title="$t('dependency.controls.clear_selection')"
                     @click="handlers.clearSelection"
                 >
                     <SelectionRemove />
-                </el-button>
-                <el-button
+                </ks-button>
+                <ks-button
                     size="small"
                     :title="$t('dependency.controls.fit_view')"
                     @click="handlers.fit"
                 >
                     <FitToScreenOutline />
-                </el-button>
+                </ks-button>
                 <el-dropdown>
-                    <el-button size="small" :title="$t('export')">
+                    <ks-button size="small" :title="$t('export')">
                         <Download />
-                    </el-button>
+                    </ks-button>
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item @click="handlers.exportAsImage('jpeg', selectedNodeID)">

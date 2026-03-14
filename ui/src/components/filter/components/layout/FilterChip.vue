@@ -22,7 +22,7 @@
             @update="emit('update', $event)"
             @remove="emit('remove', $event)"
         />
-        <el-button
+        <ks-button
             link
             size="small"
             class="close"

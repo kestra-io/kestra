@@ -1,7 +1,7 @@
 <template>
-    <el-button class="main alternative">
+    <ks-button class="main alternative">
         {{ label }}
-    </el-button>
+    </ks-button>
 </template>
 
 <script setup lang="ts">

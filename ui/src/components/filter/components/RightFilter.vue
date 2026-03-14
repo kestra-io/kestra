@@ -3,7 +3,7 @@
         class="filter-container"
         :class="{'filter-shrink': filter.searchInputFullWidth.value}"
     >
-        <el-button
+        <ks-button
             v-if="filter.tableOptions.value?.refresh?.shown"
             @click="filter.refreshData"
             :icon="Refresh"
@@ -11,7 +11,7 @@
             class="refresh-button"
         >
             {{ $t("filter.refresh") }}
-        </el-button>
+        </ks-button>
 
         <SaveFilters
             v-if="!filter.searchInputFullWidth.value"
@@ -38,7 +38,7 @@
             @hide="isSavedFiltersVisible = false"
         >
             <template #reference>
-                <el-button type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
+                <ks-button type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
                     <el-tooltip :content="$t('filter.saved tooltip')" placement="top" effect="light">
                         <span class="saved-content">
                             {{ $t("filter.saved") }}
@@ -50,7 +50,7 @@
                             </el-icon>
                         </span>
                     </el-tooltip>
-                </el-button>
+                </ks-button>
             </template>
 
             <SavedFilters
@@ -68,7 +68,7 @@
             placement="top"
             effect="light"
         >
-            <el-button
+            <ks-button
                 type="default"
                 size="default"
                 @click="filter.toggleOptions"

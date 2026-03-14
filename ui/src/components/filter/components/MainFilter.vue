@@ -12,7 +12,7 @@
             @hide="isCustomizeFiltersVisible = false"
         >
             <template #reference>
-                <el-button
+                <ks-button
                     :icon="FilterOutline"
                     size="default"
                     class="customize-button"
@@ -26,7 +26,7 @@
                     >
                         <span>{{ $t("filter.customize") }}</span>
                     </el-tooltip>
-                </el-button>
+                </ks-button>
             </template>
 
             <CustomizeFilters
@@ -76,14 +76,14 @@
             :content="$t('filter.reset_all')"
             :disabled="filter.readOnly?.value"
         >
-            <el-button
+            <ks-button
                 link
                 class="refresh-btn"
                 @click="handleReset"
                 :disabled="!canReset || filter.readOnly?.value"
             >
                 {{ $t("filter.reset") }}
-            </el-button>
+            </ks-button>
         </el-tooltip>
     </div>
 </template>

@@ -4,9 +4,9 @@
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
-                        <el-button :icon="Download" @click="exportExecutionsAsStream()">
+                        <ks-button :icon="Download" @click="exportExecutionsAsStream()">
                             {{ $t('export_csv') }}
-                        </el-button>
+                        </ks-button>
                     </li>
                     <li>
                         <template v-if="hasAnyExecute">
@@ -17,9 +17,9 @@
                 <template v-if="$route.name === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
+                            <ks-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
                                 {{ $t("edit flow") }}
-                            </el-button>
+                            </ks-button>
                         </template>
                     </li>
                     <li>
@@ -87,26 +87,26 @@
                             @unselect="toggleAllUnselected"
                         >
                             <!-- Always visible buttons -->
-                            <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                            <ks-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                                 {{ $t("change state") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                            </ks-button>
+                            <ks-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t("restart") }}
-                            </el-button>
-                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
+                            </ks-button>
+                            <ks-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                                 {{ $t("replay") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                            </ks-button>
+                            <ks-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t("kill") }}
-                            </el-button>
-                            <el-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
+                            </ks-button>
+                            <ks-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                                 {{ $t("delete") }}
-                            </el-button>
+                            </ks-button>
 
                             <el-dropdown>
-                                <el-button>
+                                <ks-button>
                                     <DotsVertical />
-                                </el-button>
+                                </ks-button>
                                 <template #dropdown>
                                     <el-dropdown-menu>
                                         <el-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
@@ -140,12 +140,12 @@
                             </template>
 
                             <template #footer>
-                                <el-button @click="isOpenLabelsModal = false">
+                                <ks-button @click="isOpenLabelsModal = false">
                                     {{ $t("cancel") }}
-                                </el-button>
-                                <el-button type="primary" @click="setLabels()">
+                                </ks-button>
+                                <ks-button type="primary" @click="setLabels()">
                                     {{ $t("ok") }}
-                                </el-button>
+                                </ks-button>
                             </template>
 
                             <el-form labelPosition="top">
@@ -322,15 +322,15 @@
         </template>
 
         <template #footer>
-            <el-button @click="changeStatusDialogVisible = false">
+            <ks-button @click="changeStatusDialogVisible = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button
+            </ks-button>
+            <ks-button
                 type="primary"
                 @click="changeStatus()"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 
@@ -361,15 +361,15 @@
         </template>
 
         <template #footer>
-            <el-button @click="unqueueDialogVisible = false">
+            <ks-button @click="unqueueDialogVisible = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button
+            </ks-button>
+            <ks-button
                 type="primary"
                 @click="unqueueExecutions()"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 
@@ -383,18 +383,18 @@
         </template>
 
         <template #footer>
-            <el-button @click="isOpenReplayModal = false">
+            <ks-button @click="isOpenReplayModal = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button @click="replayExecutions(true)">
+            </ks-button>
+            <ks-button @click="replayExecutions(true)">
                 {{ $t('replay latest revision') }}
-            </el-button>
-            <el-button
+            </ks-button>
+            <ks-button
                 type="primary"
                 @click="replayExecutions(false)"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 </template>

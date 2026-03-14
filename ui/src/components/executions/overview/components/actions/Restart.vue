@@ -79,14 +79,14 @@
                 class="mt-2"
             >
                 <el-form-item>
-                    <el-select v-model="revisionsSelected">
-                        <el-option
+                    <ks-select v-model="revisionsSelected">
+                        <ks-option
                             v-for="item in revisionsOptions"
                             :key="item.value"
                             :label="item.text"
                             :value="item.value"
                         />
-                    </el-select>
+                    </ks-select>
                 </el-form-item>
             </el-form>
 

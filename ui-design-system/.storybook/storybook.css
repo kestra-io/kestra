@@ -1,0 +1,35 @@
+/*
+ * Canvas background management for Storybook + Element Plus.
+ *
+ * `withThemeByClassName` toggles the `dark` class on <html>.
+ * Element Plus uses `html.dark` as its dark-mode selector.
+ *
+ * We target `html.dark body` (higher specificity than any plain `body`
+ * rule Storybook may inject) so the canvas flips reliably with the theme.
+ *
+ * Colors are taken directly from the Element Plus dark-mode variable values:
+ *   --el-bg-color            #141414   (story canvas)
+ *   --el-bg-color-page       #0a0a0a   (outer viewport)
+ *   --el-text-color-primary  #e5eaf3
+ */
+
+/* ── Light baseline ─────────────────────────────────────────────────────── */
+body,
+#storybook-root {
+    background-color: #ffffff;
+    color: #303133;
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease;
+}
+
+/* ── Dark override ──────────────────────────────────────────────────────── */
+/*
+ * Two-segment selector beats any single-class or element selector
+ * Storybook uses, without needing !important.
+ */
+html.dark body,
+html.dark #storybook-root {
+    background-color: #141414;
+    color: #e5eaf3;
+}

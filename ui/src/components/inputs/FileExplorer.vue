@@ -5,7 +5,7 @@
         @click="onRootClick"
     >
         <div class="flex-row d-flex">
-            <el-select
+            <ks-select
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
                 filterable
@@ -16,14 +16,14 @@
                 <template #prefix>
                     <Magnify />
                 </template>
-                <el-option
+                <ks-option
                     v-for="item in filesStore.searchResults"
                     :key="item"
                     :label="item"
                     :value="item"
                     @click.prevent.stop="chooseSearchResults(item)"
                 />
-            </el-select>
+            </ks-select>
             <el-button-group class="d-flex">
                 <el-tooltip
                     effect="light"
@@ -249,19 +249,19 @@
                     {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
             </div>
-            <el-select
+            <ks-select
                 v-model="dialog.folder"
                 clearable
                 size="large"
                 class="mb-3"
             >
-                <el-option
+                <ks-option
                     v-for="folder in filesStore.folders"
                     :key="folder"
                     :value="folder"
                     :label="folder"
                 />
-            </el-select>
+            </ks-select>
             <template #footer>
                 <div>
                     <el-button @click="toggleDialog(false)">

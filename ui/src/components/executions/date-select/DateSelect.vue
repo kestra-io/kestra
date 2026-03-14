@@ -1,6 +1,6 @@
 <template>
     <el-tooltip :disabled="tooltip === undefined" :content="tooltip" effect="light">
-        <el-select
+        <ks-select
             :modelValue="value"
             :placeholder="placeholder"
             @change="emit('change', $event)"
@@ -9,13 +9,13 @@
             <template #prefix>
                 <ClockOutline />
             </template>
-            <el-option
+            <ks-option
                 v-for="preset in options"
                 :key="preset.value"
                 :label="$t(preset.label)"
                 :value="preset.value"
             />
-        </el-select>
+        </ks-select>
     </el-tooltip>
 </template>
 

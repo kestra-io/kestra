@@ -1,18 +1,18 @@
 <template>
-    <el-select
+    <ks-select
         v-model="scope"
         @update:model-value="onInput"
         collapseTags
         multiple
         :placeholder="$t('scope_filter.all', {label})"
     >
-        <el-option
+        <ks-option
             v-for="item in options"
             :key="item.key"
             :label="item.name"
             :value="item.key"
         />
-    </el-select>
+    </ks-select>
 </template>
 <script>
     export default {

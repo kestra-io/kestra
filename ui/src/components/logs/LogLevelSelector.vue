@@ -1,20 +1,20 @@
 <template>
-    <el-select
+    <ks-select
         :modelValue="value"
         @update:model-value="emit('update:modelValue', $event)"
         filterable
         :persistent="false"
         :placeholder="$t('revisions')"
     >
-        <el-option
+        <ks-option
             v-for="item in LEVELS"
             :key="item"
             :label="item"
             :value="item"
         >
             {{ item }}
-        </el-option>
-    </el-select>
+        </ks-option>
+    </ks-select>
 </template>
 <script setup lang="ts">
     const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>()

@@ -2,19 +2,19 @@
     <div class="d-flex pagination" :class="{'top': top}">
         <slot name="search" />
         <div class="flex-grow-1 d-sm-none d-md-inline-block page-size">
-            <el-select
+            <ks-select
                 v-if="!top"
                 size="small"
                 :modelValue="internalSize"
                 @update:model-value="pageSizeChange"
             >
-                <el-option
+                <ks-option
                     v-for="item in pageOptions"
                     :key="item.value"
                     :label="item.text"
                     :value="item.value"
                 />
-            </el-select>
+            </ks-select>
         </div>
         <div v-if="isPaginationDisplayed">
             <el-pagination

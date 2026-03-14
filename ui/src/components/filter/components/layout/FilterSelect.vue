@@ -3,12 +3,12 @@
         <TimeRangeSwitch v-if="filterKey?.key === 'timeRange'" v-model="local.timeRangeMode" />
 
         <div v-if="local.timeRangeMode === 'predefined'" class="section">
-            <el-select
+            <ks-select
                 v-model="local.value"
                 :placeholder="placeholder ?? $t('filter.select_option')"
                 :showArrow="false"
             >
-                <el-option
+                <ks-option
                     v-for="option in options"
                     :key="option.value"
                     :label="option.label"
@@ -21,8 +21,8 @@
                         />
                         {{ option.label }}
                     </span>
-                </el-option>
-            </el-select>
+                </ks-option>
+            </ks-select>
         </div>
 
         <div v-else class="section">

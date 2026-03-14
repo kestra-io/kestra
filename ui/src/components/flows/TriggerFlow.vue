@@ -40,32 +40,32 @@
                 labelPosition="top"
             >
                 <el-form-item :label="$t('namespace')">
-                    <el-select
+                    <ks-select
                         v-model="localNamespace"
                     >
-                        <el-option
+                        <ks-option
                             v-for="np in executionsStore.namespaces"
                             :key="np"
                             :label="np"
                             :value="np"
                         />
-                    </el-select>
+                    </ks-select>
                 </el-form-item>
                 <el-form-item
                     v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
                     :label="$t('flow')"
                 >
-                    <el-select
+                    <ks-select
                         v-model="localFlow"
                         valueKey="id"
                     >
-                        <el-option
+                        <ks-option
                             v-for="exFlow in executionsStore.flowsExecutable"
                             :key="exFlow.id"
                             :label="exFlow.id"
                             :value="exFlow"
                         />
-                    </el-select>
+                    </ks-select>
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">

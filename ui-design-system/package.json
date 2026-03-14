@@ -1,0 +1,55 @@
+{
+    "name": "@kestra-io/ui-design-system",
+    "version": "0.1.0",
+    "description": "Kestra UI Design System – component abstractions over Element Plus",
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/src/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/src/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "./node_modules/.bin/vite build",
+        "build:watch": "vite build --watch",
+        "test": "vitest run --config vitest.unit.config.ts",
+        "test:watch": "vitest",
+        "storybook": "storybook dev -p 6007",
+        "build-storybook": "storybook build"
+    },
+    "dependencies": {
+        "element-plus": "2.13.5"
+    },
+    "peerDependencies": {
+        "vue": "^3.5.0"
+    },
+    "devDependencies": {
+        "@storybook/addon-themes": "^10.2.17",
+        "@storybook/addon-vitest": "^10.2.19",
+        "@storybook/vue3-vite": "^10.2.17",
+        "@vitejs/plugin-vue": "^6.0.4",
+        "@vitest/browser": "^4.1.0",
+        "@vitest/browser-playwright": "^4.1.0",
+        "@vitest/coverage-v8": "^4.1.0",
+        "@vitest/runner": "^4.1.0",
+        "@vue/test-utils": "^2.4.6",
+        "happy-dom": "^20.8.4",
+        "jsdom": "^28.1.0",
+        "playwright": "^1.58.2",
+        "storybook": "^10.2.17",
+        "typescript": "^5.9.3",
+        "vite": "^6.3.5",
+        "vite-plugin-dts": "^4.5.4",
+        "vitest": "^4.1.0",
+        "vue": "^3.5.30",
+        "vue-material-design-icons": "^5.3.1",
+        "vue-tsc": "^3.2.5"
+    }
+}

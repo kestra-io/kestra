@@ -21,7 +21,7 @@
             </el-alert>
             <el-form class="ks-horizontal max-size mt-3">
                 <el-form-item :label="$t('row count')">
-                    <el-select
+                    <ks-select
                         v-model="maxPreview"
                         filterable
                         clearable
@@ -29,16 +29,16 @@
                         :persistent="false"
                         @change="getFilePreview"
                     >
-                        <el-option
+                        <ks-option
                             v-for="item in maxPreviewOptions"
                             :key="item"
                             :label="item"
                             :value="item"
                         />
-                    </el-select>
+                    </ks-select>
                 </el-form-item>
                 <el-form-item :label="$t('encoding')">
-                    <el-select
+                    <ks-select
                         v-model="encoding"
                         filterable
                         clearable
@@ -46,13 +46,13 @@
                         :persistent="false"
                         @change="getFilePreview"
                     >
-                        <el-option
+                        <ks-option
                             v-for="item in encodingOptions"
                             :key="item.value"
                             :label="item.label"
                             :value="item.value"
                         />
-                    </el-select>
+                    </ks-select>
                 </el-form-item>
                 <el-form-item :label="($t('preview.view'))">
                     <el-switch

@@ -6,19 +6,19 @@
             clearable
         />
 
-        <el-select 
+        <ks-select 
             v-model="namespace"
             :placeholder="$t('dependency.search.namespace.select')"
             clearable
             filterable
         >
-            <el-option
+            <ks-option
                 v-for="item in namespaces"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value"
             />
-        </el-select>
+        </ks-select>
 
         <el-switch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
     </section>

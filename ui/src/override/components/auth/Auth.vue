@@ -1,5 +1,5 @@
 <template>
-    <el-select
+    <ks-select
         placement="right-end"
         :popperOffset="20"
         :showArrow="false"
@@ -11,40 +11,40 @@
             <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra" class="user-avatar">
         </template>
         <template #header>
-            <el-option :value="{}" class=" list-unstyled">
+            <ks-option :value="{}" class=" list-unstyled">
                 <div class="menu-item">
                     <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
                     {{ $t("kestra") }}
                 </div>
-            </el-option>
+            </ks-option>
         </template>
-        <el-option label="welcome" value="welcome">
+        <ks-option label="welcome" value="welcome">
             <RouterLink :to="startTutorial" class="menu-item">
                 <RocketLaunchOutline class="menu-icon" />
                 {{ $t("product_tour") }}
             </RouterLink>
-        </el-option>
-        <el-option label="Settings" value="settings">
+        </ks-option>
+        <ks-option label="Settings" value="settings">
             <RouterLink :to="{name: 'settings'}" class="menu-item">
                 <CogOutline class="menu-icon" />
                 {{ $t("settings.label") }}
             </RouterLink>
-        </el-option>
-        <el-option label="slack" value="slack">
+        </ks-option>
+        <ks-option label="slack" value="slack">
             <a href="https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
                 {{ $t("join_slack") }}
             </a>
-        </el-option>
+        </ks-option>
         <template #footer>
-            <el-option class="list-unstyled" :value="'logout'" @click="logout">
+            <ks-option class="list-unstyled" :value="'logout'" @click="logout">
                 <div class="menu-item">
                     <Logout class="menu-icon" />
                     {{ $t("setup.logout") }}
                 </div>
-            </el-option>
+            </ks-option>
         </template>
-    </el-select>
+    </ks-select>
 </template>
 
 <script setup lang="ts">
@@ -63,7 +63,7 @@
 
     const route = useRoute();
     const router = useRouter();
-    
+
     const startTutorial = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},

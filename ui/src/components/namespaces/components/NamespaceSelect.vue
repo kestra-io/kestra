@@ -1,5 +1,5 @@
 <template>
-    <el-select
+    <ks-select
         class="fit-text"
         v-model="modelValue"
         :multiple
@@ -26,13 +26,13 @@
                 {{ value }}
             </el-tag>
         </template>
-        <el-option
+        <ks-option
             v-for="item in options"
             :key="item.id"
             :label="item.label"
             :value="item.id"
         />
-    </el-select>
+    </ks-select>
 </template>
 
 <script setup lang="ts">

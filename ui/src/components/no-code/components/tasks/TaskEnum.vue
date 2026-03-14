@@ -1,5 +1,5 @@
 <template>
-    <el-select
+    <ks-select
         :modelValue="values"
         @update:model-value="onInput"
         filterable
@@ -7,13 +7,13 @@
         :persistent="false"
         :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root?.split('.').pop() || 'value'}`"
     >
-        <el-option
+        <ks-option
             v-for="item in schema.enum"
             :key="item"
             :label="item"
             :value="item"
         />
-    </el-select>
+    </ks-select>
 </template>
 <script>
     import Task from "./MixinTask";

@@ -22,7 +22,7 @@
                 @update:model-value="onChange(input)"
                 @confirm="onSubmit"
             />
-            <el-select
+            <ks-select
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
@@ -34,15 +34,15 @@
                 filterable
                 clearable
             >
-                <el-option
+                <ks-option
                     v-for="item in input.values"
                     :key="item"
                     :label="item"
                     :value="item"
                 >
                     <Markdown :source="item" />
-                </el-option>
-            </el-select>
+                </ks-option>
+            </ks-select>
             <el-radio-group
                 v-if="input.type === 'SELECT' && input.isRadio"
                 :data-testid="`input-form-${input.id}`"
@@ -57,7 +57,7 @@
                     :placeholder="$t('custom value')"
                 />
             </el-radio-group>
-            <el-select
+            <ks-select
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
@@ -70,15 +70,15 @@
                 clearable
                 :allowCreate="input.allowCustomValue"
             >
-                <el-option
+                <ks-option
                     v-for="item in (input.values ?? input.options)"
                     :key="item"
                     :label="item"
                     :value="item"
                 >
                     <Markdown :source="item" />
-                </el-option>
-            </el-select>
+                </ks-option>
+            </ks-select>
             <el-input
                 type="password"
                 v-if="input.type === 'SECRET'"

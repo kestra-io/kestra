@@ -98,7 +98,8 @@ export default defineConfig({
             "nprogress"
         ],
         exclude: [
-            "* > @kestra-io/ui-libs"
+            "* > @kestra-io/ui-libs",
+            "@kestra-io/ui-design-system"
         ]
     },
 })

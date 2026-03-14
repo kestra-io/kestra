@@ -294,12 +294,12 @@
         <template #default>
             <p v-html="changeStatusToast()" />
 
-            <el-select
+            <ks-select
                 :required="true"
                 v-model="selectedStatus"
                 :persistent="false"
             >
-                <el-option
+                <ks-option
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
@@ -308,8 +308,8 @@
                         <Status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </el-option>
-            </el-select>
+                </ks-option>
+            </ks-select>
         </template>
 
         <template #footer>
@@ -333,12 +333,12 @@
         <template #default>
             <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? executionsStore.total : selection.length})" />
 
-            <el-select
+            <ks-select
                 :required="true"
                 v-model="selectedStatus"
                 :persistent="false"
             >
-                <el-option
+                <ks-option
                     v-for="item in unQueuestates"
                     :key="item.code"
                     :value="item.code"
@@ -347,8 +347,8 @@
                         <Status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </el-option>
-            </el-select>
+                </ks-option>
+            </ks-select>
         </template>
 
         <template #footer>

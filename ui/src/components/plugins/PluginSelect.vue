@@ -1,11 +1,11 @@
 <template>
-    <el-select
+    <ks-select
         v-model="modelValue"
         :placeholder="$te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
         clearable
     >
-        <el-option
+        <ks-option
             v-for="item in taskModels"
             :key="item.cls"
             :label="item.cls"
@@ -25,7 +25,7 @@
                     </div>
                 </div>
             </span>
-        </el-option>
+        </ks-option>
 
         <template #prefix>
             <TaskIcon
@@ -35,7 +35,7 @@
                 :icons="pluginsStore.icons"
             />
         </template>
-    </el-select>
+    </ks-select>
 </template>
 
 <script setup lang="ts">

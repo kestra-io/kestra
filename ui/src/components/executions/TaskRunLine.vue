@@ -146,19 +146,19 @@
         </el-dropdown>
     </div>
     <div class="attempt-header">
-        <el-select
+        <ks-select
             class="d-none d-md-inline-block attempt-select"
             :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="$emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
-            <el-option
+            <ks-option
                 v-for="(_, index) in attempts(currentTaskRun)"
                 :key="`attempt-${index}-${currentTaskRun.id}`"
                 :value="index"
                 :label="`${$t('attempt')} ${index + 1}`"
             />
-        </el-select>
+        </ks-select>
 
         <div class="task-status">
             <Status size="small" :status="selectedAttempt(currentTaskRun).state.current" />

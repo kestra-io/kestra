@@ -1,17 +1,17 @@
 <template>
     <el-form-item :class="{'radio-wrapper':!isSelectingPlugins}">
-        <el-select
+        <ks-select
             v-if="isSelectingPlugins"
             v-model="selectedSchema"
             filterable
         >
-            <el-option
+            <ks-option
                 v-for="item in schemaOptions"
                 :key="item.value"
                 :label="item.id"
                 :value="item.value"
             />
-        </el-select>
+        </ks-select>
         <el-radio-group v-else v-model="selectedSchema" @change="onSelectType">
             <el-radio
                 v-for="radioSchema in schemaOptions"

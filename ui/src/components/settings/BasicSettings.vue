@@ -33,19 +33,19 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_display')">
-                        <el-select :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
+                            <ks-option
                                 v-for="item in logDisplayOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.editor_type')">
-                        <el-select :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
+                            <ks-option
                                 v-for="item in [
                                     {
                                         label: $t('no_code.labels.yaml'),
@@ -60,40 +60,40 @@
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_flow')">
-                        <el-select :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
+                            <ks-option
                                 v-for="item in Object.values(executeFlowBehaviours)"
                                 :key="item"
                                 :label="$t(`open in ${item}`)"
                                 :value="item"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
-                        <el-select :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
+                            <ks-option
                                 v-for="item in executeDefaultTabOptions"
                                 :key="item.value"
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
-                        <el-select :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                            <ks-option
                                 v-for="item in flowDefaultTabOptions"
                                 :key="item.value"
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
                     <Column :label="$t('settings.blocks.configuration.fields.playground')">
                         <el-switch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
@@ -134,14 +134,14 @@
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.theme')">
-                        <el-select :modelValue="pendingSettings.theme" @update:model-value="onTheme">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.theme" @update:model-value="onTheme">
+                            <ks-option
                                 v-for="item in themesOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
@@ -155,14 +155,14 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_family')">
-                        <el-select :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
+                            <ks-option
                                 v-for="item in fontFamilyOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_size')">
@@ -237,36 +237,36 @@
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.language')">
-                        <el-select :modelValue="pendingSettings.lang" @update:model-value="onLang">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.lang" @update:model-value="onLang">
+                            <ks-option
                                 v-for="item in langOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">
-                        <el-select :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
+                            <ks-option
                                 v-for="item in zonesWithOffset"
                                 :key="item.zone"
                                 :label="`${item.zone} (UTC${item.offset === 0 ? '' : item.formattedOffset})`"
                                 :value="item.zone"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.date_format')">
-                        <el-select :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
-                            <el-option
+                        <ks-select :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
+                            <ks-option
                                 v-for="item in dateFormats"
                                 :key="pendingSettings.timezone + item.value"
                                 :label="$filters.date(now, item.value)"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </ks-select>
                     </Column>
                 </Row>
             </template>

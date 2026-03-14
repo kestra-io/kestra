@@ -203,20 +203,20 @@
                     <span class="shortcut-hint">(⌘) Ctrl + Alt (⌥) + Shift + K {{ $t("to toggle") }}</span>
                 </div>
 
-                <el-select
+                <ks-select
                     v-if="providers.length > 1"
                     class="w-50 mx-3"
                     :modelValue="selectedProvider"
                     @update:model-value="onProviderChange"
                     :placeholder="$t('ai.flow.select_provider')"
                 >
-                    <el-option
+                    <ks-option
                         v-for="p in providers"
                         :key="p.id"
                         :label="p.displayName"
                         :value="p.id"
                     />
-                </el-select>
+                </ks-select>
 
                 <div class="footer-right">
                     <template v-if="waitingForReply">

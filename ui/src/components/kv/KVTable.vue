@@ -159,19 +159,19 @@
             </el-form-item>
 
             <el-form-item :label="$t('kv.type')" prop="type" required>
-                <el-select
+                <ks-select
                     v-model="kv.type"
                     :disabled="kv.update"
                     @change="kv.value = undefined"
                 >
-                    <el-option value="STRING" />
-                    <el-option value="NUMBER" />
-                    <el-option value="BOOLEAN" />
-                    <el-option value="DATETIME" />
-                    <el-option value="DATE" />
-                    <el-option value="DURATION" />
-                    <el-option value="JSON" />
-                </el-select>
+                    <ks-option value="STRING" />
+                    <ks-option value="NUMBER" />
+                    <ks-option value="BOOLEAN" />
+                    <ks-option value="DATETIME" />
+                    <ks-option value="DATE" />
+                    <ks-option value="DURATION" />
+                    <ks-option value="JSON" />
+                </ks-select>
             </el-form-item>
 
             <el-form-item :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'">

@@ -1,5 +1,5 @@
 <template>
-    <el-select
+    <ks-select
         :modelValue="value"
         @update:model-value="onInput"
         filterable
@@ -9,15 +9,15 @@
         :persistent="false"
         :placeholder="$t('state')"
     >
-        <el-option
+        <ks-option
             v-for="item in statuses"
             :key="item.key"
             :label="item.name"
             :value="item.key"
         >
             <Status :status="item.key" size="small" />
-        </el-option>
-    </el-select>
+        </ks-option>
+    </ks-select>
 </template>
 <script>
     import {State, Status} from "@kestra-io/ui-libs"

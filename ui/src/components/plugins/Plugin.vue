@@ -27,7 +27,7 @@
                     </el-button>
                 </div>
                 <div class="versions" v-if="(pluginsStore.versions?.length ?? 0) > 0">
-                    <el-select
+                    <ks-select
                         v-model="version"
                         placeholder="Version"
                         size="small"
@@ -38,13 +38,13 @@
                             <span>Version: </span>
                             <span style="font-weight: bold">{{ value }}</span>
                         </template>
-                        <el-option
+                        <ks-option
                             v-for="item in pluginsStore.versions"
                             :key="item"
                             :label="item"
                             :value="item"
                         />
-                    </el-select>
+                    </ks-select>
                     <div class="release-notes-mobile d-inline-flex d-md-none" v-if="releaseNotesUrl">
                         <el-button
                             size="small"

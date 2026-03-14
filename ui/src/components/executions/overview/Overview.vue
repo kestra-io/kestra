@@ -139,17 +139,17 @@
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
-                                <el-select
+                                <ks-select
                                     v-model="timerange"
                                     @change="chartRef!.refresh(filters)"
                                 >
-                                    <el-option
+                                    <ks-option
                                         v-for="option in options"
                                         :key="option.value"
                                         :label="option.label"
                                         :value="option.value"
                                     />
-                                </el-select>
+                                </ks-select>
                             </div>
                         </section>
                         <TimeSeries

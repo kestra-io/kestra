@@ -3,9 +3,9 @@
         <template #additional-right v-if="miscStore.configs?.secretsEnabled">
             <ul>
                 <li>
-                    <el-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">
+                    <ks-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">
                         {{ $t('secret.add') }}
-                    </el-button>
+                    </ks-button>
                 </li>
             </ul>
         </template>

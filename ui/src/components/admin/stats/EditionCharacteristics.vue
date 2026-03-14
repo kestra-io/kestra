@@ -28,13 +28,13 @@
         </div>
 
         <a v-if="button?.href" class="button-link" :href="button.href">
-            <el-button type="primary" class="action-button">
+            <ks-button type="primary" class="action-button">
                 {{ button.text }}
-            </el-button>
+            </ks-button>
         </a>
-        <el-button v-else-if="button" class="action-button disabled" disabled>
+        <ks-button v-else-if="button" class="action-button disabled" disabled>
             {{ button.text }}
-        </el-button>
+        </ks-button>
     </el-card>
 </template>
 

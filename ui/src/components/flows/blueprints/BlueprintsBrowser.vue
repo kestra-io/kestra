@@ -71,7 +71,7 @@
 
                                     <div class="d-flex align-items-center gap-2">
                                         <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
-                                            <el-button
+                                            <ks-button
                                                 type="primary"
                                                 size="default"
                                                 :icon="icon.ContentCopy"
@@ -80,9 +80,9 @@
                                             />
                                         </el-tooltip>
                                         <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                            <el-button v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                            <ks-button v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                                 {{ $t('use') }}
-                                            </el-button>
+                                            </ks-button>
                                         </slot>
                                     </div>
                                 </div>

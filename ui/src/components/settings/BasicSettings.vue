@@ -1,9 +1,9 @@
 <template>
     <TopNavBar :title="routeInfo.title">
         <template #additional-right>
-            <el-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
+            <ks-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
                 {{ $t("settings.blocks.save.label") }}
-            </el-button>
+            </ks-button>
         </template>
     </TopNavBar>
 
@@ -14,7 +14,7 @@
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <el-button
+                    <ks-button
                         v-if="!hasDefaultMainConfig"
                         :icon="Reload"
                         circle
@@ -123,7 +123,7 @@
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <el-button
+                    <ks-button
                         v-if="!hasDefaultPreferences"
                         :icon="Reload"
                         circle
@@ -226,7 +226,7 @@
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <el-button
+                    <ks-button
                         v-if="!hasDefaultLocalization"
                         :icon="Reload"
                         circle
@@ -276,9 +276,9 @@
             <template #content>
                 <Row>
                     <Column>
-                        <el-button v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
+                        <ks-button v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
                             {{ $t("settings.blocks.export.fields.flows") }}
-                        </el-button>
+                        </ks-button>
                     </Column>
                 </Row>
             </template>

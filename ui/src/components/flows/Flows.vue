@@ -3,21 +3,21 @@
         <template #additional-right>
             <ul class="header-actions-list">
                 <li>
-                    <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
+                    <ks-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
                         {{ $t('export_csv') }}
-                    </el-button>
+                    </ks-button>
                 </li>
                 <li>
-                    <el-button :icon="Upload" @click="file?.click()">
+                    <ks-button :icon="Upload" @click="file?.click()">
                         {{ $t("import") }}
-                    </el-button>
+                    </ks-button>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
+                        <ks-button :icon="TextBoxSearch">
                             {{ $t("source search") }}
-                        </el-button>
+                        </ks-button>
                     </router-link>
                 </li>
                 <li>
@@ -28,9 +28,9 @@
                         }"
                         v-if="canCreate"
                     >
-                        <el-button :icon="Plus" type="primary">
+                        <ks-button :icon="Plus" type="primary">
                             {{ $t("create") }}
-                        </el-button>
+                        </ks-button>
                     </router-link>
                 </li>
             </ul>
@@ -86,26 +86,26 @@
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
-                                <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
+                                <ks-button v-if="canRead" :icon="Download" @click="exportFlows()">
                                     {{ $t("export") }}
-                                </el-button>
-                                <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                                </ks-button>
+                                <ks-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
                                     {{ $t("delete") }}
-                                </el-button>
-                                <el-button
+                                </ks-button>
+                                <ks-button
                                     v-if="canUpdate && anyFlowDisabled()"
                                     @click="enableFlows"
                                     :icon="FileDocumentCheckOutline"
                                 >
                                     {{ $t("enable") }}
-                                </el-button>
-                                <el-button
+                                </ks-button>
+                                <ks-button
                                     v-if="canUpdate && anyFlowEnabled()"
                                     @click="disableFlows"
                                     :icon="FileDocumentRemoveOutline"
                                 >
                                     {{ $t("disable") }}
-                                </el-button>
+                                </ks-button>
                             </BulkSelect>
                         </template>
                         <template #default>

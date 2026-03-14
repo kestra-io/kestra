@@ -21,14 +21,14 @@
             <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
 
             <div class="newsButtonBar">
-                <el-button
+                <ks-button
                     style="flex:1"
                     @click="expanded[feed.id] = !expanded[feed.id]"
                 >
                     <MenuDown class="expandIcon" />
                     {{ expanded[feed.id] ? $t("showLess") : $t("showMore") }}
-                </el-button>
-                <el-button
+                </ks-button>
+                <ks-button
                     v-if="feed.href"
                     :title="$t('open in new tab')"
                     tag="a"
@@ -37,7 +37,7 @@
                     :href="feed.href"
                 >
                     <OpenInNew :title="feed.link" />
-                </el-button>
+                </ks-button>
             </div>
 
             <el-divider class="mb-2" v-if="index !== feeds.length - 1" />

@@ -93,8 +93,8 @@
                                 :data-index="index"
                             >
                                 <Teleport v-if="item.logFile" to="#buttons">
-                                    <el-button-group class="line">
-                                        <el-button
+                                    <ks-button-group class="line">
+                                        <ks-button
                                             type="primary"
                                             tag="a"
                                             :href="fileUrl(item.logFile)"
@@ -104,12 +104,12 @@
                                             rel="noopener noreferrer"
                                         >
                                             {{ $t("download") }}
-                                        </el-button>
+                                        </ks-button>
                                         <FilePreview
                                             :value="item.logFile"
                                             :executionId="followedExecution.id"
                                         />
-                                        <el-button
+                                        <ks-button
                                             disabled
                                             size="small"
                                             type="primary"
@@ -120,8 +120,8 @@
                                             ({{
                                                 logFileSizeByPath[item.logFile]
                                             }})
-                                        </el-button>
-                                    </el-button-group>
+                                        </ks-button>
+                                    </ks-button-group>
                                 </Teleport>
                                 <LogLine
                                     class="line"

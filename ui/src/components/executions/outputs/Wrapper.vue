@@ -89,7 +89,7 @@
                                         class="w-100"
                                     />
 
-                                    <el-button
+                                    <ks-button
                                         type="primary"
                                         @click="
                                             onDebugExpression(
@@ -99,7 +99,7 @@
                                         class="mt-3 el-button--wrap"
                                     >
                                         {{ $t("eval.title") }}
-                                    </el-button>
+                                    </ks-button>
 
                                     <Editor
                                         v-if="debugExpression"

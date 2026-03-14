@@ -1,6 +1,6 @@
 <template>
     <div v-if="currentView !== 'documentation' || currentDocumentationPlugin" class="breadcrumb">
-        <el-button
+        <ks-button
             v-if="navigationStack.length > 0"
             class="back-btn"
             @click="goBack"

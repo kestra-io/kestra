@@ -13,12 +13,12 @@
         </div>
         <template #footer>
             <div class="dialog-footer">
-                <el-button @click="unsavedChangesStore.handleCancel">
+                <ks-button @click="unsavedChangesStore.handleCancel">
                     {{ $t('cancel') }}
-                </el-button>
-                <el-button type="primary" @click="unsavedChangesStore.handleLeave">
+                </ks-button>
+                <ks-button type="primary" @click="unsavedChangesStore.handleLeave">
                     {{ $t('leave page') }}
-                </el-button>
+                </ks-button>
             </div>
         </template>
     </el-dialog>

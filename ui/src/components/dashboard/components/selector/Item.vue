@@ -5,9 +5,9 @@
         </div>
 
         <div class="col-auto">
-            <el-button v-if="props.dashboard.id !== 'default'" link :icon="props.dashboard.isDefault ? Home : HomeOutline" class="mx-0" @click.stop="props.setAsDefault(props.dashboard.id)" title="set as default" />
-            <el-button v-if="props.dashboard.id !== 'default'" link :icon="Pencil" class="mx-0" @click.stop="props.edit(props.dashboard.id)" title="edit" />
-            <el-button v-if="props.dashboard.id !== 'default' && props.remove" link :icon="DeleteOutline" class="mx-0" @click.stop="props.remove(props.dashboard)" title="delete" />
+            <ks-button v-if="props.dashboard.id !== 'default'" link :icon="props.dashboard.isDefault ? Home : HomeOutline" class="mx-0" @click.stop="props.setAsDefault(props.dashboard.id)" title="set as default" />
+            <ks-button v-if="props.dashboard.id !== 'default'" link :icon="Pencil" class="mx-0" @click.stop="props.edit(props.dashboard.id)" title="edit" />
+            <ks-button v-if="props.dashboard.id !== 'default' && props.remove" link :icon="DeleteOutline" class="mx-0" @click.stop="props.remove(props.dashboard)" title="delete" />
         </div>
     </el-dropdown-item>
 </template>

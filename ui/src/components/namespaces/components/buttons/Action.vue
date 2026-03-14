@@ -1,7 +1,7 @@
 <template>
     <ul>
         <li>
-            <el-button
+            <ks-button
                 :type="props.type || 'primary'"
                 :icon="props.icon ?? Plus"
                 @click="emits('click')"
@@ -10,7 +10,7 @@
                 :loading="props.loading ?? false"
             >
                 {{ props.label }}
-            </el-button>
+            </ks-button>
         </li>
     </ul>
 </template>

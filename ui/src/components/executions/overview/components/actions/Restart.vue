@@ -142,12 +142,12 @@
         </div>
 
         <template #footer>
-            <el-button @click="isOpen = false">
+            <ks-button @click="isOpen = false">
                 {{ t("cancel") }}
-            </el-button>
-            <el-button type="primary" @click="handleReplayExecute">
+            </ks-button>
+            <ks-button type="primary" @click="handleReplayExecute">
                 {{ t("execute") }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 

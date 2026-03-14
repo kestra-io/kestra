@@ -3,9 +3,9 @@
         <template #additional-right>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
-                    <el-button type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
+                    <ks-button type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
                         {{ $t('use') }}
-                    </el-button>
+                    </ks-button>
                 </router-link>
             </ul>
         </template>

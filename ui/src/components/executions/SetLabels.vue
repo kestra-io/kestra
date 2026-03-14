@@ -1,11 +1,11 @@
 <template>
-    <el-button
+    <ks-button
         :disabled="!enabled"
         :icon="Plus"
         @click="isOpen = !isOpen"
     >
         {{ $t("set_extra_labels") }}
-    </el-button>
+    </ks-button>
 
     <el-dialog
         v-if="isOpen"
@@ -18,12 +18,12 @@
         </template>
 
         <template #footer>
-            <el-button @click="onCancel">
+            <ks-button @click="onCancel">
                 {{ $t("cancel") }}
-            </el-button>
-            <el-button type="primary" :loading="isSaving" @click="setLabels()">
+            </ks-button>
+            <ks-button type="primary" :loading="isSaving" @click="setLabels()">
                 {{ $t("ok") }}
-            </el-button>
+            </ks-button>
         </template>
 
         <p v-html="$t('Set labels to execution', {id: execution.id})" />

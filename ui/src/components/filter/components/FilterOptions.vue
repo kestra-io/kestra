@@ -31,11 +31,11 @@
                     @hide="isColumnsPanelVisible = false"
                 >
                     <template #reference>
-                        <el-button size="default" class="columns-button" :icon="CogOutline">
+                        <ks-button size="default" class="columns-button" :icon="CogOutline">
                             <el-tooltip :content="$t('filter.customize columns')" placement="top" effect="light">
                                 <span>{{ $t("filter.columns") }}</span>
                             </el-tooltip>
-                        </el-button>
+                        </ks-button>
                     </template>
 
                     <CustomColumns

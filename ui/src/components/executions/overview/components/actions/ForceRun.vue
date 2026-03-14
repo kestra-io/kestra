@@ -1,11 +1,11 @@
 <template>
-    <el-button
+    <ks-button
         :disabled="!enabled"
         :icon="RunFast"
         @click="click"
     >
         {{ $t("force run") }}
-    </el-button>
+    </ks-button>
 
     <el-dialog
         v-if="isDrawerOpen"
@@ -17,14 +17,14 @@
             <span v-html="$t('force run title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button
+            <ks-button
                 :icon="QueueFirstInLastOut"
                 type="primary"
                 @click="forceRun()"
                 nativeType="submit"
             >
                 {{ $t("force run") }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 </template>

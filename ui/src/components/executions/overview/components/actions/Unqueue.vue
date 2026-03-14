@@ -1,11 +1,11 @@
 <template>
-    <el-button
+    <ks-button
         v-if="enabled"
         :icon="QueueFirstInLastOut"
         @click="isDrawerOpen = !isDrawerOpen"
     >
         {{ $t('unqueue') }}
-    </el-button>
+    </ks-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -34,9 +34,9 @@
         </template>
 
         <template #footer>
-            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
+            <ks-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
                 {{ $t('unqueue') }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 </template>

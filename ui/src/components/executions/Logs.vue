@@ -23,21 +23,21 @@
                 />
             </el-form-item>
             <el-form-item>
-                <el-button @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+                <ks-button @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
-                </el-button>
+                </ks-button>
             </el-form-item>
             <el-form-item>
                 <el-tooltip
                     :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')"
                 >
-                    <el-button @click="toggleViewType" :icon="logViewTypeButtonIcon">
+                    <ks-button @click="toggleViewType" :icon="logViewTypeButtonIcon">
                         {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
-                    </el-button>
+                    </ks-button>
                 </el-tooltip>
             </el-form-item>
             <el-form-item>
-                <el-button-group class="ks-b-group">
+                <ks-button-group class="ks-b-group">
                     <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="forwardEvent('follow', $event)" />
                     <IconButton :tooltip="$t('download logs')" @click="downloadContent()">
                         <Download />
@@ -48,7 +48,7 @@
                     <IconButton :tooltip="$t('refresh')" @click="loadLogs()">
                         <Refresh />
                     </IconButton>
-                </el-button-group>
+                </ks-button-group>
             </el-form-item>
         </Collapse>
 

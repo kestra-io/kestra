@@ -4,9 +4,9 @@
 
         <nav v-if="rendered">
             <el-tooltip :content="$t('page.previous')" effect="light" :showAfter="1500">
-                <el-button @click="onPrevPage">
+                <ks-button @click="onPrevPage">
                     <ChevronLeft />
-                </el-button>
+                </ks-button>
             </el-tooltip>
             <span>
                 {{ pageNum }}
@@ -14,9 +14,9 @@
                 {{ pdfDoc?.numPages }}
             </span>
             <el-tooltip :content="$t('page.next')" effect="light" :showAfter="1500">
-                <el-button @click="onNextPage">
+                <ks-button @click="onNextPage">
                     <ChevronRight />
-                </el-button>
+                </ks-button>
             </el-tooltip>
         </nav>
     </div>

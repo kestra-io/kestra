@@ -1,11 +1,11 @@
 <template>
-    <el-button
+    <ks-button
         :disabled="!enabled"
         :icon="SwapHorizontal"
         @click="visible = !visible"
     >
         {{ $t('change state') }}
-    </el-button>
+    </ks-button>
 
     <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
         <template #header>
@@ -39,16 +39,16 @@
         </template>
 
         <template #footer>
-            <el-button @click="visible = false">
+            <ks-button @click="visible = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button
+            </ks-button>
+            <ks-button
                 type="primary"
                 @click="changeStatus()"
                 :disabled="selectedStatus === execution.state.current || selectedStatus === null"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 </template>

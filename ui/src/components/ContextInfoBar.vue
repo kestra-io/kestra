@@ -1,6 +1,6 @@
 <template>
     <div v-if="hasButtons && !activeTab.length" class="barWrapper">
-        <el-button
+        <ks-button
             v-for="(button, key) of contextButtons"
             :key="key"
             :type="activeTab === key ? 'primary' : 'default'"
@@ -12,7 +12,7 @@
             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
             <OpenInNew v-if="button.url" class="open-in-new" />
             <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-        </el-button>
+        </ks-button>
 
         <div style="flex:1" />
 
@@ -28,10 +28,10 @@
             </template>
             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
         </el-tooltip>
-        <el-button class="theme-switcher" @click="onSwitchTheme">
+        <ks-button class="theme-switcher" @click="onSwitchTheme">
             <WeatherNight v-if="themeIsDark" />
             <WeatherSunny v-else />
-        </el-button>
+        </ks-button>
     </div>
 
     <div v-else-if="hasButtons" class="contextInfoSidebar" :style="{width: `${sidebarWidth}px`}">
@@ -44,7 +44,7 @@
             <el-splitter-panel v-model:size="sidebarWidth" :min="minSidebarWidth" :max="maxSidebarWidth">
                 <div class="contextInfoContent">
                     <div class="barWrapper opened">
-                        <el-button
+                        <ks-button
                             v-for="(button, key) of contextButtons"
                             :key="key"
                             :type="activeTab === key ? 'primary' : 'default'"
@@ -56,7 +56,7 @@
                             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
                             <OpenInNew v-if="button.url" class="open-in-new" />
                             <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                        </el-button>
+                        </ks-button>
 
                         <div style="flex:1" />
 
@@ -72,10 +72,10 @@
                             </template>
                             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
                         </el-tooltip>
-                        <el-button class="theme-switcher" @click="onSwitchTheme">
+                        <ks-button class="theme-switcher" @click="onSwitchTheme">
                             <WeatherNight v-if="themeIsDark" />
                             <WeatherSunny v-else />
-                        </el-button>
+                        </ks-button>
                     </div>
 
                     <div class="panelWrapper">

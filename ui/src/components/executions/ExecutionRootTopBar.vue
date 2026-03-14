@@ -9,21 +9,21 @@
             <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
                     <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
-                        <el-button
+                        <ks-button
                             class="execution-edit-flow-button"
                             :icon="Pencil"
                             @click="editFlow"
                         >
                             {{ $t("edit flow") }}
-                        </el-button>
+                        </ks-button>
                     </li>
                 </ul>
     
                 <el-dropdown class="d-flex d-xl-none align-items-center">
-                    <el-button>
+                    <ks-button>
                         <el-icon><DotsVerticalIcon /></el-icon>
                         <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
-                    </el-button>
+                    </ks-button>
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item v-if="isAllowedEdit" @click="editFlow">

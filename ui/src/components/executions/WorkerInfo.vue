@@ -24,9 +24,9 @@
             </template>
 
             <template #footer>
-                <el-button @click="visible = false">
+                <ks-button @click="visible = false">
                     {{ $t("close") }}
-                </el-button>
+                </ks-button>
             </template>
         </el-dialog>
     </component>

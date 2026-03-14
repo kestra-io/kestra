@@ -69,7 +69,7 @@
                 {{ $t("backfill") }}
             </template>
             <template #default="scope">
-                <el-button
+                <ks-button
                     :icon="CalendarCollapseHorizontalOutline"
                     v-if="isSchedule(scope.row.type) && !scope.row.backfill && userCan(action.CREATE)"
                     @click="setBackfillModal(scope.row, true)"
@@ -78,7 +78,7 @@
                     type="primary"
                 >
                     {{ $t("backfill executions") }}
-                </el-button>
+                </ks-button>
                 <template v-else-if="isSchedule(scope.row.type) && userCan(action.UPDATE)">
                     <div class="backfill-cell">
                         <div class="progress-cell">
@@ -175,13 +175,13 @@
     </el-table>
 
     <div v-if="triggersWithType.length" class="mt-4">
-        <el-button
+        <ks-button
             @click="addNewTrigger"
             :icon="Plus"
             class="border-0 p-3"
         >
             {{ $t('no_code.creation.triggers') }}
-        </el-button>
+        </ks-button>
     </div>
 
     <Empty
@@ -189,14 +189,14 @@
         type="triggers"
     >
         <template #button>
-            <el-button
+            <ks-button
                 type="primary"
                 @click="addNewTrigger"
                 :icon="Plus"
                 class="mt-3"
             >
                 {{ $t('no_code.creation.triggers') }}
-            </el-button>
+            </ks-button>
         </template>
     </Empty>
 
@@ -236,13 +236,13 @@
             :embed="true"
         />
         <template #footer>
-            <el-button
+            <ks-button
                 type="primary"
                 @click="postBackfill()"
                 :disabled="checkBackfill"
             >
                 {{ $t("execute backfill") }}
-            </el-button>
+            </ks-button>
         </template>
     </el-dialog>
 

@@ -1,6 +1,6 @@
 <template>
     <div class="docsMenuWrapper">
-        <el-button
+        <ks-button
             @click="menuOpen = !menuOpen"
             class="menuOpener"
             :class="{'is-open': menuOpen}"
@@ -10,7 +10,7 @@
                 class="expandIcon"
                 :class="{'rotate-icon': menuOpen}"
             />
-        </el-button>
+        </ks-button>
         <div v-if="menuOpen" class="docsMenuContainer">
             <ul class="docsMenu list-unstyled d-flex flex-column m-0">
                 <template v-if="rawStructure">
@@ -141,7 +141,7 @@
     $scrollbar-width: 6px;
     $link-radius: 6px;
     $transition-timing: cubic-bezier(0.16, 1, 0.3, 1);
-    
+
     @mixin custom-scrollbar {
         &::-webkit-scrollbar {
             width: $scrollbar-width;
@@ -229,7 +229,7 @@
 
             @for $i from 0 through 5 {
                 $base-pad: 0.5rem + ($i * 1rem);
-                
+
                 &.depth-#{$i} {
                     padding-left: $base-pad;
                     @if $i == 0 {
@@ -243,7 +243,7 @@
                         opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
                     }
                 }
-                
+
                 &.active-page.depth-#{$i} {
                     padding-left: calc(#{$base-pad} - 3px);
                 }

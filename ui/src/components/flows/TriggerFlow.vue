@@ -1,10 +1,10 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
+        <ks-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
-        </el-button>
+        </ks-button>
         <span v-else data-onboarding-target="flow-execute-button">
-            <el-button
+            <ks-button
                 id="execute-button"
                 :icon="icon.Play"
                 :type="type"
@@ -12,7 +12,7 @@
                 @click="onClick()"
             >
                 {{ $t("execute") }}
-            </el-button>
+            </ks-button>
         </span>
         <el-dialog
             id="execute-flow-dialog"

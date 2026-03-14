@@ -1,35 +1,35 @@
 <template>
     <div class="button-top">
-        <el-button-group class="view-buttons">
+        <ks-button-group class="view-buttons">
             <el-tooltip :content="$t('source only')">
-                <el-button
+                <ks-button
                     :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('documentation.documentation')">
-                <el-button
+                <ks-button
                     :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('chart preview')">
-                <el-button
+                <ks-button
                     :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('dashboards.preview')">
-                <el-button
+                <ks-button
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
                     @click="setView(views.DASHBOARD)"
                 />
             </el-tooltip>
-        </el-button-group>
+        </ks-button-group>
 
         <ValidationErrors
             class="mx-3"
@@ -37,14 +37,14 @@
             :errors="errors"
         />
 
-        <el-button
+        <ks-button
             :icon="ContentSave"
             @click="emit('save', source)"
             :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
-        </el-button>
+        </ks-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
         <Sections :dashboard="{id: 'default', charts: []}" :charts="charts.map(chart => chart.data)" showDefault />

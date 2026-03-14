@@ -1,8 +1,8 @@
 <template>
     <el-dropdown>
-        <el-button>
+        <ks-button>
             <DotsVertical />
-        </el-button>
+        </ks-button>
         <template #dropdown>
             <el-dropdown-menu>
                 <slot />

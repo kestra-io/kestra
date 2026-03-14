@@ -39,7 +39,7 @@
                 />
             </div>
 
-            <el-button
+            <ks-button
                 type="default"
                 size="small"
                 class="add-btn"
@@ -47,7 +47,7 @@
                 @click="addPair"
             >
                 {{ $t('add') }}
-            </el-button>
+            </ks-button>
         </div>
     </div>
 </template>

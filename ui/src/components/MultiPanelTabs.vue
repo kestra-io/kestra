@@ -13,7 +13,7 @@
                 :class="{'panel-dragover': panel.dragover}"
             >
                 <div class="editor-tabs-container">
-                    <el-button
+                    <ks-button
                         :icon="DragVertical"
                         link
                         class="tab-icon drag-handle"
@@ -84,7 +84,7 @@
                         </button>
 
                         <el-dropdown trigger="click" placement="bottom-end">
-                            <el-button :icon="DotsVertical" link class="me-2 tab-icon" />
+                            <ks-button :icon="DotsVertical" link class="me-2 tab-icon" />
                             <template #dropdown>
                                 <el-dropdown-menu class="m-2">
                                     <el-dropdown-item

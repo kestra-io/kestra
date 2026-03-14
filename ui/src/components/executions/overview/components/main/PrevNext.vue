@@ -1,19 +1,19 @@
 <template>
     <div id="buttons">
-        <el-button
+        <ks-button
             :icon="ChevronLeft"
             :disabled="!results.previous"
             @click="navigate('previous')"
         >
             {{ $t("prev_execution") }}
-        </el-button>
+        </ks-button>
 
-        <el-button :disabled="!results.next" @click="navigate('next')">
+        <ks-button :disabled="!results.next" @click="navigate('next')">
             {{ $t("next_execution") }}
             <el-icon class="el-icon--right">
                 <ChevronRight />
             </el-icon>
-        </el-button>
+        </ks-button>
     </div>
 </template>
 

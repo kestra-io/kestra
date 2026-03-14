@@ -1,14 +1,14 @@
 <template>
     <el-dropdown trigger="click" hideOnClick placement="bottom-end">
-        <el-button :icon="ChartLineVariant" class="selected">
+        <ks-button :icon="ChartLineVariant" class="selected">
             <span v-if="!verticalLayout" class="text-truncate">
                 {{ selected?.title ?? $t('dashboards.default') }}
             </span>
-        </el-button>
+        </ks-button>
 
         <template #dropdown>
             <el-dropdown-menu class="p-3 dropdown">
-                <el-button
+                <ks-button
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
@@ -16,7 +16,7 @@
                     class="w-100"
                 >
                     <small>{{ $t("dashboards.creation.label") }}</small>
-                </el-button>
+                </ks-button>
 
                 <Item
                     :dashboard="{

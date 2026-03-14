@@ -17,7 +17,7 @@
                 <div v-loading="isLoading">
                     <ValidationError class="me-2" link :errors="errors" />
 
-                    <el-button
+                    <ks-button
                         :icon="ContentSave"
                         @click="saveTask"
                         v-if="canSave && !readOnly"
@@ -25,7 +25,7 @@
                         type="primary"
                     >
                         {{ $t("save task") }}
-                    </el-button>
+                    </ks-button>
                     <el-alert
                         showIcon
                         :closable="false"

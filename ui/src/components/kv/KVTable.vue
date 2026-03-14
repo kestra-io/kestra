@@ -41,9 +41,9 @@
                         @update:select-all="toggleAllSelection"
                         @unselect="toggleAllUnselected"
                     >
-                        <el-button :icon="Delete" type="default" @click="removeKvs()">
+                        <ks-button :icon="Delete" type="default" @click="removeKvs()">
                             {{ $t("delete") }}
-                        </el-button>
+                        </ks-button>
                     </BulkSelect>
                 </template>
 
@@ -231,9 +231,9 @@
         </el-form>
 
         <template #footer>
-            <el-button :icon="ContentSave" @click="saveKv(formRef)" type="primary">
+            <ks-button :icon="ContentSave" @click="saveKv(formRef)" type="primary">
                 {{ $t('save') }}
-            </el-button>
+            </ks-button>
         </template>
     </Drawer>
 

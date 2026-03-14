@@ -20,18 +20,18 @@
                     <router-link
                         :to="{name: 'dashboards/update', params: {dashboard: props.dashboard.id}}"
                     >
-                        <el-button :icon="Pencil">
+                        <ks-button :icon="Pencil">
                             {{ $t("dashboards.edition.label") }}
-                        </el-button>
+                        </ks-button>
                     </router-link>
                 </li>
                 <li
                     v-if="isAllowedFlow"
                 >
                     <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary">
+                        <ks-button :icon="Plus" type="primary">
                             {{ $t("create_flow") }}
-                        </el-button>
+                        </ks-button>
                     </router-link>
                 </li>
             </ul>

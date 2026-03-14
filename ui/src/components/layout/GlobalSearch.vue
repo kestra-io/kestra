@@ -16,7 +16,7 @@
                                 <span v-if="scopePrefix" class="scope-prefix">{{ scopePrefix }}</span>
                             </template>
                             <template #suffix>
-                                <el-button
+                                <ks-button
                                     v-if="query"
                                     class="close-button"
                                     text
@@ -24,7 +24,7 @@
                                     @click.stop="clearSearch"
                                 >
                                     <Close />
-                                </el-button>
+                                </ks-button>
                                 <span v-else class="d-none d-sm-block">
                                     <kbd>ESC</kbd> to close
                                 </span>

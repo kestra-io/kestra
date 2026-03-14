@@ -25,7 +25,7 @@
                             </el-tooltip>
                             <Badge v-if="beta" label="Beta" />
                         </slot>
-                        <el-button
+                        <ks-button
                             class="icon"
                             :class="{'active': bookmarked}"
                             :icon="bookmarked ? StarIcon : StarOutlineIcon"
@@ -46,10 +46,10 @@
                 <GlobalSearch class="trigger-flow-guided-step" />
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
+                <ks-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
                     <TrashCan class="me-2" />
                     <span>{{ $t("delete logs") }}</span>
-                </el-button>
+                </ks-button>
             </div>
             <slot name="additional-right" />
         </div>

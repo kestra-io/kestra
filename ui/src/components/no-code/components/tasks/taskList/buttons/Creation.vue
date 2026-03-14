@@ -1,7 +1,7 @@
 <template>
-    <el-button @click.prevent.stop="handleClick()" type="default" :icon="Plus">
+    <ks-button @click.prevent.stop="handleClick()" type="default" :icon="Plus">
         {{ $t("add") }}
-    </el-button>
+    </ks-button>
 </template>
 
 <script setup lang="ts">

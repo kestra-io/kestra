@@ -1,10 +1,10 @@
 <template>
     <div v-if="!isNamespace && (isAllowedEdit || canDelete)">
         <el-dropdown>
-            <el-button type="default" :disabled="isReadOnly">
+            <ks-button type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />
                 {{ $t("actions") }}
-            </el-button>
+            </ks-button>
             <template #dropdown>
                 <el-dropdown-menu class="m-dropdown-menu">
                     <el-dropdown-item
@@ -37,7 +37,7 @@
         </el-dropdown>
     </div>
     <div data-onboarding-target="flow-save-button">
-        <el-button
+        <ks-button
             v-if="isNamespace || isAllowedEdit"
             :icon="ContentSave"
             @click="forwardEvent(showSaveAndExecute ? 'save-and-execute' : 'save', $event)"
@@ -51,7 +51,7 @@
             :id="showSaveAndExecute ? 'execute-button' : undefined"
         >
             {{ $t(showSaveAndExecute ? "save_and_execute" : "save") }}
-        </el-button>
+        </ks-button>
     </div>
 </template>
 <script setup lang="ts">

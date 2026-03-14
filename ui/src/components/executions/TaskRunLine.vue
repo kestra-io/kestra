@@ -59,9 +59,9 @@
         <slot name="buttons" />
 
         <el-dropdown trigger="click">
-            <el-button type="default" class="task-run-buttons">
+            <ks-button type="default" class="task-run-buttons">
                 <DotsVertical title="" />
-            </el-button>
+            </ks-button>
             <template #dropdown>
                 <el-dropdown-menu>
                     <el-dropdown-item

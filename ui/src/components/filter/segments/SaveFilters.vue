@@ -1,6 +1,6 @@
 <template>
     <el-tooltip :content="$t('filter.save filter tooltip')" placement="top" effect="light">
-        <el-button
+        <ks-button
             type="default"
             :disabled="disabled"
             @click="showSaveDialog = true"
@@ -62,17 +62,17 @@
 
         <template #footer>
             <div>
-                <el-button @click="closeSaveDialog">
+                <ks-button @click="closeSaveDialog">
                     {{ $t("filter.cancel") }}
-                </el-button>
-                <el-button
+                </ks-button>
+                <ks-button
                     type="primary"
                     @click="saveFilter"
                     :disabled="!filterName.trim() || hasDuplicate"
                     :icon="ContentSaveOutline"
                 >
                     {{ isEditMode ? $t("filter.update") : $t("filter.save") }}
-                </el-button>
+                </ks-button>
             </div>
         </template>
     </el-dialog>

@@ -3,9 +3,9 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <el-button :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
+                    <ks-button :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
                         {{ $t("kv.add") }}
-                    </el-button>
+                    </ks-button>
                 </li>
             </ul>
         </template>

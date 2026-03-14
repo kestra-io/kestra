@@ -2,9 +2,10 @@ import type {App} from "vue"
 import {KsSelect} from "./components/KsSelect"
 import {KsOption} from "./components/KsOption"
 import {KsButton} from "./components/KsButton"
+import {KsButtonGroup} from "./components/KsButtonGroup"
 
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
-export {KsSelect, KsOption, KsButton}
+export {KsSelect, KsOption, KsButton, KsButtonGroup}
 
 // ─── Vue plugin (auto-registers all components) ──────────────────────────────
 const KestraDesignSystem = {
@@ -12,6 +13,7 @@ const KestraDesignSystem = {
         app.component("KsSelect", KsSelect)
         app.component("KsOption", KsOption)
         app.component("KsButton", KsButton)
+        app.component("KsButtonGroup", KsButtonGroup)
     },
 }
 
@@ -23,5 +25,6 @@ declare module "vue" {
         KsSelect: typeof KsSelect
         KsOption: typeof KsOption
         KsButton: typeof KsButton
+        KsButtonGroup: typeof KsButtonGroup
     }
 }

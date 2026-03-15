@@ -70,8 +70,9 @@ public class IterationOutputsFunction implements Function {
         if(targetOutputs == null)
             throw new PebbleException(null, "The provided task with taskId = " + taskId + " has no execution outputs", lineNumber, self.getName());
 
-        List<Map<?, ?>> parents = (List<Map<?, ?>>) context.getVariable("parents");
-        if (parents != null && !parents.isEmpty()) {
+        List<Map<?, ?>> immutableParents = (List<Map<?, ?>>) context.getVariable("parents");
+        if (immutableParents != null && !immutableParents.isEmpty()) {
+            List<Map<?, ?>> parents = new ArrayList<>(immutableParents);
             Collections.reverse(parents);
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");

@@ -15,7 +15,7 @@ to <hello@kestra.io>.
 
 ### Reporting bugs
 Bug reports help us make Kestra better for everyone. We provide a preconfigured template for bugs to make it very clear what information we need.
-Please search within our [already reported bugs](https://github.com/kestra-io/kestra/issues?q=is%3Aissue+is%3Aopen+label%3Abug) before raising a new one to make sure you're not raising a duplicate.
+Please search within our [already reported bugs](https://github.com/kestra-io/kestra/issues?q=is%3Aissue+is%3Aopen+type%3Abug) before raising a new one to make sure you're not raising a duplicate.
 
 ### Reporting security issues
 Please do not create a public GitHub issue. If you've found a security issue, please email us directly at hello@kestra.io instead of raising an issue.
@@ -24,7 +24,7 @@ Please do not create a public GitHub issue. If you've found a security issue, pl
 ### Requesting new features
 To request new features, please create an issue on this project.
 If you would like to suggest a new feature, we ask that you please use our issue template. It contains a few essential questions that help us understand the problem you are looking to solve and how you think your recommendation will address it.
-To see what has already been proposed by the community, you can look [here](https://github.com/kestra-io/kestra/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement).
+To see what has already been proposed by the community, you can look [here](https://github.com/kestra-io/kestra/issues?q=is%3Aissue+is%3Aopen+type%3Afeature).
 Watch out for duplicates! If you are creating a new issue, please check existing open, or recently closed. Having a single voted for issue is far easier for us to prioritize.
 
 ### Your First Code Contribution
@@ -39,7 +39,7 @@ The following dependencies are required to build Kestra locally:
 
 Thanks to the Kestra community, if using VSCode, you can also start development on either the frontend or backend with a bootstrapped docker container without the need to manually set up the environment.
 
-Check out the [README](../.devcontainer/README.md) for set-up instructions and the associated [Dockerfile](../.devcontainer/Dockerfile) in the respository to get started.
+Check out the [README](../develop/README.md) for set-up instructions and the associated [Dockerfile](../develop/Dockerfile) in the respository to get started.
 
 To start contributing:
 - [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the repository
@@ -59,13 +59,13 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
 - You may need to enable java annotation processors since we are using them.
 - On IntelliJ IDEA, click on **Run -> Edit Configurations -> + Add new Configuration** to create a run configuration to start Kestra.
   - The main class is `io.kestra.cli.App` from module `kestra.cli.main`.
-  - Pass as program arguments the server you want to work with, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies). You can also use `server standalone` and use the provided `docker-compose-ci.yml` Docker compose file to start a standalone server with a real database as a backend that would need to be configured properly.
+  - Pass as program arguments the server you want to work with, for example `server local` will start the [standalone local](https://kestra.io/docs/installation/standalone-server). You can also use `server standalone` and use the provided `docker-compose-ci.yml` Docker compose file to start a standalone server with a real database as a backend that would need to be configured properly.
   - Configure the following environment variables:
     - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
     - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
-  - See the screenshot below for an example: ![Intellij IDEA Configuration ](./assets/run-app.png)
+  - See the screenshot below for an example: ![Intellij IDEA Configuration ](./.github/assets/run-app.png)
   - If you encounter **JavaScript memory heap out** error during startup, configure `NODE_OPTIONS` environment variable with some large value.
-      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](./assets/node_option_env_var.png)
+      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](./.github/assets/node_option_env_var.png)
 - The server starts by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:
@@ -85,7 +85,7 @@ The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` 
 - You can run `npm run build` in order to build the front-end that will be delivered from the backend (without running the `npm run dev`) above.
 
 Now, you need to start a backend server, you could:
-- start a [local server](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies) without a database using this docker-compose file already configured with CORS enabled:
+- start a [local server](https://kestra.io/docs/installation/standalone-server) without a database using this docker-compose file already configured with CORS enabled:
 ```yaml
 services:
   kestra:
@@ -105,7 +105,7 @@ services:
     ports:
       - "8080:8080"
 ```
-- start the [Develop backend](#develop-backend) from your IDE, you need to configure CORS restrictions when using the local development npm server, changing the backend configuration allowing the http://localhost:5173 origin in `cli/src/main/resources/application-override.yml`
+- start the [Develop backend](#develop-on-the-backend) from your IDE, you need to configure CORS restrictions when using the local development npm server, changing the backend configuration allowing the http://localhost:5173 origin in `cli/src/main/resources/application-override.yml`
 
 ```yaml
 micronaut:
@@ -139,4 +139,4 @@ A complete documentation for developing plugin can be found [here](https://kestr
 
 ### Improving The Documentation
 The main documentation is located in a separate [repository](https://github.com/kestra-io/kestra.io).
-For tasks documentation, they are located directly in the Java source, using [Swagger annotations](https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations) (Example: [for Bash tasks](https://github.com/kestra-io/kestra/blob/develop/core/src/main/java/io/kestra/core/tasks/scripts/AbstractBash.java))
+For tasks documentation, they are located directly in the Java source, using [Swagger annotations](https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations) (Example: [for Bash tasks](https://github.com/kestra-io/plugin-scripts/blob/main/plugin-script-shell/src/main/java/io/kestra/core/tasks/scripts/Bash.java))

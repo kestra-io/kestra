@@ -1,11 +1,11 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import {h} from "vue"
-import ElementPlus from "element-plus"
+import KestraDesignSystem from "../../../src/index"
 import KsButton from "../../../src/components/KsButton/KsButton.vue"
-import KsButtonGroup from "../../../src/components/KsButtonGroup/KsButtonGroup.vue"
+import KsButtonGroup from "../../../src/components/KsButton/KsButtonGroup.vue"
 
-const globalConfig = {plugins: [ElementPlus]}
+const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsButtonGroup", () => {
     test("renders a button group element", () => {
@@ -18,7 +18,7 @@ describe("KsButtonGroup", () => {
             },
             global: globalConfig,
         })
-        expect(wrapper.find(".el-button-group").exists()).toBe(true)
+        expect(wrapper.find(".kel-button-group").exists()).toBe(true)
     })
 
     test("renders slotted buttons inside the group", () => {
@@ -32,16 +32,16 @@ describe("KsButtonGroup", () => {
             },
             global: globalConfig,
         })
-        expect(wrapper.findAll(".el-button").length).toBe(3)
+        expect(wrapper.findAll(".kel-button").length).toBe(3)
     })
 
-    test("vertical direction applies el-button-group--vertical class", () => {
+    test("vertical direction applies kel-button-group--vertical class", () => {
         const wrapper = mount(KsButtonGroup, {
             props: {direction: "vertical"},
             slots: {default: () => [h(KsButton, null, () => "Top"), h(KsButton, null, () => "Bottom")]},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-button-group--vertical").exists()).toBe(true)
+        expect(wrapper.find(".kel-button-group--vertical").exists()).toBe(true)
     })
 
     test("type prop is passed through to the group", () => {
@@ -50,7 +50,7 @@ describe("KsButtonGroup", () => {
             slots: {default: () => [h(KsButton, null, () => "X")]},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-button-group").exists()).toBe(true)
+        expect(wrapper.find(".kel-button-group").exists()).toBe(true)
     })
 
     test("size prop is passed through to the group", () => {
@@ -59,6 +59,6 @@ describe("KsButtonGroup", () => {
             slots: {default: () => [h(KsButton, null, () => "X")]},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-button-group").exists()).toBe(true)
+        expect(wrapper.find(".kel-button-group").exists()).toBe(true)
     })
 })

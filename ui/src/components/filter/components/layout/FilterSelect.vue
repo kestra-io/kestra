@@ -125,7 +125,7 @@
     }
 }
 
-.el-select-dropdown__item {
+.kel-select-dropdown__item {
     font-size: 14px;
 }
 

@@ -7,97 +7,6 @@
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 // button
-.el-button {
-
-    &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground), &--default {
-        --el-button-hover-text-color: var(--ks-content-primary);
-        --el-button-hover-border-color: var(--ks-border-primary);
-        --el-button-bg-color: var(--ks-button-background-secondary);
-        --el-button-hover-bg-color: var(--ks-button-background-secondary-hover);
-        --el-button-active-bg-color: var(--ks-button-background-secondary-active);
-    }
-
-    &.el-button--primary {
-        --el-button-text-color: var(--ks-button-content-primary);
-        --el-button-hover-text-color: var(--ks-button-content-primary);
-        --el-button-bg-color: var(--ks-button-background-primary);
-        --el-button-border-color: var(--ks-button-background-primary);
-        --el-button-hover-bg-color: var(--ks-button-background-primary-hover);
-        --el-button-active-bg-color: var(--ks-button-background-primary-active);
-        --el-button-disabled-text-color: var(--ks-content-inactive);
-        --el-button-disabled-bg-color: var(--ks-button-background-inactive);
-        --el-button-disabled-border-color: var(--ks-button-background-inactive);
-    }
-
-    &.el-button--playground {
-        #{--el-button-disabled-text-color}: $base-blue-50;
-        #{--el-button-text-color}: $base-white;
-        #{--el-button-hover-text-color}: $base-white;
-        #{--el-button-bg-color}: $base-blue-500;
-        #{--el-button-hover-bg-color}: $base-blue-400;
-        #{--el-button-active-bg-color}: $base-blue-600;
-        #{--el-button-active-border-color}: $base-blue-700;
-        #{--el-button-outline-color}: $base-blue-700;
-    }
-
-    &.el-button--success {
-        --el-button-bg-color: var(--ks-button-background-success);
-        --el-button-border-color: var(--ks-button-background-success);
-        --el-button-hover-bg-color: var(--ks-button-background-success-hover);
-        --el-button-active-bg-color: var(--ks-button-background-success-active);
-    }
-
-    .el-input-group--append & [class*=el-icon] + span {
-        position: relative;
-        top: -3px;
-    }
-
-    [class*=el-icon] + span:empty {
-        margin-left: 0;
-    }
-
-    &.el-button--large {
-        font-size: var(--bs-body-font-size);
-        line-height: var(--bs-body-font-size);
-    }
-
-    &.is-text {
-        border: 1px solid var(--ks-border-primary);
-        height: 32px;
-        line-height: 32px;
-        font-weight: normal;
-        --el-button-background-color: var(--ks-background-card);
-        --el-button-text-color: var(--ks-content-primary);
-
-        &.version {
-            --el-button-text-color: var(--ks-content-primary);
-            --el-button-border-color: var(--ks-border-active);
-            --el-button-background-color: var(--ks-button-background-primary);
-        }
-    }
-
-    &.no-focus {
-        outline: none !important;
-    }
-
-    &.wh-15 {
-        padding: 0;
-        border: 0;
-        width: 1.5rem;
-        height: 1.5rem;
-
-        * {
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-    }
-
-    &--success {
-        #{--el-button-bg-color}: $green-500;
-        #{--el-button-hover-bg-color}: $green-400;
-    }
-}
-
 .el-button--wrap {
   display: inline-block;
   max-width: 100%;
@@ -190,66 +99,6 @@
 }
 
 
-.el-select {
-    --el-disabled-text-color: var(--ks-content-inactive);
-
-    &.fit-text .el-select__input {
-        width: fit-content !important;
-    }
-    .el-tag {
-        color: var(--el-select-input-color);
-
-        html.dark & {
-            background-color: var(--bs-gray-200);
-        }
-    }
-
-    &:not(.el-select--small), &:not(.el-select--large) {
-        font-size: var(--el-font-size-base);
-    }
-
-    .el-select__wrapper {
-        background-color: var(--ks-background-input);
-
-        &.is-disabled {
-            html.dark & {
-                background-color: var(--bs-gray-400);
-            }
-
-            .el-select__suffix {
-                .el-select__caret {
-                    color: var(--ks-content-inactive);
-                }
-            }
-        }
-    }
-}
-
-.el-select__popper {
-    // icon for selection of items in multiple choices
-    .el-select-dropdown.is-multiple .el-select-dropdown__item.is-selected::after{
-        background-color: var(--ks-select-active-icon);
-        -webkit-mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
-        mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
-        -webkit-mask-size: 100% 100%;
-        mask-size: 100% 100%;
-        right: 1rem;
-    }
-
-    .el-select-dropdown__item {
-        border-radius: var(--bs-border-radius);
-        margin: 0 0.6rem 1px;
-
-        &.is-selected {
-            background-color: var(--ks-select-active);
-            color: var(--ks-content-primary);
-        }
-
-        &.is-hovering {
-            background-color: var(--ks-select-hover);
-        }
-    }
-}
 
 .el-checkbox {
     --el-checkbox-text-color: var(--ks-content-primary);
@@ -745,7 +594,7 @@ form.ks-horizontal {
         border: 1px solid var(--ks-border-primary);
         background: var(--ks-dropdown-background);
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
-        
+
         .el-popper__arrow::before {
             border: 1px solid var(--ks-border-primary);
             background-color: var(--ks-dropdown-background);
@@ -1131,11 +980,11 @@ form.ks-horizontal {
     height: 62px;
     width: 62px;
 
-    .el-dialog__close { 
-       
-        color: var(--ks-dialog-headerbtn) !important; 
-        
-       
+    .el-dialog__close {
+
+        color: var(--ks-dialog-headerbtn) !important;
+
+
         &:hover {
             color: var(--ks-dialog-headerbtn-hover) !important;
         }

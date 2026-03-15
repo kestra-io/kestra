@@ -158,7 +158,7 @@ export const Loading: Story = {
         const canvas = within(canvasElement)
         const btn = canvas.getByRole("button")
         await expect(btn).toBeDisabled()
-        await expect(canvasElement.querySelector(".el-button.is-loading")).toBeTruthy()
+        await expect(canvasElement.querySelector(".kel-button.is-loading")).toBeTruthy()
     },
 }
 
@@ -176,7 +176,7 @@ export const WithIcon: Story = {
         const canvas = within(canvasElement)
         const btn = canvas.getByRole("button")
         await expect(btn).toBeTruthy()
-        await expect(canvasElement.querySelector(".el-icon")).toBeTruthy()
+        await expect(canvasElement.querySelector(".kel-icon")).toBeTruthy()
     },
 }
 

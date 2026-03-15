@@ -1,11 +1,11 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import {h} from "vue"
-import ElementPlus from "element-plus"
+import KestraDesignSystem from "../../../src/index"
 import KsSelect from "../../../src/components/KsSelect/KsSelect.vue"
-import KsOption from "../../../src/components/KsOption/KsOption.vue"
+import KsOption from "../../../src/components/KsSelect/KsOption.vue"
 
-const globalConfig = {plugins: [ElementPlus]}
+const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsSelect", () => {
     test("renders trigger with placeholder", () => {
@@ -13,8 +13,8 @@ describe("KsSelect", () => {
             props: {placeholder: "Select a status"},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-select").exists()).toBe(true)
-        expect(wrapper.find(".el-select__placeholder").text()).toBe("Select a status")
+        expect(wrapper.find(".kel-select").exists()).toBe(true)
+        expect(wrapper.find(".kel-select__placeholder").text()).toBe("Select a status")
     })
 
     test("renders options via KsOption", () => {
@@ -28,15 +28,15 @@ describe("KsSelect", () => {
             },
             global: globalConfig,
         })
-        expect(wrapper.find(".el-select").exists()).toBe(true)
+        expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
 
-    test("small size applies el-select--small class", () => {
+    test("small size applies kel-select--small class", () => {
         const wrapper = mount(KsSelect, {
             props: {size: "small"},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-select--small").exists()).toBe(true)
+        expect(wrapper.find(".kel-select--small").exists()).toBe(true)
     })
 
     test("disabled applies is-disabled class", () => {
@@ -44,7 +44,7 @@ describe("KsSelect", () => {
             props: {disabled: true},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-select__wrapper.is-disabled").exists()).toBe(true)
+        expect(wrapper.find(".kel-select__wrapper.is-disabled").exists()).toBe(true)
     })
 
     test("multiple mode renders select wrapper", () => {
@@ -52,7 +52,7 @@ describe("KsSelect", () => {
             props: {multiple: true, placeholder: "Select statuses"},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-select").exists()).toBe(true)
+        expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
 
     test("filterable mode renders input", () => {
@@ -60,6 +60,6 @@ describe("KsSelect", () => {
             props: {filterable: true, placeholder: "Filter…"},
             global: globalConfig,
         })
-        expect(wrapper.find(".el-select").exists()).toBe(true)
+        expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
 })

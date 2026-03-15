@@ -108,17 +108,17 @@ export class ExecutionsPage extends BasePage {
 
     async setPaginationTo(size: Pagination) {
         // The Element-Plus dropdown is not a `select` - click on text
-        await this.page.locator(".pagination .el-select").click();
+        await this.page.locator(".pagination .kel-select").click();
 
         // Wait for the select dropdown to show
-        const dropdowns = this.page.locator(".el-select-dropdown");
+        const dropdowns = this.page.locator(".kel-select-dropdown");
         const visibleDropdown = dropdowns.filter({has: this.page.locator(":visible")}).last();
 
         // Wait for the visible dropdown to actually appear
         await visibleDropdown.waitFor({state: "visible", timeout: 500});
 
         // Find and click the matching option
-        const option = visibleDropdown.locator(".el-select-dropdown__item", {hasText: `${size} per page`});
+        const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size} per page`});
         await option.waitFor({state: "visible", timeout: 500});
         await option.click();
     }

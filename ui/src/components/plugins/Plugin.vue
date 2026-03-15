@@ -241,13 +241,13 @@
         background-color: var(--ks-background-panel);
         flex: 1;
         min-height: 64px;
-        
+
         .plugin-icon {
             width: 35px;
             height: 35px;
             flex-shrink: 0;
         }
-        
+
         .plugin-name {
             font-size: 1.5rem;
             white-space: nowrap;
@@ -256,7 +256,7 @@
             flex: 1;
             min-width: 0;
         }
-        
+
         .release-notes-btn {
             background-color: var(--ks-background-info);
             color: var(--ks-content-info);
@@ -264,7 +264,7 @@
             font-family: 'Courier New', Courier, monospace;
             white-space: nowrap;
             flex-shrink: 0;
-            
+
             :deep(.material-design-icon) {
                 position: absolute;
                 bottom: 0;
@@ -281,35 +281,35 @@
         margin: 0;
         padding: 0;
     }
-    
+
     .plugin-doc {
         background-color: var(--ks-background-panel);
     }
-    
+
     @media (max-width: 991px) {
         .plugin-secondary-header {
             flex-wrap: wrap;
             padding: 0.5rem 0.75rem;
             gap: 0.5rem;
-            
+
             .plugin-icon {
                 width: 32px;
                 height: 32px;
                 margin-right: 0.5rem;
             }
-            
+
             .plugin-name {
                 font-size: 1.25rem;
                 flex: 1;
                 min-width: 0;
             }
-            
+
             .release-notes-btn {
                 padding: 6px 12px;
                 font-size: 0.75rem;
                 min-width: auto;
             }
-            
+
             .versions {
                 width: 100%;
                 display: flex;
@@ -318,7 +318,7 @@
                 gap: 0.5rem;
             }
 
-            .versions :deep(.el-select) {
+            .versions :deep(.kel-select) {
                 width: 100%;
             }
 
@@ -334,7 +334,7 @@
                 justify-content: center;
             }
         }
-        
+
         .plugin-doc {
             padding: 0.75rem;
         }

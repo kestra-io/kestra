@@ -1,19 +1,16 @@
 import {setup} from "@storybook/vue3-vite"
 import {withThemeByClassName} from "@storybook/addon-themes"
-import ElementPlus from "element-plus"
+import KestraDesignSystem from "../src/index"
 /*
  * dist/index.css contains all light-mode variables (:root) and component styles.
  * theme-chalk/dark/css-vars.css contains ONLY the html.dark { ... } overrides —
  * they are NOT bundled into dist/index.css and must be imported separately.
  */
-import "element-plus/dist/index.css"
-import "element-plus/theme-chalk/dark/css-vars.css"
-import "./storybook.css"
+import "../src/assets/styles/index.scss"
 import type {Preview} from "@storybook/vue3-vite"
 
-// Register Element Plus globally so el-option resolves its parent el-select context
 setup((app) => {
-    app.use(ElementPlus)
+    app.use(KestraDesignSystem)
 })
 
 const preview: Preview = {

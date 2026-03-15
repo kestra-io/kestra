@@ -34,7 +34,7 @@ const render: Story["render"] = (args: ComponentPropsAndSlots<typeof Revisions>)
 });
 
 async function selectorOptions(canvasElement: HTMLElement) {
-    const revisionSelectors = [...canvasElement.querySelectorAll(".revision-select .el-select__wrapper")] as HTMLElement[];
+    const revisionSelectors = [...canvasElement.querySelectorAll(".revision-select .kel-select__wrapper")] as HTMLElement[];
     const revisionSelectorsOptions: HTMLElement[][] = [];
     for (const selector of revisionSelectors) {
         selector.click();

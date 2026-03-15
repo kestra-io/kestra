@@ -27,4 +27,12 @@ export default defineConfig({
         // Generate sourcemaps for easier debugging
         sourcemap: true,
     },
+    css: {
+        devSourcemap: true,
+        preprocessorOptions: {
+            scss: {
+                silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
+            },
+        }
+    },
 })

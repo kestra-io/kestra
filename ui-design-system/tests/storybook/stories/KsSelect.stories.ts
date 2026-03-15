@@ -84,9 +84,9 @@ export const Default: Story = {
         const canvas = within(canvasElement)
         const trigger = canvas.getByRole("combobox")
         await userEvent.click(trigger)
-        const dropdown = document.querySelector(".el-select-dropdown")
+        const dropdown = document.querySelector(".kel-select-dropdown")
         await expect(dropdown).toBeTruthy()
-        const runningOption = Array.from(document.querySelectorAll(".el-select-dropdown__item")).find(
+        const runningOption = Array.from(document.querySelectorAll(".kel-select-dropdown__item")).find(
             (el) => el.textContent?.trim() === "Running"
         ) as HTMLElement | undefined
         if (runningOption) {
@@ -118,7 +118,7 @@ export const Filterable: Story = {
         const canvas = within(canvasElement)
         const trigger = canvas.getByRole("combobox")
         await userEvent.click(trigger)
-        const dropdown = document.querySelector(".el-select-dropdown")
+        const dropdown = document.querySelector(".kel-select-dropdown")
         await expect(dropdown).toBeTruthy()
     },
 }
@@ -145,12 +145,12 @@ export const Multiple: Story = {
         const canvas = within(canvasElement)
         const trigger = canvas.getByRole("combobox")
         await userEvent.click(trigger)
-        const options = document.querySelectorAll(".el-select-dropdown__item")
+        const options = document.querySelectorAll(".kel-select-dropdown__item")
         if (options.length >= 2) {
             await userEvent.click(options[0] as HTMLElement)
             await userEvent.click(options[1] as HTMLElement)
         }
-        const tags = canvasElement.querySelectorAll(".el-tag")
+        const tags = canvasElement.querySelectorAll(".kel-tag")
         await expect(tags.length).toBeGreaterThan(0)
     },
 }

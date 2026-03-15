@@ -137,7 +137,7 @@
         </el-table>
         <div style="margin:1rem; display:flex; gap: 1rem; justify-content: center; align-items: center;">
             Single Select
-            <el-select
+            <kel-select
                 v-model="valueSelect"
                 placeholder="Select"
                 size="large"
@@ -149,16 +149,16 @@
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
-            <el-select v-model="valueSelect" placeholder="Select" style="width: 240px">
+            </kel-select>
+            <kel-select v-model="valueSelect" placeholder="Select" style="width: 240px">
                 <el-option
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
-            <el-select
+            </kel-select>
+            <kel-select
                 v-model="valueSelect"
                 placeholder="Select"
                 size="small"
@@ -170,11 +170,11 @@
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
+            </kel-select>
         </div>
         <div style="margin:1rem; display:flex; gap: 1rem; justify-content: center; align-items: center;">
             Multiple Select
-            <el-select
+            <kel-select
                 v-model="valueMultiple"
                 multiple
                 placeholder="Select"
@@ -186,7 +186,7 @@
                     :label="item.label"
                     :value="item.value"
                 />
-            </el-select>
+            </kel-select>
         </div>
 
         <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="(tab) => { if(tab.name) tabChanged({name:tab.name}) }" />

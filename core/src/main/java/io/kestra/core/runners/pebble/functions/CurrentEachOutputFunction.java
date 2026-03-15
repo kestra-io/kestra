@@ -5,6 +5,7 @@ import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,13 +24,19 @@ public class CurrentEachOutputFunction implements Function {
         }
 
         Map<?, ?> outputs = (Map<?, ?>) args.get("outputs");
-        List<Map<?, ?>> parents = (List<Map<?, ?>>) context.getVariable("parents");
-        if (parents != null && !parents.isEmpty()) {
+        List<Map<?, ?>> immutableParents = (List<Map<?, ?>>) context.getVariable("parents");
+        if (immutableParents != null && !immutableParents.isEmpty()) {
+            List<Map<?, ?>> parents = new ArrayList<>(immutableParents);
             Collections.reverse(parents);
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {
-                    outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
+                    if(outputs.get(taskrun.get("value")) != null){
+                        outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
+                    }
+                    else {
+                        throw new PebbleException(null, "No execution outputs for the current task runs path", lineNumber, self.getName());
+                    }
                 }
             }
         }

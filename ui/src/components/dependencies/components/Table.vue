@@ -6,7 +6,7 @@
             clearable
         />
 
-        <ks-select 
+        <ks-select
             v-model="namespace"
             :placeholder="$t('dependency.search.namespace.select')"
             clearable
@@ -57,7 +57,7 @@
                             v-if="[FLOW, NAMESPACE, ASSET].includes(row.data.metadata.subtype)"
                             :to="{
                                 name: row.data.metadata.subtype === ASSET ? 'assets/update' : 'flows/update',
-                                params: row.data.metadata.subtype === ASSET 
+                                params: row.data.metadata.subtype === ASSET
                                     ? {namespace: row.data.namespace, assetId: row.data.flow}
                                     : {namespace: row.data.namespace, id: row.data.flow}
                             }"
@@ -137,7 +137,7 @@
             ...(props.subtype === ASSET ?  [{
                 label: t("dependency.search.namespace.no_namespace"),
                 value: NO_NAMESPACE_VALUE,
-            }] : [])      
+            }] : [])
         ];
     });
 
@@ -181,7 +181,7 @@ section#filtering {
     padding: 1rem;
     background-color: var(--ks-background-input);
 
-    :deep(.el-input__wrapper), :deep(.el-select__wrapper) {
+    :deep(.el-input__wrapper), :deep(.kel-select__wrapper) {
         margin-bottom: 0.5rem;
         font-size: var(--font-size-sm);
     }

@@ -1,9 +1,8 @@
-@use "fonts";
-
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
 @use "@kestra-io/ui-libs/style.css";
+@use "@kestra-io/ui-design-system/src/assets/styles/index.scss" as *;
 
 // element-plus
 @use "layout/element-plus-overload";
@@ -106,10 +105,6 @@ main {
             flex: 1;
         }
     }
-}
-
-.el-icon.el-select__caret.el-select__icon {
-    font-size: 1.1rem;
 }
 
 // status

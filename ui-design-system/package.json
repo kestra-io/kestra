@@ -11,7 +11,8 @@
             "types": "./dist/src/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs"
-        }
+        },
+        "./src/assets/styles/*": "./src/assets/styles/*"
     },
     "files": [
         "dist"
@@ -25,6 +26,7 @@
         "build-storybook": "storybook build"
     },
     "dependencies": {
+        "bootstrap": "^5.3.8",
         "element-plus": "2.13.5"
     },
     "peerDependencies": {
@@ -43,6 +45,7 @@
         "happy-dom": "^20.8.4",
         "jsdom": "^28.1.0",
         "playwright": "^1.58.2",
+        "sass-embedded": "^1.98.0",
         "storybook": "^10.2.17",
         "typescript": "^5.9.3",
         "vite": "^6.3.5",

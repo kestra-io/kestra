@@ -273,7 +273,7 @@
                 let indexedLogs = this?.logs
                     .filter(logLine => (logLine?.message ?? "").toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
                     .map((logLine, index) => ({...logLine, index}));
-            
+
                 // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
                 indexedLogs = Array.from(new Set(indexedLogs))
 
@@ -473,12 +473,12 @@
     }
 
     .attempt-header {
-        .el-select {
+        .kel-select {
             width: 10rem;
             height: 24px;
             margin-top: 0.35rem;
 
-            :deep(.el-select__wrapper) {
+            :deep(.kel-select__wrapper) {
                 height: 24px;
                 min-height: 24px;
             }
@@ -494,7 +494,7 @@
 </style>
 
 <style lang="scss">
-.attempt-select > .el-select__wrapper {
+.attempt-select > .kel-select__wrapper {
     height: 100%;
 }
 </style>

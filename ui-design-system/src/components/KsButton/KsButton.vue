@@ -1,39 +1,41 @@
 <script setup lang="ts">
-import {ElButton} from "element-plus"
-import type {Component} from "vue"
+    import type {Component} from "vue"
+    import {ElButton, provideGlobalConfig} from "element-plus"
 
-defineOptions({inheritAttrs: false})
+    provideGlobalConfig({namespace: "kel"})
 
-defineProps<{
-    type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
-    size?: "small" | "default" | "large" | ""
-    disabled?: boolean
-    icon?: string | Component
-    nativeType?: "button" | "submit" | "reset"
-    loading?: boolean
-    loadingIcon?: string | Component
-    plain?: boolean
-    text?: boolean
-    link?: boolean
-    bg?: boolean
-    autofocus?: boolean
-    round?: boolean
-    circle?: boolean
-    color?: string
-    dark?: boolean
-    autoInsertSpace?: boolean
-    tag?: string | Component
-}>()
+    defineOptions({inheritAttrs: false})
 
-const emit = defineEmits<{
-    click: [evt: MouseEvent]
-}>()
+    defineProps<{
+        type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+        size?: "small" | "default" | "large" | ""
+        disabled?: boolean
+        icon?: string | Component
+        nativeType?: "button" | "submit" | "reset"
+        loading?: boolean
+        loadingIcon?: string | Component
+        plain?: boolean
+        text?: boolean
+        link?: boolean
+        bg?: boolean
+        autofocus?: boolean
+        round?: boolean
+        circle?: boolean
+        color?: string
+        dark?: boolean
+        autoInsertSpace?: boolean
+        tag?: string | Component
+    }>()
 
-defineSlots<{
-    default?(): unknown
-    loading?(): unknown
-    icon?(): unknown
-}>()
+    const emit = defineEmits<{
+        click: [evt: MouseEvent]
+    }>()
+
+    defineSlots<{
+        default?(): unknown
+        loading?(): unknown
+        icon?(): unknown
+    }>()
 </script>
 
 <template>
@@ -46,3 +48,95 @@ defineSlots<{
         <template v-if="$slots.icon" #icon><slot name="icon" /></template>
     </el-button>
 </template>
+
+<style lang="scss">
+    .kel-button {
+        &:not(.kel-button--primary):not(.kel-button--success):not(.kel-button--warning):not(.kel-button--danger):not(.kel-button--error):not(.kel-button--info):not(.kel-button--playground), &--default {
+            --kel-button-hover-text-color: var(--ks-content-primary);
+            --kel-button-hover-border-color: var(--ks-border-primary);
+            --kel-button-bg-color: var(--ks-button-background-secondary);
+            --kel-button-hover-bg-color: var(--ks-button-background-secondary-hover);
+            --kel-button-active-bg-color: var(--ks-button-background-secondary-active);
+        }
+
+        &.kel-button--primary {
+            --kel-button-text-color: var(--ks-button-content-primary);
+            --kel-button-hover-text-color: var(--ks-button-content-primary);
+            --kel-button-bg-color: var(--ks-button-background-primary);
+            --kel-button-border-color: var(--ks-button-background-primary);
+            --kel-button-hover-bg-color: var(--ks-button-background-primary-hover);
+            --kel-button-active-bg-color: var(--ks-button-background-primary-active);
+            --kel-button-disabled-text-color: var(--ks-content-inactive);
+            --kel-button-disabled-bg-color: var(--ks-button-background-inactive);
+            --kel-button-disabled-border-color: var(--ks-button-background-inactive);
+        }
+
+        &.kel-button--playground {
+            #{--kel-button-disabled-text-color}: var(--ks-blue-50);
+            #{--kel-button-text-color}: var(--ks-white);
+            #{--kel-button-hover-text-color}: var(--ks-white);
+            #{--kel-button-bg-color}: var(--ks-blue-500);
+            #{--kel-button-hover-bg-color}: var(--ks-blue-400);
+            #{--kel-button-active-bg-color}: var(--ks-blue-600);
+            #{--kel-button-active-border-color}: var(--ks-blue-700);
+            #{--kel-button-outline-color}: var(--ks-blue-700);
+        }
+
+        &.kel-button--success {
+            --kel-button-bg-color: var(--ks-button-background-success);
+            --kel-button-border-color: var(--ks-button-background-success);
+            --kel-button-hover-bg-color: var(--ks-button-background-success-hover);
+            --kel-button-active-bg-color: var(--ks-button-background-success-active);
+        }
+
+        .kel-input-group--append & [class*=kel-icon] + span {
+            position: relative;
+            top: -3px;
+        }
+
+        [class*=kel-icon] + span:empty {
+            margin-left: 0;
+        }
+
+        &.kel-button--large {
+            font-size: var(--bs-body-font-size);
+            line-height: var(--bs-body-font-size);
+        }
+
+        &.is-text {
+            border: 1px solid var(--ks-border-primary);
+            height: 2rem;
+            line-height: 2rem;
+            font-weight: normal;
+            --kel-button-background-color: var(--ks-background-card);
+            --kel-button-text-color: var(--ks-content-primary);
+
+            &.version {
+                --kel-button-text-color: var(--ks-content-primary);
+                --kel-button-border-color: var(--ks-border-active);
+                --kel-button-background-color: var(--ks-button-background-primary);
+            }
+        }
+
+        &.no-focus {
+            outline: none !important;
+        }
+
+        &.wh-15 {
+            padding: 0;
+            border: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+
+            * {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+        }
+
+        &--success {
+            #{--kel-button-bg-color}: var(--ks-green-500);
+            #{--kel-button-hover-bg-color}: var(--ks-green-400);
+        }
+    }
+</style>

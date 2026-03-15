@@ -87,7 +87,7 @@
     }
 }
 
-.el-select-dropdown__item {
+.kel-select-dropdown__item {
     height: fit-content;
     padding: 4px 12px;
 }

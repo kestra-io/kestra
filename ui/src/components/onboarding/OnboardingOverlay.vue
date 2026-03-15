@@ -232,7 +232,7 @@
         const target = event.target as HTMLElement | null;
         if (
             target?.closest(
-                "button, a, input, textarea, select, label, [role='button'], .el-button, .el-input, .el-select",
+                "button, a, input, textarea, select, label, [role='button'], .el-button, .el-input, .kel-select",
             )
         ) {
             return;

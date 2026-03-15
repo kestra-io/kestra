@@ -1,0 +1,136 @@
+@use "variables.scss" as global-var;
+
+@forward 'element-plus/theme-chalk/src/mixins/config.scss' with (
+  $namespace: 'kel'
+);
+
+@forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
+    $font-family: (
+        '':  global-var.$font-family-sans-serif,
+        'monospace': global-var.$font-family-monospace
+    ),
+
+    $font-size: (
+        'extra-large': global-var.$font-size-base * 1.5,
+        'large': global-var.$font-size-lg,
+        'medium': global-var.$font-size-base * 1.15 ,
+        'base': global-var.$font-size-base,
+        'small': global-var.$font-size-sm,
+        'extra-small': global-var.$font-size-xs,
+    ),
+
+    $colors:  (
+        'white': global-var.$white,
+        'black': global-var.$black,
+        'primary': (
+            'base': global-var.$purple-500,
+        ),
+        'success': (
+            'base': global-var.$green-500,
+        ),
+        'warning': (
+            'base': global-var.$orange-500,
+        ),
+        'danger': (
+            'base': global-var.$red-500,
+        ),
+        'error': (
+            'base': global-var.$red-500,
+        ),
+        'info': (
+            'base': global-var.$blue-500,
+        ),
+    ),
+
+    $border-radius: (
+        'base': global-var.$border-radius,
+        'small': global-var.$border-radius-sm,
+        'round': global-var.$border-radius-lg,
+    ),
+
+    $input: (
+        'bg-color': var(--ks-background-input),
+    ),
+    $checkbox: (
+        'bg-color': var(--ks-background-input),
+    ),
+    $radio: (
+        'input-bg-color': var(--ks-background-input),
+    ),
+    $select: (
+        'input-color': var(--ks-background-input),
+    )
+);
+
+@use "element-plus/theme-chalk/src/index.scss";
+@use "element-plus/theme-chalk/src/dark/css-vars";
+
+:root {
+    #{--kel-bg-color}: var(--ks-background-body);
+    #{--kel-bg-color-page}: var(--ks-background-body);
+    #{--kel-bg-color-overlay}: var(--ks-white);
+
+    #{--kel-disabled-bg-color}: var(--ks-gray-50);
+
+    #{--kel-text-color-primary}: var(--ks-content-primary);
+    #{--kel-text-color-regular}: var(--ks-content-primary);
+    #{--kel-text-color-secondary}: var(--ks-content-secondary);
+    #{--kel-text-color-placeholder}: var(--ks-gray-300);
+    #{--kel-text-color-disabled}: var(--ks-content-inactive);
+
+    #{--kel-border-color}: var(--ks-border-primary);
+    #{--kel-border-color-light}: var(--ks-border-primary);
+    #{--kel-border-color-lighter}: var(--ks-border-primary);
+    #{--kel-border-color-extra-light}: var(--ks-border-primary);
+    #{--kel-border-color-dark}: var(--ks-border-secondary);
+    #{--kel-border-color-darker}: var(--ks-border-secondary);
+
+    #{--kel-fill-color}: var(--ks-gray-300); // used in buttons .is-text
+    #{--kel-fill-color-light}: var(--ks-gray-200); // used in many places autocomplete suggestion highlighted
+    #{--kel-fill-color-lighter}: var(--ks-gray-100); // used to be for table stripped but not anymore
+    #{--kel-fill-color-extra-light}: var(--ks-white); // not used at all
+    #{--kel-fill-color-dark}: var(--ks-gray-400); // used in buttons .is-text when active
+    #{--kel-fill-color-darker}: var(--ks-gray-500); // not used at kestra
+    #{--kel-fill-color-blank}: var(--ks-white); // used in many places --kel-input-background-color
+
+
+    #{--kel-box-shadow}: 0 .5rem 1rem rgba(#000, .15);
+    #{--kel-box-shadow-light}: 0 .125rem .25rem rgba(#000, .075);
+    #{--kel-box-shadow-lighter}: 0 1rem 3rem rgba(#000, .175);
+    #{--kel-box-shadow-dark}: 0 1rem 3rem rgba(#000, .175);
+
+    #{--kel-menu-hover-bg-color}: var(--ks-button-background-secondary);
+    #{--kel-menu-hover-text-color}: var(--ks-content-primary);
+    #{--kel-menu-active-color}: var(--ks-content-link);
+}
+
+html.dark {
+    #{--kel-bg-color}: var(--ks-background-body);
+    #{--kel-bg-color-page}: var(--ks-background-body);
+    #{--kel-bg-color-overlay}: var(--ks-gray-950);
+
+    #{--kel-disabled-bg-color}: var(--ks-gray-900);
+
+    #{--kel-text-color-primary}: var(--ks-content-primary);
+    #{--kel-text-color-regular}: var(--ks-content-primary);
+    #{--kel-text-color-secondary}: var(--ks-content-secondary);
+    #{--kel-text-color-placeholder}: var(--ks-gray-400);
+    #{--kel-text-color-disabled}: var(--ks-gray-400);
+
+    #{--kel-border-color}: var(--ks-border-primary);
+    #{--kel-border-color-light}: var(--ks-border-primary);
+    #{--kel-border-color-lighter}: var(--ks-border-primary);
+    #{--kel-border-color-extra-light}: var(--ks-border-primary);
+    #{--kel-border-color-dark}: var(--ks-border-primary);
+    #{--kel-border-color-darker}: var(--ks-border-primary);
+
+    #{--kel-fill-color}: var(--ks-gray-700);
+    #{--kel-fill-color-light}: var(--ks-gray-800);
+    #{--kel-fill-color-lighter}: var(--ks-gray-700);
+    #{--kel-fill-color-extra-light}: var(--ks-gray-400);
+    #{--kel-fill-color-dark}: var(--ks-gray-800);
+    #{--kel-fill-color-darker}: var(--ks-gray-900);
+    #{--kel-fill-color-blank}: var(--ks-gray-500);
+
+    #{--kel-button-active-text-color}: var(--ks-content-primary);
+}

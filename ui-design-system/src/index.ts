@@ -1,8 +1,10 @@
 import type {App} from "vue"
-import {KsSelect} from "./components/KsSelect"
-import {KsOption} from "./components/KsOption"
-import {KsButton} from "./components/KsButton"
-import {KsButtonGroup} from "./components/KsButtonGroup"
+import ElementPlus from "element-plus"
+
+import KsSelect from "./components/KsSelect/KsSelect.vue"
+import KsOption from "./components/KsSelect/KsOption.vue"
+import KsButton from "./components/KsButton/KsButton.vue"
+import KsButtonGroup from "./components/KsButton/KsButtonGroup.vue"
 
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {KsSelect, KsOption, KsButton, KsButtonGroup}
@@ -10,6 +12,8 @@ export {KsSelect, KsOption, KsButton, KsButtonGroup}
 // ─── Vue plugin (auto-registers all components) ──────────────────────────────
 const KestraDesignSystem = {
     install(app: App) {
+        app.use(ElementPlus)
+
         app.component("KsSelect", KsSelect)
         app.component("KsOption", KsOption)
         app.component("KsButton", KsButton)

@@ -29,7 +29,7 @@
     }
 }
 
-:deep(.el-select__suffix) {
+:deep(.kel-select__suffix) {
     display: flex !important;
 }
 </style>

@@ -320,7 +320,7 @@
                 gap: 0.5rem;
             }
 
-            .versions :deep(.el-select) {
+            .versions :deep(.kel-select) {
                 width: 100%;
             }
 

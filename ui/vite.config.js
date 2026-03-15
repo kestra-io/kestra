@@ -40,6 +40,9 @@ export default defineConfig({
                 ws: true,
                 changeOrigin: true
             }
+        },
+        fs: {
+            allow: [".", "../ui-design-system"]
         }
     },
     resolve: {

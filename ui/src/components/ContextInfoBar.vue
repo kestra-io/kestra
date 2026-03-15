@@ -247,7 +247,7 @@
             border-right: 1px solid var(--ks-border-primary);
         }
 
-        .el-button {
+        .kel-button {
             font-size: var(--font-size-sm);
             height: auto;
             padding: 10px 5px;
@@ -255,7 +255,7 @@
             position: relative;
         }
 
-        .el-button + .el-button {
+        .kel-button + .kel-button {
             margin-left: 0;
         }
 

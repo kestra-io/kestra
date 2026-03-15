@@ -629,7 +629,7 @@
                     }
 
                     & .timerange {
-                        .el-select {
+                        .kel-select {
                             width: calc($spacer * 10);
                         }
                     }

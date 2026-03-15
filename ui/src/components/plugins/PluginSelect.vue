@@ -151,11 +151,11 @@
         }
     }
 
-    :deep(.el-select__suffix) {
+    :deep(.kel-select__suffix) {
         display: flex !important;
     }
 
-    .el-select-dropdown__item {
+    .kel-select-dropdown__item {
         height: fit-content;
         line-height: normal;
         padding: 8px 12px;

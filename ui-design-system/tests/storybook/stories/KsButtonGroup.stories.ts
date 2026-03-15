@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {markRaw} from "vue"
 import {within, expect} from "storybook/test"
 import KsButton from "../../../src/components/KsButton/KsButton.vue"
-import KsButtonGroup from "../../../src/components/KsButtonGroup/KsButtonGroup.vue"
+import KsButtonGroup from "../../../src/components/KsButton/KsButtonGroup.vue"
 
 const PrevIcon = markRaw({
     template: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
@@ -123,7 +123,7 @@ export const Vertical: Story = {
     }),
     async play({canvasElement}) {
         const canvas = within(canvasElement)
-        const group = canvasElement.querySelector(".el-button-group--vertical")
+        const group = canvasElement.querySelector(".kel-button-group--vertical")
         await expect(group).toBeTruthy()
         const buttons = canvas.getAllByRole("button")
         await expect(buttons.length).toBe(3)

@@ -336,7 +336,7 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
-            t.dependsOn("test")// explicit depend to insure they are run before
+            t.mustRunAfter(tasks.named('test'))
         }
 
         // test task (default)
@@ -363,6 +363,7 @@ subprojects {subProj ->
 
         tasks.named('check') {
             dependsOn(tasks.named('test'))// default behaviour
+            dependsOn(tasks.named('flakyTest'))
         }
 
         testlogger {

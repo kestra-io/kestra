@@ -81,7 +81,12 @@
                 this.duration = Utils.humanDuration(this.delta() / 1000)
             },
             squareClass(state) {
-                const statusVarname = state.toLowerCase();
+                let statusVarname = state.toLowerCase();
+
+                // Minor hack to reuse created color for submitted status.
+                // See https://github.com/kestra-io/kestra/issues/14876 for more details.
+                if(statusVarname === "submitted") statusVarname = "created";
+
                 return {
                     backgroundColor: `var(--ks-chart-${statusVarname})`
                 };

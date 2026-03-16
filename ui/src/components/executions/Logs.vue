@@ -76,7 +76,7 @@
                 ref="logScroller"
                 :items="temporalLogs"
                 :minItemSize="50"
-                keyField="taskRunId"
+                keyField="uid"
                 class="log-lines temporal"
                 :buffer="200"
                 :prerender="20"
@@ -208,18 +208,21 @@
                 return State
             },
             temporalLogs() {
-                if (!this.executionsStore.logs?.length) {
+                const logResults = this.executionsStore.logs?.results ?? [];
+
+                if (!logResults.length) {
                     return [];
                 }
 
-                const filtered = this.executionsStore.logs.filter(log => {
+                const filtered = logResults.filter(log => {
                     if (!this.filter) return true;
                     return log.message?.toLowerCase().includes(this.filter.toLowerCase());
                 });
 
                 return filtered.map((logLine, index) => ({
                     ...logLine,
-                    index
+                    index,
+                    uid: `${logLine.taskRunId ?? ""}-${logLine.attemptNumber ?? 0}-${logLine.timestamp}-${index}`,
                 }));
             },
             ...mapStores(useExecutionsStore),

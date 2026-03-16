@@ -190,7 +190,7 @@ public class MapUtils {
      * @throws IllegalArgumentException if the given map contains conflicting keys.
      */
     public static Map<String, Object> flattenToNestedMap(@NotNull Map<String, ?> flatMap) {
-        Map<String, Object> result = new TreeMap<>();
+        Map<String, Object> result = new HashMap<>();
 
         for (Map.Entry<String, ?> entry : flatMap.entrySet()) {
             String[] keys = entry.getKey().split("\\.");
@@ -224,7 +224,7 @@ public class MapUtils {
      * @return the flattened map.
      */
     public static Map<String, Object> nestedToFlattenMap(@NotNull Map<String, Object> nestedMap) {
-        Map<String, Object> result = new TreeMap<>();
+        Map<String, Object> result = new HashMap<>();
 
         for (Map.Entry<String, Object> entry : nestedMap.entrySet()) {
             if (entry.getValue() instanceof Map<?, ?> map) {
@@ -238,7 +238,7 @@ public class MapUtils {
     }
 
     private static Map<String, Object> flattenEntry(String key, Map<String, Object> value) {
-        Map<String, Object> result = new TreeMap<>();
+        Map<String, Object> result = new HashMap<>();
 
         for (Map.Entry<String, Object> entry : value.entrySet()) {
             String newKey = key + "." + entry.getKey();

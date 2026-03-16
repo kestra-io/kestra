@@ -17,7 +17,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Validated
 @Controller("/api/v1/{tenant}/blueprints/community")
 public class BlueprintController {
     @Inject

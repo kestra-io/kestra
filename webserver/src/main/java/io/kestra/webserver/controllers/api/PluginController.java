@@ -29,7 +29,6 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
@@ -42,7 +41,6 @@ import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-@Validated
 @Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";

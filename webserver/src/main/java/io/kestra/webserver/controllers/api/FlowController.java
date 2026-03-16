@@ -42,7 +42,6 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -67,7 +66,6 @@ import java.util.stream.Stream;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-@Validated
 @Controller("/api/v1/{tenant}/flows")
 @Slf4j
 public class FlowController {

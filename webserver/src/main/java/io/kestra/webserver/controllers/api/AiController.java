@@ -14,7 +14,6 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.server.util.HttpClientAddressResolver;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Validated
 @Controller("/api/v1/main/ai")
 @Requires(bean = AiServiceManager.class)
 public class AiController {

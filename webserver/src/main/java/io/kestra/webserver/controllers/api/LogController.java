@@ -25,7 +25,6 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -43,7 +42,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-@Validated
 @Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogRepositoryInterface.class)
 public class LogController {

@@ -70,7 +70,6 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -126,7 +125,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 // FIXME for all update on the execution (resume, pause, force run, ...) we validate the state and if validation fail we throws
 //  sometimes an IllegalStateException sometimes an IllegalArgumentException: this would be great to always throw the same exception.
 @Slf4j
-@Validated
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
     @Nullable

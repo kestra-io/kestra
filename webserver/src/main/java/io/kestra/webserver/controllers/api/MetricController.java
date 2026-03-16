@@ -15,7 +15,6 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
@@ -26,7 +25,6 @@ import java.util.List;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
-@Validated
 @Controller("/api/v1/{tenant}/metrics")
 @Requires(beans = MetricRepositoryInterface.class)
 public class MetricController {

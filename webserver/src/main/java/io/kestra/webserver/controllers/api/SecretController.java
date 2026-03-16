@@ -16,7 +16,6 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
@@ -24,7 +23,6 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 
-@Validated
 @Controller("/api/v1/{tenant}/secrets")
 public class SecretController<META extends ApiSecretMeta> {
     @Inject

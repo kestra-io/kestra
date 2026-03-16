@@ -19,7 +19,6 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
@@ -31,7 +30,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Validated
 @Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceController<N extends Namespace> {
     protected static final Pageable AUTOCOMPLETE_PAGEABLE = PageableUtils.from(1, 50, null);

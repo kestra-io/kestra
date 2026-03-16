@@ -22,7 +22,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -33,7 +32,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-@Validated
 @Controller("/api/v1/{tenant}")
 public class KVController {
 
@@ -183,7 +181,7 @@ public class KVController {
     protected KVStore kvStore(String namespace) {
         return kvStoreService.get(tenantService.resolveTenant(), namespace);
     }
-    
+
     /**
      * API Response for the bulk-delete operation.
      *

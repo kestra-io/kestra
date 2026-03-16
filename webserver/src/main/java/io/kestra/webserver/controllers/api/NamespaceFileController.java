@@ -18,7 +18,6 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
@@ -44,7 +43,6 @@ import java.util.zip.ZipOutputStream;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Slf4j
-@Validated
 @Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceFileController {
     public static final String FLOWS_FOLDER = "_flows";

@@ -16,7 +16,6 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -28,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-@Validated
 @Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceSecretController<META extends ApiSecretMeta> {
     @Inject

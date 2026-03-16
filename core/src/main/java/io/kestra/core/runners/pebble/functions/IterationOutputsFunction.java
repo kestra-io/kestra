@@ -87,17 +87,10 @@ public class IterationOutputsFunction implements Function {
             }
 
         }
-        // the output of current or future iterations can't occur at the current iteration
-        if (iteration == targetOutputs.size()) {
-            throw new PebbleException(null,
-                    "The provided index (" + iteration + ") refers to the current iteration, "
-                            + "whose outputs are not yet available at runtime.",
-                    lineNumber, self.getName());
-        }
-        if (iteration > targetOutputs.size()) {
+        if (iteration >= targetOutputs.size()) {
             throw new PebbleException(null,
                     "The provided index (" + iteration + ") is out of range. "
-                            + "It refers to a future iteration whose outputs do not exist yet. "
+                            + "It refers to an iteration whose outputs do not exist yet. "
                             + "Maximum valid index is " + (targetOutputs.size() - 1) + ".",
                     lineNumber, self.getName());
         }

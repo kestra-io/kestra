@@ -3,7 +3,6 @@ package io.kestra.core.models.collectors;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -14,7 +13,6 @@ import java.util.List;
 @SuperBuilder
 @Getter
 @Jacksonized
-@Introspected
 public class ExecutionUsage {
     private final List<DailyExecutionStatistics> dailyExecutionsCount;
 

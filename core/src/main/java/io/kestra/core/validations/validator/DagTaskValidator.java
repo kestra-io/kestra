@@ -3,7 +3,6 @@ package io.kestra.core.validations.validator;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.core.validations.DagTaskValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-@Introspected
 public class DagTaskValidator  implements ConstraintValidator<DagTaskValidation, Dag> {
     @Override
     public boolean isValid(

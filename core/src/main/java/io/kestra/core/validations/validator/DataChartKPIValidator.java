@@ -5,7 +5,6 @@ import io.kestra.core.validations.DataChartKPIValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-@Introspected
 public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIValidation, DataChartKPI<?, ?>> {
     @Value("${kestra.repository.type}")
     private String repositoryType;

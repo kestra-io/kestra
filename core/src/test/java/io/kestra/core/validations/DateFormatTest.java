@@ -1,7 +1,6 @@
 package io.kestra.core.validations;
 
 import io.kestra.core.models.validations.ModelValidator;
-import io.micronaut.core.annotation.Introspected;
 import io.kestra.core.junit.annotations.KestraTest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +22,6 @@ class DateFormatTest {
     private ModelValidator modelValidator;
 
     @AllArgsConstructor
-    @Introspected
     @Getter
     @Builder
     public static class DateFormatCls {

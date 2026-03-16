@@ -5,13 +5,11 @@ import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import io.kestra.core.models.TenantInterface;
-import io.micronaut.core.annotation.Introspected;
 
 import java.io.Serial;
 import java.util.List;
 import jakarta.inject.Singleton;
 
-@Introspected
 @Singleton
 public class TenantSerializer extends BeanSerializerModifier {
     @Serial

@@ -1,7 +1,6 @@
 package io.kestra.core.models.collectors;
 
 import io.kestra.core.plugins.PluginRegistry;
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
 @SuperBuilder
 @Getter
 @Jacksonized
-@Introspected
 public class PluginUsage {
     private final Map<String, String> manifest;
 

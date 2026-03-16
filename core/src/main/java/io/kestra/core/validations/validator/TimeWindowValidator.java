@@ -3,7 +3,6 @@ package io.kestra.core.validations.validator;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.validations.TimeWindowValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -13,7 +12,6 @@ import jakarta.inject.Singleton;
 import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
 
 @Singleton
-@Introspected
 public class TimeWindowValidator implements ConstraintValidator<TimeWindowValidation, TimeWindow> {
 
     @Override

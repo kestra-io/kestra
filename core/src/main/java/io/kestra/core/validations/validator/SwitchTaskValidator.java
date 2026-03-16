@@ -3,7 +3,6 @@ package io.kestra.core.validations.validator;
 import io.kestra.plugin.core.flow.Switch;
 import io.kestra.core.validations.SwitchTaskValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -11,7 +10,6 @@ import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Introspected
 public class SwitchTaskValidator implements ConstraintValidator<SwitchTaskValidation, Switch> {
     @Override
     public boolean isValid(

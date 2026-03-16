@@ -5,7 +5,6 @@ import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.utils.IdUtils;
-import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +23,6 @@ import java.util.Objects;
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @Hidden

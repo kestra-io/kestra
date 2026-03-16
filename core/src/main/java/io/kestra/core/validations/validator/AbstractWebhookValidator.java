@@ -4,7 +4,6 @@ import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.validations.AbstractWebhookValidation;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.MediaType;
@@ -15,7 +14,6 @@ import jakarta.inject.Singleton;
 import java.util.Set;
 
 @Singleton
-@Introspected
 public class AbstractWebhookValidator implements ConstraintValidator<AbstractWebhookValidation, AbstractWebhookTrigger> {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
         MediaType.APPLICATION_JSON,

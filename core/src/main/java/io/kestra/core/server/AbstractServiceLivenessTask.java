@@ -2,7 +2,6 @@ package io.kestra.core.server;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Base class for scheduling a task that operate on Worker liveness.
  */
-@Introspected
 @Slf4j
 public abstract class AbstractServiceLivenessTask implements Runnable, AutoCloseable {
 

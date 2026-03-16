@@ -7,7 +7,6 @@ import io.kestra.core.reporter.AbstractReportable;
 import io.kestra.core.reporter.Schedules;
 import io.kestra.core.reporter.Types;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Builder;
@@ -45,7 +44,6 @@ public class ServiceUsageReport extends AbstractReportable<ServiceUsageReport.Se
     }
     
     @Builder
-    @Introspected
     public record ServiceUsageEvent(
         ServiceUsage services
     ) implements Event {

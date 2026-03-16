@@ -8,7 +8,6 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -391,7 +390,6 @@ class PropertyTest {
     })
     @Getter
     @NoArgsConstructor
-    @Introspected
     public abstract static class WithSubtype {
         abstract public String getType();
     }

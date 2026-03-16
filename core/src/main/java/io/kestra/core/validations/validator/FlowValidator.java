@@ -10,7 +10,6 @@ import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -27,7 +26,6 @@ import static io.kestra.core.models.Label.READ_ONLY;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
-@Introspected
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
     public static List<String> RESERVED_FLOW_IDS = List.of(
         "pause",

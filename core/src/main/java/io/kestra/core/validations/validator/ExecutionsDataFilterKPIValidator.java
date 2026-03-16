@@ -4,7 +4,6 @@ import io.kestra.core.validations.ExecutionsDataFilterValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.dashboard.data.ExecutionsKPI;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-@Introspected
 public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<ExecutionsDataFilterValidation, ExecutionsKPI<?>> {
     @Override
     public boolean isValid(

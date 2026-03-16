@@ -56,7 +56,6 @@ import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.format.Format;
@@ -2559,7 +2558,6 @@ public class ExecutionController {
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");
     }
 
-    @Introspected
     public record LastExecutionResponse(
         @Parameter(description = "The execution's ID") String id,
         @Parameter(description = "The flow's ID") String flowId,
@@ -2579,7 +2577,6 @@ public class ExecutionController {
         }
     }
 
-    @Introspected
     public record ApiValidateExecutionInputsResponse(
         @Parameter(description = "The flow's ID")
         String id,
@@ -2590,7 +2587,6 @@ public class ExecutionController {
         List<ApiCheckFailure> checks
     ) {
 
-        @Introspected
         public record ApiInputAndValue(
             @Parameter(description = "The input")
             Input<?> input,
@@ -2605,14 +2601,12 @@ public class ExecutionController {
         ) {
         }
 
-        @Introspected
         public record ApiInputError(
             @Parameter(description = "The error message")
             String message
         ) {
         }
 
-        @Introspected
         public record ApiCheckFailure(
             @Parameter(description = "The message")
             String message,

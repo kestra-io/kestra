@@ -21,7 +21,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -48,7 +47,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 /**
  * Default and mutable implementation of {@link RunContext}.
  */
-@Introspected
 public class DefaultRunContext extends RunContext {
     // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;

@@ -8,7 +8,6 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.webserver.services.FlowAutoLoaderService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -31,7 +30,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Slf4j
-@Introspected
 public abstract class AbstractCommand extends BaseCommand implements Callable<Integer> {
     @Inject
     protected ApplicationContext applicationContext;

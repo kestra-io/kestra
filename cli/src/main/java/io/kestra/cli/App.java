@@ -11,7 +11,6 @@ import io.kestra.cli.services.EnvironmentProvider;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
-import io.micronaut.core.annotation.Introspected;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -40,7 +39,6 @@ import java.util.stream.Stream;
         MigrationCommand.class
     }
 )
-@Introspected
 public class App implements Callable<Integer> {
 
     public static void main(String[] args) {

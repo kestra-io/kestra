@@ -4,7 +4,6 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.validations.InputValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -13,7 +12,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Introspected
 public class InputValidator implements ConstraintValidator<InputValidation, Input<?>> {
     
     @Inject

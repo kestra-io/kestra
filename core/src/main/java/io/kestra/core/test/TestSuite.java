@@ -8,7 +8,6 @@ import io.kestra.core.models.TenantInterface;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TestSuiteValidation;
-import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -21,7 +20,6 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Introspected
 @ToString
 @EqualsAndHashCode
 @TestSuiteValidation

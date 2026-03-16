@@ -18,7 +18,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.DagTaskValidation;
-import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -253,7 +252,6 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    @Introspected
     public static class DagTask {
         @NotNull
         @Schema(

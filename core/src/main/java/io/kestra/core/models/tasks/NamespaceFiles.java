@@ -1,7 +1,6 @@
 package io.kestra.core.models.tasks;
 
 import io.kestra.core.models.property.Property;
-import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +15,6 @@ import lombok.extern.jackson.Jacksonized;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Introspected
 @Jacksonized
 public class NamespaceFiles {
     @Schema(

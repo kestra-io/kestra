@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -10,7 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 public class FlowWithSource extends Flow {
 

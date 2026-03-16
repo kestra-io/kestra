@@ -7,7 +7,6 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.AbstractReportable;
 import io.kestra.core.reporter.Schedules;
 import io.kestra.core.reporter.Types;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Builder;
@@ -43,7 +42,6 @@ public class PluginUsageReport extends AbstractReportable<PluginUsageReport.Plug
     }
     
     @Builder
-    @Introspected
     public record PluginUsageEvent(
         List<PluginUsage> plugins
     ) implements Event {

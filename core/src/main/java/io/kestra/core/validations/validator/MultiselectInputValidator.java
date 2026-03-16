@@ -4,7 +4,6 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.validations.MultiselectInputValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -12,7 +11,6 @@ import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Introspected
 public class MultiselectInputValidator implements ConstraintValidator<MultiselectInputValidation, MultiselectInput> {
     @Override
     public boolean isValid(@Nullable MultiselectInput value, @NonNull AnnotationValue<MultiselectInputValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {

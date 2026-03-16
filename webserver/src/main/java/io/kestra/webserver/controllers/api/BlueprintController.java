@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.responses.PagedResults;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -139,7 +138,6 @@ public class BlueprintController {
     @Value
     @SuperBuilder(toBuilder = true)
     @Jacksonized
-    @Introspected
     public static class ApiBlueprintItemWithSource extends ApiBlueprintItem {
         String source;
         Kind kind;
@@ -152,7 +150,6 @@ public class BlueprintController {
     @Getter
     @SuperBuilder(toBuilder = true)
     @Jacksonized
-    @Introspected
     public static class ApiBlueprintItem {
         String id;
         String title;
@@ -167,7 +164,6 @@ public class BlueprintController {
     @Value
     @Builder
     @Jacksonized
-    @Introspected
     public static class ApiBlueprintTagItem {
         String id;
         String name;

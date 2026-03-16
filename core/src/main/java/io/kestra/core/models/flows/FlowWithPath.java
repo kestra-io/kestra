@@ -2,7 +2,6 @@ package io.kestra.core.models.flows;
 
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.FlowValidation;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -13,7 +12,6 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 @EqualsAndHashCode
 @FlowValidation

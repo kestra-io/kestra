@@ -11,7 +11,6 @@ import io.kestra.core.reporter.model.Count;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
@@ -71,7 +70,6 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     @SuperBuilder(toBuilder = true)
     @Getter
     @Jacksonized
-    @Introspected
     public static class UsageEvent implements Event {
         private ExecutionUsage executions;
         private FlowUsage flows;

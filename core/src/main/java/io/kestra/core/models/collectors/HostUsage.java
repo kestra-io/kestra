@@ -1,6 +1,5 @@
 package io.kestra.core.models.collectors;
 
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -19,7 +18,6 @@ import java.util.stream.Stream;
 @SuperBuilder
 @Getter
 @Jacksonized
-@Introspected
 public class HostUsage {
     private final String uuid;
     private final Hardware hardware;
@@ -29,7 +27,6 @@ public class HostUsage {
     @SuperBuilder
     @Getter
     @Jacksonized
-    @Introspected
     public static class Hardware {
         private final int logicalProcessorCount;
         private final long physicalProcessorCount;
@@ -42,7 +39,6 @@ public class HostUsage {
     @SuperBuilder
     @Getter
     @Jacksonized
-    @Introspected
     public static class Os {
         private final String family;
         private final String version;
@@ -53,7 +49,6 @@ public class HostUsage {
     @SuperBuilder
     @Getter
     @Jacksonized
-    @Introspected
     public static class Jvm {
         private final String name;
         private final String vendor;

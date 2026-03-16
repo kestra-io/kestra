@@ -13,7 +13,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
@@ -187,7 +186,6 @@ public class KVController {
      *
      * @param keys
      */
-    @Introspected
     public record ApiDeleteBulkResponse(
         @Parameter(description = "The list of keys deleted")
         List<String> keys

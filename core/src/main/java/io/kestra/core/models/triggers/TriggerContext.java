@@ -1,7 +1,6 @@
 package io.kestra.core.models.triggers;
 
 import io.kestra.core.models.flows.State;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -19,7 +18,6 @@ import java.util.List;
 @ToString
 @Getter
 @NoArgsConstructor
-@Introspected
 public class TriggerContext implements TriggerId {
     @Setter
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]")

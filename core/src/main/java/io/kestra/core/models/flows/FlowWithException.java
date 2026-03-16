@@ -2,7 +2,6 @@ package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.core.annotation.Introspected;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +16,6 @@ import java.util.Optional;
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 @EqualsAndHashCode
 public class FlowWithException extends FlowWithSource {

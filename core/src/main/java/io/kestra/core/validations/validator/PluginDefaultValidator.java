@@ -3,7 +3,6 @@ package io.kestra.core.validations.validator;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.services.PluginDefaultService;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -18,7 +17,6 @@ import java.util.Map;
 
 
 @Singleton
-@Introspected
 public class PluginDefaultValidator implements ConstraintValidator<PluginDefaultValidation, PluginDefault> {
     @Inject
     private PluginDefaultService pluginDefaultService;

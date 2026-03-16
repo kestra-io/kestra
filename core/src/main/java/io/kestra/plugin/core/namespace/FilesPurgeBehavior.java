@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.storages.NamespaceFile;
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -19,7 +18,6 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-@Introspected
 public abstract class FilesPurgeBehavior {
     abstract public String getType();
 

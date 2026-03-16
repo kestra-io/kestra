@@ -3,7 +3,6 @@ package io.kestra.queue;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.utils.IdUtils;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -124,6 +123,5 @@ public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
         assertThat(map.get(3)).hasSize(2);
     }
 
-    @Introspected
     public record TestVNodeDispatchDispatch(String key, Integer id) implements VNodeDispatchEvent {}
 }

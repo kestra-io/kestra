@@ -1,12 +1,10 @@
 package io.kestra.core.models.flows;
 
 import io.kestra.core.models.flows.input.*;
-import io.micronaut.core.annotation.Introspected;
 
 /**
  * The supported data types.
  */
-@Introspected
 public enum Type {
     STRING(StringInput.class.getName()),
     SELECT(SelectInput.class.getName()),

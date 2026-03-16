@@ -8,7 +8,6 @@ import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.validations.FileInputValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -19,7 +18,6 @@ import jakarta.inject.Singleton;
 import java.net.URI;
 
 @Singleton
-@Introspected
 public class FileInputValidator implements ConstraintValidator<FileInputValidation, FileInput> {
     
     @Inject

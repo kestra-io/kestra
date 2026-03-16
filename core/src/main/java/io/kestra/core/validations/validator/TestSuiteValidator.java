@@ -4,7 +4,6 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.test.TestSuite;
 import io.kestra.core.validations.TestSuiteValidation;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-@Introspected
 public class TestSuiteValidator implements ConstraintValidator<TestSuiteValidation, TestSuite> {
     @Inject
     private FlowService flowService;

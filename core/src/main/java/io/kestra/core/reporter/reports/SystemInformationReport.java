@@ -7,7 +7,6 @@ import io.kestra.core.reporter.Schedules;
 import io.kestra.core.reporter.Types;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Builder;
@@ -51,7 +50,6 @@ public class SystemInformationReport extends AbstractReportable<SystemInformatio
     }
     
     @Builder
-    @Introspected
     public record SystemInformationEvent(
         Set<String> environments,
         HostUsage host,

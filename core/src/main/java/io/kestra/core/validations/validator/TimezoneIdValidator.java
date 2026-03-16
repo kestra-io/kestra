@@ -2,7 +2,6 @@ package io.kestra.core.validations.validator;
 
 import io.kestra.core.validations.TimezoneId;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -13,7 +12,6 @@ import java.time.DateTimeException;
 import java.time.ZoneId;
 
 @Singleton
-@Introspected
 public class TimezoneIdValidator implements ConstraintValidator<TimezoneId, String> {
     @Override
     public boolean isValid(

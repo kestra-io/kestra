@@ -2,7 +2,6 @@ package io.kestra.core.validations.validator;
 
 import io.kestra.core.validations.DateFormat;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -13,7 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Singleton
-@Introspected
 public class DateFormatValidator implements ConstraintValidator<DateFormat, String> {
     @Override
     public boolean isValid(

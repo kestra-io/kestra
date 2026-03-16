@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.RetryPolicyBuilder;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.constraints.Min;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,7 +22,6 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-@Introspected
 public abstract class AbstractRetry {
     abstract public String getType();
 

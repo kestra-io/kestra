@@ -5,7 +5,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -20,7 +19,6 @@ import java.util.stream.Stream;
 @SuperBuilder
 @Getter
 @Jacksonized
-@Introspected
 public class FlowUsage {
 
     // Namespace used for 'Getting Started' flows.

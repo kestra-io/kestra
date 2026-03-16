@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVEntry;
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -20,7 +19,6 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-@Introspected
 public abstract class KvPurgeBehavior {
     abstract public String getType();
 

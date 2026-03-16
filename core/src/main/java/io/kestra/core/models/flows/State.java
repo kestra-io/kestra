@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.tasks.Task;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Value;
@@ -21,7 +20,6 @@ import java.util.stream.Stream;
 
 @Value
 @Slf4j
-@Introspected
 public class State {
     @NotNull
     @JsonInclude
@@ -242,7 +240,6 @@ public class State {
        return this.current ==  Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
     }
 
-    @Introspected
     public enum Type {
         CREATED,
         SUBMITTED,

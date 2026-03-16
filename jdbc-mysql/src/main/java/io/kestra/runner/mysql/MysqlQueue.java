@@ -64,7 +64,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+    protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Long> offsets) {
         var update = ctx
             .update(DSL.table(table.getName()))
             .set(

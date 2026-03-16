@@ -55,7 +55,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+    protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Long> offsets) {
         var update = ctx.update(DSL.table(table.getName()))
             .set(
                 AbstractJdbcRepository.field("consumers"),
@@ -66,7 +66,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
                 )
             )
             .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())
-            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)));
+            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Long[]::new)));
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));

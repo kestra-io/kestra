@@ -33,7 +33,7 @@
                 </div>
             </template>
             <template #default>
-                <DynamicScroller
+                <TypedDynamicScroller
                     :items="filteredSeries"
                     :minItemSize="40"
                     keyField="id"
@@ -112,7 +112,7 @@
                             </div>
                         </DynamicScrollerItem>
                     </template>
-                </DynamicScroller>
+                </TypedDynamicScroller>
             </template>
         </el-card>
     </template>
@@ -131,7 +131,6 @@
     // @ts-expect-error no types yet
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
-    // @ts-expect-error no types yet
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
@@ -191,6 +190,12 @@
         parentEndPercent?: number;
     }
 
+    type DynamicScrollerSlotProps = {
+        item: SeriesItem;
+        index: number;
+        active: boolean;
+    };
+
     // Props
     withDefaults(defineProps<{
         namespace?: string;
@@ -212,6 +217,11 @@
     const executionsStore = useExecutionsStore();
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
     const ganttExecutionFilter = useGanttExecutionFilter();
+    const TypedDynamicScroller = DynamicScroller as typeof DynamicScroller & (new () => {
+        $slots: {
+            default(props: DynamicScrollerSlotProps): unknown;
+        };
+    });
 
     // Constants
     const TASKRUN_THRESHOLD = 50;

@@ -29,12 +29,8 @@ public class CurrentEachOutputFunction implements Function {
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {
-                    if(outputs.get(taskrun.get("value")) != null){
-                        outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
-                    }
-                    else {
-                        throw new PebbleException(null, "No execution outputs for the current task runs path", lineNumber, self.getName());
-                    }
+                    if(outputs.get(taskrun.get("value")) == null) return null;
+                    outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
                 }
             }
         }

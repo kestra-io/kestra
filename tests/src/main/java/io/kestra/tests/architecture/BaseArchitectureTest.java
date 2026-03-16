@@ -1,7 +1,8 @@
 package io.kestra.tests.architecture;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
-import org.junit.jupiter.api.Test;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
 
 import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
 
@@ -11,7 +12,10 @@ import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_
  */
 public class BaseArchitectureTest {
 
-    @Test
+    protected final JavaClasses importedClasses = new ClassFileImporter()
+        .withImportOption(new ImportOption.DoNotIncludeTests())
+        .importPackages("io.kestra");
+
     static final com.tngtech.archunit.lang.ArchRule no_java_util_logging =
         NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
 }

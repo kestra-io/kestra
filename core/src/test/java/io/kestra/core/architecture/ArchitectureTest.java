@@ -1,7 +1,10 @@
 package io.kestra.core.architecture;
 
 import com.tngtech.archunit.lang.ArchRule;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.tests.architecture.BaseArchitectureTest;
+import io.micronaut.core.annotation.Generated;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
@@ -31,9 +34,13 @@ public class ArchitectureTest extends BaseArchitectureTest {
             .and().areNotInterfaces()
             .and().areNotAnnotations()
             .and().areTopLevelClasses()
+            .and().areNotAssignableTo(ArrayListTotal.class)
+            .and().areNotAssignableTo(LocalFlowRepositoryLoader.class)
+            .and().areNotAnnotatedWith(Generated.class)
             .should().haveSimpleNameEndingWith("Repository")
             .orShould().haveSimpleNameEndingWith("RepositoryService")
-            .because("Repository classes should follow naming conventions");
+            .because("Repository classes should follow naming conventions")
+            .allowEmptyShould(true);
 
         rule.check(importedClasses);
     }

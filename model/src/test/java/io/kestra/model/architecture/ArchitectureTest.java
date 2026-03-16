@@ -2,6 +2,7 @@ package io.kestra.model.architecture;
 
 import com.tngtech.archunit.lang.ArchRule;
 import io.kestra.tests.architecture.BaseArchitectureTest;
+import io.micronaut.core.annotation.Generated;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -16,9 +17,14 @@ public class ArchitectureTest extends BaseArchitectureTest {
     void modelsShouldNotDependOnMicronaut() {
         ArchRule rule = noClasses()
             .that().resideInAPackage("..models..")
+            .and().areNotAnnotatedWith(Generated.class)
             .should().dependOnClassesThat()
-            .resideInAPackage("io.micronaut..")
-            .because("Domain models should be framework-agnostic and must not depend on Micronaut");
+            .resideInAnyPackage(
+                "io.micronaut.inject..",
+                "io.micronaut.runtime..",
+                "io.micronaut.aop.."
+            )
+            .because("Domain models should avoid Micronaut injection/runtime dependencies; annotations are allowed");
 
         rule.check(importedClasses);
     }

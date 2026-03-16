@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
     public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
+    public static final String ENVS = "envs";
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -180,7 +181,7 @@ public final class RunVariables {
         public Map<String, Object> build(final RunContextLogger logger, final PropertyContext propertyContext) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
-            builder.put("envs", envs != null ? envs : Map.of());
+            builder.put(ENVS, envs != null ? envs : Map.of());
             builder.put("globals", globals != null ? globals : Map.of());
 
             // Flow

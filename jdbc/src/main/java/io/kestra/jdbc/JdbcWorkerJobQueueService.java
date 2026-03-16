@@ -21,7 +21,7 @@ public class JdbcWorkerJobQueueService implements Closeable {
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
     private final AtomicReference<Runnable> disposable = new AtomicReference<>();
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
-    
+
     @Inject
     public JdbcWorkerJobQueueService(ApplicationContext applicationContext) {
         this.jdbcWorkerJobRunningRepository = applicationContext.getBean(AbstractJdbcWorkerJobRunningRepository.class);
@@ -55,7 +55,7 @@ public class JdbcWorkerJobQueueService implements Closeable {
                 } else {
                     throw new IllegalArgumentException("Message is of type " + workerJob.getClass() + " which should never occurs");
                 }
-                
+
                 jdbcWorkerJobRunningRepository.save(workerJobRunning, dslContext);
 
                 if (log.isTraceEnabled()) {
@@ -72,7 +72,7 @@ public class JdbcWorkerJobQueueService implements Closeable {
     /** {@inheritDoc} **/
     @Override
     public void close() {
-        if (!isStopped.compareAndSet(true, false)) {
+        if (!isStopped.compareAndSet(false, true)) {
             return;
         }
 

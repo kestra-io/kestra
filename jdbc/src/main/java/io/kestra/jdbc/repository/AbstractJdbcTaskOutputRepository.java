@@ -4,6 +4,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.repositories.TaskOutputRepositoryInterface;
+import io.kestra.jdbc.AbstractJdbcRepository;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.jooq.Field;
 import org.jooq.impl.DSL;
@@ -72,6 +82,58 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
 
                 return select.fetch().map(record -> map(record));
             });
+    }
+
+    @Override
+    public List<TaskOutput> findByTaskRunIds(String tenantId, List<String> taskRunIds) {
+        if (taskRunIds == null || taskRunIds.isEmpty()) {
+            return List.of();
+        }
+
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select()
+                    .from(this.jdbcRepository.getTable())
+                    .where(buildTenantCondition(tenantId))
+                    .and(TASK_RUN_ID_FIELD.in(taskRunIds));
+
+                return select.fetch().map(AbstractJdbcTaskOutputRepository::map);
+            });
+    }
+
+    @Override
+    public java.util.Set<String> findTaskIdWithOutputByExecution(Execution execution) {
+        if (execution == null) {
+            return java.util.Collections.emptySet();
+        }
+
+        var condition = EXECUTION_ID_FIELD.eq(execution.getId());
+        List<String> taskRunIds = this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .selectDistinct(TASK_RUN_ID_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(buildTenantCondition(execution.getTenantId()))
+                    .and(condition);
+
+                return select.fetch().stream().map(r -> r.get(TASK_RUN_ID_FIELD)).toList();
+            });
+
+        if (taskRunIds == null || taskRunIds.isEmpty()) {
+            return java.util.Collections.emptySet();
+        }
+
+        Map<String, String> taskRunIdToTaskId = execution.getTaskRunList().stream().collect(Collectors.toMap(
+            TaskRun::getId,
+            TaskRun::getTaskId
+        ));
+
+        return taskRunIds.stream().map(taskRunIdToTaskId::get).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     @Override

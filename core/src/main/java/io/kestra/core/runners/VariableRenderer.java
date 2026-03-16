@@ -206,6 +206,9 @@ public class VariableRenderer {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+        if (object instanceof LazyOutputsMap) {
+            return Optional.of(object);
+        }
         if (object instanceof Map map) {
             return Optional.of(this.render(map, variables, recursive));
         } else if (object instanceof List list) {

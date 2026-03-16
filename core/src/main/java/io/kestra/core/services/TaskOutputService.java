@@ -198,6 +198,58 @@ public class TaskOutputService {
         return result;
     }
 
+    public Map<String, Object> computeOutputsForTask(Execution execution, String taskId) {
+        if (execution == null || execution.getTaskRunList() == null || taskId == null) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, TaskRun> byIds = execution.getTaskRunList().stream().collect(Collectors.toMap(
+            taskRun -> taskRun.getId(),
+            taskRun -> taskRun
+        ));
+
+        List<TaskRun> taskRuns = execution.getTaskRunList().stream().filter(tr -> taskId.equals(tr.getTaskId())).toList();
+        if (taskRuns.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<String> taskRunIds = taskRuns.stream().map(TaskRun::getId).toList();
+        List<TaskOutput> outputsList = outputRepository.findByTaskRunIds(execution.getTenantId(), taskRunIds);
+
+        Map<String, Object> taskOutputs = new HashMap<>();
+        for (TaskRun current : taskRuns) {
+            var outputs = outputsList.stream().filter(it -> it.taskRunId().equals(current.getId())).findAny();
+            if (outputs.isPresent()) {
+                try {
+                    var outputMap = readOutput(current, outputs.get());
+                    if (current.getIteration() != null) {
+                        Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, outputMap, byIds));
+                        if (merged instanceof Variables) {
+                            merged = new HashMap<>(merged);
+                        }
+                        taskOutputs = merged;
+                    } else {
+                        taskOutputs.putAll(outputs(current, outputMap, byIds));
+                    }
+                } catch (InternalException e) {
+                    throw new KestraRuntimeException(e);
+                }
+            }
+        }
+
+        return taskOutputs;
+    }
+
+    public Set<String> findTaskIdWithOutputByExecution(Execution execution) {
+        if (execution == null) {
+            return Collections.emptySet();
+        }
+
+        Set<String> result = this.outputRepository.findTaskIdWithOutputByExecution(execution);
+        return result == null ? Collections.emptySet() : result;
+    }
+
+
     private Map<String, Object> readOutput(TaskRun taskRun, TaskOutput taskOutput) throws InternalException {
         try {
             return taskOutput.value() != null ? readFromValue(taskOutput) : readFromInternalStorage(taskRun, taskOutput);

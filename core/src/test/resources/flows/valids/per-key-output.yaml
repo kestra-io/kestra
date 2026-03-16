@@ -1,0 +1,21 @@
+id: per-key-output
+namespace: io.kestra.tests
+
+tasks:
+  - id: return1
+    type: io.kestra.plugin.core.debug.Return
+    format: "1"
+  - id: return2
+    type: io.kestra.plugin.core.debug.Return
+    format: "2"
+  - id: if
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.return1.value == '1' }}"
+    then:
+      - id: when_true
+        type: io.kestra.plugin.core.log.Log
+        message: "Condition was true"
+    else:
+      - id: when_false
+        type: io.kestra.plugin.core.log.Log
+        message: "Condition was false"

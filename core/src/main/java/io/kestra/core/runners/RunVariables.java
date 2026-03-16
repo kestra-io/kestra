@@ -248,18 +248,20 @@ public final class RunVariables {
 
                 builder.put("execution", executionMap.build());
 
-                if (execution.getTaskRunList() != null) {
-                    if (!MapUtils.isEmpty(outputs)) {
-                        if (decryptVariables) {
-                            final Secret secret = new Secret(secretKey, logger);
-                            builder.put("outputs", secret.decrypt(outputs));
-                        } else {
-                            builder.put("outputs", outputs);
-                        }
+                if (outputs instanceof LazyOutputsMap) {
+                    builder.put("outputs", outputs);
+                } else if (!MapUtils.isEmpty(outputs)) {
+                    if (decryptVariables) {
+                        final Secret secret = new Secret(secretKey, logger);
+                        builder.put("outputs", secret.decrypt(outputs));
                     } else {
-                        builder.put("outputs", Collections.emptyMap());
+                        builder.put("outputs", outputs);
                     }
+                } else {
+                    builder.put("outputs", Collections.emptyMap());
+                }
 
+                if (execution.getTaskRunList() != null) {
                     Map<String, Object> tasksMap = new HashMap<>();
 
                     execution.getTaskRunList().forEach(taskRun -> {

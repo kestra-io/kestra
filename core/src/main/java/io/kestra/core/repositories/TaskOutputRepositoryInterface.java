@@ -2,10 +2,10 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
-import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Repository for task outputs, used to store and retrieve the outputs of tasks.
@@ -27,6 +27,10 @@ public interface TaskOutputRepositoryInterface {
      * Find all task outputs for a given execution.
      */
     List<TaskOutput> findByExecution(Execution execution);
+
+    List<TaskOutput> findByTaskRunIds(String tenantId, List<String> taskRunIds);
+
+    Set<String> findTaskIdWithOutputByExecution(Execution execution);
 
     /**
      * Purge (hard delete) all task outputs for a given list of execution ids.

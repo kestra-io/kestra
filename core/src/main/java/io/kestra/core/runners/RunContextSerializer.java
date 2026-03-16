@@ -33,6 +33,7 @@ public class RunContextSerializer extends StdSerializer<RunContext> {
     public void serialize(RunContext value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         Map<String, Object> mutableVariables = new HashMap<>(value.getVariables());
         mutableVariables.remove("envs");
+        mutableVariables.remove("outputs");
         gen.writeObject(new RunContextData(mutableVariables, value.getSecretInputs(), value.getTraceParent()));
     }
 

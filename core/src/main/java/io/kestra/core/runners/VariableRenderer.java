@@ -30,16 +30,16 @@ public class VariableRenderer {
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
         this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
     }
-    
+
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
         this.pebbleEngine = pebbleEngineFactory.create();
     }
-    
+
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
         this.pebbleEngine = pebbleEngine;
     }
-    
+
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
         if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
@@ -191,6 +191,9 @@ public class VariableRenderer {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+        if (object instanceof LazyOutputsMap) {
+            return Optional.of(object);
+        }
         if (object instanceof Map map) {
             return Optional.of(this.render(map, variables, recursive));
         } else if (object instanceof List list) {

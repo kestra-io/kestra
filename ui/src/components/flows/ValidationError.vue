@@ -6,7 +6,7 @@
         </ks-button>
 
         <!-- Errors -->
-        <el-tooltip
+        <ks-tooltip
             effect="light"
             v-if="errors"
             popperClass="p-0 bg-transparent"
@@ -18,23 +18,23 @@
             :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
+                <ks-container class="validation-tooltip">
+                    <ks-header>
                         <AlertCircle class="align-middle text-danger" />
                         <span class="align-middle">
                             {{ $t("error detected") }}
                         </span>
-                    </el-header>
-                    <el-main v-for="error in errors" :key="error">{{ error }}</el-main>
-                </el-container>
+                    </ks-header>
+                    <ks-main v-for="error in errors" :key="error">{{ error }}</ks-main>
+                </ks-container>
             </template>
             <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
                 <AlertCircle class="text-danger" />
             </ks-button>
-        </el-tooltip>
+        </ks-tooltip>
 
         <!-- Warnings -->
-        <el-tooltip
+        <ks-tooltip
             effect="light"
             v-if="warnings"
             popperClass="p-0 bg-transparent"
@@ -46,14 +46,14 @@
             :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
+                <ks-container class="validation-tooltip">
+                    <ks-header>
                         <Alert class="align-middle text-warning" />
                         <span class="align-middle">
                             {{ $t("warning detected") }}
                         </span>
-                    </el-header>
-                    <el-main>
+                    </ks-header>
+                    <ks-main>
                         <span v-for="(warning, index) in warnings" :key="index">
                             {{ warning }}<br v-if="index < warnings.length - 1">
                         </span>
@@ -61,16 +61,16 @@
                         <span v-for="(info, index) in infos" :key="index">
                             {{ info }}<br v-if="index < (infos?.length ?? 0) - 1">
                         </span>
-                    </el-main>
-                </el-container>
+                    </ks-main>
+                </ks-container>
             </template>
             <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
                 <Alert class="text-warning" />
             </ks-button>
-        </el-tooltip>
+        </ks-tooltip>
 
         <!-- Infos -->
-        <el-tooltip
+        <ks-tooltip
             effect="light"
             v-if="infos && !warnings"
             popperClass="p-0 bg-transparent"
@@ -82,21 +82,21 @@
             :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
+                <ks-container class="validation-tooltip">
+                    <ks-header>
                         <Alert class="align-middle text-info" />
                         <span class="align-middle">
                             {{ $t("informative notice") }}
                         </span>
-                    </el-header>
-                    <el-main>{{ infos.join("<\n") }}</el-main>
-                </el-container>
+                    </ks-header>
+                    <ks-main>{{ infos.join("<\n") }}</ks-main>
+                </ks-container>
             </template>
             <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
                 <Alert class="text-info" />
                 <span class="text-info label">{{ $t("informative notice") }}</span>
             </ks-button>
-        </el-tooltip>
+        </ks-tooltip>
     </span>
 </template>
 

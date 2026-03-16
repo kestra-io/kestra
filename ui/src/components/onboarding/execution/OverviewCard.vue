@@ -1,16 +1,16 @@
 <template>
-    <el-card class="card">
+    <ks-card class="card">
         <div v-if="showIcon" class="header">
-            <el-link underline="never" :href="link" target="_blank">
-                <el-icon class="el-icon--right">
+            <ks-link :underline="true" :href="link" target="_blank">
+                <ks-icon class="el-icon--right">
                     <OpenInNew />
-                </el-icon>
-            </el-link>
+                </ks-icon>
+            </ks-link>
         </div>
         <div class="icon-row">
-            <el-icon :size="24">
+            <ks-icon :size="24">
                 <component :is="icon" />
-            </el-icon>
+            </ks-icon>
             <div>
                 <h5 class="title">
                     {{ title }}
@@ -20,7 +20,7 @@
                 </div>
             </div>
         </div>
-    </el-card>
+    </ks-card>
 </template>
 
 <script setup lang="ts">
@@ -38,7 +38,7 @@
 </script>
 
 <style scoped lang="scss">
-.el-card {
+.kel-card {
     background-color: var(--ks-background-card);
     border-color: var(--ks-border-primary);
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
@@ -56,7 +56,7 @@
         top: 0.3125rem;
         right: 0.3125rem;
 
-        :deep(.el-icon) {
+        :deep(.kel-icon) {
             color: var(--ks-content-secondary);
             font-size: 1rem;
             position: absolute;

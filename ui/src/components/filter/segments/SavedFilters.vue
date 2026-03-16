@@ -26,7 +26,7 @@
                     </small>
                 </div>
                 <div class="action-buttons">
-                    <el-tooltip :content="$t('filter.edit filter')" placement="top" effect="light">
+                    <ks-tooltip :content="$t('filter.edit filter')" placement="top" effect="light">
                         <ks-button
                             link
                             size="small"
@@ -34,8 +34,8 @@
                             :icon="PencilOutline"
                             @click.stop="$emit('edit', savedFilter)"
                         />
-                    </el-tooltip>
-                    <el-tooltip :content="$t('filter.delete filter')" placement="top" effect="light">
+                    </ks-tooltip>
+                    <ks-tooltip :content="$t('filter.delete filter')" placement="top" effect="light">
                         <ks-button
                             link
                             size="small"
@@ -43,15 +43,15 @@
                             :icon="Delete"
                             @click.stop="deleteFilter(savedFilter)"
                         />
-                    </el-tooltip>
+                    </ks-tooltip>
                 </div>
             </div>
-            <el-alert v-if="savedFilters.length === 0" type="info" showIcon :closable="false">
+            <ks-alert v-if="savedFilters.length === 0" type="info" showIcon :closable="false">
                 {{ $t("filter.empty") }}
                 <template #icon>
                     <InformationOutline />
                 </template>
-            </el-alert>
+            </ks-alert>
         </div>
     </div>
 </template>
@@ -188,7 +188,7 @@
         }
     }
 
-    :deep(.el-alert__icon) {
+    :deep(.kel-alert__icon) {
         color: var(--ks-content-info);
         font-size: 1.5rem;
     }

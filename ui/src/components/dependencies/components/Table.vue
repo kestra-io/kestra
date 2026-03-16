@@ -1,6 +1,6 @@
 <template>
     <section id="filtering">
-        <el-input
+        <ks-input
             v-model="search"
             :placeholder="$t(`dependency.search.placeholders.${props.subtype === ASSET ? 'asset' : 'default'}`)"
             clearable
@@ -20,10 +20,10 @@
             />
         </ks-select>
 
-        <el-switch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
+        <ks-switch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
     </section>
 
-    <el-table
+    <ks-table
         :data="results"
         :emptyText="$t('dependency.search.no_results', {term: search})"
         :showHeader="false"
@@ -31,7 +31,7 @@
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
         :rowClassName="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
     >
-        <el-table-column>
+        <ks-table-column>
             <template #default="{row}">
                 <section id="row">
                     <section id="left">
@@ -62,15 +62,15 @@
                                     : {namespace: row.data.namespace, id: row.data.flow}
                             }"
                         >
-                            <el-icon :size="16">
+                            <ks-icon :size="16">
                                 <OpenInNew />
-                            </el-icon>
+                            </ks-icon>
                         </RouterLink>
                     </section>
                 </section>
             </template>
-        </el-table-column>
-    </el-table>
+        </ks-table-column>
+    </ks-table>
 </template>
 
 <script setup lang="ts">
@@ -98,7 +98,7 @@
     }>();
 
     const focusSelectedRow = () => {
-        const row = document.querySelector<HTMLElement>(".el-table__row.selected");
+        const row = document.querySelector<HTMLElement>(".kel-table__row.selected");
 
         if (!row) return;
 
@@ -181,23 +181,23 @@ section#filtering {
     padding: 1rem;
     background-color: var(--ks-background-input);
 
-    :deep(.el-input__wrapper), :deep(.kel-select__wrapper) {
+    :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
         margin-bottom: 0.5rem;
         font-size: var(--font-size-sm);
     }
 }
 
-.el-table.nodes {
+.kel-table.nodes {
     outline: none;
     border-radius: 0;
     border-top: 1px solid var(--ks-border-primary);
 
-    :deep(.el-table__empty-text) {
+    :deep(.kel-table__empty-text) {
         width: 100%;
         font-size: var(--font-size-sm);
     }
 
-    & :deep(.el-table__row.selected) {
+    & :deep(.kel-table__row.selected) {
         background-color: var(--ks-tag-background);
 
         &:hover {
@@ -242,7 +242,7 @@ section#row {
         flex-shrink: 0;
         margin-left: 0.5rem;
 
-        :deep(a:hover .el-icon) {
+        :deep(a:hover .kel-icon) {
             color: var(--ks-content-link-hover);
         }
     }

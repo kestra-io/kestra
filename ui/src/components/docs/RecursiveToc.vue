@@ -1,10 +1,10 @@
 <template>
-    <el-collapse accordion v-model="openedDocs" :key="openedDocs">
+    <ks-collapse accordion v-model="openedDocs" :key="openedDocs">
         <template
             :key="child.title"
             v-for="child in filteredChildren"
         >
-            <el-collapse-item
+            <ks-collapse-item
                 class="mt-1"
                 :name="child.path"
                 v-if="child.children"
@@ -24,7 +24,7 @@
                         <slot v-bind="subChild" />
                     </template>
                 </RecursiveToc>
-            </el-collapse-item>
+            </ks-collapse-item>
             <div v-else>
                 <slot v-bind="child" :class="`depth-${depth}`">
                     <RouterLink :to="{path: '/' + child.path}">
@@ -33,7 +33,7 @@
                 </slot>
             </div>
         </template>
-    </el-collapse>
+    </ks-collapse>
 </template>
 
 <script setup lang="ts">
@@ -88,7 +88,7 @@
         }
 
         :deep(> .el-collapse-item) {
-            > .el-collapse-item__header{
+            > .kel-collapse-item__header{
                 padding: 0;
             }
             > button {
@@ -104,7 +104,7 @@
             }
         }
 
-        :deep(.el-collapse-item__content) {
+        :deep(.kel-collapse-item__content) {
             padding-top: 0;
             padding-bottom: 0;
         }

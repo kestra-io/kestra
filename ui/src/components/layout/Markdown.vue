@@ -1,7 +1,7 @@
 <template>
     <div class="enhanced-documentation">
         <div v-if="showSearch" class="doc-toolbar">
-            <el-input
+            <ks-input
                 v-model="searchQuery"
                 :suffixIcon="Magnify"
                 :clearable="true"
@@ -648,13 +648,13 @@
 
 .doc-search {
   flex: 1 1 auto;
-  :deep(.el-input__wrapper) {
+  :deep(.kel-input__wrapper) {
     background: var(--ks-background-input);
     box-shadow: none;
     border: 1px solid var(--ks-border-primary);
     border-radius: var(--el-border-radius-base);
   }
-  :deep(.el-input__inner) {
+  :deep(.kel-input__inner) {
     font-size: var(--font-size-sm);
   }
 }

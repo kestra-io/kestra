@@ -4,7 +4,7 @@
             <slot name="select-actions" />
         </div>
 
-        <el-table
+        <ks-table
             ref="table"
             v-bind="$attrs"
             :data
@@ -13,9 +13,9 @@
             @selection-change="selectionChanged"
             @select="onSelect"
         >
-            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
+            <ks-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
             <slot name="default" />
-        </el-table>
+        </ks-table>
     </div>
 </template>
 
@@ -45,7 +45,7 @@
     const table = ref<any>(null);
     const hasSelection = ref(false);
     const container = ref<HTMLElement | null>(null);
-    
+
     const lastCheckedIndex = ref<number | null>(null);
     const isShiftPressed = ref(false);
 
@@ -61,10 +61,10 @@
     const onSelect = async (selection: any[], row: any) => {
         const data = props.data ?? [];
         const currentIndex = data.indexOf(row);
-    
-        const isChecked = selection.some(s => 
-            typeof props.rowKey === "function" 
-                ? props.rowKey(s) === props.rowKey(row) 
+
+        const isChecked = selection.some(s =>
+            typeof props.rowKey === "function"
+                ? props.rowKey(s) === props.rowKey(row)
                 : s[props.rowKey] === row[props.rowKey]
         );
 
@@ -75,9 +75,9 @@
             for (let i = start; i <= end; i++) {
                 table.value?.toggleRowSelection(data[i], isChecked);
             }
-        
+
             await nextTick();
-        
+
             const finalSelection = table.value?.getSelectionRows() ?? [];
             selectionChanged(finalSelection);
 
@@ -172,13 +172,13 @@
         border-bottom: 1px solid var(--ks-border-primary);
         overflow-x: auto;
 
-        & ~ .el-table {
+        & ~ .kel-table {
             z-index: 0;
         }
     }
 
     @media (max-width: 500px) {
-        :deep(.el-table__empty-text) {
+        :deep(.kel-table__empty-text) {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;

@@ -10,7 +10,7 @@
             @search="filter = $event"
         />
         <Collapse>
-            <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
+            <ks-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <LogLevelNavigator
                     v-if="countByLogLevel[logLevel] > 0"
                     :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
@@ -21,22 +21,22 @@
                     @close="logCursor = undefined"
                     class="w-100"
                 />
-            </el-form-item>
-            <el-form-item>
+            </ks-form-item>
+            <ks-form-item>
                 <ks-button @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
                 </ks-button>
-            </el-form-item>
-            <el-form-item>
-                <el-tooltip
+            </ks-form-item>
+            <ks-form-item>
+                <ks-tooltip
                     :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')"
                 >
                     <ks-button @click="toggleViewType" :icon="logViewTypeButtonIcon">
                         {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
                     </ks-button>
-                </el-tooltip>
-            </el-form-item>
-            <el-form-item>
+                </ks-tooltip>
+            </ks-form-item>
+            <ks-form-item>
                 <ks-button-group class="ks-b-group">
                     <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="forwardEvent('follow', $event)" />
                     <IconButton :tooltip="$t('download logs')" @click="downloadContent()">
@@ -49,7 +49,7 @@
                         <Refresh />
                     </IconButton>
                 </ks-button-group>
-            </el-form-item>
+            </ks-form-item>
         </Collapse>
 
         <TaskRunDetails
@@ -67,7 +67,7 @@
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />
-        <el-card v-else class="attempt-wrapper">
+        <ks-card v-else class="attempt-wrapper">
             <DynamicScroller
                 ref="logScroller"
                 :items="temporalLogs"
@@ -97,7 +97,7 @@
                     </DynamicScrollerItem>
                 </template>
             </DynamicScroller>
-        </el-card>
+        </ks-card>
     </div>
 </template>
 
@@ -402,7 +402,7 @@
         box-shadow: 2px 3px 3px 0px var(--ks-card-shadow);
     }
 
-    :deep(.el-form-item) {
+    :deep(.kel-form-item) {
         margin-bottom: 0.5rem !important;
     }
 </style>

@@ -1,8 +1,8 @@
 <template>
-    <el-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+    <ks-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <Empty v-if="!panels.length" type="panels" />
         <template v-else>
-            <el-splitter-panel
+            <ks-splitter-panel
                 v-for="(panel, panelIndex) in panels"
                 min="10%"
                 :key="panelIndex"
@@ -83,11 +83,11 @@
                             </svg>
                         </button>
 
-                        <el-dropdown trigger="click" placement="bottom-end">
+                        <ks-dropdown trigger="click" placement="bottom-end">
                             <ks-button :icon="DotsVertical" link class="me-2 tab-icon" />
                             <template #dropdown>
-                                <el-dropdown-menu class="m-2">
-                                    <el-dropdown-item
+                                <ks-dropdown-menu class="m-2">
+                                    <ks-dropdown-item
                                         :icon="DockRight"
                                         :disabled="panelIndex === panels.length - 1"
                                         @click="movePanel(panelIndex, 'right')"
@@ -95,8 +95,8 @@
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item
+                                    </ks-dropdown-item>
+                                    <ks-dropdown-item
                                         :icon="DockLeft"
                                         :disabled="panelIndex === 0"
                                         @click="movePanel(panelIndex, 'left')"
@@ -104,18 +104,18 @@
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_left") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
+                                    </ks-dropdown-item>
+                                    <ks-dropdown-item v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.close_all_tabs") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item :icon="Close" @click="closeAllPanels()">
+                                    </ks-dropdown-item>
+                                    <ks-dropdown-item :icon="Close" @click="closeAllPanels()">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.close_all_panels") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item
+                                    </ks-dropdown-item>
+                                    <ks-dropdown-item
                                         v-if="panel.activeTab?.uid === 'code'"
                                         :icon="Keyboard"
                                         @click="showKeyShortcuts()"
@@ -123,10 +123,10 @@
                                         <span class="small-text">
                                             {{ $t("editor_shortcuts.label") }}
                                         </span>
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
+                                    </ks-dropdown-item>
+                                </ks-dropdown-menu>
                             </template>
-                        </el-dropdown>
+                        </ks-dropdown>
                     </div>
                 </div>
                 <div
@@ -151,9 +151,9 @@
                         :class="{dragover: panel.dragover}"
                     />
                 </div>
-            </el-splitter-panel>
+            </ks-splitter-panel>
         </template>
-    </el-splitter>
+    </ks-splitter>
 
     <div
         v-if="showDropZones"

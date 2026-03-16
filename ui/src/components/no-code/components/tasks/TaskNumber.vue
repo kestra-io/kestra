@@ -1,5 +1,5 @@
 <template>
-    <el-input-number
+    <ks-input-number
         :modelValue="val"
         @update:model-value="onInput"
         :state="isValid"

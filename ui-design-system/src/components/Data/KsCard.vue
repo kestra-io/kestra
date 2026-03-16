@@ -1,0 +1,45 @@
+<script setup lang="ts">
+    import {ElCard, provideGlobalConfig} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
+
+    provideGlobalConfig({namespace: "kel"})
+
+    defineOptions({inheritAttrs: false})
+
+    const props = defineProps<{
+        shadow?: "always" | "hover" | "never"
+        bodyStyle?: string | object | any[]
+    }>()
+
+    const filteredProps = useFilteredProps(props)
+
+    defineSlots<{
+        default?(): unknown
+        header?(): unknown
+        footer?(): unknown
+    }>()
+</script>
+
+<template>
+    <el-card v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default><slot /></template>
+        <template v-if="$slots.header" #header><slot name="header" /></template>
+        <template v-if="$slots.footer" #footer><slot name="footer" /></template>
+    </el-card>
+</template>
+
+<style lang="scss">
+    .kel-card {
+        border-radius: var(--kel-border-radius-round);
+        --kel-card-border-color: var(--ks-border-primary);
+        --kel-card-border-radius: var(--kel-border-radius-round);
+        --kel-card-padding: 1rem;
+        color: var(--ks-content-primary);
+        background-color: var(--ks-background-card);
+
+        .kel-card__header {
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+        }
+    }
+</style>

@@ -1,12 +1,12 @@
 <template>
-    <el-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
-        <el-table-column prop="key" rowspan="3" :label="$t('name')">
+    <ks-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+        <ks-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 {{ getHumanizeLabel(scope.row.key) }}
             </template>
-        </el-table-column>
+        </ks-table-column>
 
-        <el-table-column prop="value" :label="$t('value')">
+        <ks-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
                     <Markdown :source="scope.row.value" />
@@ -24,8 +24,8 @@
                     <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
                 </template>
             </template>
-        </el-table-column>
-    </el-table>
+        </ks-table-column>
+    </ks-table>
 </template>
 
 <script setup lang="ts">
@@ -66,7 +66,7 @@
         }
     }
 
-    :deep(.el-table__cell:nth-child(2) span) {
+    :deep(.kel-table__cell:nth-child(2) span) {
         color: var(--ks-content-secondary);
     }
 </style>

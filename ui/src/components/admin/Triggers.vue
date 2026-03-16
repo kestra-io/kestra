@@ -47,7 +47,7 @@
                         :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
                     >
                         <template #expand>
-                            <el-table-column type="expand">
+                            <ks-table-column type="expand">
                                 <template #default="props">
                                     <LogsWrapper
                                         class="m-3"
@@ -57,7 +57,7 @@
                                         embed
                                     />
                                 </template>
-                            </el-table-column>
+                            </ks-table-column>
                         </template>
                         <template #select-actions>
                             <BulkSelect
@@ -90,7 +90,7 @@
                                 </ks-button>
                             </BulkSelect>
                         </template>
-                        <el-table-column
+                        <ks-table-column
                             prop="triggerId"
                             sortable="custom"
                             :sortOrders="['ascending', 'descending']"
@@ -101,9 +101,9 @@
                                     {{ scope.row.id }}
                                 </div>
                             </template>
-                        </el-table-column>
+                        </ks-table-column>
 
-                        <el-table-column
+                        <ks-table-column
                             v-for="col in visibleColumns"
                             :key="col.prop"
                             :prop="col.prop"
@@ -112,34 +112,34 @@
                             :sortOrders="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
                         >
                             <template #header v-if="col.prop === 'lastTriggeredDate'">
-                                <el-tooltip
+                                <ks-tooltip
                                     :content="$t('last trigger date tooltip')"
                                     placement="top"
                                     effect="light"
                                     popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
-                                </el-tooltip>
+                                </ks-tooltip>
                             </template>
                             <template #header v-else-if="col.prop === 'updatedAt'">
-                                <el-tooltip
+                                <ks-tooltip
                                     :content="$t('context updated date tooltip')"
                                     placement="top"
                                     effect="light"
                                     popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
-                                </el-tooltip>
+                                </ks-tooltip>
                             </template>
                             <template #header v-else-if="col.prop === 'nextExecutionDate'">
-                                <el-tooltip
+                                <ks-tooltip
                                     :content="$t('next evaluation date tooltip')"
                                     placement="top"
                                     effect="light"
                                     popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
-                                </el-tooltip>
+                                </ks-tooltip>
                             </template>
                             <template #default="scope">
                                 <template v-if="col.prop === 'flowId'">
@@ -176,9 +176,9 @@
                                     <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
                                 </template>
                             </template>
-                        </el-table-column>
+                        </ks-table-column>
 
-                        <el-table-column :label="$t('details')">
+                        <ks-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar
                                     v-if="!scope.row.missingSource"
@@ -186,9 +186,9 @@
                                     :triggerId="scope.row.id"
                                 />
                             </template>
-                        </el-table-column>
+                        </ks-table-column>
 
-                        <el-table-column
+                        <ks-table-column
                             v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                             columnKey="action"
                             className="row-action"
@@ -212,21 +212,21 @@
                                     </IconButton>
                                 </div>
                             </template>
-                        </el-table-column>
-                        <el-table-column :label="$t('backfill')" columnKey="backfill">
+                        </ks-table-column>
+                        <ks-table-column :label="$t('backfill')" columnKey="backfill">
                             <template #default="scope">
                                 <div class="backfillContainer items-center gap-2">
                                     <span v-if="scope.row.backfill" class="statusIcon">
-                                        <el-tooltip
+                                        <ks-tooltip
                                             v-if="!scope.row.backfill.paused"
                                             :content="$t('backfill running')"
                                             effect="light"
                                         >
                                             <PlayBox font />
-                                        </el-tooltip>
-                                        <el-tooltip v-else :content="$t('backfill paused')">
+                                        </ks-tooltip>
+                                        <ks-tooltip v-else :content="$t('backfill paused')">
                                             <PauseBox />
-                                        </el-tooltip>
+                                        </ks-tooltip>
                                     </span>
 
                                     <ks-button
@@ -241,35 +241,35 @@
                                     </ks-button>
                                 </div>
                             </template>
-                        </el-table-column>
+                        </ks-table-column>
 
 
-                        <el-table-column :label="$t('enabled')" columnKey="disable" className="row-action">
+                        <ks-table-column :label="$t('enabled')" columnKey="disable" className="row-action">
                             <template #default="scope">
-                                <el-tooltip
+                                <ks-tooltip
                                     v-if="!scope.row.missingSource"
                                     :content="$t('trigger disabled')"
                                     :disabled="!scope.row.codeDisabled"
                                     effect="light"
                                 >
-                                    <el-switch
+                                    <ks-switch
                                         :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                                         @change="setDisabled(scope.row, $event)"
                                         inlinePrompt
                                         class="switch-text"
                                         :disabled="scope.row.codeDisabled"
                                     />
-                                </el-tooltip>
-                                <el-tooltip v-else :content="$t('flow source not found')" effect="light">
+                                </ks-tooltip>
+                                <ks-tooltip v-else :content="$t('flow source not found')" effect="light">
                                     <AlertCircle />
-                                </el-tooltip>
+                                </ks-tooltip>
                             </template>
-                        </el-table-column>
+                        </ks-table-column>
                     </SelectTable>
                 </template>
             </DataTable>
 
-            <el-dialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
+            <ks-dialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
                 <template #header>
                     <span v-html="$t('unlock trigger.confirmation')" />
                 </template>
@@ -279,36 +279,36 @@
                         {{ $t("unlock trigger.button") }}
                     </ks-button>
                 </template>
-            </el-dialog>
+            </ks-dialog>
 
-            <el-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+            <ks-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
                 <template #header>
                     <span v-html="$t('backfill executions')" />
                 </template>
-                <el-form :model="backfill" labelPosition="top">
+                <ks-form :model="backfill" labelPosition="top">
                     <div class="pickers">
                         <div class="small-picker">
-                            <el-form-item label="Start">
-                                <el-date-picker
+                            <ks-form-item label="Start">
+                                <ks-date-picker
                                     v-model="backfill.start"
                                     type="datetime"
                                     placeholder="Start"
                                     :disabledDate="disabledStartDate"
                                 />
-                            </el-form-item>
+                            </ks-form-item>
                         </div>
                         <div class="small-picker">
-                            <el-form-item label="End">
-                                <el-date-picker
+                            <ks-form-item label="End">
+                                <ks-date-picker
                                     v-model="backfill.end"
                                     type="datetime"
                                     placeholder="End"
                                     :disabledDate="disabledEndDate"
                                 />
-                            </el-form-item>
+                            </ks-form-item>
                         </div>
                     </div>
-                </el-form>
+                </ks-form>
                 <FlowRun
                     @update-inputs="backfill.inputs = $event"
                     @update-labels="backfill.labels = $event"
@@ -325,7 +325,7 @@
                         {{ $t("execute backfill") }}
                     </ks-button>
                 </template>
-            </el-dialog>
+            </ks-dialog>
         </div>
     </section>
 </template>
@@ -854,15 +854,15 @@
         font-size: 1.4em;
     }
 
-    :deep(.el-table__expand-icon) {
+    :deep(.kel-table__expand-icon) {
         pointer-events: none;
 
-        .el-icon {
+        .kel-icon {
             display: none;
         }
     }
 
-    :deep(.el-switch) {
+    :deep(.kel-switch) {
         .is-text {
             padding: 0 3px;
             color: inherit;
@@ -875,7 +875,7 @@
         }
     }
 
-    .el-table {
+    .kel-table {
         a {
             color: var(--ks-content-link);
         }
@@ -893,19 +893,19 @@
         border: 1px solid var(--ks-border-primary);
         background: var(--bs-gray-100);
 
-        .el-collapse-item__header {
+        .kel-collapse-item__header {
             background: transparent;
             border-bottom: 1px solid var(--ks-border-primary);
             font-size: var(--bs-font-size-sm);
         }
 
-        .el-collapse-item__content {
+        .kel-collapse-item__content {
             background: var(--bs-gray-100);
             border-bottom: 1px solid var(--ks-border-primary);
         }
 
-        .el-collapse-item__header,
-        .el-collapse-item__content {
+        .kel-collapse-item__header,
+        .kel-collapse-item__content {
             &:last-child {
                 border-bottom-left-radius: var(--bs-border-radius-lg);
                 border-bottom-right-radius: var(--bs-border-radius-lg);

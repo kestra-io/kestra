@@ -1,5 +1,5 @@
 <template>
-    <el-dropdown-item class="w-100 p-2">
+    <ks-dropdown-item class="w-100 p-2">
         <div class="col text-truncate">
             <small>{{ props.dashboard.title }}</small>
         </div>
@@ -9,7 +9,7 @@
             <ks-button v-if="props.dashboard.id !== 'default'" link :icon="Pencil" class="mx-0" @click.stop="props.edit(props.dashboard.id)" title="edit" />
             <ks-button v-if="props.dashboard.id !== 'default' && props.remove" link :icon="DeleteOutline" class="mx-0" @click.stop="props.remove(props.dashboard)" title="delete" />
         </div>
-    </el-dropdown-item>
+    </ks-dropdown-item>
 </template>
 
 <script setup lang="ts">

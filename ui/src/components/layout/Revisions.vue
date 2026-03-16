@@ -10,8 +10,8 @@
                 />
             </ks-select>
         </div>
-        <el-row :gutter="15" class="mb-2">
-            <el-col :span="12" v-if="revisionLeftIndex !== undefined">
+        <ks-row :gutter="15" class="mb-2">
+            <ks-col :span="12" v-if="revisionLeftIndex !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
                         <ks-select v-model="revisionLeftIndex" @change="addQuery">
@@ -46,8 +46,8 @@
                     </div>
                     <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
                 </div>
-            </el-col>
-            <el-col :span="12" v-if="revisionRightIndex !== undefined">
+            </ks-col>
+            <ks-col :span="12" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select-row m">
                     <div class="revision-select">
                         <ks-select v-model="revisionRightIndex" @change="addQuery">
@@ -82,8 +82,8 @@
                     </div>
                     <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
                 </div>
-            </el-col>
-        </el-row>
+            </ks-col>
+        </ks-row>
 
         <Editor
             class="mt-1"
@@ -101,9 +101,9 @@
         </div>
     </div>
     <div v-else>
-        <el-alert class="mb-0" showIcon :closable="false">
+        <ks-alert class="mb-0" showIcon :closable="false">
             {{ $t("no revisions found") }}
-        </el-alert>
+        </ks-alert>
     </div>
 </template>
 

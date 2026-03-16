@@ -1,6 +1,6 @@
 <template>
-    <el-tabs class="router-link" :class="{top: top}" v-model="activeName" :type="type">
-        <el-tab-pane
+    <ks-tabs class="router-link" :class="{top: top}" v-model="activeName" :type="type">
+        <ks-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
             :label="tab.title"
@@ -9,19 +9,19 @@
         >
             <template #label>
                 <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
-                    <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
+                    <ks-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
-                    </el-tooltip>
+                    </ks-tooltip>
                     <EnterpriseBadge :enable="tab.locked">
                         <span class="tab-label-wrapper">
                             {{ tab.title }}
-                            <el-badge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
+                            <ks-badge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
                         </span>
                     </EnterpriseBadge>
                 </component>
             </template>
-        </el-tab-pane>
-    </el-tabs>
+        </ks-tab-pane>
+    </ks-tabs>
     <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized, 'no-overflow': activeTab.noOverflow}">
         <BlueprintDetail
             v-if="selectedBlueprintId"
@@ -179,8 +179,8 @@ section.container.mt-4:has(> section.empty) {
     padding: 0 !important;
 }
 
-:deep(.el-tabs) {
-    .el-tabs__item.is-disabled {
+:deep(.kel-tabs) {
+    .kel-tabs__item.is-disabled {
         &:after {
             top: 0;
             content: "";
@@ -221,8 +221,8 @@ section.container.mt-4:has(> section.empty) {
     width: 100%;
 }
 
-:deep(.el-tabs__nav-next),
-:deep(.el-tabs__nav-prev) {
+:deep(.kel-tabs__nav-next),
+:deep(.kel-tabs__nav-prev) {
     &.is-disabled {
         display: none;
     }
@@ -235,7 +235,7 @@ section.container.mt-4:has(> section.empty) {
 }
 
 .inline-badge {
-    :deep(.el-badge__content) {
+    :deep(.kel-badge__content) {
         transform: translateY(-1px);
         position: static;
         border: none;

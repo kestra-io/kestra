@@ -1,12 +1,12 @@
 <template>
     <div class="bulk-select">
-        <el-checkbox
+        <ks-checkbox
             :modelValue="selections.length > 0"
             @change="toggle"
             :indeterminate="partialCheck"
         >
             <span v-html="$t('selection.selected', {count: selectAll && total !== undefined ? total : selections.length})" />
-        </el-checkbox>
+        </ks-checkbox>
         <ks-button-group>
             <ks-button
                 :type="selectAll ? 'primary' : 'default'"

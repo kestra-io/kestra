@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip :disabled="tooltip === undefined" :content="tooltip" effect="light">
+    <ks-tooltip :disabled="tooltip === undefined" :content="tooltip" effect="light">
         <ks-select
             :modelValue="value"
             :placeholder="placeholder"
@@ -16,7 +16,7 @@
                 :value="preset.value"
             />
         </ks-select>
-    </el-tooltip>
+    </ks-tooltip>
 </template>
 
 <script setup lang="ts">

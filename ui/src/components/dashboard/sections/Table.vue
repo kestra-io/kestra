@@ -1,12 +1,12 @@
 <template>
     <section v-if="data?.results?.length" id="table">
-        <el-table
+        <ks-table
             :id="containerID"
             :data="data.results"
             :height="240"
             size="small"
         >
-            <el-table-column
+            <ks-table-column
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
                 :label="value.displayName || key"
                 :key
@@ -18,8 +18,8 @@
                     </template>
                     <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                 </template>
-            </el-table-column>
-        </el-table>
+            </ks-table-column>
+        </ks-table>
 
         <Pagination
             v-if="isPaginationEnabled(props.chart)"

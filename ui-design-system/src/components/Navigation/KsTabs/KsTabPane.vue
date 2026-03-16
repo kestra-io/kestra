@@ -1,0 +1,30 @@
+<script setup lang="ts">
+    import {ElTabPane, provideGlobalConfig} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
+
+    provideGlobalConfig({namespace: "kel"})
+
+    defineOptions({inheritAttrs: false})
+
+    const props = defineProps<{
+        label?: string
+        name?: string
+        disabled?: boolean
+    }>()
+
+    const filteredProps = useFilteredProps(props)
+
+    defineSlots<{
+        default?(): unknown
+        label?(): unknown
+    }>()
+</script>
+
+<template>
+    <el-tab-pane
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default><slot /></template>
+        <template v-if="$slots.label" #label><slot name="label" /></template>
+    </el-tab-pane>
+</template>

@@ -26,7 +26,7 @@
                     >
                         {{ $t("save task") }}
                     </ks-button>
-                    <el-alert
+                    <ks-alert
                         showIcon
                         :closable="false"
                         class="mb-0 mt-3"
@@ -34,12 +34,12 @@
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
-                    </el-alert>
+                    </ks-alert>
                 </div>
             </template>
 
-            <el-tabs v-model="activeTabs">
-                <el-tab-pane v-if="!readOnly" name="form">
+            <ks-tabs v-model="activeTabs">
+                <ks-tab-pane v-if="!readOnly" name="form">
                     <template #label>
                         <span>{{ $t("form") }}</span>
                     </template>
@@ -49,8 +49,8 @@
                         :section="section"
                         @update:model-value="onInput"
                     />
-                </el-tab-pane>
-                <el-tab-pane name="source">
+                </ks-tab-pane>
+                <ks-tab-pane name="source">
                     <template #label>
                         <span>{{ $t("source") }}</span>
                     </template>
@@ -65,8 +65,8 @@
                         lang="yaml"
                         @update:model-value="onInput"
                     />
-                </el-tab-pane>
-                <el-tab-pane v-if="pluginMarkdown" name="documentation">
+                </ks-tab-pane>
+                <ks-tab-pane v-if="pluginMarkdown" name="documentation">
                     <template #label>
                         <span>
                             {{ $t("documentation.documentation") }}
@@ -75,8 +75,8 @@
                     <div class="documentation">
                         <Markdown :source="pluginMarkdown" />
                     </div>
-                </el-tab-pane>
-            </el-tabs>
+                </ks-tab-pane>
+            </ks-tabs>
         </Drawer>
     </component>
 </template>

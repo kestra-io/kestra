@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip
+    <ks-tooltip
         effect="light"
         placement="left"
         :persistent="false"
@@ -27,7 +27,7 @@
                 :duration="duration"
             />
         </div>
-    </el-tooltip>
+    </ks-tooltip>
 </template>
 
 <script setup lang="ts">

@@ -19,20 +19,20 @@
                     </li>
                 </ul>
     
-                <el-dropdown class="d-flex d-xl-none align-items-center">
+                <ks-dropdown class="d-flex d-xl-none align-items-center">
                     <ks-button>
-                        <el-icon><DotsVerticalIcon /></el-icon>
+                        <ks-icon><DotsVerticalIcon /></ks-icon>
                         <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
                     </ks-button>
                     <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item v-if="isAllowedEdit" @click="editFlow">
-                                <el-icon><Pencil /></el-icon>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item v-if="isAllowedEdit" @click="editFlow">
+                                <ks-icon><Pencil /></ks-icon>
                                 {{ $t("edit flow") }}
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </ks-dropdown-item>
+                        </ks-dropdown-menu>
                     </template>
-                </el-dropdown>
+                </ks-dropdown>
     
                 <div v-if="primaryAction || fallbackToExecute">
                     <div class="d-flex align-items-center gap-2">

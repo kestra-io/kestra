@@ -2,7 +2,7 @@ import {mergeConfig} from "vite"
 import type {StorybookConfig} from "@storybook/vue3-vite"
 
 const config: StorybookConfig = {
-    stories: ["../tests/storybook/stories/**/*.stories.@(ts|tsx)"],
+    stories: ["../tests/storybook/**/*.stories.@(ts|tsx)"],
     addons: ["@storybook/addon-themes", "@storybook/addon-vitest"],
     framework: {
         name: "@storybook/vue3-vite",

@@ -15,7 +15,7 @@
             @filter="onFilterChange"
         />
         <div class="gantt-stage">
-            <el-card
+            <ks-card
                 id="gantt"
                 data-onboarding-target="execution-gantt"
                 shadow="never"
@@ -54,7 +54,7 @@
                                             <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                             <ChevronDown v-else />
                                         </div>
-                                        <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                        <ks-tooltip placement="top-start" :persistent="false" transition="ks-fade-in-linear" :autoClose="2000" effect="light">
                                             <template #content>
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
@@ -67,17 +67,17 @@
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                             </span>
-                                        </el-tooltip>
+                                        </ks-tooltip>
                                         <div>
-                                            <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                            <ks-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="ks-fade-in-linear" :autoClose="2000" effect="light">
                                                 <template #content>
                                                     <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                                 </template>
                                                 <Warning class="attempt_warn me-3" />
-                                            </el-tooltip>
+                                            </ks-tooltip>
                                         </div>
                                         <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                            <el-tooltip placement="top" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                            <ks-tooltip placement="top" :persistent="false" transition="ks-fade-in-linear" :autoClose="2000" effect="light">
                                                 <template #content>
                                                     <span style="white-space: pre-wrap;">
                                                         {{ item.tooltip }}
@@ -96,7 +96,7 @@
                                                         />
                                                     </div>
                                                 </div>
-                                            </el-tooltip>
+                                            </ks-tooltip>
                                         </div>
                                     </div>
                                     <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
@@ -115,17 +115,17 @@
                         </template>
                     </TypedDynamicScroller>
                 </template>
-            </el-card>
+            </ks-card>
         </div>
         <OnboardingSuccessPopup
             :modelValue="showOnboardingSuccessPopup"
             :backdrop="false"
-            @update:model-value="showOnboardingSuccessPopup = $event"
+            @update:modks-value="showOnboardingSuccessPopup = $event"
         />
         <SaveExecuteAnimation
             :modelValue="showSaveExecuteAnimation"
             :dialogMode="showOnboardingSuccessPopup"
-            @update:model-value="showSaveExecuteAnimation = $event"
+            @update:modks-value="showSaveExecuteAnimation = $event"
             @finished="onSaveExecuteAnimationFinished"
         />
     </template>
@@ -609,10 +609,10 @@
 </script>
 
 <style scoped lang="scss">
-    .el-card {
+    .kks-card {
         padding: 0;
 
-        :deep(.el-card__header) {
+        :deep(.kks-card__header) {
             padding: 0;
             font-size: var(--font-size-sm);
             background-color: var(--bs-gray-200);
@@ -647,7 +647,7 @@
             }
         }
 
-        :deep(.el-card__body) {
+        :deep(.kks-card__body) {
             padding: 0;
 
             .vue-recycle-scroller {
@@ -677,7 +677,7 @@
                     padding: 1rem .5rem;
                 }
 
-                .el-tooltip__trigger {
+                .ks-tooltip__trigger {
                     flex: 1;
                     white-space: nowrap;
                     overflow: hidden;
@@ -715,7 +715,7 @@
                 }
 
                 .attempt_warn{
-                    color: var(--el-color-warning);
+                    color: var(--ks-color-warning);
                     vertical-align: middle;
                 }
 

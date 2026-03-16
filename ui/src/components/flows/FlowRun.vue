@@ -1,15 +1,15 @@
 <template>
     <template v-if="flow">
-        <el-alert v-if="flow.disabled" type="warning" showIcon :closable="false">
+        <ks-alert v-if="flow.disabled" type="warning" showIcon :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
-        </el-alert>
+        </ks-alert>
         <div class="flow-execution-checks-alerts">
-            <el-alert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
+            <ks-alert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
                 {{ alert.message }}
-            </el-alert>
+            </ks-alert>
         </div>
-        <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
+        <ks-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
             <InputsForm
                 :initialInputs="flow.inputs"
                 :selectedTrigger="selectedTrigger"
@@ -21,43 +21,43 @@
                 @update:checks="values => checks=values"
             />
 
-            <el-collapse v-model="collapseName">
-                <el-collapse-item :title="$t('advanced configuration')" name="advanced">
-                    <el-form-item
+            <ks-collapse v-model="collapseName">
+                <ks-collapse-item :title="$t('advanced configuration')" name="advanced">
+                    <ks-form-item
                         :label="$t('execution labels')"
                     >
                         <LabelInput
                             :key="executionLabels"
                             v-model:labels="executionLabels"
                         />
-                    </el-form-item>
-                    <el-form-item
+                    </ks-form-item>
+                    <ks-form-item
                         :label="$t('scheduleDate')"
                     >
-                        <el-date-picker
+                        <ks-date-picker
                             v-model="scheduleDate"
                             type="datetime"
                         />
-                    </el-form-item>
-                </el-collapse-item>
-                <el-collapse-item :title="$t('curl.command')" name="curl">
+                    </ks-form-item>
+                </ks-collapse-item>
+                <ks-collapse-item :title="$t('curl.command')" name="curl">
                     <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
-                </el-collapse-item>
-                <el-collapse-item v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
+                </ks-collapse-item>
+                <ks-collapse-item v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
                     <WebhookCurl :flow="flow" />
-                </el-collapse-item>
-            </el-collapse>
+                </ks-collapse-item>
+            </ks-collapse>
 
             <div class="bottom-buttons" v-if="!embed">
                 <div class="left-align">
-                    <el-form-item>
+                    <ks-form-item>
                         <ks-button v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
                             {{ $t('prefill inputs') }}
                         </ks-button>
-                    </el-form-item>
+                    </ks-form-item>
                 </div>
                 <div class="right-align">
-                    <el-form-item class="submit">
+                    <ks-form-item class="submit">
                         <span data-onboarding-target="flow-execute-confirm-button">
                             <ks-button
                                 :icon="buttonIcon"
@@ -70,13 +70,13 @@
                                 {{ $t(buttonText) }}
                             </ks-button>
                         </span>
-                        <el-text v-if="haveBadLabels" type="danger" size="small">
+                        <ks-text v-if="haveBadLabels" type="danger" size="small">
                             {{ $t('wrong labels') }}
-                        </el-text>
-                    </el-form-item>
+                        </ks-text>
+                    </ks-form-item>
                 </div>
             </div>
-        </el-form>
+        </ks-form>
     </template>
 </template>
 
@@ -284,18 +284,18 @@
         border: 1px solid var(--ks-border-primary);
         background: var(--bs-gray-100);
 
-        .el-collapse-item__header {
+        .kel-collapse-item__header {
             background: transparent;
             border-bottom: 1px solid var(--ks-border-primary);
             font-size: var(--bs-font-size-sm);
         }
 
-        .el-collapse-item__content {
+        .kel-collapse-item__content {
             background: var(--bs-gray-100);
             border-bottom: 1px solid var(--ks-border-primary);
         }
 
-        .el-collapse-item__header, .el-collapse-item__content {
+        .kel-collapse-item__header, .kel-collapse-item__content {
             &:last-child {
                 border-bottom-left-radius: var(--bs-border-radius-lg);
                 border-bottom-right-radius: var(--bs-border-radius-lg);

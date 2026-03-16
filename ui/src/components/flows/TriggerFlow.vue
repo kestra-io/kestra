@@ -14,7 +14,7 @@
                 {{ $t("execute") }}
             </ks-button>
         </span>
-        <el-dialog
+        <ks-dialog
             id="execute-flow-dialog"
             v-model="isOpen"
             destroyOnClose
@@ -27,8 +27,8 @@
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
-        </el-dialog>
-        <el-dialog
+        </ks-dialog>
+        <ks-dialog
             v-if="isSelectFlowOpen"
             v-model="isSelectFlowOpen"
             destroyOnClose
@@ -36,10 +36,10 @@
             :appendToBody="true"
             :width="dialogWidth"
         >
-            <el-form
+            <ks-form
                 labelPosition="top"
             >
-                <el-form-item :label="$t('namespace')">
+                <ks-form-item :label="$t('namespace')">
                     <ks-select
                         v-model="localNamespace"
                     >
@@ -50,8 +50,8 @@
                             :value="np"
                         />
                     </ks-select>
-                </el-form-item>
-                <el-form-item
+                </ks-form-item>
+                <ks-form-item
                     v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
                     :label="$t('flow')"
                 >
@@ -66,14 +66,14 @@
                             :value="exFlow"
                         />
                     </ks-select>
-                </el-form-item>
-                <el-form-item v-if="localFlow" :label="$t('inputs')">
+                </ks-form-item>
+                <ks-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
                         <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
-                </el-form-item>
-            </el-form>
-        </el-dialog>
+                </ks-form-item>
+            </ks-form>
+        </ks-dialog>
     </div>
 </template>
 

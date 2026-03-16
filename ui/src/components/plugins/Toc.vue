@@ -1,14 +1,14 @@
 <template>
     <div class="plugins-list">
-        <el-input
+        <ks-input
             class="p-2 bg-transparent search"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"
             v-model="searchInput"
             clearable
         />
-        <el-collapse accordion v-model="activeNames">
+        <ks-collapse accordion v-model="activeNames">
             <template v-for="(plugin) in sortedPlugins(pluginsList)" :key="plugin.title">
-                <el-collapse-item
+                <ks-collapse-item
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
@@ -46,9 +46,9 @@
                             </ul>
                         </li>
                     </ul>
-                </el-collapse-item>
+                </ks-collapse-item>
             </template>
-        </el-collapse>
+        </ks-collapse>
     </div>
 </template>
 
@@ -228,7 +228,7 @@
             background-color: var(--bs-gray-100);
         }
 
-        .el-collapse-item__header {
+        .kel-collapse-item__header {
             font-size: 0.875rem;
         }
 
@@ -289,7 +289,7 @@
                 overflow-y: auto;
             }
 
-            .el-collapse-item__header {
+            .kel-collapse-item__header {
                 font-size: 0.75rem;
             }
 

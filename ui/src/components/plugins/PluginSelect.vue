@@ -136,7 +136,7 @@
         margin-right: 1rem;
     }
 
-    :deep(.el-input__prefix-inner) {
+    :deep(.kel-input__prefix-inner) {
         .wrapper {
             top: 0;
             margin-right: 0;

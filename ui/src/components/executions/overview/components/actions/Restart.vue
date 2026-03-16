@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip
+    <ks-tooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
         :enterable="false"
@@ -34,9 +34,9 @@
                 {{ $t(replayOrRestart) }}
             </component>
         </span>
-    </el-tooltip>
+    </ks-tooltip>
 
-    <el-dialog
+    <ks-dialog
         v-if="enabled && isOpen"
         v-model="isOpen"
         destroyOnClose
@@ -48,7 +48,7 @@
                 <h3 class="modal-title">
                     {{ t("replay execution title") }}
                 </h3>
-                <el-divider />
+                <ks-divider />
             </div>
         </template>
 
@@ -62,23 +62,23 @@
                 {{ t("replay using") }}:
             </h4>
 
-            <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
-                <el-radio label="original" class="radio-item">
+            <ks-radio-group v-model="replayRevisionMode" class="radio-vertical">
+                <ks-radio label="original" class="radio-item">
                     {{ t("flow revision original") }}
-                </el-radio>
-                <el-radio label="latest" class="radio-item">
+                </ks-radio>
+                <ks-radio label="latest" class="radio-item">
                     {{ t("flow revision latest") }}
-                </el-radio>
-                <el-radio label="specific" class="radio-item">
+                </ks-radio>
+                <ks-radio label="specific" class="radio-item">
                     {{ t("flow revision specific") }}
-                </el-radio>
-            </el-radio-group>
+                </ks-radio>
+            </ks-radio-group>
 
-            <el-form
+            <ks-form
                 v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
                 class="mt-2"
             >
-                <el-form-item>
+                <ks-form-item>
                     <ks-select v-model="revisionsSelected">
                         <ks-option
                             v-for="item in revisionsOptions"
@@ -87,21 +87,21 @@
                             :value="item.value"
                         />
                     </ks-select>
-                </el-form-item>
-            </el-form>
+                </ks-form-item>
+            </ks-form>
 
             <h4 class="section-title">
                 {{ t("replay inputs") }}:
             </h4>
 
-            <el-radio-group v-model="inputMode" class="radio-vertical">
-                <el-radio label="reuse" class="radio-item">
+            <ks-radio-group v-model="inputMode" class="radio-vertical">
+                <ks-radio label="reuse" class="radio-item">
                     {{ t("reuse original inputs") }}
-                </el-radio>
-                <el-radio label="modify" class="radio-item">
+                </ks-radio>
+                <ks-radio label="modify" class="radio-item">
                     {{ t("modify inputs") }}
-                </el-radio>
-            </el-radio-group>
+                </ks-radio>
+            </ks-radio-group>
         </div>
 
         <template #footer>
@@ -112,9 +112,9 @@
                 {{ t("execute") }}
             </ks-button>
         </template>
-    </el-dialog>
+    </ks-dialog>
 
-    <el-dialog
+    <ks-dialog
         v-if="isReplayWithInputsOpen"
         v-model="isReplayWithInputsOpen"
         destroyOnClose
@@ -136,7 +136,7 @@
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
         />
-    </el-dialog>
+    </ks-dialog>
 </template>
 
 <script setup lang="ts">

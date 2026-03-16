@@ -2,7 +2,7 @@
     <div class="multi-select-panel">
         <div class="panel-header">
             <div v-if="props.searchable" class="search-section">
-                <el-input
+                <ks-input
                     v-model="searchQuery"
                     size="default"
                     clearable
@@ -12,22 +12,22 @@
             </div>
             <div class="controls-section">
                 <div class="check-border">
-                    <el-checkbox
+                    <ks-checkbox
                         v-model="allSelected"
                         size="default"
                         :indeterminate="isPartiallySelected"
                         @change="handleSelectAllChange"
                     >
                         {{ $t('filter.select all') }}
-                    </el-checkbox>
+                    </ks-checkbox>
                 </div>
                 <div class="check-border">
-                    <el-checkbox
+                    <ks-checkbox
                         size="default"
                         @change="handleDeselectAllChange"
                     >
                         {{ $t('filter.deselect all') }}
-                    </el-checkbox>
+                    </ks-checkbox>
                 </div>
             </div>
         </div>
@@ -52,7 +52,7 @@
                     @click.stop
                 />
             </div>
-            <el-alert 
+            <ks-alert 
                 v-if="filteredOptions.length === 0" 
                 type="info" 
                 showIcon 
@@ -63,7 +63,7 @@
                 <template #icon>
                     <InformationOutline />
                 </template>
-            </el-alert>
+            </ks-alert>
         </div>
     </div>
 </template>
@@ -227,14 +227,14 @@
             color: var(--ks-content-tertiary);
             font-size: 14px;
 
-            :deep(.el-alert__icon) {
+            :deep(.kel-alert__icon) {
                 color: var(--ks-content-info);
                 font-size: 1.5rem;
             }
         }
     }
 
-    :deep(.el-input__inner) {
+    :deep(.kel-input__inner) {
         font-size: 14px;
 
         &::placeholder {

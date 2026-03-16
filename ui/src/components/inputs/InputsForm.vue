@@ -1,6 +1,6 @@
 <template>
     <template v-if="initialInputs">
-        <el-form-item
+        <ks-form-item
             v-for="input in inputsMetaData"
             :key="input.id"
             :required="input.required !== false"
@@ -43,20 +43,20 @@
                     <Markdown :source="item" />
                 </ks-option>
             </ks-select>
-            <el-radio-group
+            <ks-radio-group
                 v-if="input.type === 'SELECT' && input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
-                <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />
-                <el-input
+                <ks-radio v-for="item in input.values" :key="item" :label="item" :value="item" />
+                <ks-input
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                     :placeholder="$t('custom value')"
                 />
-            </el-radio-group>
+            </ks-radio-group>
             <ks-select
                 :fullHeight="false"
                 :input="true"
@@ -79,7 +79,7 @@
                     <Markdown :source="item" />
                 </ks-option>
             </ks-select>
-            <el-input
+            <ks-input
                 type="password"
                 v-if="input.type === 'SECRET'"
                 :data-testid="`input-form-${input.id}`"
@@ -88,7 +88,7 @@
                 showPassword
             />
             <span v-if="input.type === 'INT'">
-                <el-input-number
+                <ks-input-number
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -99,7 +99,7 @@
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
             <span v-if="input.type === 'FLOAT'">
-                <el-input-number
+                <ks-input-number
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -116,21 +116,21 @@
                 @update:model-value="onChange(input)"
                 class="w-100 boolean-inputs"
             />
-            <el-date-picker
+            <ks-date-picker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="datetime"
             />
-            <el-date-picker
+            <ks-date-picker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="date"
             />
-            <el-time-picker
+            <ks-time-picker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
                 v-model="inputsValues[input.id]"
@@ -158,12 +158,12 @@
             >
                 <div v-if="editingArrayId !== input.id" class="preview">
                     <div class="tags">
-                        <el-tag
+                        <ks-tag
                             v-for="(item, index) in parseArrayValue(input.id)"
                             :key="index"
                         >
                             {{ item }}
-                        </el-tag>
+                        </ks-tag>
                     </div>
                     <ks-button
                         class="p-3"
@@ -177,7 +177,7 @@
                 <div v-else class="edit_input">
                     <div>
                         <div v-for="(_item, index) in editableItems[input.id]" :key="index" class="list-row">
-                            <el-input
+                            <ks-input
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
                             />
@@ -233,19 +233,19 @@
             />
             <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-for="err in input.errors ?? []" :key="err.message">
-                <el-text type="warning">
+                <ks-text type="warning">
                     {{ err.message }}
-                </el-text>
+                </ks-text>
             </template>
-        </el-form-item>
+        </ks-form-item>
         <div class="d-flex justify-content-end">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
     </template>
 
-    <el-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
+    <ks-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
-    </el-alert>
+    </ks-alert>
 </template>
 
 <script setup lang="ts">
@@ -591,7 +591,7 @@
             return [{
                 required: true,
                 validator: (_rule, _val: unknown, callback: (error?: Error) => void) => {
-                    const val = input.type === "MULTISELECT" 
+                    const val = input.type === "MULTISELECT"
                         ? multiSelectInputs[input.id] as unknown[] | undefined
                         : inputsValues[input.id] as unknown[] | string | undefined;
                     if (!val || (Array.isArray(val) ? val.length === 0 : !val)) {
@@ -622,7 +622,7 @@
 
     function addNewArrayItem(input: InputMetaData): void {
         if (!editableItems[input.id]) {
-            editableItems[input.id] = parseArrayValue(input.id).map(item => 
+            editableItems[input.id] = parseArrayValue(input.id).map(item =>
                 item?.toString() || ""
             );
         }
@@ -785,16 +785,16 @@
     display: flex;
     align-items: center;
 
-    .el-radio-button {
+    .kel-radio-button {
         &.is-active {
-            .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+            .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
                 color: var(--ks-content-primary);
                 background-color: var(--bs-gray-100);
                 box-shadow: 0 0 0 0 var(--ks-border-active);
             }
         }
 
-        .el-radio-button__inner {
+        .kel-radio-button__inner {
             border: var(--ks-border-primary);
             transition: 0.3s ease-in-out;
 
@@ -811,15 +811,15 @@
     }
 }
 
-.el-input-file {
+.kel-input-file {
     display: flex;
     align-items: center;
 
-    .el-input__inner {
+    .kel-input__inner {
         cursor: pointer;
     }
 
-    .el-input__wrapper {
+    .kel-input__wrapper {
         padding: 0.5rem;
     }
 
@@ -841,7 +841,7 @@
         padding: 5px;
         gap: 4px;
 
-        :deep(.el-tag) {
+        :deep(.kel-tag) {
             display: inline-flex;
             align-items: center;
             border-radius: 4px;
@@ -857,13 +857,13 @@
         margin-bottom: 8px;
 
         .array-cell {
-            :deep(.el-input__wrapper) {
+            :deep(.kel-input__wrapper) {
                 box-shadow: none;
                 border: 1px solid var(--ks-border-primary);
                 border-radius: 5px;
             }
 
-            :deep(.el-input__inner) {
+            :deep(.kel-input__inner) {
                 color: #eeae7e !important;
                 font-size: var(--font-size-sm) !important;
 
@@ -912,7 +912,7 @@
     }
 }
 
-.el-form-item {
+.kel-form-item {
     &:has(.edit_input) {
         padding: 1rem;
         border-radius: 8px;
@@ -938,8 +938,8 @@
   visibility: hidden;
 }
 
-.el-input-file {
-  .el-input__wrapper {
+.kel-input-file {
+  .kel-input__wrapper {
     display: flex;
     align-items: center;
     padding: 4px 0 4px 0;

@@ -219,7 +219,7 @@
             font-size: $font-size-sm;
         }
 
-        :deep(.el-row) {
+        :deep(.kel-row) {
             position: relative;
             z-index: 1;
         }

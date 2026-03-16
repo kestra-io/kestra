@@ -9,7 +9,7 @@
             <slot name="navbar" />
         </template>
         <template #table>
-            <el-table
+            <ks-table
                 :data="metrics"
                 :defaultSort="{prop: 'name', order: 'ascending'}"
                 tableLayout="auto"
@@ -17,15 +17,15 @@
                 @sort-change="onSort"
             >
                 <template v-for="col in displayColumns" :key="col">
-                    <el-table-column v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
+                    <ks-table-column v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                         <template #default="scope">
                             <p class="m-0">
                                 {{ scope.row.taskId }}
                             </p>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
+                    <ks-table-column v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
                         <template #default="scope">
                             <template v-if="scope.row.type === 'timer'">
                                 <Kicon><Timer /></Kicon>
@@ -35,9 +35,9 @@
                             </template>
                             &nbsp;<code>{{ scope.row.name }}</code>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
+                    <ks-table-column v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
                         <template #default="scope">
                             <span v-if="scope.row.type === 'timer'">
                                 {{ humanizeDuration((scope.row.value / 1000).toString()) }}
@@ -46,11 +46,11 @@
                                 {{ humanizeNumber(scope.row.value) }}
                             </span>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
+                    <ks-table-column v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
                         <template #default="scope">
-                            <el-tag
+                            <ks-tag
                                 v-for="(value, key) in scope.row.tags"
                                 :key="key"
                                 class="tag"
@@ -59,11 +59,11 @@
                                 disableTransitions
                             >
                                 {{ key }}: <strong>{{ value }}</strong>
-                            </el-tag>
+                            </ks-tag>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
                 </template>
-            </el-table>
+            </ks-table>
         </template>
     </DataTable>
 </template>

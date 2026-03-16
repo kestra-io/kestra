@@ -1,6 +1,6 @@
 <template>
     <span v-if="props.labels.length" class="d-flex flex-wrap gap-1">
-        <el-check-tag
+        <ks-check-tag
             v-for="(label, index) in props.labels"
             :key="index"
             :disabled="readOnly"
@@ -10,7 +10,7 @@
         >
             <template v-if="!label.key">{{ label.value }}</template>
             <template v-else>{{ label.key }}:{{ label.value }}</template>
-        </el-check-tag>
+        </ks-check-tag>
     </span>
 </template>
 
@@ -100,7 +100,7 @@
     color: var(--ks-tag-content);
 }
 
-.label.el-check-tag.is-checked {
+.label.kel-check-tag.is-checked {
     background-color: var(--ks-tag-background-active);
     color: var(--ks-tag-content-active);
 }

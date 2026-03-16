@@ -1,7 +1,7 @@
 <template>
-    <el-dropdown-item :disabled :icon="LocationExit" @click="isOpen = !isOpen">
+    <ks-dropdown-item :disabled :icon="LocationExit" @click="isOpen = !isOpen">
         {{ $t("outputs") }}
-    </el-dropdown-item>
+    </ks-dropdown-item>
 
     <Drawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
         <Vars

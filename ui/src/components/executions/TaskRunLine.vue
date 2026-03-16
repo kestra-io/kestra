@@ -1,7 +1,7 @@
 <template>
     <div class="taskrun-header">
         <div>
-            <el-icon
+            <ks-icon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"
                 @click.stop="() => $emit('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
@@ -10,7 +10,7 @@
                     v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
                 />
                 <ChevronRight v-else />
-            </el-icon>
+            </ks-icon>
         </div>
         <div class="task-icon d-none d-md-inline-block me-1">
             <TaskIcon
@@ -25,7 +25,7 @@
             class="task-id flex-grow-1"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
-            <el-tooltip :persistent="false" transition="" :hideAfter="0" effect="light">
+            <ks-tooltip :persistent="false" transition="" :hideAfter="0" effect="light">
                 <template #content>
                     {{ $t("from") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.startDate) }}
@@ -43,7 +43,7 @@
                         {{ currentTaskRun.value }}
                     </small>
                 </span>
-            </el-tooltip>
+            </ks-tooltip>
         </div>
 
         <div class="task-duration d-none d-md-inline-block">
@@ -58,13 +58,13 @@
 
         <slot name="buttons" />
 
-        <el-dropdown trigger="click">
+        <ks-dropdown trigger="click">
             <ks-button type="default" class="task-run-buttons">
                 <DotsVertical title="" />
             </ks-button>
             <template #dropdown>
-                <el-dropdown-menu>
-                    <el-dropdown-item
+                <ks-dropdown-menu>
+                    <ks-dropdown-item
                         v-if="selectedAttempt(currentTaskRun).state.current === 'FAILED'"
                         @click="fixErrorWithAi(currentTaskRun)"
                     >
@@ -72,7 +72,7 @@
                             <AiIcon class="me-1" />
                             <span>{{ $t('fix_with_ai') }}</span>
                         </span>
-                    </el-dropdown-item>
+                    </ks-dropdown-item>
                     <SubFlowLink
                         v-if="isSubflow(currentTaskRun)"
                         component="el-dropdown-item"
@@ -117,33 +117,33 @@
                         :revision="followedExecution.flowRevision"
                         :flowSource="flow?.source"
                     />
-                    <el-dropdown-item
+                    <ks-dropdown-item
                         :icon="Download"
                         @click="downloadContent(currentTaskRun.id)"
                     >
                         {{ $t("download logs") }}
-                    </el-dropdown-item>
-                    <el-dropdown-item
+                    </ks-dropdown-item>
+                    <ks-dropdown-item
                         :icon="Copy"
                         @click="copyContent(currentTaskRun.id)"
                     >
                         {{ $t("copy logs") }}
-                    </el-dropdown-item>
-                    <el-dropdown-item
+                    </ks-dropdown-item>
+                    <ks-dropdown-item
                         :icon="Delete"
                         @click="deleteLogs(currentTaskRun.id)"
                     >
                         {{ $t("delete logs") }}
-                    </el-dropdown-item>
+                    </ks-dropdown-item>
                     <WorkerInfo
                         component="el-dropdown-item"
                         v-if="hasWorkerId(currentTaskRun) !== null"
                         :taskRun="currentTaskRun"
                         @follow="$emit('follow', $event)"
                     />
-                </el-dropdown-menu>
+                </ks-dropdown-menu>
             </template>
-        </el-dropdown>
+        </ks-dropdown>
     </div>
     <div class="attempt-header">
         <ks-select

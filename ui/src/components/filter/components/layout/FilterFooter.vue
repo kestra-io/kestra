@@ -9,9 +9,9 @@
         </div>
 
         <div class="action-buttons">
-            <el-tooltip :content="$t('filter.reset_tooltip')" placement="top" effect="light">
+            <ks-tooltip :content="$t('filter.reset_tooltip')" placement="top" effect="light">
                 <ks-button size="small" :icon="Restore" @click="emits('reset')" />
-            </el-tooltip>
+            </ks-tooltip>
             <ks-button
                 type="primary"
                 size="small"

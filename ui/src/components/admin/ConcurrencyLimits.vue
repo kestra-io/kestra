@@ -8,11 +8,11 @@
         >
             <template #table>
                 <NoData v-if="data?.results === undefined || data?.results.length === 0" />
-                <el-table
+                <ks-table
                     v-else
                     :data="data?.results"
                 >
-                    <el-table-column 
+                    <ks-table-column 
                         v-for="k in KEYS" 
                         :key="k"
                         :prop="k"
@@ -27,16 +27,16 @@
                                 {{ scope.row[k] }}
                             </span>
                         </template>
-                    </el-table-column>
-                </el-table>
+                    </ks-table-column>
+                </ks-table>
             </template>
         </DataTable>
-        <el-dialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
-            <el-alert type="warning" :closable="false" showIcon>
+        <ks-dialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
+            <ks-alert type="warning" :closable="false" showIcon>
                 {{ $t("concurrency_limit.warning") }}
-            </el-alert>
+            </ks-alert>
             <br>
-            <el-input-number v-model="newRunningCount" />
+            <ks-input-number v-model="newRunningCount" />
             <template #footer>
                 <ks-button @click="editRunning = false">
                     {{ $t("cancel") }}
@@ -45,7 +45,7 @@
                     {{ $t("save") }}
                 </ks-button>
             </template>
-        </el-dialog>
+        </ks-dialog>
     </section>
 </template>
 

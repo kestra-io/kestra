@@ -1,27 +1,27 @@
 <template>
-    <el-dropdown v-if="enabled" placement="bottom-end" class="kill-dropdown">
+    <ks-dropdown v-if="enabled" placement="bottom-end" class="kill-dropdown">
         <ks-button :icon="Circle" @click="kill(true)">
             {{ $t("kill") }}
         </ks-button>
         <template #dropdown>
-            <el-dropdown-menu class="m-dropdown-menu">
-                <el-dropdown-item
+            <ks-dropdown-menu class="m-dropdown-menu">
+                <ks-dropdown-item
                     :icon="StopCircleOutline"
                     size="large"
                     @click="kill(true)"
                 >
                     {{ $t('kill parents and subflow') }}
-                </el-dropdown-item>
-                <el-dropdown-item
+                </ks-dropdown-item>
+                <ks-dropdown-item
                     :icon="StopCircleOutline"
                     size="large"
                     @click="kill(false)"
                 >
                     {{ $t('kill only parents') }}
-                </el-dropdown-item>
-            </el-dropdown-menu>
+                </ks-dropdown-item>
+            </ks-dropdown-menu>
         </template>
-    </el-dropdown>
+    </ks-dropdown>
 </template>
 <script setup lang="ts">
     import {computed} from "vue";

@@ -7,22 +7,22 @@
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <div class="d-flex align-items-end gap-2">
                 <div class="d-flex flex-column gap-2">
-                    <el-breadcrumb v-if="breadcrumb">
-                        <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                    <ks-breadcrumb v-if="breadcrumb">
+                        <ks-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
                             <a v-if="item.disabled || !item.link">
                                 {{ item.label }}
                             </a>
                             <RouterLink v-else :to="item.link">
                                 {{ item.label }}
                             </RouterLink>
-                        </el-breadcrumb-item>
-                    </el-breadcrumb>
+                        </ks-breadcrumb-item>
+                    </ks-breadcrumb>
                     <h1 class="h5 fw-semibold m-0 d-inline-flex">
                         <slot name="title">
                             {{ title }}
-                            <el-tooltip v-if="description" :content="description">
+                            <ks-tooltip v-if="description" :content="description">
                                 <Information class="ms-2 icon" />
-                            </el-tooltip>
+                            </ks-tooltip>
                             <Badge v-if="beta" label="Beta" />
                         </slot>
                         <ks-button

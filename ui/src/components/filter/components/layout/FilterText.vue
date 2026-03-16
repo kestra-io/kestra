@@ -1,6 +1,6 @@
 <template>
     <div class="p-3">
-        <el-input
+        <ks-input
             :modelValue="textValue"
             :placeholder="`Enter ${label.toLowerCase()}`"
             @update:model-value="emits('update:textValue', $event)"
@@ -20,7 +20,7 @@
 </script>
 
 <style lang="scss" scoped>
-    :deep(.el-input__inner) {
+    :deep(.kel-input__inner) {
         &::placeholder {
             color: var(--ks-content-tertiary);
             font-size: 14px;

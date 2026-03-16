@@ -1,40 +1,40 @@
 <template>
     <div v-if="!isNamespace && (isAllowedEdit || canDelete)">
-        <el-dropdown>
+        <ks-dropdown>
             <ks-button type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />
                 {{ $t("actions") }}
             </ks-button>
             <template #dropdown>
-                <el-dropdown-menu class="m-dropdown-menu">
-                    <el-dropdown-item
+                <ks-dropdown-menu class="m-dropdown-menu">
+                    <ks-dropdown-item
                         v-if="isAllowedEdit"
                         :icon="Download"
                         size="large"
                         @click="forwardEvent('export')"
                     >
                         {{ $t("flow_export") }}
-                    </el-dropdown-item>
-                    <el-dropdown-item
+                    </ks-dropdown-item>
+                    <ks-dropdown-item
                         v-if="!isCreating && canDelete"
                         :icon="Delete"
                         size="large"
                         @click="forwardEvent('delete-flow', $event)"
                     >
                         {{ $t("delete") }}
-                    </el-dropdown-item>
+                    </ks-dropdown-item>
 
-                    <el-dropdown-item
+                    <ks-dropdown-item
                         v-if="!isCreating"
                         :icon="ContentCopy"
                         size="large"
                         @click="forwardEvent('copy', $event)"
                     >
                         {{ $t("copy") }}
-                    </el-dropdown-item>
-                </el-dropdown-menu>
+                    </ks-dropdown-item>
+                </ks-dropdown-menu>
             </template>
-        </el-dropdown>
+        </ks-dropdown>
     </div>
     <div data-onboarding-target="flow-save-button">
         <ks-button

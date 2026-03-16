@@ -10,19 +10,19 @@
                     v-if="executionsStore.execution"
                     :execution="executionsStore.execution"
                 />
-                <el-dropdown trigger="click" placement="bottom-end">
+                <ks-dropdown trigger="click" placement="bottom-end">
                     <ks-button :icon="DotsVertical" link class="tab-icon" />
                     <template #dropdown>
-                        <el-dropdown-menu class="m-2">
-                            <el-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
+                        <ks-dropdown-menu class="m-2">
+                            <ks-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
                                 <span class="small-text">{{ $t('playground.clear_history') }}</span>
-                            </el-dropdown-item>
-                            <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
+                            </ks-dropdown-item>
+                            <ks-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
                                 <span class="small-text">{{ $t('close') }} {{ $t('playground.toggle').toLowerCase() }}</span>
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </ks-dropdown-item>
+                        </ks-dropdown-menu>
                     </template>
-                </el-dropdown>
+                </ks-dropdown>
                 <ks-button
                     :icon="CloseIcon"
                     link

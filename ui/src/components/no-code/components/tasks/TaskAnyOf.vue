@@ -1,5 +1,5 @@
 <template>
-    <el-form-item :class="{'radio-wrapper':!isSelectingPlugins}">
+    <ks-form-item :class="{'radio-wrapper':!isSelectingPlugins}">
         <ks-select
             v-if="isSelectingPlugins"
             v-model="selectedSchema"
@@ -12,17 +12,17 @@
                 :value="item.value"
             />
         </ks-select>
-        <el-radio-group v-else v-model="selectedSchema" @change="onSelectType">
-            <el-radio
+        <ks-radio-group v-else v-model="selectedSchema" @change="onSelectType">
+            <ks-radio
                 v-for="radioSchema in schemaOptions"
                 :key="radioSchema.value"
                 :value="radioSchema.value"
             >
                 {{ radioSchema.label }}
-            </el-radio>
-        </el-radio-group>
-    </el-form-item>
-    <el-form labelPosition="top" v-if="selectedSchema">
+            </ks-radio>
+        </ks-radio-group>
+    </ks-form-item>
+    <ks-form labelPosition="top" v-if="selectedSchema">
         <component
             :is="currentSchemaType"
             v-if="currentSchema"
@@ -32,7 +32,7 @@
             @update:model-value="onAnyOfInput"
             merge
         />
-    </el-form>
+    </ks-form>
 </template>
 
 <script setup lang="ts">

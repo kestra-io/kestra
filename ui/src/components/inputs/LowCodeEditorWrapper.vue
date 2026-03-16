@@ -15,14 +15,14 @@
             @swapped-task="onSwappedTask"
         />
         <div v-else-if="invalidGraph">
-            <el-alert
+            <ks-alert
                 :title="$t('topology-graph.invalid')"
                 type="error"
                 class="invalid-graph"
                 :closable="false"
             >
                 {{ $t('topology-graph.invalid_description') }}
-            </el-alert>
+            </ks-alert>
         </div>
     </div>
 </template>

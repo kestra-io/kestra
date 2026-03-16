@@ -1,0 +1,10 @@
+// bootstrap reboot only
+@import "variables.scss";
+
+$prefix: 'kbs-';
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables.scss";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/reboot.scss";

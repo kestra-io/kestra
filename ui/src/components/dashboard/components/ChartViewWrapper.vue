@@ -13,13 +13,13 @@
             <span v-for="error in dashboardStore.chartErrors" :key="error">{{ error }}</span>
         </div>
         <div v-else>
-            <el-empty :image="EmptyVisualDashboard" :imageSize="200">
+            <ks-empty :image="EmptyVisualDashboard" :imageSize="200">
                 <template #description>
                     <h5>
                         {{ $t("dashboards.chart_preview") }}
                     </h5>
                 </template>
-            </el-empty>
+            </ks-empty>
         </div>
     </div>
 </template>

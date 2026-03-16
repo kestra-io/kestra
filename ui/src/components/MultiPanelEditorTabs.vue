@@ -1,7 +1,7 @@
 <template>
     <div class="tabs-wrapper">
         <div class="tabs">
-            <el-tooltip
+            <ks-tooltip
                 v-for="element of tabs"
                 :key="element.uid"
                 :content="element.button.label"
@@ -15,7 +15,7 @@
                     <component class="tabs-icon" :is="element.button.icon" />
                     <span class="tab-label">{{ element.button.label }}</span>
                 </button>
-            </el-tooltip>
+            </ks-tooltip>
         </div>
         <slot />
     </div>

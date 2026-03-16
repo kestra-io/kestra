@@ -8,7 +8,7 @@
                 {{ $t('none') }}
             </div>
             <div v-else class="pairs-container">
-                <el-tag
+                <ks-tag
                     v-for="(pair, index) in detailPairs"
                     :key="index"
                     closable
@@ -17,14 +17,14 @@
                     class="detail-tag"
                 >
                     <span class="detail-key">{{ pair.key }}:</span><span class="detail-value">{{ pair.value }}</span>
-                </el-tag>
+                </ks-tag>
             </div>
         </div>
 
         <div class="add-pair">
             <div class="input-group">
                 <label class="input-label">{{ $t('filter.key') }}</label>
-                <el-input
+                <ks-input
                     v-model="newKey"
                     placeholder="e.g. flowId"
                     @keydown.enter="addPair"
@@ -32,7 +32,7 @@
             </div>
             <div class="input-group">
                 <label class="input-label">{{ $t('filter.value') }}</label>
-                <el-input
+                <ks-input
                     v-model="newValue"
                     placeholder="e.g. orchestrator-1234"
                     @keydown.enter="addPair"
@@ -137,7 +137,7 @@
             color: var(--ks-badge-content);
             font-size: 0.75rem;
 
-            :deep(.el-tag__content) {
+            :deep(.kel-tag__content) {
                 display: flex;
                 align-items: center;
                 overflow: hidden;
@@ -146,7 +146,7 @@
             }
         }
 
-        :deep(.el-tag__close) {
+        :deep(.kel-tag__close) {
             color: var(--ks-badge-content);
             background: transparent;
         }
@@ -192,7 +192,7 @@
     }
 }
 
-:deep(.el-input__inner) {
+:deep(.kel-input__inner) {
     font-size: 14px;
 
     &::placeholder {

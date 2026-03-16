@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip
+    <ks-tooltip
         v-if="tooltip"
         effect="light"
         :content="tooltip"
@@ -22,7 +22,7 @@
         >
             <slot />
         </ks-button>
-    </el-tooltip>
+    </ks-tooltip>
     <ks-button
         v-else
         v-bind="buttonAttrs"

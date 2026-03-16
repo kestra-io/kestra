@@ -13,8 +13,8 @@
     />
 
     <div v-bind="$attrs" v-loading="isLoading">
-        <el-card>
-            <el-tooltip
+        <ks-card>
+            <ks-tooltip
                 effect="light"
                 placement="bottom"
                 :persistent="false"
@@ -34,13 +34,13 @@
                     :options="options"
                     v-if="flowStore.aggregatedMetrics"
                 />
-            </el-tooltip>
+            </ks-tooltip>
             <span v-else>
-                <el-alert type="info" :closable="false">
+                <ks-alert type="info" :closable="false">
                     {{ $t("metric choice") }}
-                </el-alert>
+                </ks-alert>
             </span>
-        </el-card>
+        </ks-card>
     </div>
 </template>
 

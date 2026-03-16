@@ -1,5 +1,5 @@
 <template>
-    <el-dropdown trigger="click" hideOnClick placement="bottom-end">
+    <ks-dropdown trigger="click" hideOnClick placement="bottom-end">
         <ks-button :icon="ChartLineVariant" class="selected">
             <span v-if="!verticalLayout" class="text-truncate">
                 {{ selected?.title ?? $t('dashboards.default') }}
@@ -7,7 +7,7 @@
         </ks-button>
 
         <template #dropdown>
-            <el-dropdown-menu class="p-3 dropdown">
+            <ks-dropdown-menu class="p-3 dropdown">
                 <ks-button
                     type="primary"
                     :icon="Plus"
@@ -31,7 +31,7 @@
 
                 <hr class="my-2">
 
-                <el-input
+                <ks-input
                     v-model="search"
                     :placeholder="$t('search')"
                     :prefixIcon="Magnify"
@@ -53,9 +53,9 @@
                         {{ $t("dashboards.empty") }}
                     </span>
                 </div>
-            </el-dropdown-menu>
+            </ks-dropdown-menu>
         </template>
-    </el-dropdown>
+    </ks-dropdown>
 </template>
 
 <script setup lang="ts">

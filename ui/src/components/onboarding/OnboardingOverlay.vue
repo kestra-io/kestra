@@ -20,7 +20,7 @@
                     :showCopyButtons="snippetCopyEnabled"
                 />
             </div>
-            <el-alert
+            <ks-alert
                 v-if="externalActionNote"
                 type="info"
                 :closable="false"
@@ -30,8 +30,8 @@
                 <template #title>
                     <span class="feedback-note-title" v-html="externalActionNote" />
                 </template>
-            </el-alert>
-            <el-alert
+            </ks-alert>
+            <ks-alert
                 v-if="feedback.message"
                 :title="feedback.message"
                 :type="feedback.level === 'error' ? 'error' : feedback.level === 'info' ? 'info' : 'warning'"
@@ -232,7 +232,7 @@
         const target = event.target as HTMLElement | null;
         if (
             target?.closest(
-                "button, a, input, textarea, select, label, [role='button'], .el-button, .el-input, .kel-select",
+                "button, a, input, textarea, select, label, [role='button'], .el-button, .kel-input, .kel-select",
             )
         ) {
             return;
@@ -752,7 +752,7 @@
         margin-bottom: 0.75rem;
     }
 
-    .onboarding-overlay .feedback :deep(.el-alert__title) {
+    .onboarding-overlay .feedback :deep(.kel-alert__title) {
         white-space: pre-line;
     }
 

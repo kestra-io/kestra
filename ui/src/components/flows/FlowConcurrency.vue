@@ -1,7 +1,7 @@
 <template>
     <template v-if="flowStore.flow?.concurrency">
         <div v-if="!loading && concurrencyLimit" :class="{'d-none': !runningCountSet}">
-            <el-card class="mb-3">
+            <ks-card class="mb-3">
                 <div class="row mb-3">
                     <span class="col d-flex align-items-center">
                         <h5 class="m-3">RUNNING</h5> {{ runningCount }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
@@ -11,10 +11,10 @@
                     </span>
                 </div>
                 <div class="progressbar mb-3">
-                    <el-progress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
+                    <ks-progress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
                 </div>
-            </el-card>
-            <el-card>
+            </ks-card>
+            <ks-card>
                 <Executions
                     :restoreUrl="false"
                     :topbar="false"
@@ -22,19 +22,19 @@
                     :flowId="flowStore.flow?.id"
                     filter
                 />
-            </el-card>
+            </ks-card>
         </div>
-        <el-card v-else-if="loading" class="mb-3">
+        <ks-card v-else-if="loading" class="mb-3">
             <div class="text-center">
-                <el-icon class="is-loading">
+                <ks-icon class="is-loading">
                     <Loading />
-                </el-icon>
+                </ks-icon>
                 <span class="ms-2">{{ $t('loading') }}</span>
             </div>
-        </el-card>
-        <el-alert v-else-if="error" type="error" :closable="false" showIcon class="mb-3">
+        </ks-card>
+        <ks-alert v-else-if="error" type="error" :closable="false" showIcon class="mb-3">
             {{ $t('failed to load concurrency limit') }}
-        </el-alert>
+        </ks-alert>
         <Empty v-else-if="!concurrencyLimit && !loading" type="concurrency_executions" />
     </template>
     <Empty v-else type="concurrency_limit" />
@@ -126,13 +126,13 @@
         margin-left: 0 !important;
     }
 
-    :deep(.el-progress) {
-        .el-progress-bar, .el-progress-bar__outer, .el-progress-bar__inner {
+    :deep(.kel-progress) {
+        .kel-progress-bar, .kel-progress-bar__outer, .kel-progress-bar__inner {
             border-radius: var(--bs-border-radius);
         }
     }
 
-    :deep(.el-card) {
+    :deep(.kel-card) {
         background-color: var(--ks-background-panel);
     }
 

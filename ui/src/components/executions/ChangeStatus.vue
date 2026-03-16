@@ -7,7 +7,7 @@
     >
         <span v-if="component !== 'el-button'">{{ $t('change state') }}</span>
 
-        <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
+        <ks-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
@@ -58,7 +58,7 @@
                     {{ $t('ok') }}
                 </ks-button>
             </template>
-        </el-dialog>
+        </ks-dialog>
     </component>
 </template>
 

@@ -23,7 +23,7 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.el-input__inner) {
+:deep(.kel-input__inner) {
     &::placeholder {
         color: var(--ks-content-tertiary);
     }

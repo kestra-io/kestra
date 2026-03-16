@@ -1,5 +1,5 @@
 <template>
-    <el-dialog
+    <ks-dialog
         v-model="isVisible"
         :title="$t('setup.titles.survey')"
         width="550px"
@@ -13,42 +13,42 @@
             <div class="question-section">
                 <h4>{{ $t('setup.survey.company_size') }}</h4>
                 <div class="company-size-options">
-                    <el-radio-group v-model="companySize">
-                        <el-radio 
+                    <ks-radio-group v-model="companySize">
+                        <ks-radio 
                             v-for="option in companySizeOptions" 
                             :key="option.value" 
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
-                        </el-radio>
-                    </el-radio-group>
+                        </ks-radio>
+                    </ks-radio-group>
                 </div>
             </div>
 
-            <el-divider />
+            <ks-divider />
             
             <div class="question-section">
                 <h4>{{ $t('setup.survey.use_case') }}</h4>
                 <div class="use-case-options">
-                    <el-checkbox-group v-model="useCases">
-                        <el-checkbox 
+                    <ks-checkbox-group v-model="useCases">
+                        <ks-checkbox 
                             v-for="option in useCaseOptions" 
                             :key="option.value" 
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
-                        </el-checkbox>
-                    </el-checkbox-group>
+                        </ks-checkbox>
+                    </ks-checkbox-group>
                 </div>
             </div>
 
-            <el-divider />
+            <ks-divider />
 
             
             <div class="newsletter-section">
-                <el-checkbox v-model="subscribeNewsletter">
+                <ks-checkbox v-model="subscribeNewsletter">
                     <span v-html="$t('setup.survey.newsletter')" />
-                </el-checkbox>
+                </ks-checkbox>
             </div>
         </div>
         
@@ -62,7 +62,7 @@
                 </ks-button>
             </div>
         </template>
-    </el-dialog>
+    </ks-dialog>
 </template>
 
 <script setup lang="ts">

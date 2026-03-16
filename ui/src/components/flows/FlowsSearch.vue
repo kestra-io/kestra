@@ -10,22 +10,22 @@
                 :total="flowStore.total"
             >
                 <template #navbar>
-                    <el-form-item>
+                    <ks-form-item>
                         <SearchField />
-                    </el-form-item>
-                    <el-form-item>
+                    </ks-form-item>
+                    <ks-form-item>
                         <NamespaceSelect
                             v-if="$route.name !== 'flows/update'"
                             data-type="flow"
                             v-model="namespace"
                             @update:model-value="onDataTableValue('namespace', $event)"
                         />
-                    </el-form-item>
+                    </ks-form-item>
                 </template>
 
                 <template #table>
                     <template v-for="(item, _i) in flowStore.search" :key="`card-${_i}`">
-                        <el-card class="mb-2" shadow="never">
+                        <ks-card class="mb-2" shadow="never">
                             <template #header>
                                 <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
                                     {{ item.model.namespace }}.{{ item.model.id }}
@@ -36,7 +36,7 @@
                                     <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
                                 </small>
                             </template>
-                        </el-card>
+                        </ks-card>
                     </template>
 
                     <NoData v-if="flowStore.search === undefined || flowStore.search.length === 0" />

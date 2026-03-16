@@ -22,9 +22,9 @@
                 />
             </div>
         </div>
-        <el-divider>
+        <ks-divider>
             {{ isNamespace ? $t("no-executions-view.namespace_guidance_desc") : $t("welcome_page.guide") }}
-        </el-divider>
+        </ks-divider>
         <OverviewBottom class="bottom" :isNamespace />
     </EmptyTemplate>
 </template>
@@ -85,7 +85,7 @@
     margin: 0 auto;
 }
 
-:deep(.el-divider__text) {
+:deep(.kel-divider__text) {
     color: var(--ks-content-secondary);
     white-space: nowrap;
     font-size: var(--el-font-size-extra-small);

@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip
+    <ks-tooltip
         v-if="showTooltip && date"
         :key="uid('tooltip')"
         :content="inverted ? from : full"
@@ -11,7 +11,7 @@
         <span :class="className">
             {{ inverted ? full : from }}
         </span>
-    </el-tooltip>
+    </ks-tooltip>
     <span v-else-if="date" :class="className">
         {{ inverted ? full : from }}
     </span>

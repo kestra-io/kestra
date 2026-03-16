@@ -13,9 +13,9 @@
     <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
-                <el-icon size="medium" @click="goBack">
+                <ks-icon size="medium" @click="goBack">
                     <ChevronLeft />
-                </el-icon>
+                </ks-icon>
             </button>
             <span class="header-title align-self-center">
                 {{ $t('blueprints.title') }}
@@ -29,7 +29,7 @@
     </div>
 
     <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
-        <el-card v-if="blueprint && kind === 'flow'">
+        <ks-card v-if="blueprint && kind === 'flow'">
             <div class="embedded-topology" v-if="flowGraph">
                 <LowCodeEditor
                     v-if="flowGraph"
@@ -41,11 +41,11 @@
                     isReadOnly
                 />
             </div>
-        </el-card>
-        <el-row :gutter="30" v-if="blueprint">
-            <el-col :md="24" :lg="embed ? 24 : 18">
+        </ks-card>
+        <ks-row :gutter="30" v-if="blueprint">
+            <ks-col :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
-                <el-card>
+                <ks-card>
                     <Editor
                         class="position-relative"
                         :readOnly="true"
@@ -59,28 +59,28 @@
                             <CopyToClipboard :text="blueprint?.source" />
                         </template>
                     </Editor>
-                </el-card>
+                </ks-card>
                 <template v-if="blueprint?.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
                     <div class="tags text-uppercase">
                         <div v-for="tag in processedTags" :key="tag.original" class="tag-box">
-                            <el-tag type="info" size="small">
+                            <ks-tag type="info" size="small">
                                 {{ tag.display }}
-                            </el-tag>
+                            </ks-tag>
                         </div>
                     </div>
                     <Markdown :source="blueprint?.description" />
                 </template>
-            </el-col>
-            <el-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
+            </ks-col>
+            <ks-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint?.includedTasks)]" :key="String(task)">
                         <TaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
                     </div>
                 </div>
-            </el-col>
-        </el-row>
+            </ks-col>
+        </ks-row>
     </section>
 </template>
 <script setup lang="ts">
@@ -246,7 +246,7 @@
         margin-top: calc($spacer * 2);
         margin-bottom: $spacer;
 
-        .el-card & {
+        .kel-card & {
             margin-top: 2.5rem;
         }
 
@@ -284,8 +284,8 @@
     .blueprint-container {
         height: 100%;
 
-        :deep(.el-card) {
-            .el-card__body {
+        :deep(.kel-card) {
+            .kel-card__body {
                 padding: 0;
             }
         }
@@ -341,7 +341,7 @@
         margin: 10px 0;
         display: flex;
 
-        .el-tag.el-tag--info {
+        .kel-tag.kel-tag--info {
             background-color: var(--ks-background-card);
             padding: 15px 10px;
             color: var(--ks-content-primary);

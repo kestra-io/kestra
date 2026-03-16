@@ -38,19 +38,19 @@
             </template>
             <div v-if="isShowLogsOpen">
                 <Collapse>
-                    <el-form-item>
+                    <ks-form-item>
                         <SearchField
                             :router="false"
                             @search="onSearch"
                             class="me-2"
                         />
-                    </el-form-item>
-                    <el-form-item>
+                    </ks-form-item>
+                    <ks-form-item>
                         <LogLevelSelector
                             :value="logLevel"
                             @update:model-value="onLevelChange"
                         />
-                    </el-form-item>
+                    </ks-form-item>
                 </Collapse>
                 <TaskRunDetails
                     v-for="taskRun in selectedTask.taskRuns"

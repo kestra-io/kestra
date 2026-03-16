@@ -1,10 +1,10 @@
 <template>
     <div :id="cascaderID">
         <div class="header">
-            <el-text truncated>
+            <ks-text truncated>
                 {{ props.title }}
-            </el-text>
-            <el-input
+            </ks-text>
+            <ks-input
                 v-if="props.elements"
                 v-model="filter"
                 :placeholder="$t('search')"
@@ -14,7 +14,7 @@
 
         <template v-if="props.elements">
             <template v-if="props.includeDebug">
-                <el-cascader-panel
+                <ks-cascader-panel
                     :options="filteredOptions"
                     @expand-change="(p: string[]) => (path = p.join('.'))"
                 >
@@ -31,7 +31,7 @@
                             <VarValue :value="data.value" :execution />
                         </div>
                     </template>
-                </el-cascader-panel>
+                </ks-cascader-panel>
                 <DebugPanel
                     :property="props.includeDebug"
                     :execution
@@ -39,7 +39,7 @@
                 />
             </template>
 
-            <el-cascader-panel v-else :options="filteredOptions">
+            <ks-cascader-panel v-else :options="filteredOptions">
                 <template #default="{data}">
                     <div class="node">
                         <div :title="data.label">
@@ -53,7 +53,7 @@
                         <VarValue :value="data.value" :execution />
                     </div>
                 </template>
-            </el-cascader-panel>
+            </ks-cascader-panel>
         </template>
 
         <span v-else class="empty">{{ props.empty }}</span>
@@ -152,7 +152,7 @@
 
         await nextTick(() => {
             // Open first node by default on page mount
-            const selector = `#${cascaderID} .el-cascader-node`;
+            const selector = `#${cascaderID} .kel-cascader-node`;
             const nodes = document.querySelectorAll(selector);
 
             if (nodes.length > 0) (nodes[0] as HTMLElement).click();
@@ -172,14 +172,14 @@
         align-items: center;
         padding-bottom: $spacer;
 
-        > .el-text {
+        > .kel-text {
             width: 100%;
             display: flex;
             align-items: center;
             font-size: $font-size-xl;
         }
 
-        > .el-input {
+        > .kel-input {
             display: flex;
             align-items: center;
             width: calc($spacer * 16);
@@ -226,7 +226,7 @@
             }
         }
 
-        & .el-cascader-node {
+        & .kel-cascader-node {
             height: min-content;
             line-height: 36px;
             font-size: $font-size-sm;

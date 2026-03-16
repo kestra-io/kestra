@@ -1,13 +1,10 @@
 import {setup} from "@storybook/vue3-vite"
 import {withThemeByClassName} from "@storybook/addon-themes"
-import KestraDesignSystem from "../src/index"
-/*
- * dist/index.css contains all light-mode variables (:root) and component styles.
- * theme-chalk/dark/css-vars.css contains ONLY the html.dark { ... } overrides —
- * they are NOT bundled into dist/index.css and must be imported separately.
- */
-import "../src/assets/styles/index.scss"
 import type {Preview} from "@storybook/vue3-vite"
+
+import "../src/assets/styles/index.scss"
+
+import KestraDesignSystem from "../src/index"
 
 setup((app) => {
     app.use(KestraDesignSystem)

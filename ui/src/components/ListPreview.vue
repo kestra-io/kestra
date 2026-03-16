@@ -1,18 +1,18 @@
 <template>
-    <el-table :data="value" stripe>
-        <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
+    <ks-table :data="value" stripe>
+        <ks-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
             <template #default="scope">
                 <span v-if="isComplex(scope.row[column])">
-                    <el-tooltip :content="JSON.stringify(scope.row[column], null, 2)">
+                    <ks-tooltip :content="JSON.stringify(scope.row[column], null, 2)">
                         <span class="preview-row">{{ truncate(JSON.stringify(scope.row[column])) }}</span>
-                    </el-tooltip>
+                    </ks-tooltip>
                 </span>
                 <span v-else>
                     {{ scope.row[column] }}
                 </span>
             </template>
-        </el-table-column>
-    </el-table>
+        </ks-table-column>
+    </ks-table>
 </template>
 
 <script setup lang="ts">

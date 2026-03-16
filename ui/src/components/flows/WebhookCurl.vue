@@ -1,7 +1,7 @@
 <template>
     <div class="webhook-curl">
         <div v-if="webhookTriggers.length > 0">
-            <el-form-item :label="$t('webhook.payload')" class="payload">
+            <ks-form-item :label="$t('webhook.payload')" class="payload">
                 <Editor
                     :fullHeight="false"
                     :input="true"
@@ -10,7 +10,7 @@
                     :showScroll="true"
                     v-model="webhookPayload"
                 />
-            </el-form-item>
+            </ks-form-item>
             <div v-for="trigger in webhookTriggers" :key="trigger.id" class="trigger">
                 <div class="code">
                     <pre><code>{{ generateWebhookCurlCommand(trigger) }}</code></pre>
@@ -18,14 +18,14 @@
                 </div>
             </div>
 
-            <el-alert type="info" showIcon :closable="false">
+            <ks-alert type="info" showIcon :closable="false">
                 {{ $t('webhook.curl_note') }}
-            </el-alert>
+            </ks-alert>
         </div>
         <div v-else>
-            <el-alert type="warning" showIcon :closable="false">
+            <ks-alert type="warning" showIcon :closable="false">
                 {{ $t('webhook.no_triggers') }}
-            </el-alert>
+            </ks-alert>
         </div>
     </div>
 </template>
@@ -118,7 +118,7 @@
     .payload {
         margin-bottom: 1rem;
 
-        :deep(.el-form-item__label) {
+        :deep(.kel-form-item__label) {
             font-size: var(--font-size-sm);
             color: var(--ks-content-secondary);
         }

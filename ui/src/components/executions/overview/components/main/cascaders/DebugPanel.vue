@@ -34,7 +34,7 @@
             />
         </template>
 
-        <el-alert
+        <ks-alert
             v-else-if="error"
             type="error"
             :title="error"

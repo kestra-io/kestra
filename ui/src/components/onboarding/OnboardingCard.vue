@@ -1,8 +1,8 @@
 <template>
-    <el-card class="box-card">
+    <ks-card class="box-card">
         <div class="card-content">
             <div class="card-header">
-                <el-link
+                <ks-link
                     v-if="isOpenInNewCategory"
                     underline="never"
                     :icon="OpenInNew"
@@ -11,9 +11,9 @@
                 />
             </div>
             <div class="icon-title">
-                <el-icon size="25px">
+                <ks-icon size="25px">
                     <component :is="getIcon()" />
-                </el-icon>
+                </ks-icon>
                 <div class="card">
                     <h5 class="cat_title">
                         {{ title }}
@@ -24,7 +24,7 @@
                 </div>
             </div>
         </div>
-    </el-card>
+    </ks-card>
 </template>
 
 <script setup lang="ts">
@@ -61,7 +61,7 @@ a:hover {
     text-decoration: none;
 }
 
-.el-card {
+.kel-card {
     background-color: var(--ks-background-card);
     border-color: var(--ks-border-primary);
     box-shadow: var(--el-box-shadow);
@@ -70,7 +70,7 @@ a:hover {
     flex: 1;
     cursor: pointer;
 
-    &:deep(.el-card__header) {
+    &:deep(.kel-card__header) {
         padding: 0;
     }
 }
@@ -105,7 +105,7 @@ a:hover {
     }
 }
 
-.el-link {
+.kel-link {
     font-size: 20px;
 }
 </style>

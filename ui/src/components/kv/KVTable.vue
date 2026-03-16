@@ -47,14 +47,14 @@
                 </template>
 
                 <template v-for="colProp in orderedVisibleColumns" :key="colProp">
-                    <el-table-column
+                    <ks-table-column
                         v-if="colProp === 'namespace' && namespace === undefined && !paneView"
                         prop="namespace"
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('namespace')"
                     />
-                    <el-table-column
+                    <ks-table-column
                         v-else-if="colProp === 'key'"
                         prop="key"
                         sortable="custom"
@@ -64,15 +64,15 @@
                         <template #default="scope">
                             <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
                         </template>
-                    </el-table-column>
-                    <el-table-column
+                    </ks-table-column>
+                    <ks-table-column
                         v-else-if="colProp === 'description' && !paneView"
                         prop="description"
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="$t('description')"
                     />
-                    <el-table-column
+                    <ks-table-column
                         v-else-if="colProp === 'updateDate'"
                         prop="updateDate"
                         sortable="custom"
@@ -82,8 +82,8 @@
                         <template #default="scope">
                             <DateAgo :date="convertToUserTimezone(scope.row.updateDate)" inverted />
                         </template>
-                    </el-table-column>
-                    <el-table-column
+                    </ks-table-column>
+                    <ks-table-column
                         v-else-if="colProp === 'expirationDate' && !paneView"
                         prop="expirationDate"
                         sortable="custom"
@@ -93,10 +93,10 @@
                         <template #default="scope">
                             <DateAgo v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
                 </template>
 
-                <el-table-column columnKey="copy" className="row-action">
+                <ks-table-column columnKey="copy" className="row-action">
                     <template #default="scope">
                         <IconButton
                             v-if="scope.row.key !== undefined"
@@ -107,9 +107,9 @@
                             <ContentCopy />
                         </IconButton>
                     </template>
-                </el-table-column>
+                </ks-table-column>
 
-                <el-table-column v-if="!paneView" columnKey="update" className="row-action">
+                <ks-table-column v-if="!paneView" columnKey="update" className="row-action">
                     <template #default="scope">
                         <IconButton
                             v-if="canUpdate(scope.row)"
@@ -120,9 +120,9 @@
                             <FileDocumentEdit />
                         </IconButton>
                     </template>
-                </el-table-column>
+                </ks-table-column>
 
-                <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
+                <ks-table-column v-if="!paneView" columnKey="delete" className="row-action">
                     <template #default="scope">
                         <IconButton
                             v-if="canDelete(scope.row)"
@@ -133,7 +133,7 @@
                             <Delete />
                         </IconButton>
                     </template>
-                </el-table-column>
+                </ks-table-column>
             </SelectTable>
         </template>
     </DataTable>
@@ -143,21 +143,21 @@
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
     >
-        <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
-            <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
+        <ks-form class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
+            <ks-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readOnly="kv.update"
                     :includeSystemNamespace="true"
                     all
                 />
-            </el-form-item>
+            </ks-form-item>
 
-            <el-form-item :label="$t('key')" prop="key" required>
-                <el-input v-model="kv.key" :disabled="kv.update" />
-            </el-form-item>
+            <ks-form-item :label="$t('key')" prop="key" required>
+                <ks-input v-model="kv.key" :disabled="kv.update" />
+            </ks-form-item>
 
-            <el-form-item :label="$t('kv.type')" prop="type" required>
+            <ks-form-item :label="$t('kv.type')" prop="type" required>
                 <ks-select
                     v-model="kv.type"
                     :disabled="kv.update"
@@ -171,24 +171,24 @@
                     <ks-option value="DURATION" />
                     <ks-option value="JSON" />
                 </ks-select>
-            </el-form-item>
+            </ks-form-item>
 
-            <el-form-item :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'">
-                <el-input v-if="kv.type === 'STRING'" type="textarea" :rows="5" v-model="kv.value" />
-                <el-input v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
-                <el-switch
+            <ks-form-item :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'">
+                <ks-input v-if="kv.type === 'STRING'" type="textarea" :rows="5" v-model="kv.value" />
+                <ks-input v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
+                <ks-switch
                     v-else-if="kv.type === 'BOOLEAN'"
                     :activeText="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
                     :activeActionIcon="Check"
                 />
-                <el-date-picker
+                <ks-date-picker
                     v-else-if="kv.type === 'DATETIME'"
                     v-model="kv.value"
                     type="datetime"
                 />
-                <el-date-picker
+                <ks-date-picker
                     v-else-if="kv.type === 'DATE'"
                     v-model="kv.value"
                     type="date"
@@ -209,13 +209,13 @@
                     lang="json"
                     v-model="kv.value"
                 />
-            </el-form-item>
+            </ks-form-item>
 
-            <el-form-item :label="$t('description')" prop="description">
-                <el-input v-model="kv.description" />
-            </el-form-item>
+            <ks-form-item :label="$t('description')" prop="description">
+                <ks-input v-model="kv.description" />
+            </ks-form-item>
 
-            <el-form-item :label="$t('expiration')" prop="ttl">
+            <ks-form-item :label="$t('expiration')" prop="ttl">
                 <TimeSelect
                     :fromNow="false"
                     allowInfinite
@@ -226,8 +226,8 @@
                     includeNever
                     @update:model-value="onTtlChange"
                 />
-            </el-form-item>
-        </el-form>
+            </ks-form-item>
+        </ks-form>
 
         <template #footer>
             <ks-button :icon="ContentSave" @click="saveKv(formRef)" type="primary">

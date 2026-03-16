@@ -40,7 +40,7 @@
                 </ks-button>
             </div>
 
-            <el-divider class="mb-2" v-if="index !== feeds.length - 1" />
+            <ks-divider class="mb-2" v-if="index !== feeds.length - 1" />
         </div>
     </ContextInfoContent>
 </template>

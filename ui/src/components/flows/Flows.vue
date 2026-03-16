@@ -109,7 +109,7 @@
                             </BulkSelect>
                         </template>
                         <template #default>
-                            <el-table-column
+                            <ks-table-column
                                 prop="id"
                                 sortable="custom"
                                 :sortOrders="['ascending', 'descending']"
@@ -147,19 +147,19 @@
                                         />
                                     </div>
                                 </template>
-                            </el-table-column>
+                            </ks-table-column>
 
                             <template v-for="colProp in displayColumns" :key="colProp">
-                                <el-table-column
+                                <ks-table-column
                                     v-if="colProp === 'labels'"
                                     :label="$t('labels')"
                                 >
                                     <template #default="scope">
                                         <Labels :labels="scope.row.labels" />
                                     </template>
-                                </el-table-column>
+                                </ks-table-column>
 
-                                <el-table-column
+                                <ks-table-column
                                     v-else-if="colProp === 'namespace'"
                                     prop="namespace"
                                     sortable="custom"
@@ -170,7 +170,7 @@
                                     "
                                 />
 
-                                <el-table-column
+                                <ks-table-column
                                     v-else-if="colProp === 'state.startDate' && user?.hasAny(permission.EXECUTION)"
                                     prop="state.startDate"
                                     :label="$t('last execution date')"
@@ -191,9 +191,9 @@
                                             <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
                                         </router-link>
                                     </template>
-                                </el-table-column>
+                                </ks-table-column>
 
-                                <el-table-column
+                                <ks-table-column
                                     v-else-if="colProp === 'state.current' && user?.hasAny(permission.EXECUTION)"
                                     prop="state.current"
                                     :label="$t('last execution status')"
@@ -218,9 +218,9 @@
                                             </router-link>
                                         </div>
                                     </template>
-                                </el-table-column>
+                                </ks-table-column>
 
-                                <el-table-column
+                                <ks-table-column
                                     v-else-if="colProp === 'state' && user?.hasAny(permission.EXECUTION)"
                                     prop="state"
                                     :label="$t('execution statistics')"
@@ -236,9 +236,9 @@
                                             :namespace="scope.row.namespace"
                                         />
                                     </template>
-                                </el-table-column>
+                                </ks-table-column>
 
-                                <el-table-column
+                                <ks-table-column
                                     v-else-if="colProp === 'triggers'"
                                     :label="$t('triggers')"
                                     className="row-action"
@@ -246,13 +246,13 @@
                                     <template #default="scope">
                                         <TriggerAvatar :flow="scope.row" />
                                     </template>
-                                </el-table-column>
+                                </ks-table-column>
                             </template>
 
-                            <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
+                            <ks-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <IconButton 
+                                        <IconButton
                                             v-if="canExecute(scope.row)"
                                             :tooltip="t('execute')"
                                             @click="openExecuteModal(scope.row)"
@@ -273,14 +273,14 @@
                                         </IconButton>
                                     </div>
                                 </template>
-                            </el-table-column>
+                            </ks-table-column>
                         </template>
                     </SelectTable>
                 </template>
             </DataTable>
         </div>
 
-        <el-dialog
+        <ks-dialog
             v-model="showRunModal"
             destroyOnClose
             appendToBody
@@ -294,7 +294,7 @@
                 :redirect="false"
                 @execution-trigger="handleExecutionStart"
             />
-        </el-dialog>
+        </ks-dialog>
     </section>
 </template>
 
@@ -743,7 +743,7 @@
     min-width: 200px;
 }
 
-.flows-table .el-table__cell {
+.flows-table .kel-table__cell {
     vertical-align: middle;
 }
 

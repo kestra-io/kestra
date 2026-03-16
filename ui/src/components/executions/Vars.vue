@@ -1,12 +1,12 @@
 <template>
-    <el-table tableLayout="auto" fixed :data="variables">
-        <el-table-column prop="key" minWidth="500" :label="$t(keyLabelTranslationKey)">
+    <ks-table tableLayout="auto" fixed :data="variables">
+        <ks-table-column prop="key" minWidth="500" :label="$t(keyLabelTranslationKey)">
             <template #default="scope">
                 <code class="key-col">{{ scope.row.key }}</code>
             </template>
-        </el-table-column>
+        </ks-table-column>
 
-        <el-table-column prop="value" :label="$t('value')">
+        <ks-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.date">
                     <DateAgo :inverted="true" :date="scope.row.value" />
@@ -19,8 +19,8 @@
                     <VarValue :execution="executionsStore.execution" :value="scope.row.value" />
                 </template>
             </template>
-        </el-table-column>
-    </el-table>
+        </ks-table-column>
+    </ks-table>
 </template>
 
 <script setup lang="ts">

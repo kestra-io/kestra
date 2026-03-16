@@ -1,12 +1,12 @@
 <template>
-    <el-tooltip v-if="hasTooltip" transition="" placement="top" effect="light">
+    <ks-tooltip v-if="hasTooltip" transition="" placement="top" effect="light">
         <template #content>
             <code>{{ value }}</code>
         </template>
         <code :id="uuid" @click="emit('click')" class="text-nowrap" :class="{'link': hasClickListener}">
             {{ transformValue }}
         </code>
-    </el-tooltip>
+    </ks-tooltip>
     <code v-else :id="uuid" class="text-nowrap" @click="onClick">
         {{ transformValue }}
     </code>

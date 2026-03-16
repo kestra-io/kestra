@@ -9,7 +9,7 @@
         </template>
     </Navbar>
 
-    <el-row class="p-5">
+    <ks-row class="p-5">
         <KSFilter
             :configuration="namespacesFilter"
             :prefix="'namespaces-list'"
@@ -25,17 +25,17 @@
             }"
         />
 
-        <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
+        <ks-col v-if="namespaces.length === 0" class="p-3 namespaces">
             <span>{{ $t("no_namespaces") }}</span>
-        </el-col>
+        </ks-col>
 
-        <el-col
+        <ks-col
             v-for="namespace in namespacesHierarchy"
             :key="namespace.id"
             class="namespaces"
             :class="{system: namespace.id === systemNamespace}"
         >
-            <el-tree
+            <ks-tree
                 :data="[namespace]"
                 defaultExpandAll
                 :props="{class: 'tree'}"
@@ -68,9 +68,9 @@
                         </ks-button>
                     </router-link>
                 </template>
-            </el-tree>
-        </el-col>
-    </el-row>
+            </ks-tree>
+        </ks-col>
+    </ks-row>
 </template>
 
 <script setup lang="ts">
@@ -227,7 +227,7 @@
         background-color: var(--ks-background-card)
     }
 
-    :deep(.el-tree-node__content) {
+    :deep(.kel-tree-node__content) {
         height: 2.25rem;
         overflow: hidden;
         background: transparent;

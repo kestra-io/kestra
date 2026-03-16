@@ -5,14 +5,14 @@
         :key="index"
     >
         <div class="flex-grow-1 d-flex align-items-center">
-            <el-input
+            <ks-input
                 class="form-control me-2"
                 :placeholder="$t('key')"
                 v-model="label.key"
                 :disabled="localExisting.includes(label.key || '')"
                 @update:model-value="update(index, $event, 'key')"
             />
-            <el-input
+            <ks-input
                 class="form-control me-2"
                 :placeholder="$t('value')"
                 v-model="label.value"

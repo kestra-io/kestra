@@ -1,6 +1,6 @@
 <template>
     <div :id="containerID" />
-    <el-tooltip
+    <ks-tooltip
         v-if="generated?.total > 0"
         effect="light"
         placement="top"
@@ -19,7 +19,7 @@
                 class="chart"
             />
         </div>
-    </el-tooltip>
+    </ks-tooltip>
     <NoData v-else-if="!props.short || (props.execution && generated?.total === 0)" />
 </template>
 

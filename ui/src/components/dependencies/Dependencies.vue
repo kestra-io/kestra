@@ -1,8 +1,8 @@
 <template>
     <div v-if="!TESTING && isLoading" v-loading="true" class="h-100" />
     <Empty v-else-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
-    <el-splitter v-else class="dependencies">
-        <el-splitter-panel id="graph" v-bind="PANEL">
+    <ks-splitter v-else class="dependencies">
+        <ks-splitter-panel id="graph" v-bind="PANEL">
             <div v-loading="isRendering" ref="container" />
 
             <div class="controls">
@@ -34,25 +34,25 @@
                 >
                     <FitToScreenOutline />
                 </ks-button>
-                <el-dropdown>
+                <ks-dropdown>
                     <ks-button size="small" :title="$t('export')">
                         <Download />
                     </ks-button>
                     <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item @click="handlers.exportAsImage('jpeg', selectedNodeID)">
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item @click="handlers.exportAsImage('jpeg', selectedNodeID)">
                                 {{ $t("export_as", {format: "JPEG"}) }}
-                            </el-dropdown-item>
-                            <el-dropdown-item @click="handlers.exportAsImage('png', selectedNodeID)">
+                            </ks-dropdown-item>
+                            <ks-dropdown-item @click="handlers.exportAsImage('png', selectedNodeID)">
                                 {{ $t("export_as", {format: "PNG"}) }}
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </ks-dropdown-item>
+                        </ks-dropdown-menu>
                     </template>
-                </el-dropdown>
+                </ks-dropdown>
             </div>
-        </el-splitter-panel>
+        </ks-splitter-panel>
 
-        <el-splitter-panel id="table">
+        <ks-splitter-panel id="table">
             <Table
                 :elements="getElements()"
                 :highlightShown="handlers.highlightShown"
@@ -60,8 +60,8 @@
                 :subtype="SUBTYPE"
                 @select="selectNode"
             />
-        </el-splitter-panel>
-    </el-splitter>
+        </ks-splitter-panel>
+    </ks-splitter>
 </template>
 
 <script setup lang="ts">

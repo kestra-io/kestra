@@ -1105,7 +1105,7 @@
     "killed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> beenden möchten?",
     "killed done": "Ausführung ist zum Beenden eingereiht",
     "kv": {
-      "add": "Neuer Key-Value",
+      "add": "Erstellen",
       "delete multiple": {
         "confirm": "Möchten Sie wirklich <code>{name}</code> KV(s) löschen?",
         "warning": "Du hast keine Berechtigungen für diese namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
@@ -1703,7 +1703,7 @@
     "searching": "Suche läuft...",
     "seconds": "Sekunden",
     "secret": {
-      "add": "Neues Geheimnis",
+      "add": "Erstellen",
       "inherited": "Geerbte Secrets",
       "isReadOnly": "Geheimnis ist schreibgeschützt",
       "names": "Secrets",

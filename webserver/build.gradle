@@ -1,6 +1,6 @@
 if (rootProject.name == "kestra") {
-    processResources {
-        dependsOn(':ui:assembleFrontend')
+    tasks.named('processResources') {
+        mustRunAfter(':ui:assembleFrontend')
     }
 }
 

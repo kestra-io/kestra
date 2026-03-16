@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
@@ -9,6 +10,7 @@ import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.secret.SecretNotFoundException;
@@ -19,14 +21,15 @@ import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.jetbrains.annotations.Nullable;
 import io.kestra.core.exceptions.InputOutputValidationException;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,6 +43,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -68,6 +72,9 @@ class FlowInputOutputTest {
 
     @Inject
     KvMetadataRepositoryInterface kvMetadataRepository;
+
+    @Value("${kestra.encryption.secret-key}")
+    String secretKey;
 
     @MockBean(SecretService.class)
     SecretService testSecretService() {
@@ -534,6 +541,26 @@ class FlowInputOutputTest {
             InputOutputValidationException.class,
             () -> flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("duck", invalidUri))
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldEncryptSecretOutputs() throws GeneralSecurityException {
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .outputs(List.of(
+                Output.builder().id("secret").type(Type.SECRET).build()
+            ))
+            .build();
+
+        Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("secret", TEST_SECRET_VALUE));
+
+        assertThat(result.get("secret")).isInstanceOf(Map.class);
+        Map<String, String> encryptedOutput = (Map<String, String>) result.get("secret");
+        assertThat(encryptedOutput.get("type")).isEqualTo(EncryptedString.TYPE);
+        assertThat(encryptedOutput.get("value")).isNotEqualTo(TEST_SECRET_VALUE);
+        assertThat(EncryptionService.decrypt(secretKey, encryptedOutput.get("value"))).isEqualTo(TEST_SECRET_VALUE);
     }
 
     private static class MemoryCompletedPart implements CompletedPart {

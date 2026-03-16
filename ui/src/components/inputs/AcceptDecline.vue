@@ -29,7 +29,7 @@
 
 <style scoped lang="scss">
 .accept-decline-bar {
-    position: relative; // now flow inside parent footer-row
+    position: relative;
     width: 100%;
     z-index: 1200;
     display: flex;
@@ -45,7 +45,6 @@
         justify-content: space-between;
         background: var(--ks-background-panel);
         padding: .75rem 1rem;
-        box-shadow: 0 -4px 18px rgba(2,6,23,0.45);
     }
 
     .left-slot {
@@ -75,3 +74,4 @@
     padding: 4px 12px;
 }
 </style>
+

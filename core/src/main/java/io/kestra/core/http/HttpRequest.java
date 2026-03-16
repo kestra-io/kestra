@@ -172,6 +172,14 @@ public class HttpRequest {
                     charset = Charset.forName(stripped.substring(stripped.lastIndexOf('=') + 1));
                 }
             }
+
+            if (mimeType.startsWith("multipart/")) {
+                return PassthroughRequestBody.builder()
+                    .entity(entity)
+                    .contentType(entity.getContentType())
+                    .charset(charset)
+                    .build();
+        }
             if (mimeType.equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
                 return ByteArrayRequestBody.builder()
                     .contentType(mimeType)
@@ -303,6 +311,26 @@ public class HttpRequest {
                 .build();
         }
     }
+
+    @Getter
+    @AllArgsConstructor
+    @SuperBuilder
+    public static class PassthroughRequestBody extends RequestBody {
+        private HttpEntity entity;
+        private String contentType;
+        private Charset charset;
+
+        @Override
+        public Object getContent() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public HttpEntity to() {
+            return entity;
+        }
+    }
+
 
     @Getter
     @AllArgsConstructor

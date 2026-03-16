@@ -14,7 +14,7 @@ public class MapUtils {
      * Merge map a with map b.
      * @see #deepMerge(Map, Map) that perform a deep merge which is more costly but safer for some use cases.
      */
-    public static Map<String, Object> merge(Map<String, Object> a, Map<String, Object> b) {
+    public static Map<String,Object> merge(Map<String, Object> a, Map<String, Object> b){
         if (a == null && b == null) {
             return null;
         }
@@ -27,14 +27,13 @@ public class MapUtils {
             return a;
         }
 
-        Map<String, Object> result = HashMap.newHashMap(Math.max(a.size(), b.size()));
+        Map<String, Object> result = LinkedHashMap.newLinkedHashMap(Math.max(a.size(), b.size()));
         result.putAll(a);
 
         for (Map.Entry<String, Object> entry : b.entrySet()) {
             String key = entry.getKey();
             Object valueB = entry.getValue();
             Object valueA = result.get(key);
-
             Object mergedValue;
             if (valueB == null) {
                 mergedValue = valueA;
@@ -72,7 +71,7 @@ public class MapUtils {
             return a;
         }
 
-        Map<String, Object> result = HashMap.newHashMap(Math.max(a.size(), b.size()));
+        Map<String, Object> result = LinkedHashMap.newLinkedHashMap(Math.max(a.size(), b.size()));
         result.putAll(deepCloneMap(a));
 
         for (Map.Entry<String, Object> entry : b.entrySet()) {
@@ -105,7 +104,7 @@ public class MapUtils {
     }
 
     private static Map<String, Object> deepCloneMap(Map<String, Object> original) {
-        Map<String, Object> cloned = new HashMap<>(original.size());
+        Map<String, Object> cloned = LinkedHashMap.newLinkedHashMap(original.size());
         for (Map.Entry<String, Object> entry : original.entrySet()) {
             cloned.put(entry.getKey(), deepClone(entry.getValue()));
         }

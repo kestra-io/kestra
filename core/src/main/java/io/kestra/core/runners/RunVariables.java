@@ -277,7 +277,6 @@ public final class RunVariables {
 
                     builder.put("tasks", tasksMap);
                 }
-
                 // Inputs
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (execution.getInputs() != null) {

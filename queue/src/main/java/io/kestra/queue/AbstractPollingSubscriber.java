@@ -75,8 +75,9 @@ public abstract class AbstractPollingSubscriber<T extends Event> extends Abstrac
                         log.error("Interrupted while waiting. Stopping.", e);
                         this.markEnd();
                     } catch (Exception e) {
-                        if ("io.micronaut.transaction.exceptions.CannotCreateTransactionException".equals(e.getClass().getName())) {
-                            // we ignore a transaction creation error as it is either Kestra shutting down or some other place that will fail
+                        if ("io.micronaut.transaction.exceptions.CannotCreateTransactionException".equals(e.getClass().getName())
+                            || "io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException".equals(e.getClass().getName())) {
+                            // we ignore transaction/connection errors as they occur when the datasource is closed during shutdown
                             log.debug("Can't poll on receive", e);
                         } else {
                             this.markEnd(e);

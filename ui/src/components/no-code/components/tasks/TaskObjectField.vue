@@ -15,7 +15,7 @@
         :disabled
         class="mt-1 mb-2 wrapper"
     />
-    <el-form-item v-else-if="fieldKey" :required="isRequired">
+    <ks-form-item v-else-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -33,15 +33,15 @@
                         @click="modelValue = undefined; taskComponent?.resetSelectType?.();"
                     />
                 </div>
-                <el-tag
+                <ks-tag
                     v-if="!isAnyOf"
                     disableTransitions
                     size="small"
                     class="type-tag"
                 >
                     {{ simpleType }}
-                </el-tag>
-                <el-tooltip
+                </ks-tag>
+                <ks-tooltip
                     v-if="!isAnyOf && hasTooltip"
                     :persistent="false"
                     :hideAfter="0"
@@ -57,7 +57,7 @@
                         />
                     </template>
                     <Help />
-                </el-tooltip>
+                </ks-tooltip>
             </div>
         </template>
         <TaskObjectTaskInline
@@ -74,7 +74,7 @@
             :disabled
             class="mt-1 mb-2 wrapper"
         />
-    </el-form-item>
+    </ks-form-item>
 </template>
 
 <script setup lang="ts">
@@ -182,10 +182,10 @@
 </script>
 
 <style scoped lang="scss">
-.el-form-item {
+.kel-form-item {
     width: 100%;
 
-    > :deep(.el-form-item__label) {
+    > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;

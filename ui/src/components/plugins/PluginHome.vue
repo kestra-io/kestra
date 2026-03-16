@@ -6,7 +6,7 @@
         :image="headerImage"
         :imageDark="headerImageDark"
     >
-        <el-row class="my-4 px-3" justify="center">
+        <ks-row class="my-4 px-3" justify="center">
             <KSFilter
                 :configuration="pluginFilter"
                 :buttons="{
@@ -16,9 +16,9 @@
                 :searchInputFullWidth="true"
                 @search="handleSearch"
             />
-        </el-row>
+        </ks-row>
         <section class="px-3 plugins-container">
-            <el-tooltip
+            <ks-tooltip
                 v-for="(plugin, index) in pluginsList"
                 :showAfter="1000"
                 :key="`${plugin.name}-${index}`"
@@ -56,7 +56,7 @@
                     />
                     <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
                 </div>
-            </el-tooltip>
+            </ks-tooltip>
         </section>
     </DottedLayout>
 </template>

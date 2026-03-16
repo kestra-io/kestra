@@ -16,7 +16,7 @@
 
         <div style="flex:1" />
 
-        <el-tooltip
+        <ks-tooltip
             effect="light"
             :persistent="false"
             transition=""
@@ -27,7 +27,7 @@
                 <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-        </el-tooltip>
+        </ks-tooltip>
         <ks-button class="theme-switcher" @click="onSwitchTheme">
             <WeatherNight v-if="themeIsDark" />
             <WeatherSunny v-else />
@@ -35,13 +35,13 @@
     </div>
 
     <div v-else-if="hasButtons" class="contextInfoSidebar" :style="{width: `${sidebarWidth}px`}">
-        <el-splitter
+        <ks-splitter
             class="contextInfoSplitter"
             :style="{width: `${maxSidebarWidth}px`}"
         >
-            <el-splitter-panel class="contextInfoSpacerPanel" :min="0" />
+            <ks-splitter-panel class="contextInfoSpacerPanel" :min="0" />
 
-            <el-splitter-panel v-model:size="sidebarWidth" :min="minSidebarWidth" :max="maxSidebarWidth">
+            <ks-splitter-panel v-model:size="sidebarWidth" :min="minSidebarWidth" :max="maxSidebarWidth">
                 <div class="contextInfoContent">
                     <div class="barWrapper opened">
                         <ks-button
@@ -60,7 +60,7 @@
 
                         <div style="flex:1" />
 
-                        <el-tooltip
+                        <ks-tooltip
                             effect="light"
                             :persistent="false"
                             transition=""
@@ -71,7 +71,7 @@
                                 <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
                             </template>
                             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-                        </el-tooltip>
+                        </ks-tooltip>
                         <ks-button class="theme-switcher" @click="onSwitchTheme">
                             <WeatherNight v-if="themeIsDark" />
                             <WeatherSunny v-else />
@@ -93,8 +93,8 @@
                         </div>
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
+            </ks-splitter-panel>
+        </ks-splitter>
     </div>
 </template>
 

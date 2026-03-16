@@ -14,7 +14,7 @@
                         v-if="creatingTask || editingTask"
                     />
 
-                    <el-form v-else labelPosition="top">
+                    <ks-form v-else labelPosition="top">
                         <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
                             <template #tasks>
                                 <TaskObjectField
@@ -34,7 +34,7 @@
                                 />
                             </template>
                         </Wrapper>
-                    </el-form>
+                    </ks-form>
                 </div>
             </template>
         </AiCopilotWrapper>
@@ -105,7 +105,7 @@
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
                 : val; // Handle null values
-        
+
 
         editorUpdate(YAML_UTILS.replaceBlockWithPath({
             source: flowYaml.value,
@@ -149,7 +149,7 @@
             // ignore parse errors here
             return;
         }
-        
+
         // if no-code would not change the structure of the flow,
         // do not trigger an update as it would remove all formatting and comments
         if(deepEqual(parsedSource, flowStore.flowParsed)) {

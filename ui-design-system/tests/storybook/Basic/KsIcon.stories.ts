@@ -1,0 +1,51 @@
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsIcon from "../../../src/components/Basic/KsIcon.vue"
+
+const meta: Meta<typeof KsIcon> = {
+    title: "Components/Basic/KsIcon",
+    component: KsIcon,
+    tags: ["autodocs"],
+    argTypes: {
+        size: {control: "text"},
+        color: {control: "color"},
+    },
+    parameters: {
+        docs: {description: {component: "KsIcon is the Kestra design-system abstraction over `ElIcon` from Element Plus."}},
+    },
+}
+export default meta
+type Story = StoryObj<typeof KsIcon>
+
+export const Default: Story = {
+    render: (args) => ({
+        components: {KsIcon},
+        setup() { return {args} },
+        template: `
+            <div style="padding:24px">
+                <ks-icon v-bind="args">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372zm19.8-481.6c-9.3 9.3-9.3 24.5 0 33.9L531.9 448H288c-13.3 0-24 10.7-24 24v16c0 13.3 10.7 24 24 24h243.9l-0.1 11.6c0 9 5 17.4 12.9 21.8s17.6 4.2 25.2-0.5l165.2-99.2c7-4.2 11.3-11.7 11.3-19.8s-4.3-15.6-11.3-19.8L570 306.3c-7.6-4.6-17.2-4.9-25.2-.5-7.9 4.4-12.9 12.8-12.9 21.8l0.1 11.6c-0.1 0-0.1 11.2-0.2 11.2z" fill="currentColor"/></svg>
+                </ks-icon>
+            </div>
+        `,
+    }),
+    args: {size: 24},
+}
+
+export const Sizes: Story = {
+    render: () => ({
+        components: {KsIcon},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;align-items:center">
+                <ks-icon :size="16" color="var(--el-color-primary)">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
+                </ks-icon>
+                <ks-icon :size="24" color="var(--el-color-success)">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
+                </ks-icon>
+                <ks-icon :size="32" color="var(--el-color-danger)">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
+                </ks-icon>
+            </div>
+        `,
+    }),
+}

@@ -4,7 +4,7 @@
             <div v-if="isOpen" class="search-overlay" @click="closeSearch">
                 <div class="search-modal" role="dialog" aria-modal="true" @click.stop>
                     <div class="search-container" :aria-label="$t('jump to...')">
-                        <el-input
+                        <ks-input
                             ref="searchInput"
                             v-model="query"
                             :placeholder="$t('jump to...')"
@@ -29,10 +29,10 @@
                                     <kbd>ESC</kbd> to close
                                 </span>
                             </template>
-                        </el-input>
+                        </ks-input>
 
                         <div class="results" role="listbox">
-                            <el-scrollbar v-if="results.length > 0" class="results-scroll">
+                            <ks-scrollbar v-if="results.length > 0" class="results-scroll">
                                 <ul id="global-search-listbox" class="results-list">
                                     <li
                                         v-for="(item, index) in results"
@@ -67,7 +67,7 @@
                                         </component>
                                     </li>
                                 </ul>
-                            </el-scrollbar>
+                            </ks-scrollbar>
                             <div v-else class="empty">
                                 {{ $t("no results") }}
                             </div>
@@ -372,10 +372,10 @@
             font-size: var(--gs-font-size);
         }
 
-        :deep(.el-input) {
+        :deep(.kel-input) {
             font-size: var(--gs-font-size);
 
-            .el-input__wrapper {
+            .kel-input__wrapper {
                 padding: 8px 16px;
                 border: 0;
                 box-shadow: none;

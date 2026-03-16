@@ -1,5 +1,5 @@
 <template>
-    <el-drawer
+    <ks-drawer
         v-model="modelValue"
         destroyOnClose
         lockScroll
@@ -26,7 +26,7 @@
         <template #default>
             <slot />
         </template>
-    </el-drawer>
+    </ks-drawer>
 </template>
 
 <script setup lang="ts">

@@ -1,7 +1,7 @@
 <template>
-    <el-tooltip placement="bottom" :content="$t('playground.tooltip_persistence')">
-        <el-switch v-model="playgroundStore.enabled" :activeText="$t('playground.toggle')" class="toggle" :class="{'is-active': playgroundStore.enabled}" />
-    </el-tooltip>
+    <ks-tooltip placement="bottom" :content="$t('playground.tooltip_persistence')">
+        <ks-switch v-model="playgroundStore.enabled" :activeText="$t('playground.toggle')" class="toggle" :class="{'is-active': playgroundStore.enabled}" />
+    </ks-tooltip>
 </template>
 
 <script setup lang="ts">

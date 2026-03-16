@@ -1,0 +1,48 @@
+<script setup lang="ts">
+    import {ElAlert, provideGlobalConfig} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
+
+    provideGlobalConfig({namespace: "kel"})
+
+    defineOptions({inheritAttrs: false})
+
+    const props = defineProps<{
+        type?: "success" | "warning" | "info" | "error"
+        title?: string
+        description?: string
+        closable?: boolean
+        showIcon?: boolean
+        center?: boolean
+        effect?: "light" | "dark"
+    }>()
+
+    const filteredProps = useFilteredProps(props)
+
+    defineSlots<{
+        default?(): unknown
+        title?(): unknown
+    }>()
+</script>
+
+<template>
+    <el-alert v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default><slot /></template>
+        <template v-if="$slots.title" #title><slot name="title" /></template>
+    </el-alert>
+</template>
+
+<style lang="scss">
+    @import "element-plus/theme-chalk/src/common/var.scss";
+
+    .kel-alert {
+        --kel-alert-description-font-size: var(--font-size-sm);
+
+        @each $type in $types {
+            &.kel-alert--#{$type}.is-light {
+                border: 1px solid var(--ks-border-#{$type});
+                background-color: var(--ks-background-#{$type});
+                #{--kel-color-#{$type}}: var(--ks-content-#{$type});
+            }
+        }
+    }
+</style>

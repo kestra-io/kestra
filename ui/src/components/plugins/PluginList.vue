@@ -7,11 +7,11 @@
             aria-label="Go back"
             :icon="ChevronLeft"
         />
-        <el-breadcrumb separator="/">
-            <el-breadcrumb-item>
+        <ks-breadcrumb separator="/">
+            <ks-breadcrumb-item>
                 <a :class="{'fw-bold ps-2': navigationStack.length === 0}" href="#" @click.prevent="goToStep(-1)">{{ $t('plugins.names') }}</a>
-            </el-breadcrumb-item>
-            <el-breadcrumb-item
+            </ks-breadcrumb-item>
+            <ks-breadcrumb-item
                 v-for="(item, index) in navigationStack"
                 :key="index"
                 :class="{'is-active': index === navigationStack.length - 1}"
@@ -24,8 +24,8 @@
                     {{ item.title }}
                 </a>
                 <span v-else>{{ item.title }}</span>
-            </el-breadcrumb-item>
-        </el-breadcrumb>
+            </ks-breadcrumb-item>
+        </ks-breadcrumb>
         <SearchField
             v-if="navigationStack.length === 0"
             class="search-field"
@@ -346,7 +346,7 @@
         width: 35%;
         margin-left: auto;
 
-        :deep(.el-input__inner) {
+        :deep(.kel-input__inner) {
             font-size: 14px;
 
             &::placeholder {

@@ -7,19 +7,19 @@
         {{ $t('resume') }}
     </ks-button>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <ks-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('resumed title', {id: execution.id})" />
         </template>
-        <el-form :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
+        <ks-form :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
-        </el-form>
+        </ks-form>
         <template #footer>
             <ks-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
                 {{ $t('resume') }}
             </ks-button>
         </template>
-    </el-dialog>
+    </ks-dialog>
 </template>
 
 <script setup>

@@ -33,7 +33,7 @@
                     class="fill-height"
                     :rowKey="(row: any) => `${row.namespace}-${row.key}`"
                 >
-                    <el-table-column
+                    <ks-table-column
                         prop="key"
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
@@ -42,9 +42,9 @@
                         <template #default="scope">
                             <Id v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column
+                    <ks-table-column
                         v-for="col in visibleColumns"
                         :key="col.prop"
                         :prop="col.prop"
@@ -54,13 +54,13 @@
                     >
                         <template #default="scope">
                             <template v-if="col.prop === 'namespace'">
-                                <el-tag
+                                <ks-tag
                                     type="info"
                                     class="namespace-tag"
                                 >
                                     <FolderOpenOutline />
                                     {{ scope.row?.namespace }}
-                                </el-tag>
+                                </ks-tag>
                             </template>
                             <template v-else-if="col.prop === 'description'">
                                 {{ scope.row?.description }}
@@ -69,11 +69,11 @@
                                 <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly />
                             </template>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column columnKey="locked" className="row-action">
+                    <ks-table-column columnKey="locked" className="row-action">
                         <template #default="scope">
-                            <el-tooltip
+                            <ks-tooltip
                                 v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                                 transition=""
                                 :hideAfter="0"
@@ -83,14 +83,14 @@
                                 <template #content>
                                     <span v-html="$t('secret.isReadOnly')" />
                                 </template>
-                                <el-icon class="d-flex justify-content-center text-base">
+                                <ks-icon class="d-flex justify-content-center text-base">
                                     <Lock />
-                                </el-icon>
-                            </el-tooltip>
+                                </ks-icon>
+                            </ks-tooltip>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column columnKey="copy" className="row-action">
+                    <ks-table-column columnKey="copy" className="row-action">
                         <template #default="scope">
                             <IconButton
                                 :tooltip="$t('copy_to_clipboard')"
@@ -100,9 +100,9 @@
                                 <ContentCopy />
                             </IconButton>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column
+                    <ks-table-column
                         v-if="!keyOnly && !paneView"
                         columnKey="update"
                         className="row-action"
@@ -117,9 +117,9 @@
                                 <FileDocumentEdit />
                             </IconButton>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
 
-                    <el-table-column
+                    <ks-table-column
                         v-if="!keyOnly && !paneView"
                         columnKey="delete"
                         className="row-action"
@@ -134,7 +134,7 @@
                                 <Delete />
                             </IconButton>
                         </template>
-                    </el-table-column>
+                    </ks-table-column>
                 </SelectTable>
             </template>
         </DataTable>
@@ -144,8 +144,8 @@
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
         >
-            <el-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
-                <el-form-item
+            <ks-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
+                <ks-form-item
                     v-if="namespace === undefined"
                     :label="$t('namespace')"
                     prop="namespace"
@@ -157,58 +157,58 @@
                         :includeSystemNamespace="true"
                         all
                     />
-                </el-form-item>
-                <el-form-item :label="$t('secret.key')" prop="key">
-                    <el-input v-model="secret.key" :disabled="secret.update" required />
-                </el-form-item>
-                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
+                </ks-form-item>
+                <ks-form-item :label="$t('secret.key')" prop="key">
+                    <ks-input v-model="secret.key" :disabled="secret.update" required />
+                </ks-form-item>
+                <ks-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
                     <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
-                </el-form-item>
-                <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
-                    <el-col :span="20">
+                </ks-form-item>
+                <ks-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
+                    <ks-col :span="20">
                         <MultilineSecret
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
                         />
-                    </el-col>
-                    <el-col class="px-2" :span="4">
-                        <el-switch
+                    </ks-col>
+                    <ks-col class="px-2" :span="4">
+                        <ks-switch
                             size="large"
                             inlinePrompt
                             v-model="secret.updateValue"
                             :activeIcon="PencilOutline"
                             :inactiveIcon="PencilOff"
                         />
-                    </el-col>
-                </el-form-item>
-                <el-form-item :label="$t('secret.description')" prop="description">
-                    <el-input
+                    </ks-col>
+                </ks-form-item>
+                <ks-form-item :label="$t('secret.description')" prop="description">
+                    <ks-input
                         v-model="secret.description"
                         :placeholder="$t('secret.descriptionPlaceholder')"
                         required
                     />
-                </el-form-item>
-                <el-form-item :label="$t('secret.tags')" prop="tags">
-                    <el-row class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
-                        <el-col :span="8">
-                            <el-input required v-model="tag.key" :placeholder="$t('key')" />
-                        </el-col>
-                        <el-col :span="12">
-                            <el-input required v-model="tag.value" :placeholder="$t('value')" />
-                        </el-col>
+                </ks-form-item>
+                <ks-form-item :label="$t('secret.tags')" prop="tags">
+                    <ks-row class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
+                        <ks-col :span="8">
+                            <ks-input required v-model="tag.key" :placeholder="$t('key')" />
+                        </ks-col>
+                        <ks-col :span="12">
+                            <ks-input required v-model="tag.value" :placeholder="$t('value')" />
+                        </ks-col>
                         <ks-button-group class="d-flex flex-nowrap">
                             <ks-button
                                 :icon="Delete"
                                 @click="removeSecretTag(index)"
                             />
                         </ks-button-group>
-                    </el-row>
+                    </ks-row>
                     <ks-button :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
                     </ks-button>
-                </el-form-item>
-            </el-form>
+                </ks-form-item>
+            </ks-form>
 
             <template #footer>
                 <ks-button :icon="ContentSave" @click="saveSecret(form)" type="primary">
@@ -616,7 +616,7 @@
         border: 1px solid var(--ks-log-border-debug);
         padding: 0 6px;
 
-        :deep(.el-tag__content) {
+        :deep(.kel-tag__content) {
             display: flex;
             align-items: center;
             gap: 4px;

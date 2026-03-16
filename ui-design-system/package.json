@@ -5,17 +5,19 @@
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
-    "types": "./dist/src/index.d.ts",
+    "types": "./src/index.ts",
+    "web-types": "./web-types.json",
     "exports": {
         ".": {
-            "types": "./dist/src/index.d.ts",
+            "types": "./src/index.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs"
         },
         "./src/assets/styles/*": "./src/assets/styles/*"
     },
     "files": [
-        "dist"
+        "dist",
+        "web-types.json"
     ],
     "scripts": {
         "build": "./node_modules/.bin/vite build",
@@ -26,10 +28,10 @@
         "build-storybook": "storybook build"
     },
     "dependencies": {
-        "bootstrap": "^5.3.8",
-        "element-plus": "2.13.5"
+        "bootstrap": "^5.3.8"
     },
     "peerDependencies": {
+        "element-plus": ">=2.13.5",
         "vue": "^3.5.0"
     },
     "devDependencies": {

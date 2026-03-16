@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper">
-        <el-checkbox-button
+        <ks-checkbox-button
             v-if="['duration', 'date-time'].includes(schema?.format ?? '')"
             v-model="pebble"
             :label="$t('no_code.toggle_pebble')"
@@ -8,16 +8,16 @@
             class="ks-pebble"
         >
             <IconCodeBracesBox />
-        </el-checkbox-button>
+        </ks-checkbox-button>
 
-        <el-date-picker
+        <ks-date-picker
             v-if="!pebble && schema?.format === 'date-time'"
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
             @update:model-value="onInput($event.toISOString())"
         />
-        <el-input-number
+        <ks-input-number
             v-if="!pebble && showDurationDays"
             :modelValue="daysDurationValue"
             align="right"
@@ -29,8 +29,8 @@
             <template #suffix>
                 <span class="duration-unit">{{ $t("days") }}</span>
             </template>
-        </el-input-number>
-        <el-time-picker
+        </ks-input-number>
+        <ks-time-picker
             v-if="!pebble && schema?.format === 'duration'"
             :modelValue="timeDurationValue"
             type="time"
@@ -188,7 +188,7 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.el-input__inner) {
+:deep(.kel-input__inner) {
     &::placeholder {
         color: var(--ks-content-inactive) !important;
     }
@@ -210,7 +210,7 @@
         border-radius: 4px;
     }
 
-    :deep(.el-input__wrapper),
+    :deep(.kel-input__wrapper),
     :deep(.editor-container) {
         box-shadow: none;
     }

@@ -13,7 +13,7 @@
             :largeSuggestions="false"
             @update:model-value="onEditorInput"
         />
-        <el-input
+        <ks-input
             v-else
             class="flex-grow-1"
             :class="hidden || disabled ? 'secret-value' : ''"

@@ -1,17 +1,17 @@
 <template>
-    <el-row v-for="(row, rIdx) in props.rows" :key="rIdx">
-        <el-col :span="14" class="label">
+    <ks-row v-for="(row, rIdx) in props.rows" :key="rIdx">
+        <ks-col :span="14" class="label">
             <component :is="row.icon" />
-            <el-text truncated>
+            <ks-text truncated>
                 {{ row.label }}
-            </el-text>
-        </el-col>
+            </ks-text>
+        </ks-col>
 
-        <el-col v-if="$slots.value" :span="10" class="value">
+        <ks-col v-if="$slots.value" :span="10" class="value">
             <slot name="value" />
-        </el-col>
-        <el-col v-else-if="row.value" :span="10" class="value">
-            <el-text truncated>
+        </ks-col>
+        <ks-col v-else-if="row.value" :span="10" class="value">
+            <ks-text truncated>
                 <router-link v-if="row.to" :to="row.to">
                     {{ row.value }}
                 </router-link>
@@ -19,13 +19,13 @@
                 <template v-else>
                     {{ row.value }}
                 </template>
-            </el-text>
-        </el-col>
+            </ks-text>
+        </ks-col>
 
-        <el-col v-if="$slots.action" :span="10">
+        <ks-col v-if="$slots.action" :span="10">
             <slot name="action" />
-        </el-col>
-    </el-row>
+        </ks-col>
+    </ks-row>
 </template>
 
 <script setup lang="ts">
@@ -51,7 +51,7 @@
 }
 
 .el-row {
-    & :deep(.el-text),
+    & :deep(.kel-text),
     & :deep(.el-button) {
         font-size: $font-size-sm;
     }
@@ -64,7 +64,7 @@
             margin-right: calc($spacer / 2);
         }
 
-        & .el-text {
+        & .kel-text {
             color: var(--ks-content-secondary);
         }
     }

@@ -20,7 +20,7 @@
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
-                <el-card class="attempt-wrapper">
+                <ks-card class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
                         :followedExecution="followedExecution"
@@ -213,7 +213,7 @@
                             </DynamicScrollerItem>
                         </template>
                     </DynamicScroller>
-                </el-card>
+                </ks-card>
             </DynamicScrollerItem>
         </template>
     </DynamicScroller>
@@ -999,7 +999,7 @@
         margin-bottom: 0;
         border: 1px solid var(--ks-border-primary);
 
-        :deep(.el-card__body) {
+        :deep(.kel-card__body) {
             padding: 0;
         }
 

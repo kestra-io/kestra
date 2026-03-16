@@ -7,7 +7,7 @@
         {{ $t("force run") }}
     </ks-button>
 
-    <el-dialog
+    <ks-dialog
         v-if="isDrawerOpen"
         v-model="isDrawerOpen"
         destroyOnClose
@@ -26,7 +26,7 @@
                 {{ $t("force run") }}
             </ks-button>
         </template>
-    </el-dialog>
+    </ks-dialog>
 </template>
 
 <script setup lang="ts">

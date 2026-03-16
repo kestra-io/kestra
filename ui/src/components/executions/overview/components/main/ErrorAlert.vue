@@ -1,5 +1,5 @@
 <template>
-    <el-alert id="error" type="error" showIcon :closable="false">
+    <ks-alert id="error" type="error" showIcon :closable="false">
         <template #title>
             <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
         </template>
@@ -20,7 +20,7 @@
                 </router-link>
             </div>
         </div>
-    </el-alert>
+    </ks-alert>
 </template>
 
 <script setup lang="ts">
@@ -72,13 +72,13 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 #error {
-    :deep(.el-alert__content) {
+    :deep(.kel-alert__content) {
         cursor: pointer;
         width: 100%;
         max-width: 100%;
         gap: 0;
 
-        & .el-alert__title {
+        & .kel-alert__title {
             & div,
             & span {
                 display: flex;
@@ -90,7 +90,7 @@
             }
         }
 
-        & .el-alert__description {
+        & .kel-alert__description {
             color: var(--ks-content-primary);
 
             & .logs {

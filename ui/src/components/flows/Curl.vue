@@ -4,9 +4,9 @@
 
         <CopyToClipboard :text="curlCommand" />
 
-        <el-alert class="mt-3" type="info" showIcon :closable="false">
+        <ks-alert class="mt-3" type="info" showIcon :closable="false">
             {{ $t('curl.note') }}
-        </el-alert>
+        </ks-alert>
     </div>
 </template>
 

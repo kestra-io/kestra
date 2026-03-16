@@ -1,5 +1,5 @@
 <template>
-    <el-cascader-panel ref="panelRef" :options>
+    <ks-cascader-panel ref="panelRef" :options>
         <template #default="{data}">
             <div v-if="Utils.isFile(data.value)">
                 <VarValue :value="data.value" :execution="execution" />
@@ -19,7 +19,7 @@
                 </div>
             </div>
         </template>
-    </el-cascader-panel>
+    </ks-cascader-panel>
 </template>
 
 <script setup lang="ts">
@@ -39,7 +39,7 @@
     const panelRef = ref<any>(null);
 
     onMounted(() => {
-        const nodes =  panelRef.value.$el.querySelectorAll(".el-cascader-node");
+        const nodes =  panelRef.value.$el.querySelectorAll(".kel-cascader-node");
         if(nodes.length > 0) (nodes[0] as HTMLElement).click();
     });
 </script>

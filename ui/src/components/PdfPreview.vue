@@ -3,21 +3,21 @@
         <canvas ref="canvasRef" />
 
         <nav v-if="rendered">
-            <el-tooltip :content="$t('page.previous')" effect="light" :showAfter="1500">
+            <ks-tooltip :content="$t('page.previous')" effect="light" :showAfter="1500">
                 <ks-button @click="onPrevPage">
                     <ChevronLeft />
                 </ks-button>
-            </el-tooltip>
+            </ks-tooltip>
             <span>
                 {{ pageNum }}
                 {{ $t("of") }}
                 {{ pdfDoc?.numPages }}
             </span>
-            <el-tooltip :content="$t('page.next')" effect="light" :showAfter="1500">
+            <ks-tooltip :content="$t('page.next')" effect="light" :showAfter="1500">
                 <ks-button @click="onNextPage">
                     <ChevronRight />
                 </ks-button>
-            </el-tooltip>
+            </ks-tooltip>
         </nav>
     </div>
 </template>

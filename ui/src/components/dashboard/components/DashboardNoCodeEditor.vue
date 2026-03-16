@@ -13,7 +13,7 @@
                         v-if="creatingTask || editingTask"
                     />
 
-                    <el-form v-else labelPosition="top">
+                    <ks-form v-else labelPosition="top">
                         <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchema" :transparent="v.fieldKey === 'inputs'" :merge="shouldMerge(v.schema)">
                             <template #tasks>
                                 <TaskObjectField
@@ -22,7 +22,7 @@
                                 />
                             </template>
                         </Wrapper>
-                    </el-form>
+                    </ks-form>
                 </div>
             </template>
         </AiCopilotWrapper>
@@ -137,7 +137,7 @@
         if(type){
             pluginsStore.updateDocumentation({cls: type});
         }else{
-            pluginsStore.updateDocumentation(); 
+            pluginsStore.updateDocumentation();
         }
     })
 

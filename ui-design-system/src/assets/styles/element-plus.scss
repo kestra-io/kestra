@@ -47,7 +47,6 @@
         'small': global-var.$border-radius-sm,
         'round': global-var.$border-radius-lg,
     ),
-
     $input: (
         'bg-color': var(--ks-background-input),
     ),
@@ -59,7 +58,7 @@
     ),
     $select: (
         'input-color': var(--ks-background-input),
-    )
+    ),
 );
 
 @use "element-plus/theme-chalk/src/index.scss";

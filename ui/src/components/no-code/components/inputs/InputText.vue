@@ -2,7 +2,7 @@
     <span v-if="required" class="me-1 text-danger">*</span>
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
     <div class="wrapper" :class="[props.margin, props.class]">
-        <el-input
+        <ks-input
             ref="elInputRef"
             v-model="input"
             :id="uid"
@@ -54,7 +54,7 @@
 <style scoped lang="scss">
 @import "../../styles/code.scss";
 
-:deep(.el-input__icon) {
+:deep(.kel-input__icon) {
     .lock-icon {
         color: var(--ks-content-inactive);
     }

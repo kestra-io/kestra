@@ -7,16 +7,16 @@
                 <template #navbar>
                     <div v-if="ready && !system && !embed">
                         <div class="tags-selection">
-                            <el-checkbox-group v-model="selectedTags" class="tags-checkbox-group">
-                                <el-checkbox-button
+                            <ks-checkbox-group v-model="selectedTags" class="tags-checkbox-group">
+                                <ks-checkbox-button
                                     v-for="tag in Object.values(tags || {})"
                                     :key="tag.id"
                                     :label="tag.id"
                                     class="hoverable"
                                 >
                                     {{ tag.name }}
-                                </el-checkbox-button>
-                            </el-checkbox-group>
+                                </ks-checkbox-button>
+                            </ks-checkbox-group>
                         </div>
                     </div>
                     <nav v-else-if="system" class="header pb-3">
@@ -29,7 +29,7 @@
                     </nav>
                 </template>
                 <template #top>
-                    <el-row class="mb-3" justify="center">
+                    <ks-row class="mb-3" justify="center">
                         <KSFilter
                             :configuration="blueprintFilter"
                             :buttons="{
@@ -39,14 +39,14 @@
                             :searchInputFullWidth="true"
                             @search="handleSearch"
                         />
-                    </el-row>
+                    </ks-row>
                 </template>
                 <template #table>
-                    <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
+                    <ks-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                         {{ $t('blueprints.empty') }}
-                    </el-alert>
+                    </ks-alert>
                     <div class="card-grid">
-                        <el-card
+                        <ks-card
                             class="blueprint-card"
                             v-for="blueprint in blueprints"
                             :key="blueprint.id"
@@ -70,7 +70,7 @@
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">
-                                        <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                        <ks-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <ks-button
                                                 type="primary"
                                                 size="default"
@@ -78,7 +78,7 @@
                                                 @click.prevent.stop="copy(blueprint.id)"
                                                 class="p-2"
                                             />
-                                        </el-tooltip>
+                                        </ks-tooltip>
                                         <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
                                             <ks-button v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                                 {{ $t('use') }}
@@ -87,7 +87,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </el-card>
+                        </ks-card>
                     </div>
                 </template>
             </DataTable>
@@ -421,7 +421,7 @@
             height: 24px;
         }
 
-        :deep(.el-card__body) {
+        :deep(.kel-card__body) {
             height: 100%;
             width: 100%;
         }

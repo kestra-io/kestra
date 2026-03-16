@@ -1,6 +1,6 @@
 <template>
     <div class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth?.value}">
-        <el-popover
+        <ks-popover
             v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
             placement="bottom-start"
@@ -18,14 +18,14 @@
                     class="customize-button"
                     :disabled="filter.readOnly?.value"
                 >
-                    <el-tooltip
+                    <ks-tooltip
                         placement="top"
                         effect="light"
                         :content="$t('filter.customize tooltip')"
                         :disabled="filter.readOnly?.value"
                     >
                         <span>{{ $t("filter.customize") }}</span>
-                    </el-tooltip>
+                    </ks-tooltip>
                 </ks-button>
             </template>
 
@@ -36,7 +36,7 @@
                 @remove-filter="filter.removeFilter"
                 @close="isCustomizeFiltersVisible = false"
             />
-        </el-popover>
+        </ks-popover>
 
         <div
             v-if="filter.showSearchInput?.value"
@@ -69,7 +69,7 @@
             @update="filter.updateFilter"
         />
 
-        <el-tooltip
+        <ks-tooltip
             v-if="filter.hasFilterKeys?.value"
             placement="top"
             effect="light"
@@ -84,7 +84,7 @@
             >
                 {{ $t("filter.reset") }}
             </ks-button>
-        </el-tooltip>
+        </ks-tooltip>
     </div>
 </template>
 

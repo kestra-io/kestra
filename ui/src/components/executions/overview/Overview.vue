@@ -1,11 +1,11 @@
 <template>
-    <el-splitter
+    <ks-splitter
         v-if="execution"
         id="overview"
         :layout="verticalLayout ? 'vertical' : 'horizontal'"
         lazy
     >
-        <el-splitter-panel :size="verticalLayout ? '50%' : '30%'">
+        <ks-splitter-panel :size="verticalLayout ? '50%' : '30%'">
             <div class="sidebar">
                 <div class="state">
                     <Row :rows="[{icon: StateMachine, label: $t('state')}]">
@@ -20,18 +20,18 @@
                     <Timeline :histories="execution.state.histories || []" />
                 </div>
 
-                <el-divider />
+                <ks-divider />
                 <div class="general">
                     <Row :rows="general" />
                 </div>
 
-                <el-divider />
+                <ks-divider />
                 <div class="actions">
                     <Row
                         :rows="[{icon: SortVariant, label: $t('actions')}]"
                     />
-                    <el-row :gutter="12">
-                        <el-col
+                    <ks-row :gutter="12">
+                        <ks-col
                             v-for="(action, aIdx) in actions"
                             :key="aIdx"
                             :span="12"
@@ -42,11 +42,11 @@
                                 v-on="action.on || {}"
                                 :execution
                             />
-                        </el-col>
-                    </el-row>
+                        </ks-col>
+                    </ks-row>
                 </div>
 
-                <el-divider />
+                <ks-divider />
                 <div class="metadata">
                     <Row :rows="[property]" v-for="property in metadata" :key="property.label">
                         <template v-if="property.value instanceof Date" #value>
@@ -55,7 +55,7 @@
                     </Row>
                 </div>
 
-                <el-divider />
+                <ks-divider />
                 <div class="labels">
                     <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
                         <template #action>
@@ -65,18 +65,18 @@
                     <Labels :labels="execution.labels || []" />
                 </div>
             </div>
-        </el-splitter-panel>
+        </ks-splitter-panel>
 
-        <el-splitter-panel>
+        <ks-splitter-panel>
             <div class="main">
                 <div id="alerts">
-                    <el-alert
+                    <ks-alert
                         v-if="matchesStatus('replayed')"
                         :title="$t('execution replayed')"
                         :closable="false"
                     />
 
-                    <el-alert v-if="matchesStatus('replay')" :closable="false">
+                    <ks-alert v-if="matchesStatus('replay')" :closable="false">
                         <template #title>
                             <div>
                                 {{ $t("execution replay") }}
@@ -96,9 +96,9 @@
                                 </router-link>.
                             </div>
                         </template>
-                    </el-alert>
+                    </ks-alert>
 
-                    <el-alert
+                    <ks-alert
                         v-if="matchesStatus('restarted')"
                         :title="
                             $t('execution restarted', {
@@ -164,8 +164,8 @@
 
                 <PrevNext :execution />
             </div>
-        </el-splitter-panel>
-    </el-splitter>
+        </ks-splitter-panel>
+    </ks-splitter>
     <NoData
         v-else
         id="empty"
@@ -587,7 +587,7 @@
                     margin-top: $spacer;
                 }
 
-                & :deep(.el-alert__icon) {
+                & :deep(.kel-alert__icon) {
                     font-size: var(--el-alert-icon-size);
                     width: var(--el-alert-icon-size);
                     margin-right: calc($spacer * 1.5);
@@ -637,14 +637,14 @@
             }
         }
 
-        & :deep(.el-empty) {
+        & :deep(.kel-empty) {
             padding: 0;
 
-            & .el-empty__image {
+            & .kel-empty__image {
                 width: calc($spacer * 8) !important;
             }
 
-            & .el-empty__description {
+            & .kel-empty__description {
                 margin-top: calc($spacer / 2);
             }
         }

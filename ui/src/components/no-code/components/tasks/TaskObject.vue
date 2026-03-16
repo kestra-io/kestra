@@ -1,5 +1,5 @@
 <template>
-    <el-form labelPosition="top" class="w-100">
+    <ks-form labelPosition="top" class="w-100">
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in protectedMainProperties" :key="fieldKey">
                 <Wrapper :merge>
@@ -9,8 +9,8 @@
                 </Wrapper>
             </template>
 
-            <el-collapse v-model="activeNames" v-if="mainProperties.length && hasGroupedProperties" class="collapse">
-                <el-collapse-item
+            <ks-collapse v-model="activeNames" v-if="mainProperties.length && hasGroupedProperties" class="collapse">
+                <ks-collapse-item
                     v-for="section in groupSections"
                     :key="section.key"
                     :name="section.key"
@@ -23,8 +23,8 @@
                             </template>
                         </Wrapper>
                     </template>
-                </el-collapse-item>
-                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="groupTitle('deprecated')">
+                </ks-collapse-item>
+                <ks-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="groupTitle('deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -32,8 +32,8 @@
                             </template>
                         </Wrapper>
                     </template>
-                </el-collapse-item>
-            </el-collapse>
+                </ks-collapse-item>
+            </ks-collapse>
         </template>
 
         <template v-else-if="typeof modelValue === 'object' && modelValue !== null && !Array.isArray(modelValue)">
@@ -47,7 +47,7 @@
                 :required
             />
         </template>
-    </el-form>
+    </ks-form>
 </template>
 
 <script setup lang="ts">
@@ -287,9 +287,9 @@
 </script>
 
 <style lang="scss">
-    .el-form-item__content {
+    .kel-form-item__content {
         display: block !important;
-        .el-form-item {
+        .kel-form-item {
             width: 100%;
         }
     }
@@ -303,10 +303,10 @@
 <style scoped lang="scss">
 @import "../../styles/code.scss";
 
-.el-form-item {
+.kel-form-item {
     width: 100%;
     margin-bottom: 0;
-    > :deep(.el-form-item__label) {
+    > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;

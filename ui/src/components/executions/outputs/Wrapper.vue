@@ -1,10 +1,9 @@
 <template>
     <div class="outputs">
-        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
-            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
+        <ks-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
+            <ks-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
                 <div class="d-flex flex-column overflow-auto left">
-                    <ElCascaderPanel
-                        v-if="tasksWithOutputs"
+                    <ks-cascader-panel
                         ref="cascader"
                         v-model="selected"
                         :props="cascaderProps"
@@ -52,10 +51,10 @@
                                 </code>
                             </div>
                         </template>
-                    </ElCascaderPanel>
+                    </ks-cascader-panel>
                 </div>
-            </el-splitter-panel>
-            <el-splitter-panel>
+            </ks-splitter-panel>
+            <ks-splitter-panel>
                 <div class="right wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
@@ -67,11 +66,11 @@
                             </code>
                         </div>
 
-                        <el-collapse
+                        <ks-collapse
                             v-model="debugCollapse"
                             class="mb-3 debug bordered"
                         >
-                            <el-collapse-item name="debug">
+                            <ks-collapse-item name="debug">
                                 <template #title>
                                     <span>{{ $t("eval.title") }}</span>
                                 </template>
@@ -96,7 +95,7 @@
                                                 editorValue.length > 0 ? editorValue : computedDebugValue,
                                             )
                                         "
-                                        class="mt-3 el-button--wrap"
+                                        class="mt-3 button-wrap"
                                     >
                                         {{ $t("eval.title") }}
                                     </ks-button>
@@ -114,10 +113,10 @@
                                         class="mt-3"
                                     />
                                 </div>
-                            </el-collapse-item>
-                        </el-collapse>
+                            </ks-collapse-item>
+                        </ks-collapse>
 
-                        <el-alert
+                        <ks-alert
                             v-if="debugError"
                             type="error"
                             :closable="false"
@@ -136,7 +135,7 @@
                             <pre class="mb-0" style="overflow: scroll">{{
                                 debugStackTrace
                             }}</pre>
-                        </el-alert>
+                        </ks-alert>
 
                         <VarValue
                             v-if="displayVarValue()"
@@ -149,8 +148,8 @@
                         />
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
+            </ks-splitter-panel>
+        </ks-splitter>
     </div>
 </template>
 
@@ -225,7 +224,7 @@
         } else {
             return [];
         }
-                
+
     }
 
     const cascaderProps: CascaderProps = {
@@ -319,7 +318,7 @@
     }
 
     const processedValue = (data: TransformedTask) => {
-        const regular = false;      
+        const regular = false;
 
         if(!data.leaf || data.taskId) {
             return {label: "", regular};
@@ -331,7 +330,6 @@
                 ? {label: "Internal link", regular}
                 : {label: "External link", regular};
         }
-        
 
         return {label: trim(data.value), regular: true};
     };
@@ -431,7 +429,7 @@
                         }
                     }
                 }
-                    
+
             }
         },
         {immediate: true},
@@ -476,7 +474,7 @@
 
             getTaskRunOutputs(task.id, task.path).then((children) => {
                 let child: TransformedTask | undefined = children.filter(t => t.leaf === false)[0];
-                
+
                 do {
                     selectedLocal.push(child.value);
                     if(child?.path) {
@@ -490,7 +488,7 @@
                 if(expandedValueLocal){
                     expandedValue.value = expandedValueLocal;
                 }
-            })  
+            })
         }
     })
 
@@ -626,7 +624,7 @@
         height: 100%;
     }
 
-    & .el-cascader-node {
+    & .kel-cascader-node {
         height: 36px;
         line-height: 36px;
         font-size: var(--el-font-size-small);
@@ -657,7 +655,7 @@
             & .task-label {
                 width: 100%;
                 max-width: 100%;
-                
+
                 & .task-iteration-value {
                     display: inline-block;
                     width: 80px;
@@ -697,7 +695,7 @@
         max-height: none !important;
     }
 
-    .el-collapse-item__content {
+    .kel-collapse-item__content {
         word-wrap: break-word;
         word-break: break-word;
     }

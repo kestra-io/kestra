@@ -1,7 +1,7 @@
 <template>
     <div class="tasks-wrapper">
-        <el-collapse v-model="expanded" class="collapse">
-            <el-collapse-item
+        <ks-collapse v-model="expanded" class="collapse">
+            <ks-collapse-item
                 :name="section"
                 :title="`${section}${elements ? ` (${elements.length})` : ''}`"
                 :disabled="merge"
@@ -36,8 +36,8 @@
                             )
                     "
                 />
-            </el-collapse-item>
-        </el-collapse>
+            </ks-collapse-item>
+        </ks-collapse>
     </div>
 </template>
 
@@ -209,7 +209,7 @@
     cursor: not-allowed;
 }
 
-.merge :deep(.el-collapse-item__header){
+.merge :deep(.kel-collapse-item__header){
     cursor: default;
 }
 </style>

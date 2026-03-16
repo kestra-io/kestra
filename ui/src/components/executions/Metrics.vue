@@ -1,10 +1,10 @@
 <template>
-    <el-dropdown-item
+    <ks-dropdown-item
         :icon="ChartAreaspline"
         @click="onClick"
     >
         {{ $t('metrics') }}
-    </el-dropdown-item>
+    </ks-dropdown-item>
 
     <Drawer
         v-if="isOpen"

@@ -1,6 +1,6 @@
 <template>
     <div class="p-3">
-        <el-date-picker
+        <ks-date-picker
             :modelValue="dateValue"
             type="datetime"
             :placeholder="`Select ${label.toLowerCase()}`"

@@ -1,9 +1,9 @@
 <template>
-    <el-empty :image="noData" :imageSize="180">
+    <ks-empty :image="noData" :imageSize="180">
         <template #description>
             <span v-html="description" />
         </template>
-    </el-empty>
+    </ks-empty>
 </template>
 
 <script setup lang="ts">
@@ -20,7 +20,7 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.el-empty__description) {
+:deep(.kel-empty__description) {
     font-size: var(--el-font-size-small);
     color: var(--ks-content-secondary);
 }

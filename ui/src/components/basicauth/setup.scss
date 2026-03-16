@@ -119,7 +119,7 @@ $survey-group-spacing: 0.75rem;
   margin: $survey-group-spacing 0;
 }
 
-:deep(.newsletter-form-item.el-form-item) {
+:deep(.newsletter-form-item.kel-form-item) {
   margin-bottom: 0;
 }
 
@@ -358,16 +358,16 @@ $survey-group-spacing: 0.75rem;
   gap: calc(var(--spacer) / 2);
 }
 
-:deep(.el-form-item.is-error .el-input__wrapper) {
+:deep(.kel-form-item.is-error .kel-input__wrapper) {
   box-shadow: 0 0 0 1px var(--ks-border-error) inset;
 }
 
-:deep(.el-form-item.is-error .el-input__suffix-inner),
-:deep(.el-form-item__error) {
+:deep(.kel-form-item.is-error .kel-input__suffix-inner),
+:deep(.kel-form-item__error) {
   color: var(--ks-content-alert) !important;
 }
 
-:deep(.el-input__inner) {
+:deep(.kel-input__inner) {
   font-size: 14px;
 
   &::placeholder {

@@ -279,7 +279,7 @@
                 border: 1px solid var(--ks-border-primary);
             }
 
-            .el-empty {
+            .kel-empty {
                 background-color: transparent;
             }
         }

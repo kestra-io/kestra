@@ -7,7 +7,7 @@
         {{ $t("set_extra_labels") }}
     </ks-button>
 
-    <el-dialog
+    <ks-dialog
         v-if="isOpen"
         v-model="isOpen"
         destroyOnClose
@@ -28,15 +28,15 @@
 
         <p v-html="$t('Set labels to execution', {id: execution.id})" />
 
-        <el-form labelPosition="top">
-            <el-form-item :label="$t('execution labels')">
+        <ks-form labelPosition="top">
+            <ks-form-item :label="$t('execution labels')">
                 <LabelInput
                     v-model:labels="executionLabels"
                     :existingLabels="executionLabels"
                 />
-            </el-form-item>
-        </el-form>
-    </el-dialog>
+            </ks-form-item>
+        </ks-form>
+    </ks-dialog>
 </template>
 
 <script setup lang="ts">

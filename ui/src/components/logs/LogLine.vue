@@ -5,9 +5,9 @@
         v-if="filtered"
         :style="logLineStyle"
     >
-        <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
+        <ks-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
             <MenuRight />
-        </el-icon>
+        </ks-icon>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
             <div
@@ -224,7 +224,7 @@ div.line {
         }
     }
 
-    .el-tag {
+    .kel-tag {
         height: auto;
     }
 

@@ -1,5 +1,5 @@
 <template>
-    <el-card
+    <ks-card
         shadow="never"
         :class="{
             'ai-copilot-card': !props.onboarding,
@@ -174,7 +174,7 @@
             </template>
 
             <div v-else class="ai-input-container">
-                <el-input
+                <ks-input
                     ref="promptInput"
                     v-if="configured"
                     v-model="prompt"
@@ -191,9 +191,9 @@
                     <div class="mt-2" v-html="highlightedAiConfiguration" />
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                 </template>
-                <el-text v-if="error" type="danger" size="small" class="error-msg">
+                <ks-text v-if="error" type="danger" size="small" class="error-msg">
                     {{ error }}
-                </el-text>
+                </ks-text>
             </div>
         </div>
 
@@ -221,7 +221,7 @@
                 <div class="footer-right">
                     <template v-if="waitingForReply">
                         <span class="generating-label">
-                            <el-icon class="is-loading"><Loading /></el-icon>
+                            <ks-icon class="is-loading"><Loading /></ks-icon>
                             {{ $t(`ai.flow.generating.${generationType}`) }}
                         </span>
                     </template>
@@ -259,7 +259,7 @@
                 </div>
             </div>
         </template>
-    </el-card>
+    </ks-card>
 </template>
 
 <script setup lang="ts">
@@ -683,16 +683,16 @@
     background: var(--ks-background-panel);
     border: 1px solid var(--ks-border-secondary);
 
-    :deep(.el-card__header) {
+    :deep(.kel-card__header) {
         padding: 10px 16px;
         border-bottom: none;
     }
 
-    :deep(.el-card__body) {
+    :deep(.kel-card__body) {
         padding: 0;
     }
 
-    :deep(.el-card__footer) {
+    :deep(.kel-card__footer) {
         padding: 8px 16px;
         border-top: none;
     }
@@ -867,7 +867,7 @@
 }
 
 .ai-custom-textarea {
-    :deep(.el-textarea__inner) {
+    :deep(.kel-textarea__inner) {
         color: var(--ks-content-primary) !important;
         font-size: 14px;
         line-height: 1.6;

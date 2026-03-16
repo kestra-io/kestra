@@ -1,5 +1,5 @@
 <template>
-    <el-dialog
+    <ks-dialog
         v-model="unsavedChangesStore.isDialogVisible"
         :title="$t('unsaved changes')"
         width="500px"
@@ -21,7 +21,7 @@
                 </ks-button>
             </div>
         </template>
-    </el-dialog>
+    </ks-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -46,28 +46,28 @@
     gap: 12px;
 }
 
-:deep(.el-dialog) {
+:deep(.kel-dialog) {
     background-color: var(--bs-body-bg);
     border: 1px solid var(--bs-border-color);
 }
 
-:deep(.el-dialog__header) {
+:deep(.kel-dialog__header) {
     padding: 20px 20px 10px;
     border-bottom: 1px solid var(--bs-border-color);
 }
 
-:deep(.el-dialog__title) {
+:deep(.kel-dialog__title) {
     color: var(--bs-body-color);
     font-size: 18px;
     font-weight: 600;
 }
 
-:deep(.el-dialog__body) {
+:deep(.kel-dialog__body) {
     padding: 20px;
     color: var(--bs-body-color);
 }
 
-:deep(.el-dialog__footer) {
+:deep(.kel-dialog__footer) {
     padding: 10px 20px 20px;
     border-top: 1px solid var(--bs-border-color);
 }

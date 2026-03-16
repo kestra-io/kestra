@@ -1,5 +1,5 @@
 <template>
-    <el-col
+    <ks-col
         :xs="layout.xs"
         :sm="layout.sm"
         :md="layout.md"
@@ -9,7 +9,7 @@
     >
         <p v-if="label" v-text="label" class="label" />
         <slot />
-    </el-col>
+    </ks-col>
 </template>
 
 <script setup lang="ts">

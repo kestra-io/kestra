@@ -1,7 +1,7 @@
 <template>
-    <el-row :gutter="24" class="row">
+    <ks-row :gutter="24" class="row">
         <slot />
-    </el-row>
+    </ks-row>
 </template>
 
 <style scoped lang="scss">

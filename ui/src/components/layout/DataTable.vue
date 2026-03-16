@@ -6,13 +6,13 @@
             </Collapse>
         </nav>
 
-        <el-container direction="vertical" v-loading="isLoading">
+        <ks-container direction="vertical" v-loading="isLoading">
             <slot name="top" />
 
             <slot name="table" />
 
             <Pagination v-if="total > 0" :size="size" :page="page" :total="total" @page-changed="onPageChanged" />
-        </el-container>
+        </ks-container>
     </div>
 </template>
 

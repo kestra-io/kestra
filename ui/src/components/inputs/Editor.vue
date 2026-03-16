@@ -4,7 +4,7 @@
             <slot name="nav">
                 <div class="text-nowrap">
                     <ks-button-group>
-                        <el-tooltip
+                        <ks-tooltip
                             effect="light"
                             :content="$t('Fold content lines')"
                             :persistent="false"
@@ -16,8 +16,8 @@
                                 @click="autoFold(true)"
                                 size="small"
                             />
-                        </el-tooltip>
-                        <el-tooltip
+                        </ks-tooltip>
+                        <ks-tooltip
                             effect="light"
                             :content="$t('Unfold content lines')"
                             :persistent="false"
@@ -29,7 +29,7 @@
                                 @click="unfoldAll"
                                 size="small"
                             />
-                        </el-tooltip>
+                        </ks-tooltip>
                     </ks-button-group>
                     <slot name="extends-navbar" />
                 </div>

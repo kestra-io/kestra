@@ -5,9 +5,9 @@
                 <MenuIcon />
             </ks-button>
         </div>
-        <el-form :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
+        <ks-form :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
             <slot />
-        </el-form>
+        </ks-form>
     </div>
 </template>
 
@@ -23,14 +23,14 @@
 
     @include res(sm) {
         :deep(.el-form--inline) {
-            .el-form-item {
+            .kel-form-item {
                 margin-right: 5px;
 
                 .el-radio-group {
                     margin-right: 5px;
                 }
 
-                .el-form-item__content {
+                .kel-form-item__content {
                     > *:not(.el-button-group) {
                         width: 200px;
                     }
@@ -45,11 +45,11 @@
 
     @include res(xs) {
         :deep(.el-form--inline) {
-            .el-form-item {
+            .kel-form-item {
                 display: block;
                 margin-right: 0;
 
-                .el-input {
+                .kel-input {
                     margin: 0;
                 }
 

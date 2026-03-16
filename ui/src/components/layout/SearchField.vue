@@ -1,5 +1,5 @@
 <template>
-    <el-input
+    <ks-input
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"
@@ -16,7 +16,7 @@
                 </slot>
             </div>
         </template>
-    </el-input>
+    </ks-input>
 </template>
 
 <script lang="ts" setup>
@@ -93,8 +93,8 @@
         gap: .25rem;
     }
 
-    .el-input {
-        :deep(.el-input__prefix), :deep(input)::placeholder {
+    .kel-input {
+        :deep(.kel-input__prefix), :deep(input)::placeholder {
             color: var(--ks-content-primary);
         }
     }

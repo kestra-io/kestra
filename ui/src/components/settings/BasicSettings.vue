@@ -10,7 +10,7 @@
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #actions>
-                <el-tooltip
+                <ks-tooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
@@ -20,7 +20,7 @@
                         circle
                         @click="restoreDefaultConfigurations"
                     />
-                </el-tooltip>
+                </ks-tooltip>
             </template>
             <template #content>
                 <Row>
@@ -96,12 +96,12 @@
                         </ks-select>
                     </Column>
                     <Column :label="$t('settings.blocks.configuration.fields.playground')">
-                        <el-switch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                        <ks-switch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
                     </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
-                        <el-input-number
+                        <ks-input-number
                             :modelValue="pendingSettings.autoRefreshInterval"
                             @update:model-value="onAutoRefreshInterval"
                             controlsPosition="right"
@@ -111,7 +111,7 @@
                             <template #suffix>
                                 <small class="dimmed">{{ $t('seconds').toLowerCase() }}</small>
                             </template>
-                        </el-input-number>
+                        </ks-input-number>
                     </Column>
                 </Row>
             </template>
@@ -119,7 +119,7 @@
 
         <Block :heading="$t('settings.blocks.theme.label')">
             <template #actions>
-                <el-tooltip
+                <ks-tooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
@@ -129,7 +129,7 @@
                         circle
                         @click="restoreDefaultPreferences"
                     />
-                </el-tooltip>
+                </ks-tooltip>
             </template>
             <template #content>
                 <Row>
@@ -145,7 +145,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
-                        <el-input-number
+                        <ks-input-number
                             :modelValue="pendingSettings.logsFontSize"
                             @update:model-value="onLogsFontSize"
                             controlsPosition="right"
@@ -166,7 +166,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_size')">
-                        <el-input-number
+                        <ks-input-number
                             :modelValue="pendingSettings.editorFontSize"
                             @update:model-value="onFontSize"
                             controlsPosition="right"
@@ -178,29 +178,29 @@
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
-                        <el-switch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                        <ks-switch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
                     </Column>
                     <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
-                        <el-switch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
+                        <ks-switch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
-                        <el-tooltip
+                        <ks-tooltip
                             v-if="isEnvNameFromConfig"
                             :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
                             placement="bottom"
                         >
-                            <el-input
+                            <ks-input
                                 v-model="pendingSettings.envName"
                                 @change="onEnvNameChange"
                                 :placeholder="$t('name')"
                                 clearable
                             />
-                        </el-tooltip>
+                        </ks-tooltip>
 
-                        <el-input
+                        <ks-input
                             v-else
                             v-model="pendingSettings.envName"
                             @change="onEnvNameChange"
@@ -210,7 +210,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.environment_color')">
-                        <el-color-picker
+                        <ks-color-picker
                             v-model="pendingSettings.envColor"
                             @change="onEnvColorChange"
                             showAlpha
@@ -222,7 +222,7 @@
 
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
             <template #actions>
-                <el-tooltip
+                <ks-tooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
@@ -232,7 +232,7 @@
                         circle
                         @click="restoreDefaultLocalization"
                     />
-                </el-tooltip>
+                </ks-tooltip>
             </template>
             <template #content>
                 <Row>
@@ -922,19 +922,19 @@
     };
 </script>
 <style scoped lang="scss">
-    .settings-wrapper .el-input-number {
+    .settings-wrapper .kel-input-number {
         max-width: 20vw;
 
-        & .el-input__suffix {
+        & .kel-input__suffix {
             color: var(--ks-content-secondary);
         }
 
     }
 
-    .el-input__count {
+    .kel-input__count {
         color: var(--ks-content-primary) !important;
 
-        .el-input__count-inner {
+        .kel-input__count-inner {
             background: none !important;
         }
     }

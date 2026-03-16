@@ -1,6 +1,6 @@
 <template>
     <div class="search-container" ref="searchContainer">
-        <el-input
+        <ks-input
             v-model="searchQuery"
             :placeholder="$t('search_docs')"
             class="search-input"
@@ -14,7 +14,7 @@
             <template #prefix>
                 <Magnify class="search-icon" />
             </template>
-        </el-input>
+        </ks-input>
         <div v-if="loading" class="loading-indicator">
             {{ $t('searching') }}
         </div>
@@ -151,7 +151,7 @@
     .search-input {
         width: 100%;
     }
-    .el-input__wrapper {
+    .kel-input__wrapper {
         background-color: var(--ks-background-input);
         box-shadow: 0 0 0 1px var(--ks-border-color);
         border-radius: 6px;
@@ -163,18 +163,18 @@
         }
     }
 
-    .el-input__inner {
+    .kel-input__inner {
         color: var(--ks-content-primary);
         font-size: 14px;
         height: 1.25rem;
         background: transparent;
     }
 
-    .el-input__inner::placeholder {
+    .kel-input__inner::placeholder {
         color: var(--ks-content-secondary);
     }
 
-    .el-input__prefix {
+    .kel-input__prefix {
         margin-right: 0.5rem;
     }
 

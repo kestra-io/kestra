@@ -17,7 +17,7 @@
             </ks-select>
         </div>
         <div v-if="isPaginationDisplayed">
-            <el-pagination
+            <ks-pagination
                 v-model:currentPage="internalPage"
                 v-model:pageSize="internalSize"
                 size="small"
@@ -158,7 +158,7 @@
             white-space: nowrap;
         }
 
-        :deep(.el-pagination .el-pager li) {
+        :deep(.kel-pagination .kel-pager li) {
             background-color: var(--ks-button-background-secondary);
             border: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);

@@ -137,56 +137,56 @@
         </el-table>
         <div style="margin:1rem; display:flex; gap: 1rem; justify-content: center; align-items: center;">
             Single Select
-            <kel-select
+            <el-select
                 v-model="valueSelect"
                 placeholder="Select"
                 size="large"
                 style="width: 240px"
             >
-                <el-option
+                <ks-option
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
                 />
-            </kel-select>
-            <kel-select v-model="valueSelect" placeholder="Select" style="width: 240px">
-                <el-option
+            </el-select>
+            <el-select v-model="valueSelect" placeholder="Select" style="width: 240px">
+                <ks-option
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
                 />
-            </kel-select>
-            <kel-select
+            </el-select>
+            <el-select
                 v-model="valueSelect"
                 placeholder="Select"
                 size="small"
                 style="width: 240px"
             >
-                <el-option
+                <ks-option
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
                 />
-            </kel-select>
+            </el-select>
         </div>
         <div style="margin:1rem; display:flex; gap: 1rem; justify-content: center; align-items: center;">
             Multiple Select
-            <kel-select
+            <el-select
                 v-model="valueMultiple"
                 multiple
                 placeholder="Select"
                 style="width: 240px"
             >
-                <el-option
+                <ks-option
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
                 />
-            </kel-select>
+            </el-select>
         </div>
 
         <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="(tab) => { if(tab.name) tabChanged({name:tab.name}) }" />

@@ -1,12 +1,12 @@
 <template>
-    <el-row v-for="(label, index) in props.labels" :key="index">
-        <el-col>
+    <ks-row v-for="(label, index) in props.labels" :key="index">
+        <ks-col>
             <span>{{ label.key }}:</span>
-            <el-tag :title="label.value">
+            <ks-tag :title="label.value">
                 {{ label.value }}
-            </el-tag>
-        </el-col>
-    </el-row>
+            </ks-tag>
+        </ks-col>
+    </ks-row>
 </template>
 
 <script setup lang="ts">
@@ -27,13 +27,13 @@
         gap: 6px;
         font-size: $font-size-sm;
 
-        & :deep(.el-tag) {
+        & :deep(.kel-tag) {
             margin-left: calc($spacer / 1.5);
             overflow: hidden;
             background-color: var(--ks-tag-background-active);
             color: var(--ks-tag-content);
 
-            & .el-tag__content {
+            & .kel-tag__content {
                 display: block;
                 min-width: 0;
                 white-space: nowrap;

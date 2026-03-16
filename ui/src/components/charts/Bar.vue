@@ -8,7 +8,7 @@
                     <span class="fw-bold">{{ $t("total_executions") }}</span>
                 </p>
                 <p class="m-0 fs-2">
-                    <el-skeleton v-if="loading" :rows="0" />
+                    <ks-skeleton v-if="loading" :rows="0" />
                     <span v-else>{{ total }}</span>
                 </p>
             </div>
@@ -17,7 +17,7 @@
                 <div
                     class="d-flex justify-content-end align-items-center switch-content"
                 >
-                    <el-switch
+                    <ks-switch
                         v-model="duration"
                         :activeIcon="CheckIcon"
                         inlinePrompt

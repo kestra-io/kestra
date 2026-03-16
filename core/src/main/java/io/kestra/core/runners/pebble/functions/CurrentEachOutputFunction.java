@@ -24,10 +24,8 @@ public class CurrentEachOutputFunction implements Function {
         }
 
         Map<?, ?> outputs = (Map<?, ?>) args.get("outputs");
-        List<Map<?, ?>> immutableParents = (List<Map<?, ?>>) context.getVariable("parents");
-        if (immutableParents != null && !immutableParents.isEmpty()) {
-            List<Map<?, ?>> parents = new ArrayList<>(immutableParents);
-            Collections.reverse(parents);
+        List<Map<?, ?>> parents = ((List<Map<?, ?>>) context.getVariable("parents")).reversed();
+        if (parents != null && !parents.isEmpty()) {
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {

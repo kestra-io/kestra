@@ -9,7 +9,6 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.IndexingRepository;
 import io.kestra.core.runners.Indexer;
-import io.kestra.core.runners.QueueIndexer;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
@@ -29,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class is responsible for batch-indexing asynchronously queue messages.<p>
- * Some queue messages are indexed synchronously via the {@link QueueIndexer}.
  */
 @SuppressWarnings("this-escape")
 @Slf4j

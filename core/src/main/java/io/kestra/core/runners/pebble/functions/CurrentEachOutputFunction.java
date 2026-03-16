@@ -29,7 +29,9 @@ public class CurrentEachOutputFunction implements Function {
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {
-                    if(outputs.get(taskrun.get("value")) == null) return null;
+                    if(outputs.get(taskrun.get("value")) == null) {
+                        return null;
+                    }
                     outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
                 }
             }

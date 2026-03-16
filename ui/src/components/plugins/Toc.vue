@@ -92,7 +92,7 @@
         if (activePlugin) {
             const pluginElement = pluginRefs[activePlugin];
             if (pluginElement) {
-                pluginElement.$el.scrollIntoView({behavior: "smooth", block: "start"});
+                pluginElement.$el.scrollIntoView({behavior: "smooth", block: "nearest"});
             }
         }
     };
@@ -191,6 +191,8 @@
     .plugins-list {
         display: flex;
         flex-direction: column;
+        overflow-y: auto;
+        height: 100%;
 
         .search {
             flex-shrink: 0;

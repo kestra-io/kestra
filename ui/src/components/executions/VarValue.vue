@@ -36,6 +36,7 @@
         <Editor
             :readOnly="true"
             :input="true"
+            :showScroll="true"
             :fullHeight="false"
             :customHeight="Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length))"
             :navbar="false"

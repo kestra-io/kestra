@@ -527,6 +527,7 @@
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
 .right.wrapper {
+    width: 100%;
     height: 100%;
     min-height: 0;
     display: flex;

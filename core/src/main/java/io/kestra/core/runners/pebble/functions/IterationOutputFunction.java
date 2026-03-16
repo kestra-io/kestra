@@ -6,20 +6,19 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class IterationOutputsFunction implements Function {
-    public static final String NAME = "iterationOutputs";
-
-    private static final String ITERATION_ARG = "iteration";
+public class IterationOutputFunction implements Function {
+    public static final String NAME = "iterationOutput";
 
     private static final String TASK_ID_ARG = "taskId";
 
+    private static final String ITERATION_ARG = "iteration";
+
     @Override
     public List<String> getArgumentNames() {
-        return List.of(ITERATION_ARG, TASK_ID_ARG);
+        return List.of(TASK_ID_ARG, ITERATION_ARG);
     }
 
     @Override
@@ -28,12 +27,22 @@ public class IterationOutputsFunction implements Function {
                           EvaluationContext context,
                           int lineNumber) {
 
-        Object iterationObj = args.get("iteration");
         Object taskIdObj = args.get("taskId");
+        Object iterationObj = args.get("iteration");
 
         Map<?, ?> currentTaskRun = (Map<?, ?>) context.getVariable("taskrun");
         if(!currentTaskRun.containsKey("iteration")){
             throw new PebbleException(null, " 'iterationOutputs()' function should be used inside iterative tasks only", lineNumber, self.getName());
+        }
+
+        String taskId;
+        if (taskIdObj == null) {
+            // when no taskId is provided, the default taskId is the current task
+            Map<?, ?> taskMetaData = (Map<?, ?>) context.getVariable("task");
+            taskId = (String) taskMetaData.get("id");
+        }
+        else {
+            taskId = (String) taskIdObj;
         }
 
         int iteration;
@@ -52,39 +61,25 @@ public class IterationOutputsFunction implements Function {
         if (iteration < 0) {
             throw new PebbleException(null, "Cannot fetch iteration " + iteration + ": no previous iteration exists.", lineNumber, self.getName());
         }
-        String taskId;
-        if (taskIdObj == null) {
-            // when no taskId is provided, the default taskId is the current task
-            Map<?, ?> taskMetaData = (Map<?, ?>) context.getVariable("task");
-            taskId = (String) taskMetaData.get("id");
-        }
-        else {
-            taskId = (String) taskIdObj;
-        }
-
 
         Map<?, ?> outputs = (Map<?, ?>) context.getVariable("outputs");
 
-        Map<?,?> targetOutputs = (Map<?, ?>) outputs.get(taskId);
-
-        if(targetOutputs == null){
-            throw new PebbleException(null, "The provided task with taskId = " + taskId + " has no execution outputs", lineNumber, self.getName());
+        if(outputs.get(taskId) == null){
+            return null;
         }
+        Map<?,?> targetOutputs = (Map<?, ?>) outputs.get(taskId);
 
         List<Map<?, ?>> parents = ((List<Map<?, ?>>) context.getVariable("parents")).reversed();
         if (parents != null && !parents.isEmpty()) {
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {
-                    if(targetOutputs.get(taskrun.get("value")) != null){
-                        targetOutputs = (Map<?, ?>) targetOutputs.get(taskrun.get("value"));
+                    if(targetOutputs.get(taskrun.get("value")) == null) {
+                        return null;
                     }
-                    else{
-                        throw new PebbleException(null, "The provided task with taskId = " + taskId + " has no execution outputs for the current iterative task runs path", lineNumber, self.getName());
-                    }
+                    targetOutputs = (Map<?, ?>) targetOutputs.get(taskrun.get("value"));
                 }
             }
-
         }
         if (iteration >= targetOutputs.size()) {
             throw new PebbleException(null,

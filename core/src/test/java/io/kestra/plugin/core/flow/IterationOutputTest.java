@@ -10,11 +10,11 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
-public class IterationOutputsTest {
+public class IterationOutputTest {
 
     @Test
-    @ExecuteFlow("flows/valids/iteration-outputs.yaml")
-    void iterationOutputsPrefixSum(Execution execution){
+    @ExecuteFlow("flows/valids/iteration-output.yaml")
+    void iterationOutputPrefixSum(Execution execution){
         var innerSumOutput = (Map<?,?>) execution.outputs().get("inner_even_indices_sum");
         var firstOuterIteration = (Map<?,?>) innerSumOutput.get("100");
         var lastInnerOutput1 = (Map<?,?>) firstOuterIteration.get("14");

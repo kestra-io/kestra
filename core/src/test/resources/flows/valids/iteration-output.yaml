@@ -17,9 +17,9 @@ tasks:
               {% if idx == 0 %}
                 {{ taskrun.value | trim | number + parents[0].taskrun.value | trim |number }}
               {% elseif idx is even %}
-                {{ (iterationOutputs(idx - 2, 'inner_even_indices_sum') | trim | number + taskrun.value | trim | number + parents[0].taskrun.value | trim |number) }}
+                {{ (iterationOutput('inner_even_indices_sum', idx - 2) | trim | number + taskrun.value | trim | number + parents[0].taskrun.value | trim |number) }}
               {% else %}
-                {{ iterationOutputs(idx - 1) | trim | number }}
+                {{ iterationOutput('inner_even_indices_sum') | trim | number }}
               {% endif %}
           - id: iteration_output_sibling
             type: io.kestra.plugin.core.debug.Return
@@ -28,7 +28,7 @@ tasks:
               {% if idx <= 1 %}
                 {{ taskrun.value | trim | number + parents[0].taskrun.value | trim | number }}
               {% else %}
-                {{ iterationOutputs(idx - 2, 'inner_even_indices_sum') | trim | number }}
+                {{ iterationOutput('inner_even_indices_sum', idx - 2) | trim | number }}
               {% endif %}
       - id: outer_prefix_sum
         type: io.kestra.plugin.core.debug.Return
@@ -37,7 +37,7 @@ tasks:
           {% if idx == 0 %}
             {{ taskrun.value | trim | number }}
           {% else %}
-            {{ iterationOutputs(idx - 1) | trim | number + taskrun.value | trim | number}}
+            {{ iterationOutput('outer_prefix_sum', idx - 1) | trim | number + taskrun.value | trim | number}}
           {% endif %}
       - id: default_all_prefix_sum
         type: io.kestra.plugin.core.debug.Return
@@ -46,7 +46,7 @@ tasks:
           {% if idx == 0 %}
             {{ taskrun.value | trim | number }}
           {% else %}
-            {{ iterationOutputs() | trim | number + iterationOutputs(null, null) | trim | number + taskrun.value | trim | number}}
+            {{ iterationOutput() | trim | number + iterationOutput(null, null) | trim | number + taskrun.value | trim | number}}
           {% endif %}
 
       - id: default_iteration_prefix_sum
@@ -56,7 +56,7 @@ tasks:
           {% if idx == 0 %}
             {{ taskrun.value | trim | number }}
           {% else %}
-            {{ iterationOutputs(null, 'default_iteration_prefix_sum') | trim | number + taskrun.value | trim | number}}
+            {{ iterationOutput('default_iteration_prefix_sum', null) | trim | number + taskrun.value | trim | number}}
           {% endif %}
 
       - id: default_task_id_prefix_sum
@@ -66,5 +66,5 @@ tasks:
           {% if idx == 0 %}
             {{ taskrun.value | trim | number }}
           {% else %}
-            {{ iterationOutputs(idx-1, null) | trim | number + taskrun.value | trim | number}}
+            {{ iterationOutput(null, idx - 1) | trim | number + taskrun.value | trim | number}}
           {% endif %}

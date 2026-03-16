@@ -35,6 +35,21 @@ triggers:
 id: my-flow
 namespace: my.namespace`;
 
+const flowWithOutputsAutocompleteInTask = [
+    "tasks:",
+    "  - id: download",
+    "    type: io.kestra.plugin.core.http.Download",
+    "    uri: https://example.com/file.txt",
+    "  - id: filter",
+    "    type: io.kestra.plugin.core.storage.FilterItems",
+    "    from: \"{{ outputs. }}\"",
+    "  - id: upload",
+    "    type: io.kestra.plugin.core.storage.Upload",
+    "    from: \"{{ outputs.download.uri }}\"",
+    "id: my-flow",
+    "namespace: my.namespace"
+].join("\n");
+
 const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
     schema: {
         outputs: {
@@ -124,6 +139,7 @@ const namespacesStore = {
 
 const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
+const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse(flowWithOutputsAutocompleteInTask);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
@@ -185,6 +201,24 @@ describe("FlowAutoCompletionProvider", () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task2")).toEqual(["value"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task3")).toEqual([]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "bad")).toEqual([]);
+    })
+
+    it("outputs autocomplete excludes current task id", async () => {
+        const cursorIndex = flowWithOutputsAutocompleteInTask.indexOf("outputs.") + "outputs.".length;
+        expect(cursorIndex).toBeGreaterThan(0);
+
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithOutputsAutocompleteInTask,
+            flowWithOutputsAutocompleteInTaskParsed,
+            "outputs",
+            cursorIndex
+        )).toEqual(["download", "upload"]);
+
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithOutputsAutocompleteInTask,
+            flowWithOutputsAutocompleteInTaskParsed,
+            "outputs"
+        )).toEqual(["download", "filter", "upload"]);
     })
 
     it("value autocompletions", async () => {

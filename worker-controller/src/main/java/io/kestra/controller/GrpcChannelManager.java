@@ -6,8 +6,9 @@ import io.grpc.EquivalentAddressGroup;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolverRegistry;
-import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.config.GrpcChannelConfiguration;
+import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
 import io.kestra.core.contexts.KestraContext;
 import jakarta.annotation.PostConstruct;
@@ -48,6 +49,7 @@ public class GrpcChannelManager {
     private volatile StaticNameResolverProvider registeredResolverProvider;
 
     private final GrpcChannelConfiguration grpcChannelConfiguration;
+    private final GrpcConfiguration grpcConfiguration;
     private final WorkerControllersConfiguration controllersConfig;
 
     // ExecutorService shared across channels
@@ -57,13 +59,15 @@ public class GrpcChannelManager {
      * Creates a new {@link GrpcChannelManager} instance.
      *
      * @param grpcChannelConfiguration the gRPC channel configuration.
+     * @param grpcConfiguration        the global gRPC configuration.
      * @param controllersConfig        the multi-endpoint controllers configuration.
      */
     @Inject
-    public GrpcChannelManager(GrpcChannelConfiguration grpcChannelConfiguration, WorkerControllersConfiguration controllersConfig) {
+    public GrpcChannelManager(GrpcChannelConfiguration grpcChannelConfiguration, GrpcConfiguration grpcConfiguration, WorkerControllersConfiguration controllersConfig) {
         this.grpcChannelConfiguration = grpcChannelConfiguration;
+        this.grpcConfiguration = grpcConfiguration;
         this.controllersConfig = controllersConfig;
-        this.sharedExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("grpc-channel-%d").factory());
+        this.sharedExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("grpc-channel-", 0).factory());
     }
 
     /**
@@ -169,7 +173,7 @@ public class GrpcChannelManager {
             .userAgent(getUserAgent())
             .keepAliveTime(grpcChannelConfiguration.keepAliveTime().toSeconds(), TimeUnit.SECONDS)
             .keepAliveWithoutCalls(true)
-            .maxInboundMessageSize(grpcChannelConfiguration.maxInboundMessageSize())
+            .maxInboundMessageSize(grpcConfiguration.maxInboundMessageSize())
             .executor(sharedExecutorService);
 
         // Configure load balancing policy

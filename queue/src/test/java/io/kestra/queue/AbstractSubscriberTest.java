@@ -1,5 +1,6 @@
 package io.kestra.queue;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
@@ -432,6 +433,55 @@ class AbstractSubscriberTest {
         assertThat(loopExited.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(errors.get()).isNull();
         loop.join(1000);
+    }
+
+    @Test
+    void shouldCallShutdownOnMarkEndWithException() {
+        // Given
+        var subscriber = createSubscriber();
+        subscriber.markReady();
+        var noOpContext = new NoOpShutdownContext(new AtomicBoolean(false));
+        KestraContext.setContext(noOpContext);
+
+        // When
+        subscriber.markEnd(new RuntimeException("test error"));
+
+        // Then
+        assertThat(subscriber.isActive()).isFalse();
+        assertThat(noOpContext.isShutdownCalled()).isTrue();
+    }
+
+    @Test
+    void shouldSetActiveToFalseOnMarkEndWithException() {
+        // Given
+        var subscriber = createSubscriber();
+        subscriber.markReady();
+        KestraContext.setContext(new NoOpShutdownContext(new AtomicBoolean(false)));
+
+        // When
+        subscriber.markEnd(new RuntimeException("test error"));
+
+        // Then
+        assertThat(subscriber.isActive()).isFalse();
+    }
+
+    @Test
+    void shouldBeIdempotentOnMarkEndWithExceptionCalledTwice() {
+        // Given
+        var subscriber = createSubscriber();
+        subscriber.markReady();
+        var noOpContext = new NoOpShutdownContext(new AtomicBoolean(false));
+        KestraContext.setContext(noOpContext);
+
+        // When
+        subscriber.markEnd(new RuntimeException("first"));
+        subscriber.markEnd(new RuntimeException("second"));
+
+        // Then
+        assertThat(subscriber.isActive()).isFalse();
+        // shutdown() is called twice because markEnd(Throwable) always calls it,
+        // but KestraContext.Initializer.shutdown() itself is idempotent via AtomicBoolean
+        assertThat(noOpContext.isShutdownCalled()).isTrue();
     }
 
     /**

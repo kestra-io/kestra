@@ -32,7 +32,7 @@ public class TestAuthFilter implements HttpClientFilter {
         if (ENABLED) {
             //Basic auth may be removed from the database by jdbcTestUtils.drop(); / jdbcTestUtils.migrate();
             //We need it back to be able to run the tests and avoid NPE while checking the basic authorization
-            if (basicAuthService.configuration().credentials() == null) {
+            if (basicAuthService.credentials() == null) {
                 basicAuthService.init();
             }
             //Add basic authorization header if no header are present in the query

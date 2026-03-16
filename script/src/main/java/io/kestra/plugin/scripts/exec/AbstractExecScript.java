@@ -9,6 +9,7 @@ import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
+import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.plugin.scripts.runner.docker.PullPolicy;
@@ -31,6 +32,15 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 public abstract class AbstractExecScript extends Task implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
+    @Schema(
+        title = "Deprecated - use the 'taskRunner' property instead.",
+        description = "Only used if the `taskRunner` property is not set",
+        deprecated = true
+    )
+    @PluginProperty
+    @Deprecated
+    protected RunnerType runner;
+
     @Schema(
         title = "The task runner to use.",
         description = "Task runners are provided by plugins, each have their own properties."

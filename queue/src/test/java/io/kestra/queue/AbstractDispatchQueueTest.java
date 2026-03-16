@@ -1,10 +1,13 @@
 package io.kestra.queue;
 
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -26,6 +29,21 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
     @Inject
     private DispatchQueueInterface<TestDispatch> dispatchQueue;
+
+    private KestraContext realContext;
+    protected NoOpShutdownContext noOpShutdownContext;
+
+    @BeforeEach
+    void swapKestraContext() {
+        realContext = KestraContext.getContext();
+        noOpShutdownContext = new NoOpShutdownContext(realContext, new AtomicBoolean(false));
+        KestraContext.setContext(noOpShutdownContext);
+    }
+
+    @AfterEach
+    void restoreKestraContext() {
+        KestraContext.setContext(realContext);
+    }
 
     @Test
     void singleConsumer() throws QueueException, InterruptedException, IOException {
@@ -129,6 +147,7 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).hasSize(1);
         assertThat(list.getFirst()).isEqualTo(1);
+        assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue();
 
         // consume the remaining items from the queue
         CountDownLatch remaining = new CountDownLatch(3);

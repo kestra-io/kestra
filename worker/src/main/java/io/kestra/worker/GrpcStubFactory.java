@@ -42,7 +42,7 @@ public class GrpcStubFactory {
     @Bean
     @Singleton
     public WorkerControllerServiceStub asyncWorkerServiceStub(GrpcChannelManager manager) {
-        return WorkerControllerServiceGrpc.newStub(manager.getDefaultChannel());
+        return withWaitForReady(WorkerControllerServiceGrpc.newStub(manager.getDefaultChannel()), false);
     }
 
     @Bean

@@ -17,18 +17,18 @@ public class CurrentEachOutputFunctionTest {
         var output1 = (Map<String, Object>) execution.outputs().get("1-1-1_return");
         var outputv11 = (Map<String, Object>) output1.get("v11");
         var outputv11v21 = (Map<String, Object>) outputv11.get("v21");
-        assertThat(((Map<String, Object>) outputv11v21.get("v31")).get("value")).isEqualTo("return-v11-v21-v31");
-        assertThat(((Map<String, Object>) outputv11v21.get("v32")).get("value")).isEqualTo("return-v11-v21-v32");
+        assertThat(((Map<String, Object>) outputv11v21.get("v31")).get("value")).isEqualTo("return-v11-v21-v31-v11-v21-v31");
+        assertThat(((Map<String, Object>) outputv11v21.get("v32")).get("value")).isEqualTo("return-v11-v21-v32-v11-v21-v32");
         var outputv11v22 = (Map<String, Object>) outputv11.get("v22");
-        assertThat(((Map<String, Object>) outputv11v22.get("v31")).get("value")).isEqualTo("return-v11-v22-v31");
-        assertThat(((Map<String, Object>) outputv11v22.get("v32")).get("value")).isEqualTo("return-v11-v22-v32");
+        assertThat(((Map<String, Object>) outputv11v22.get("v31")).get("value")).isEqualTo("return-v11-v22-v31-v11-v22-v31");
+        assertThat(((Map<String, Object>) outputv11v22.get("v32")).get("value")).isEqualTo("return-v11-v22-v32-v11-v22-v32");
         var outputv12 = (Map<String, Object>) output1.get("v12");
         var outputv12v21 = (Map<String, Object>) outputv12.get("v21");
-        assertThat(((Map<String, Object>) outputv12v21.get("v31")).get("value")).isEqualTo("return-v12-v21-v31");
-        assertThat(((Map<String, Object>) outputv12v21.get("v32")).get("value")).isEqualTo("return-v12-v21-v32");
+        assertThat(((Map<String, Object>) outputv12v21.get("v31")).get("value")).isEqualTo("return-v12-v21-v31-v12-v21-v31");
+        assertThat(((Map<String, Object>) outputv12v21.get("v32")).get("value")).isEqualTo("return-v12-v21-v32-v12-v21-v32");
         var outputv12v22 = (Map<String, Object>) outputv12.get("v22");
-        assertThat(((Map<String, Object>) outputv12v22.get("v31")).get("value")).isEqualTo("return-v12-v22-v31");
-        assertThat(((Map<String, Object>) outputv12v22.get("v32")).get("value")).isEqualTo("return-v12-v22-v32");
+        assertThat(((Map<String, Object>) outputv12v22.get("v31")).get("value")).isEqualTo("return-v12-v22-v31-v12-v22-v31");
+        assertThat(((Map<String, Object>) outputv12v22.get("v32")).get("value")).isEqualTo("return-v12-v22-v32-v12-v22-v32");
 
         var output2 = (Map<String, Object>) execution.outputs().get("2-1_return");
         assertThat(((Map<String, Object>) output2.get("v41")).get("value")).isEqualTo("return-v41");

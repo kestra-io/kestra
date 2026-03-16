@@ -57,7 +57,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .conditions(List.of(
                 DayWeekInMonth.builder()
                     .type(DayWeekInMonth.class.getName())
-                    .date("{{ trigger.date }}")
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
                     .build()
@@ -65,6 +65,60 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .build();
 
         return createFlow(Collections.singletonList(schedule));
+    }
+
+    @Test
+    void scheduleWithPropertyDate() throws Exception {
+        Schedule schedule = Schedule.builder()
+            .id("hourly")
+            .type(Schedule.class.getName())
+            .cron("0 0 * * *")
+            .inputs(Map.of("testInputs", "test-inputs"))
+            .conditions(List.of(
+                DayWeekInMonth.builder()
+                    .type(DayWeekInMonth.class.getName())
+                    .date(Property.ofExpression("{{ trigger.date }}"))
+                    .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
+                    .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
+                    .build()
+            ))
+            .build();
+
+        FlowWithSource flow = createFlow(Collections.singletonList(schedule));
+        flowRepository.create(GenericFlow.of(flow));
+
+        Trigger trigger = Trigger.builder()
+            .tenantId(TENANT_ID)
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId("hourly")
+            .date(ZonedDateTime.parse("2021-09-06T02:00:00+01:00[Europe/Paris]"))
+            .build();
+        triggerState.create(trigger);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+        FlowListeners flowListenersServiceSpy = spy(flowListenersService);
+        doReturn(Collections.singletonList(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        try (AbstractScheduler scheduler = new JdbcScheduler(
+            applicationContext,
+            flowListenersServiceSpy
+        )) {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
+                Execution execution = either.getLeft();
+                if (execution.getState().getCurrent() == State.Type.CREATED) {
+                    assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                    terminateExecution(execution, trigger, flow);
+                    queueCount.countDown();
+                }
+            }));
+
+            scheduler.run();
+            assertTrue(queueCount.await(45, TimeUnit.SECONDS));
+            receive.blockLast();
+        }
     }
 
     @Test

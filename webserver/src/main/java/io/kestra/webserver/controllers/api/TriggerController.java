@@ -32,6 +32,7 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -86,13 +87,16 @@ public class TriggerController {
     public PagedResults<Triggers> searchTriggers(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
-        // Deprecated params
-        @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
-        @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
+        @Parameter(description = "The sort of current page", examples = {
+            @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc"),
+            @ExampleObject(name = "Sort by trigger ID in descending order", value = "triggerId:desc")
+        }) @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
+        @Deprecated @Parameter(description = "The flow identifier", deprecated = true) @Nullable @QueryValue String flowId
     ) throws HttpStatusException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -208,7 +212,7 @@ public class TriggerController {
     @Post(uri = "/unlock/by-query")
     @Operation(tags = {"Triggers"}, summary = "Unlock triggers by query parameters")
     public MutableHttpResponse<?> unlockTriggersByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
@@ -253,7 +257,10 @@ public class TriggerController {
     public PagedResults<Trigger> searchTriggersForFlow(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "The sort of current page", examples = {
+            @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc"),
+            @ExampleObject(name = "Sort by trigger ID in descending order", value = "triggerId:desc")
+        }) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId
@@ -372,7 +379,7 @@ public class TriggerController {
     @Post(uri = "/backfill/pause/by-query")
     @Operation(tags = {"Triggers"}, summary = "Pause backfill for given triggers")
     public MutableHttpResponse<?> pauseBackfillByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
@@ -411,7 +418,7 @@ public class TriggerController {
     @Post(uri = "/backfill/unpause/by-query")
     @Operation(tags = {"Triggers"}, summary = "Unpause backfill for given triggers")
     public MutableHttpResponse<?> unpauseBackfillByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
@@ -480,7 +487,7 @@ public class TriggerController {
     @Post(uri = "/backfill/delete/by-query")
     @Operation(tags = {"Triggers"}, summary = "Delete backfill for given triggers")
     public MutableHttpResponse<?> deleteBackfillByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
@@ -565,7 +572,7 @@ public class TriggerController {
     @Delete(uri = "/delete/by-query")
     @Operation(tags = {"Triggers"}, summary = "Delete triggers by query parameters")
     public MutableHttpResponse<?> deleteTriggersByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`") @QueryFilterFormat List<QueryFilter> filters
     ) {
         Integer count = triggerRepository
             .findAsync(tenantService.resolveTenant(), filters)
@@ -598,7 +605,7 @@ public class TriggerController {
     @Post(uri = "/set-disabled/by-query")
     @Operation(tags = {"Triggers"}, summary = "Disable/enable triggers by query parameters")
     public MutableHttpResponse<?> disabledTriggersByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
@@ -637,7 +644,7 @@ public class TriggerController {
     @Operation(tags = {"Triggers"}, summary = "Export all triggers as a streamed CSV file")
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux> exportTriggers(
-        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
     ) {
 
         return HttpResponse.ok(

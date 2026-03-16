@@ -1105,7 +1105,7 @@
     "killed confirm": "실행 <code>{id}</code>을(를) 종료하시겠습니까?",
     "killed done": "종료 중입니다.",
     "kv": {
-      "add": "새 Key-Value",
+      "add": "생성",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
@@ -1703,7 +1703,7 @@
     "searching": "검색 중...",
     "seconds": "초",
     "secret": {
-      "add": "새 비밀",
+      "add": "생성",
       "inherited": "상속된 비밀",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",

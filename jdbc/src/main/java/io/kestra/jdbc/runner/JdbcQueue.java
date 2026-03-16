@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -224,11 +225,11 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
     }
 
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Long offset) {
         return this.receiveFetch(ctx, consumerGroup, offset, true);
     }
 
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset, boolean forUpdate) {
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Long offset, boolean forUpdate) {
         var select = ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
@@ -266,7 +267,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate);
 
-    abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
+    abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Long> offsets);
 
     protected abstract Condition buildTypeCondition(String type);
 
@@ -278,7 +279,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.metricRegistry
             .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
 
-        AtomicInteger maxOffset = new AtomicInteger();
+        AtomicLong maxOffset = new AtomicLong();
 
         // fetch max offset
         dslContextWrapper.transaction(configuration -> {
@@ -293,9 +294,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
             }
 
-            Integer integer = select.fetchAny("max", Integer.class);
-            if (integer != null) {
-                maxOffset.set(integer);
+            Long offset = select.fetchAny("max", Long.class);
+            if (offset != null) {
+                maxOffset.set(offset);
             }
         });
 
@@ -308,7 +309,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
 
                 if (!result.isEmpty()) {
-                    List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
+                    List<Long> offsets = result.map(record -> record.get("offset", Long.class));
 
                     maxOffset.set(offsets.getLast());
                 }
@@ -394,7 +395,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                         ctx,
                         consumerGroup,
                         queueName,
-                        result.map(record -> record.get("offset", Integer.class))
+                        result.map(record -> record.get("offset", Long.class))
                     );
                 }
 
@@ -408,7 +409,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                         DSL.using(configuration),
                         consumerGroup,
                         queueName,
-                        fetch.map(record -> record.get("offset", Integer.class))
+                        fetch.map(record -> record.get("offset", Long.class))
                     ));
             }
 

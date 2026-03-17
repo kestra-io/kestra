@@ -28,7 +28,7 @@
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision != item.value"
+                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                     />
                                 </div>
                             </el-option>
@@ -64,7 +64,7 @@
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
-                                        v-if="item.value !== undefined && currentRevision != revisionNumber(item.value)"
+                                        v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                     />
                                 </div>
                             </el-option>

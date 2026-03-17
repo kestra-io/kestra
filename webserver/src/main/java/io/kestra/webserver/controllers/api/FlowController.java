@@ -1063,4 +1063,35 @@ public class FlowController {
             throw YamlParser.toConstraintViolationException(input, cls.getSimpleName(), e);
         }
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get("/deprecated")
+    @Operation(tags = {"Flows"}, summary = "List flows containing deprecated tasks")
+    public List<FlowWithDeprecatedTasks> listDeprecated(
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+    ) {
+        List<Flow> flows = namespace != null
+            ? flowService.findByNamespace(tenantService.resolveTenant(), namespace)
+            : flowService.findAll(tenantService.resolveTenant());
+        return flows.stream()
+            .map(flow -> {
+                List<FlowService.TaskDeprecation> deprecatedTasks = flowService.findDeprecatedTasks(flow);
+                if (deprecatedTasks.isEmpty()) return null;
+                return new FlowWithDeprecatedTasks(
+                    flow.getNamespace(),
+                    flow.getId(),
+                    flow.getRevision(),
+                    deprecatedTasks
+                );
+            })
+            .filter(Objects::nonNull)
+            .toList();
+    }
+
+    public record FlowWithDeprecatedTasks(
+        String namespace,
+        String flowId,
+        Integer revision,
+        List<FlowService.TaskDeprecation> deprecatedTasks
+    ) {}
 }

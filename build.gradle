@@ -2,9 +2,7 @@ import net.e175.klaus.zip.ZipPrefixer
 import org.owasp.dependencycheck.gradle.extension.AnalyzerExtension
 
 buildscript {
-    repositories {
-        mavenCentral()
-    }
+
 
     dependencies {
         classpath "net.e175.klaus:zip-prefixer:0.4.0"
@@ -34,10 +32,16 @@ plugins {
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "2.5.7"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.36.0"
+//    id "com.vanniktech.maven.publish" version "0.36.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.0" apply false
+
+    id 'ru.vyarus.pom' version '3.0.0' apply false
+    id 'ru.vyarus.github-info' version '2.0.0' apply false
+    id "maven-publish"
+    id "com.google.cloud.artifactregistry.gradle-plugin" version "2.2.0"
+
 }
 
 idea {
@@ -559,10 +563,21 @@ tasks.register('runStandalone') {
  * Publish
  **********************************************************************************************************************/
 subprojects {subProject ->
-
+    tasks.register('publishSonatypePublicationPublicationToSonatypeRepository') {
+        doLast { }
+    }
     if (subProject.name != 'jmh-benchmarks' && subProject.name != rootProject.name) {
-        apply plugin: 'signing'
-        apply plugin: "com.vanniktech.maven.publish"
+//        apply plugin: 'signing'
+//        apply plugin: "com.vanniktech.maven.publish"
+
+        apply plugin: "maven-publish"
+        apply plugin: "com.google.cloud.artifactregistry.gradle-plugin"
+        apply plugin: 'ru.vyarus.pom'
+        apply plugin: 'ru.vyarus.github-info'
+
+        tasks.named('publish') {
+            dependsOn = [shadowJar]
+        }
 
         javadoc {
             options {
@@ -571,7 +586,12 @@ subprojects {subProject ->
                 addStringOption("Xdoclint:none", "-quiet")
             }
         }
-
+        github {
+            user 'kestra-io'
+            license 'Apache'
+            repository 'kestra'
+            site 'https://kestra.io'
+        }
         tasks.register('sourcesJar', Jar) {
             dependsOn = [':core:copyGradleProperties']
             dependsOn = [':ui:assembleFrontend']
@@ -602,40 +622,73 @@ subprojects {subProject ->
             return
         }
 
-        mavenPublishing {
-            publishToMavenCentral(true)
-            signAllPublications()
+        publishing {
+            publications {
+                "$project.name"(MavenPublication) {
+                    version project.version
 
-            coordinates(
-                "${rootProject.group}",
-                subProject.name == "cli" ? rootProject.name : subProject.name,
-                "${rootProject.version}"
-            )
+                    if (project.name.contains('cli')) {
+                        groupId "io.kestra"
+                        artifactId "kestra"
 
-            pom {
-                name        = project.name
-                description = "${project.group}:${project.name}:${rootProject.version}"
-                url         = "https://github.com/kestra-io/${rootProject.name}"
+                        artifact shadowJar
+                        artifact executableJar
+                    } else if (project.name.contains('platform')){
+                        groupId project.group
+                        artifactId project.name
+                    } else {
+                        from components.java
 
-                licenses {
-                    license {
-                        name = "The Apache License, Version 2.0"
-                        url  = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        groupId project.group
+                        artifactId project.name
+
+                        artifact sourcesJar
+                        artifact javadocJar
                     }
                 }
-                developers {
-                    developer {
-                        id    = "tchiotludo"
-                        name  = "Ludovic Dehon"
-                        email = "ldehon@kestra.io"
-                    }
-                }
-                scm {
-                    connection = 'scm:git:'
-                    url = "https://github.com/kestra-io/${rootProject.name}"
+            }
+
+            repositories {
+                maven {
+                        url "artifactregistry://europe-west1-maven.pkg.dev/kestra-host/maven-snapshot"
                 }
             }
         }
+
+//        mavenPublishing {
+//            publishToMavenCentral(true)
+//            signAllPublications()
+//
+//            coordinates(
+//                "${rootProject.group}",
+//                subProject.name == "cli" ? rootProject.name : subProject.name,
+//                "${rootProject.version}"
+//            )
+//
+//            pom {
+//                name        = project.name
+//                description = "${project.group}:${project.name}:${rootProject.version}"
+//                url         = "https://github.com/kestra-io/${rootProject.name}"
+//
+//                licenses {
+//                    license {
+//                        name = "The Apache License, Version 2.0"
+//                        url  = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id    = "tchiotludo"
+//                        name  = "Ludovic Dehon"
+//                        email = "ldehon@kestra.io"
+//                    }
+//                }
+//                scm {
+//                    connection = 'scm:git:'
+//                    url = "https://github.com/kestra-io/${rootProject.name}"
+//                }
+//            }
+//        }
 
         afterEvaluate {
             publishing {
@@ -738,4 +791,20 @@ release {
 
     pushReleaseVersionBranch = providers.gradleProperty("release.pushReleaseVersionBranch")
             .getOrElse(null)
+}
+apply plugin: "com.google.cloud.artifactregistry.gradle-plugin"
+def googleAccessToken = com.google.cloud.artifactregistry.auth.DefaultCredentialProvider.getInstance().getCredential()
+
+repositories {
+    google()
+    maven {
+        url "https://europe-west1-maven.pkg.dev/kestra-host/maven"
+        credentials {
+            username = "oauth2accesstoken"
+            password = googleAccessToken.accessToken.tokenValue
+        }
+        authentication {
+            basic(BasicAuthentication)
+        }
+    }
 }

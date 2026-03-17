@@ -6,57 +6,72 @@
                 class="save-execute-overlay"
             >
                 <div class="save-execute-backdrop" />
+                <canvas ref="canvasEl" class="save-execute-canvas" />
 
                 <div ref="wrapEl" class="save-execute-wrap">
-                    <div ref="aura1El" class="save-execute-aura aura-1" />
-                    <div ref="aura2El" class="save-execute-aura aura-2" />
-                    <div ref="aura3El" class="save-execute-aura aura-3" />
-
-                    <div ref="ring1El" class="save-execute-ring ring-1" />
-                    <div ref="ring2El" class="save-execute-ring ring-2" />
-                    <div ref="ring3El" class="save-execute-ring ring-3" />
-
                     <svg
-                        class="save-execute-bolt"
+                        class="save-execute-logo"
+                        width="120"
+                        height="116"
+                        viewBox="0 0 66 64"
                         xmlns="http://www.w3.org/2000/svg"
-                        width="110"
-                        height="130"
-                        viewBox="0 0 24 28"
                         aria-hidden="true"
                     >
                         <defs>
-                            <linearGradient id="saveExecuteBoltGradient" x1="0%" y1="0%" x2="50%" y2="100%">
-                                <stop offset="0%" stop-color="#fff" />
-                                <stop offset="40%" stop-color="#c4b5fd" />
-                                <stop offset="100%" stop-color="#7c3aed" />
+                            <linearGradient
+                                id="saveExecuteSheen"
+                                ref="sheenEl"
+                                x1="-20"
+                                y1="-20"
+                                x2="0"
+                                y2="0"
+                                gradientUnits="userSpaceOnUse"
+                            >
+                                <stop offset="0%" stop-color="white" stop-opacity="0" />
+                                <stop offset="40%" stop-color="white" stop-opacity="0" />
+                                <stop offset="50%" stop-color="white" stop-opacity="0.45" />
+                                <stop offset="60%" stop-color="white" stop-opacity="0" />
+                                <stop offset="100%" stop-color="white" stop-opacity="0" />
                             </linearGradient>
-                            <filter id="saveExecuteGlow">
-                                <feGaussianBlur stdDeviation="2" result="blur" />
-                                <feMerge>
-                                    <feMergeNode in="blur" />
-                                    <feMergeNode in="SourceGraphic" />
-                                </feMerge>
-                            </filter>
+                            <clipPath id="saveExecuteCircleClip">
+                                <circle cx="32.5774" cy="56.8499" r="6.96655" />
+                            </clipPath>
+                            <clipPath id="saveExecuteRectClip1">
+                                <rect x="46.1597" y="32.6304" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 46.1597 32.6304)" />
+                            </clipPath>
+                            <clipPath id="saveExecuteRectClip2">
+                                <rect x="23.0796" y="32.6304" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 23.0796 32.6304)" />
+                            </clipPath>
+                            <clipPath id="saveExecuteRectClip3">
+                                <rect x="0" y="32.6304" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 0 32.6304)" />
+                            </clipPath>
+                            <clipPath id="saveExecuteRectClip4">
+                                <rect x="11.5667" y="21.064" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 11.5667 21.064)" />
+                            </clipPath>
+                            <clipPath id="saveExecuteRectClip5">
+                                <rect x="23.0796" y="9.49756" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 23.0796 9.49756)" />
+                            </clipPath>
+                            <clipPath id="saveExecuteRectClip6">
+                                <rect x="34.4961" y="21.064" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 34.4961 21.064)" />
+                            </clipPath>
                         </defs>
-                        <polygon
-                            points="13,2 4,15 11,15 11,26 20,13 13,13"
-                            fill="url(#saveExecuteBoltGradient)"
-                            filter="url(#saveExecuteGlow)"
-                            stroke="rgba(255,255,255,0.6)"
-                            stroke-width="0.5"
-                        />
+
+                        <circle cx="32.5774" cy="56.8499" r="6.96655" fill="#F62E76" />
+                        <rect x="46.1597" y="32.6304" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 46.1597 32.6304)" fill="#A950FF" />
+                        <rect x="23.0796" y="32.6304" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 23.0796 32.6304)" fill="#A950FF" />
+                        <rect x="0" y="32.6304" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 0 32.6304)" fill="#A950FF" />
+                        <rect x="11.5667" y="21.064" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 11.5667 21.064)" fill="#CD88FF" />
+                        <rect x="23.0796" y="9.49756" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 23.0796 9.49756)" fill="#E9C1FF" />
+                        <rect x="34.4961" y="21.064" width="13.4319" height="13.4319" rx="3" transform="rotate(-45 34.4961 21.064)" fill="#CD88FF" />
+
+                        <rect x="-10" y="-10" width="86" height="84" clip-path="url(#saveExecuteCircleClip)" fill="url(#saveExecuteSheen)" />
+                        <rect x="-10" y="-10" width="86" height="84" clip-path="url(#saveExecuteRectClip1)" fill="url(#saveExecuteSheen)" />
+                        <rect x="-10" y="-10" width="86" height="84" clip-path="url(#saveExecuteRectClip2)" fill="url(#saveExecuteSheen)" />
+                        <rect x="-10" y="-10" width="86" height="84" clip-path="url(#saveExecuteRectClip3)" fill="url(#saveExecuteSheen)" />
+                        <rect x="-10" y="-10" width="86" height="84" clip-path="url(#saveExecuteRectClip4)" fill="url(#saveExecuteSheen)" />
+                        <rect x="-10" y="-10" width="86" height="84" clip-path="url(#saveExecuteRectClip5)" fill="url(#saveExecuteSheen)" />
+                        <rect x="-10" y="-10" width="86" height="84" clip-path="url(#saveExecuteRectClip6)" fill="url(#saveExecuteSheen)" />
                     </svg>
-
-                    <div
-                        v-for="sparkIndex in 8"
-                        :key="sparkIndex"
-                        :ref="el => setSparkRef(el, sparkIndex - 1)"
-                        class="save-execute-spark"
-                    />
-
-                    <div ref="successTextEl" class="save-execute-text">
-                        {{ text }}
-                    </div>
                 </div>
             </div>
         </Transition>
@@ -64,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onBeforeUnmount, ref, watch, type ComponentPublicInstance} from "vue";
+    import {nextTick, onBeforeUnmount, ref, watch} from "vue";
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
@@ -72,283 +87,249 @@
     }>(), {
         text: "Flow Executed!",
     });
+
     const emit = defineEmits<{
         "update:modelValue": [boolean];
         finished: [];
     }>();
 
     const wrapEl = ref<HTMLElement | null>(null);
-    const aura1El = ref<HTMLElement | null>(null);
-    const aura2El = ref<HTMLElement | null>(null);
-    const aura3El = ref<HTMLElement | null>(null);
-    const ring1El = ref<HTMLElement | null>(null);
-    const ring2El = ref<HTMLElement | null>(null);
-    const ring3El = ref<HTMLElement | null>(null);
-    const successTextEl = ref<HTMLElement | null>(null);
-    const sparkEls = ref<(HTMLElement | null)[]>(Array.from({length: 8}, () => null));
-    const starParticles = ref<HTMLElement[]>([]);
+    const canvasEl = ref<HTMLCanvasElement | null>(null);
+    const sheenEl = ref<SVGLinearGradientElement | null>(null);
 
-    let timeouts: number[] = [];
     let running = false;
+    let animationFrame: number | null = null;
+    let completionTimeout: number | null = null;
 
-    function setSparkRef(el: Element | ComponentPublicInstance | null, index: number) {
-        if (el && "$el" in el) {
-            sparkEls.value[index] = el.$el as HTMLElement | null;
-            return;
+    type Particle = {
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+        gravity: number;
+        w: number;
+        h: number;
+        color: string;
+        rot: number;
+        rotV: number;
+        wobble: number;
+        wobbleSpeed: number;
+        circ: boolean;
+    };
+
+    let particles: Particle[] = [];
+
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+    const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    const PALETTE = ["#A950FF", "#F62E76", "#CD88FF", "#E9C1FF", "#ffffff", "#c084fc"];
+
+    function clearAnimationFrame() {
+        if (animationFrame !== null) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
         }
-        sparkEls.value[index] = el as HTMLElement | null;
     }
 
-    function queueTimeout(callback: () => void, delay: number) {
-        const timeout = window.setTimeout(callback, delay);
-        timeouts.push(timeout);
+    function clearCompletionTimeout() {
+        if (completionTimeout !== null) {
+            window.clearTimeout(completionTimeout);
+            completionTimeout = null;
+        }
     }
 
-    function cleanupTimers() {
-        timeouts.forEach(timeout => window.clearTimeout(timeout));
-        timeouts = [];
+    function resizeCanvas() {
+        const canvas = canvasEl.value;
+        if (!canvas) return;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
 
     function resetElements() {
-        const wrap = wrapEl.value;
-        const successText = successTextEl.value;
-        const auras = [aura1El.value, aura2El.value, aura3El.value];
-        const rings = [ring1El.value, ring2El.value, ring3El.value];
-
-        if (wrap) {
-            wrap.style.transition = "none";
-            wrap.style.opacity = "0";
-            wrap.style.transform = "scale(0.2)";
-        }
-
-        if (successText) {
-            successText.style.transition = "none";
-            successText.style.opacity = "0";
-            successText.style.transform = "translateX(-50%)";
-        }
-
-        auras.forEach(aura => {
-            if (!aura) return;
-            aura.style.transition = "none";
-            aura.style.opacity = "0";
-        });
-
-        rings.forEach(ring => {
-            if (!ring) return;
-            ring.style.transition = "none";
-            ring.style.opacity = "0";
-            ring.style.transform = "scale(1)";
-        });
-
-        sparkEls.value.forEach(spark => {
-            if (!spark) return;
-            spark.style.transition = "none";
-            spark.style.opacity = "0";
-            spark.style.transform = "translate(0,0) scale(1)";
-        });
-
-        starParticles.value.forEach(particle => particle.remove());
-        starParticles.value = [];
+        clearAnimationFrame();
+        clearCompletionTimeout();
+        particles = [];
         running = false;
+
+        if (wrapEl.value) {
+            wrapEl.value.classList.remove("visible");
+            wrapEl.value.style.transition = "none";
+            wrapEl.value.style.opacity = "0";
+            wrapEl.value.style.transform = "translateY(60px) scale(0.4)";
+        }
+
+        if (sheenEl.value) {
+            sheenEl.value.setAttribute("x1", "-20");
+            sheenEl.value.setAttribute("y1", "-20");
+            sheenEl.value.setAttribute("x2", "0");
+            sheenEl.value.setAttribute("y2", "0");
+        }
+
+        const ctx = canvasEl.value?.getContext("2d");
+        if (ctx && canvasEl.value) {
+            ctx.clearRect(0, 0, canvasEl.value.width, canvasEl.value.height);
+        }
     }
 
-    function makeStarCanvas(size: number, color: string, glow: boolean) {
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-            return "";
-        }
+    function tween(duration: number, step: (progress: number) => void, done?: () => void) {
+        const start = performance.now();
 
-        const cx = size / 2;
-        const cy = size / 2;
-        const outer = size / 2 - 1;
-        const inner = outer * 0.38;
-
-        ctx.save();
-        if (glow) {
-            ctx.shadowColor = color;
-            ctx.shadowBlur = size * 0.35;
-        }
-
-        ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
-            const radius = i % 2 === 0 ? outer : inner;
-            const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-            const px = cx + Math.cos(angle) * radius;
-            const py = cy + Math.sin(angle) * radius;
-            if (i === 0) {
-                ctx.moveTo(px, py);
+        const frame = (now: number) => {
+            const progress = Math.min((now - start) / duration, 1);
+            step(progress);
+            if (progress < 1) {
+                animationFrame = requestAnimationFrame(frame);
             } else {
-                ctx.lineTo(px, py);
+                animationFrame = null;
+                done?.();
             }
-        }
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.restore();
+        };
 
-        return canvas.toDataURL();
+        animationFrame = requestAnimationFrame(frame);
     }
 
-    const starImages = [
-        makeStarCanvas(18, "rgba(255,255,255,0.95)", true),
-        makeStarCanvas(13, "rgba(196,181,253,0.95)", true),
-        makeStarCanvas(10, "rgba(167,139,250,0.9)", true),
-        makeStarCanvas(8, "rgba(255,255,255,0.7)", false),
-        makeStarCanvas(22, "rgba(221,214,254,0.85)", true),
-    ];
-
-    function launchStars() {
-        const count = 38;
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
-
-        for (let i = 0; i < count; i++) {
-            const particle = document.createElement("img");
-            particle.className = "save-execute-star-particle";
-            particle.src = starImages[Math.floor(Math.random() * starImages.length)] ?? "";
-
-            const size = 8 + Math.random() * 18;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${cx}px`;
-            particle.style.top = `${cy}px`;
-            particle.style.transformOrigin = "center";
-            document.body.appendChild(particle);
-            starParticles.value.push(particle);
-
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 120 + Math.random() * 260;
-            const tx = Math.cos(angle) * speed;
-            const ty = Math.sin(angle) * speed - Math.random() * 60;
-            const rotation = (Math.random() - 0.5) * 360;
-            const duration = 900 + Math.random() * 600;
-            const delay = Math.random() * 100;
-            const initialRotation = Math.random() * 360;
-
-            particle.style.opacity = "1";
-            particle.style.transform = `translate(-50%,-50%) rotate(${initialRotation}deg) scale(1)`;
-
-            requestAnimationFrame(() => {
-                particle.style.transition = `transform ${duration}ms cubic-bezier(.2,.8,.4,1) ${delay}ms, opacity ${duration * 0.55}ms ease ${delay + duration * 0.45}ms`;
-                particle.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) rotate(${initialRotation + rotation}deg) scale(0.3)`;
-                particle.style.opacity = "0";
-            });
-
-            queueTimeout(() => {
-                particle.remove();
-                starParticles.value = starParticles.value.filter(item => item !== particle);
-            }, duration + delay + 50);
+    function phaseRise(done?: () => void) {
+        const wrap = wrapEl.value;
+        if (!wrap) {
+            done?.();
+            return;
         }
-    }
 
-    function shootSparks() {
-        sparkEls.value.forEach((spark, index) => {
-            if (!spark) return;
-            const angle = (index / 8) * Math.PI * 2;
-            const distance = 90 + Math.random() * 50;
-            spark.style.transition = "none";
-            spark.style.opacity = "1";
-            spark.style.transform = "translate(0,0) scale(1)";
-            spark.style.background = "#c4b5fd";
-            spark.style.boxShadow = "0 0 6px #a78bfa";
-
-            requestAnimationFrame(() => {
-                spark.style.transition = "transform .8s ease-out, opacity .8s ease-out";
-                spark.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`;
-                spark.style.opacity = "0";
-            });
+        requestAnimationFrame(() => {
+            wrap.style.transition = "";
+            wrap.classList.add("visible");
+            wrap.style.opacity = "1";
+            wrap.style.transform = "translateY(0) scale(1)";
+            const handler = (event: TransitionEvent) => {
+                if (event.propertyName !== "transform") return;
+                wrap.removeEventListener("transitionend", handler);
+                done?.();
+            };
+            wrap.addEventListener("transitionend", handler);
         });
+    }
+
+    function phaseSweep(done?: () => void) {
+        const sheen = sheenEl.value;
+        if (!sheen) {
+            done?.();
+            return;
+        }
+
+        tween(750, progress => {
+            const eased = easeInOutSine(progress);
+            const pos = lerp(-20, 86, eased);
+            sheen.setAttribute("x1", String(pos - 20));
+            sheen.setAttribute("y1", String(pos - 20));
+            sheen.setAttribute("x2", String(pos + 20));
+            sheen.setAttribute("y2", String(pos + 20));
+        }, done);
+    }
+
+    function spawnConfetti() {
+        const canvas = canvasEl.value;
+        if (!canvas) return;
+
+        particles = [];
+        for (let i = 0; i < 80; i++) {
+            const fromLeft = i < 40;
+            const w = 4 + Math.random() * 6;
+            const h = 3 + Math.random() * 4;
+            const x = fromLeft ? -10 - Math.random() * 40 : canvas.width + 10 + Math.random() * 40;
+            const y = canvas.height * (0.1 + Math.random() * 0.5);
+            const speed = 8 + Math.random() * 6;
+
+            particles.push({
+                x,
+                y,
+                vx: fromLeft ? speed : -speed,
+                vy: -(3 + Math.random() * 5),
+                gravity: 0.35 + Math.random() * 0.2,
+                w,
+                h,
+                color: PALETTE[Math.floor(Math.random() * PALETTE.length)] ?? "#ffffff",
+                rot: Math.random() * 360,
+                rotV: (Math.random() - 0.5) * 6,
+                wobble: Math.random() * Math.PI * 2,
+                wobbleSpeed: 0.03 + Math.random() * 0.03,
+                circ: Math.random() < 0.3,
+            });
+        }
+    }
+
+    function confettiLoop() {
+        const canvas = canvasEl.value;
+        const ctx = canvas?.getContext("2d");
+        if (!canvas || !ctx) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles = particles.filter(particle => particle.y < canvas.height + 20);
+
+        for (const particle of particles) {
+            particle.wobble += particle.wobbleSpeed;
+            particle.x += particle.vx + Math.sin(particle.wobble) * 0.8;
+            particle.y += particle.vy;
+            particle.vy += particle.gravity;
+            particle.vx *= 0.97;
+            particle.rot += particle.rotV;
+
+            ctx.save();
+            ctx.globalAlpha = 0.85;
+            ctx.fillStyle = particle.color;
+            ctx.translate(particle.x, particle.y);
+            ctx.rotate((particle.rot * Math.PI) / 180);
+            if (particle.circ) {
+                ctx.beginPath();
+                ctx.arc(0, 0, particle.w / 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillRect(-particle.w / 2, -particle.h / 2, particle.w, particle.h);
+            }
+            ctx.restore();
+        }
+
+        if (particles.length > 0) {
+            animationFrame = requestAnimationFrame(confettiLoop);
+        } else {
+            animationFrame = null;
+        }
+    }
+
+    function launchConfetti() {
+        const wrap = wrapEl.value;
+        if (!wrap) return;
+
+        tween(400, progress => {
+            wrap.style.opacity = String(1 - easeOutCubic(progress));
+        });
+        spawnConfetti();
+        confettiLoop();
     }
 
     async function runAnimation() {
-        if (running) {
-            return;
-        }
+        if (running) return;
 
         await nextTick();
-
-        const wrap = wrapEl.value;
-        const successText = successTextEl.value;
-        if (!wrap || !successText) {
-            return;
-        }
-
+        resizeCanvas();
+        resetElements();
         running = true;
 
-        wrap.style.opacity = "1";
-        wrap.style.transition = "opacity .15s, transform .45s cubic-bezier(.17,.67,.3,1.4)";
-        wrap.style.transform = "scale(1)";
-
-        queueTimeout(() => {
-            [aura1El.value, aura2El.value, aura3El.value].forEach((aura, index) => {
-                if (!aura) return;
-                aura.style.transition = `opacity .4s ${index * 80}ms`;
-                aura.style.opacity = "1";
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                phaseRise(() => phaseSweep(() => {
+                    launchConfetti();
+                    completionTimeout = window.setTimeout(() => {
+                        emit("update:modelValue", false);
+                        emit("finished");
+                    }, 1800);
+                }));
             });
-        }, 80);
-
-        [ring1El.value, ring2El.value, ring3El.value].forEach((ring, index) => {
-            queueTimeout(() => {
-                if (!ring) return;
-                ring.style.transition = "none";
-                ring.style.opacity = "0.9";
-                ring.style.transform = "scale(1)";
-                requestAnimationFrame(() => {
-                    ring.style.transition = "transform 1.2s ease-out, opacity 1.2s ease-out";
-                    ring.style.transform = "scale(2.8)";
-                    ring.style.opacity = "0";
-                });
-            }, 200 + index * 200);
         });
-
-        queueTimeout(() => {
-            shootSparks();
-        }, 250);
-
-        queueTimeout(() => {
-            launchStars();
-        }, 280);
-
-        queueTimeout(() => {
-            successText.style.transition = "opacity .35s, transform .4s cubic-bezier(.17,.67,.3,1.3)";
-            successText.style.opacity = "1";
-            successText.style.transform = "translateX(-50%) translateY(-10px)";
-        }, 500);
-
-        queueTimeout(() => {
-            [ring1El.value, ring2El.value, ring3El.value].forEach(ring => {
-                if (!ring) return;
-                ring.style.transition = "none";
-                ring.style.opacity = "0.7";
-                ring.style.transform = "scale(1)";
-                requestAnimationFrame(() => {
-                    ring.style.transition = "transform 1s ease-out, opacity 1s ease-out";
-                    ring.style.transform = "scale(3.5)";
-                    ring.style.opacity = "0";
-                });
-            });
-        }, 700);
-
-        queueTimeout(() => {
-            wrap.style.transition = "opacity .5s, transform .5s ease-in";
-            wrap.style.opacity = "0";
-            wrap.style.transform = "scale(1.3)";
-            successText.style.opacity = "0";
-        }, 2000);
-
-        queueTimeout(() => {
-            emit("update:modelValue", false);
-            emit("finished");
-        }, 2600);
     }
 
     watch(
         () => props.modelValue,
         value => {
-            cleanupTimers();
             if (value) {
                 void runAnimation();
             } else {
@@ -359,7 +340,6 @@
     );
 
     onBeforeUnmount(() => {
-        cleanupTimers();
         resetElements();
     });
 </script>
@@ -373,102 +353,58 @@
         align-items: center;
         justify-content: center;
         pointer-events: none;
+        overflow: hidden;
     }
 
     .save-execute-backdrop {
         position: absolute;
         inset: 0;
-        background: rgba(10, 5, 30, 0.65);
+        background: rgba(10, 10, 15, 0.72);
+    }
+
+    .save-execute-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 4001;
+        pointer-events: none;
     }
 
     .save-execute-wrap {
-        position: absolute;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transform: scale(0.2);
-    }
-
-    .save-execute-ring,
-    .save-execute-aura {
-        position: absolute;
-        border-radius: 999px;
-        opacity: 0;
-    }
-
-    .save-execute-ring {
-        border: 3px solid rgba(124, 58, 237, 0.6);
-    }
-
-    .save-execute-aura.aura-1 {
-        width: 240px;
-        height: 240px;
-        background: radial-gradient(circle, rgba(167, 139, 250, 0.55) 0%, transparent 70%);
-    }
-
-    .save-execute-aura.aura-2 {
-        width: 380px;
-        height: 380px;
-        background: radial-gradient(circle, rgba(124, 58, 237, 0.35) 0%, transparent 65%);
-    }
-
-    .save-execute-aura.aura-3 {
-        width: 520px;
-        height: 520px;
-        background: radial-gradient(circle, rgba(91, 33, 182, 0.2) 0%, transparent 60%);
-    }
-
-    .save-execute-ring.ring-1 {
-        width: 150px;
-        height: 150px;
-    }
-
-    .save-execute-ring.ring-2 {
-        width: 220px;
-        height: 220px;
-        border-color: rgba(167, 139, 250, 0.5);
-    }
-
-    .save-execute-ring.ring-3 {
-        width: 310px;
-        height: 310px;
-        border-color: rgba(124, 58, 237, 0.35);
-    }
-
-    .save-execute-bolt {
         position: relative;
-        z-index: 5;
-        filter: drop-shadow(0 0 18px #a78bfa) drop-shadow(0 0 40px #7c3aed);
+        z-index: 4002;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        opacity: 0;
+        transform: translateY(60px) scale(0.4);
+        transition:
+            opacity 0.15s ease,
+            transform 0.55s linear(
+                0, 0.0221, 0.0739, 0.1485, 0.2394, 0.3402, 0.4458, 0.5517, 0.6541,
+                0.7502, 0.8375, 0.9149, 0.9813, 1.0364, 1.0803, 1.1136, 1.1369,
+                1.1513, 1.1579, 1.1578, 1.1522, 1.1424, 1.1294, 1.1142, 1.0978,
+                1.081, 1.0643, 1.0485, 1.0338, 1.0205, 1.009, 0.9992, 0.9912,
+                0.9849, 0.9803, 0.9772, 0.9754, 0.9748, 0.9752, 0.9764, 0.9782,
+                0.9804, 0.9829, 0.9856, 0.9882, 0.9908, 0.9933, 0.9955, 0.9975,
+                0.9992, 1.0007, 1.0018, 1.0027, 1.0034, 1.0038, 1.004, 1.004,
+                1.0039, 1.0036, 1.0033, 1.0029, 1.0025, 1.0021, 1.0017, 1.0013,
+                1.0009, 1.0006, 1.0003, 1, 0.9998, 0.9996, 0.9995, 0.9994,
+                0.9994, 0.9994, 0.9994, 0.9994, 0.9994, 0.9995, 0.9996, 0.9996,
+                0.9997, 0.9998, 0.9998, 0.9999, 0.9999, 1, 1, 1, 1.0001,
+                1.0001, 1.0001, 1.0001, 1.0001, 1.0001, 1.0001, 1.0001, 1.0001,
+                1.0001, 1.0001, 1
+            );
     }
 
-    .save-execute-spark {
-        position: absolute;
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        opacity: 0;
+    .save-execute-wrap.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
 
-    .save-execute-text {
-        position: absolute;
-        bottom: -80px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: #fff;
-        font-size: 22px;
-        font-weight: 800;
-        letter-spacing: 1px;
-        white-space: nowrap;
-        opacity: 0;
-        text-shadow: 0 0 20px #a78bfa, 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
-
-    :global(.save-execute-star-particle) {
-        position: fixed;
-        z-index: 4001;
-        opacity: 0;
-        pointer-events: none;
+    .save-execute-logo {
+        display: block;
+        filter: drop-shadow(0 18px 36px rgba(169, 80, 255, 0.18));
     }
 
     .save-execute-fade-enter-active,
@@ -480,4 +416,4 @@
     .save-execute-fade-leave-to {
         opacity: 0;
     }
- </style>
+</style>

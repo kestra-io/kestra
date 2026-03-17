@@ -1,0 +1,20 @@
+id: chimpanzee_331848
+namespace: company.team
+
+tasks:
+  - id: duckdb_query
+    type: io.kestra.plugin.jdbc.duckdb.Queries
+    sql: |
+      INSTALL httpfs;
+      LOAD httpfs;
+      SELECT sum(total) as sum_total, avg(quantity) as avg_quantity FROM read_csv_auto('https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv');
+    fetchType: FETCH
+  - id: send_slack_message
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: https://kestra.io/api/mock
+    messageText: "DuckDB Query Results: Sum of total = {{ outputs.duckdb_query.outputs[0].rows[0].sum_total }}, Average quantity = {{ outputs.duckdb_query.outputs[0].rows[0].avg_quantity }}"
+
+triggers:
+  - id: monday_9am_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * 1"

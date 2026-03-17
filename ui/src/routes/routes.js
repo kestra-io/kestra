@@ -14,7 +14,7 @@ export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
-    // New onboarding pages, intial one and the success one after the user has completed the onboarding flow.
+    // New onboarding pages, initial one and the success one after the user has completed the onboarding flow.
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
     {name: "welcome/success", path: "/:tenant?/welcome/success", component: () => import("../components/onboarding/Success.vue")},
 

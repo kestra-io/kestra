@@ -328,9 +328,6 @@ subprojects {subProj ->
                 includeTags 'flaky'
             }
 
-//            testClassesDirs = sourceSets.test.output.classesDirs
-//            classpath = sourceSets.test.runtimeClasspath
-
             reports {
                 junitXml.required = true
                 junitXml.outputPerTestCase = true

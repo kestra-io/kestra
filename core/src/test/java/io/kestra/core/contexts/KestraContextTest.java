@@ -31,4 +31,9 @@ class KestraContextTest {
         // Then
         assertThat(context.getWorkerGroupKey()).isEqualTo(Optional.of("my-key"));
     }
+
+    @Test
+    void shouldGetAllocatedCpuCores() {
+        assertThat(context.getAllocatedCpuCores()).isEqualTo(Runtime.getRuntime().availableProcessors());
+    }
 }

@@ -10,8 +10,12 @@ import java.util.List;
 public interface Worker extends Service {
     String EXECUTOR_NAME = "worker";
 
+    /**
+     * The default number of threads for the worker service.
+     * Only used for display/documentation of commands as in runtime KestraContext.getAllocatedCpuCores() is used instead
+     */
     static int defaultNumThreads() {
-        return Math.min(Runtime.getRuntime().availableProcessors() * 8, Runtime.getRuntime().availableProcessors());
+        return Runtime.getRuntime().availableProcessors() * 8;
     }
 
     /**

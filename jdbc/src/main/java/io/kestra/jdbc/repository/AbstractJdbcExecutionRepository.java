@@ -18,14 +18,11 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.QueueIndexerRepository;
-import io.kestra.core.runners.TransactionContext;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.executor.ExecutionStateStore;
-import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.context.ApplicationContext;
@@ -54,7 +51,7 @@ import java.util.stream.Stream;
 
 import static io.kestra.core.models.QueryFilter.Field.KIND;
 
-public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRepository<Execution> implements ExecutionRepositoryInterface, ExecutionStateStore, QueueIndexerRepository<Execution> {
+public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRepository<Execution> implements ExecutionRepositoryInterface, ExecutionStateStore {
     private static final int FETCH_SIZE = 100;
     private static final Field<String> STATE_CURRENT_FIELD = field("state_current", String.class);
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
@@ -686,23 +683,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                     .where(field("row_num").eq(1));
                 return mainQuery.fetch().map(this.jdbcRepository::map);
             });
-    }
-
-    @Override
-    public Execution save(TransactionContext txContext, Execution execution) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(execution);
-        this.jdbcRepository.persist(execution, txContext.unwrap(JdbcTransactionContext.class).getDslContext(), fields);
-        return execution;
-    }
-
-    @Override
-    public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
-        return JdbcTransactionContext.class.isAssignableFrom(clazz);
-    }
-
-    @Override
-    public Class<Execution> getItemClass() {
-        return Execution.class;
     }
 
     @SneakyThrows

@@ -2,6 +2,7 @@ package io.kestra.queue.jdbc.client;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.queue.QueueService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,9 +19,10 @@ public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
         JdbcQueueClient jdbcQueueClient,
         String queueName,
         List<String> routingKeys,
-        MetricRegistry metricRegistry
+        MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService
     ) {
-        super(cls, queueService, jdbcQueueClient, queueName, metricRegistry);
+        super(cls, queueService, jdbcQueueClient, queueName, metricRegistry, ignoreExecutionService);
 
         this.routingKeys = routingKeys;
     }

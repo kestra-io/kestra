@@ -3,6 +3,7 @@ package io.kestra.queue.jdbc;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.queue.AbstractDispatchQueue;
@@ -18,12 +19,14 @@ import java.util.List;
 public class JdbcDispatchQueue<T extends DispatchEvent> extends AbstractDispatchQueue<T> {
     private final JdbcQueueClient jdbcQueueClient;
     private final MetricRegistry metricRegistry;
+    private final IgnoreExecutionService ignoreExecutionService;
 
-    public JdbcDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+    public JdbcDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.metricRegistry = metricRegistry;
+        this.ignoreExecutionService = ignoreExecutionService;
     }
 
     @Override
@@ -34,7 +37,8 @@ public class JdbcDispatchQueue<T extends DispatchEvent> extends AbstractDispatch
             jdbcQueueClient,
             queueName(),
             null,
-            metricRegistry
+            metricRegistry,
+            ignoreExecutionService
         );
     }
 

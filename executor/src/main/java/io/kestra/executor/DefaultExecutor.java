@@ -54,7 +54,6 @@ import static io.kestra.core.utils.Rethrow.*;
 @Slf4j
 public class DefaultExecutor extends AbstractService implements Executor {
     private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
-    private static final String SKIPPING_EXECUTION = "Skipping execution {}";
     private static final String IGNORING_EXECUTION_MSG = "Ignoring execution {} because there is a kill switch on it";
     private static final String CANCELLING_EXECUTION_MSG = "Cancelling execution {} because there is a kill switch on it";
     private static final String KILLING_EXECUTION_MSG = "Killing execution {} because there is a kill switch on it";
@@ -151,7 +150,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
-        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors());
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, KestraContext.getContext().getAllocatedCpuCores());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
         setState(ServiceState.CREATED);

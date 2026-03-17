@@ -1,4 +1,4 @@
 kestra:
   server-type: WEBSERVER
   queue:
-    type: jdbc
+    type: mysql

@@ -1,5 +1,6 @@
 package io.kestra.core.utils;
 
+import io.kestra.core.contexts.KestraContext;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 
@@ -7,6 +8,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.*;
 
+import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,13 @@ public class ExecutorsUtils {
 
     @Inject
     private MeterRegistry meterRegistry;
+
+    @Value("${" + KestraContext.KESTRA_ALLOCATED_CPU_CORES + ":0}")
+    private int allocatedCpuCores;
+
+    public int getAllocatedCpuCores() {
+        return allocatedCpuCores == 0 ? Runtime.getRuntime().availableProcessors() : allocatedCpuCores;
+    }
 
     public ExecutorService cachedThreadPool(String name) {
         return this.wrap(

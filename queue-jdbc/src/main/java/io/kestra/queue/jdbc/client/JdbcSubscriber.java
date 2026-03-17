@@ -2,6 +2,7 @@ package io.kestra.queue.jdbc.client;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Either;
 import io.kestra.queue.AbstractPollingSubscriber;
 import io.kestra.core.queues.event.Event;
@@ -21,9 +22,10 @@ public abstract class JdbcSubscriber<T extends Event> extends AbstractPollingSub
         QueueService queueService,
         JdbcQueueClient jdbcQueueClient,
         String queueName,
-        MetricRegistry metricRegistry
+        MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService
     ) {
-        super(cls, queueName, queueService, metricRegistry, new QueuePollerConfiguration(
+        super(cls, queueName, queueService, metricRegistry, ignoreExecutionService, new QueuePollerConfiguration(
             jdbcQueueClient.getConfiguration().minPollInterval(),
             jdbcQueueClient.getConfiguration().maxPollInterval(),
             jdbcQueueClient.getConfiguration().pollSwitchInterval(),

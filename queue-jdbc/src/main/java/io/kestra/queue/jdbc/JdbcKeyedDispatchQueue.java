@@ -4,6 +4,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.KeyedDispatchEvent;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.queue.AbstractKeyedDispatchQueue;
 import io.kestra.queue.QueueRecord;
@@ -18,12 +19,14 @@ import java.util.List;
 public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends AbstractKeyedDispatchQueue<T> {
     private final JdbcQueueClient jdbcQueueClient;
     private final MetricRegistry metricRegistry;
+    private final IgnoreExecutionService ignoreExecutionService;
 
-    public JdbcKeyedDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient JdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
+    public JdbcKeyedDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient JdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = JdbcQueueClient;
         this.metricRegistry = metricRegistry;
+        this.ignoreExecutionService = ignoreExecutionService;
     }
 
     @Override
@@ -34,7 +37,8 @@ public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends Abstra
             jdbcQueueClient,
             queueName(),
             routingKey == null ? List.of() : List.of(routingKey),
-            metricRegistry
+            metricRegistry,
+            ignoreExecutionService
         );
     }
 

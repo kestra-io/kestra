@@ -3,6 +3,7 @@ package io.kestra.queue;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
@@ -30,6 +31,9 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     @Inject
     private DispatchQueueInterface<TestDispatch> dispatchQueue;
 
+    @Inject
+    private IgnoreExecutionService ignoreExecutionService;
+
     private KestraContext realContext;
     protected NoOpShutdownContext noOpShutdownContext;
 
@@ -46,7 +50,7 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     }
 
     @Test
-    void singleConsumer() throws QueueException, InterruptedException, IOException {
+    void singleConsumer() throws QueueException, InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
 
@@ -70,7 +74,33 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     }
 
     @Test
-    void closingConsumer() throws QueueException, InterruptedException, IOException {
+    void batchConsumer() throws QueueException, InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
+
+        QueueSubscriber<TestDispatch> subscriber = dispatchQueue
+            .subscriber()
+            .subscribeBatch(items -> {
+                items.forEach(e -> {
+                    list.add(e.getLeft().id);
+                    countDownLatch.countDown();
+                });
+            });
+
+        String prefix = this.keyPrefix();
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 1));
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 2));
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.close();
+
+        assertThat(await).isEqualTo(true);
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
+        assertThat(list).containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    void closingConsumer() throws QueueException, InterruptedException {
         singleConsumer();
         singleConsumer();
     }
@@ -229,6 +259,62 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(exception.getMessage()).contains("message of size");
         assertThat(exception.getMessage()).contains("has exceeded the configured limit of 1048576");
         assertThat(exception).isInstanceOf(MessageTooBigException.class);
+    }
+
+    @Test
+    void shouldIgnoreRecordInConsumer() throws QueueException, InterruptedException {
+        String prefix = this.keyPrefix();
+        var record1 = new TestDispatch(prefix + "_" + IdUtils.create(), 1);
+        var record2 = new TestDispatch(prefix + "_" + IdUtils.create(), 2);
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
+        ignoreExecutionService.setIgnoredQueueRecords(List.of(record1.key()));
+
+        QueueSubscriber<TestDispatch> subscriber = dispatchQueue
+            .subscriber()
+            .subscribe(e -> {
+                list.add(e.getLeft().id);
+                countDownLatch.countDown();
+            });
+
+        dispatchQueue.emit(record1);
+        dispatchQueue.emit(record2);
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.close();
+
+        assertThat(await).isEqualTo(true);
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
+        assertThat(list).containsExactlyInAnyOrder(2);
+    }
+
+    @Test
+    void shouldIgnoreRecordInBatchConsumer() throws QueueException, InterruptedException {
+        String prefix = this.keyPrefix();
+        var record1 = new TestDispatch(prefix + "_" + IdUtils.create(), 1);
+        var record2 = new TestDispatch(prefix + "_" + IdUtils.create(), 2);
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
+        ignoreExecutionService.setIgnoredQueueRecords(List.of(record1.key()));
+
+        QueueSubscriber<TestDispatch> subscriber = dispatchQueue
+            .subscriber()
+            .subscribeBatch(items -> {
+                items.forEach(e -> {
+                    list.add(e.getLeft().id);
+                    countDownLatch.countDown();
+                });
+            });
+
+        dispatchQueue.emit(record1);
+        dispatchQueue.emit(record2);
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.close();
+
+        assertThat(await).isEqualTo(true);
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
+        assertThat(list).containsExactlyInAnyOrder(2);
     }
 
     public record TestDispatch(String key, Integer id, String value) implements DispatchEvent {

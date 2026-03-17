@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - releases/*
-      - develop
+      - kestra_wip
 
   workflow_dispatch:
     inputs:
@@ -26,10 +26,10 @@ jobs:
   trigger-ee:
     runs-on: ubuntu-latest
     steps:
-      # Targeting develop branch from develop
-      - name: Trigger EE Workflow (develop push, no payload)
+      # Targeting kestra_wip branch from kestra_wip
+      - name: Trigger EE Workflow (kestra_wip push, no payload)
         uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/kestra_wip' }}
         with:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
           repository: kestra-io/kestra-ee
@@ -59,10 +59,10 @@ jobs:
       TRUNK_API_TOKEN: ${{ secrets.TRUNK_API_TOKEN }}
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-develop-docker:
+  publish-kestra_wip-docker:
     name: Publish Docker
     needs: [backend-tests, frontend-tests]
-    if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+    if: "!failure() && !cancelled() && github.ref == 'refs/heads/kestra_wip'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
       java-version: 25
@@ -73,10 +73,10 @@ jobs:
       GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
 
 
-  publish-develop-maven:
-    name: Publish develop Maven
+  publish-kestra_wip-maven:
+    name: Publish kestra_wip Maven
     needs: [ backend-tests, frontend-tests ]
-    if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+    if: "!failure() && !cancelled() && github.ref == 'refs/heads/kestra_wip'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
     secrets:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
@@ -89,7 +89,7 @@ jobs:
 
   end:
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests, publish-develop-docker, publish-develop-maven]
+    needs: [backend-tests, frontend-tests, publish-kestra_wip-docker, publish-kestra_wip-maven]
     if: "always() && github.repository == 'kestra-io/kestra'"
     steps:
       - run: echo "end CI of failed or success"

@@ -328,6 +328,9 @@ subprojects {subProj ->
                 includeTags 'flaky'
             }
 
+//            testClassesDirs = sourceSets.test.output.classesDirs
+//            classpath = sourceSets.test.runtimeClasspath
+
             reports {
                 junitXml.required = true
                 junitXml.outputPerTestCase = true
@@ -381,6 +384,7 @@ subprojects {subProj ->
 
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    dependsOn(tasks.named('flakyTest'))
     finalizedBy jacocoTestReport
 }
 

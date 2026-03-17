@@ -4,6 +4,7 @@
             <div
                 v-if="modelValue"
                 class="onboarding-success-overlay"
+                :class="{'without-backdrop': !props.backdrop}"
             >
                 <div class="onboarding-success-card">
                     <h3>{{ $t("welcome_copilot.success_popup.title") }}</h3>
@@ -34,9 +35,12 @@
     import {computed, nextTick} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         modelValue: boolean;
-    }>();
+        backdrop?: boolean;
+    }>(), {
+        backdrop: true,
+    });
     const emit = defineEmits<{
         "update:modelValue": [boolean];
     }>();
@@ -73,9 +77,18 @@
         inset: 0;
         display: grid;
         place-items: center;
-        z-index: 2000;
+        z-index: 5000;
         overflow: hidden;
         background: rgba(15, 23, 42, 0.18);
+    }
+
+    .onboarding-success-overlay.without-backdrop {
+        background: transparent;
+        pointer-events: none;
+    }
+
+    .onboarding-success-overlay.without-backdrop .onboarding-success-card {
+        pointer-events: auto;
     }
 
     .onboarding-success-card {

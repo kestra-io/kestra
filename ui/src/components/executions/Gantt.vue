@@ -119,10 +119,12 @@
         </div>
         <OnboardingSuccessPopup
             :modelValue="showOnboardingSuccessPopup"
+            :backdrop="false"
             @update:model-value="showOnboardingSuccessPopup = $event"
         />
         <SaveExecuteAnimation
             :modelValue="showSaveExecuteAnimation"
+            :dialogMode="showOnboardingSuccessPopup"
             @update:model-value="showSaveExecuteAnimation = $event"
             @finished="onSaveExecuteAnimationFinished"
         />
@@ -590,6 +592,7 @@
             ) {
                 onboardingAnimationPlayed.value = true;
                 showSaveExecuteAnimation.value = true;
+                showOnboardingSuccessPopup.value = true;
             }
         },
         {immediate: true},

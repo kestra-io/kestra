@@ -62,7 +62,7 @@
                     <div v-else class="ai-input-container ai-input-container-onboarding">
                         <el-input
                             ref="promptInput"
-                            v-if="configured"
+                            v-if="configured || props.onboarding"
                             v-model="prompt"
                             type="textarea"
                             :disabled="!props.onboarding && waitingForReply"

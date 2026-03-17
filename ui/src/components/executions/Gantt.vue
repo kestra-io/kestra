@@ -34,7 +34,7 @@
                     </div>
                 </template>
                 <template #default>
-                    <DynamicScrollerAny
+                    <TypedDynamicScroller
                         :items="filteredSeries"
                         :minItemSize="40"
                         keyField="id"
@@ -42,7 +42,7 @@
                         :updateInterval="0"
                     >
                         <template #default="{item, index, active}">
-                            <DynamicScrollerItemAny
+                            <DynamicScrollerItem
                                 :item="item"
                                 :active="active"
                                 :data-index="index"
@@ -55,48 +55,6 @@
                                             <ChevronDown v-else />
                                         </div>
                                         <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
-                    <span v-else class="text-end" v-for="(date, i) in dates" :key="i">
-                        {{ date }}
-                    </span>
-                </div>
-            </template>
-            <template #default>
-                <TypedDynamicScroller
-                    :items="filteredSeries"
-                    :minItemSize="40"
-                    keyField="id"
-                    :buffer="0"
-                    :updateInterval="0"
-                >
-                    <template #default="{item, index, active}">
-                        <DynamicScrollerItem
-                            :item="item"
-                            :active="active"
-                            :data-index="index"
-                            :sizeDependencies="[selectedTaskRuns]"
-                        >
-                            <div class="d-flex flex-column">
-                                <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
-                                    <div v-if="!verticalLayout" class="d-inline-flex">
-                                        <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
-                                        <ChevronDown v-else />
-                                    </div>
-                                    <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
-                                        <template #content>
-                                            <code>{{ item.name }}</code>
-                                            <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
-                                        </template>
-                                        <span v-if="verticalLayout" class="task-name">
-                                            <code :title="item.name">{{ item.name }}</code>
-                                            <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
-                                        </span>
-                                        <span v-else>
-                                            <code>{{ item.name }}</code>
-                                            <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
-                                        </span>
-                                    </el-tooltip>
-                                    <div>
-                                        <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                             <template #content>
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
@@ -153,9 +111,9 @@
                                         />
                                     </div>
                                 </div>
-                            </DynamicScrollerItemAny>
+                            </DynamicScrollerItem>
                         </template>
-                    </DynamicScrollerAny>
+                    </TypedDynamicScroller>
                 </template>
             </el-card>
         </div>
@@ -203,9 +161,6 @@
     } from "../filter/utils/logLevelQuery";
     import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
     import {useExecutionsStore, type Execution} from "../../stores/executions";
-
-    const DynamicScrollerAny = DynamicScroller as any;
-    const DynamicScrollerItemAny = DynamicScrollerItem as any;
 
     interface TaskRun {
         id: string;
@@ -277,6 +232,11 @@
     const executionsStore = useExecutionsStore();
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
     const ganttExecutionFilter = useGanttExecutionFilter();
+    const TypedDynamicScroller = DynamicScroller as typeof DynamicScroller & (new () => {
+        $slots: {
+            default(props: DynamicScrollerSlotProps): unknown;
+        };
+    });
     // Constants
     const TASKRUN_THRESHOLD = 50;
     const ts = (date: string | Date): number => new Date(date).getTime();

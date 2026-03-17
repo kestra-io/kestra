@@ -2122,7 +2122,7 @@
       },
       "need_help": "お困りですか？",
       "placeholder_prompt": "毎日午前9時に挨拶メッセージを送信してください。",
-      "show_less": "プロンプトを少なく表示",
+      "show_less": "プロンプトを減らす",
       "show_more": "さらにプロンプトを表示",
       "success_page": {
         "description": "Kestraの基本を学びました。ここから旅を続けるためのリソースをいくつかご紹介します。",

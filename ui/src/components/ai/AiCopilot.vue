@@ -1,6 +1,12 @@
 <template>
-    <el-card shadow="never" class="ai-copilot-card">
-        <template #header>
+    <el-card
+        shadow="never"
+        :class="{
+            'ai-copilot-card': !props.onboarding,
+            'ai-copilot-onboarding-card': props.onboarding,
+        }"
+    >
+        <template #header v-if="!props.onboarding">
             <div class="d-flex justify-content-between align-items-center">
                 <span class="d-inline-flex title align-items-center">
                     <AiIcon />&nbsp;<span>{{ $t("ai.flow.title") }}</span>
@@ -13,7 +19,144 @@
             </div>
         </template>
 
-        <div class="ai-body">
+        <div v-if="props.onboarding" class="ai-body ai-body-onboarding">
+            <div class="ai-onboarding-hero">
+                <div class="ai-onboarding-icon">
+                    <img
+                        src="/favicon-192x192.png"
+                        alt="Kestra"
+                        class="ai-onboarding-logo"
+                    >
+                </div>
+                <h2 class="ai-onboarding-title">
+                    {{ $t("welcome_copilot.title") }}
+                </h2>
+            </div>
+
+            <div class="ai-onboarding-composer-wrap" :class="{'has-warning': !!error}">
+                <div v-if="error" class="ai-onboarding-warning" role="alert">
+                    <span class="ai-onboarding-warning-content">
+                        <el-icon class="ai-onboarding-warning-icon">
+                            <AlertBox />
+                        </el-icon>
+                        <span>{{ error }}</span>
+                    </span>
+                </div>
+
+                <div class="ai-onboarding-composer" :class="{'has-error': !!error}">
+                    <template v-if="isListening">
+                        <div class="ai-voice-pill ai-voice-pill-onboarding">
+                            <div class="ai-waves-track" ref="wavesContainer">
+                                <span
+                                    v-for="(val, i) in volumeBuffer"
+                                    :key="i"
+                                    class="ai-wave-bar"
+                                    :style="{
+                                        height: barHeight(val) + 'px',
+                                    }"
+                                />
+                            </div>
+                        </div>
+                    </template>
+
+                    <div v-else class="ai-input-container ai-input-container-onboarding">
+                        <el-input
+                            ref="promptInput"
+                            v-if="configured || props.onboarding"
+                            v-model="prompt"
+                            type="textarea"
+                            :disabled="!props.onboarding && waitingForReply"
+                            :readonly="props.onboarding && waitingForReply"
+                            :autosize="{minRows: 4, maxRows: 8}"
+                            :placeholder="$t('welcome_copilot.placeholder_prompt')"
+                            @keydown.exact.enter.prevent="submitPrompt"
+                            @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
+                            class="ai-custom-textarea ai-custom-textarea-onboarding"
+                        />
+                        <template v-else>
+                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                            <div class="mt-2" v-html="highlightedAiConfiguration" />
+                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
+                        </template>
+                        <el-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
+                            {{ error }}
+                        </el-text>
+                    </div>
+
+                    <div v-if="configured" class="ai-footer ai-footer-onboarding">
+                        <el-select
+                            v-if="providers.length > 1"
+                            class="ai-provider-select"
+                            :modelValue="selectedProvider"
+                            @update:model-value="onProviderChange"
+                            :placeholder="$t('ai.flow.select_provider')"
+                        >
+                            <el-option
+                                v-for="p in providers"
+                                :key="p.id"
+                                :label="p.displayName"
+                                :value="p.id"
+                            />
+                        </el-select>
+
+                        <div class="footer-right">
+                            <template v-if="waitingForReply">
+                                <template v-if="props.onboarding">
+                                    <el-button
+                                        type="primary"
+                                        class="send-btn send-btn-onboarding"
+                                        disabled
+                                    >
+                                        <el-icon class="is-loading">
+                                            <Loading />
+                                        </el-icon>
+                                    </el-button>
+                                </template>
+                                <template v-else>
+                                    <span class="generating-label">
+                                        <el-icon class="is-loading"><Loading /></el-icon>
+                                        {{ $t(`ai.flow.generating.${generationType}`) }}
+                                    </span>
+                                </template>
+                            </template>
+                            <template v-else-if="isListening">
+                                <el-button
+                                    class="no-bg-btn"
+                                    @click="cancelVoice"
+                                >
+                                    <Close />
+                                </el-button>
+                                <el-button
+                                    class="no-bg-btn"
+                                    @click="stopAndValidateVoice"
+                                >
+                                    <Check />
+                                </el-button>
+                            </template>
+                            <template v-else>
+                                <el-button
+                                    class="no-bg-btn"
+                                    @click="toggleVoiceInput"
+                                >
+                                    <Microphone />
+                                </el-button>
+
+                                <el-button
+                                    type="primary"
+                                    class="send-btn send-btn-onboarding"
+                                    :disabled="!prompt.trim()"
+                                    @click="submitPrompt"
+                                >
+                                    <ArrowUp />
+                                </el-button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="ai-body">
             <template v-if="isListening">
                 <div class="ai-voice-pill">
                     <div class="ai-waves-track" ref="wavesContainer">
@@ -53,7 +196,7 @@
             </div>
         </div>
 
-        <template #footer>
+        <template #footer v-if="!props.onboarding">
             <div v-if="configured" class="ai-footer">
                 <div class="footer-left">
                     <span class="shortcut-hint">(⌘) Ctrl + Alt (⌥) + Shift + K {{ $t("to toggle") }}</span>
@@ -121,6 +264,7 @@
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
     import {Loading} from "@element-plus/icons-vue";
+    import AlertBox from "vue-material-design-icons/AlertBox.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import Check from "vue-material-design-icons/Check.vue";
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue";
@@ -137,27 +281,32 @@
     const apiStore = useApiStore();
 
     const promptInput = ref<InputInstance>();
-    const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
     const initialPromptBeforeListening = ref("");
     const waitingForReply = ref(false);
 
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
+        createFlowDirectly: [string];
     }>();
-
-    watch(prompt, (newValue) => {
-        sessionStorage.setItem("kestra-ai-prompt", newValue);
-    });
 
     const props = defineProps<{
         flow: string,
         conversationId: string,
         generationType?: AiGenerationType,
-        namespace?: string
+        namespace?: string,
+        onboarding?: boolean,
+        initialPrompt?: string,
+        redirectOnUnchangedPrompt?: boolean,
+        selectedFromTag?: boolean,
     }>();
 
+    const prompt = ref(
+        props.onboarding ? props.initialPrompt ?? "" : sessionStorage.getItem("kestra-ai-prompt") ?? "",
+    );
+
     const error = ref<string | undefined>(undefined);
+    const onboardingPromptEdited = ref(false);
 
     const speechSupported = ref(false);
     const isListening = ref(false);
@@ -283,6 +432,22 @@
     async function submitPrompt() {
         if (!prompt.value.trim()) return;
         error.value = undefined;
+        // Blur before disabling to avoid the textarea focus ring flashing on submit.
+        const activeElement = document.activeElement as HTMLElement | null;
+        activeElement?.blur?.();
+
+        if (
+            props.onboarding &&
+            props.selectedFromTag &&
+            props.redirectOnUnchangedPrompt &&
+            !onboardingPromptEdited.value
+        ) {
+            waitingForReply.value = true;
+            await nextTick();
+            emit("createFlowDirectly", props.flow);
+            return;
+        }
+
         waitingForReply.value = true;
         apiStore.posthogEvents({
             type: "AI_COPILOT",
@@ -419,10 +584,45 @@
         stopAudioAnalysis();
     });
 
-    watch(prompt, (v) => sessionStorage.setItem("kestra-ai-prompt", v));
+    watch(
+        () => [props.onboarding, props.initialPrompt] as const,
+        ([onboarding, initialPrompt]) => {
+            if (onboarding) {
+                prompt.value = initialPrompt ?? "";
+                onboardingPromptEdited.value = false;
+            }
+        },
+        {immediate: true},
+    );
+
+    watch(
+        prompt,
+        (value) => {
+            if (!props.onboarding) {
+                sessionStorage.setItem("kestra-ai-prompt", value);
+            }
+
+            if (props.onboarding) {
+                onboardingPromptEdited.value = value.trim() !== (props.initialPrompt ?? "").trim();
+            }
+        },
+    );
 </script>
 
 <style scoped lang="scss">
+@import "@kestra-io/ui-libs/src/scss/_variables.scss";
+
+.ai-copilot-onboarding-card {
+    border: none;
+    background: transparent;
+    overflow: visible;
+
+    :deep(.el-card__body) {
+        padding: 0;
+        overflow: visible;
+    }
+}
+
 .ai-copilot-card {
     background: var(--ks-background-panel);
     border: 1px solid var(--ks-border-secondary);
@@ -450,6 +650,99 @@
     align-items: stretch;
 }
 
+.ai-body-onboarding {
+    align-items: center;
+    gap: 32px;
+    padding: 40px 24px 10px;
+}
+
+.ai-onboarding-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    text-align: center;
+}
+
+.ai-onboarding-icon {
+    width: 69px;
+    height: 69px;
+    display: grid;
+    place-items: center;
+}
+
+.ai-onboarding-logo {
+    width: 69px;
+    height: 69px;
+    object-fit: contain;
+    border-radius: 20px;
+}
+
+.ai-onboarding-title {
+    margin: 0;
+    max-width: 760px;
+    color: var(--ks-content-primary);
+    font-size: $font-size-2xl;
+    line-height: 1.08;
+    font-weight: 600;
+    margin-bottom: 3rem;
+}
+
+.ai-onboarding-warning {
+    position: absolute;
+    top: -30px;
+    left: 16px;
+    right: 16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    padding: 4px 14px;
+    border: 1px solid var(--ks-border-info);
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    background: var(--ks-background-info);
+    color: var(--ks-content-info);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.ai-onboarding-warning-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: $font-size-sm;
+}
+
+.ai-onboarding-warning-icon {
+    color: var(--ks-content-info);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.ai-onboarding-composer-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1120px;
+}
+
+.ai-onboarding-composer {
+    width: 100%;
+    height: 152px;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    background: var(--ks-background-input);
+    box-shadow:
+        0 8px 20px rgba(15, 23, 42, 0.035),
+        0 22px 44px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    outline: none !important;
+}
+
+.ai-onboarding-composer.has-error {
+    border-color: var(--ks-border-info);
+}
+
 /* Voice waveform container — matches the textarea look */
 .ai-voice-pill {
     width: 100%;
@@ -460,6 +753,16 @@
     border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
     padding: 8px 12px;
     min-height: 58px;
+}
+
+.ai-voice-pill-onboarding {
+    flex: 1;
+    min-height: 0;
+    justify-content: center;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
 }
 
 /* Waveform track fills remaining space inside the pill */
@@ -481,6 +784,10 @@
     }
 }
 
+.ai-voice-pill-onboarding .ai-waves-track {
+    max-width: calc(100% - 12px);
+}
+
 .ai-input-container {
     width: 100%;
 
@@ -489,6 +796,17 @@
         text-align: right;
         margin-top: 8px;
     }
+}
+
+.ai-input-container-onboarding {
+    flex: 1;
+    min-height: 0;
+    padding: 14px 18px 0;
+    display: flex;
+    flex-direction: column;
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
 .ai-custom-textarea {
@@ -505,10 +823,111 @@
     }
 }
 
+.ai-custom-textarea-onboarding {
+    flex: 1;
+    --el-disabled-bg-color: transparent;
+    --el-disabled-text-color: var(--ks-content-primary);
+    --el-fill-color-light: transparent;
+    --el-fill-color-blank: transparent;
+    --el-input-border-color: transparent;
+    --el-input-hover-border-color: transparent;
+    --el-input-focus-border-color: transparent;
+    --el-border-color: transparent;
+    --el-input-focus-border: transparent;
+    --el-input-box-shadow: none;
+
+    :deep(.el-textarea) {
+        height: 100%;
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    :deep(.el-textarea:focus-within) {
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    :deep(.el-textarea.is-disabled) {
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    :deep(.el-textarea__inner) {
+        min-height: 100% !important;
+        height: 100% !important;
+        padding: 16px 14px 8px;
+        border: none !important;
+        border-radius: 0;
+        background: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+        font-size: $font-size-md;
+        line-height: 1.45;
+
+        &::placeholder {
+            font-style: normal;
+            font-size: $font-size-md;
+        }
+
+        &:disabled {
+            background: transparent !important;
+            color: var(--ks-content-primary) !important;
+            -webkit-text-fill-color: var(--ks-content-primary) !important;
+            opacity: 1;
+            cursor: default;
+        }
+
+        &:focus,
+        &:focus-visible,
+        &:active {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+    }
+
+    :deep(.el-textarea.is-disabled .el-textarea__inner) {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: var(--ks-content-primary) !important;
+        -webkit-text-fill-color: var(--ks-content-primary) !important;
+        opacity: 1;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    :deep(.el-textarea__inner:hover) {
+        box-shadow: none !important;
+        border: none !important;
+        outline: none !important;
+    }
+
+    :deep(.el-textarea__inner::-webkit-focus-inner) {
+        border: 0;
+    }
+}
+
 .ai-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.ai-footer-onboarding {
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 2px 12px 8px;
+    margin-top: -2px;
+}
+
+.ai-provider-select {
+    width: min(240px, 100%);
 }
 
 .footer-right {
@@ -555,8 +974,79 @@
     }
 }
 
+.send-btn-onboarding {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 999px !important;
+    color: white !important;
+    margin-left: calc(1rem / 2) !important;
+
+    &:hover,
+    &:focus-visible {
+        color: white !important;
+    }
+
+    &:disabled {
+        color: var(--ks-content-inactive) !important;
+    }
+}
+
 .shortcut-hint {
     font-size: 11px;
     color: var(--ks-content-tertiary);
+}
+
+@media (max-width: 768px) {
+    .ai-body-onboarding {
+        gap: 24px;
+        padding: 24px 12px 16px;
+    }
+
+    .ai-onboarding-icon {
+        width: 69px;
+        height: 69px;
+    }
+
+    .ai-onboarding-logo {
+        width: 69px;
+        height: 69px;
+        border-radius: 22px;
+    }
+
+    .ai-onboarding-composer {
+        border-radius: 18px;
+    }
+
+    .ai-onboarding-warning {
+        left: 12px;
+        right: 12px;
+    }
+
+    .ai-custom-textarea-onboarding {
+        :deep(.el-textarea__inner) {
+            font-size: $font-size-md;
+
+            &::placeholder {
+                font-size: $font-size-md;
+            }
+        }
+    }
+
+    .ai-footer-onboarding {
+        flex-wrap: wrap;
+    }
+
+    .ai-provider-select {
+        width: 100%;
+        order: 3;
+    }
+
+    .footer-left {
+        width: 100%;
+    }
+
+    .footer-right {
+        margin-left: auto;
+    }
 }
 </style>

@@ -73,7 +73,7 @@
     import OnboardingResourceList from "./OnboardingResourceList.vue";
     import {useOnboardingResources} from "./useOnboardingResources";
 
-    import {flowExamples, initialFlow, labels} from "./flows/index";
+    import {flowExamples, labels} from "./flows/index";
     import {aiGenerationTypes} from "../../utils/constants";
 
     import permission from "../../models/permission";
@@ -105,17 +105,8 @@
     useRouteContext(routeInfo);
 
     const conversationId = ref<string>(Utils.uid());
-    const selectedLabel = ref<(typeof labels)[number] | undefined>(undefined);
-    const selectedExample = computed(
-        () =>
-            (selectedLabel.value
-                ? flowExamples[selectedLabel.value]
-                : undefined) ?? {
-                flow: initialFlow,
-                labelKey: "",
-                promptKey: "",
-            },
-    );
+    const selectedLabel = ref<(typeof labels)[number]>(labels[0]);
+    const selectedExample = computed(() => flowExamples[selectedLabel.value]);
 
     const allLabelsShown = ref(false);
     const visibleLabels = computed(() => {

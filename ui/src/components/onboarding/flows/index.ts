@@ -1,5 +1,3 @@
-import initial from "./initial.yaml?raw";
-
 import jsonApiToDuckdb from "./json-api-to-duckdb.yaml?raw";
 import ansibleInstallNginx from "./ansible-install-nginx.yaml?raw";
 import buildDbtPipeline from "./build-dbt-pipeline.yaml?raw";
@@ -10,8 +8,6 @@ import microservicesApis from "./microservices-apis.yaml?raw";
 import runDockerImage from "./run-docker-image.yaml?raw";
 import scheduledPdfReports from "./scheduled-pdf-reports.yaml?raw";
 import weeklySalesKpisToSlack from "./weekly-sales-kpis-to-slack.yaml?raw";
-
-export const initialFlow = initial;
 
 export const flowExamples = {
     jsonApiToDuckdb: {

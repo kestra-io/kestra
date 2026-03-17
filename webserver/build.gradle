@@ -16,6 +16,8 @@ dependencies {
     annotationProcessor project(':processor')
     implementation project(":core")
 
+    implementation "io.kestra.libs:copilot"
+
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"

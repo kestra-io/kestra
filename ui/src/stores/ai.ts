@@ -2,6 +2,7 @@ import axios from "axios";
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {AiGenerationType} from "../utils/constants";
+import {getUid} from "../utils/uid";
 
 export const useAiStore = defineStore("ai", {
     actions: {
@@ -16,6 +17,10 @@ export const useAiStore = defineStore("ai", {
                 yaml,
                 conversationId,
                 providerId
+            }, {
+                headers: {
+                    "X-Kestra-User-Id": getUid()
+                }
             });
 
             return response.data;
@@ -29,6 +34,10 @@ export const useAiStore = defineStore("ai", {
                 providerId,
                 namespace,
                 tenantId
+            }, {
+                headers: {
+                    "X-Kestra-User-Id": getUid()
+                }
             });
 
             return response.data;

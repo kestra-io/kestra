@@ -2057,6 +2057,9 @@
         "title": "チュートリアル"
       }
     },
+    "welcome_copilot": {
+      "show_less": "プロンプトを減らす"
+    },
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
       "welcome": "Kestraへようこそ"

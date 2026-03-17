@@ -2057,6 +2057,9 @@
         "title": "Samouczek"
       }
     },
+    "welcome_copilot": {
+      "show_less": "Pokaż mniej podpowiedzi"
+    },
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
       "welcome": "Witamy w Kestra"

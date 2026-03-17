@@ -2057,6 +2057,9 @@
         "title": "教程"
       }
     },
+    "welcome_copilot": {
+      "show_less": "显示较少提示"
+    },
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",
       "welcome": "欢迎使用 Kestra"

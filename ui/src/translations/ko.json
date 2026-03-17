@@ -2057,6 +2057,9 @@
         "title": "튜토리얼"
       }
     },
+    "welcome_copilot": {
+      "show_less": "프롬프트 줄이기"
+    },
     "welcome_page": {
       "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
       "welcome": "Kestra에 오신 것을 환영합니다"

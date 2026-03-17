@@ -2057,6 +2057,9 @@
         "title": "Tutorial"
       }
     },
+    "welcome_copilot": {
+      "show_less": "Mostrar menos prompts"
+    },
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?",
       "welcome": "Bem-vindo ao Kestra"

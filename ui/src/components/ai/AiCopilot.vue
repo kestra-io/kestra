@@ -698,7 +698,8 @@
     align-items: center;
     padding: 4px 14px;
     border: 1px solid var(--ks-border-info);
-    border-radius: 12px;
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
     background: var(--ks-background-info);
     color: var(--ks-content-info);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);

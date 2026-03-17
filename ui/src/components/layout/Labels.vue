@@ -84,13 +84,15 @@
 
 <style scoped lang="scss">
 .label {
-    --ks-tag-background: #E0E3F0;
+    --ks-tag-background: #ECEBEF;
     --ks-tag-content: var(--ks-content-primary);
-    --ks-tag-background-active: var(--el-color-primary);
+    --ks-tag-background-active: #414557;
     --ks-tag-content-active: var(--bs-white);
 
     html.dark & {
-        --ks-tag-background: #404559;
+        --ks-tag-background: #5A6079;
+        --ks-tag-background-active: #F2F2F2;
+        --ks-tag-content-active: var(--bs-black);
     }
 
     background-color: var(--ks-tag-background);

@@ -2077,7 +2077,7 @@
         "need_help": "Need Help?",
         "placeholder_prompt": "Send me a daily greeting message at 9am.",
         "show_more": "Show more prompts",
-        "show_less": "Show less prompts",
+        "show_less": "Show fewer prompts",
         "execute_hint": {
           "title": "Save & Execute your flow",
           "description": "Click to save your workflow and run it immediately."

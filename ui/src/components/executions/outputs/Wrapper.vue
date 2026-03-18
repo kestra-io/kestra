@@ -445,7 +445,7 @@
             ? value
             : `${value.substring(0, 16)}...`;
 
-    const isFile = (value: unknown) => Utils.isFile(value);
+    const isFile = (value: unknown): boolean => Utils.isFile(value);
 
     const displayVarValue = () =>
         isFile(selectedValue.value) ||

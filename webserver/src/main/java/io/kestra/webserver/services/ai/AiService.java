@@ -104,7 +104,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     @Override
-    public String generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
+    public GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
         AiService.GenerationContext ctx = this.beforeGeneration(userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration", Map.of(
             "flowYaml", flowGenerationPrompt.getYaml(),
             "userPrompt", flowGenerationPrompt.getUserPrompt()
@@ -119,11 +119,11 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             tenantId
         );
 
-        return this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow");
+        return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
     }
 
     @Override
-    public String generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
+    public GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
         AiService.GenerationContext ctx = this.beforeGeneration(userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration", Map.of(
             "dashboardYaml", dashboardGenerationPrompt.getYaml(),
             "userPrompt", dashboardGenerationPrompt.getUserPrompt()
@@ -137,7 +137,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             dashboardGenerationPrompt
         );
 
-        return this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard");
+        return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
     }
 
     public String displayName() {

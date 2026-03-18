@@ -3,8 +3,11 @@ package io.kestra.webserver.services.ai.api;
 import io.kestra.core.services.InstanceService;
 import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
+import io.kestra.webserver.services.ai.GenerationResult;
 import io.kestra.webserver.services.ai.UserInfo;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.BlockingHttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,9 +18,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,11 +49,18 @@ class ApiAiServiceTest {
         FlowGenerationPrompt prompt = new FlowGenerationPrompt("conversation-1", "Generate a flow", "yaml: true", "io.kestra.tests");
 
         when(instanceService.fetch()).thenReturn("instance-1");
-        when(apiHttpClient.retrieve(requestCaptor.capture(), eq(String.class))).thenReturn("generated-flow");
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> httpResponse = mock(HttpResponse.class);
+        HttpHeaders headers = mock(HttpHeaders.class);
+        when(headers.get("X-Kestra-AI-Quota", Integer.class)).thenReturn(Optional.of(42));
+        when(httpResponse.body()).thenReturn("generated-flow");
+        when(httpResponse.getHeaders()).thenReturn(headers);
+        when(apiHttpClient.exchange(requestCaptor.capture(), eq(String.class))).thenReturn(httpResponse);
 
-        String result = apiAiService.generateFlow(userInfo, prompt, "tenant-1");
+        GenerationResult result = apiAiService.generateFlow(userInfo, prompt, "tenant-1");
 
-        assertThat(result).isEqualTo("generated-flow");
+        assertThat(result.content()).isEqualTo("generated-flow");
+        assertThat(result.remainingQuota()).hasValue(42);
 
         HttpRequest<?> request = requestCaptor.getValue();
         assertThat(request.getPath()).isEqualTo("/v1/ai/generate/flow");
@@ -75,11 +87,18 @@ class ApiAiServiceTest {
         DashboardGenerationPrompt prompt = new DashboardGenerationPrompt("conversation-2", "Generate a dashboard", "widgets: []");
 
         when(instanceService.fetch()).thenReturn("instance-2");
-        when(apiHttpClient.retrieve(requestCaptor.capture(), eq(String.class))).thenReturn("generated-dashboard");
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> httpResponse = mock(HttpResponse.class);
+        HttpHeaders headers = mock(HttpHeaders.class);
+        when(headers.get("X-Kestra-AI-Quota", Integer.class)).thenReturn(Optional.empty());
+        when(httpResponse.body()).thenReturn("generated-dashboard");
+        when(httpResponse.getHeaders()).thenReturn(headers);
+        when(apiHttpClient.exchange(requestCaptor.capture(), eq(String.class))).thenReturn(httpResponse);
 
-        String result = apiAiService.generateDashboard(userInfo, prompt);
+        GenerationResult result = apiAiService.generateDashboard(userInfo, prompt);
 
-        assertThat(result).isEqualTo("generated-dashboard");
+        assertThat(result.content()).isEqualTo("generated-dashboard");
+        assertThat(result.remainingQuota()).isEmpty();
 
         HttpRequest<?> request = requestCaptor.getValue();
         assertThat(request.getPath()).isEqualTo("/v1/ai/generate/dashboard");

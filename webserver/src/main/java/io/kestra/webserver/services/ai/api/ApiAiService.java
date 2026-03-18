@@ -5,17 +5,22 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
 import io.kestra.webserver.services.ai.AiServiceInterface;
+import io.kestra.webserver.services.ai.GenerationResult;
 import io.kestra.webserver.services.ai.UserInfo;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.BlockingHttpClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 public class ApiAiService implements AiServiceInterface {
+    private static final String QUOTA_HEADER = "X-Kestra-AI-Quota";
+
     private final BlockingHttpClient apiHttpClient;
     private final InstanceService instanceService;
 
@@ -26,22 +31,26 @@ public class ApiAiService implements AiServiceInterface {
 
 
     @Override
-    public String generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
+    public GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
         Map<String, Object> asMap = new HashMap<>(JacksonMapper.toMap(flowGenerationPrompt));
         asMap.put("tenantId", tenantId);
 
-        return apiHttpClient.retrieve(withUserInfoHeaders(HttpRequest.POST(
+        HttpResponse<String> response = apiHttpClient.exchange(withUserInfoHeaders(HttpRequest.POST(
             "/v1/ai/generate/flow",
             asMap
         ), userInfo), String.class);
+
+        return toResult(response);
     }
 
     @Override
-    public String generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
-        return apiHttpClient.retrieve(withUserInfoHeaders(HttpRequest.POST(
+    public GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
+        HttpResponse<String> response = apiHttpClient.exchange(withUserInfoHeaders(HttpRequest.POST(
             "/v1/ai/generate/dashboard",
             dashboardGenerationPrompt
         ), userInfo), String.class);
+
+        return toResult(response);
     }
 
     private <B> HttpRequest<B> withUserInfoHeaders(MutableHttpRequest<B> originalRequest, UserInfo userInfo) {
@@ -49,6 +58,12 @@ public class ApiAiService implements AiServiceInterface {
             "X-Kestra-Instance-Id", instanceService.fetch(),
             "X-Kestra-User-Id", userInfo.uid()
         ));
+    }
+
+    private GenerationResult toResult(HttpResponse<String> response) {
+        Optional<Integer> remainingQuota = response.getHeaders()
+            .get(QUOTA_HEADER, Integer.class);
+        return new GenerationResult(response.body(), remainingQuota);
     }
 
     @Override

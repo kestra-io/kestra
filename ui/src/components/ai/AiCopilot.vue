@@ -33,17 +33,18 @@
                 </h2>
             </div>
 
-            <div class="ai-onboarding-composer-wrap" :class="{'has-warning': !!error}">
-                <div v-if="error" class="ai-onboarding-warning" role="alert">
-                    <span class="ai-onboarding-warning-content">
-                        <el-icon class="ai-onboarding-warning-icon">
-                            <AlertBox />
+            <div class="ai-onboarding-composer-wrap">
+                <div v-if="apiFeedback" class="ai-onboarding-info" :role="error ? 'alert' : 'status'">
+                    <span class="ai-onboarding-info-content">
+                        <el-icon class="ai-onboarding-info-icon">
+                            <AlertBox v-if="error" />
+                            <InformationOutline v-else />
                         </el-icon>
-                        <span>{{ error }}</span>
+                        <span>{{ error ?? $t("welcome_copilot.remaining_quota", {count: remainingQuota}) }}</span>
                     </span>
                 </div>
 
-                <div class="ai-onboarding-composer" :class="{'has-error': !!error}">
+                <div class="ai-onboarding-composer" :class="{'api-feedback': apiFeedback}">
                     <template v-if="isListening">
                         <div class="ai-voice-pill ai-voice-pill-onboarding">
                             <div class="ai-waves-track" ref="wavesContainer">
@@ -265,6 +266,7 @@
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
     import {Loading} from "@element-plus/icons-vue";
     import AlertBox from "vue-material-design-icons/AlertBox.vue";
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import Check from "vue-material-design-icons/Check.vue";
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue";
@@ -308,6 +310,35 @@
     );
 
     const error = ref<string | undefined>(undefined);
+
+    const QUOTA_STORAGE_KEY = "kestra-ai-remaining-quota";
+    const QUOTA_DATE_KEY = "kestra-ai-remaining-quota-date";
+    const todayUTC = new Date().toISOString().slice(0, 10);
+
+    function loadStoredQuota(): string | undefined {
+        const date = sessionStorage.getItem(QUOTA_DATE_KEY);
+        if (date !== todayUTC) {
+            sessionStorage.removeItem(QUOTA_STORAGE_KEY);
+            sessionStorage.removeItem(QUOTA_DATE_KEY);
+            return undefined;
+        }
+        return sessionStorage.getItem(QUOTA_STORAGE_KEY) ?? undefined;
+    }
+
+    const remainingQuota = ref<string | undefined>(loadStoredQuota());
+
+    function setRemainingQuota(value: string | undefined) {
+        remainingQuota.value = value;
+        if (value != null) {
+            sessionStorage.setItem(QUOTA_STORAGE_KEY, value);
+            sessionStorage.setItem(QUOTA_DATE_KEY, todayUTC);
+        } else {
+            sessionStorage.removeItem(QUOTA_STORAGE_KEY);
+            sessionStorage.removeItem(QUOTA_DATE_KEY);
+        }
+    }
+
+    const apiFeedback = computed(() => !!error.value || (remainingQuota.value != null && props.onboarding));
     const onboardingPromptEdited = ref(false);
 
     const speechSupported = ref(false);
@@ -472,28 +503,29 @@
             action: "prompt_submit",
             ai_copilot_configured: configured.value === true,
         });
-        let aiResponse;
+        let aiResult;
         try {
             const type = props.generationType ?? aiGenerationTypes.FLOW;
             if (type === aiGenerationTypes.FLOW) {
-                aiResponse = await aiStore.generateFlow({
+                aiResult = await aiStore.generateFlow({
                     userPrompt: prompt.value,
                     conversationId: props.conversationId,
                     providerId: selectedProvider.value,
                     namespace: props.namespace,
                     type: type,
                     ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
-                }) as string;
+                });
             } else {
-                aiResponse = await aiStore.generate({
+                aiResult = await aiStore.generate({
                     userPrompt: prompt.value,
                     conversationId: props.conversationId,
                     providerId: selectedProvider.value,
                     type: type,
                     ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
-                }) as string;
+                });
             }
-            emit("generatedYaml", aiResponse);
+            setRemainingQuota(aiResult.remainingQuota);
+            emit("generatedYaml", aiResult.data);
         } catch (e: any) {
             error.value = e.response?.data?.message ?? e.message;
         } finally {
@@ -710,7 +742,7 @@
     margin-bottom: 3rem;
 }
 
-.ai-onboarding-warning {
+.ai-onboarding-info {
     display: flex;
     align-items: center;
     margin: 0 16px -1px;
@@ -723,7 +755,7 @@
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
-.ai-onboarding-warning-content {
+.ai-onboarding-info-content {
     display: inline-flex;
     align-items: flex-start;
     gap: 8px;
@@ -733,7 +765,7 @@
     white-space: normal;
 }
 
-.ai-onboarding-warning-icon {
+.ai-onboarding-info-icon {
     color: var(--ks-content-info);
     font-size: 16px;
     flex-shrink: 0;
@@ -762,7 +794,7 @@
     outline: none !important;
 }
 
-.ai-onboarding-composer.has-error {
+.ai-onboarding-composer.api-feedback {
     border-color: var(--ks-border-info);
 }
 
@@ -1040,7 +1072,7 @@
         border-radius: 18px;
     }
 
-    .ai-onboarding-warning {
+    .ai-onboarding-info {
         margin: 0 12px -1px;
     }
 

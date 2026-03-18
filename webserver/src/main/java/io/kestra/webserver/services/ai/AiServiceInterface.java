@@ -11,9 +11,9 @@ import java.util.Map;
  */
 @WebServerEnabled
 public interface AiServiceInterface {
-    String generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId);
+    GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId);
 
-    String generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt);
+    GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt);
 
     String displayName();
 

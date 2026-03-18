@@ -23,7 +23,8 @@ export const useAiStore = defineStore("ai", {
                 }
             });
 
-            return response.data;
+            const remainingQuota = response.headers["x-kestra-ai-quota"];
+            return {data: response.data, remainingQuota: remainingQuota ?? undefined};
         },
 
         async generateFlow({userPrompt, yaml, conversationId, providerId, namespace, tenantId}: {userPrompt: string, yaml?: string, conversationId: string, providerId?: string, namespace?: string, tenantId?: string, type: AiGenerationType}) {
@@ -40,7 +41,8 @@ export const useAiStore = defineStore("ai", {
                 }
             });
 
-            return response.data;
+            const remainingQuota = response.headers["x-kestra-ai-quota"];
+            return {data: response.data, remainingQuota: remainingQuota ?? undefined};
         }
 
     }

@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.GenerationResult;
 import io.kestra.webserver.services.ai.UserInfo;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -42,25 +45,33 @@ public class AiController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/generate/flow", produces = "application/yaml")
     @Operation(tags = {"AI"}, summary = "Generate or regenerate a flow based on a prompt")
-    public String generateFlow(
+    public HttpResponse<String> generateFlow(
         @RequestBody(description = "Prompt and context required for flow generation") @Body FlowGenerationPrompt flowGenerationPrompt,
         HttpRequest<?> httpRequest
     ) {
         AiServiceInterface service = aiServiceManager.getAiService(flowGenerationPrompt.getProviderId());
 
-        return service.generateFlow(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), flowGenerationPrompt, tenantService.resolveTenant());
+        GenerationResult result = service.generateFlow(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), flowGenerationPrompt, tenantService.resolveTenant());
+        return toHttpResponse(result);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/generate/dashboard", produces = "application/yaml")
     @Operation(tags = {"AI"}, summary = "Generate or regenerate a dashboard based on a prompt")
-    public String generateDashboard(
+    public HttpResponse<String> generateDashboard(
         @RequestBody(description = "Prompt and context required for dashboard generation") @Body DashboardGenerationPrompt dashboardGenerationPrompt,
         HttpRequest<?> httpRequest
     ) {
         AiServiceInterface service = aiServiceManager.getAiService(dashboardGenerationPrompt.getProviderId());
 
-        return service.generateDashboard(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), dashboardGenerationPrompt);
+        GenerationResult result = service.generateDashboard(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), dashboardGenerationPrompt);
+        return toHttpResponse(result);
+    }
+
+    protected HttpResponse<String> toHttpResponse(GenerationResult result) {
+        MutableHttpResponse<String> response = HttpResponse.ok(result.content());
+        result.remainingQuota().ifPresent(quota -> response.header("X-Kestra-AI-Quota", quota.toString()));
+        return response;
     }
 
     @ExecuteOn(TaskExecutors.IO)

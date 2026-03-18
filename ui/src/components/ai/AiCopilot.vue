@@ -694,14 +694,10 @@
 }
 
 .ai-onboarding-warning {
-    position: absolute;
-    top: -30px;
-    left: 16px;
-    right: 16px;
-    z-index: 2;
     display: flex;
     align-items: center;
-    padding: 4px 14px;
+    margin: 0 16px -1px;
+    padding: 8px 14px;
     border: 1px solid var(--ks-border-info);
     border-bottom: 0;
     border-radius: 12px 12px 0 0;
@@ -712,19 +708,24 @@
 
 .ai-onboarding-warning-content {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
+    width: 100%;
     font-size: $font-size-sm;
+    line-height: 1.35;
+    white-space: normal;
 }
 
 .ai-onboarding-warning-icon {
     color: var(--ks-content-info);
     font-size: 16px;
     flex-shrink: 0;
+    align-self: center;
 }
 
 .ai-onboarding-composer-wrap {
-    position: relative;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: 1120px;
 }
@@ -1023,8 +1024,7 @@
     }
 
     .ai-onboarding-warning {
-        left: 12px;
-        right: 12px;
+        margin: 0 12px -1px;
     }
 
     .ai-custom-textarea-onboarding {

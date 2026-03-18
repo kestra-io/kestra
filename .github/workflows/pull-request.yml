@@ -76,7 +76,7 @@ jobs:
     name: Frontend - Tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@chore/singular-test-build-scan
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -86,7 +86,7 @@ jobs:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@chore/singular-test-build-scan
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -109,7 +109,7 @@ jobs:
           fetch-depth: 0
 
       # Setup build
-      - uses: kestra-io/actions/composite/setup-build@chore/singular-test-build-scan
+      - uses: kestra-io/actions/composite/setup-build@main
         name: Setup - Build
         id: build
         with:
@@ -135,12 +135,12 @@ jobs:
 
   e2e-tests:
     name: E2E - Tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@chore/singular-test-build-scan
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
     with:
       java-version: 25
 
   generate-pull-request-docker-image:
     name: Generate PR docker image
-    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@chore/singular-test-build-scan
+    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
     with:
       java-version: 25

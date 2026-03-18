@@ -42,6 +42,13 @@ export default class Utils {
             Math.random().toString(16).slice(2) +
             Date.now().toString(16).slice(4);
     }
+    static isFile(value: unknown): value is string {
+        return typeof value === "string" && (
+            value.startsWith("kestra:///") ||
+            value.startsWith("file://") ||
+            value.startsWith("nsfile://")
+        );
+    }
 
     static flatten(object: Record<string, any>) {
         return Object.assign({}, function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any> {

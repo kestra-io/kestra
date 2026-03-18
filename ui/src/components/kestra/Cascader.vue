@@ -1,7 +1,7 @@
 <template>
     <el-cascader-panel ref="panelRef" :options>
         <template #default="{data}">
-            <div v-if="isFile(data.value)">
+            <div v-if="Utils.isFile(data.value)">
                 <VarValue :value="data.value" :execution="execution" />
             </div>
             <div v-else class="w-100 d-flex justify-content-between">
@@ -26,8 +26,7 @@
     import {onMounted, ref} from "vue";
 
     import VarValue from "../executions/VarValue.vue";
-
-    const isFile = (data: any) => typeof data === "string" && (data.startsWith("kestra:///") || data.startsWith("file://") || data.startsWith("nsfile://"));
+    import Utils from "../../utils/utils";
 
     interface Options {
         label: string;

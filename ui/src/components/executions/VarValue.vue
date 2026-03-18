@@ -80,7 +80,7 @@
     const humanSize = ref<string>("");
 
     const isFile = (value: unknown): value is string => {
-        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+        return Utils.isFile(value);
     };
 
     const isFileValid = (value: unknown): boolean => {

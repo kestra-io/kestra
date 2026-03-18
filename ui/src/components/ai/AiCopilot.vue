@@ -288,6 +288,7 @@
         close: [];
         generatedYaml: [string];
         createFlowDirectly: [string];
+        onboardingPromptDiverged: [];
     }>();
 
     const props = defineProps<{
@@ -603,7 +604,11 @@
             }
 
             if (props.onboarding) {
-                onboardingPromptEdited.value = value.trim() !== (props.initialPrompt ?? "").trim();
+                const hasDiverged = value.trim() !== (props.initialPrompt ?? "").trim();
+                if (!onboardingPromptEdited.value && hasDiverged) {
+                    emit("onboardingPromptDiverged");
+                }
+                onboardingPromptEdited.value = hasDiverged;
             }
         },
     );

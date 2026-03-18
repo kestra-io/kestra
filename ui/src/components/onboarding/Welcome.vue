@@ -13,14 +13,15 @@
         <el-row justify="center">
             <el-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
                 <AiCopilot
-                    :flow="selectedExample.flow"
+                    :flow="activeExample.flow"
                     :conversationId="conversationId"
                     namespace="tutorial"
                     :onboarding="true"
-                    :initialPrompt="te(selectedExample.promptKey) ? t(selectedExample.promptKey) : undefined"
+                    :initialPrompt="te(activeExample.promptKey) ? t(activeExample.promptKey) : undefined"
                     :generationType="aiGenerationTypes.FLOW"
                     :selectedFromTag="selectedLabel !== undefined"
                     :redirectOnUnchangedPrompt="selectedLabel !== undefined"
+                    @onboarding-prompt-diverged="clearSelectedTag"
                     @generated-yaml="createFlowFromGeneratedPrompt"
                     @create-flow-directly="createFlowFromSelectedExample"
                 />
@@ -32,7 +33,7 @@
                         round
                         :effect="selectedLabel === label ? 'dark' : 'plain'"
                         :type="selectedLabel === label ? 'primary' : 'info'"
-                        @click="selectedLabel = label"
+                        @click="selectLabel(label)"
                     >
                         {{ t(flowExamples[label].labelKey) }}
                     </el-tag>
@@ -105,8 +106,9 @@
     useRouteContext(routeInfo);
 
     const conversationId = ref<string>(Utils.uid());
-    const selectedLabel = ref<(typeof labels)[number]>(labels[0]);
-    const selectedExample = computed(() => flowExamples[selectedLabel.value]);
+    const selectedLabel = ref<(typeof labels)[number] | undefined>(labels[0]);
+    const activeLabel = ref<(typeof labels)[number]>(labels[0]);
+    const activeExample = computed(() => flowExamples[activeLabel.value]);
 
     const allLabelsShown = ref(false);
     const visibleLabels = computed(() => {
@@ -116,6 +118,15 @@
     const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset";
     const {onboardingResources} = useOnboardingResources();
     const welcomeResources = computed(() => onboardingResources.value.slice(0, 3));
+
+    function selectLabel(label: (typeof labels)[number]) {
+        activeLabel.value = label;
+        selectedLabel.value = label;
+    }
+
+    function clearSelectedTag() {
+        selectedLabel.value = undefined;
+    }
 
     async function createFlowFromSelectedExample(flowSource: string) {
         sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);

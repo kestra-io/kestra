@@ -51,7 +51,7 @@ micronaut:
           - /health/.+
           - /metrics
           - /metrics/.+
-          - /prometheus
+          - /prometheus(\?.*)?
     http-version: HTTP_1_1
   caches:
     default:

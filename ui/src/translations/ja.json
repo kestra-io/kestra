@@ -453,14 +453,14 @@
       "command_palette": "コマンドパレットを表示",
       "comment": "コメント",
       "comment_uncomment": "コメント/コメント解除",
-      "decrease_fontsize": "フォントサイズを縮小",
+      "decrease_fontsize": "エディタのフォントサイズを小さくする",
       "duplicate_cursor": "カーソルを複製",
       "execute_flow": "フローを実行",
       "fold_unfold": "コードを折りたたむ/展開する",
-      "increase_fontsize": "フォントサイズを大きくする",
+      "increase_fontsize": "エディタのフォントサイズを大きくする",
       "label": "キーボードショートカット",
       "move_line": "行を移動",
-      "reset_fontsize": "フォントサイズをリセット",
+      "reset_fontsize": "エディタのフォントサイズをリセット",
       "save_flow": "フローを保存",
       "toggle_ai_agent": "AIエージェントを切り替える",
       "trigger_autocompletion": "オートコンプリートをトリガー",
@@ -1108,7 +1108,7 @@
     "killed confirm": "実行<code>{id}</code>をキルしてもよろしいですか？",
     "killed done": "実行はキルのためにキューに入れられました",
     "kv": {
-      "add": "新しいKey-Value",
+      "add": "作成",
       "delete multiple": {
         "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
         "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
@@ -1706,7 +1706,7 @@
     "searching": "検索中...",
     "seconds": "秒",
     "secret": {
-      "add": "新しいシークレット",
+      "add": "作成",
       "inherited": "継承されたsecrets",
       "isReadOnly": "シークレットは読み取り専用です",
       "names": "Secrets",

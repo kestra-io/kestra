@@ -453,14 +453,14 @@
       "command_palette": "Pokaż paletę poleceń",
       "comment": "Komentarz",
       "comment_uncomment": "Komentarz/Odkomentuj",
-      "decrease_fontsize": "Zmniejsz rozmiar czcionki",
+      "decrease_fontsize": "Zmniejsz rozmiar czcionki edytora",
       "duplicate_cursor": "Duplikuj kursor",
       "execute_flow": "Uruchom flow",
       "fold_unfold": "Zwiń/Rozwiń kod",
-      "increase_fontsize": "Zwiększ rozmiar czcionki",
+      "increase_fontsize": "Zwiększ rozmiar czcionki edytora",
       "label": "Skróty klawiaturowe",
       "move_line": "Przenieś linię",
-      "reset_fontsize": "Zresetuj rozmiar czcionki",
+      "reset_fontsize": "Zresetuj rozmiar czcionki edytora",
       "save_flow": "Zapisz flow",
       "toggle_ai_agent": "Przełącz agenta AI",
       "trigger_autocompletion": "Wyzwól autouzupełnianie",
@@ -1108,7 +1108,7 @@
     "killed confirm": "Czy na pewno chcesz zakończyć wykonanie <code>{id}</code>?",
     "killed done": "Wykonanie jest w kolejce do zakończenia",
     "kv": {
-      "add": "Nowy Key-Value",
+      "add": "Utwórz",
       "delete multiple": {
         "confirm": "Czy na pewno chcesz usunąć: <code>{name}</code> kv?",
         "warning": "Nie masz uprawnień do tych namespace, więc zostaną pominięte: <code>{namespaces}</code>"
@@ -1706,7 +1706,7 @@
     "searching": "Szukanie...",
     "seconds": "Sekundy",
     "secret": {
-      "add": "Nowy sekret",
+      "add": "Utwórz",
       "inherited": "Dziedziczone secrets",
       "isReadOnly": "Sekret jest tylko do odczytu",
       "names": "Secrets",

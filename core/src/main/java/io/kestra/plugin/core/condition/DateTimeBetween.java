@@ -88,8 +88,7 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = Property.ofExpression("{{ trigger.date }}");
 
     @Schema(
         title = "The date to test must be after this one.",
@@ -106,8 +105,14 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         Map<String, Object> vars = conditionContext.getVariables();
-        String render = conditionContext.getRunContext().render(date, vars);
-        ZonedDateTime currentDate = DateUtils.parseZonedDateTime(render);
+        String renderedDate = conditionContext.getRunContext().render(this.date).as(String.class, vars).orElseThrow();
+
+        ZonedDateTime currentDate;
+        try {
+            currentDate = DateUtils.parseZonedDateTime(renderedDate);
+        } catch (InternalException e) {
+            throw new RuntimeException(e);
+        }
 
         ZonedDateTime afterRendered = conditionContext.getRunContext().render(this.after).as(ZonedDateTime.class, vars).orElse(null);
         ZonedDateTime beforeRendered = conditionContext.getRunContext().render(this.before).as(ZonedDateTime.class, vars).orElse(null);
@@ -117,7 +122,7 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
         } else if (beforeRendered != null) {
             return currentDate.isBefore(beforeRendered);
         } else if (afterRendered != null) {
-            return currentDate.isAfter(afterRendered);
+            return currentDate.isAfter(afterRendered) || currentDate.isEqual(afterRendered);
         } else {
             throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
         }

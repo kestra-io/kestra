@@ -127,9 +127,13 @@ export const usePluginsStore = defineStore("plugins", () => {
             ?.flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)) ?? [];
     });
     const deprecatedTypes = computed(() => {
-        return plugins.value?.flatMap(plugin => Object.entries(plugin))
+        const deprecatedPlugins = plugins.value?.flatMap(plugin => Object.entries(plugin))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             ?.flatMap(([, value]) => (value as PluginElement[]).filter(({deprecated}) => deprecated === true).map(({cls}) => cls)) ?? [];
+        return [
+            ...deprecatedPlugins,
+            ...(plugins.value?.flatMap(({aliases}) => aliases ?? [])) ?? []
+        ];
     });
 
     function resolveRef(obj: JsonSchemaDef): JsonSchemaDef {

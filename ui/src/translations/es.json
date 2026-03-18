@@ -453,14 +453,14 @@
       "command_palette": "Mostrar paleta de comandos",
       "comment": "Comentario",
       "comment_uncomment": "Comentar/Descomentar",
-      "decrease_fontsize": "Disminuir tamaño de fuente",
+      "decrease_fontsize": "Disminuir el tamaño de fuente del editor",
       "duplicate_cursor": "Duplicar cursor",
       "execute_flow": "Ejecutar flow",
       "fold_unfold": "Plegar/Desplegar código",
-      "increase_fontsize": "Aumentar tamaño de fuente",
+      "increase_fontsize": "Aumentar el tamaño de fuente del editor",
       "label": "Atajos de teclado",
       "move_line": "Mover línea",
-      "reset_fontsize": "Restablecer tamaño de fuente",
+      "reset_fontsize": "Restablecer el tamaño de fuente del editor",
       "save_flow": "Guardar flow",
       "toggle_ai_agent": "Alternar agente de AI",
       "trigger_autocompletion": "Activar autocompletado",
@@ -1108,7 +1108,7 @@
     "killed confirm": "¿Estás seguro de terminar la ejecución <code>{id}</code>?",
     "killed done": "La ejecución está en cola para ser terminada",
     "kv": {
-      "add": "Nuevo Key-Value",
+      "add": "Crear",
       "delete multiple": {
         "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
@@ -1706,7 +1706,7 @@
     "searching": "Buscando...",
     "seconds": "Segundos",
     "secret": {
-      "add": "Nuevo secreto",
+      "add": "Crear",
       "inherited": "Secrets heredados",
       "isReadOnly": "El secreto es de solo lectura",
       "names": "Secrets",

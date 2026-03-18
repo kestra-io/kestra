@@ -985,7 +985,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .filter(taskRun -> taskRun.getOutputs() != null)
             .collect(Collectors.groupingBy(taskRun -> taskRun.getTaskId()))
             .forEach((taskId, taskRuns) -> {
-                Map<String, Object> taskOutputs = new HashMap<>();
+                Map<String, Object> taskOutputs = new LinkedHashMap<>();
                 for (TaskRun current : taskRuns) {
                     if (!MapUtils.isEmpty(current.getOutputs())) {
                         if (current.getIteration() != null) {
@@ -995,7 +995,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
                             // hashmap to avoid taskOutputs becoming read-only
                             // i.e this happen in nested loopUntil tasks
                             if (merged instanceof Variables) {
-                                merged = new HashMap<>(merged);
+                                merged = new LinkedHashMap<>(merged);
                             }
                             taskOutputs = merged;
                         } else {
@@ -1019,15 +1019,15 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             if (taskRun.getValue() == null) {
                 return taskRun.getOutputs();
             } else {
-                return Map.of(taskRun.getValue(), taskRun.getOutputs());
+                return Map.of(taskRun.getValue(),taskRun.getOutputs());
             }
         }
 
-        Map<String, Object> result = HashMap.newHashMap(1);
+        Map<String, Object> result = LinkedHashMap.newLinkedHashMap(1);
         Map<String, Object> current = result;
 
         for (TaskRun t : parents) {
-            HashMap<String, Object> item = HashMap.newHashMap(1);
+            HashMap<String, Object> item = LinkedHashMap.newLinkedHashMap(1);
             current.put(t.getValue(), item);
             current = item;
         }

@@ -45,10 +45,6 @@
                     <IconButton :tooltip="$t('copy logs')" @click="copyAllLogs()">
                         <ContentCopy />
                     </IconButton>
-                </el-button-group>
-            </el-form-item>
-            <el-form-item>
-                <el-button-group class="ks-b-group">
                     <IconButton :tooltip="$t('refresh')" @click="loadLogs()">
                         <Refresh />
                     </IconButton>

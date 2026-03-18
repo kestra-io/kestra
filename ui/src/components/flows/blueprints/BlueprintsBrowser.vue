@@ -59,7 +59,7 @@
                                 <div v-if="blueprint.template" class="tags-section">
                                     <span class="tag-item">{{ $t('template') }}</span>
                                 </div>
-                                <div class="text-section">                                        
+                                <div class="text-section">
                                     <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
                                     </h3>
@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
+    import {ref, computed, onMounted, onActivated, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -241,8 +241,15 @@
         if (route.query.page || internalPageNumber.value) query.page = parseInt((route.query.page || internalPageNumber.value) as string);
         if (route.query.size || internalPageSize.value) query.size = parseInt((route.query.size || internalPageSize.value) as string);
         if (route.query.q || searchText.value) query.q = route.query.q || searchText.value;
-        if (props.system) query.tags = "system";
-        else if (selectedTags.value.length > 0) query.tags = selectedTags.value;
+        if (props.system) {
+            query.tags = "system";
+        } else {
+            const tagsFromRoute = initSelectedTags();
+            const tagsToUse = tagsFromRoute.length > 0 ? tagsFromRoute : selectedTags.value;
+            if (tagsToUse.length > 0) {
+                query.tags = tagsToUse;
+            }
+        }
 
         const data = await blueprintsStore.getBlueprints({
             type: props.blueprintType,
@@ -283,18 +290,29 @@
         };
     };
 
-    onMounted(() => {
+    const syncFromRoute = () => {
         searchText.value = route.query?.q || "";
+        selectedTags.value = initSelectedTags();
+    };
+
+    onMounted(() => {
+        syncFromRoute();
+        load(onDataLoaded);
         docStore.docId = `blueprints.${props.blueprintType}`;
     });
 
-    watch(route, (newRoute, oldRoute) => {
-        if (newRoute.name === oldRoute.name) {
-            selectedTags.value = initSelectedTags();
-            searchText.value = newRoute.query.q || "";
+    onActivated(() => {
+        syncFromRoute();
+        load(onDataLoaded);
+    });
+
+    watch(
+        () => [route.query.selectedTag, route.query.q],
+        () => {
+            syncFromRoute();
             load(onDataLoaded);
         }
-    });
+    );
 
     watch(searchText, () => {
         load(onDataLoaded);

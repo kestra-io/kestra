@@ -146,7 +146,7 @@ export function registerNestedValueAutoCompletion(
 
             const startOfWordColumn = position.column - parentFieldMatcher.matches[2].length;
             return {
-                suggestions: (await autoCompletion.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches[1]))
+                suggestions: (await autoCompletion.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches[1], model.getOffsetAt(position)))
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
                         startColumn: startOfWordColumn,

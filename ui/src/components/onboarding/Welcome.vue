@@ -18,6 +18,7 @@
                     namespace="tutorial"
                     :onboarding="true"
                     :initialPrompt="te(activeExample.promptKey) ? t(activeExample.promptKey) : undefined"
+                    :onboardingExamples="onboardingExamples"
                     :generationType="aiGenerationTypes.FLOW"
                     :selectedFromTag="selectedLabel !== undefined"
                     :redirectOnUnchangedPrompt="selectedLabel !== undefined"
@@ -109,6 +110,16 @@
     const selectedLabel = ref<(typeof labels)[number] | undefined>(labels[0]);
     const activeLabel = ref<(typeof labels)[number]>(labels[0]);
     const activeExample = computed(() => flowExamples[activeLabel.value]);
+    const onboardingExamples = computed(() => labels
+        .map((label) => {
+            const example = flowExamples[label];
+            return {
+                prompt: te(example.promptKey) ? t(example.promptKey) : "",
+                flow: example.flow,
+            };
+        })
+        .filter((example) => example.prompt.length > 0),
+    );
 
     const allLabelsShown = ref(false);
     const visibleLabels = computed(() => {

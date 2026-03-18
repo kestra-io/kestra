@@ -298,6 +298,7 @@
         namespace?: string,
         onboarding?: boolean,
         initialPrompt?: string,
+        onboardingExamples?: {prompt: string; flow: string}[],
         redirectOnUnchangedPrompt?: boolean,
         selectedFromTag?: boolean,
     }>();
@@ -339,6 +340,22 @@
     const miscStore = useMiscStore();
     const configured = computed(() => miscStore.configs?.isAiEnabled);
     const highlightedAiConfiguration = ref<string | undefined>();
+    const effectiveFlowYaml = computed(() => {
+        if (!props.onboarding) {
+            return props.flow;
+        }
+
+        const normalizedPrompt = prompt.value.trim();
+        if (!normalizedPrompt) {
+            return undefined;
+        }
+
+        const matchedExample = props.onboardingExamples?.find(
+            (example) => example.prompt.trim() === normalizedPrompt,
+        );
+
+        return matchedExample?.flow;
+    });
 
     const providers = ref<{id: string, displayName: string}[]>([]);
     const selectedProvider = ref<string | undefined>(undefined);
@@ -461,19 +478,19 @@
             if (type === aiGenerationTypes.FLOW) {
                 aiResponse = await aiStore.generateFlow({
                     userPrompt: prompt.value,
-                    yaml: props.flow,
                     conversationId: props.conversationId,
                     providerId: selectedProvider.value,
                     namespace: props.namespace,
-                    type: type
+                    type: type,
+                    ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
                 }) as string;
             } else {
                 aiResponse = await aiStore.generate({
                     userPrompt: prompt.value,
-                    yaml: props.flow,
                     conversationId: props.conversationId,
                     providerId: selectedProvider.value,
-                    type: type
+                    type: type,
+                    ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
                 }) as string;
             }
             emit("generatedYaml", aiResponse);

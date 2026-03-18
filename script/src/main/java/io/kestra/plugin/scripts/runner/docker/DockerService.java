@@ -109,7 +109,7 @@ public class DockerService {
                 }
 
                 if (c.getRegistry() != null) {
-                    registry = runContext.render(c.getRegistry()).as(String.class).orElse(null);
+                    registry = normalizeRegistryUrl(runContext.render(c.getRegistry()).as(String.class).orElse(null));
                 } else if (image != null) {
                     String renderedImage = runContext.render(image);
                     String detectedRegistry = registryUrlFromImage(renderedImage);
@@ -138,6 +138,39 @@ public class DockerService {
         );
 
         return docker.toPath().getParent();
+    }
+
+    /**
+     * Normalizes a registry URL so that Docker Hub endpoints map to the canonical
+     * {@code https://index.docker.io/v1/} key expected by the Docker daemon, and
+     * other registries have the unnecessary {@code /v2/} path stripped.
+     */
+    static String normalizeRegistryUrl(String registry) {
+        if (registry == null) {
+            return null;
+        }
+
+        String canonical = "https://index.docker.io/v1/";
+
+        // Strip trailing slashes for uniform comparison
+        var normalized = registry.replaceAll("/+$", "");
+
+        // Detect any Docker Hub endpoint (with or without scheme) and map to canonical key
+        var withoutScheme = normalized.replaceFirst("^https?://", "");
+        if (withoutScheme.equals("registry-1.docker.io/v2")
+            || withoutScheme.equals("registry-1.docker.io")
+            || withoutScheme.equals("index.docker.io/v1")
+            || withoutScheme.equals("index.docker.io/v2")
+            || withoutScheme.equals("index.docker.io")) {
+            return canonical;
+        }
+
+        // For any other registry, strip a trailing /v2 path
+        if (normalized.endsWith("/v2")) {
+            normalized = normalized.substring(0, normalized.length() - "/v2".length());
+        }
+
+        return normalized;
     }
 
     public static String registryUrlFromImage(String image) {

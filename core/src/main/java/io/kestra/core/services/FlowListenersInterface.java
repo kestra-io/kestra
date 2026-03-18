@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public interface FlowListenersInterface {
+public interface FlowListenersInterface extends AutoCloseable {
     void run();
 
     void listen(Consumer<List<FlowWithSource>> consumer);

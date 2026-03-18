@@ -59,7 +59,7 @@ public class JdbcScheduler extends AbstractScheduler {
         });
 
         // No-op consumption of the trigger queue, so the events are purged from the queue
-        this.triggerQueue.receive(Scheduler.class, trigger -> { });
+        this.receiveCancellations.add(this.triggerQueue.receive(Scheduler.class, trigger -> { }));
     }
 
     @Override

@@ -207,7 +207,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         var condition = this.fullTextCondition(query).and(this.defaultFilter());
 
         if (namespace != null) {
-            condition = condition.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
+            condition = condition.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
         }
 
         if (flowId != null) {

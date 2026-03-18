@@ -1,32 +1,109 @@
-# Kestra AGENTS.md
+# CLAUDE.md
 
-This file provides guidance for AI coding agents working on the Kestra project. Kestra is an open-source data orchestration and scheduling platform built with Java (Micronaut) and Vue.js.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository Layout
+## What is Kestra
 
-- **`core/`**: Core Kestra framework and task definitions
-- **`cli/`**: Command-line interface and server implementation
-- **`webserver/`**: REST API server implementation
-- **`ui/`**: Vue.js frontend application
-- **`jdbc-*`**: Database connector modules (H2, MySQL, PostgreSQL)
-- **`script/`**: Script execution engine
-- **`storage-local/`**: Local file storage implementation
-- **`repository-memory/`**: In-memory repository implementation
-- **`runner-memory/`**: In-memory execution runner
-- **`processor/`**: Task processing engine
-- **`model/`**: Data models and Data Transfer Objects
-- **`platform/`**: Platform-specific implementations
-- **`tests/`**: Integration test framework
+Kestra is an open-source event-driven orchestration platform. Users define workflows as YAML "flows" composed of tasks, triggers, and inputs. Built with Java 21 (Micronaut framework) backend and Vue 3 frontend.
+
+## Build & Test Commands
+
+**Prerequisites:** Java 25+ (compiles to Java 21 target), Node.js 22+, Docker. Gradle 9.4 wrapper included.
+
+```bash
+# Build
+./gradlew build                    # Full build (includes tests)
+./gradlew build -x test            # Build without tests
+./gradlew shadowJar                # Build fat JAR
+
+# Test
+./gradlew test                     # All tests (excludes 'flaky' and 'integration' tags)
+./gradlew :core:test               # Single module
+./gradlew :core:test --tests "io.kestra.core.runners.FlowableUtilsTest"           # Single class
+./gradlew :core:test --tests "io.kestra.core.runners.FlowableUtilsTest.methName"  # Single method
+
+# Run
+./gradlew runLocal                 # Local mode (H2 database, port 8080)
+make start-standalone-postgres     # Standalone mode with PostgreSQL
+
+# Frontend
+cd ui && npm install && npm run dev   # Dev server on port 5173
+cd ui && npm run build                # Production build
+
+# Useful Makefile targets
+make install                       # Install to ~/.kestra/current
+make install-plugins               # Download plugins from API
+make health                        # Check if Kestra is running
+```
+
+## Project Structure
+
+21 Gradle subprojects organized as:
+
+| Module | Purpose |
+|--------|---------|
+| `core/` | Core framework: tasks, runners, serialization, topology, events |
+| `model/` | Data models and DTOs (flows, executions, triggers, inputs) |
+| `cli/` | CLI entry point (`io.kestra.cli.App`), server commands |
+| `webserver/` | Micronaut REST API controllers |
+| `executor/`, `scheduler/`, `worker/` | Execution engine components |
+| `processor/` | Task processing engine |
+| `script/` | Script execution engine (Python, Node, Shell, etc.) |
+| `jdbc/`, `jdbc-h2/`, `jdbc-mysql/`, `jdbc-postgres/` | Database backends |
+| `repository-memory/`, `runner-memory/` | In-memory implementations (for local/test mode) |
+| `storage-local/` | Local filesystem storage |
+| `ui/` | Vue 3 + TypeScript + Vite frontend |
+| `platform/` | BOM for enforced platform dependencies |
+| `tests/` | Shared integration test utilities |
+
+## Architecture
+
+**Backend (Java/Micronaut):**
+- Entry point: `io.kestra.cli.App` — Picocli-based CLI that boots Micronaut
+- Two run modes: **local** (H2 + in-memory queues) and **standalone** (PostgreSQL/MySQL + JDBC queues)
+- Flows are YAML-defined, parsed into the model layer, executed by the executor/worker/scheduler triad
+- Plugin system: plugins are JARs loaded at startup from `KESTRA_PLUGINS_PATH`; built-in plugins live in `core/src/main/java/io/kestra/plugin/core/`
+- Repository pattern: abstract repositories in `core/`, JDBC implementations in `jdbc-*` modules
+
+**Frontend (Vue 3):**
+- Vite-based build, source in `ui/src/`
+- Communicates with backend REST API
+
+## Testing Patterns
+
+### Backend testing
+- **JUnit 5** with Micronaut Test integration
+- Custom `@KestraTest` annotation bootstraps the Micronaut context for tests
+- Assertions: AssertJ preferred, Hamcrest also used
+- Tags: tests tagged `flaky` or `integration` are excluded from default `./gradlew test`
+- JDBC modules (`jdbc-h2`, `jdbc-mysql`, `jdbc-postgres`) run tests in parallel
+- Test workers get 4GB heap
+
+### Frontend Testing
+- Unit tests with Jest
+- E2E tests with Playwright
+- Component testing with Storybook
+- Run `npm run test:unit` and `npm run test:e2e`
+
+### End-to-End Tests
+
+```bash
+# Build and start E2E tests
+./build-and-start-e2e-tests.sh
+
+# Or use the Makefile
+make install
+make install-plugins
+make start-standalone-postgres
+```
+
+## Code Style
+
+- 4 spaces for Java, 2 spaces for YAML/JSON/CSS (see `.editorconfig`)
+- UTF-8 encoding, LF line endings, trim trailing whitespace
+- Conventional commits: `fix(core):`, `feat(webserver):`, `build(deps):`
 
 ## Development Environment
-
-### Prerequisites
-
-- Java 25+
-- Node.js 22+ and npm
-- Python 3, pip, and python venv
-- Docker & Docker Compose
-- Gradle (wrapper included)
 
 ### Quick Setup with Devcontainer
 
@@ -37,16 +114,9 @@ The easiest way to get started is using the provided devcontainer:
 3. Select the Kestra root folder
 4. Wait for Gradle build to complete
 
-### Manual Setup
+### Configuration Files
 
-1. Clone the repository
-2. Run `./gradlew build` to build the backend
-3. Navigate to `ui/` and run `npm install`
-4. Create configuration files as described below
-
-## Configuration Files
-
-### Backend Configuration
+#### Backend Configuration
 
 Create `cli/src/main/resources/application-override.yml`:
 
@@ -107,67 +177,9 @@ micronaut:
             - http://localhost:5173
 ```
 
-### Frontend Configuration
-
-Create `ui/.env.development.local` for environment variables.
-
-## Running the Application
-
-### Backend
-
-- **Local mode**: `./gradlew runLocal` (uses H2 database)
-- **Standalone mode**: Use VSCode Run and Debug with main class `io.kestra.cli.App` and args `server standalone`
-
-### Frontend
-
-- Navigate to `ui/` directory
-- Run `npm run dev` for development server (port 5173)
-- Run `npm run build` for production build
-
-## Building and Testing
-
-### Backend
-
-```bash
-# Build the project
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run specific module tests
-./gradlew :core:test
-
-# Clean build
-./gradlew clean build
-```
-
-### Frontend
-
-```bash
-cd ui
-npm install
-npm run test
-npm run lint
-npm run build
-```
-
-### End-to-End Tests
-
-```bash
-# Build and start E2E tests
-./build-and-start-e2e-tests.sh
-
-# Or use the Makefile
-make install
-make install-plugins
-make start-standalone-postgres
-```
-
 ## Development Guidelines
 
 ### Java Backend
-
 - Use Java 25 features
 - Follow Micronaut framework patterns
 - Add Swagger annotations for API documentation
@@ -176,7 +188,6 @@ make start-standalone-postgres
 - Set `KESTRA_PLUGINS_PATH` for custom plugin loading
 
 ### Vue.js Frontend
-
 - Vue 3 with Composition API
 - TypeScript for type safety
 - Vite for build tooling
@@ -184,41 +195,10 @@ make start-standalone-postgres
 - Component-based architecture in `src/components/`
 
 ### Code Style
-
 - Follow `.editorconfig` settings
 - Use 4 spaces for Java, 2 spaces for YAML/JSON/CSS
 - Enable format on save in VSCode
 - Use Prettier for frontend code formatting
-
-## Testing Strategy
-
-### Backend Testing
-
-- Unit tests in `src/test/java/`
-- Integration tests in `tests/` module
-- Use Micronaut test framework
-- Test both local and standalone modes
-
-### Frontend Testing
-- Unit tests with Jest
-- E2E tests with Playwright
-- Component testing with Storybook
-- Run `npm run test:unit` and `npm run test:e2e`
-
-## Plugin Development
-
-### Creating Plugins
-
-- Follow the [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/)
-- Place JAR files in `KESTRA_PLUGINS_PATH`
-- Use the plugin template structure
-- Test with both local and standalone modes
-
-### Plugin Loading
-
-- Set `KESTRA_PLUGINS_PATH` environment variable
-- Use devcontainer mounts for local development
-- Plugins are loaded at startup
 
 ## Common Issues and Solutions
 
@@ -254,9 +234,21 @@ Ensure backend CORS is configured for `http://localhost:5173` when using fronten
 
 ### Commit Messages
 
-- Follow conventional commit format
+- Follow this commit message format:
+```
+<type>(<scope>)<!|*>: <description> (<pr id>)
+
+detailed description (optional)
+
+<close|related> #<issue id> (required)
+
+BREAKING CHANGE: <message> (optional)
+```
+With:
+type=chore|feat|fix|refactor|test|docs|build
+scope=flows|executions|plugins|namespaces|secrets|assets|storage|triggers|dashboards|apps|tasks|tests|tenants|iam|variables|system|core|deps|version
+
 - Use present tense ("Add feature" not "Added feature")
-- Reference issue numbers when applicable
 - Keep commits focused and atomic
 
 ### Review Checklist
@@ -267,38 +259,3 @@ Ensure backend CORS is configured for `http://localhost:5173` when using fronten
 - [ ] No breaking changes without migration guide
 - [ ] CORS properly configured if API changes
 - [ ] Both local and standalone modes tested
-
-## Useful Commands
-
-```bash
-# Quick development commands
-./gradlew runLocal                    # Start local backend
-./gradlew :ui:build                   # Build frontend
-./gradlew clean build                 # Clean rebuild
-npm run dev                           # Start frontend dev server
-make install                          # Install Kestra locally
-make start-standalone-postgres        # Start with PostgreSQL
-
-# Testing commands
-./gradlew test                        # Run all backend tests
-./gradlew :core:test                  # Run specific module tests
-npm run test                          # Run frontend tests
-npm run lint                          # Lint frontend code
-```
-
-## Getting Help
-
-- Open a [GitHub issue](https://github.com/kestra-io/kestra/issues)
-- Join the [Kestra Slack community](https://kestra.io/slack)
-- Check the [main documentation](https://kestra.io/docs)
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MICRONAUT_ENVIRONMENTS` | Custom config environments | `local,override` |
-| `KESTRA_PLUGINS_PATH` | Path to custom plugins | `/workspaces/kestra/local/plugins` |
-| `NODE_OPTIONS` | Node.js options | `--max-old-space-size=4096` |
-| `JAVA_HOME` | Java installation path | `/usr/java/jdk-21` |
-
-Remember: Always test your changes in both local and standalone modes, and ensure CORS is properly configured for frontend development.

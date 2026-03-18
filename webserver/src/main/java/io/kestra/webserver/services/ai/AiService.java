@@ -227,6 +227,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             this.version = Version.of(version);
         }
 
+        @Override
         public int compareTo(ReverseOrderVersion that) {
             return -version.compareTo(that.version);
         }

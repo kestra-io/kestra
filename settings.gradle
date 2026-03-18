@@ -3,6 +3,12 @@ plugins {
     id("com.gradle.common-custom-user-data-gradle-plugin") version "2.4.0"
 }
 def isCI = System.getenv('CI') != null
+buildCache {
+    remote(develocity.buildCache) {
+        enabled = true
+        push = isCI
+    }
+}
 develocity {
     server = "https://develocity.kestra.io"
     buildScan {

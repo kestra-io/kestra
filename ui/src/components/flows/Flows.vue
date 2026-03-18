@@ -65,7 +65,7 @@
                 <template #table>
                     <SelectTable
                         ref="selectTable"
-                        :data="flowStore.flows"
+                        :data="displayFlows"
                         :defaultSort="{prop: 'id', order: 'ascending'}"
                         tableLayout="auto"
                         fixed
@@ -117,34 +117,42 @@
                             >
                                 <template #default="scope">
                                     <div class="flow-id">
-                                        <router-link
-                                            :to="{
-                                                name: 'flows/update',
-                                                params: {
-                                                    namespace:
-                                                        scope.row.namespace,
-                                                    id: scope.row.id,
-                                                },
-                                            }"
-                                            class="me-1"
+                                        <div class="flow-id-row">
+                                            <router-link
+                                                :to="{
+                                                    name: 'flows/update',
+                                                    params: {
+                                                        namespace:
+                                                            scope.row.namespace,
+                                                        id: scope.row.id,
+                                                    },
+                                                }"
+                                                class="me-1"
+                                            >
+                                                {{
+                                                    FILTERS.invisibleSpace(
+                                                        scope.row.id,
+                                                    )
+                                                }}
+                                            </router-link>
+                                            <MarkdownTooltip
+                                                :id="scope.row.namespace +
+                                                    '-' +
+                                                    scope.row.id
+                                                "
+                                                :description="scope.row.description"
+                                                :title="scope.row.namespace +
+                                                    '.' +
+                                                    scope.row.id
+                                                "
+                                            />
+                                        </div>
+                                        <div
+                                            v-if="isPinned(scope.row) && scope.row.description"
+                                            class="flow-pinned-description"
                                         >
-                                            {{
-                                                FILTERS.invisibleSpace(
-                                                    scope.row.id,
-                                                )
-                                            }}
-                                        </router-link>
-                                        <MarkdownTooltip
-                                            :id="scope.row.namespace +
-                                                '-' +
-                                                scope.row.id
-                                            "
-                                            :description="scope.row.description"
-                                            :title="scope.row.namespace +
-                                                '.' +
-                                                scope.row.id
-                                            "
-                                        />
+                                            {{ scope.row.description }}
+                                        </div>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -252,7 +260,15 @@
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <IconButton 
+                                        <IconButton
+                                            v-if="onTogglePin"
+                                            :tooltip="isPinned(scope.row) ? t('unpin') : t('pin')"
+                                            @click="onTogglePin(scope.row.id, !isPinned(scope.row))"
+                                        >
+                                            <PinOff v-if="isPinned(scope.row)" />
+                                            <Pin v-else />
+                                        </IconButton>
+                                        <IconButton
                                             v-if="canExecute(scope.row)"
                                             :tooltip="t('execute')"
                                             @click="openExecuteModal(scope.row)"
@@ -317,6 +333,8 @@
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import Play from "vue-material-design-icons/Play.vue";
+    import Pin from "vue-material-design-icons/Pin.vue";
+    import PinOff from "vue-material-design-icons/PinOff.vue";
 
     import IconButton from "../IconButton.vue";
     import {Status} from "@kestra-io/ui-libs";
@@ -353,11 +371,17 @@
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
+        pinnedFlows?: string[],
+        pinnedFlowObjects?: any[],
+        onTogglePin?: (flowId: string, pinned: boolean) => void,
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
+        pinnedFlows: undefined,
+        pinnedFlowObjects: undefined,
+        onTogglePin: undefined,
     });
 
     const flowStore = useFlowStore();
@@ -433,6 +457,17 @@
     const canDelete = computed(() => user?.value?.isAllowed(permission.FLOW, action.DELETE, routeNamespace.value));
     const canUpdate = computed(() => user?.value?.isAllowed(permission.FLOW, action.UPDATE, routeNamespace.value));
     const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.namespace);
+
+    const isPinned = (flow: any) => props.pinnedFlows?.includes(flow.id) ?? false;
+
+    const displayFlows = computed(() => {
+        const flows = flowStore.flows ?? [];
+        if (!props.pinnedFlowObjects?.length) return flows;
+        // Always show pinned flow objects at top, dedup against current page results
+        const pinnedIds = new Set(props.pinnedFlowObjects.map((f: any) => f.id));
+        const unpinned = flows.filter((f: any) => !pinnedIds.has(f.id));
+        return [...props.pinnedFlowObjects, ...unpinned];
+    });
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
@@ -704,7 +739,10 @@
     }
 
     function rowClasses(row: any) {
-        return row && row.row && row.row.disabled ? "disabled" : "";
+        const classes: string[] = [];
+        if (row?.row?.disabled) classes.push("disabled");
+        if (row?.row && isPinned(row.row)) classes.push("pinned");
+        return classes.join(" ");
     }
 
     function mappedChart(id: string, namespace: string) {
@@ -779,5 +817,25 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+}
+
+:deep(.flows-table) .el-table__row.pinned {
+    background-color: var(--el-color-primary-light-9);
+    border-left: 3px solid var(--el-color-primary);
+}
+
+:deep(.flows-table) .el-table__row.pinned td {
+    background-color: var(--el-color-primary-light-9) !important;
+}
+
+.flow-pinned-description {
+    color: var(--ks-text-secondary, #6b7280);
+    font-size: 0.8em;
+    line-height: 1.3;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
 }
 </style>

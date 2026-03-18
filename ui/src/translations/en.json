@@ -2037,13 +2037,6 @@
             },
             "blueprints": {
                 "tags": "Tags associated with the blueprint"
-            },
-            "provisioning": {
-              "provision": "Unique provision identifier",
-              "name": "Name of the provision",
-              "type": "Type of the provision",
-              "description": "Description of the provision",
-              "enabled": "Whether the provision is enabled"
             }
         },
         "titles": {

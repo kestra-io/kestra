@@ -75,7 +75,7 @@
     function editorUpdate(source: string) {
         // if no-code would not change the structure of the app,
         // do not trigger an update as it would remove all formatting and comments
-        if(deepEqual(YAML_UTILS.parse(source), dashboardStore.sourceCode)) {
+        if (deepEqual(YAML_UTILS.parse(source), YAML_UTILS.parse(dashboardStore.sourceCode))) {
             return;
         }
         dashboardStore.sourceCode = source;

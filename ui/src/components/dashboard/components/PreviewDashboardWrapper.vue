@@ -1,7 +1,6 @@
 <template>
     <div class="w-100 p-4">
         <Sections
-            :key="dashboardStore.sourceCode"
             :dashboard="{id: 'default', charts: []}"
             :charts="charts.map(chart => chart.data).filter(chart => chart !== null)"
             showDefault

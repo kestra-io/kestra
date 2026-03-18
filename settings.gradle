@@ -7,6 +7,7 @@ buildCache {
     remote(develocity.buildCache) {
         enabled = true
         push = isCI
+        path = "kestra_wip"// TODO remove this once kestra_wip is merged to develop
     }
 }
 develocity {

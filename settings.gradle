@@ -7,6 +7,7 @@ develocity {
     server = "https://develocity.kestra.io"
     buildScan {
         uploadInBackground = !isCI
+        tag("kestra_wip")
         publishing.onlyIf {
             it.authenticated
         }

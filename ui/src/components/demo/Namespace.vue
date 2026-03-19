@@ -1,6 +1,7 @@
 <template>
     <Layout
         :title="$t(`demos.namespace.${props.tab}.title`)"
+        type="namespace"
         :image="{source: sourceImg, alt: $t(`demos.namespace.${props.tab}.title`)}"
         :video="videoSource"
     >

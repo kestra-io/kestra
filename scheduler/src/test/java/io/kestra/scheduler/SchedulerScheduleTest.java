@@ -25,6 +25,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -85,11 +86,18 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .truncatedTo(ChronoUnit.HOURS);
     }
 
-    protected AbstractScheduler scheduler(FlowListeners flowListenersServiceSpy, SchedulerExecutionStateInterface executionStateSpy) {
+    protected AbstractScheduler scheduler(FlowListeners flowListenersServiceSpy) {
         return new JdbcScheduler(
             applicationContext,
             flowListenersServiceSpy
-        );
+        ) {
+            @SneakyThrows
+            @Override
+            public void close() {
+                super.close();
+                flowListenersServiceSpy.close();
+            }
+        };
     }
 
     @BeforeEach
@@ -139,7 +147,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(trigger.toBuilder().triggerId("schedule-invalid").flowId(invalid.getId()).build());
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionStateSpy)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
@@ -200,7 +208,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(trigger);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             Await.until(() -> {
@@ -235,7 +243,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
@@ -281,7 +289,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
@@ -326,7 +334,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(lastTrigger);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             Await.until(() -> scheduler.isReady(), Duration.ofMillis(100), Duration.ofSeconds(5));
@@ -358,7 +366,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .build();
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             Await.until(() -> {
@@ -422,7 +430,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         triggerState.create(trigger);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             scheduler.run();
 
             // Wait 3s to see if things happen
@@ -462,7 +470,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(2);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
@@ -522,7 +530,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
@@ -576,7 +584,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
@@ -635,7 +643,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
@@ -708,7 +716,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(1);
 
         // scheduler
-        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();

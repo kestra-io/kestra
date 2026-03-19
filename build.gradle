@@ -66,6 +66,18 @@ compileJava {
     options.release = 21
 }
 
+
+abstract class GenericLocationProvider implements CommandLineArgumentProvider {
+    @InputFile
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract RegularFileProperty getDistribution()
+
+    @Override
+    Iterable<String> asArguments() {
+        ["-javaagent:${distribution.get().asFile.absolutePath}"]
+    }
+}
+
 dependencies {
     implementation project(":cli")
     testImplementation project(":cli")
@@ -336,7 +348,7 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
-            t.dependsOn("test")// explicit depend to insure they are run before
+            t.mustRunAfter(tasks.named('test'))
         }
 
         // test task (default)
@@ -355,14 +367,22 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
             commonTestConfig(t)
-            jvmArgs = [
-                "-javaagent:${configurations.agent.singleFile}",
-                "-javaagent:${configurations.mockitoAgent.singleFile}"
-            ]
+            jvmArgumentProviders.add(
+                objects.newInstance(GenericLocationProvider).tap {
+                    distribution = configurations.mockitoAgent.singleFile
+                }
+            )
+
+            jvmArgumentProviders.add(
+                objects.newInstance(GenericLocationProvider).tap {
+                    distribution = configurations.agent.singleFile
+                }
+            )
         }
 
         tasks.named('check') {
             dependsOn(tasks.named('test'))// default behaviour
+            dependsOn(tasks.named('flakyTest'))
         }
 
         testlogger {
@@ -380,6 +400,7 @@ subprojects {subProj ->
 
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    dependsOn(tasks.named('flakyTest'))
     finalizedBy jacocoTestReport
 }
 

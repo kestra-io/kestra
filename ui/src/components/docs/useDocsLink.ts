@@ -25,7 +25,7 @@ function isRemoteLink(href:string) {
  * @returns normalized href
  */
 function normalizeRemoteHref(href: string) {
-    return href.startsWith("/") ? "https://kestra.io" + href : href
+    return href.startsWith("/") ? "https://kestra.io" + href  + "?utm_source=app&utm_medium=referral&utm_campaign=embed-docs" : href
 }
 
 export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {

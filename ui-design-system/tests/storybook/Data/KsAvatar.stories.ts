@@ -51,6 +51,40 @@ export const Sizes: Story = {
     }),
 }
 
+/** Fit container – controls how image fills the avatar area */
+export const FitOptions: Story = {
+    render: () => ({
+        components: {KsAvatar},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+                <div v-for="fit in ['fill','contain','cover','none','scale-down']" :key="fit" style="text-align:center">
+                    <ks-avatar
+                        shape="square"
+                        :size="80"
+                        :fit="fit"
+                        src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg"
+                    />
+                    <div style="font-size:12px;margin-top:4px;opacity:0.6">{{ fit }}</div>
+                </div>
+            </div>
+        `,
+    }),
+}
+
+/** Types – icon, image, and text avatars */
+export const Types: Story = {
+    render: () => ({
+        components: {KsAvatar},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;align-items:center">
+                <ks-avatar src="https://cube.elemecdn.com/3/7c/3ea0eb2965f53f9570b3a1a9891c3png.png" />
+                <ks-avatar>KS</ks-avatar>
+                <ks-avatar>A</ks-avatar>
+            </div>
+        `,
+    }),
+}
+
 export const WithFallback: Story = {
     render: () => ({
         components: {KsAvatar},

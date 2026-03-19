@@ -72,6 +72,35 @@ export const Sizes: Story = {
     }),
 }
 
+/** Disabled – entire control or individual options */
+export const Disabled: Story = {
+    render: () => ({
+        components: {KsSegmented},
+        setup() {
+            const v1 = ref("b")
+            const v2 = ref("list")
+            const partialOptions = [
+                {label: "List", value: "list"},
+                {label: "Grid", value: "grid", disabled: true},
+                {label: "Table", value: "table"},
+            ]
+            return {v1, v2, partialOptions}
+        },
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+                <div>
+                    <p style="font-size:12px;opacity:0.5;margin:0 0 6px">Fully disabled</p>
+                    <ks-segmented v-model="v1" :options="['a', 'b', 'c']" disabled />
+                </div>
+                <div>
+                    <p style="font-size:12px;opacity:0.5;margin:0 0 6px">Single option disabled</p>
+                    <ks-segmented v-model="v2" :options="partialOptions" />
+                </div>
+            </div>
+        `,
+    }),
+}
+
 export const Block: Story = {
     render: () => ({
         components: {KsSegmented},

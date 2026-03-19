@@ -50,6 +50,58 @@ export const Default: Story = {
     }),
 }
 
+/** Inline form */
+export const InlineForm: Story = {
+    render: () => ({
+        components: {KsForm, KsFormItem, KsInput, KsButton},
+        setup() {
+            const form = reactive({keyword: "", region: ""})
+            return {form}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-form :model="form" inline>
+                    <ks-form-item label="Namespace">
+                        <ks-input v-model="form.keyword" placeholder="company.team" style="width:180px" />
+                    </ks-form-item>
+                    <ks-form-item label="Status">
+                        <ks-input v-model="form.region" placeholder="SUCCESS" style="width:120px" />
+                    </ks-form-item>
+                    <ks-form-item>
+                        <ks-button type="primary" native-type="submit">Search</ks-button>
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+}
+
+/** Size control – form-level size affects all children */
+export const SizeControl: Story = {
+    render: () => ({
+        components: {KsForm, KsFormItem, KsInput, KsButton},
+        setup() {
+            const form = reactive({name: "", desc: ""})
+            return {form}
+        },
+        template: `
+            <div style="padding:24px;max-width:400px">
+                <ks-form :model="form" size="small" label-position="top">
+                    <ks-form-item label="Name">
+                        <ks-input v-model="form.name" placeholder="Flow name" />
+                    </ks-form-item>
+                    <ks-form-item label="Description">
+                        <ks-input v-model="form.desc" type="textarea" :rows="2" />
+                    </ks-form-item>
+                    <ks-form-item>
+                        <ks-button type="primary">Save</ks-button>
+                    </ks-form-item>
+                </ks-form>
+            </div>
+        `,
+    }),
+}
+
 export const LabelPositions: Story = {
     render: () => ({
         components: {KsForm, KsFormItem, KsInput},

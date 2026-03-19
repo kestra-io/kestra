@@ -53,6 +53,75 @@ export const Default: Story = {
     },
 }
 
+/** Custom width */
+export const CustomWidth: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open wide dialog</ks-button>
+                <ks-dialog v-model="visible" title="Wide Dialog" width="60%" destroy-on-close>
+                    <p>This dialog has a custom width of 60%.</p>
+                    <template #footer>
+                        <ks-button type="primary" @click="visible = false">Close</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+}
+
+/** Destroy on close – remounts content each time */
+export const DestroyOnClose: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            const count = ref(0)
+            return {visible, count}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="() => { count++; visible = true }">
+                    Open (opened {{ count }}x)
+                </ks-button>
+                <ks-dialog v-model="visible" title="Destroy On Close" destroy-on-close>
+                    <p>This dialog destroys its content on close. Open count: {{ count }}</p>
+                    <template #footer>
+                        <ks-button type="primary" @click="visible = false">Close</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+}
+
+/** Close on click modal (backdrop) disabled */
+export const NoCloseOnBackdrop: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Click backdrop won't close</ks-button>
+                <ks-dialog v-model="visible" title="Persistent Dialog" :close-on-click-modal="false" destroy-on-close>
+                    <p>Click outside will not close this dialog. Use the button below.</p>
+                    <template #footer>
+                        <ks-button type="primary" @click="visible = false">Close explicitly</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+}
+
 export const WithCustomHeader: Story = {
     render: () => ({
         components: {KsButton, KsDialog},

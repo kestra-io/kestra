@@ -36,6 +36,67 @@ export const Default: Story = {
     args: {type: "date", placeholder: "Select date"},
 }
 
+/** Week picker */
+export const WeekPicker: Story = {
+    render: () => ({
+        components: {KsDatePicker},
+        setup() { return {value: ref(null)} },
+        template: `
+            <div style="padding:24px;min-height:400px">
+                <ks-date-picker v-model="value" type="week" placeholder="Select week" />
+            </div>
+        `,
+    }),
+}
+
+/** Month picker */
+export const MonthPicker: Story = {
+    render: () => ({
+        components: {KsDatePicker},
+        setup() { return {value: ref(null)} },
+        template: `
+            <div style="padding:24px;min-height:400px">
+                <ks-date-picker v-model="value" type="month" placeholder="Select month" clearable />
+            </div>
+        `,
+    }),
+}
+
+/** Disabled dates */
+export const DisabledDates: Story = {
+    render: () => ({
+        components: {KsDatePicker},
+        setup() {
+            const value = ref(null)
+            const disabledDate = (date: Date) => date.getTime() < Date.now() - 8.64e7
+            return {value, disabledDate}
+        },
+        template: `
+            <div style="padding:24px;min-height:400px">
+                <ks-date-picker
+                    v-model="value"
+                    type="date"
+                    placeholder="Future dates only"
+                    :disabled-date="disabledDate"
+                />
+            </div>
+        `,
+    }),
+}
+
+/** Date + time (datetime type) */
+export const DateTime: Story = {
+    render: () => ({
+        components: {KsDatePicker},
+        setup() { return {value: ref(null)} },
+        template: `
+            <div style="padding:24px;min-height:400px">
+                <ks-date-picker v-model="value" type="datetime" placeholder="Select date and time" clearable />
+            </div>
+        `,
+    }),
+}
+
 export const DateRange: Story = {
     render: () => ({
         components: {KsDatePicker},

@@ -69,6 +69,42 @@ export const WithContentSlot: Story = {
     }),
 }
 
+/** Theme – dark and light */
+export const Theme: Story = {
+    render: () => ({
+        components: {KsTooltip, KsButton},
+        template: `
+            <div style="padding:48px;display:flex;gap:16px">
+                <ks-tooltip content="Dark theme (default)" effect="dark" placement="top">
+                    <ks-button>Dark</ks-button>
+                </ks-tooltip>
+                <ks-tooltip content="Light theme" effect="light" placement="top">
+                    <ks-button>Light</ks-button>
+                </ks-tooltip>
+            </div>
+        `,
+    }),
+}
+
+/** HTML content via rawContent */
+export const HTMLContent: Story = {
+    render: () => ({
+        components: {KsTooltip, KsButton},
+        template: `
+            <div style="padding:48px">
+                <ks-tooltip
+                    content="<strong>Bold</strong> and <em>italic</em> text"
+                    :raw-content="true"
+                    effect="light"
+                    placement="top"
+                >
+                    <ks-button type="primary">HTML tooltip</ks-button>
+                </ks-tooltip>
+            </div>
+        `,
+    }),
+}
+
 export const Disabled: Story = {
     render: () => ({
         components: {KsTooltip, KsButton},

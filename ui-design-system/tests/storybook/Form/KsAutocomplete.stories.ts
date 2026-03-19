@@ -54,6 +54,55 @@ export const Default: Story = {
     args: {placeholder: "Search namespaces...", triggerOnFocus: true, clearable: true},
 }
 
+/** Disabled state */
+export const Disabled: Story = {
+    render: () => ({
+        components: {KsAutocomplete},
+        setup() {
+            const fetchSuggestions = (_q: string, cb: (r: {value: string}[]) => void) => cb([])
+            return {fetchSuggestions}
+        },
+        template: `
+            <div style="padding:24px;width:360px">
+                <ks-autocomplete disabled placeholder="Not available" :fetch-suggestions="fetchSuggestions" />
+            </div>
+        `,
+    }),
+}
+
+/** Remote search – suggestions fetched asynchronously */
+export const RemoteSearch: Story = {
+    render: () => ({
+        components: {KsAutocomplete},
+        setup() {
+            const value = ref("")
+            const databases = ["PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "ClickHouse", "BigQuery"]
+            function fetchSuggestions(query: string, callback: (results: {value: string}[]) => void) {
+                setTimeout(() => {
+                    const results = databases
+                        .filter(d => d.toLowerCase().includes(query.toLowerCase()))
+                        .map(d => ({value: d}))
+                    callback(results)
+                }, 200)
+            }
+            return {value, fetchSuggestions}
+        },
+        template: `
+            <div style="padding:24px;width:360px;min-height:280px">
+                <ks-autocomplete
+                    v-model="value"
+                    :fetch-suggestions="fetchSuggestions"
+                    placeholder="Search databases..."
+                    clearable
+                />
+                <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">
+                    Selected: {{ value || '(none)' }}
+                </span>
+            </div>
+        `,
+    }),
+}
+
 export const WithCustomTemplate: Story = {
     render: () => ({
         components: {KsAutocomplete},

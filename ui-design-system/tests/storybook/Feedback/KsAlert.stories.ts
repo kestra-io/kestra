@@ -59,6 +59,47 @@ export const WithDescription: Story = {
     }),
 }
 
+/** With icon and description – all types */
+export const WithIconAndDescription: Story = {
+    render: () => ({
+        components: {KsAlert},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
+                <ks-alert type="success" title="Execution completed" description="All 12 tasks finished successfully in 1m 23s." show-icon :closable="false" />
+                <ks-alert type="info" title="Scheduled run" description="Next execution is scheduled for today at 03:00 UTC." show-icon :closable="false" />
+                <ks-alert type="warning" title="Resource limit approaching" description="CPU usage is at 85% of the allocated quota." show-icon :closable="false" />
+                <ks-alert type="error" title="Task failed" description="Task 'fetch-data' failed with exit code 1. Check the logs for details." show-icon :closable="false" />
+            </div>
+        `,
+    }),
+}
+
+/** Centered text */
+export const Centered: Story = {
+    render: () => ({
+        components: {KsAlert},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
+                <ks-alert type="info" title="Centered alert" center show-icon />
+                <ks-alert type="success" title="Centered with description" description="Text is horizontally centered." center show-icon :closable="false" />
+            </div>
+        `,
+    }),
+}
+
+/** Closable with custom close text */
+export const CustomClosable: Story = {
+    render: () => ({
+        components: {KsAlert},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
+                <ks-alert type="info" title="Dismiss this" :closable="true" />
+                <ks-alert type="warning" title="Dismiss this too" :closable="true" />
+            </div>
+        `,
+    }),
+}
+
 export const DarkEffect: Story = {
     render: () => ({
         components: {KsAlert},

@@ -20,24 +20,26 @@
         "web-types.json"
     ],
     "scripts": {
+        "dev": "storybook dev -p 6007 --no-open",
         "build": "./node_modules/.bin/vite build",
+        "test": "npm run unit:test & npm run storybook:test & wait",
         "build:watch": "vite build --watch",
-        "test": "vitest run --config vitest.unit.config.ts",
-        "test:watch": "vitest",
-        "storybook": "storybook dev -p 6007",
-        "build-storybook": "storybook build"
-    },
-    "dependencies": {
-        "bootstrap": "^5.3.8"
+        "unit:test": "vitest run --config vitest.unit.config.ts",
+        "unit:watch": "vitest",
+        "storybook:test": "vitest run --config vitest.config.ts --project 'storybook:*'",
+        "storybook:build": "storybook build"
     },
     "peerDependencies": {
+        "bootstrap": "^5.3.8",
         "element-plus": ">=2.13.5",
         "vue": "^3.5.0"
     },
     "devDependencies": {
-        "@storybook/addon-themes": "^10.2.17",
-        "@storybook/addon-vitest": "^10.2.19",
-        "@storybook/vue3-vite": "^10.2.17",
+        "@storybook/addon-a11y": "^10.3.1",
+        "@storybook/addon-docs": "^10.3.1",
+        "@storybook/addon-themes": "^10.3.1",
+        "@storybook/addon-vitest": "^10.3.1",
+        "@storybook/vue3-vite": "^10.3.1",
         "@vitejs/plugin-vue": "^6.0.4",
         "@vitest/browser": "^4.1.0",
         "@vitest/browser-playwright": "^4.1.0",
@@ -45,16 +47,16 @@
         "@vitest/runner": "^4.1.0",
         "@vue/test-utils": "^2.4.6",
         "happy-dom": "^20.8.4",
-        "jsdom": "^28.1.0",
+        "jsdom": "^29.0.0",
         "playwright": "^1.58.2",
         "sass-embedded": "^1.98.0",
-        "storybook": "^10.2.17",
+        "storybook": "^10.3.1",
         "typescript": "^5.9.3",
         "vite": "^6.3.5",
         "vite-plugin-dts": "^4.5.4",
         "vitest": "^4.1.0",
         "vue": "^3.5.30",
         "vue-material-design-icons": "^5.3.1",
-        "vue-tsc": "^3.2.5"
+        "vue-tsc": "^3.2.6"
     }
 }

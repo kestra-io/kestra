@@ -55,6 +55,36 @@ export const Sizes: Story = {
     }),
 }
 
+/** Line clamp – multiline truncation */
+export const LineClamp: Story = {
+    render: () => ({
+        components: {KsText},
+        template: `
+            <div style="padding:24px;width:300px;display:flex;flex-direction:column;gap:12px">
+                <ks-text :line-clamp="2">
+                    This text will be clamped to two lines. It is long enough to demonstrate the line-clamp behavior when the content exceeds the allotted space.
+                </ks-text>
+            </div>
+        `,
+    }),
+}
+
+/** Override – render as different HTML elements */
+export const Override: Story = {
+    render: () => ({
+        components: {KsText},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:8px">
+                <ks-text tag="p">Paragraph &lt;p&gt;</ks-text>
+                <ks-text tag="b">Bold &lt;b&gt;</ks-text>
+                <ks-text tag="i">Italic &lt;i&gt;</ks-text>
+                <ks-text tag="sub">Subscript &lt;sub&gt;</ks-text>
+                <ks-text tag="sup">Superscript &lt;sup&gt;</ks-text>
+            </div>
+        `,
+    }),
+}
+
 export const Truncated: Story = {
     render: () => ({
         components: {KsText},

@@ -64,6 +64,49 @@ export const TextArea: Story = {
     }),
 }
 
+/** Clearable – clear button when input has value */
+export const Clearable: Story = {
+    render: () => ({
+        components: {KsInput},
+        setup() { return {value: ref("Clear me")} },
+        template: `<div style="padding:24px;width:300px"><ks-input v-model="value" clearable placeholder="Type to fill..." /></div>`,
+    }),
+}
+
+/** With suffix slot */
+export const WithSuffix: Story = {
+    render: () => ({
+        components: {KsInput},
+        setup() { return {value: ref("")} },
+        template: `
+            <div style="padding:24px;width:300px">
+                <ks-input v-model="value" placeholder="Search...">
+                    <template #suffix>🔍</template>
+                </ks-input>
+            </div>
+        `,
+    }),
+}
+
+/** Mixed input – prepend and append */
+export const MixedInput: Story = {
+    render: () => ({
+        components: {KsInput},
+        setup() { return {v1: ref(""), v2: ref("")} },
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:360px">
+                <ks-input v-model="v1" placeholder="website">
+                    <template #prepend>https://</template>
+                </ks-input>
+                <ks-input v-model="v2" placeholder="domain">
+                    <template #prepend>http://</template>
+                    <template #suffix>.io</template>
+                </ks-input>
+            </div>
+        `,
+    }),
+}
+
 export const Disabled: Story = {
     render: () => ({
         components: {KsInput},

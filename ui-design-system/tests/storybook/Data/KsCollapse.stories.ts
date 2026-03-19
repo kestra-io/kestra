@@ -42,6 +42,62 @@ export const Default: Story = {
     }),
 }
 
+/** Custom title – header content via named slot */
+export const CustomTitle: Story = {
+    render: () => ({
+        components: {KsCollapse, KsCollapseItem},
+        setup() { return {active: ref(["1"])} },
+        template: `
+            <div style="padding:24px;max-width:600px">
+                <ks-collapse v-model="active">
+                    <ks-collapse-item name="1">
+                        <template #title>
+                            <span style="display:flex;align-items:center;gap:8px">
+                                <span style="font-size:16px">⚙️</span>
+                                <strong>General Settings</strong>
+                                <span style="font-size:11px;opacity:0.5;margin-left:4px">required</span>
+                            </span>
+                        </template>
+                        <p>Configure general workflow settings here.</p>
+                    </ks-collapse-item>
+                    <ks-collapse-item name="2">
+                        <template #title>
+                            <span style="display:flex;align-items:center;gap:8px">
+                                <span style="font-size:16px">🔔</span>
+                                <strong>Notifications</strong>
+                            </span>
+                        </template>
+                        <p>Manage notification preferences.</p>
+                    </ks-collapse-item>
+                </ks-collapse>
+            </div>
+        `,
+    }),
+}
+
+/** Disabled item – specific panel cannot be toggled */
+export const DisabledItem: Story = {
+    render: () => ({
+        components: {KsCollapse, KsCollapseItem},
+        setup() { return {active: ref(["1"])} },
+        template: `
+            <div style="padding:24px;max-width:600px">
+                <ks-collapse v-model="active">
+                    <ks-collapse-item title="Enabled item" name="1">
+                        <p>This item can be toggled.</p>
+                    </ks-collapse-item>
+                    <ks-collapse-item title="Disabled item" name="2" disabled>
+                        <p>This content cannot be toggled.</p>
+                    </ks-collapse-item>
+                    <ks-collapse-item title="Another enabled" name="3">
+                        <p>Another toggleable item.</p>
+                    </ks-collapse-item>
+                </ks-collapse>
+            </div>
+        `,
+    }),
+}
+
 export const Accordion: Story = {
     render: () => ({
         components: {KsCollapse, KsCollapseItem},

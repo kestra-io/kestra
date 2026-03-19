@@ -240,6 +240,33 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/parallel-nested.yaml"})
+    void replayParallelRestartsRunningSibling() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "parallel-nested");
+        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        TaskRun replayTarget = execution.findTaskRunByTaskIdAndValue("1-3-2_par", List.of());
+        TaskRun runningSibling = execution.findTaskRunByTaskIdAndValue("1-3-3_end", List.of());
+
+        Execution executionWithRunningSibling = execution.withTaskRunList(
+            execution.getTaskRunList()
+                .stream()
+                .map(taskRun -> taskRun.getId().equals(runningSibling.getId())
+                    ? taskRun.withState(State.Type.RUNNING)
+                    : taskRun)
+                .toList()
+        );
+
+        Execution restart = executionService.replay(executionWithRunningSibling, replayTarget.getId(), null);
+
+        TaskRun restartedSibling = restart.findTaskRunByTaskIdAndValue("1-3-3_end", List.of());
+        assertThat(restartedSibling.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restartedSibling.getId()).isNotEqualTo(runningSibling.getId());
+        assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
+    }
+
+    @Test
     @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml", tenantId = TENANT_2)
     void replayEachSeq(Execution execution) throws Exception {
         assertThat(execution.getTaskRunList()).hasSize(23);

@@ -445,10 +445,8 @@
             ? value
             : `${value.substring(0, 16)}...`;
 
-    const isFile = (value: unknown): boolean => Utils.isFile(value);
-
     const displayVarValue = () =>
-        isFile(selectedValue.value) ||
+        Utils.isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");

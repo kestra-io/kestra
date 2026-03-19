@@ -42,12 +42,16 @@ export default class Utils {
             Math.random().toString(16).slice(2) +
             Date.now().toString(16).slice(4);
     }
-    static isFile(value: unknown): value is string {
-        return typeof value === "string" && (
-            value.startsWith("kestra:///") ||
-            value.startsWith("file://") ||
-            value.startsWith("nsfile://")
-        );
+
+    /**
+     * Checks whether a value is a supported file URI.
+     *
+     * @param value Value to validate.
+     * @returns `true` if the value is a string with a supported file prefix.
+     */
+    static isFile(value: unknown): boolean {
+        const PREFIXES = ["kestra:///", "file://", "nsfile://"];
+        return typeof value === "string" && PREFIXES.some(p => value.startsWith(p));
     }
 
     static flatten(object: Record<string, any>) {

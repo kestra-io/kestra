@@ -35,21 +35,21 @@ export function useOnboardingResources() {
             descriptionKey: "welcome_copilot.success_page.items.slack.description",
             icon: Slack,
             iconClass: "is-slack",
-            href: "https://kestra.io/slack",
+            href: "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
         },
         {
             titleKey: "welcome_copilot.success_page.items.videos.title",
             descriptionKey: "welcome_copilot.success_page.items.videos.description",
             icon: Youtube,
             iconClass: "is-videos",
-            href: "https://kestra.io/tutorial-videos/all",
+            href: "https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
         },
         {
             titleKey: "welcome_copilot.success_page.items.demo.title",
             descriptionKey: "welcome_copilot.success_page.items.demo.description",
             icon: CalendarMonth,
             iconClass: "is-demo",
-            href: "https://kestra.io/demo",
+            href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
         },
     ]);
 

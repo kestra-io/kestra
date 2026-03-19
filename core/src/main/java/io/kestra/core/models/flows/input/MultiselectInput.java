@@ -5,6 +5,7 @@ import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.validations.MultiselectInputValidation;
 import io.kestra.core.validations.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolation;
@@ -21,6 +22,7 @@ import java.util.function.Function;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@MultiselectInputValidation
 public class MultiselectInput extends Input<List<String>> implements ItemTypeInterface, RenderableInput {
     @Schema(
         title = "Deprecated, please use `values` instead."

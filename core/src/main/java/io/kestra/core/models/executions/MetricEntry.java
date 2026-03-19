@@ -1,7 +1,6 @@
 package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Gauge;
@@ -18,7 +17,7 @@ import jakarta.validation.constraints.Pattern;
 
 @Value
 @Builder(toBuilder = true)
-public class MetricEntry implements DeletedInterface, TenantInterface {
+public class MetricEntry implements TenantInterface {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -53,10 +52,6 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
 
     @Nullable
     Map<String, String> tags;
-
-    @NotNull
-    @Builder.Default
-    boolean deleted = false;
 
     @Nullable
     ExecutionKind executionKind;

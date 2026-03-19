@@ -28,12 +28,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Schema(
-    title = "Deduplicate a file by retaining only the latest item for each extracted key.",
+    title = "Deduplicate a line-oriented file by key.",
     description = """
-        The `Deduplicate` task involves reading the input file twice, rather than loading the entire file into memory.
-        The first iteration is used to build a deduplication map in memory containing the last lines observed for each key.
-        The second iteration is used to rewrite the file without the duplicates. The task must be used with this in mind.
-        """
+        Reads the file twice: first to map each key (from `expr`) to its last occurrence offset, then to write only those last occurrences to a new file. Avoids loading the full file in memory.
+
+        Use for ordered “keep-last” semantics; expression can reference columns directly."""
 )
 @Plugin(
     examples = {

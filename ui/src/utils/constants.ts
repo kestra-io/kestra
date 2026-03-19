@@ -67,3 +67,13 @@ export const groupMemberships = {
     OWNER: "OWNER",
     MEMBER: "MEMBER",
 } as const;
+
+export const aiGenerationTypes = {
+    FLOW: "flow",
+    APP: "app",
+    TEST: "test",
+    DASHBOARD: "dashboard"
+} as const;
+export type AiGenerationType = typeof aiGenerationTypes[keyof typeof aiGenerationTypes];
+
+export const TUTORIAL_NAMESPACE = "tutorial";

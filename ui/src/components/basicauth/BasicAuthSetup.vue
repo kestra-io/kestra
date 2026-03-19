@@ -24,8 +24,8 @@
                         <el-text size="large" class="header-title" v-else-if="activeStep === 1">
                             {{ $t('setup.titles.survey') }}
                         </el-text>
-                        <el-text class="d-block mt-4">
-                            {{ subtitles[activeStep] }}
+                        <el-text v-if="activeStep === 0" class="header-subtitle">
+                            {{ $t('setup.subtitles.user') }}
                         </el-text>
                         <el-button v-if="activeStep === 1" class="skip-button" @click="handleSurveySkip()">
                             {{ $t('setup.survey.skip') }}
@@ -36,8 +36,8 @@
                 <div class="setup-card-body">
                     <div v-if="activeStep === 0">
                         <el-form ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
-                            <el-form-item :label="$t('setup.form.email')" prop="username">
-                                <el-input v-model="userFormData.username" :placeholder="$t('setup.form.email')" type="email">
+                            <el-form-item :label="$t('setup.form.email')" prop="username" class="mb-2">
+                                <el-input v-model="userFormData.username" placeholder="admin@company.com" type="email">
                                     <template #suffix v-if="getFieldError('username')">
                                         <el-tooltip placement="top" :content="getFieldError('username')">
                                             <InformationOutline class="validation-icon error" />
@@ -45,30 +45,17 @@
                                     </template>
                                 </el-input>
                             </el-form-item>
-                            <el-form-item :label="$t('setup.form.firstName')" prop="firstName">
-                                <el-input v-model="userFormData.firstName" :placeholder="$t('setup.form.firstName')">
-                                    <template #suffix v-if="getFieldError('firstName')">
-                                        <el-tooltip placement="top" :content="getFieldError('firstName')">
-                                            <InformationOutline class="validation-icon error" />
-                                        </el-tooltip>
-                                    </template>
-                                </el-input>
-                            </el-form-item>
-                            <el-form-item :label="$t('setup.form.lastName')" prop="lastName">
-                                <el-input v-model="userFormData.lastName" :placeholder="$t('setup.form.lastName')">
-                                    <template #suffix v-if="getFieldError('lastName')">
-                                        <el-tooltip placement="top" :content="getFieldError('lastName')">
-                                            <InformationOutline class="validation-icon error" />
-                                        </el-tooltip>
-                                    </template>
-                                </el-input>
-                            </el-form-item>
+                            <div class="username-requirements mb-2">
+                                <el-text>
+                                    Used as your admin login. No emails unless you opt in.
+                                </el-text>
+                            </div>
                             <el-form-item :label="$t('setup.form.password')" prop="password" class="mb-2">
                                 <el-input
                                     type="password"
                                     showPassword
                                     v-model="userFormData.password"
-                                    :placeholder="$t('setup.form.password')"
+                                    placeholder="StrongPass1"
                                 >
                                     <template #suffix v-if="getFieldError('password')">
                                         <el-tooltip placement="top" :content="getFieldError('password')">
@@ -77,13 +64,13 @@
                                     </template>
                                 </el-input>
                             </el-form-item>
-                            <div class="password-requirements mb-4">
-                                <el-text>     
+                            <div class="password-requirements mb-2">
+                                <el-text>
                                     {{ $t('setup.form.password_requirements') }}
                                 </el-text>
                             </div>
                         </el-form>
-                        <div class="d-flex gap-1">
+                        <div class="d-flex justify-content-end gap-1">
                             <el-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
                                 {{ $t("setup.confirm.confirm") }}
                             </el-button>
@@ -93,9 +80,9 @@
                     <div v-else-if="activeStep === 1">
                         <el-form ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
                             <el-form-item :label="$t('setup.survey.company_size')">
-                                <el-radio-group v-model="surveyData.companySize" class="survey-radio-group">
+                                <el-radio-group v-model="surveyData.mainGoal" class="survey-radio-group">
                                     <el-radio
-                                        v-for="option in companySizeOptions"
+                                        v-for="option in intentOptions"
                                         :key="option.value"
                                         :value="option.value"
                                     >
@@ -104,7 +91,7 @@
                                 </el-radio-group>
                             </el-form-item>
 
-                            <el-divider class="my-4" />
+                            <el-divider class="survey-divider" />
 
                             <el-form-item :label="$t('setup.survey.use_case')">
                                 <div class="use-case-checkboxes">
@@ -121,16 +108,16 @@
                                 </div>
                             </el-form-item>
 
-                            <el-divider class="my-4" />
+                            <el-divider class="survey-divider" />
 
-                            <el-form-item>
+                            <el-form-item :label="$t('setup.survey.newsletter_heading')" class="newsletter-form-item">
                                 <el-checkbox v-model="surveyData.newsletter" class="newsletter-checkbox">
-                                    <span v-html="$t('setup.survey.newsletter')" />
+                                    {{ $t('setup.survey.newsletter') }}
                                 </el-checkbox>
                             </el-form-item>
                         </el-form>
 
-                        <div class="d-flex">
+                        <div class="d-flex justify-content-end">
                             <el-button type="primary" @click="handleSurveyContinue()">
                                 {{ $t("setup.survey.continue") }}
                             </el-button>
@@ -164,7 +151,8 @@
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
-    import {initPostHogForSetup, trackSetupEvent} from "../../composables/usePosthog"
+    import {trackSetupEvent} from "../../composables/usePosthog"
+    import {identifyPosthogUser, initPosthogIfEnabled} from "../../utils/posthog"
 
     import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
@@ -176,14 +164,12 @@
     import * as BasicAuth from "../../utils/basicAuth";
 
     interface UserFormData {
-        firstName: string
-        lastName: string
         username: string
         password: string
     }
 
     interface SurveyData {
-        companySize: string
+        mainGoal: string
         useCases: string[]
         newsletter: boolean
     }
@@ -200,17 +186,14 @@
 
     const activeStep = ref(0)
     const userForm: Ref<any> = ref(null)
-    const surveyForm: Ref<any> = ref(null)
 
     const userFormData = ref<UserFormData>({
-        firstName: "",
-        lastName: "",
         username: "",
         password: ""
     })
 
     const surveyData = ref<SurveyData>({
-        companySize: "",
+        mainGoal: "",
         useCases: [],
         newsletter: false
     })
@@ -228,7 +211,11 @@
                 return
             }
 
-            await initPostHogForSetup(config)
+            await initPosthogIfEnabled(config)
+
+            trackSetupEvent("setup_flow:started", {
+                setup_step: "account_creation"
+            }, userFormData.value)
 
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
@@ -245,24 +232,19 @@
         }
     })
 
-    const subtitles = computed(() => [
-        t("setup.subtitles.user"),
-        t("setup.subtitles.survey"),
-    ])
-
-    const companySizeOptions = computed<CompanySizeOption[]>(() => [
-        {value: "1-10", label: t("setup.survey.company_1_10")},
-        {value: "11-50", label: t("setup.survey.company_11_50")},
-        {value: "50-250", label: t("setup.survey.company_50_250")},
-        {value: "250+", label: t("setup.survey.company_250_plus")},
-        {value: "personal", label: t("setup.survey.company_personal")}
+    const intentOptions = computed<CompanySizeOption[]>(() => [
+        {value: "learning_exploring", label: t("setup.survey.company_1_10")},
+        {value: "personal_project", label: t("setup.survey.company_11_50")},
+        {value: "evaluating_team_company", label: t("setup.survey.company_50_250")},
+        {value: "production_use", label: t("setup.survey.company_250_plus")}
     ])
 
     const useCaseOptions = computed<CompanySizeOption[]>(() => [
         {value: "infrastructure", label: t("setup.survey.use_case_infrastructure")},
-        {value: "business", label: t("setup.survey.use_case_business")},
         {value: "data", label: t("setup.survey.use_case_data")},
         {value: "ml", label: t("setup.survey.use_case_ml")},
+        {value: "business", label: t("setup.survey.use_case_business")},
+        {value: "scheduling", label: t("setup.survey.use_case_scheduling")},
         {value: "other", label: t("setup.survey.use_case_other")}
     ])
 
@@ -290,14 +272,12 @@
 
     const userRules = computed(() => ({
         username: [{required: true, validator: validateEmail, trigger: "blur"}],
-        firstName: [{required: true, message: t("setup.validation.firstName_required"), trigger: "blur"}],
-        lastName: [{required: true, message: t("setup.validation.lastName_required"), trigger: "blur"}],
         password: [{required: true, pattern: PASSWORD_REGEX, message: t("setup.validation.password_invalid"), trigger: "blur"}]
     }))
 
     const isUserStepValid = computed(() => {
         const data = userFormData.value
-        return data.firstName && data.lastName && data.username && data.password &&
+        return data.username && data.password &&
             EMAIL_REGEX.test(data.username) && PASSWORD_REGEX.test(data.password) &&
             MailChecker.isValid(data.username)
     })
@@ -310,21 +290,21 @@
 
     const handleUserFormSubmit = async () => {
         try {
+            const normalizedEmail = userFormData.value.username.trim()
+
             await miscStore.addBasicAuth({
-                firstName: userFormData.value.firstName,
-                lastName: userFormData.value.lastName,
-                username: userFormData.value.username,
+                username: normalizedEmail,
                 password: userFormData.value.password
             })
 
-            BasicAuth.signIn(userFormData.value.username, userFormData.value.password)
+            BasicAuth.signIn(normalizedEmail, userFormData.value.password)
 
-            await miscStore.loadConfigs()
+            const configs = await miscStore.loadConfigs()
+
+            await identifyPosthogUser(configs, {email: normalizedEmail})
 
             trackSetupEvent("setup_flow:account_created", {
-                user_firstname: userFormData.value.firstName,
-                user_lastname: userFormData.value.lastName,
-                user_email: userFormData.value.username
+                user_email: normalizedEmail
             }, userFormData.value)
 
 
@@ -343,7 +323,7 @@
         localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
 
         const surveySelections: Record<string, any> = {
-            company_size: surveyData.value.companySize,
+            main_goal: surveyData.value.mainGoal,
             use_cases: surveyData.value.useCases,
             use_cases_count: surveyData.value.useCases.length,
             newsletter_opted_in: surveyData.value.newsletter,
@@ -365,6 +345,8 @@
 
     const handleSurveySkip = () => {
         const surveySelections: Record<string, any> = {
+            main_goal: surveyData.value.mainGoal,
+            newsletter_opted_in: surveyData.value.newsletter,
             survey_action: "skipped"
         }
 
@@ -388,13 +370,15 @@
     const completeSetup = () => {
         const savedSurveyData = localStorage.getItem("basicAuthSurveyData")
         const surveySelections = savedSurveyData ? JSON.parse(savedSurveyData) : {}
+        const normalizedEmail = userFormData.value.username.trim()
 
-        trackSetupEvent("setup_flow:completed", {
-            user_firstname: userFormData.value.firstName,
-            user_lastname: userFormData.value.lastName,
-            user_email: userFormData.value.username,
+        const completeEventPayload: Record<string, any> = {
+            user_email: normalizedEmail,
+            newsletter_opted_in: surveyData.value.newsletter,
             ...surveySelections
-        }, userFormData.value)
+        }
+
+        trackSetupEvent("setup_flow:completed", completeEventPayload, userFormData.value)
 
         localStorage.setItem("basicAuthSetupCompleted", "true")
         localStorage.removeItem("basicAuthSetupInProgress")

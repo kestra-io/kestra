@@ -34,16 +34,20 @@ import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.flow.Pause;
-import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
+import io.kestra.plugin.core.trigger.WebhookContext;
+import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
-import io.kestra.webserver.services.ExecutionStreamingService;
+import io.kestra.core.services.ExecutionStreamingService;
+import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -70,7 +74,6 @@ import io.micronaut.validation.Validated;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -93,6 +96,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -211,29 +215,35 @@ public class ExecutionController {
     @Inject
     private ObjectMapper objectMapper;
 
+    @Inject
+    private WebhookService webhookService;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = {"Executions"}, summary = "Search for executions")
     public PagedResults<Execution> searchExecutions(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
-        //Deprecated params
-        @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
+        @Parameter(description = "The sort of current page", examples = {
+            @ExampleObject(name = "Sort by start date in ascending order", value = "state.startDate:asc"),
+            @ExampleObject(name = "Sort by namespace in descending order", value = "namespace:desc"),
+        }) @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
 
     ) {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
@@ -429,7 +439,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete executions filter by query parameters")
     public HttpResponse<?> deleteExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -490,62 +500,67 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/webhook/{namespace}/{id}/{key}")
+    @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = {MediaType.ALL})
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public Publisher<HttpResponse<?>> triggerExecutionByPostWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
         HttpRequest<String> request
-    ) {
-        return this.webhook(namespace, id, key, request);
+    ) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/webhook/{namespace}/{id}/{key}")
+    @Get(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = {MediaType.ALL})
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public Publisher<HttpResponse<?>> triggerExecutionByGetWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
         HttpRequest<String> request
-    ) {
-        return this.webhook(namespace, id, key, request);
+    ) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "/webhook/{namespace}/{id}/{key}")
+    @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = {MediaType.ALL})
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
-    public Publisher<HttpResponse<?>> triggerExecutionByPutWebhook(
+    public Mono<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
         HttpRequest<String> request
-    ) {
-        return this.webhook(namespace, id, key, request);
+    ) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
-    private Publisher<HttpResponse<?>> webhook(
+    private Mono<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
+        String path,
         HttpRequest<String> request
-    ) {
+    ) throws IllegalVariableEvaluationException {
         Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
-        return webhook(find, key, request);
+        return webhook(find, key, path, request);
     }
 
-    protected Publisher<HttpResponse<?>> webhook(
+    protected Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
+        String path,
         HttpRequest<String> request
-    ) {
+    ) throws IllegalVariableEvaluationException {
         if (maybeFlow.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
         }
@@ -558,11 +573,11 @@ public class ExecutionController {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
-        Optional<Webhook> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
+        Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
             .getTriggers())
             .stream()
-            .filter(o -> o instanceof Webhook)
-            .map(o -> (Webhook) o)
+            .filter(o -> o instanceof AbstractWebhookTrigger)
+            .map(o -> (AbstractWebhookTrigger) o)
             .filter(w -> {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
@@ -580,94 +595,41 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
         }
 
-        final Webhook webhook = maybeWebhook.get();
-        Optional<Execution> execution = webhook.evaluate(request, flow);
+        final AbstractWebhookTrigger webhook = maybeWebhook.get();
 
-        if (execution.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
-        }
+        // Webhook context
+        var webhookContext = new WebhookContext(
+            MicronautHttpService.from(request),
+            path,
+            flow,
+            webhook,
+            webhookService
+        );
 
-        List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, "trigger"));
-        if (flow.getLabels() != null) {
-            labels.addAll(LabelService.labelsExcludingSystem(flow));
-        }
-        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
-            labels.add(new Label(CORRELATION_ID, execution.get().getId()));
-        }
-
-        var result = execution.get().withLabels(labels);
-
-        // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
-        var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
-        if (!conditionService.isValid(flow, webhook, conditionContext)) {
-            return Mono.just(HttpResponse.noContent());
-        }
-
-        // inject trigger inputs
-        if (webhook.getInputs() != null) {
-            RunContext runContext = runContextFactory.of(flow, result);
-            try {
-                Map<String, Object> inputs = runContext.render(webhook.getInputs());
-                inputs = flowInputOutput.readExecutionInputs(flow, result, inputs);
-                result = result.withInputs(inputs);
-            } catch (Exception e) {
-                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
-                throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
-            }
-        }
-
+        // Call evaluate and create a failed execution if exception occurs
         try {
-            // inject the traceparent into the execution
-            Optional<TextMapPropagator> propagator = openTelemetry
-                .map(OpenTelemetry::getPropagators)
-                .map(ContextPropagators::getTextMapPropagator);
+            return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
+        } catch (Exception e) {
+            Execution failedExecution = Execution.builder()
+                .id(IdUtils.create())
+                .tenantId(flow.getTenantId())
+                .namespace(flow.getNamespace())
+                .flowId(flow.getId())
+                .flowRevision(flow.getRevision())
+                .labels(LabelService.labelsExcludingSystem(flow.getLabels()))
+                .state(new State().withState(State.Type.FAILED))
+                .build();
 
-            if (propagator.isPresent()) {
-                propagator.get().inject(Context.current(), result, ExecutionTextMapSetter.INSTANCE);
+            Logger logger = webhookContext.webhookService().runContext(flow, failedExecution).logger();
+            logger.error("[trigger: {}] Webhook evaluate Failed with error '{}'" , webhookContext.trigger(), e.getMessage());
+
+            try {
+                this.executionQueue.emit(failedExecution);
+            } catch (QueueException ex) {
+                log.error("Unable to emit the execution", ex);
             }
 
-            executionQueue.emit(result);
-            eventPublisher.publishEvent(CrudEvent.create(result));
-
-            if (webhook.getWait()) {
-                var subscriberId = UUID.randomUUID().toString();
-                var executionId = result.getId();
-                return Flux.<Event<Execution>>create(emitter -> {
-                        streamingService.registerSubscriber(
-                            executionId,
-                            subscriberId,
-                            emitter,
-                            flow
-                        );
-                    })
-                    .last()
-                    .map(event -> {
-                        if (webhook.getReturnOutputs()) {
-                            return HttpResponse.ok(event.getData().getOutputs());
-
-                        } else {
-                            return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
-                                event.getData(),
-                                executionUrl(event.getData())
-                            ));
-                        }
-                    })
-                    .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
-            } else {
-                return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
-            }
-        } catch (QueueException e) {
-            log.error(e.getMessage(), e);
-            return Mono.just(HttpResponse.serverError());
-        }
-    }
-
-    public record WebhookResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision,
-                                  ExecutionTrigger trigger, Map<String, Object> outputs, List<Label> labels,
-                                  State state, URI url) {
-        public static WebhookResponse fromExecution(Execution execution, URI url) {
-            return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
+            return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -752,8 +714,8 @@ public class ExecutionController {
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
                     return Mono.error(new IllegalArgumentException(
                         "Flow execution blocked: one or more condition checks evaluated to false."
-                        + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
-                    )));
+                            + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
+                        )));
                 }
 
                 final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
@@ -1040,7 +1002,7 @@ public class ExecutionController {
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in state PAUSED or terminated",
+                    "execution not in state PAUSED or terminated, or is KILLED",
                     executionId,
                     String.class,
                     "execution",
@@ -1079,7 +1041,7 @@ public class ExecutionController {
     @Post(uri = "/restart/by-query")
     @Operation(tags = {"Executions"}, summary = "Restart executions filter by query parameters")
     public HttpResponse<?> restartExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1264,8 +1226,8 @@ public class ExecutionController {
             return null;
         }
 
-        if (!execution.get().getState().isTerminated()) {
-            throw new IllegalArgumentException("You can only change the state of a terminated execution.");
+        if (!execution.get().getState().canChangeStatus()) {
+            throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
         }
 
         Execution updated = execution.get().withState(status);
@@ -1294,9 +1256,9 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
+            if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in a terminated state",
+                    "execution not in a terminated state or is killed",
                     executionId,
                     String.class,
                     "execution",
@@ -1340,7 +1302,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
     @ApiResponse(responseCode = "422", description = "Changed state with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public HttpResponse<?> updateExecutionsStatusByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1390,7 +1352,7 @@ public class ExecutionController {
     public HttpResponse<?> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
-    ) throws InternalException, QueueException {
+    ) throws QueueException {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
@@ -1526,8 +1488,7 @@ public class ExecutionController {
         return resumeFoundExecution(inputs, execution, flow);
     }
 
-    protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution,
-                                                         Flow flow) {
+    protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution, Flow flow) {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
@@ -1644,7 +1605,7 @@ public class ExecutionController {
     @Post(uri = "/resume/by-query")
     @Operation(tags = {"Executions"}, summary = "Resume executions filter by query parameters")
     public HttpResponse<?> resumeExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1753,7 +1714,7 @@ public class ExecutionController {
     @Post(uri = "/pause/by-query")
     @Operation(tags = {"Executions"}, summary = "Pause executions filter by query parameters")
     public HttpResponse<?> pauseExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1797,7 +1758,7 @@ public class ExecutionController {
     @Delete(uri = "/kill/by-query")
     @Operation(tags = {"Executions"}, summary = "Kill executions filter by query parameters")
     public HttpResponse<?> killExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1841,7 +1802,7 @@ public class ExecutionController {
     @Post(uri = "/replay/by-query")
     @Operation(tags = {"Executions"}, summary = "Create new executions from old ones filter by query parameters. Keep the flow revision")
     public HttpResponse<?> replayExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -2159,7 +2120,7 @@ public class ExecutionController {
     @Post(uri = "/labels/by-query")
     @Operation(tags = {"Executions"}, summary = "Set label on executions filter by query parameters")
     public HttpResponse<?> setLabelsOnTerminatedExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -2276,7 +2237,7 @@ public class ExecutionController {
     @Post(uri = "/unqueue/by-query")
     @Operation(tags = {"Executions"}, summary = "Unqueue executions filter by query parameters")
     public HttpResponse<?> unqueueExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -2292,6 +2253,7 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
@@ -2398,7 +2360,7 @@ public class ExecutionController {
     @Post(uri = "/force-run/by-query")
     @Operation(tags = {"Executions"}, summary = "Force run executions filter by query parameters")
     public HttpResponse<?> forceRunExecutionsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -2595,7 +2557,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Export all executions as a streamed CSV file")
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux> exportExecutions(
-        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
     ) {
 
         return HttpResponse.ok(

@@ -10,6 +10,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
@@ -201,7 +202,8 @@ public class DefaultWorker implements Worker {
     void initMetricsAndTracer() {
         // the method is called twice due to how we create the bean, see https://github.com/micronaut-projects/micronaut-core/issues/11656
         if (this.init.compareAndSet(false, true)) {
-            String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
+            String[] tags = {MetricRegistry.TAG_WORKER_GROUP, this.workerGroupKey != null ? this.workerGroupKey : "__default__"};
+
             // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION, numThreads, tags);
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);
@@ -317,8 +319,7 @@ public class DefaultWorker implements Worker {
 
         if (workerGroupKey != null) {
             log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
-        }
-        else {
+        } else {
             log.info("Worker started with {} thread(s)", numThreads);
         }
     }
@@ -466,14 +467,14 @@ public class DefaultWorker implements Worker {
         }
 
         var flow = workerTrigger.getConditionContext().getFlow();
-        if (flow.getLabels() != null) {
-            evaluate = evaluate.map(execution -> {
+
+        evaluate = evaluate.map(execution -> {
                     List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-                    executionLabels.addAll(LabelService.labelsExcludingSystem(flow));
+                    executionLabels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
                     return execution.withLabels(executionLabels);
                 }
             );
-        }
+
 
         try {
             this.workerTriggerResultQueue.emit(
@@ -647,7 +648,7 @@ public class DefaultWorker implements Worker {
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, MetricRegistry.METRIC_WORKER_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
             .increment();
 
-        if (workerTask.getTaskRun().getState().getCurrent() == CREATED) {
+        if (workerTask.getTaskRun().getState().getCurrent() == CREATED || workerTask.getTaskRun().getState().getCurrent() == SUBMITTED) {
             metricRegistry
                 .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, MetricRegistry.METRIC_WORKER_QUEUED_DURATION_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
                 .record(Duration.between(
@@ -655,7 +656,7 @@ public class DefaultWorker implements Worker {
                 ));
         }
 
-        if (! Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+        if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
@@ -774,7 +775,7 @@ public class DefaultWorker implements Worker {
                     archive.write(JacksonMapper.ofIon().writeValueAsBytes(workerTask.getTaskRun().getOutputs()));
                     archive.closeEntry();
                     archive.finish();
-                    Path archiveFile = runContext.workingDir().createTempFile( ".zip");
+                    Path archiveFile = runContext.workingDir().createTempFile(".zip");
                     Files.write(archiveFile, bos.toByteArray());
                     URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), workerTask.getTaskRun().getValue());
                     runContext.logger().debug("Caching entry uploaded in URI {}", uri);
@@ -952,12 +953,20 @@ public class DefaultWorker implements Worker {
             Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
             taskRun = taskRun.withOutputs(variables);
             if (workerTask.getTask().getAssets() != null) {
-                List<Asset> outputAssets = runContext.assets().outputs();
-                Optional<AssetsDeclaration> renderedAssetsDeclaration = runContext.render(workerTask.getTask().getAssets()).as(AssetsDeclaration.class);
-                renderedAssetsDeclaration.map(AssetsDeclaration::getOutputs).ifPresent(outputAssets::addAll);
+                // We need to have the task outputs injected before rendering the assets
+                Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun);
+
+                List<AssetEmit> assetEmits = runContext.assets().emitted();
+                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
                 taskRun = taskRun.withAssets(new AssetsInOut(
-                    renderedAssetsDeclaration.map(AssetsDeclaration::getInputs).orElse(null),
-                    outputAssets
+                    Stream.concat(
+                        runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap).stream(),
+                        assetEmits.stream().map(AssetEmit::inputs).flatMap(Collection::stream)
+                    ).toList(),
+                    Stream.concat(
+                        runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap).stream(),
+                        assetEmits.stream().map(AssetEmit::outputs).flatMap(Collection::stream)
+                    ).toList()
                 ));
             }
         } catch (Exception e) {

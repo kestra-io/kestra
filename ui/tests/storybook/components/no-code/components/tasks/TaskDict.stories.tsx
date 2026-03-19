@@ -1,7 +1,7 @@
 import {computed, provide, ref} from "vue";
 import TaskDict from "../../../../../../src/components/no-code/components/tasks/TaskDict.vue";
 import Wrapper from "../../../../../../src/components/no-code/components/tasks/Wrapper.vue";
-import {userEvent, waitFor, within, expect} from "storybook/internal/test";
+import {userEvent, waitFor, within, expect} from "storybook/test";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";

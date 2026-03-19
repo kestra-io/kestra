@@ -46,7 +46,7 @@
 
     const getLink = () => {
         const links = {
-            help: "https://kestra.io/slack",
+            help: "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
         };
         return links[props.category as keyof typeof links] || "#";
     };

@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
@@ -54,6 +55,11 @@ public class HttpRequest {
      * The (user-accessible) request headers that this request was (or will be) sent with.
      */
     HttpHeaders headers;
+
+    /**
+     * The remote address of the request sender.
+     */
+    InetSocketAddress remoteAddress;
 
     public static HttpRequest from(org.apache.hc.core5.http.HttpRequest request) throws IOException {
         return HttpRequest.builder()
@@ -142,13 +148,13 @@ public class HttpRequest {
     public abstract static class RequestBody {
         public abstract HttpEntity to() throws IOException;
 
-        public abstract Object getContent() throws IOException;
+        public abstract Object getContent();
 
-        public abstract Charset getCharset() throws IOException;
+        public abstract Charset getCharset();
 
-        public abstract String getContentType() throws IOException;
+        public abstract String getContentType();
 
-        protected ContentType entityContentType() throws IOException {
+        protected ContentType entityContentType() {
             return this.getCharset() != null ? ContentType.create(this.getContentType(), this.getCharset()) : ContentType.create(this.getContentType());
         }
 
@@ -166,6 +172,14 @@ public class HttpRequest {
                     charset = Charset.forName(stripped.substring(stripped.lastIndexOf('=') + 1));
                 }
             }
+
+            if (mimeType.startsWith("multipart/")) {
+                return PassthroughRequestBody.builder()
+                    .entity(entity)
+                    .contentType(entity.getContentType())
+                    .charset(charset)
+                    .build();
+        }
             if (mimeType.equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
                 return ByteArrayRequestBody.builder()
                     .contentType(mimeType)
@@ -211,6 +225,13 @@ public class HttpRequest {
         public HttpEntity to() throws IOException {
             return new InputStreamEntity(content, this.entityContentType());
         }
+
+        public static InputStreamRequestBody of(InputStream data) {
+            return InputStreamRequestBody.builder()
+                .content(data)
+                .charset(StandardCharsets.UTF_8)
+                .build();
+        }
     }
 
     @Getter
@@ -226,6 +247,13 @@ public class HttpRequest {
 
         public HttpEntity to() throws IOException {
             return new StringEntity(this.content, this.entityContentType());
+        }
+
+        public static StringRequestBody of(String data) {
+            return StringRequestBody.builder()
+                .content(data)
+                .charset(StandardCharsets.UTF_8)
+                .build();
         }
     }
 
@@ -243,6 +271,13 @@ public class HttpRequest {
         public HttpEntity to() throws IOException {
             return new ByteArrayEntity(content, this.entityContentType());
         }
+
+        public static ByteArrayRequestBody of(byte[] data) {
+            return ByteArrayRequestBody.builder()
+                .content(data)
+                .charset(StandardCharsets.UTF_8)
+                .build();
+        }
     }
 
     @Getter
@@ -254,7 +289,7 @@ public class HttpRequest {
         private Object content;
 
         @Override
-        public String getContentType() throws IOException {
+        public String getContentType() {
             return ContentType.APPLICATION_JSON.getMimeType();
         }
 
@@ -268,7 +303,34 @@ public class HttpRequest {
                 throw new IOException(e);
             }
         }
+
+        public static JsonRequestBody of(Object data) {
+            return JsonRequestBody.builder()
+                .content(data)
+                .charset(StandardCharsets.UTF_8)
+                .build();
+        }
     }
+
+    @Getter
+    @AllArgsConstructor
+    @SuperBuilder
+    public static class PassthroughRequestBody extends RequestBody {
+        private HttpEntity entity;
+        private String contentType;
+        private Charset charset;
+
+        @Override
+        public Object getContent() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public HttpEntity to() {
+            return entity;
+        }
+    }
+
 
     @Getter
     @AllArgsConstructor
@@ -279,7 +341,7 @@ public class HttpRequest {
         private Map<String, Object> content;
 
         @Override
-        public String getContentType() throws IOException {
+        public String getContentType() {
             return ContentType.APPLICATION_FORM_URLENCODED.getMimeType();
         }
 
@@ -290,6 +352,13 @@ public class HttpRequest {
                 .toList();
 
             return this.charset != null ? new UrlEncodedFormEntity(list, this.charset) : new UrlEncodedFormEntity(list);
+        }
+
+        public static UrlEncodedRequestBody of(Map<String, Object> data) {
+            return UrlEncodedRequestBody.builder()
+                .content(data)
+                .charset(StandardCharsets.UTF_8)
+                .build();
         }
     }
 
@@ -302,7 +371,7 @@ public class HttpRequest {
         private Map<String, Object> content;
 
         @Override
-        public String getContentType() throws IOException {
+        public String getContentType() {
             return ContentType.MULTIPART_MIXED.getMimeType();
         }
 
@@ -337,6 +406,13 @@ public class HttpRequest {
             });
 
             return builder.build();
+        }
+
+        public static MultipartRequestBody of(Map<String, Object>  data) {
+            return MultipartRequestBody.builder()
+                .content(data)
+                .charset(StandardCharsets.UTF_8)
+                .build();
         }
     }
 }

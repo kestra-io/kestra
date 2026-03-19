@@ -5,7 +5,7 @@
         <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
-        <VueTour v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
+        <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
         <UnsavedChangesDialog />
     </el-config-provider>
 </template>
@@ -20,9 +20,9 @@
     import {useMiscStore} from "override/stores/misc";
     import Utils from "./utils/utils";
     import * as BasicAuth from "./utils/basicAuth";
-    import {initPostHogForSetup} from "./composables/usePosthog";
+    import {initPosthogIfEnabled} from "./utils/posthog";
     import ErrorToast from "./components/ErrorToast.vue";
-    import VueTour from "./components/onboarding/VueTour.vue";
+    import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue";
@@ -74,7 +74,7 @@
             uid: uid,
         });
 
-        await initPostHogForSetup(config);
+        void initPosthogIfEnabled(config);
 
         return config;
     }

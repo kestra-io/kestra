@@ -1,12 +1,12 @@
 package io.kestra.webserver.services.ai.gemini;
 
 import io.kestra.webserver.services.ai.AiConfiguration;
-import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@ConfigurationProperties(value = "kestra.ai.gemini")
+import java.time.Duration;
+
 public record GeminiConfiguration (
     @Nullable
     String baseUrl,
@@ -29,5 +29,16 @@ public record GeminiConfiguration (
     @Bindable(defaultValue = "false")
     boolean logRequests,
     @Bindable(defaultValue = "false")
-    boolean logResponses
-) implements AiConfiguration {}
+    boolean logResponses,
+    Duration timeout
+) implements AiConfiguration {
+    public GeminiConfiguration {
+        if (modelName == null) modelName = "gemini-2.5-flash";
+        if (temperature == null) temperature = 0.7;
+        if (maxOutputTokens == 0) maxOutputTokens = 8000;
+    }
+    @Override
+    public String type() {
+        return "gemini";
+    }
+}

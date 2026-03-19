@@ -48,6 +48,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -227,9 +228,12 @@ public class FlowController {
     public PagedResults<Flow> searchFlows(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
-        // Deprecated params
+        @Parameter(description = "The sort of current page", examples = {
+            @ExampleObject(name = "Sort by namespace in ascending order", value = "namespace:asc"),
+            @ExampleObject(name = "Sort by flow ID in descending order", value = "id:desc"),
+        }) @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
         @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
@@ -661,37 +665,63 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate", consumes = MediaType.APPLICATION_YAML)
-    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
-    public List<ValidateConstraintViolation> validateFlows(
-        @RequestBody(description = "A list of flows source code in a single string") @Body String flows
-    ) {
-        List<FlowSource> flowSources = Arrays.stream(flows.split("\\n+---\\n*?"))
-            .map(flow -> new FlowSource(null, flow))
-            .toList();
-
-        return flowService.validate(tenantService.resolveTenant(), flowSources);
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "validate", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
-    public List<ValidateConstraintViolation> validateFlows(
-        @RequestBody(description = "A list of flow files") @Part("flows") Publisher<CompletedFileUpload> flowsPublisher
-    ) throws IOException {
-        List<CompletedFileUpload> flowFiles = Flux.from(flowsPublisher)
-            .collectList()
-            .blockOptional()
-            .orElse(Collections.emptyList());
-
-        List<FlowSource> flowSources = new ArrayList<>();
-        for (CompletedFileUpload flowFile : flowFiles) {
-            String source = new String(flowFile.getBytes()).trim();
-
-            flowSources.add(new FlowSource(flowFile.getFilename(), source));
+    @Post(uri = "validate", consumes = {
+        MediaType.APPLICATION_YAML,
+        MediaType.MULTIPART_FORM_DATA
+    })
+    @Operation(
+        tags = {"Flows"},
+        summary = "Validate a list of flows"
+    )
+    @RequestBody(
+        description = "Flows as YAML string or multipart files",
+        required = true,
+        content = {
+            @Content(
+                mediaType = "application/x-yaml",
+                schema = @Schema(type = "string")
+            ),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    requiredProperties = {"flows"}
+                )
+            )
         }
+    )
+    public List<ValidateConstraintViolation> validateFlows(
+        @Parameter(hidden = true) @Body @Nullable String body,
+        @Parameter(hidden = true) @Part("flows") @Nullable Publisher<CompletedFileUpload> flowsPublisher,
+        HttpRequest<?> request
+    ) throws IOException {
+        String tenantId = tenantService.resolveTenant();
 
-        return flowService.validate(tenantService.resolveTenant(), flowSources);
+        MediaType contentType = request.getHeaders().contentType().orElse(MediaType.APPLICATION_JSON_TYPE);
+
+        // If multipart parts are provided, process files
+        if (contentType.matches(MediaType.MULTIPART_FORM_DATA_TYPE)) {
+            List<CompletedFileUpload> flowFiles = (flowsPublisher == null ? Flux.<CompletedFileUpload>empty() : Flux.from(flowsPublisher))
+                .collectList()
+                .blockOptional()
+                .orElse(Collections.emptyList());
+
+            List<FlowSource> flowSources = new ArrayList<>();
+            for (CompletedFileUpload flowFile : flowFiles) {
+                String source = new String(flowFile.getBytes()).trim();
+                flowSources.add(new FlowSource(flowFile.getFilename(), source));
+            }
+
+            return flowService.validate(tenantId, flowSources);
+        } else {
+            // Fallback to YAML body
+            String content = (body == null ? "" : body).trim();
+            List<FlowSource> flowSources = Arrays.stream(content.split("\\n+---\\n*?"))
+                .map(flow -> new FlowSource(null, flow))
+                .toList();
+
+            return flowService.validate(tenantId, flowSources);
+        }
     }
 
     // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience
@@ -784,7 +814,7 @@ public class FlowController {
         summary = "Export flows as a ZIP archive of yaml sources."
     )
     public HttpResponse<byte[]> exportFlowsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
@@ -822,7 +852,7 @@ public class FlowController {
         summary = "Delete flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
@@ -865,7 +895,7 @@ public class FlowController {
         summary = "Disable flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> disableFlowsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
@@ -897,7 +927,7 @@ public class FlowController {
         summary = "Enable flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> enableFlowsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
@@ -983,7 +1013,7 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Export all flows as a streamed CSV file")
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux> exportFlows(
-        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
     ) {
         return HttpResponse.ok(
                 CSVUtils.toCSVFlux(

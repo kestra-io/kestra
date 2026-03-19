@@ -20,10 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.With;
 
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -32,6 +29,7 @@ import java.util.function.Consumer;
 public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
     public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
+    public static final String ENVS = "envs";
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -44,6 +42,20 @@ public final class RunVariables {
             "id", task.getId(),
             "type", task.getType()
         );
+    }
+
+    public static Map<String, Object> executionFormattedOutputMap(TaskRun taskRun) {
+        return Optional.ofNullable(taskRun.getOutputs())
+            .map(o -> Map.of(
+                    "outputs",
+                    (Object) Map.of(
+                        taskRun.getTaskId(),
+                        Optional.ofNullable(taskRun.getValue())
+                            .map(v -> Map.of(v, (Object) o))
+                            .orElse(o)
+                    )
+                )
+            ).orElse(Collections.emptyMap());
     }
 
     /**
@@ -180,7 +192,7 @@ public final class RunVariables {
         public Map<String, Object> build(final RunContextLogger logger, final PropertyContext propertyContext) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
-            builder.put("envs", envs != null ? envs : Map.of());
+            builder.put(ENVS, envs != null ? envs : Map.of());
             builder.put("globals", globals != null ? globals : Map.of());
 
             // Flow
@@ -265,7 +277,6 @@ public final class RunVariables {
 
                     builder.put("tasks", tasksMap);
                 }
-
                 // Inputs
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (execution.getInputs() != null) {
@@ -321,7 +332,12 @@ public final class RunVariables {
                 }
 
                 if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
-                    builder.put("trigger", execution.getTrigger().getVariables());
+                    Map<String, Object> outputs = execution.getTrigger().getVariables();
+                    if (decryptVariables) {
+                        final Secret secret = new Secret(secretKey, logger);
+                        outputs = secret.decrypt(outputs);
+                    }
+                    builder.put("trigger", outputs);
 
                     // temporal hack to add back the `schedule`variables
                     // will be removed in 2.0
@@ -344,6 +360,10 @@ public final class RunVariables {
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
+            } else if (flow != null) {
+                // if the execution is null, we should add flow labels
+                // this is useful for triggers that don't have an execution
+                builder.put("labels", Label.toNestedMap(flow.getLabels()));
             }
 
             // variables
@@ -394,8 +414,10 @@ public final class RunVariables {
             } else if (inputs.containsKey(id)) {
                 try {
                     Map<String, String> encryptedString = (Map<String,String>) inputs.get(id);
-                    String decoded = secret.decrypt(encryptedString.get("value"));
-                    inputs.put(id, decoded);
+                    if (encryptedString != null) {
+                        String decoded = secret.decrypt(encryptedString.get("value"));
+                        inputs.put(id, decoded);
+                    }
                 } catch (GeneralSecurityException e) {
                     throw new RuntimeException(e);
                 }

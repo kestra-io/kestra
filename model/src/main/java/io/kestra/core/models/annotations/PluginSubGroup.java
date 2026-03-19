@@ -29,6 +29,9 @@ public @interface PluginSubGroup {
         AI,
         CORE,
         INGESTION,
-        BI
+        BI,
+        BUSINESS,
+        DATA,
+        INFRASTRUCTURE,
     }
 }

@@ -25,9 +25,9 @@ import java.util.Optional;
 @Schema(
     title = "Return a value for debugging purposes.",
     description = """
-        This task is mostly useful for troubleshooting.
+        Render a templated string and return it so you can quickly inspect or reuse values during a flow.
 
-        It allows you to return some templated functions, inputs or outputs. In some cases you might want to trim all white spaces from the rendered values so downstream tasks can use them properly."""
+        Handy for troubleshooting (the rendered value is logged) or for generating small payloads such as headers or tokens that downstream tasks expect. Combine with template filters to control whitespace or formatting before the value is passed along."""
 )
 @Plugin(
     examples = {
@@ -44,15 +44,36 @@ import java.util.Optional;
                 """
         ),
         @Example(
+            full = true,
             code = """
-                id: compute_header
-                type: io.kestra.plugin.core.debug.Return
-                format: >-
-                  {%- if inputs.token is not empty -%}
-                  Bearer {{ inputs.token }}
-                  {%- elseif inputs.username is not empty and inputs.password is not empty -%}
-                  Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
-                  {%- endif -%}
+                id: return
+                namespace: company.team
+
+                inputs:
+                  - id: token
+                    type: STRING
+                    required: false
+                    displayName: "API Token"
+                  
+                  - id: username
+                    type: STRING
+                    displayName: "Username"
+                    required: false
+
+                  - id: password
+                    type: STRING
+                    displayName: "Password"
+                    required: false
+
+                tasks:
+                  - id: compute_header
+                    type: io.kestra.plugin.core.debug.Return
+                    format: >-
+                      {%- if inputs.token is not empty -%}
+                      Bearer {{ inputs.token }}
+                      {%- elseif inputs.username is not empty and inputs.password is not empty -%}
+                      Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
+                      {%- endif -%}
                 """
         )
     },

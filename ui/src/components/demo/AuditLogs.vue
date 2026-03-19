@@ -2,6 +2,7 @@
     <TopNavBar :title="routeInfo.title" v-if="!isFullScreen() && !embed" />
     <Layout
         :title="$t('demos.audit-logs.title')"
+        type="auditlogs"
         :image="{source: sourceImg, alt: $t('demos.audit-logs.title')}"
         :video="{
             source: 'https://www.youtube.com/embed/Qz24gBPGZHs',

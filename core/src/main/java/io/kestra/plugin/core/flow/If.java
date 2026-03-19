@@ -26,6 +26,7 @@ import lombok.experimental.SuperBuilder;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -36,8 +37,11 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process tasks conditionally depending on a contextual value.",
-    description = "Allow some workflow based on context variables, for example, branch a flow based on a previous task."
+    title = "Branch tasks based on a rendered condition.",
+    description = """
+        Renders `condition` and coerces it to boolean (empty string/0/null is false, everything else true). Executes `then` when true, `_else` when false, with optional `errors`/`finally` blocks.
+
+        Frequently used after previous task results to drive control flow."""
 )
 @Plugin(
     examples = {
@@ -77,6 +81,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     // Note: we can't use Property<String> here because of the cache of the property evaluation which causes issue when using If in a ForEach with concurrencyLimit > 1!
     // See https://github.com/kestra-io/kestra/issues/8697
     // At some point, if we need it, we should allow bypassing (or clearing) the property evaluation cache
+    @NotNull
     @PluginProperty(dynamic = true)
     private String condition;
 

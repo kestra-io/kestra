@@ -104,6 +104,7 @@
                                         v-if="debugExpression"
                                         :readOnly="true"
                                         :input="true"
+                                        :showScroll="true"
                                         :fullHeight="false"
                                         :customHeight="20"
                                         :navbar="false"
@@ -138,7 +139,7 @@
 
                         <VarValue
                             v-if="displayVarValue()"
-                            :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
+                            :value="typeof selectedValue === 'object' && selectedValue?.uri ? selectedValue?.uri : selectedValue"
                             :execution="execution"
                         />
                         <SubFlowLink
@@ -170,12 +171,12 @@
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
+    import Utils from "../../../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
     const editorValue = ref<string>("");
     const debugCollapse = ref<string>("");
-    const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref<string>("");
 
     const computedDebugValue = computed(() => {
@@ -215,7 +216,7 @@
     };
 
     const axios = useAxios();
-    const onDebugExpression = (expression: string) => {
+    const onDebugExpression = (expression?: string) => {
         const taskRun = selectedTask();
 
         if (!taskRun) return;
@@ -263,7 +264,7 @@
 
     const execution = computed(() => executionsStore.execution);
 
-    function isValidURL(url) {
+    function isValidURL(url: string) {
         try {
             new URL(url);
             return true;
@@ -272,13 +273,13 @@
         }
     }
 
-    const processedValue = (data) => {
+    const processedValue = (data: TransformedTask) => {
         const regular = false;
 
         if (!data.value && !data.children?.length) {
             return {label: data.value, regular};
         } else if (data?.children?.length) {
-            const message = (length) => ({label: `${length} items`, regular});
+            const message = (length: number) => ({label: `${length} items`, regular});
             const length = data.children.length;
 
             return data.children[0].isFirstPass
@@ -297,7 +298,7 @@
     };
 
     const expandedValue = ref("");
-    const selected = ref<string[]>([]);
+    const selected = ref<(string | {uri: string})[]>([]);
 
     onMounted(() => {
         const task = outputs.value?.[1];
@@ -307,12 +308,12 @@
         expandedValue.value = task.value;
 
         const child = task.children?.[1];
-        if (child) {
+        if (child?.path) {
             selected.value.push(child.value);
             expandedValue.value = child.path;
 
             const grandChild = child.children?.[1];
-            if (grandChild) {
+            if (grandChild?.path) {
                 selected.value.push(grandChild.value);
                 expandedValue.value = grandChild.path;
             }
@@ -342,8 +343,18 @@
         return {label, value};
     };
 
-    const transform = (o, isFirstPass, path = "") => {
-        const result = Object.keys(o).map((key) => {
+    interface TransformedTask {
+        label: string;
+        heading?: boolean;
+        component?: any;
+        isFirstPass?: boolean;
+        value?: any;
+        children?: TransformedTask[];
+        path?: string;
+    }
+
+    const transform = (o: any, isFirstPass: boolean, path = "") => {
+        const result: TransformedTask[] = Object.keys(o).map((key) => {
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
 
@@ -368,7 +379,7 @@
         });
 
         if (isFirstPass) {
-            const OUTPUTS = {
+            const OUTPUTS: TransformedTask = {
                 label: t("outputs"),
                 heading: true,
                 component: shallowRef(TextBoxSearchOutline),
@@ -398,7 +409,7 @@
             label: t("tasks"),
             heading: true,
             component: shallowRef(TimelineTextOutline),
-        };
+        } as any;
         tasks?.unshift(HEADING);
 
         return tasks;
@@ -408,7 +419,11 @@
 
     const icons = computed(() => {
         // TODO: https://github.com/kestra-io/kestra/issues/5643
-        const getTaskIcons = (tasks, mapped) => {
+        const getTaskIcons = (tasks: {
+            id: string;
+            type: string;
+            tasks?: any[];
+        }[], mapped: Record<string, string>) => {
             tasks.forEach((task) => {
                 mapped[task.id] = task.type;
                 if (task.tasks && task.tasks.length > 0) {
@@ -417,7 +432,7 @@
             });
         };
 
-        const mapped = {};
+        const mapped:Record<string, string> = {};
 
         getTaskIcons(executionsStore?.flow?.tasks || [], mapped);
         getTaskIcons(executionsStore?.flow?.errors || [], mapped);
@@ -426,14 +441,13 @@
         return mapped;
     });
 
-    const trim = (value) =>
+    const trim = (value: any) =>
         typeof value !== "string" || value.length < 16
             ? value
             : `${value.substring(0, 16)}...`;
-    const isFile = (value) =>
-        typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+
     const displayVarValue = () =>
-        isFile(selectedValue.value) ||
+        Utils.isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");
@@ -444,7 +458,19 @@
 .outputs {
     display: flex;
     width: 100%;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+:deep(.el-splitter) {
+    height: 100%;
+    min-height: 0;
+}
+
+:deep(.el-splitter-panel) {
+    display: flex;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -501,9 +527,12 @@
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
 .right.wrapper {
+    width: 100%;
     height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 :deep(.el-cascader-menu) {
@@ -582,15 +611,6 @@
     word-break: break-word;
     position: relative;
     z-index: 0;
-}
-
-/* Hide the visual scrollbar on the right panel but keep scrolling usable */
-.content-container {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-}
-.content-container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
 }
 
 :deep(.el-collapse) {

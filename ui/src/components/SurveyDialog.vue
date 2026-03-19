@@ -10,8 +10,6 @@
         customClass="hello-survey-dialog"
     >
         <div class="survey-content">
-            <h3>{{ $t('setup.subtitles.survey') }}</h3>
-            
             <div class="question-section">
                 <h4>{{ $t('setup.survey.company_size') }}</h4>
                 <div class="company-size-options">
@@ -198,14 +196,7 @@
 
 .survey-content {
     padding: 1rem;
-    h3 {
-        color: var(--ks-content-primary, #ffffff);
-        font-size: 18.4px;
-        font-weight: 600;
-        margin: 0 0 24px 0;
-        line-height: 1.4;
-    }
-    
+
     .question-section {
         margin-bottom: 32px;
         

@@ -171,7 +171,7 @@
                                 />
 
                                 <el-table-column
-                                    v-else-if="colProp === 'state.startDate' && user.hasAny(permission.EXECUTION)"
+                                    v-else-if="colProp === 'state.startDate' && user?.hasAny(permission.EXECUTION)"
                                     prop="state.startDate"
                                     :label="$t('last execution date')"
                                 >
@@ -194,7 +194,7 @@
                                 </el-table-column>
 
                                 <el-table-column
-                                    v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
+                                    v-else-if="colProp === 'state.current' && user?.hasAny(permission.EXECUTION)"
                                     prop="state.current"
                                     :label="$t('last execution status')"
                                 >
@@ -221,7 +221,7 @@
                                 </el-table-column>
 
                                 <el-table-column
-                                    v-else-if="colProp === 'state' && user.hasAny(permission.EXECUTION)"
+                                    v-else-if="colProp === 'state' && user?.hasAny(permission.EXECUTION)"
                                     prop="state"
                                     :label="$t('execution statistics')"
                                     className="row-graph"
@@ -251,19 +251,27 @@
 
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
-                                    <router-link
-                                        :to="{
-                                            name: 'flows/update',
-                                            params: {
-                                                namespace: scope.row.namespace,
-                                                id: scope.row.id,
-                                            },
-                                        }"
-                                    >
-                                        <Kicon :tooltip="$t('details')" placement="left">
+                                    <div class="flow-actions-cell">
+                                        <IconButton 
+                                            v-if="canExecute(scope.row)"
+                                            :tooltip="t('execute')"
+                                            @click="openExecuteModal(scope.row)"
+                                        >
+                                            <Play />
+                                        </IconButton>
+                                        <IconButton
+                                            :tooltip="$t('details')"
+                                            :to="{
+                                                name: 'flows/update',
+                                                params: {
+                                                    namespace: scope.row.namespace,
+                                                    id: scope.row.id,
+                                                },
+                                            }"
+                                        >
                                             <TextSearch />
-                                        </Kicon>
-                                    </router-link>
+                                        </IconButton>
+                                    </div>
                                 </template>
                             </el-table-column>
                         </template>
@@ -271,6 +279,22 @@
                 </template>
             </DataTable>
         </div>
+
+        <el-dialog
+            v-model="showRunModal"
+            destroyOnClose
+            appendToBody
+            width="70%"
+        >
+            <template #header>
+                <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+            </template>
+            <FlowRun
+                v-if="executionsStore.flow"
+                :redirect="false"
+                @execution-trigger="handleExecutionStart"
+            />
+        </el-dialog>
     </section>
 </template>
 
@@ -292,14 +316,17 @@
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import {Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import DataTable from "../layout/DataTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
+    //@ts-expect-error no declaration file
+    import FlowRun from "./FlowRun.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
@@ -312,6 +339,7 @@
     import {useToast} from "../../utils/toast";
 
     import {useFlowStore} from "../../stores/flow";
+    import {useApiStore} from "../../stores/api";
     import {useAuthStore} from "override/stores/auth";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
@@ -329,10 +357,11 @@
         topbar: true,
         namespace: undefined,
         id: undefined,
-        defaultScopeFilter: true,
+        defaultScopeFilter: false,
     });
 
     const flowStore = useFlowStore();
+    const apiStore = useApiStore();
     const authStore = useAuthStore();
     const executionsStore = useExecutionsStore();
     const miscStore = useMiscStore();
@@ -398,10 +427,12 @@
 
     const user = computed(() => authStore.user);
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value);
-    const canCreate = computed(() => user.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
-    const canRead = computed(() => user.value?.isAllowed(permission.FLOW, action.READ, route.query.namespace));
-    const canDelete = computed(() => user.value?.isAllowed(permission.FLOW, action.DELETE, route.query.namespace));
-    const canUpdate = computed(() => user.value?.isAllowed(permission.FLOW, action.UPDATE, route.query.namespace));
+    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
+    const routeNamespace = computed(() => route.query.namespace as string | undefined);
+    const canRead = computed(() => user?.value?.isAllowed(permission.FLOW, action.READ, routeNamespace.value));
+    const canDelete = computed(() => user?.value?.isAllowed(permission.FLOW, action.DELETE, routeNamespace.value));
+    const canUpdate = computed(() => user?.value?.isAllowed(permission.FLOW, action.UPDATE, routeNamespace.value));
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.namespace);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
@@ -520,6 +551,30 @@
 
     function updateDisplayColumns(newColumns: string[]) {
         updateVisibleColumns(newColumns);
+    }
+
+    const showRunModal = ref(false);
+    const selectedFlow = ref<any | null>(null);
+
+    async function openExecuteModal(flow: any) {
+        apiStore.posthogEvents({
+            type: "FLOW_EXECUTION",
+            action: "open_modal",
+        });
+        selectedFlow.value = flow;
+
+        await executionsStore.loadFlowForExecution({
+            namespace: flow.namespace,
+            flowId: flow.id,
+            store: true
+        });
+
+        showRunModal.value = true;
+    }
+
+    function handleExecutionStart() {
+        showRunModal.value = false;
+        toast.success(t("execution_started"));
     }
 
     function exportFlows() {
@@ -718,5 +773,11 @@
     &:hover {
         text-decoration: none;
     }
+}
+
+.flow-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 </style>

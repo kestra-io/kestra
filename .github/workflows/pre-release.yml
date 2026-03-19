@@ -19,6 +19,8 @@ jobs:
   build-artifacts:
     name: Build Artifacts
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    with:
+      java-version: 25
 
   backend-tests:
     name: Backend tests
@@ -27,8 +29,11 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      TRUNK_API_TOKEN: ${{ secrets.TRUNK_API_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    with:
+      java-version: 25
 
   frontend-tests:
     name: Frontend tests
@@ -37,6 +42,7 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      TRUNK_API_TOKEN: ${{ secrets.TRUNK_API_TOKEN }}
 
   publish-maven:
     name: Publish Maven
@@ -49,6 +55,8 @@ jobs:
       SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
       SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
       SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
+    with:
+      java-version: 25
 
   publish-github:
     name: Github Release

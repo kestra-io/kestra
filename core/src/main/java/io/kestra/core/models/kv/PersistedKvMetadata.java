@@ -1,6 +1,6 @@
 package io.kestra.core.models.kv;
 
-import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.storages.kv.KVEntry;
@@ -22,7 +22,7 @@ import java.util.Optional;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @ToString
 @EqualsAndHashCode
-public class PersistedKvMetadata implements DeletedInterface, TenantInterface, HasUID {
+public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, TenantInterface, HasUID {
     @With
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
@@ -83,6 +83,7 @@ public class PersistedKvMetadata implements DeletedInterface, TenantInterface, H
         return this.toBuilder().updated(Instant.now()).last(true).build();
     }
 
+    @Override
     public PersistedKvMetadata toDeleted() {
         return this.toBuilder().updated(Instant.now()).deleted(true).build();
     }

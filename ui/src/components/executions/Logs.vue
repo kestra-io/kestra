@@ -8,7 +8,6 @@
                 refresh: {shown: true, callback: loadLogs}
             }"
             @search="filter = $event"
-            @filter="onFilterChange"
         />
         <Collapse>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
@@ -39,26 +38,16 @@
             </el-form-item>
             <el-form-item>
                 <el-button-group class="ks-b-group">
-                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
-                    <el-button @click="downloadContent()">
-                        <Kicon :tooltip="$t('download logs')">
-                            <Download />
-                        </Kicon>
-                    </el-button>
-                    <el-button @click="copyAllLogs()">
-                        <Kicon :tooltip="$t('copy logs')">
-                            <ContentCopy />
-                        </Kicon>
-                    </el-button>
-                </el-button-group>
-            </el-form-item>
-            <el-form-item>
-                <el-button-group class="ks-b-group">
-                    <el-button @click="loadLogs()">
-                        <Kicon :tooltip="$t('refresh')">
-                            <Refresh />
-                        </Kicon>
-                    </el-button>
+                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="forwardEvent('follow', $event)" />
+                    <IconButton :tooltip="$t('download logs')" @click="downloadContent()">
+                        <Download />
+                    </IconButton>
+                    <IconButton :tooltip="$t('copy logs')" @click="copyAllLogs()">
+                        <ContentCopy />
+                    </IconButton>
+                    <IconButton :tooltip="$t('refresh')" @click="loadLogs()">
+                        <Refresh />
+                    </IconButton>
                 </el-button-group>
             </el-form-item>
         </Collapse>
@@ -66,7 +55,7 @@
         <TaskRunDetails
             v-if="!raw_view"
             ref="logs"
-            :level="level"
+            :level="effectiveLevel"
             :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
             :levelToHighlight="cursorLogLevel"
@@ -83,7 +72,7 @@
                 ref="logScroller"
                 :items="temporalLogs"
                 :minItemSize="50"
-                keyField="index"
+                keyField="uid"
                 class="log-lines temporal"
                 :buffer="200"
                 :prerender="20"
@@ -101,7 +90,7 @@
                             :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
                             :cursor="item.index.toString() === logCursor"
                             :excludeMetas="['namespace', 'flowId', 'executionId']"
-                            :level="level"
+                            :level="effectiveLevel"
                             :filter="filter"
                             :log="item"
                         />
@@ -112,12 +101,9 @@
     </div>
 </template>
 
-<script setup>
-    import {useLogExecutionsFilter} from "../filter/configurations";
-
-    const logExecutionsFilter = useLogExecutionsFilter();
-</script>
 <script>
+    import {computed} from "vue";
+    import {useLogExecutionsFilter} from "../filter/configurations";
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -125,7 +111,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import ViewList from "vue-material-design-icons/ViewList.vue";
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -140,13 +126,19 @@
     import {useExecutionsStore} from "../../stores/executions";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {storageKeys} from "../../utils/constants";
+    import {
+        hasUnsupportedRouteLevelComparator,
+        normalizeRouteLevelFilter,
+        readRouteLevelFilter
+    } from "../filter/utils/logLevelQuery";
+    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
 
     export default {
         components: {
             LogLine,
             TaskRunDetails,
             LogLevelNavigator,
-            Kicon,
+            IconButton,
             Download,
             ContentCopy,
             Collapse,
@@ -156,10 +148,33 @@
             Refresh,
             KSFilter
         },
+        setup() {
+            const logExecutionsFilter = useLogExecutionsFilter();
+            const defaultLogLevel = computed(
+                () => localStorage.getItem("defaultLogLevel") || "INFO"
+            );
+
+            const {
+                routeValue: routeLevel,
+                effectiveValue: effectiveLevel,
+            } = useRouteFilterPolicy({
+                defaultValue: () => defaultLogLevel.value,
+                applyDefaultIfMissing: () => true,
+                fallbackValue: () => "TRACE",
+                readFromRoute: readRouteLevelFilter,
+                writeToRoute: normalizeRouteLevelFilter,
+                hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
+            });
+
+            return {
+                logExecutionsFilter,
+                routeLevel,
+                effectiveLevel
+            };
+        },
         data() {
             return {
                 fullscreen: false,
-                level: undefined,
                 filter: undefined,
                 openedTaskrunsCount: 0,
                 raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
@@ -168,11 +183,10 @@
             };
         },
         created() {
-            this.level = (this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO");
             this.filter = (this.$route.query.q || undefined);
         },
         watch:{
-            level: {
+            routeLevel: {
                 handler() {
                     if (this.raw_view) {
                         this.loadLogs();
@@ -190,18 +204,21 @@
                 return State
             },
             temporalLogs() {
-                if (!this.executionsStore.logs?.length) {
+                const logResults = this.executionsStore.logs?.results ?? [];
+
+                if (!logResults.length) {
                     return [];
                 }
 
-                const filtered = this.executionsStore.logs.filter(log => {
+                const filtered = logResults.filter(log => {
                     if (!this.filter) return true;
                     return log.message?.toLowerCase().includes(this.filter.toLowerCase());
                 });
 
                 return filtered.map((logLine, index) => ({
                     ...logLine,
-                    index
+                    index,
+                    uid: `${logLine.taskRunId ?? ""}-${logLine.attemptNumber ?? 0}-${logLine.timestamp}-${index}`,
                 }));
             },
             ...mapStores(useExecutionsStore),
@@ -221,7 +238,7 @@
                 return this.raw_view ? ViewGrid : ViewList;
             },
             currentLevelOrLower() {
-                return LogUtils.levelOrLower(this.level);
+                return LogUtils.levelOrLower(this.routeLevel);
             },
             countByLogLevel() {
                 return Object.fromEntries(Object.entries(this.viewTypeAwareLogIndicesByLevel).map(([level, indices]) => [level, indices.length]));
@@ -257,7 +274,7 @@
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.level
+                        minLevel: this.effectiveLevel
                     }
                 })
             },
@@ -265,7 +282,7 @@
                 this.executionsStore.downloadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.level
+                        minLevel: this.effectiveLevel
                     }
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
@@ -275,7 +292,7 @@
                 this.executionsStore.downloadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.level,
+                        minLevel: this.effectiveLevel,
                     }
                 }).then((response) => {
                     Utils.copy(response);
@@ -286,14 +303,6 @@
             },
             prevent(event) {
                 event.preventDefault();
-            },
-            onFilterChange(filters) {
-                const levelFilter = filters.find(f => f.key === "level");
-                if (levelFilter) {
-                    this.level = Array.isArray(levelFilter.value) ? levelFilter.value[0] : levelFilter.value;
-                } else {
-                    this.level = undefined;
-                }
             },
             expandCollapseAll() {
                 if (this.$refs.logs && this.$refs.logs.toggleExpandCollapseAll) {

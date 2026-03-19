@@ -12,7 +12,7 @@
 <script setup lang="ts">
     import {PropType, watch} from "vue";
 
-    import {Chart, getDashboard} from "../composables/useDashboards";
+    import {Chart} from "../composables/useDashboards";
     import {getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
     import NoData from "../../layout/NoData.vue";
@@ -20,17 +20,17 @@
     import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     });
 
     const route = useRoute();
-
-    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props);
+    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props.dashboardId, {...props});
 
     function refresh() {
-        return generate(getDashboard(route, "id")!);
+        return generate();
     }
 
     defineExpose({

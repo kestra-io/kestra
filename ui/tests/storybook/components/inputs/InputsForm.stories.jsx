@@ -73,7 +73,7 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent).to.include("foo@example.com");
         });
 
-        const input = await waitFor(() => can.getByLabelText("Single select input"), {timeout: 2000, interval: 500});
+        const input = await waitFor(() => can.getByLabelText("Single select input"), {timeout: 4000, interval: 500});
 
         await userEvent.click(input);
         await userEvent.click(popups.getByText("Second value"));

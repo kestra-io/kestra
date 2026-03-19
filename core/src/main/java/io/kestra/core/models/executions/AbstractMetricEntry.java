@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.executions.metrics.Gauge;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.annotation.Nullable;
@@ -24,6 +25,7 @@ import jakarta.validation.constraints.NotNull;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Counter.class, name = "counter"),
+    @JsonSubTypes.Type(value = Gauge.class, name = "gauge"),
     @JsonSubTypes.Type(value = Timer.class, name = "timer"),
 })
 @ToString

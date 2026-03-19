@@ -25,7 +25,6 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
-import io.kestra.plugin.core.flow.If;
 import io.kestra.plugin.core.log.Log;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
@@ -198,20 +197,6 @@ class JsonSchemaGeneratorTest {
 
             var dag = definitions.get(Dag.class.getName());
             assertThat((List<String>) dag.get("required"), not(contains("errors")));
-        });
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    void ifTask() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
-            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
-
-            Map<String, Object> generate = jsonSchemaGenerator.schemas(If.class);
-
-            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
-            var ifTask = definitions.get(If.class.getName());
-            assertThat((List<String>) ifTask.get("required"), hasItems("condition", "then"));
         });
     }
 

@@ -13,6 +13,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
 import lombok.*;
@@ -72,6 +73,7 @@ public class RegisteredPlugin {
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
+    Map<String, List<PluginUiModule>> pluginUiManifest;
 
     public boolean isValid() {
         return !tasks.isEmpty() ||
@@ -430,6 +432,15 @@ public class RegisteredPlugin {
             b.append(this.getAliases().values().stream().collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue
+            )));
+            b.append("] ");
+        }
+
+        if (!this.getPluginUiManifest().isEmpty()) {
+            b.append("[Plugin UI manifests: ");
+            b.append(this.getPluginUiManifest().entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().stream().map(Objects::toString).collect(Collectors.joining(","))
             )));
             b.append("] ");
         }

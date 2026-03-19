@@ -1,4 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router";
+import {watch} from "vue";
+import {setSelectedTenant} from "kestra-api/index";
 import {configure} from "vue-gtag";
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
@@ -166,6 +168,10 @@ export default async (app, routes, _stores, translations, additionalTranslations
         .forEach(([name, component]) => app.component(name, component));
 
     app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
+
+    watch(() => router.currentRoute.value.params.tenant, (to) => {
+        setSelectedTenant(to);
+    }, {immediate: true});
 
     return {router, piniaStore};
 }

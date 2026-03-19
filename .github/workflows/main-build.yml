@@ -65,7 +65,6 @@ jobs:
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
-      plugin-version: 'LATEST-SNAPSHOT'
       java-version: 25
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

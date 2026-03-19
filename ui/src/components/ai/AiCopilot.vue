@@ -546,7 +546,7 @@
     width: 32px !important;
     height: 32px !important;
     border-radius: 6px !important;
-    color: var(--ks-content-primary) !important;
+    color: var(--ks-button-content-primary) !important;
     padding: 0 !important;
 
     &:disabled {

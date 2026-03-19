@@ -34,15 +34,31 @@
                 >
                     <FitToScreenOutline />
                 </el-button>
+                <el-dropdown>
+                    <el-button size="small" :title="$t('export')">
+                        <Download />
+                    </el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item @click="handlers.exportAsImage('jpeg', selectedNodeID)">
+                                {{ $t("export_as", {format: "JPEG"}) }}
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handlers.exportAsImage('png', selectedNodeID)">
+                                {{ $t("export_as", {format: "PNG"}) }}
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </div>
         </el-splitter-panel>
 
         <el-splitter-panel id="table">
             <Table
                 :elements="getElements()"
-                @select="selectNode"
+                :highlightShown="handlers.highlightShown"
                 :selected="selectedNodeID"
                 :subtype="SUBTYPE"
+                @select="selectNode"
             />
         </el-splitter-panel>
     </el-splitter>
@@ -67,6 +83,7 @@
     import Minus from "vue-material-design-icons/Minus.vue";
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
+    import Download from "vue-material-design-icons/Download.vue";
 
     const props = defineProps<{
         fetchAssetDependencies?: () => Promise<{
@@ -118,7 +135,7 @@
             justify-content: flex-end;
             gap: 0.25rem;
 
-            & > button {
+            & button {
                 width: 2rem;
                 height: 2rem;
                 margin: 0;

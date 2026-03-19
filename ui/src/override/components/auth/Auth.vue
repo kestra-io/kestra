@@ -31,7 +31,7 @@
             </RouterLink>
         </el-option>
         <el-option label="slack" value="slack">
-            <a href="https://kestra.io/slack" target="_blank" class="menu-item">
+            <a href="https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
                 {{ $t("join_slack") }}
             </a>

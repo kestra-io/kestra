@@ -34,11 +34,17 @@ class ClassPluginDocumentationTest {
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
             List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-            assertThat(scan.size()).isEqualTo(1);
-            assertThat(scan.getFirst().getTasks().size()).isEqualTo(1);
+            assertThat(scan.size()).isEqualTo(2);
+            RegisteredPlugin templatePlugin = scan
+                .stream()
+                .filter(rp -> rp.group().equals("io.kestra.plugin.templates"))
+                .findFirst()
+                .orElseThrow();
+            assertThat(templatePlugin.getTasks().size()).isEqualTo(1);
 
-            PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
-            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.getFirst().version(), false);
+            PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(
+                templatePlugin, templatePlugin.getTasks().getFirst(), Task.class, null);
+            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, templatePlugin.version(), false);
 
             assertThat(doc.getDocExamples().size()).isEqualTo(2);
             assertThat(doc.getIcon()).isNotNull();

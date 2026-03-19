@@ -58,8 +58,8 @@ message WorkerJobResponse {
   // List of jobs to execute (may be empty if no jobs available)
   repeated WorkerJobPayload jobs = 2;
 
-  // Serialized ExecutionKilled commands (JSON format) to be processed by the worker
-  repeated bytes killCommands = 3;
+  // Serialized WorkerBroadcastEvent (JSON format) — carries ExecutionKilled, ClusterEvent, etc.
+  repeated bytes events = 3;
 }
 
 // Individual job payload

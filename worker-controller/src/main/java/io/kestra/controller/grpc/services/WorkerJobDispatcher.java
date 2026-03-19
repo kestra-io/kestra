@@ -8,7 +8,6 @@ import io.kestra.controller.grpc.WorkerJobPayload;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
-import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -24,12 +23,14 @@ import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.*;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
-import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
+import io.kestra.core.worker.WorkerBroadcastEvent;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -38,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -122,11 +122,17 @@ public class WorkerJobDispatcher {
      */
     private volatile QueueSubscriber<ExecutionKilled> killQueueSubscriber;
 
+    /**
+     * Subscription to the cluster event broadcast queue.
+     */
+    private volatile QueueSubscriber<ClusterEvent> clusterEventSubscriber;
+
     @Inject
     public WorkerJobDispatcher(
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         WorkerJobRunningStateStore workerJobRunningStateStore,
         BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
+        @Nullable BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
         DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue,
         TriggerEventQueue triggerEventQueue) {
         this.workerJobEventQueue = workerJobEventQueue;
@@ -146,6 +152,18 @@ public class WorkerJobDispatcher {
                 onExecutionKilled(killed);
             }
         });
+
+        // Subscribe to cluster events to forward them to gRPC workers
+        if (clusterEventQueue != null) {
+            this.clusterEventSubscriber = clusterEventQueue.subscriber();
+            this.clusterEventSubscriber.subscribe(either -> {
+                if (either.isRight()) {
+                    log.error("Deserialization error for ClusterEvent: {}", either.getRight().getMessage());
+                    return;
+                }
+                onClusterEvent(either.getLeft());
+            });
+        }
     }
 
     /**
@@ -158,20 +176,47 @@ public class WorkerJobDispatcher {
             log.info("Received execution killed event for execution '{}'", killedExecution.getExecutionId());
         }
 
-        // Serialize the kill command
-        ByteString killData = MessageFormats.JSON.toByteString(killed);
+        broadcastEvent(new WorkerBroadcastEvent.KillEvent(killed), "kill command");
+    }
 
-        // Broadcast to all connected workers
+    /**
+     * Cluster event types that should NOT be forwarded to gRPC workers.
+     */
+    private static final Set<ClusterEvent.EventType> EXCLUDED_EVENT_TYPES = Set.of(
+        ClusterEvent.EventType.MAINTENANCE_ENTER,
+        ClusterEvent.EventType.MAINTENANCE_EXIT,
+        ClusterEvent.EventType.KILL_SWITCH_SYNC_REQUESTED
+    );
+
+    /**
+     * Handles a cluster event from the broadcast queue and forwards it to all connected workers.
+     * Maintenance and executor-only events are excluded.
+     */
+    private void onClusterEvent(ClusterEvent event) {
+        if (EXCLUDED_EVENT_TYPES.contains(event.eventType())) {
+            log.debug("Skipping cluster event not relevant to workers: type={}", event.eventType());
+            return;
+        }
+        log.info("Received cluster event: type={}, message={}", event.eventType(), event.message());
+        broadcastEvent(new WorkerBroadcastEvent.ClusterBroadcast(event), "cluster event");
+    }
+
+    /**
+     * Broadcasts a {@link WorkerBroadcastEvent} to all connected workers via the events field.
+     */
+    private void broadcastEvent(WorkerBroadcastEvent event, String description) {
+        ByteString eventData = MessageFormats.JSON.toByteString(event);
+
         activeStreams.forEach((workerId, context) -> {
             try {
                 WorkerJobResponse response = WorkerJobResponse.newBuilder()
                     .setHeader(RequestOrResponseHeaderFactory.create(workerId))
-                    .addKillCommands(killData)
+                    .addEvents(eventData)
                     .build();
                 context.sendResponse(response);
-                log.debug("Broadcast kill command to worker {}", workerId);
+                log.debug("Broadcast {} to worker {}", description, workerId);
             } catch (Exception e) {
-                log.warn("Failed to send kill command to worker {}: {}", workerId, e.getMessage());
+                log.warn("Failed to send {} to worker {}: {}", description, workerId, e.getMessage());
             }
         });
     }
@@ -577,6 +622,15 @@ public class WorkerJobDispatcher {
                 killQueueSubscriber.close();
             } catch (Exception e) {
                 log.warn("Error closing kill queue subscription: {}", e.getMessage());
+            }
+        }
+
+        // Close cluster event queue subscription
+        if (clusterEventSubscriber != null) {
+            try {
+                clusterEventSubscriber.close();
+            } catch (Exception e) {
+                log.warn("Error closing cluster event queue subscription: {}", e.getMessage());
             }
         }
 

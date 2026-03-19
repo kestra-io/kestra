@@ -13,6 +13,8 @@ import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
+import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -59,10 +61,18 @@ public class CommandsWrapper implements TaskCommands {
     private io.kestra.core.models.tasks.runners.AbstractLogConsumer logConsumer;
 
     @With
+    @Deprecated
+    private RunnerType runnerType;
+
+    @With
     private String containerImage;
 
     @With
     private TaskRunner<?> taskRunner;
+
+    @With
+    @Deprecated
+    private DockerOptions dockerOptions;
 
     @With
     @Deprecated
@@ -106,8 +116,10 @@ public class CommandsWrapper implements TaskCommands {
             failFast,
             envs,
             logConsumer,
+            runnerType,
             containerImage,
             taskRunner,
+            dockerOptions,
             warningOnStdErr,
             namespaceFiles,
             inputFiles,

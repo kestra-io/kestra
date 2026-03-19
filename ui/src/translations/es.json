@@ -2122,6 +2122,7 @@
       },
       "need_help": "¿Necesitas ayuda?",
       "placeholder_prompt": "Envíame un mensaje de saludo diario a las 9am.",
+      "remaining_quota": "Te quedan {count} generaciones de IA",
       "show_less": "Mostrar menos mensajes",
       "show_more": "Mostrar más indicaciones",
       "success_page": {

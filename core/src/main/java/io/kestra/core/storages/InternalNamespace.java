@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
@@ -144,7 +145,7 @@ public class InternalNamespace implements Namespace {
         final Path normalizedSource = NamespaceFile.normalize(source);
         final Path normalizedTarget = NamespaceFile.normalize(target);
 
-        if (findByPath(normalizedTarget).isPresent()) {
+        if (exists(normalizedTarget)) {
             throw new IOException(String.format(
                 "File '%s' already exists in namespace '%s'.",
                 normalizedTarget,
@@ -152,38 +153,79 @@ public class InternalNamespace implements Namespace {
             ));
         }
 
-        ArrayListTotal<NamespaceFileMetadata> beforeRename = namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, List.of(
+        // Get all metadata for source and its descendants, all versions
+        ArrayListTotal<NamespaceFileMetadata> sourceMetas = namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, List.of(
             QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
             QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(List.of(normalizedSource.toString(), normalizedSource + "/")).build()
         ), true, FetchVersion.ALL);
-        beforeRename.sort(Comparator.comparing(NamespaceFileMetadata::getVersion));
-        ArrayListTotal<NamespaceFileMetadata> afterRename = beforeRename
-            .map(nsFileMetadata -> {
-                String newPath;
+
+        List<NamespaceFileMetadata> allMetas = new ArrayList<>(sourceMetas);
+        boolean isDirectory = sourceMetas.stream().anyMatch(NamespaceFileMetadata::isDirectory);
+        if (isDirectory) {
+            String parentPathPrefix = normalizedSource.toString().endsWith("/") ? normalizedSource.toString() : normalizedSource + "/";
+            ArrayListTotal<NamespaceFileMetadata> descendants = namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                QueryFilter.builder().field(QueryFilter.Field.PARENT_PATH).operation(QueryFilter.Op.STARTS_WITH).value(parentPathPrefix).build()
+            ), true, FetchVersion.ALL);
+            allMetas.addAll(descendants);
+        }
+
+        allMetas.sort(Comparator.comparing(NamespaceFileMetadata::getVersion));
+
+        // Phase 1: Copy all entries to their new locations, tracking what was created for rollback
+        List<Pair<NamespaceFile, NamespaceFile>> results = new ArrayList<>();
+        try {
+            for (NamespaceFileMetadata nsFileMetadata : allMetas) {
+                String oldPath = nsFileMetadata.getPath();
+                String relativePart = "";
+                if (oldPath.startsWith(normalizedSource.toString())) {
+                    relativePart = oldPath.substring(normalizedSource.toString().length());
+                }
+                String intermediateNewPath = normalizedTarget.toString() + relativePart;
+                if (nsFileMetadata.isDirectory() && !intermediateNewPath.endsWith("/")) {
+                    intermediateNewPath += "/";
+                }
+                final String finalNewPath = intermediateNewPath;
+
+                NamespaceFile beforeNamespaceFile = NamespaceFile.of(namespace, Path.of(oldPath), nsFileMetadata.getVersion());
+                NamespaceFile afterNamespaceFile;
+
                 if (nsFileMetadata.isDirectory()) {
-                    newPath = normalizedTarget.toString().endsWith("/") ? normalizedTarget.toString() : normalizedTarget + "/";
+                    afterNamespaceFile = this.createDirectory(Path.of(finalNewPath));
                 } else {
-                    newPath = normalizedTarget.toString();
+                    try (InputStream oldContent = storage.get(tenant, namespace, beforeNamespaceFile.storagePath().toUri())) {
+                        List<NamespaceFile> putResult = this.putFile(Path.of(finalNewPath), oldContent, Conflicts.OVERWRITE);
+                        afterNamespaceFile = putResult.stream().filter(f -> f.path().equals(finalNewPath)).findFirst().orElse(putResult.get(putResult.size() - 1));
+                    }
                 }
 
-                return nsFileMetadata.toBuilder().path(newPath).build();
-            });
-
-        return afterRename.map(throwFunction(nsFileMetadata -> {
-            NamespaceFile beforeNamespaceFile = NamespaceFile.of(namespace, normalizedSource, nsFileMetadata.getVersion());
-            Path namespaceFilePath = beforeNamespaceFile.storagePath();
-            NamespaceFile afterNamespaceFile;
-            if (nsFileMetadata.isDirectory()) {
-                afterNamespaceFile = this.createDirectory(Path.of(nsFileMetadata.getPath()));
-            } else {
-                try (InputStream oldContent = storage.get(tenant, namespace, namespaceFilePath.toUri())) {
-                    afterNamespaceFile = this.putFile(Path.of(nsFileMetadata.getPath()), oldContent, Conflicts.OVERWRITE).getFirst();
-                }
+                results.add(Pair.of(beforeNamespaceFile, afterNamespaceFile));
             }
+        } catch (Exception e) {
+            // Rollback: purge all already-created target entries (longest paths first to handle children before parents)
+            logger.warn("Move from '{}' to '{}' failed after creating {} of {} entries, rolling back.",
+                normalizedSource, normalizedTarget, results.size(), allMetas.size(), e);
+            results.stream()
+                .sorted(Comparator.comparing((Pair<NamespaceFile, NamespaceFile> p) -> p.getRight().path().length()).reversed())
+                .forEach(pair -> {
+                    try {
+                        this.purge(pair.getRight());
+                    } catch (IOException rollbackEx) {
+                        logger.error("Failed to rollback created file '{}' during move rollback.", pair.getRight().path(), rollbackEx);
+                    }
+                });
+            throw new IOException(String.format(
+                "Failed to move '%s' to '%s' in namespace '%s'. All changes have been rolled back.",
+                normalizedSource, normalizedTarget, namespace
+            ), e);
+        }
 
-            this.purge(NamespaceFile.of(namespace, normalizedSource, nsFileMetadata.getVersion()));
-            return Pair.of(beforeNamespaceFile, afterNamespaceFile);
-        }));
+        // Phase 2: All copies succeeded — now purge the source entries
+        results.stream()
+            .sorted(Comparator.comparing((Pair<NamespaceFile, NamespaceFile> p) -> p.getLeft().path().length()).reversed())
+            .forEach(throwConsumer(pair -> this.purge(pair.getLeft())));
+
+        return results;
     }
 
     /**

@@ -372,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
           "intro": "新しいSecretを作成するには：",
           "second": "`<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>`という名前の環境変数を上記の値で追加してください。",
           "third": "Kestraインスタンスを再起動する"
@@ -453,14 +453,14 @@
       "command_palette": "コマンドパレットを表示",
       "comment": "コメント",
       "comment_uncomment": "コメント/コメント解除",
-      "decrease_fontsize": "フォントサイズを縮小",
+      "decrease_fontsize": "エディタのフォントサイズを小さくする",
       "duplicate_cursor": "カーソルを複製",
       "execute_flow": "フローを実行",
       "fold_unfold": "コードを折りたたむ/展開する",
-      "increase_fontsize": "フォントサイズを大きくする",
+      "increase_fontsize": "エディタのフォントサイズを大きくする",
       "label": "キーボードショートカット",
       "move_line": "行を移動",
-      "reset_fontsize": "フォントサイズをリセット",
+      "reset_fontsize": "エディタのフォントサイズをリセット",
       "save_flow": "フローを保存",
       "toggle_ai_agent": "AIエージェントを切り替える",
       "trigger_autocompletion": "オートコンプリートをトリガー",
@@ -486,11 +486,11 @@
         "title": "まだアセットがありません！"
       },
       "concurrency_executions": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには進行中の実行はありません。"
       },
       "concurrency_limit": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">同時実行制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">同時実行制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
@@ -499,15 +499,15 @@
           "title": "現在、依存関係はありません。"
         },
         "EXECUTION": {
-          "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">実行の依存関係</a>についての詳細は、ドキュメントをご覧ください。",
+          "content": "<a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">実行の依存関係</a>についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
         },
         "FLOW": {
-          "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+          "content": "<a href=\"https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Flow Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
         },
         "NAMESPACE": {
-          "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+          "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
         }
       },
@@ -524,7 +524,7 @@
         "title": "プラグインのデフォルトがまだありません！"
       },
       "plugins": {
-        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
+        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
         "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
       },
       "testSuites": {
@@ -532,7 +532,7 @@
         "title": "テストスイートがまだありません！"
       },
       "triggers": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
       },
       "versionPlugin": {
@@ -1932,7 +1932,7 @@
     "template export": "<code>{templateCount}</code>件のテンプレートをエクスポートしてもよろしいですか？",
     "templates": "テンプレート",
     "templates deleted": "<code>{count}</code>件のテンプレートが削除されました",
-    "templates deprecated": "テンプレートは非推奨です。代わりにsubflowsを使用してください。テンプレートからsubflowsへの移行方法については、<a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">移行セクション</a>を参照してください。",
+    "templates deprecated": "テンプレートは非推奨です。代わりにsubflowsを使用してください。テンプレートからsubflowsへの移行方法については、<a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">移行セクション</a>を参照してください。",
     "templates exported": "テンプレートがエクスポートされました",
     "tenant": {
       "name": "テナント",
@@ -2053,7 +2053,7 @@
         "title": "製品ツアーを体験する"
       },
       "tutorial": {
-        "text": "----------\n\n * <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">ビデオチュートリアル</a> \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">ドキュメント</a> \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
+        "text": "----------\n\n * <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">ビデオチュートリアル</a> \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">ドキュメント</a> \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "チュートリアル"
       }
     },

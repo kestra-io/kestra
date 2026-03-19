@@ -13,7 +13,7 @@ public enum ServiceType {
     WEBSERVER,
     WORKER,
     INVALID;
-    
+
     @JsonCreator
     public static ServiceType fromString(final String value) {
         try {

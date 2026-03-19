@@ -469,7 +469,7 @@
                 let params = {minLevel: this.level};
 
                 if (this.taskRunId) {
-                    params.taskId = this.taskRunById[this.taskRunId]?.taskId; // Fix #13024: Only fetch logs for this specific task
+                    params.taskId = this.taskRunById[this.taskRunId]?.taskId;
 
                     if (this.forcedAttemptNumber) {
                         params.attempt = this.forcedAttemptNumber;
@@ -751,7 +751,7 @@
                         clearTimeout(this.timeout);
                         this.timeout = setTimeout(() => {
                             this.timer = moment();
-                            this.rawLogs = this.rawLogs.concat(this.logsBuffer);
+                            this.rawLogs = this._deduplicateLogs(this.rawLogs.concat(this.logsBuffer));
                             this.logsBuffer = [];
                             this.scrollToBottomFailedTask();
                         }, 100);
@@ -760,7 +760,7 @@
                         if (moment().diff(this.timer, "seconds") > 0.5) {
                             clearTimeout(this.timeout);
                             this.timer = moment();
-                            this.rawLogs = this.rawLogs.concat(this.logsBuffer);
+                            this.rawLogs = this._deduplicateLogs(this.rawLogs.concat(this.logsBuffer));
                             this.logsBuffer = [];
                             this.scrollToBottomFailedTask();
                         }
@@ -873,17 +873,20 @@
                 if (!this.showLogs) {
                     return;
                 }
-
+                
                 this.executionsStore
                     .loadLogs({
                         executionId,
                         params: {
                             minLevel: this.level,
-                            taskId: this.taskRunById[this.taskRunId]?.taskId, // Fix #13024: Only fetch logs for this specific task
+                            taskId: this.taskRunById[this.taskRunId]?.taskId,
                         },
                     })
                     .then((logs) => {
-                        this.rawLogs = logs;
+                        // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.
+                        this.rawLogs = logs?.results ?? logs ?? [];
+                        // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
+                        this.logsBuffer = [];
                     });
             },
             attempts(taskRun) {
@@ -951,6 +954,23 @@
                         split[0] + "/" + split[1]
                     ]?.scrollToLog(split.slice(2).join("/"));
                 }
+            },
+
+            _deduplicateLogs(logs) {
+                const list = new Set();
+
+                return logs.filter((log) => {
+                    // Use the server-assigned index when present as it is the most stable unique identifier per log line per attempt.
+                    const key = log.index !== undefined
+                        ? `${log.taskRunId}-${log.attemptNumber}-${log.index}`
+                        : `${log.taskRunId}-${log.attemptNumber}-${log.timestamp}-${log.message}`;
+
+                    if (list.has(key)) return false;
+
+                    list.add(key);
+
+                    return true;
+                });
             },
         },
         beforeUnmount() {

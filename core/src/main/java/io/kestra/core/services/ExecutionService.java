@@ -31,6 +31,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -163,8 +164,6 @@ public class ExecutionService {
             .stream()
             .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
-                    // Keep only CREATED/RUNNING
-                    // To avoid having large history
                     return taskRun.resetAttempts().incrementIteration();
                 }
 
@@ -300,18 +299,53 @@ public class ExecutionService {
             );
 
             // remove all child for replay task id
-            Set<String> taskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
+            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
                 .stream()
                 .filter(task -> task instanceof AbstractGraphTask)
                 .map(task -> ((AbstractGraphTask) task))
                 .filter(task -> task.getTaskRun() != null)
                 .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
                 .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
-                .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
+                .map(s -> s.getTaskRun().getId())
+                .collect(Collectors.toSet());
+
+            Set<String> taskRunToRemove = originalTaskRunToRemove
+                .stream()
+                .map(mappingTaskRunId::get)
                 .collect(Collectors.toSet());
 
             taskRunToRemove
                 .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
+
+            // Restart non-terminated task runs (e.g., running in parallel) from the previous execution.
+            // We must remap using the original task runs to keep id/parent mapping consistent.
+            List<TaskRun> tasksToRestart = execution.getTaskRunList()
+                .stream()
+                .filter(taskRun -> !taskRunToRestart.contains(taskRun.getId()))
+                .filter(taskRun -> !originalTaskRunToRemove.contains(taskRun.getId()))
+                .filter(taskRun -> !taskRun.getState().isTerminated())
+                .toList();
+
+            Set<String> taskRunToRestartMapped = tasksToRestart
+                .stream()
+                .map(TaskRun::getId)
+                .map(mappingTaskRunId::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+            newTaskRuns.removeIf(taskRun -> taskRunToRestartMapped.contains(taskRun.getId()));
+
+            for (TaskRun originalTaskRun : tasksToRestart) {
+                TaskRun restartedTaskRun = this.mapTaskRun(
+                    flow,
+                    originalTaskRun,
+                    mappingTaskRunId,
+                    newExecutionId,
+                    State.Type.RESTARTED,
+                    true
+                );
+                newTaskRuns.add(restartedTaskRun);
+            }
 
             // Worker task, we need to remove all child in order to be restarted
             this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
@@ -838,7 +872,7 @@ public class ExecutionService {
             alterState = originalTaskRun.withState(newStateType).getState();
         } else {
             Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
-            if (!task.isFlowable() || task instanceof WorkingDirectory) {
+            if (!task.isFlowable() || task instanceof WorkingDirectory || task instanceof LoopUntil) {
                 // The current task run is the reference task run, its default state will be newState
                 alterState = originalTaskRun.withState(newStateType).getState();
             } else {

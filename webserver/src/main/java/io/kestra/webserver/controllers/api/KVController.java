@@ -26,6 +26,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 
@@ -59,8 +60,11 @@ public class KVController {
     public PagedResults<KVEntry> listAllKeys(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
+        @Parameter(description = "The sort of current page", examples = {
+            @ExampleObject(name = "Sort by key in ascending order", value = "key:asc"),
+            @ExampleObject(name = "Sort by description in descending order", value = "description:desc"),
+        }) @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat List<QueryFilter> filters
         ) throws IOException {
         return PagedResults.of(globalKvStore().list(PageableUtils.from(page, size, sort, this::sortMapper), filters));
     }

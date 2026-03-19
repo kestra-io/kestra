@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.app.AppBlockInterface;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
@@ -13,14 +14,16 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.secret.SecretPluginInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.swagger.v3.oas.annotations.Hidden;
+import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +40,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PluginScanner {
     ClassLoader parent;
+
+    private static final String UI_MANIFEST_PATH = "plugin-ui/manifest.json";
+    private static final TypeReference<Map<String, List<PluginUiModule>>> PLUGIN_UI_MANIFEST_TYPE =
+         new TypeReference<>() {};
 
     public PluginScanner(final ClassLoader parent) {
         this.parent = parent;
@@ -121,6 +128,7 @@ public class PluginScanner {
         List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
+        Map<String, List<PluginUiModule>> pluginUiManifest = new HashMap<>();
 
         if (manifest == null) {
             manifest = getManifest(classLoader);
@@ -206,7 +214,7 @@ public class PluginScanner {
                 Plugin.getAliases(plugin.getClass()).forEach(alias -> aliases.put(alias, plugin.getClass()));
             }
         } catch (ServiceConfigurationError | NoClassDefFoundError e) {
-            Object location = externalPlugin != null ? externalPlugin.getLocation() : "core";
+            Object location = getLocation(externalPlugin);
             log.error("Unable to load all plugin classes from '{}'. Cause: [{}] {}",
                 location,
                 e.getClass().getSimpleName(),
@@ -225,6 +233,14 @@ public class PluginScanner {
             } catch (FileSystemNotFoundException e) {
                 addGuidesThroughNewFileSystem(guidesDirectory, guides);
             }
+        }
+
+        try (InputStream in = classLoader.getResourceAsStream(UI_MANIFEST_PATH)) {
+            if (in != null) {
+                pluginUiManifest.putAll(JacksonMapper.ofJson().readValue(in, PLUGIN_UI_MANIFEST_TYPE));
+            }
+        } catch (IOException e) {
+            log.error("Unable to read plugin ui manifest for plugin {}", getLocation(externalPlugin));
         }
 
         return RegisteredPlugin.builder()
@@ -251,7 +267,13 @@ public class PluginScanner {
                 e -> e.getKey().toLowerCase(),
                 Function.identity()
             )))
+            .pluginUiManifest(pluginUiManifest)
             .build();
+    }
+
+    private static Object getLocation(ExternalPlugin externalPlugin) {
+        Object location = externalPlugin != null ? externalPlugin.getLocation() : "core";
+        return location;
     }
 
     private static void addGuidesThroughNewFileSystem(URL guidesDirectory, List<String> guides) {

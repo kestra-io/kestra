@@ -18,7 +18,7 @@
     import {defaultNamespace} from "../../composables/useNamespaces";
 
     import type {BlueprintType} from "../../stores/blueprints"
-    import {useAuthStore} from "../../override/stores/auth";
+    import {useAuthStore} from "override/stores/auth";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";

@@ -372,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
+          "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
           "intro": "创建新Secret：",
           "second": "添加一个名为 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' 的环境变量，并使用上述值",
           "third": "重新启动您的Kestra实例"
@@ -405,9 +405,18 @@
         "zoom_out": "缩小视图"
       },
       "search": {
-        "asset_placeholder": "按资产、flow或namespace搜索...",
+        "flow": {
+          "display": "包含flow依赖项"
+        },
+        "namespace": {
+          "no_namespace": "没有namespace",
+          "select": "选择一个namespace"
+        },
         "no_results": "未找到与 {term} 相关的结果",
-        "placeholder": "按flow或namespace搜索..."
+        "placeholders": {
+          "asset": "按资产、flow或namespace搜索...",
+          "default": "按flow或namespace搜索..."
+        }
       }
     },
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
@@ -444,14 +453,14 @@
       "command_palette": "显示命令面板",
       "comment": "评论",
       "comment_uncomment": "注释/取消注释",
-      "decrease_fontsize": "减少字体大小",
+      "decrease_fontsize": "减小编辑器字体大小",
       "duplicate_cursor": "复制光标",
       "execute_flow": "执行 flow",
       "fold_unfold": "折叠/展开代码",
-      "increase_fontsize": "增加字体大小",
+      "increase_fontsize": "增加编辑器字体大小",
       "label": "键盘快捷键",
       "move_line": "移动行",
-      "reset_fontsize": "重置字体大小",
+      "reset_fontsize": "重置编辑器字体大小",
       "save_flow": "保存flow",
       "toggle_ai_agent": "切换AI代理",
       "trigger_autocompletion": "触发自动完成",
@@ -477,11 +486,11 @@
         "title": "您还没有资产！"
       },
       "concurrency_executions": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executions</a></strong>的信息。",
         "title": "此 Flow 没有正在进行的 Executions。"
       },
       "concurrency_limit": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
@@ -490,15 +499,15 @@
           "title": "当前没有依赖项。"
         },
         "EXECUTION": {
-          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
         },
         "FLOW": {
-          "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
+          "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
           "title": "当前没有依赖项。"
         },
         "NAMESPACE": {
-          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
         }
       },
@@ -515,7 +524,7 @@
         "title": "您还没有插件默认值！"
       },
       "plugins": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Namespace未设置插件默认值。"
       },
       "testSuites": {
@@ -523,7 +532,7 @@
         "title": "您还没有测试套件！"
       },
       "triggers": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
       },
       "versionPlugin": {
@@ -630,6 +639,7 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
+    "export_as": "导出为.{format}",
     "export_csv": "导出为CSV",
     "exports": "导出",
     "failed to export plugin defaults": "无法导出插件默认值",
@@ -703,6 +713,10 @@
         "label": "Flow ID"
       },
       "footer_apply": "应用",
+      "group": {
+        "description": "按组筛选",
+        "label": "组"
+      },
       "hierarchy": {
         "all": "默认",
         "child_description": "仅显示嵌套/触发的执行",
@@ -935,6 +949,10 @@
         "label": "触发状态"
       },
       "update": "更新",
+      "username": {
+        "description": "按用户名筛选",
+        "label": "用户名"
+      },
       "value": "值",
       "workerId": {
         "description": "按worker ID筛选",
@@ -1087,7 +1105,7 @@
     "killed confirm": "确定要终止执行 <code>{id}</code> 吗？",
     "killed done": "执行已排队终止",
     "kv": {
-      "add": "新建键值",
+      "add": "创建",
       "delete multiple": {
         "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
@@ -1287,6 +1305,7 @@
           "retry": "重试",
           "sla": "SLA",
           "taskDefaults": "任务默认值",
+          "updated": "已更新",
           "variables": "变量",
           "workerGroup": "工作组"
         },
@@ -1342,6 +1361,7 @@
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_file_choosen": "未选择文件",
     "no_flow_outputs": "没有可用的output。",
+    "no_history": "无可用历史记录",
     "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
@@ -1683,7 +1703,7 @@
     "searching": "搜索中...",
     "seconds": "秒钟",
     "secret": {
-      "add": "新密钥",
+      "add": "创建",
       "inherited": "继承的秘密",
       "isReadOnly": "Secret 是只读的",
       "names": "秘密",
@@ -1860,6 +1880,10 @@
     "side-by-side": "并排",
     "slack support": "通过Slack提问",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "无法连接到您的Kestra实例。请确保它正在运行，然后刷新页面。",
+        "title": "连接中断"
+      },
       "loading_execution": "加载执行时出现问题"
     },
     "source": "来源",
@@ -1908,7 +1932,7 @@
     "template export": "确定要导出 <code>{templateCount}</code> 个模板吗？",
     "templates": "模板",
     "templates deleted": "<code>{count}</code> 个模板已删除",
-    "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
+    "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
     "templates exported": "模板已导出",
     "tenant": {
       "name": "租户",
@@ -2029,7 +2053,7 @@
         "title": "开始产品导览"
       },
       "tutorial": {
-        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">视频教程</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">文档</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">视频教程</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">文档</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "教程"
       }
     },

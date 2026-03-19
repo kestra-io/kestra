@@ -1,5 +1,11 @@
-import {defineConfig} from "@hey-api/openapi-ts";
+import type {UserConfig} from "@hey-api/openapi-ts";
+// @ts-expect-error need a second tsconfig file for node execution (vite.config, openapi-ts.config, vitest.config)
+import * as path from "path";
+import {fileURLToPath} from "url";
 import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const generateHash = (str: string) => {
   let hash = 0;
@@ -10,10 +16,10 @@ const generateHash = (str: string) => {
   return hash.toString(16).replace("-", "0");
 };
 
-export default defineConfig({
+export default {
   input: "../openapi.yml",
   output: {
-    path: "./src/generated/kestra-api",
+    path: path.resolve(__dirname, "./src/generated/kestra-api"),
     postProcess: ["eslint"],
   },
   
@@ -30,8 +36,6 @@ export default defineConfig({
             },
         }
     },
-    defineKestraHeyConfig({
-        output: "./src/generated/kestra-heyapi-sdk",
-    })
+    defineKestraHeyConfig()
   ],
-});
+} satisfies UserConfig

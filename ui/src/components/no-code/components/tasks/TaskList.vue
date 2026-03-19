@@ -10,7 +10,7 @@
                 <template #icon>
                     <Creation
                         :parentPathComplete
-                        :refPath="elements?.length ? elements.length - 1 : undefined"
+                        :refPath="elements?.length ? elements.length - 1 : -1"
                         :blockSchemaPath
                     />
                 </template>

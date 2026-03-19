@@ -9,7 +9,8 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.*;
 
-public interface QueueFactoryInterface {
+// We provide a generic <D> type that allows to pass to each queue bean method the required dependencies to make sure Micronaut dependency tree is built correctly so we have a proper bean shutdown order.
+public interface QueueFactoryInterface<D> {
     String EXECUTION_NAMED = "executionQueue";
     String EXECUTOR_NAMED = "executorQueue";
     String WORKERJOB_NAMED = "workerJobQueue";
@@ -28,35 +29,35 @@ public interface QueueFactoryInterface {
     String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
     String MULTIPLE_CONDITION_EVENT_NAMED = "multipleConditionEventQueue";
 
-    QueueInterface<Execution> execution();
+    QueueInterface<Execution> execution(D dependencies);
 
-    QueueInterface<Executor> executor();
+    QueueInterface<Executor> executor(D dependencies);
 
-    WorkerJobQueueInterface workerJob();
+    WorkerJobQueueInterface workerJob(D dependencies);
 
-    QueueInterface<WorkerTaskResult> workerTaskResult();
+    QueueInterface<WorkerTaskResult> workerTaskResult(D dependencies);
 
-    QueueInterface<WorkerTriggerResult> workerTriggerResult();
+    QueueInterface<WorkerTriggerResult> workerTriggerResult(D dependencies);
 
-    QueueInterface<LogEntry> logEntry();
+    QueueInterface<LogEntry> logEntry(D dependencies);
 
-    QueueInterface<MetricEntry> metricEntry();
+    QueueInterface<MetricEntry> metricEntry(D dependencies);
 
-    QueueInterface<FlowInterface> flow();
+    QueueInterface<FlowInterface> flow(D dependencies);
 
-    QueueInterface<ExecutionKilled> kill();
+    QueueInterface<ExecutionKilled> kill(D dependencies);
 
-    QueueInterface<Template> template();
+    QueueInterface<Template> template(D dependencies);
 
-    QueueInterface<WorkerInstance> workerInstance();
+    QueueInterface<WorkerInstance> workerInstance(D dependencies);
 
-    QueueInterface<WorkerJobRunning> workerJobRunning();
+    QueueInterface<WorkerJobRunning> workerJobRunning(D dependencies);
 
-    QueueInterface<Trigger> trigger();
+    QueueInterface<Trigger> trigger(D dependencies);
 
-    QueueInterface<SubflowExecutionResult> subflowExecutionResult();
+    QueueInterface<SubflowExecutionResult> subflowExecutionResult(D dependencies);
 
-    QueueInterface<SubflowExecutionEnd> subflowExecutionEnd();
+    QueueInterface<SubflowExecutionEnd> subflowExecutionEnd(D dependencies);
 
-    QueueInterface<MultipleConditionEvent> multipleConditionEvent();
+    QueueInterface<MultipleConditionEvent> multipleConditionEvent(D dependencies);
 }

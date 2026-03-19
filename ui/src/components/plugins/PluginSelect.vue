@@ -83,27 +83,6 @@
     }) || []);
 
     const taskModelsSets = computed(() => {
-        if (blockType === "pluginDefaults" || isPluginBlock) {
-            const models = new Map<string, string>();
-            const pluginKeySection = (["tasks", "conditions", "triggers", "taskRunners"] as const)
-                .filter(s => blockType === "pluginDefaults" || s === blockType);
-
-            for (const plugin of pluginsStore.plugins || []) {
-                for (const curSection of pluginKeySection) {
-                    const entries = plugin[curSection] as {cls: string, title?: string, deprecated?: boolean}[] | undefined;
-                    if (entries) {
-                        for (const {cls, title} of entries.filter(({deprecated}) => !deprecated)) {
-                            if (cls) {
-                                models.set(cls, title ?? cls);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return models;
-        }
-
         return allRefs.value.reduce((acc: Map<string, string>, item: string) => {
             const def = rootDefinitions.value?.[item]
 
@@ -117,6 +96,12 @@
 
             if (consolidatedType?.const) {
                 acc.set(consolidatedType.const, def.title ?? consolidatedType.const);
+            }
+
+            if (consolidatedType?.enum) {
+                const val = consolidatedType.enum[0];
+                    
+                acc.set(val, def.title ?? val);
             }
             return acc
         }, new Map<string, string>());

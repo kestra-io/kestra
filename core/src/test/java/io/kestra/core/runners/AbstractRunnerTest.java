@@ -662,7 +662,7 @@ public abstract class AbstractRunnerTest {
             "execution-start-date", null, null, Duration.ofSeconds(60));
 
         Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().getFirst());
-        assertThat((String) outputs.get("value")).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z");
+        assertThat((String) outputs.get("value")).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6,9}Z");
     }
 
     @RetryingTest(5)

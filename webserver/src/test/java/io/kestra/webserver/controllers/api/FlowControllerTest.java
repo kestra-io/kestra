@@ -1453,6 +1453,52 @@ class FlowControllerTest {
         assertThat(revisions.get(2).getRevision()).isEqualTo(4);
     }
 
+    @Test
+    void listDeprecated() {
+        // Given
+        String flowYaml = """
+            id: test-deprecated
+            namespace: io.kestra.unittest
+            tasks:
+              - id: t1
+                type: io.kestra.core.runners.test.task.Alias
+                message: hello
+            """;
+        client.toBlocking().retrieve(
+            POST(FLOW_PATH, flowYaml).contentType(MediaType.APPLICATION_YAML),
+            String.class
+        );
+
+        // When
+        List<FlowController.FlowWithDeprecatedTasks> result = client.toBlocking().retrieve(
+            GET("/api/v1/main/flows/deprecated"),
+            Argument.listOf(FlowController.FlowWithDeprecatedTasks.class)
+        );
+
+        // Then: the flow with the alias task appears
+        assertThat(result).hasSize(1);
+        FlowController.FlowWithDeprecatedTasks flowResult = result.getFirst();
+        assertThat(flowResult.flowId()).isEqualTo("test-deprecated");
+        assertThat(flowResult.namespace()).isEqualTo("io.kestra.unittest");
+        assertThat(flowResult.deprecatedTasks()).hasSize(1);
+        assertThat(flowResult.deprecatedTasks().getFirst().taskType()).isEqualTo("io.kestra.core.runners.test.task.Alias");
+        assertThat(flowResult.deprecatedTasks().getFirst().replacement()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
+
+        // Test namespace filter — matching namespace returns the flow
+        List<FlowController.FlowWithDeprecatedTasks> filtered = client.toBlocking().retrieve(
+            GET("/api/v1/main/flows/deprecated?namespace=io.kestra.unittest"),
+            Argument.listOf(FlowController.FlowWithDeprecatedTasks.class)
+        );
+        assertThat(filtered).hasSize(1);
+
+        // Test namespace filter — non-matching namespace returns nothing
+        List<FlowController.FlowWithDeprecatedTasks> empty = client.toBlocking().retrieve(
+            GET("/api/v1/main/flows/deprecated?namespace=io.kestra.other"),
+            Argument.listOf(FlowController.FlowWithDeprecatedTasks.class)
+        );
+        assertThat(empty).isEmpty();
+    }
+
     private Flow generateFlow(String namespace, String inputName) {
         return generateFlow(IdUtils.create(), namespace, inputName);
     }

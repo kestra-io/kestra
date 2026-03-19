@@ -1,0 +1,14 @@
+id: build_run_docker_image
+namespace: company.team
+
+tasks:
+  - id: build_image
+    type: io.kestra.plugin.docker.Build
+    dockerfile: |
+      FROM alpine:latest
+      CMD ["echo", "Hello from Docker!"]
+    tags:
+      - my-alpine-image:latest
+  - id: run_image
+    type: io.kestra.plugin.docker.Run
+    containerImage: my-alpine-image:latest

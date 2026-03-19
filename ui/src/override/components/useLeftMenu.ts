@@ -14,6 +14,7 @@ import {useMiscStore} from "override/stores/misc";
 import {shouldShowWelcome} from "../../utils/welcomeGuard";
 
 // Main icons
+import AiMenuIcon from "../../components/ai/AiMenuIcon.vue";
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
@@ -27,7 +28,6 @@ import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue";
 import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue";
-import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
 
 // Blueprints icons
 import Wrench from "vue-material-design-icons/Wrench.vue";
@@ -112,18 +112,18 @@ export function useLeftMenu() {
     const menu = computed<MenuItem[]>(() => {
         const generated = [
             {
-                title: t("welcome.menu"),
+                title: t("ai.flow.title"),
                 routes: routeStartWith("welcome"),
                 href: {
                     name: "welcome",
                 },
                 icon: {
-                    element: RocketLaunchOutline,
+                    element: AiMenuIcon,
                 },
-                hidden: !showWelcomeLink.value,
             },
             {
                 title: t("dashboards.labels.plural"),
+                routes: routeStartWith("home"),
                 href: {
                     name: "home",
                 },

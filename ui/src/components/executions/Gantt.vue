@@ -14,107 +14,120 @@
             @search="search = $event"
             @filter="onFilterChange"
         />
-        <el-card
-            id="gantt"
-            data-onboarding-target="execution-gantt"
-            shadow="never"
-            :class="{'no-border': !hasValidDate}"
-        >
-            <template #header v-if="hasValidDate">
-                <div class="d-flex">
-                    <Duration class="th text-end" :histories="execution.state.histories" />
-                    <div v-if="verticalLayout" class="timeline-header">
-                        <span class="timeline-start">{{ startTime }}</span>
-                        <span class="timeline-end">{{ endTime }}</span>
+        <div class="gantt-stage">
+            <el-card
+                id="gantt"
+                data-onboarding-target="execution-gantt"
+                shadow="never"
+                :class="{'no-border': !hasValidDate}"
+            >
+                <template #header v-if="hasValidDate">
+                    <div class="d-flex">
+                        <Duration class="th text-end" :histories="execution.state.histories" />
+                        <div v-if="verticalLayout" class="timeline-header">
+                            <span class="timeline-start">{{ startTime }}</span>
+                            <span class="timeline-end">{{ endTime }}</span>
+                        </div>
+                        <span v-else class="text-end" v-for="(date, i) in dates" :key="i">
+                            {{ date }}
+                        </span>
                     </div>
-                    <span v-else class="text-end" v-for="(date, i) in dates" :key="i">
-                        {{ date }}
-                    </span>
-                </div>
-            </template>
-            <template #default>
-                <TypedDynamicScroller
-                    :items="filteredSeries"
-                    :minItemSize="40"
-                    keyField="id"
-                    :buffer="0"
-                    :updateInterval="0"
-                >
-                    <template #default="{item, index, active}">
-                        <DynamicScrollerItem
-                            :item="item"
-                            :active="active"
-                            :data-index="index"
-                            :sizeDependencies="[selectedTaskRuns]"
-                        >
-                            <div class="d-flex flex-column">
-                                <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
-                                    <div v-if="!verticalLayout" class="d-inline-flex">
-                                        <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
-                                        <ChevronDown v-else />
-                                    </div>
-                                    <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
-                                        <template #content>
-                                            <code>{{ item.name }}</code>
-                                            <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
-                                        </template>
-                                        <span v-if="verticalLayout" class="task-name">
-                                            <code :title="item.name">{{ item.name }}</code>
-                                            <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
-                                        </span>
-                                        <span v-else>
-                                            <code>{{ item.name }}</code>
-                                            <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
-                                        </span>
-                                    </el-tooltip>
-                                    <div>
-                                        <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                </template>
+                <template #default>
+                    <TypedDynamicScroller
+                        :items="filteredSeries"
+                        :minItemSize="40"
+                        keyField="id"
+                        :buffer="0"
+                        :updateInterval="0"
+                    >
+                        <template #default="{item, index, active}">
+                            <DynamicScrollerItem
+                                :item="item"
+                                :active="active"
+                                :data-index="index"
+                                :sizeDependencies="[selectedTaskRuns]"
+                            >
+                                <div class="d-flex flex-column">
+                                    <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
+                                        <div v-if="!verticalLayout" class="d-inline-flex">
+                                            <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
+                                            <ChevronDown v-else />
+                                        </div>
+                                        <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                             <template #content>
-                                                <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
+                                                <code>{{ item.name }}</code>
+                                                <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
                                             </template>
-                                            <Warning class="attempt_warn me-3" />
+                                            <span v-if="verticalLayout" class="task-name">
+                                                <code :title="item.name">{{ item.name }}</code>
+                                                <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                            </span>
+                                            <span v-else>
+                                                <code>{{ item.name }}</code>
+                                                <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                            </span>
                                         </el-tooltip>
-                                    </div>
-                                    <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                        <el-tooltip placement="top" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
-                                            <template #content>
-                                                <span style="white-space: pre-wrap;">
-                                                    {{ item.tooltip }}
-                                                </span>
-                                            </template>
-                                            <div
-                                                :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
-                                                class="task-progress"
-                                            >
-                                                <div class="progress">
-                                                    <div
-                                                        :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
-                                                        class="progress-bar"
-                                                        :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
-                                                        role="progressbar"
-                                                    />
+                                        <div>
+                                            <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                                <template #content>
+                                                    <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
+                                                </template>
+                                                <Warning class="attempt_warn me-3" />
+                                            </el-tooltip>
+                                        </div>
+                                        <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
+                                            <el-tooltip placement="top" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                                <template #content>
+                                                    <span style="white-space: pre-wrap;">
+                                                        {{ item.tooltip }}
+                                                    </span>
+                                                </template>
+                                                <div
+                                                    :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
+                                                    class="task-progress"
+                                                >
+                                                    <div class="progress">
+                                                        <div
+                                                            :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
+                                                            class="progress-bar"
+                                                            :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
+                                                            role="progressbar"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </el-tooltip>
+                                            </el-tooltip>
+                                        </div>
+                                    </div>
+                                    <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
+                                        <TaskRunDetails
+                                            :taskRunId="item.id"
+                                            :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                            :level="effectiveSelectedLogLevel"
+                                            @follow="emit('follow', $event)"
+                                            :targetFlow="executionsStore.flow"
+                                            :showLogs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
+                                            class="mh-100 mx-3"
+                                        />
                                     </div>
                                 </div>
-                                <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
-                                    <TaskRunDetails
-                                        :taskRunId="item.id"
-                                        :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
-                                        :level="effectiveSelectedLogLevel"
-                                        @follow="emit('follow', $event)"
-                                        :targetFlow="executionsStore.flow"
-                                        :showLogs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
-                                        class="mh-100 mx-3"
-                                    />
-                                </div>
-                            </div>
-                        </DynamicScrollerItem>
-                    </template>
-                </TypedDynamicScroller>
-            </template>
-        </el-card>
+                            </DynamicScrollerItem>
+                        </template>
+                    </TypedDynamicScroller>
+                </template>
+            </el-card>
+        </div>
+        <OnboardingSuccessPopup
+            :modelValue="showOnboardingSuccessPopup"
+            :backdrop="false"
+            @update:model-value="showOnboardingSuccessPopup = $event"
+        />
+        <SaveExecuteAnimation
+            :modelValue="showSaveExecuteAnimation"
+            :dialogMode="showOnboardingSuccessPopup"
+            @update:model-value="showSaveExecuteAnimation = $event"
+            @finished="onSaveExecuteAnimationFinished"
+        />
     </template>
 </template>
 
@@ -122,13 +135,14 @@
     import {ref, computed, watch, onUnmounted} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
     // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {State} from "@kestra-io/ui-libs";
     // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
-    // @ts-expect-error no types yet
+    // @ts-expect-error JS module without declarations
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
@@ -137,6 +151,8 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
     import ExecutionPending from "./ExecutionPending.vue";
+    import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue";
+    import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {Comparators, type AppliedFilter} from "../filter/utils/filterTypes";
     import {useGanttExecutionFilter} from "../filter/configurations";
@@ -214,6 +230,7 @@
 
     // Composables
     const {t} = useI18n();
+    const route = useRoute();
     const executionsStore = useExecutionsStore();
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
     const ganttExecutionFilter = useGanttExecutionFilter();
@@ -222,7 +239,6 @@
             default(props: DynamicScrollerSlotProps): unknown;
         };
     });
-
     // Constants
     const TASKRUN_THRESHOLD = 50;
     const ts = (date: string | Date): number => new Date(date).getTime();
@@ -245,6 +261,10 @@
     const selectedStatesComparator = ref<Comparators | undefined>(undefined);
     const selectedTaskRunId = ref<string | undefined>(undefined);
     const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined);
+    const expandedFromRoute = ref(false);
+    const showOnboardingSuccessPopup = ref(false);
+    const showSaveExecuteAnimation = ref(false);
+    const onboardingAnimationPlayed = ref(false);
 
     // Log level filter policy
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO");
@@ -556,6 +576,31 @@
         },
         {immediate: true}
     );
+
+    watch(
+        execution,
+        (newExecution) => {
+            if (route.query.autoExpandGantt === "true" && newExecution?.taskRunList && !expandedFromRoute.value) {
+                selectedTaskRuns.value = newExecution.taskRunList.map(taskRun => taskRun.id);
+                expandedFromRoute.value = true;
+            }
+
+            if (
+                route.query.onboardingSuccess === "true" &&
+                newExecution?.state?.current === "SUCCESS" &&
+                !onboardingAnimationPlayed.value
+            ) {
+                onboardingAnimationPlayed.value = true;
+                showSaveExecuteAnimation.value = true;
+                showOnboardingSuccessPopup.value = true;
+            }
+        },
+        {immediate: true},
+    );
+
+    function onSaveExecuteAnimationFinished() {
+        showOnboardingSuccessPopup.value = true;
+    }
 
     // Lifecycle
     onUnmounted(() => {

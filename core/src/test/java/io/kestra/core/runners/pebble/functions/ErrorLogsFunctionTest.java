@@ -4,13 +4,17 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.runners.pebble.PebbleUtils;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mockito.Mockito;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
@@ -19,7 +23,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
-@Property(name = "kestra.server-type", value = "WORKER")
+@Property(name = "kestra.server-type", value = "STANDALONE")
 @Execution(ExecutionMode.SAME_THREAD)
 class ErrorLogsFunctionTest {
     @Inject
@@ -64,5 +68,12 @@ class ErrorLogsFunctionTest {
 
     private LogEntry logEntry(Level level, String message) {
         return LogEntry.builder().tenantId("dev").namespace("namespace").flowId("flow").executionId("execution").timestamp(Instant.now()).level(level).message(message).build();
+    }
+
+    @MockBean(PebbleUtils.class)
+    PebbleUtils pebbleUtils() {
+        PebbleUtils pebbleUtils = Mockito.mock(PebbleUtils.class);
+        Mockito.when(pebbleUtils.calledOnWorker()).thenReturn(true);
+        return pebbleUtils;
     }
 }

@@ -58,6 +58,12 @@ service NamespaceFileMetadataService {
   rpc save(OpaqueData) returns (OpaqueData);
 }
 
+// Service for execution logs operations - provides execution log read to workers.
+service ExecutionLogsService {
+  // Find execution logs by execution ID
+  rpc errorLogs(ErrorLogsRequest) returns (OpaqueData);
+}
+
 // Request to check if a namespace exists
 message NamespaceRequest {
   RequestOrResponseHeader header = 1;
@@ -121,4 +127,11 @@ message NamespaceFileMetadataPathsRequest {
   string namespace = 3;
   repeated string paths = 4;
   bool allow_deleted = 5;
+}
+
+// Request to fetch error logs
+message ErrorLogsRequest {
+    RequestOrResponseHeader header = 1;
+    string tenant_id = 2;
+    string execution_id = 3;
 }

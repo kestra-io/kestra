@@ -2,11 +2,10 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.runners.ExecutionLogMetaStore;
 import io.kestra.core.runners.pebble.PebbleUtils;
-import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
-import io.micronaut.context.annotation.Requires;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -20,10 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 @Singleton
-@Requires(property = "kestra.repository.type")
 public class ErrorLogsFunction  implements Function {
     @Inject
-    private ExecutionLogService logService;
+    private ExecutionLogMetaStore executionLogMetaStore;
 
     @Inject
     private PebbleUtils pebbleUtils;
@@ -52,7 +50,7 @@ public class ErrorLogsFunction  implements Function {
             .build());
 
         try {
-            return retry.run( logs -> ListUtils.isEmpty(logs), () -> logService.errorLogs(flow.get("tenantId"), execution.get("id")));
+            return retry.run( logs -> ListUtils.isEmpty(logs), () -> executionLogMetaStore.errorLogs(flow.get("tenantId"), execution.get("id")));
         } catch (RetryUtils.RetryFailed e) {
             return Collections.emptyList();
         } catch (Throwable e) {

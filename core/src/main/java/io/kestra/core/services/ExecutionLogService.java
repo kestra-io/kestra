@@ -2,8 +2,6 @@ package io.kestra.core.services;
 
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
@@ -20,9 +18,9 @@ import java.util.stream.Stream;
  */
 @Singleton
 public class ExecutionLogService {
-   
+
     private final LogRepositoryInterface logRepository;
-    
+
     @Inject
     public ExecutionLogService(LogRepositoryInterface logRepository) {
         this.logRepository = logRepository;
@@ -56,18 +54,6 @@ public class ExecutionLogService {
         );
     }
 
-
-    /**
-     * Fetches the error logs of an execution.
-     * <p>
-     * This method limits the results to the first 25 error logs, ordered by timestamp asc.
-     *
-     * @return the log entries
-     */
-    public List<LogEntry> errorLogs(String tenantId, String executionId) {
-        return logRepository.findByExecutionId(tenantId, executionId, Level.ERROR, Pageable.from(1, 25, Sort.of(Sort.Order.asc("timestamp"))));
-    }
-    
     public InputStream getExecutionLogsAsStream(String tenantId,
                                                 String executionId,
                                                 Level minLevel,

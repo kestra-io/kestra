@@ -18,6 +18,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
@@ -740,9 +741,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         DefaultDockerClientConfig.Builder dockerClientConfigBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(host);
 
+        runContext.logger().debug("dockerClient: %s, %s".formatted(image, host));
+
         if (this.configPath != null) {
+            runContext.logger().debug("configPath configured: %s".formatted(configPath));
             dockerClientConfigBuilder.withDockerConfig(this.configPath);
         } else if (this.getConfig() != null || this.getCredentials() != null) {
+            runContext.logger().debug("creds: %s, config configured: %s".formatted(credentials, JacksonMapper.ofJson().writeValueAsString(config)));
             Path config = DockerService.createConfig(
                 runContext,
                 this.getConfig(),

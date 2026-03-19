@@ -55,6 +55,8 @@ public class DockerService {
         DefaultDockerClientConfig.Builder dockerClientConfigBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(DockerService.findHost(runContext, host));
 
+        runContext.logger().debug("client: %s, %s".formatted(image, host));
+
         if (config != null || credentials != null) {
             Path configPath = DockerService.createConfig(
                 runContext,

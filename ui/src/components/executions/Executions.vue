@@ -397,6 +397,31 @@
             </el-button>
         </template>
     </el-dialog>
+
+    <el-dialog v-if="isOpenRestartModal" v-model="isOpenRestartModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="changeRestartToast()" />
+        </template>
+
+        <template #footer>
+            <el-button @click="isOpenRestartModal = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button @click="restartExecutionsWithRevision(true)">
+                {{ $t('restart latest revision') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="restartExecutionsWithRevision(false)"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -513,6 +538,7 @@
     const recomputeInterval = ref(false);
     const isOpenLabelsModal = ref(false);
     const isOpenReplayModal = ref(false);
+    const isOpenRestartModal = ref(false);
     const selectedStatus = ref(undefined);
     const lastRefreshDate = ref(new Date());
     const unqueueDialogVisible = ref(false);
@@ -892,11 +918,16 @@
     };
 
     const restartExecutions = () => {
-        genericConfirmAction(
-            "bulk restart",
+        isOpenRestartModal.value = true;
+    };
+
+    const restartExecutionsWithRevision = (latestRevision: boolean) => {
+        isOpenRestartModal.value = false;
+        genericConfirmCallback(
             "queryRestartExecution",
             "bulkRestartExecution",
-            "executions restarted"
+            "executions restarted",
+            {latestRevision: latestRevision}
         );
     };
 
@@ -913,6 +944,10 @@
 
     const changeReplayToast = () => {
         return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
+    };
+
+    const changeRestartToast = () => {
+        return t("bulk restart", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
     };
 
     const changeStatus = () => {

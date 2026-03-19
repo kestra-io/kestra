@@ -25,7 +25,7 @@
 
     const handleCardClick = (card: OnboardingCardModel) => {
         if (card.category === "tour") void router.push({name: "flows/create"});
-        else if (card.category === "help") window.open("https://kestra.io/slack", "_blank");
+        else if (card.category === "help") window.open("https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome", "_blank");
     };
 </script>
 

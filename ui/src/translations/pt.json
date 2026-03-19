@@ -372,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
+          "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
           "intro": "Para criar um novo Secret:",
           "second": "Adicione uma variável de ambiente chamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' com o valor acima",
           "third": "Reinicie sua instância do Kestra"
@@ -453,14 +453,14 @@
       "command_palette": "Mostrar paleta de comandos",
       "comment": "Comentário",
       "comment_uncomment": "Comentar/Descomentar",
-      "decrease_fontsize": "Diminuir tamanho da fonte",
+      "decrease_fontsize": "Diminuir tamanho da fonte do editor",
       "duplicate_cursor": "Duplicar cursor",
       "execute_flow": "Executar flow",
       "fold_unfold": "Dobra/Desdobra código",
-      "increase_fontsize": "Aumentar tamanho da fonte",
+      "increase_fontsize": "Aumentar o tamanho da fonte do editor",
       "label": "Atalhos de teclado",
       "move_line": "Mover linha",
-      "reset_fontsize": "Redefinir tamanho da fonte",
+      "reset_fontsize": "Redefinir tamanho da fonte do editor",
       "save_flow": "Salvar flow",
       "toggle_ai_agent": "Alternar agente de IA",
       "trigger_autocompletion": "Acionar autocompletar",
@@ -486,11 +486,11 @@
         "title": "Você ainda não tem Assets!"
       },
       "concurrency_executions": {
-        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execuções</a></strong> em nossa documentação.",
+        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Execuções</a></strong> em nossa documentação.",
         "title": "Nenhuma Execução em andamento para este Flow."
       },
       "concurrency_limit": {
-        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
+        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
         "title": "Nenhum limite está definido para este Flow."
       },
       "dependencies": {
@@ -499,15 +499,15 @@
           "title": "Atualmente, não há dependências."
         },
         "EXECUTION": {
-          "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dependências de Execução</a> na nossa documentação.",
+          "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Dependências de Execução</a> na nossa documentação.",
           "title": "Atualmente, não há dependências."
         },
         "FLOW": {
-          "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependências de Flow</a> na nossa documentação.",
+          "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Dependências de Flow</a> na nossa documentação.",
           "title": "Atualmente, não há dependências."
         },
         "NAMESPACE": {
-          "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Dependências de Namespace</a> em nossa documentação.",
+          "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Dependências de Namespace</a> em nossa documentação.",
           "title": "Atualmente, não há dependências."
         }
       },
@@ -524,7 +524,7 @@
         "title": "Você ainda não tem padrões de plugin!"
       },
       "plugins": {
-        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
+        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
         "title": "Nenhum padrão de plugin está definido para este Namespace."
       },
       "testSuites": {
@@ -532,7 +532,7 @@
         "title": "Você ainda não tem Test suites!"
       },
       "triggers": {
-        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> em nossa documentação.",
+        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> em nossa documentação.",
         "title": "Seu flow não possui nenhum trigger."
       },
       "versionPlugin": {
@@ -1932,7 +1932,7 @@
     "template export": "Tem certeza de que deseja exportar <code>{templateCount}</code> template(s)?",
     "templates": "Templates",
     "templates deleted": "<code>{count}</code> Template(s) deletado(s)",
-    "templates deprecated": "Templates estão obsoletos. Por favor, use subflows. Veja a <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Seção de Migrações</a> explicando como você pode migrar de templates para subflows.",
+    "templates deprecated": "Templates estão obsoletos. Por favor, use subflows. Veja a <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">Seção de Migrações</a> explicando como você pode migrar de templates para subflows.",
     "templates exported": "Templates exportados",
     "tenant": {
       "name": "Mandante",
@@ -2053,7 +2053,7 @@
         "title": "Faça um tour pelo produto"
       },
       "tutorial": {
-        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">Tutoriais em Vídeo</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">Documentação</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Tutoriais em Vídeo</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Documentação</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "Tutorial"
       }
     },

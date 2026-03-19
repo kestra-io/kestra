@@ -104,6 +104,7 @@
                                         v-if="debugExpression"
                                         :readOnly="true"
                                         :input="true"
+                                        :showScroll="true"
                                         :fullHeight="false"
                                         :customHeight="20"
                                         :navbar="false"
@@ -170,6 +171,7 @@
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
+    import Utils from "../../../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -443,10 +445,9 @@
         typeof value !== "string" || value.length < 16
             ? value
             : `${value.substring(0, 16)}...`;
-    const isFile = (value: any) =>
-        typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+
     const displayVarValue = () =>
-        isFile(selectedValue.value) ||
+        Utils.isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");
@@ -457,7 +458,19 @@
 .outputs {
     display: flex;
     width: 100%;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+:deep(.el-splitter) {
+    height: 100%;
+    min-height: 0;
+}
+
+:deep(.el-splitter-panel) {
+    display: flex;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -514,9 +527,12 @@
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
 .right.wrapper {
+    width: 100%;
     height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 :deep(.el-cascader-menu) {
@@ -595,15 +611,6 @@
     word-break: break-word;
     position: relative;
     z-index: 0;
-}
-
-/* Hide the visual scrollbar on the right panel but keep scrolling usable */
-.content-container {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-}
-.content-container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
 }
 
 :deep(.el-collapse) {

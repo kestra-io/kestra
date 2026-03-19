@@ -5,10 +5,7 @@ import io.kestra.core.models.tasks.common.EncryptedString;
 import org.slf4j.Logger;
 
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 final class Secret {
@@ -41,7 +38,7 @@ final class Secret {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     Map<String, Object> decrypt(final Map<String, Object> data) {
-        Map<String, Object> decryptedMap = new HashMap<>(data);
+        Map<String, Object> decryptedMap = new LinkedHashMap<>(data);
         for (var entry: data.entrySet()) {
             if (entry.getValue() instanceof Map map) {
                 // if some value are of type EncryptedString we decode them and replace the object

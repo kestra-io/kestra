@@ -37,6 +37,7 @@ ui/coverage
 ui/stats.html
 ui/.frontend-gradle-plugin
 ui/test-report.junit.xml
+ui/frontend.*
 *storybook.log
 storybook-static
 

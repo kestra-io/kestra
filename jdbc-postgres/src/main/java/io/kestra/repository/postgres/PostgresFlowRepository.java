@@ -2,6 +2,7 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.micronaut.context.ApplicationContext;
@@ -12,7 +13,7 @@ import org.jooq.Condition;
 
 import java.util.Map;
 
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
     @Inject

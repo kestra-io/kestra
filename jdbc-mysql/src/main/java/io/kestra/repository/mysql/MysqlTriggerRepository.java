@@ -1,5 +1,6 @@
 package io.kestra.repository.mysql;
 
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -14,7 +15,7 @@ import org.jooq.impl.DSL;
 import java.util.Date;
 import java.util.List;
 
-@Singleton
+@RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlTriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject

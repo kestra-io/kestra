@@ -1,5 +1,6 @@
 package io.kestra.repository.h2;
 
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -11,7 +12,7 @@ import org.jooq.Field;
 
 import java.util.Date;
 
-@Singleton
+@RepositoryBean
 @H2RepositoryEnabled
 public class H2TriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject

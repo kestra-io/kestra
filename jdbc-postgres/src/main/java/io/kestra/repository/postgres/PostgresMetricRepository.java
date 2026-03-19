@@ -1,6 +1,7 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcMetricRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -12,7 +13,7 @@ import org.jooq.impl.DSL;
 
 import java.util.Date;
 
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresMetricRepository extends AbstractJdbcMetricRepository {
     @Inject

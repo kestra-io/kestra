@@ -2,6 +2,7 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresLogRepository extends AbstractJdbcLogRepository {
 

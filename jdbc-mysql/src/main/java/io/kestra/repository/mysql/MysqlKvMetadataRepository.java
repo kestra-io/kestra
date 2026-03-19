@@ -1,6 +1,7 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcKvMetadataRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -12,7 +13,7 @@ import org.jooq.impl.DSL;
 import java.util.ArrayList;
 import java.util.List;
 
-@Singleton
+@RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlKvMetadataRepository extends AbstractJdbcKvMetadataRepository {
     @Inject

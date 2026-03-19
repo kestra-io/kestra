@@ -372,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
           "intro": "새 Secret을 생성하려면:",
           "second": "위의 값을 사용하여 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>'라는 환경 변수를 추가하세요.",
           "third": "Kestra 인스턴스를 재시작하십시오"
@@ -486,11 +486,11 @@
         "title": "아직 자산이 없습니다!"
       },
       "concurrency_executions": {
-        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>에 대한 문서를 참조하세요.",
+        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executions</a></strong>에 대한 문서를 참조하세요.",
         "title": "이 Flow에 대한 진행 중인 실행이 없습니다."
       },
       "concurrency_limit": {
-        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
+        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
       },
       "dependencies": {
@@ -499,15 +499,15 @@
           "title": "현재 종속성이 없습니다."
         },
         "EXECUTION": {
-          "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">실행 종속성</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "content": "<a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">실행 종속성</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         },
         "FLOW": {
-          "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "content": "<a href=\"https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         },
         "NAMESPACE": {
-          "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         }
       },
@@ -524,7 +524,7 @@
         "title": "아직 플러그인 기본값이 없습니다!"
       },
       "plugins": {
-        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
+        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Namespace에 대한 플러그인 기본값이 설정되지 않았습니다."
       },
       "testSuites": {
@@ -532,7 +532,7 @@
         "title": "아직 Test suite가 없습니다!"
       },
       "triggers": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
         "title": "flow에 Triggers가 없습니다."
       },
       "versionPlugin": {
@@ -1932,7 +1932,7 @@
     "template export": "<code>{templateCount}</code> 개의 템플릿을 내보내시겠습니까?",
     "templates": "템플릿들",
     "templates deleted": "<code>{count}</code> 개의 템플릿이 삭제되었습니다",
-    "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
+    "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
     "templates exported": "템플릿이 내보내졌습니다",
     "tenant": {
       "name": "테넌트",
@@ -2053,7 +2053,7 @@
         "title": "제품 투어 시작하기"
       },
       "tutorial": {
-        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">비디오 튜토리얼</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">문서</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">비디오 튜토리얼</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">문서</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "튜토리얼"
       }
     },

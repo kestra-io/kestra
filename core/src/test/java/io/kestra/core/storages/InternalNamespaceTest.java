@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -184,6 +186,92 @@ class InternalNamespaceTest {
         assertThat(namespaceFiles.size()).isZero();
     }
     
+    @Test
+    void shouldMoveFolderWithFilesIntoAnotherFolder() throws Exception {
+        // Given: folder1 with 2 files, folder2 with 2 files
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+
+        namespace.putFile(Path.of("/folder1/file1.txt"), new ByteArrayInputStream("content1".getBytes()));
+        namespace.putFile(Path.of("/folder1/file2.txt"), new ByteArrayInputStream("content2".getBytes()));
+        namespace.putFile(Path.of("/folder2/file3.txt"), new ByteArrayInputStream("content3".getBytes()));
+        namespace.putFile(Path.of("/folder2/file4.txt"), new ByteArrayInputStream("content4".getBytes()));
+
+        // When: move folder2 into folder1
+        List<Pair<NamespaceFile, NamespaceFile>> moved = namespace.move(Path.of("/folder2"), Path.of("/folder1/folder2"));
+
+        // Then: folder2 and its files were moved
+        assertThat(moved).isNotEmpty();
+
+        // folder1's original files are untouched
+        assertThat(namespace.exists(Path.of("/folder1/file1.txt"))).isTrue();
+        assertThat(namespace.exists(Path.of("/folder1/file2.txt"))).isTrue();
+        try (InputStream is = namespace.getFileContent(Path.of("/folder1/file1.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content1");
+        }
+        try (InputStream is = namespace.getFileContent(Path.of("/folder1/file2.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content2");
+        }
+
+        // folder2 now exists as a nested directory inside folder1
+        assertThat(namespace.exists(Path.of("/folder1/folder2"))).isTrue();
+
+        // folder2's files are accessible at the new paths with correct content
+        assertThat(namespace.exists(Path.of("/folder1/folder2/file3.txt"))).isTrue();
+        assertThat(namespace.exists(Path.of("/folder1/folder2/file4.txt"))).isTrue();
+        try (InputStream is = namespace.getFileContent(Path.of("/folder1/folder2/file3.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content3");
+        }
+        try (InputStream is = namespace.getFileContent(Path.of("/folder1/folder2/file4.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content4");
+        }
+
+        // folder2 no longer exists at the old location
+        assertThat(namespace.exists(Path.of("/folder2"))).isFalse();
+        assertThat(namespace.exists(Path.of("/folder2/file3.txt"))).isFalse();
+        assertThat(namespace.exists(Path.of("/folder2/file4.txt"))).isFalse();
+    }
+
+    @Test
+    void shouldRollbackMoveWhenCopyFails() throws Exception {
+        // Given: folder1 with 2 files, folder2 with 2 files
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+
+        namespace.putFile(Path.of("/folder1/file1.txt"), new ByteArrayInputStream("content1".getBytes()));
+        namespace.putFile(Path.of("/folder1/file2.txt"), new ByteArrayInputStream("content2".getBytes()));
+        namespace.putFile(Path.of("/folder2/file3.txt"), new ByteArrayInputStream("content3".getBytes()));
+        List<NamespaceFile> file4Result = namespace.putFile(Path.of("/folder2/file4.txt"), new ByteArrayInputStream("content4".getBytes()));
+
+        // Corrupt file4 in the underlying storage so that reading it during move will fail
+        NamespaceFile file4 = file4Result.stream().filter(f -> f.path().endsWith("file4.txt")).findFirst().orElseThrow();
+        storageInterface.delete(MAIN_TENANT, namespaceId, file4.storagePath().toUri());
+
+        // When: move folder2 into folder1 — should fail because file4.txt can't be read
+        Assertions.assertThrows(IOException.class, () ->
+            namespace.move(Path.of("/folder2"), Path.of("/folder1/folder2"))
+        );
+
+        // Then: rollback should have cleaned up any partially-created target entries
+        assertThat(namespace.exists(Path.of("/folder1/folder2"))).isFalse();
+        assertThat(namespace.exists(Path.of("/folder1/folder2/file3.txt"))).isFalse();
+        assertThat(namespace.exists(Path.of("/folder1/folder2/file4.txt"))).isFalse();
+
+        // Source files are still intact at original locations
+        assertThat(namespace.exists(Path.of("/folder2"))).isTrue();
+        assertThat(namespace.exists(Path.of("/folder2/file3.txt"))).isTrue();
+
+        // folder1's original files are untouched
+        assertThat(namespace.exists(Path.of("/folder1/file1.txt"))).isTrue();
+        assertThat(namespace.exists(Path.of("/folder1/file2.txt"))).isTrue();
+        try (InputStream is = namespace.getFileContent(Path.of("/folder1/file1.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content1");
+        }
+        try (InputStream is = namespace.getFileContent(Path.of("/folder1/file2.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content2");
+        }
+    }
+
     @Test
     void shouldCreateDirectory() throws IOException {
         // Given

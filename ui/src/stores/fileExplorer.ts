@@ -216,32 +216,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             fileTree.value.push(NEW);
             fileTree.value = sorted(fileTree.value);
         } else {
-            (function pushItemToFolder(basePath: string = "", array: TreeNode[], pathParts: string[]): boolean {
-                for (const item of array) {
-                    const folderPath = `${basePath}${item.fileName}`;
-                    if (folderPath === parentPath && isDirectory(item)) {
-                        item.children = sorted([...(item.children ?? []), NEW]);
-                        return true;
-                    }
-                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children ?? [], pathParts.slice(1))) {
-                        return true;
-                    }
-                }
-                if (pathParts && pathParts.length > 0 && pathParts[0]) {
-                    const folderPath = `${basePath}${pathParts[0]}`;
-                    if (folderPath === parentPath) {
-                        const newFolder = folderNode(pathParts[0], [NEW]);
-                        array.push(newFolder);
-                        array = sorted(array);
-                        return true;
-                    }
-                    const newFolder = folderNode(pathParts[0], []);
-                    array.push(newFolder);
-                    array = sorted(array);
-                    return newFolder.children ? pushItemToFolder(`${basePath}${pathParts[0]}/`, newFolder.children, pathParts.slice(1)) : false;
-                }
-                return false;
-            })(undefined, fileTree.value, path.split("/"));
+            pushToParentFolder(parentPath, NEW);
         }
         return {path, file: NEW};
     }

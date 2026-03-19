@@ -171,6 +171,7 @@
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
+    import Utils from "../../../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -444,10 +445,9 @@
         typeof value !== "string" || value.length < 16
             ? value
             : `${value.substring(0, 16)}...`;
-    const isFile = (value: any) =>
-        typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+
     const displayVarValue = () =>
-        isFile(selectedValue.value) ||
+        Utils.isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");

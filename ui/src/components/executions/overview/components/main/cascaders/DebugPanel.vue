@@ -20,7 +20,7 @@
         </div>
 
         <template v-if="result">
-            <VarValue v-if="isFile" :value="result.value" :execution />
+            <VarValue v-if="Utils.isFile(result.value)" :value="result.value" :execution />
 
             <Editor
                 v-else
@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-    import {watch, ref, computed} from "vue";
+    import {watch, ref} from "vue";
 
     import Editor from "../../../../../inputs/Editor.vue";
     import VarValue from "../../../../VarValue.vue";
@@ -54,6 +54,8 @@
 
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
+
+    import Utils from "../../../../../../utils/utils";
 
     const props = defineProps<{
         property: "outputs" | "trigger";
@@ -68,13 +70,6 @@
         result.value = undefined;
         error.value = undefined;
     };
-
-    const isFile = computed(() => {
-        if (!result.value || typeof result.value.value !== "string") return false;
-
-        const prefixes = ["kestra:///", "file://", "nsfile://"];
-        return prefixes.some((prefix) => result.value!.value.startsWith(prefix));
-    });
 
     const expression = ref<string>("");
     watch(

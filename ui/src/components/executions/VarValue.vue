@@ -11,7 +11,7 @@
         >
             {{ $t('download') }}
         </el-button>
-        <FilePreview v-if="isFile(value)" :value="value.toString()" :executionId="execution.id" />
+        <FilePreview v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
@@ -80,12 +80,8 @@
 
     const humanSize = ref<string>("");
 
-    const isFile = (value: unknown): value is string => {
-        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
-    };
-
     const isFileValid = (value: unknown): boolean => {
-        return isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B";
+        return Utils.isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B";
     };
 
     const isURI = (value: unknown): value is string => {
@@ -146,7 +142,7 @@
     const axios = useAxios();
 
     const getFileSize = async (): Promise<void> => {
-        if (isFile(props.value) && props.execution?.id) {
+        if (Utils.isFile(props.value) && props.execution?.id) {
             try {
                 const response = await axios.get<FileMetadata>(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`);
                 humanSize.value = Utils.humanFileSize(response.data.size);

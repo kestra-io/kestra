@@ -104,6 +104,7 @@
                                         v-if="debugExpression"
                                         :readOnly="true"
                                         :input="true"
+                                        :showScroll="true"
                                         :fullHeight="false"
                                         :customHeight="20"
                                         :navbar="false"
@@ -457,7 +458,19 @@
 .outputs {
     display: flex;
     width: 100%;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+:deep(.el-splitter) {
+    height: 100%;
+    min-height: 0;
+}
+
+:deep(.el-splitter-panel) {
+    display: flex;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -514,9 +527,12 @@
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
 .right.wrapper {
+    width: 100%;
     height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 :deep(.el-cascader-menu) {
@@ -595,15 +611,6 @@
     word-break: break-word;
     position: relative;
     z-index: 0;
-}
-
-/* Hide the visual scrollbar on the right panel but keep scrolling usable */
-.content-container {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-}
-.content-container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
 }
 
 :deep(.el-collapse) {

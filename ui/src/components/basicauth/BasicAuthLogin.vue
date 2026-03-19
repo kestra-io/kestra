@@ -279,7 +279,7 @@
             type: "ossauth",
             action: "forgot_password_click",
         })
-        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
+        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting?utm_source=app&utm_medium=referral&utm_campaign=login&utm_content=lost-password", "_blank")
     }
 </script>
 

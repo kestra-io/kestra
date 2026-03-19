@@ -11,14 +11,12 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.sun.jna.LastErrorException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
@@ -52,7 +50,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -167,6 +164,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     @PluginProperty(dynamic = true)
     private Object config;
+
+    @Schema(
+        title = "Docker configuration file path.",
+        description = "Docker configuration file file path, usually its `~/.docker/config.json`, either use this or 'config' but not both."
+    )
+    @PluginProperty(dynamic = true)
+    private String configPath;
 
     @Schema(
         title = "Credentials for a private container registry."
@@ -339,6 +343,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .type(Docker.class.getName())
             .host(dockerOptions.getHost())
             .config(dockerOptions.getConfig())
+            .configPath(dockerOptions.getConfigPath())
             .credentials(dockerOptions.getCredentials())
             .image(dockerOptions.getImage())
             .user(dockerOptions.getUser())
@@ -735,7 +740,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         DefaultDockerClientConfig.Builder dockerClientConfigBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(host);
 
-        if (this.getConfig() != null || this.getCredentials() != null) {
+        if (this.configPath != null) {
+            dockerClientConfigBuilder.withDockerConfig(this.configPath);
+        } else if (this.getConfig() != null || this.getCredentials() != null) {
             Path config = DockerService.createConfig(
                 runContext,
                 this.getConfig(),

@@ -4,6 +4,8 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.plugin.scripts.runner.docker.*;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,8 +13,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Map;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
@@ -31,6 +31,13 @@ public class DockerOptions {
     )
     @PluginProperty(dynamic = true)
     private Object config;
+
+    @Schema(
+        title = "Docker configuration file path.",
+        description = "Docker configuration file file path, usually its `~/.docker/config.json`, either use this or 'config' but not both."
+    )
+    @PluginProperty(dynamic = true)
+    private String configPath;
 
     @Schema(
         title = "Credentials for a private container registry."

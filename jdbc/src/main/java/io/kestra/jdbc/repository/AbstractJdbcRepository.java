@@ -349,7 +349,7 @@ public abstract class AbstractJdbcRepository {
         return defaultHandlers(field, value, operation);
     }
 
-    private Condition defaultHandlers(
+    protected Condition defaultHandlers(
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation

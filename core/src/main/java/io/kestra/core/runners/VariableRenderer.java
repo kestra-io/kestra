@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.pebble.*;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
@@ -30,16 +31,16 @@ public class VariableRenderer {
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
         this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
     }
-    
+
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
         this.pebbleEngine = pebbleEngineFactory.create();
     }
-    
+
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
         this.pebbleEngine = pebbleEngine;
     }
-    
+
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
         if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
@@ -98,9 +99,27 @@ public class VariableRenderer {
         try {
             PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate((String) result);
 
-            OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
-            compiledTemplate.evaluate(writer, variables);
-            result = writer.output();
+            try {
+                OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
+                compiledTemplate.evaluate(writer, variables);
+                result = writer.output();
+            } catch (IllegalArgumentException e) {
+                //can happen in case of mixed type in string
+                if (!stringify) {
+                    JsonWriter fallbackWriter = new JsonWriter();
+                    compiledTemplate.evaluate(fallbackWriter, variables);
+                    Object rendered = fallbackWriter.output();
+
+                    if (rendered instanceof String renderedString) {
+                        result = tryParseJson(renderedString);
+                    } else {
+                        result = rendered;
+                    }
+                } else {
+                    throw e;
+                }
+            }
+
         } catch (IOException | PebbleException e) {
             String alternativeRender = this.alternativeRender(e, (String) inline, variables);
             if (alternativeRender == null) {
@@ -119,6 +138,14 @@ public class VariableRenderer {
         }
 
         return result;
+    }
+
+    private Object tryParseJson(String value) {
+        try {
+            return JacksonMapper.ofJson().readValue(value, Object.class);
+        } catch (Exception ignored) {
+            return value;
+        }
     }
 
     /**

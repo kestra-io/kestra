@@ -2,6 +2,7 @@
     <TopNavBar :title="routeInfo.title" />
     <Layout
         :title="t(`demos.apps.title`)"
+        type="apps"
         :image="{source: sourceImg, alt: t(`demos.apps.title`)}"
         :video="{
             source: 'https://www.youtube.com/embed/KwBO8mcS3kk',

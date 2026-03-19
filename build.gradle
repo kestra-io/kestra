@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.2.2.6593"
+    id "org.sonarqube" version "7.2.3.7755"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -64,6 +64,18 @@ java {
 compileJava {
     // We use 21 release (target) level temporary, will be switched to 25 for 2.0
     options.release = 21
+}
+
+
+abstract class GenericLocationProvider implements CommandLineArgumentProvider {
+    @InputFile
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract RegularFileProperty getDistribution()
+
+    @Override
+    Iterable<String> asArguments() {
+        ["-javaagent:${distribution.get().asFile.absolutePath}"]
+    }
 }
 
 dependencies {
@@ -336,7 +348,7 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
-            t.dependsOn("test")// explicit depend to insure they are run before
+            t.mustRunAfter(tasks.named('test'))
         }
 
         // test task (default)
@@ -355,14 +367,22 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
             commonTestConfig(t)
-            jvmArgs = [
-                "-javaagent:${configurations.agent.singleFile}",
-                "-javaagent:${configurations.mockitoAgent.singleFile}"
-            ]
+            jvmArgumentProviders.add(
+                objects.newInstance(GenericLocationProvider).tap {
+                    distribution = configurations.mockitoAgent.singleFile
+                }
+            )
+
+            jvmArgumentProviders.add(
+                objects.newInstance(GenericLocationProvider).tap {
+                    distribution = configurations.agent.singleFile
+                }
+            )
         }
 
         tasks.named('check') {
             dependsOn(tasks.named('test'))// default behaviour
+            dependsOn(tasks.named('flakyTest'))
         }
 
         testlogger {
@@ -380,6 +400,7 @@ subprojects {subProj ->
 
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    dependsOn(tasks.named('flakyTest'))
     finalizedBy jacocoTestReport
 }
 
@@ -401,7 +422,6 @@ tasks.register('flakyTest') {
 
 tasks.named('testCodeCoverageReport') {
     dependsOn ':core:copyGradleProperties'
-    dependsOn ':ui:assembleFrontend'
 }
 
 /**********************************************************************************************************************\

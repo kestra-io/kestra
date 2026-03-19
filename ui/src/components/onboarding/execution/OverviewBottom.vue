@@ -34,7 +34,7 @@
                     title: t("execution_guide.namespaces.title"),
                     category: "namespaces",
                     content: "",
-                    link: "https://kestra.io/docs/ui/namespaces",
+                    link: "https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
                     icon: FolderOpenOutline,
                 }
                 : {
@@ -48,7 +48,7 @@
                 title: t("execution_guide.workflow_components.title"),
                 category: "workflow_components",
                 content: "",
-                link: "https://kestra.io/docs/workflow-components",
+                link: "https://kestra.io/docs/workflow-components?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
                 icon: VideoInputComponent,
             },
             {

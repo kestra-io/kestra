@@ -4,7 +4,6 @@ import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.http.client.HttpClientRequestException;
-import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.*;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -45,10 +44,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import io.kestra.core.http.client.HttpClientResponseException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 
 @KestraTest
 @Execution(ExecutionMode.SAME_THREAD)
@@ -484,6 +492,77 @@ class RequestTest {
             assertThat(output.getCode()).isEqualTo(200);
         }
     }
+     @Test
+     void multipartInlineContent_doesNotThrowContentTooLong() throws Exception {
+         Path tmp = Files.createTempFile("kestra-large-", ".txt");
+
+         try {
+             int size = 5 * 1024 * 1024; // large enough to trigger old client-side ContentTooLongException
+             byte[] payloadBytes = new byte[size];
+             Arrays.fill(payloadBytes, (byte) 'a');
+             Files.write(tmp, payloadBytes);
+
+             URI bigStorage;
+             try (InputStream in = Files.newInputStream(tmp)) {
+                 bigStorage = storageInterface.put(
+                     MAIN_TENANT,
+                     null,
+                     new URI("/" + FriendlyId.createFriendlyId()),
+                     in
+                 );
+             }
+
+             try (
+                 ApplicationContext applicationContext = ApplicationContext.run();
+                 EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
+             ) {
+                 Request task = Request.builder()
+                     .id(RequestTest.class.getSimpleName())
+                     .type(RequestTest.class.getName())
+                     .method(Property.ofValue("POST"))
+                     .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+                     .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
+                     .formData(Property.ofValue(ImmutableMap.of(
+                         "hello", "world",
+                         "file", ImmutableMap.of(
+                             "content", bigStorage.toString(),
+                             "name", "big.txt"
+                         )
+                     )))
+                     .build();
+
+                 RunContext runContext =
+                     TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+                     assertThatThrownBy(() -> task.run(runContext))
+                         .isInstanceOf(HttpClientResponseException.class)
+                         .hasMessageContaining("response code '413'");
+             }
+         } finally {
+             Files.deleteIfExists(tmp);
+         }
+     }
+
+    @Test
+     void multipartFromEntity_doesNotMaterialize_andKeepsEntityForSend() throws Exception {
+         HttpEntity entity = MultipartEntityBuilder.create()
+            .addTextBody("hello", "world")
+            .addBinaryBody(
+            "file",
+            "abc".getBytes(StandardCharsets.UTF_8),
+            ContentType.DEFAULT_BINARY,
+            "a.txt"
+            )
+            .build();
+
+        io.kestra.core.http.HttpRequest.RequestBody body =
+            io.kestra.core.http.HttpRequest.RequestBody.from(entity);
+
+            HttpEntity rebuilt = body.to();
+
+            assertThat(rebuilt).isSameAs(entity);
+        }
+
 
     @Test
     void bytes() {

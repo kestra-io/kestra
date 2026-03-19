@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DockerService {
+    static final String DOCKER_HUB_CANONICAL_URL = "https://index.docker.io/v1/";
+
     public static DockerClient client(DockerClientConfig dockerClientConfig) {
         DockerHttpClient dockerHttpClient = new ApacheDockerHttpClient.Builder()
             .dockerHost(dockerClientConfig.getDockerHost())
@@ -85,7 +87,7 @@ public class DockerService {
 
         if (credentials != null) {
             Map<String, Object> auths = new HashMap<>();
-            String registry = "https://index.docker.io/v1/";
+            String registry = DOCKER_HUB_CANONICAL_URL;
 
             for (Credentials c : credentials) {
                 if (c.getUsername() != null) {
@@ -150,8 +152,6 @@ public class DockerService {
             return null;
         }
 
-        String canonical = "https://index.docker.io/v1/";
-
         // Strip trailing slashes for uniform comparison
         var normalized = registry.replaceAll("/+$", "");
 
@@ -162,7 +162,7 @@ public class DockerService {
             || withoutScheme.equals("index.docker.io/v1")
             || withoutScheme.equals("index.docker.io/v2")
             || withoutScheme.equals("index.docker.io")) {
-            return canonical;
+            return DOCKER_HUB_CANONICAL_URL;
         }
 
         // For any other registry, strip a trailing /v2 path

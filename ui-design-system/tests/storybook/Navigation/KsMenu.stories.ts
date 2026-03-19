@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
 import KsMenu from "../../../src/components/Navigation/KsMenu/KsMenu.vue"
 import KsMenuItem from "../../../src/components/Navigation/KsMenu/KsMenuItem.vue"
 
@@ -27,6 +28,30 @@ export const Vertical: Story = {
                     <ks-menu-item index="executions">Executions</ks-menu-item>
                     <ks-menu-item index="namespaces">Namespaces</ks-menu-item>
                     <ks-menu-item index="settings" disabled>Settings</ks-menu-item>
+                </ks-menu>
+            </div>
+        `,
+    }),
+}
+
+/** Collapse – vertically collapsible sidebar */
+export const Collapse: Story = {
+    render: () => ({
+        components: {KsMenu, KsMenuItem},
+        setup() {
+            const collapsed = ref(false)
+            return {collapsed}
+        },
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;align-items:flex-start">
+                <button @click="collapsed = !collapsed" style="margin-top:8px">
+                    {{ collapsed ? 'Expand' : 'Collapse' }}
+                </button>
+                <ks-menu default-active="flows" :collapse="collapsed" style="width:200px;transition:width 0.3s">
+                    <ks-menu-item index="flows">Flows</ks-menu-item>
+                    <ks-menu-item index="executions">Executions</ks-menu-item>
+                    <ks-menu-item index="namespaces">Namespaces</ks-menu-item>
+                    <ks-menu-item index="settings">Settings</ks-menu-item>
                 </ks-menu>
             </div>
         `,

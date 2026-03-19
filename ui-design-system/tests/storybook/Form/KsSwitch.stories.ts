@@ -59,6 +59,30 @@ export const Sizes: Story = {
     }),
 }
 
+/** Extended value types – string/number active/inactive values */
+export const ExtendedValues: Story = {
+    render: () => ({
+        components: {KsSwitch},
+        setup() {
+            const env = ref("production")
+            const priority = ref(1)
+            return {env, priority}
+        },
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <ks-switch v-model="env" active-value="production" inactive-value="development" />
+                    <span style="font-size:13px;opacity:0.7">{{ env }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                    <ks-switch v-model="priority" :active-value="1" :inactive-value="0" />
+                    <span style="font-size:13px;opacity:0.7">Priority: {{ priority }}</span>
+                </div>
+            </div>
+        `,
+    }),
+}
+
 export const Disabled: Story = {
     render: () => ({
         components: {KsSwitch},

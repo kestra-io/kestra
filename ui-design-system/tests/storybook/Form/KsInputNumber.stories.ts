@@ -52,6 +52,34 @@ export const ControlsRight: Story = {
     }),
 }
 
+/** Step strictly – only multiples of step are valid */
+export const StepStrictly: Story = {
+    render: () => ({
+        components: {KsInputNumber},
+        setup() { return {value: ref(0)} },
+        template: `
+            <div style="padding:24px">
+                <ks-input-number v-model="value" :step="5" step-strictly :min="0" :max="100" />
+                <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">Only multiples of 5</span>
+            </div>
+        `,
+    }),
+}
+
+/** Precision – fixed decimal places */
+export const Precision: Story = {
+    render: () => ({
+        components: {KsInputNumber},
+        setup() { return {value: ref(3.14)} },
+        template: `
+            <div style="padding:24px">
+                <ks-input-number v-model="value" :precision="2" :step="0.1" />
+                <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">2 decimal places</span>
+            </div>
+        `,
+    }),
+}
+
 export const Disabled: Story = {
     render: () => ({
         components: {KsInputNumber},

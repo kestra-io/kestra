@@ -35,6 +35,37 @@ export const WithAction: Story = {
     }),
 }
 
+/** Custom image size */
+export const ImageSize: Story = {
+    render: () => ({
+        components: {KsEmpty},
+        template: `
+            <div style="padding:24px;display:flex;gap:32px;flex-wrap:wrap">
+                <ks-empty :image-size="60" description="Small (60px)" />
+                <ks-empty :image-size="100" description="Medium (100px)" />
+                <ks-empty :image-size="160" description="Large (160px)" />
+            </div>
+        `,
+    }),
+}
+
+/** Custom description slot */
+export const CustomDescription: Story = {
+    render: () => ({
+        components: {KsEmpty, KsButton},
+        template: `
+            <div style="padding:24px">
+                <ks-empty>
+                    <template #description>
+                        <span>No executions found. <a href="#" style="color:inherit;text-decoration:underline">Learn more</a></span>
+                    </template>
+                    <ks-button type="primary">Create execution</ks-button>
+                </ks-empty>
+            </div>
+        `,
+    }),
+}
+
 export const CustomImage: Story = {
     render: () => ({
         components: {KsEmpty},

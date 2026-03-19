@@ -195,6 +195,33 @@ export const TextAndLink: Story = {
     }),
 }
 
+/** Custom tag – render as anchor or div instead of button */
+export const CustomTag: Story = {
+    render: () => ({
+        components: {KsButton},
+        template: `
+            <div style="padding:24px;display:flex;gap:12px;align-items:center">
+                <ks-button tag="a" href="#" type="primary">Anchor tag</ks-button>
+                <ks-button tag="div" type="success">Div tag</ks-button>
+            </div>
+        `,
+    }),
+}
+
+/** Custom color – auto-calculates hover and active states */
+export const CustomColor: Story = {
+    render: () => ({
+        components: {KsButton},
+        template: `
+            <div style="padding:24px;display:flex;gap:12px;align-items:center">
+                <ks-button color="#626aef">Custom purple</ks-button>
+                <ks-button color="#626aef" plain>Plain purple</ks-button>
+                <ks-button color="#e07b54">Custom orange</ks-button>
+            </div>
+        `,
+    }),
+}
+
 /** Click event emission */
 export const ClickEvent: Story = {
     render: () => ({

@@ -3,7 +3,13 @@ import type {StorybookConfig} from "@storybook/vue3-vite"
 
 const config: StorybookConfig = {
     stories: ["../tests/storybook/**/*.stories.@(ts|tsx)"],
-    addons: ["@storybook/addon-themes", "@storybook/addon-vitest"],
+    addons: [
+        "@storybook/addon-themes",
+        "@storybook/addon-vitest",
+        "@chromatic-com/storybook",
+        "@storybook/addon-a11y",
+        "@storybook/addon-docs"
+    ],
     framework: {
         name: "@storybook/vue3-vite",
         options: {},

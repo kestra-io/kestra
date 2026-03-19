@@ -53,6 +53,62 @@ export const Card: Story = {
     }),
 }
 
+/** Tab position – top, right, bottom, left */
+export const TabPosition: Story = {
+    render: () => ({
+        components: {KsTabs, KsTabPane},
+        setup() { return {active: ref("a"), active2: ref("a"), active3: ref("a"), active4: ref("a")} },
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:32px">
+                <div>
+                    <p style="font-size:12px;opacity:0.5;margin:0 0 8px">top</p>
+                    <ks-tabs v-model="active" tab-position="top">
+                        <ks-tab-pane label="Tab A" name="a">Content A</ks-tab-pane>
+                        <ks-tab-pane label="Tab B" name="b">Content B</ks-tab-pane>
+                    </ks-tabs>
+                </div>
+                <div>
+                    <p style="font-size:12px;opacity:0.5;margin:0 0 8px">bottom</p>
+                    <ks-tabs v-model="active2" tab-position="bottom">
+                        <ks-tab-pane label="Tab A" name="a">Content A</ks-tab-pane>
+                        <ks-tab-pane label="Tab B" name="b">Content B</ks-tab-pane>
+                    </ks-tabs>
+                </div>
+            </div>
+        `,
+    }),
+}
+
+/** Custom tab label via slot */
+export const CustomLabel: Story = {
+    render: () => ({
+        components: {KsTabs, KsTabPane},
+        setup() { return {active: ref("flows")} },
+        template: `
+            <div style="padding:24px">
+                <ks-tabs v-model="active">
+                    <ks-tab-pane name="flows">
+                        <template #label>
+                            <span style="display:flex;align-items:center;gap:4px">
+                                <span>⚡</span> Flows
+                            </span>
+                        </template>
+                        Flows content
+                    </ks-tab-pane>
+                    <ks-tab-pane name="executions">
+                        <template #label>
+                            <span style="display:flex;align-items:center;gap:4px">
+                                <span>▶</span> Executions
+                            </span>
+                        </template>
+                        Executions content
+                    </ks-tab-pane>
+                </ks-tabs>
+            </div>
+        `,
+    }),
+}
+
 export const BorderCard: Story = {
     render: () => ({
         components: {KsTabs, KsTabPane},

@@ -37,6 +37,66 @@ export const Default: Story = {
     }),
 }
 
+/** Custom node – size, icon, hollow */
+export const CustomNode: Story = {
+    render: () => ({
+        components: {KsTimeline, KsTimelineItem},
+        template: `
+            <div style="padding:24px;max-width:400px">
+                <ks-timeline>
+                    <ks-timeline-item timestamp="Queued" color="#909399" size="normal" hollow>
+                        Execution queued
+                    </ks-timeline-item>
+                    <ks-timeline-item timestamp="Running" color="#409eff" size="large">
+                        Tasks executing
+                    </ks-timeline-item>
+                    <ks-timeline-item timestamp="Done" color="#67c23a" size="large">
+                        Completed successfully
+                    </ks-timeline-item>
+                </ks-timeline>
+            </div>
+        `,
+    }),
+}
+
+/** Custom timestamp placement – above the content */
+export const TimestampPlacement: Story = {
+    render: () => ({
+        components: {KsTimeline, KsTimelineItem},
+        template: `
+            <div style="padding:24px;max-width:400px">
+                <ks-timeline>
+                    <ks-timeline-item timestamp="2024-01-15 09:00" placement="top">
+                        Flow started
+                    </ks-timeline-item>
+                    <ks-timeline-item timestamp="2024-01-15 09:05">
+                        Task 1 completed (timestamp below)
+                    </ks-timeline-item>
+                    <ks-timeline-item timestamp="2024-01-15 09:12" placement="top">
+                        Flow finished
+                    </ks-timeline-item>
+                </ks-timeline>
+            </div>
+        `,
+    }),
+}
+
+/** Hide timestamp */
+export const HideTimestamp: Story = {
+    render: () => ({
+        components: {KsTimeline, KsTimelineItem},
+        template: `
+            <div style="padding:24px;max-width:400px">
+                <ks-timeline>
+                    <ks-timeline-item timestamp="09:00" color="#67c23a">Started</ks-timeline-item>
+                    <ks-timeline-item hide-timestamp color="#409eff">Running (no timestamp)</ks-timeline-item>
+                    <ks-timeline-item timestamp="09:15" color="#f56c6c">Failed</ks-timeline-item>
+                </ks-timeline>
+            </div>
+        `,
+    }),
+}
+
 export const WithColors: Story = {
     render: () => ({
         components: {KsTimeline, KsTimelineItem},

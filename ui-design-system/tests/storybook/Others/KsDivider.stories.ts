@@ -46,6 +46,22 @@ export const WithText: Story = {
     }),
 }
 
+/** Dashed border style */
+export const Dashed: Story = {
+    render: () => ({
+        components: {KsDivider},
+        template: `
+            <div style="padding:24px">
+                <p>Section above</p>
+                <ks-divider border-style="dashed" />
+                <p>Section below (dashed)</p>
+                <ks-divider border-style="dotted" />
+                <p>Section below (dotted)</p>
+            </div>
+        `,
+    }),
+}
+
 export const Vertical: Story = {
     render: () => ({
         components: {KsDivider},

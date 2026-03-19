@@ -42,6 +42,36 @@ export const Types: Story = {
     }),
 }
 
+/** Underline control */
+export const Underline: Story = {
+    render: () => ({
+        components: {KsLink},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:8px">
+                <ks-link type="primary" :underline="true">With underline</ks-link>
+                <ks-link type="primary" :underline="false">Without underline</ks-link>
+            </div>
+        `,
+    }),
+}
+
+/** With icon slot */
+export const WithIcon: Story = {
+    render: () => ({
+        components: {KsLink},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+                <ks-link type="primary" href="#">
+                    <template #icon>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </template>
+                    Open in new tab
+                </ks-link>
+            </div>
+        `,
+    }),
+}
+
 export const Disabled: Story = {
     render: () => ({
         components: {KsLink},

@@ -45,6 +45,43 @@ export const NoShadow: Story = {
     }),
 }
 
+/** Shadow variants – always, hover, never */
+export const Shadow: Story = {
+    render: () => ({
+        components: {KsCard},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;flex-wrap:wrap">
+                <ks-card shadow="always" style="width:180px">
+                    <template #header>Always</template>
+                    <p style="font-size:13px">Shadow always visible</p>
+                </ks-card>
+                <ks-card shadow="hover" style="width:180px">
+                    <template #header>Hover</template>
+                    <p style="font-size:13px">Shadow on hover only</p>
+                </ks-card>
+                <ks-card shadow="never" style="width:180px">
+                    <template #header>Never</template>
+                    <p style="font-size:13px">No shadow</p>
+                </ks-card>
+            </div>
+        `,
+    }),
+}
+
+/** Simple card – no header */
+export const Simple: Story = {
+    render: () => ({
+        components: {KsCard},
+        template: `
+            <div style="padding:24px;max-width:400px">
+                <ks-card shadow="never">
+                    <p style="margin:0">A simple card with just body content and no header section.</p>
+                </ks-card>
+            </div>
+        `,
+    }),
+}
+
 export const WithFooter: Story = {
     render: () => ({
         components: {KsCard, KsButton},

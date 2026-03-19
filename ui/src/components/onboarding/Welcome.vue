@@ -47,16 +47,16 @@
                     {{ $t("onboarding.welcome.additional_help") }}
                 </el-divider>
                 <div class="resources">
-                    <el-link href="https://kestra.io/docs" target="_blank">
+                    <el-link href="https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome" target="_blank">
                         {{ $t("onboarding.welcome.docs") }}
                     </el-link>
-                    <el-link href="https://kestra.io/docs/tutorial" target="_blank">
+                    <el-link href="https://kestra.io/docs/tutorial?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome" target="_blank">
                         {{ $t("onboarding.welcome.tutorial") }}
                     </el-link>
-                    <el-link href="https://kestra.io/blueprints" target="_blank">
+                    <el-link href="https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome" target="_blank">
                         {{ $t("onboarding.welcome.blueprints") }}
                     </el-link>
-                    <el-link href="https://kestra.io/slack" target="_blank">
+                    <el-link href="https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome" target="_blank">
                         {{ $t("onboarding.welcome.slack") }}
                     </el-link>
                 </div>

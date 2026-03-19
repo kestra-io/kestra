@@ -23,7 +23,7 @@
     const buttons = [{
                          label: "Community Slack",
                          description: "Discuss topics with other users and kestra Team",
-                         href: "https://kestra.io/slack",
+                         href: "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=support-link",
                          icon: SlackIcon,
                      },
                      {
@@ -35,7 +35,7 @@
                      {
                          label: "Help Center",
                          description: "Contact support for help with your Enterprise account",
-                         href: "https://kestra.io/demo",
+                         href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=support-link",
                          icon: LifebuoyIcon,
                      }]
 </script>

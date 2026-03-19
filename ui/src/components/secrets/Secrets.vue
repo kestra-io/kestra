@@ -56,7 +56,7 @@
                                     <p>{{ $t('demos.secrets.message') }}</p>
                                 </div>
                             </div>
-                            <DemoButtons />
+                            <DemoButtons type="secrets" />
                         </div>
                     </div>
                 </div>

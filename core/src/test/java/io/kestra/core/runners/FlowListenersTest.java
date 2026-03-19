@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,6 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 @Slf4j
 abstract public class FlowListenersTest {
+    @Inject
+    private FlowListenersInterface flowListenersService;
+
     @Inject
     protected FlowRepositoryInterface flowRepository;
 
@@ -43,9 +47,14 @@ abstract public class FlowListenersTest {
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
-    public void suite(FlowListenersInterface flowListenersService) throws TimeoutException {
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+    @Test
+    public void all() throws Exception {
+        this.suite(flowListenersService);
+    }
+
+    public void suite(FlowListenersInterface flowListenersService) throws Exception {
         flowListenersService.run();
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         AtomicInteger count = new AtomicInteger();
 
@@ -64,13 +73,13 @@ abstract public class FlowListenersTest {
         }
 
         // create first
-        log.info("-----------> create fist flow");
+        log.info("-----------> create first flow");
         FlowWithSource first = create(tenant, "first_" + IdUtils.create(), "test");
         FlowWithSource firstUpdated = create(tenant, first.getId(), "test2");
 
 
         flowRepository.create(GenericFlow.of(first));
-        Await.until(() -> count.get() == 1, Duration.ofMillis(10), Duration.ofSeconds(5));
+        Await.until(() -> "Expected to have 1 flow but got " + count.get(), () -> count.get() == 1, Duration.ofMillis(10), Duration.ofSeconds(5));
         assertThat(getFlowsForTenant(flowListenersService, tenant).size()).isEqualTo(1);
 
         // create the same id than first, no additional flows
@@ -93,10 +102,9 @@ abstract public class FlowListenersTest {
         flowRepository.create(GenericFlow.of(first));
         Await.until(() -> count.get() == 2, Duration.ofMillis(10), Duration.ofSeconds(5));
         assertThat(getFlowsForTenant(flowListenersService, tenant).size()).isEqualTo(2);
-
     }
 
-    public List<FlowWithSource> getFlowsForTenant(FlowListenersInterface flowListenersService, String tenantId){
+    public List<FlowWithSource> getFlowsForTenant(FlowListenersInterface flowListenersService, String tenantId) {
         return flowListenersService.flows().stream()
             .filter(f -> tenantId.equals(f.getTenantId()))
             .toList();

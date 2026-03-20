@@ -1484,12 +1484,12 @@ public class JdbcExecutor implements ExecutorInterface {
 
                 // 4. Dual-check mechanism (compatible with existing in-flight jobs)
                 if (executorState.getChildDeduplication().containsKey(safeKey)) {
-                    log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), safeKey);
+                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), safeKey);
                     return false;
                 }
 
                 if (!safeKey.equals(rawKey) && executorState.getChildDeduplication().containsKey(rawKey)) {
-                    log.trace("Duplicate Nexts (Legacy) on execution '{}' with key '{}'", execution.getId(), rawKey);
+                    log.warn("Duplicate Nexts (Legacy) on execution '{}' with key '{}'", execution.getId(), rawKey);
                     return false;
                 }
 

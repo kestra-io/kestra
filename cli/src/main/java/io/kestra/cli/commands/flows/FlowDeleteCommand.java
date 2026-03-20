@@ -28,7 +28,6 @@ public class FlowDeleteCommand extends AbstractApiCommand {
     @Inject
     private TenantIdSelectorService tenantService;
 
-    @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
         super.call();

@@ -1,5 +1,5 @@
 package io.kestra.cli.commands.configs.sys;
-import io.kestra.cli.commands.flows.FlowCreateCommand;
+import io.kestra.cli.commands.flows.FlowDeleteCommand;
 import io.kestra.cli.commands.namespaces.kv.KvCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -37,11 +37,9 @@ class NoConfigCommandTest {
     }
 
     @Test
-    void shouldFailWithCreateFlowCommandWithoutConfig() throws URISyntaxException {
+    void shouldFailWithDeleteFlowCommandWithoutConfig() throws URISyntaxException {
         URL flowUrl = NoConfigCommandTest.class.getClassLoader().getResource("crudFlow/date.yml");
         Objects.requireNonNull(flowUrl, "Test flow resource not found");
-
-        Path flowPath = Paths.get(flowUrl.toURI());
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err=new ByteArrayOutputStream();
@@ -61,15 +59,16 @@ class NoConfigCommandTest {
                 embeddedServer.getURL().toString(),
                 "--user",
                 "myuser:pass:word",
-                flowPath.toString(),
+                "namespace",
+                "id"
             };
 
-            Integer exitCode = PicocliRunner.call(FlowCreateCommand.class, ctx, createArgs);
+            Integer exitCode = PicocliRunner.call(FlowDeleteCommand.class, ctx, createArgs);
 
 
             assertThat(exitCode).isNotZero();
             // check that the only log is an access log: this has the advantage to also check that access log is working!
-            assertThat(out.toString()).contains("POST /api/v1/main/flows HTTP/1.1 | status: 500");
+            assertThat(out.toString()).contains("DELETE /api/v1/main/flows/namespace/id HTTP/1.1 | status: 500");
             assertThat(err.toString()).contains("No bean of type [io.kestra.core.repositories.FlowRepositoryInterface] exists");
         }
     }

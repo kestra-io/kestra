@@ -8,3 +8,7 @@ $prefix: 'kbs-';
 @import "bootstrap/scss/mixins";
 @import "bootstrap/scss/root";
 @import "bootstrap/scss/reboot.scss";
+
+a:hover {
+    --kbs-link-color-rgb: var(--ks-content-link-hover);
+}

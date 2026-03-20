@@ -37,6 +37,27 @@ export const Default: Story = {
     }),
 }
 
+export const Box: Story = {
+    render: () => ({
+        components: {KsTabs, KsTabPane},
+        setup() { return {active: ref("tab1")} },
+        template: `
+            <div style="padding:24px">
+                <ks-tabs v-model="active" type="box">
+                    <ks-tab-pane label="Tab 1" name="tab1">Tab 1</ks-tab-pane>
+                    <ks-tab-pane label="Tab 2" name="tab2">Tab 2</ks-tab-pane>
+                    <ks-tab-pane label="Tab 3" name="tab3">Tab 3</ks-tab-pane>
+                    <ks-tab-pane label="Tab 4" name="tab4">Tab 4</ks-tab-pane>
+                    <ks-tab-pane label="Tab 5" name="tab5">Tab 5</ks-tab-pane>
+                    <ks-tab-pane label="Tab 6" name="tab6">Tab 6</ks-tab-pane>
+                    <ks-tab-pane label="Tab 7" name="tab7">Tab 7</ks-tab-pane>
+                    <ks-tab-pane label="Tab 8" name="tab8">Tab 8</ks-tab-pane>
+                </ks-tabs>
+            </div>
+        `,
+    }),
+}
+
 export const Card: Story = {
     render: () => ({
         components: {KsTabs, KsTabPane},
@@ -47,6 +68,7 @@ export const Card: Story = {
                     <ks-tab-pane label="Tab 1" name="tab1">Tab 1</ks-tab-pane>
                     <ks-tab-pane label="Tab 2" name="tab2">Tab 2</ks-tab-pane>
                     <ks-tab-pane label="Tab 3" name="tab3">Tab 3</ks-tab-pane>
+                    <ks-tab-pane label="Tab 4" name="tab4" disabled>Tab 4</ks-tab-pane>
                 </ks-tabs>
             </div>
         `,

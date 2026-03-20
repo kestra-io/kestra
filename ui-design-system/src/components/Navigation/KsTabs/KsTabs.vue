@@ -1,6 +1,7 @@
 <script setup lang="ts">
     import {ElTabs, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import {computed} from "vue";
 
     provideGlobalConfig({namespace: "kel"})
 
@@ -8,10 +9,10 @@
 
     const props = defineProps<{
         modelValue?: string
-        type?: "" | "card" | "border-card"
+        type?: "" | "card" | "border-card" | "box"
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["type"])
 
     const emit = defineEmits<{
         "update:modelValue": [name: string]
@@ -20,10 +21,16 @@
     defineSlots<{
         default?(): unknown
     }>()
+
+    const type = computed(() => {
+        return props.type == "box" ? "" : props.type;
+    })
 </script>
 
 <template>
     <el-tabs
+        :type="type"
+        :class="{'kel-tabs--box': props.type === 'box'}"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @update:model-value="emit('update:modelValue', $event as string)"
     >
@@ -33,54 +40,47 @@
 
 <style lang="scss">
     .kel-tabs {
+        a {
+            color: currentColor;
+        }
+
         .kel-tabs__active-bar {
             height: 4px;
             background-color: var(--ks-button-background-primary);
         }
 
         .kel-tabs__item {
-            padding: 0;
+            padding: 1rem 1.5rem !important;
             transition: all 0.3s ease;
+            color: var(--ks-content-secondary);
 
-            > * {
-                padding: 1rem 1.5rem;
-
+            &:hover {
+                color: var(--ks-content-link-hover);
             }
 
-            a {
-                color: var(--ks-content-secondary);
-                transition: 0.3s ease;
-            }
-
-            &.is-active > * {
-                background-color: var(--ks-button-background-primary);
-                color: var(--ks-button-content-primary);
-            }
-
-            &.is-disabled a {
+            &.is-disabled {
                 color: var(--ks-content-inactive) !important;
             }
         }
 
-        .kel-tabs__nav-wrap::after {
-            height: 1px;
-            background-color: var(--ks-border-primary);
-        }
-
-        html.dark & {
-            .kel-tabs__active-bar {
-                background-color: var(--ks-button-background-secondary-hover);
-            }
-
+        &.kel-tabs--card {
             .kel-tabs__item {
-                &.is-active > * {
-                    color: var(--ks-content-secondary);
+                &:first-child {
+                    border-radius: 4px 0 0 0;
+                }
+
+                &:last-child {
+                    border-radius: 0 4px 0 0;
+                }
+
+                &.is-active {
+                    background-color: var(--ks-button-background-primary);
+                    color: var(--ks-button-content-primary);
                 }
             }
         }
 
-
-        &.top {
+        &.kel-tabs--box {
             background: var(--ks-background-card);
             border-bottom: 1px solid var(--ks-border-primary);
             padding: .5rem;
@@ -131,65 +131,15 @@
             }
 
             .kel-tabs__item {
-                > * {
-                    padding: .5rem 1rem;
-                }
+                padding: .5rem 1rem !important;
 
-                a:hover{
-                    color: var(--ks-content-link);
-                }
-
-                &.is-active > a {
+                &.is-active {
                     background: var(--ks-button-background-secondary-hover);
                     color: var(--ks-content-link);
                     border-radius: var(--kel-border-radius-base);
                 }
             }
-
-        }
-
-        &.kel-tabs--card {
-            margin-top: 32px;
-
-            .kel-tabs__nav-wrap{
-                margin-bottom: 1px;
-            }
-
-            & > .kel-tabs__header .kel-tabs__nav{
-                background-color: var(--ks-background-card);
-                border-bottom: 1px solid var(--ks-border-inactive);
-                gap: 2px;
-
-                .kel-tabs__item{
-                    padding: 0 !important;
-                    border: none;
-                    &:first-child a{
-                        margin-left: 1px;
-                        border-top-left-radius: 3px;
-                    }
-                    &:last-child a{
-                        border-top-right-radius: 3px;
-                    }
-                    a{
-                        padding-top: .5rem;
-                        padding-bottom: .5rem;
-                        font-weight: normal!important;
-                        color: var(--ks-content-primary);
-                        &:hover{
-                            // create an outline without cutting the rounded corners
-                            box-shadow: 0 0 0 1px var(--ks-border-active);
-                        }
-                    }
-                    &.is-active a{
-                        background-color: var(--ks-background-body);
-                        color: var(--ks-content-link);
-                        position: relative;
-                        z-index: 1;
-                        // create an outline without cutting the rounded corners
-                        box-shadow: 0 0 0 1px var(--ks-border-active);
-                    }
-                }
-            }
         }
     }
+
 </style>

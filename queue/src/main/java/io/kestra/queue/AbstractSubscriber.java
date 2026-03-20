@@ -238,12 +238,13 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
      */
     protected void markEnd(Throwable cause) {
         log.error("{} fatal error while consuming messages. Initiating application shutdown.", logPrefix, cause);
-        this.markEnd();
         try {
+            // shutdown() must be called before markEnd() so that close() only returns after shutdown has been initiated
             KestraContext.getContext().shutdown();
         } catch (Exception e) {
             log.warn("{} failed to initiate shutdown.", logPrefix, e);
         }
+        this.markEnd();
     }
 
     /** {@inheritDoc} */

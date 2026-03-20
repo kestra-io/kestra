@@ -79,4 +79,19 @@ public class AbstractService implements Service {
     protected ServiceState doStop() throws Exception {
         return ServiceState.TERMINATED_GRACEFULLY;
     }
+
+    /**
+     * Marks this service as forcibly stopped without going through the normal shutdown lifecycle.
+     * <p>
+     * This is intended for abrupt, non-graceful stops (e.g., simulated crashes in tests).
+     * It sets the {@code stopped} flag so that subsequent {@link #stop()} calls are no-ops,
+     * and publishes a {@link ServiceStateChangeEvent} with {@link ServiceState#TERMINATED_FORCED}
+     * so that liveness monitors stop heartbeating this service immediately.
+     * </p>
+     */
+    protected void markAsForciblyStopped() {
+        if (stopped.compareAndSet(false, true)) {
+            setState(ServiceState.TERMINATED_FORCED);
+        }
+    }
 }

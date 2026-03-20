@@ -246,6 +246,11 @@ public class WorkerAgent extends AbstractService implements Worker {
 
         // Stop WorkerJobExecutor
         this.workerJobExecutor.shutdownNow();
+
+        // Mark as forcibly stopped so that ServiceLivenessManager immediately stops heartbeating
+        // this worker and the liveness coordinator can detect it as dead and resubmit its jobs.
+        // This must be called AFTER all components are stopped to avoid publishing stale state.
+        markAsForciblyStopped();
         log.info("Stopped");
     }
 

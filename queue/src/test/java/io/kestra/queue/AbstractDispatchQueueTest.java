@@ -179,14 +179,21 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(list.getFirst()).isEqualTo(1);
         assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue();
 
-        // consume the remaining items from the queue
-        CountDownLatch remaining = new CountDownLatch(3);
+        // All remaining messages should still be available after the crash (redelivery guarantee).
+        // Drain all emitted messages to keep the queue clean for subsequent tests.
+        // With JDBC (pollSize >= 14), the entire batch rolls back so all 14 messages are re-queued.
+        // With other backends, at least 3 must be redelivered (the messages processed after the crash point).
+        CountDownLatch atLeastThree = new CountDownLatch(3);
+        CountDownLatch drainAll = new CountDownLatch(14);
         subscriber = dispatchQueue
             .subscriber()
             .subscribe(e -> {
-                remaining.countDown();
+                atLeastThree.countDown();
+                drainAll.countDown();
             });
-        assertThat(remaining.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)).isEqualTo(true);
+        assertThat(atLeastThree.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)).isEqualTo(true);
+        // Best-effort drain: consume all emitted messages; count may vary by queue implementation
+        drainAll.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
     }
 

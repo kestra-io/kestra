@@ -1,5 +1,5 @@
 <template>
-    <ks-tabs class="router-link" :class="{top: top}" v-model="activeName" :type="type">
+    <ks-tabs class="router-link" :class="{top: top}" v-model="activeName" type="box">
         <ks-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
@@ -75,7 +75,6 @@
          */
         embedActiveTab?: string;
         namespace?: string | null;
-        type?: string;
     }>(), {
         routeName: "",
         top: true,

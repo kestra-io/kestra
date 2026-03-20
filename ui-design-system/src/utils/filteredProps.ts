@@ -5,8 +5,8 @@
  * This prevents Vue's boolean prop casting (absent boolean props are cast to `false`,
  * overriding element-plus defaults that may be `true`).
  */
-export function useFilteredProps<T extends Record<string, unknown>>(props: T): () => Partial<T> {
+export function useFilteredProps<T extends Record<string, unknown>>(props: T, skip?: (keyof T)[]): () => Partial<T> {
     return () => Object.fromEntries(
-        Object.entries(props).filter(([, v]) => v !== undefined),
+        Object.entries(props).filter(([k, v]) => v !== undefined && !skip?.includes(k as keyof T)),
     ) as Partial<T>
 }

@@ -52,38 +52,17 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to eight times the number of available processors. Set it to 0 to avoid starting a worker.")
     private int workerThread = Worker.defaultNumThreads();
-
-    @Option(names = {"--skip-executions"}, split=",", description = "deprecated - use '--ignore-executions' instead")
-    @Deprecated
-    private List<String> skipExecutions;
-
     @Option(names = {"--ignore-executions"}, split=",", description = "a list of execution identifiers to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreExecutions = Collections.emptyList();
-
-    @Option(names = {"--skip-flows"}, split=",", description = "deprecated - use '--ignore-flows' instead")
-    @Deprecated
-    private List<String> skipFlows;
 
     @Option(names = {"--ignore-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreFlows = Collections.emptyList();
 
-    @Option(names = {"--skip-namespaces"}, split=",", description = "deprecated - use 'ignore-namespaces' instead")
-    @Deprecated
-    private List<String> skipNamespaces;
-
     @Option(names = {"--ignore-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only")
     private List<String> ignoreNamespaces = Collections.emptyList();
 
-    @Option(names = {"--skip-tenants"}, split=",", description = "a list of tenants to skip, separated by a coma; for troubleshooting only")
-    @Deprecated
-    private List<String> skipTenants;
-
     @Option(names = {"--ignore-tenants"}, split=",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreTenants = Collections.emptyList();
-
-    @Option(names = {"--skip-indexer-records"}, split=",", description = "deprecated - use '--ignore-indexer-record' instead")
-    @Deprecated
-    private List<String> skipIndexerRecords;
 
     @Option(names = {"--ignore-indexer-records"}, split=",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreIndexerRecords = Collections.emptyList();
@@ -117,11 +96,11 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(skipExecutions != null ? skipExecutions : ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(skipFlows != null ? skipFlows : ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
-        this.ignoreExecutionService.setIgnoredIndexerRecords(skipIndexerRecords != null ? skipIndexerRecords : ignoreIndexerRecords);
+        this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
+        this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);

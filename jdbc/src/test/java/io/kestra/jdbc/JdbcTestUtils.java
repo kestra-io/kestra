@@ -1,5 +1,6 @@
 package io.kestra.jdbc;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.flyway.FlywayConfigurationProperties;
 import io.micronaut.flyway.FlywayMigrator;
 import jakarta.annotation.PostConstruct;
@@ -7,6 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.jooq.DSLContext;
+import org.jooq.Require;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
@@ -17,6 +19,7 @@ import java.util.Optional;
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @Singleton
+@Requires(property = "kestra.repository.type", pattern = "mysql|postgres|h2|memory")
 public class JdbcTestUtils {
     @Inject
     protected JooqDSLContextWrapper dslContextWrapper;

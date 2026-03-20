@@ -57,7 +57,7 @@ public class WorkingDirectoryTest {
                 List.of(Pause.builder()
                     .id("pause")
                     .type(Pause.class.getName())
-                    .delay(Property.ofValue(Duration.ofSeconds(1L)))
+                    .pauseDuration(Property.ofValue(Duration.ofSeconds(1L)))
                     .build()
                 )
             )

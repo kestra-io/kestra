@@ -27,16 +27,6 @@ public abstract class AbstractRetry {
 
     private Duration maxDuration;
 
-    @Deprecated(forRemoval = true)
-    public Integer getMaxAttempt() {
-        return maxAttempts;
-    }
-
-    @Deprecated(forRemoval = true)
-    public void setMaxAttempt(@Min(1) Integer maxAttempt) {
-        this.maxAttempts = maxAttempt;
-    }
-
     @Min(1)
     private Integer maxAttempts;
 

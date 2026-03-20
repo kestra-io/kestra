@@ -9,8 +9,4 @@ tasks:
     tasks:
       - id: pause
         type: io.kestra.plugin.core.flow.Pause
-        delay: PT1S
-        tasks:
-          - id: log
-            type: io.kestra.plugin.core.log.Log
-            message: Hello World
+        pauseDuration: PT1S

@@ -118,7 +118,7 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(9);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(13);
 
         assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("array1: `itemType` cannot be ARRAY");

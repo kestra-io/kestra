@@ -461,7 +461,6 @@ public class InputsTest {
         List<String> messages = Arrays.asList(ex.getMessage().split(System.lineSeparator()));
 
         assertThat(messages).containsExactlyInAnyOrder(
-            "Invalid value for input `multi`. Cause: you can't define both `values` and `options`",
             "Invalid value for input `multi`. Cause: value `F` doesn't match the values `[A, B, C]`",
             "Invalid value for input `multi`. Cause: value `H` doesn't match the values `[A, B, C]`"
         );

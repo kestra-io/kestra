@@ -4,10 +4,6 @@ namespace: io.kestra.tests
 tasks:
   - id: pause
     type: io.kestra.plugin.core.flow.Pause
-    tasks:
-      - id: subtask
-        type: io.kestra.plugin.core.log.Log
-        message: "trigger after manual restart"
   - id: last
     type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

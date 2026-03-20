@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextProperty;
@@ -18,7 +17,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -29,7 +27,7 @@ import java.util.Objects;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
- * Define a plugin properties that will be rendered and converted to a target type at use time.
+ * Define a plugin property that will be rendered and converted to a target type at use time.
  *
  * @param <T> the target type of the property
  */
@@ -62,20 +60,6 @@ public class Property<T> {
     private Property(String expression, boolean skipCache) {
         this.expression = expression;
         this.skipCache = skipCache;
-    }
-
-    /**
-     * @deprecated use {@link #ofValue(Object)} instead.
-     */
-    @VisibleForTesting
-    @Deprecated
-    public Property(Map<?, ?> map) {
-        try {
-            expression = MAPPER.writeValueAsString(map);
-            this.skipCache = false;
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e);
-        }
     }
 
     String getExpression() {

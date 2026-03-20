@@ -41,15 +41,6 @@ class ExitTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/exit-canceled.yaml")
-    void shouldExitWithCanceled(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
-        assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
-        assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
-    }
-
-    @Test
     @ExecuteFlow("flows/valids/exit-cancelled.yaml")
     void shouldExitWithCancelled(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);

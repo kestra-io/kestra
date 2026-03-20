@@ -542,8 +542,11 @@ class RequestTest {
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
                 .options(HttpConfiguration.builder()
-                    .basicAuthUser("John")
-                    .basicAuthPassword("p4ss")
+                    .auth(BasicAuthConfiguration
+                        .builder()
+                        .username(Property.ofValue("John"))
+                        .password(Property.ofValue("p4ss"))
+                    .build())
                     .build()
                 )
                 .build();

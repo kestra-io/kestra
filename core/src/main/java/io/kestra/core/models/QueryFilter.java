@@ -300,12 +300,6 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of();
             }
-        },
-        SERVICE_INSTANCE_STATE("serviceInstanceState") {
-            @Override
-            public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
-            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -510,7 +504,7 @@ public record QueryFilter(
         SERVICE_INSTANCE {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.SERVICE_INSTANCE_STATE, Field.TYPE, Field.CREATED);
+                return List.of(Field.STATE, Field.TYPE, Field.CREATED);
             }
         };
 

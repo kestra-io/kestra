@@ -60,7 +60,7 @@ public interface ServiceInstanceRepositoryInterface {
         List<QueryFilter> filters = new ArrayList<>();
         if (states != null && !states.isEmpty()) {
             filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.SERVICE_INSTANCE_STATE)
+                .field(QueryFilter.Field.STATE)
                 .operation(QueryFilter.Op.IN)
                 .value(states.stream().map(Enum::name).toList())
                 .build());
@@ -152,25 +152,25 @@ public interface ServiceInstanceRepositoryInterface {
     }
 
     /**
-     * Rewrites any {@link QueryFilter.Field#SERVICE_INSTANCE_STATE} filters in the list to include
+     * Rewrites any {@link QueryFilter.Field#STATE} filters in the list to include
      * backward-compatible state name aliases via {@link #expandStateNamesForFilterQueryBackwardCompat(List)}.
      *
      * @param filters the original filter list (may be {@code null})
-     * @return a new filter list with SERVICE_INSTANCE_STATE filters rewritten, or the original list when no rewrite is needed
+     * @return a new filter list with STATE filters rewritten, or the original list when no rewrite is needed
      */
     static List<QueryFilter> expandStateNamesForFilterQueryBackwardCompat(List<QueryFilter> filters) {
         if (filters == null || filters.isEmpty()) {
             return filters;
         }
         return filters.stream().map(filter -> {
-            if (filter.field() != QueryFilter.Field.SERVICE_INSTANCE_STATE) {
+            if (filter.field() != QueryFilter.Field.STATE) {
                 return filter;
             }
             List<String> stateNames = switch (filter.value()) {
                 case List<?> list -> list.stream().map(Object::toString).toList();
                 case String s -> List.of(s);
                 default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
-                    "SERVICE_INSTANCE_STATE requires a String or List value");
+                    "STATE requires a String or List value");
             };
             List<String> expanded = expandStateNamesForBackwardCompat(stateNames);
             if (expanded == stateNames) {

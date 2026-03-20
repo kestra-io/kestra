@@ -25,6 +25,7 @@ import org.jooq.SelectConditionStep;
 import org.jooq.Table;
 import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
+import org.jooq.impl.DSL;
 
 import java.time.Instant;
 import java.util.List;
@@ -283,10 +284,24 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             // The service type column is named "service_type", not "type"
             return quotedName("service_type");
         }
-        if (field == QueryFilter.Field.SERVICE_INSTANCE_STATE) {
-            return quotedName("state");
-        }
         return super.getColumnName(field);
+    }
+
+    @Override
+    protected Condition generateStateCondition(Object value, QueryFilter.Op operation) {
+        List<String> stateNames = switch (value) {
+            case List<?> list -> list.stream().map(Object::toString).toList();
+            case String s -> List.of(s);
+            default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
+                "Field 'state' requires a String or List<String> value for service instances");
+        };
+        Field<String> stateField = DSL.field(org.jooq.impl.DSL.quotedName("state"), String.class);
+        return switch (operation) {
+            case EQUALS, IN -> stateField.in(stateNames);
+            case NOT_EQUALS, NOT_IN -> stateField.notIn(stateNames);
+            default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
+                "Unsupported operation for STATE: " + operation);
+        };
     }
 
     /**

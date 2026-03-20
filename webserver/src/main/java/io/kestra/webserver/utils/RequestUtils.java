@@ -305,7 +305,7 @@ public class RequestUtils {
         List<QueryFilter> result = new ArrayList<>();
         if (states != null && !states.isEmpty()) {
             result.add(QueryFilter.builder()
-                .field(QueryFilter.Field.SERVICE_INSTANCE_STATE)
+                .field(QueryFilter.Field.STATE)
                 .operation(QueryFilter.Op.IN)
                 .value(states.stream().map(Enum::name).toList())
                 .build());

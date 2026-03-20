@@ -299,7 +299,7 @@ public class ExecutionService {
             );
 
             // remove all child for replay task id
-            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
+            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, List.of(taskRunId))
                 .stream()
                 .filter(task -> task instanceof AbstractGraphTask)
                 .map(task -> ((AbstractGraphTask) task))

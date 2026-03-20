@@ -17,7 +17,6 @@ import io.kestra.worker.services.WorkerConnectionService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 
@@ -31,12 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,13 +46,10 @@ import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
 public class WorkerAgent extends AbstractService implements Worker {
 
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
-    
-    private final MetricRegistry metricRegistry;
-    
-    private final ServerConfig serverConfig;
 
-    @Getter
-    private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
+    private final MetricRegistry metricRegistry;
+
+    private final ServerConfig serverConfig;
 
     private final AtomicBoolean skipGracefulTermination = new AtomicBoolean(false);
 
@@ -110,9 +104,9 @@ public class WorkerAgent extends AbstractService implements Worker {
             return Collections.emptySet();
         }
 
-        // TODO
         Stream<String> metrics = Stream.of(
-            MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT
+            MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT,
+            MetricRegistry.METRIC_WORKER_RUNNING_COUNT
         );
 
         return metrics
@@ -258,7 +252,7 @@ public class WorkerAgent extends AbstractService implements Worker {
     private void stopAllWorkerIOThreads() {
         // Stop all Worker IO Sender Threads
         workerIOSenders.forEach(WorkerIOSender::stop);
-        
+
         // Shutdown the WorkerIO threads executor and wait for termination
         workerIOThreadsExecutor.shutdown();
         try {

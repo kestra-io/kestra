@@ -5,6 +5,7 @@ import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
@@ -16,6 +17,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.Either;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -53,19 +56,28 @@ class WorkerJobDispatcherTest {
     @SuppressWarnings("unchecked")
     private BroadcastQueueInterface<ExecutionKilled> mockKillQueue = mock(BroadcastQueueInterface.class);
     @SuppressWarnings("unchecked")
+    private BroadcastQueueInterface<ClusterEvent> mockClusterEventQueue = mock(BroadcastQueueInterface.class);
+    @SuppressWarnings("unchecked")
     private DispatchQueueInterface<WorkerTaskResult> mockResultQueue = mock(DispatchQueueInterface.class);
     private WorkerJobDispatcher dispatcher;
     private TriggerEventQueue mockTriggerEventQueue = mock(TriggerEventQueue.class);
 
     // Captures for verifying interactions
     private List<MockQueueSubscriber> createdSubscribers;
+    private Consumer<Either<ClusterEvent, DeserializationException>> clusterEventConsumer;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
+        // Initialize KestraContext for RequestOrResponseHeaderFactory
+        KestraContext testContext = mock(KestraContext.class);
+        when(testContext.getVersion()).thenReturn("1.0.0-test");
+        KestraContext.setContext(testContext);
+
         mockQueue = mock(KeyedDispatchQueueInterface.class);
         mockStateStore = mock(WorkerJobRunningStateStore.class);
         mockKillQueue = mock(BroadcastQueueInterface.class);
+        mockClusterEventQueue = mock(BroadcastQueueInterface.class);
         mockResultQueue = mock(DispatchQueueInterface.class);
         mockTriggerEventQueue = mock(TriggerEventQueue.class);
         createdSubscribers = new ArrayList<>();
@@ -76,6 +88,15 @@ class WorkerJobDispatcherTest {
         when(killSubscriber.subscribe(any())).thenReturn(killSubscriber);
         when(mockKillQueue.subscriber()).thenReturn(killSubscriber);
 
+        // Mock cluster event queue subscriber and capture the consumer
+        @SuppressWarnings("unchecked")
+        QueueSubscriber<ClusterEvent> clusterEventSubscriber = mock(QueueSubscriber.class);
+        when(clusterEventSubscriber.subscribe(any())).thenAnswer(invocation -> {
+            clusterEventConsumer = invocation.getArgument(0);
+            return clusterEventSubscriber;
+        });
+        when(mockClusterEventQueue.subscriber()).thenReturn(clusterEventSubscriber);
+
         // Create mock subscribers for each group
         when(mockQueue.subscriber(anyString())).thenAnswer(invocation -> {
             String group = invocation.getArgument(0);
@@ -84,7 +105,7 @@ class WorkerJobDispatcherTest {
             return subscriber;
         });
 
-        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockResultQueue, mockTriggerEventQueue);
+        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue);
     }
 
     @AfterEach
@@ -338,15 +359,11 @@ class WorkerJobDispatcherTest {
             // When - simulate job from queue
             subscriber.deliverJob(event);
 
-            // Then - verify dispatch was attempted (state store save is called before send)
-            // Note: In unit tests without Kestra context, the actual send fails and triggers
-            // handleDispatchFailure which restores permits and re-queues. We verify the
-            // dispatch was attempted by checking the state store was called.
+            // Then - verify job was persisted and sent to worker
             verify(mockStateStore).save(any(), any());
-
-            // After dispatch failure, permit is restored and job is re-queued
-            // Verify re-queue happened due to send failure
-            verify(mockQueue).emit(eq(WORKER_GROUP_A), eq(event));
+            verify(context.getResponseObserver()).onNext(any(WorkerJobResponse.class));
+            assertThat(context.getInFlightCount()).isEqualTo(1);
+            assertThat(context.getAvailablePermits()).isEqualTo(4);
         }
 
         @Test
@@ -370,15 +387,15 @@ class WorkerJobDispatcherTest {
             // When
             subscriber.deliverJob(event);
 
-            // Then - verify dispatch was attempted (state store save)
-            // Worker-2 should be selected (lower in-flight count), which we can verify
-            // by checking that state store save was called.
-            // Note: In unit tests, the actual send fails and handleDispatchFailure is called,
-            // but we can verify the worker selection logic worked by checking save was called.
+            // Then - verify dispatch went to worker-2 (lower in-flight count)
             verify(mockStateStore).save(any(), any());
+            verify(context2.getResponseObserver()).onNext(any(WorkerJobResponse.class));
+            verify(context1.getResponseObserver(), never()).onNext(any(WorkerJobResponse.class));
 
             // Worker-1 should still have its 2 original in-flight jobs
             assertThat(context1.getInFlightCount()).isEqualTo(2);
+            // Worker-2 should now have 1 in-flight job
+            assertThat(context2.getInFlightCount()).isEqualTo(1);
         }
 
         @Test
@@ -401,7 +418,7 @@ class WorkerJobDispatcherTest {
         }
 
         @Test
-        void shouldPauseAfterLastPermit() throws QueueException {
+        void shouldPauseAfterLastPermit() {
             // Given
             WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
             context.addPermits(1); // Only one permit
@@ -413,19 +430,11 @@ class WorkerJobDispatcherTest {
             // When
             subscriber.deliverJob(event);
 
-            // Then - verify dispatch was attempted and pause behavior
-            // Note: In unit tests, the send fails but we can verify:
-            // 1. State store save was called (dispatch was attempted)
-            // 2. After the (failed) dispatch attempt, subscription should be paused
-            //    because we started with only 1 permit
+            // Then - job was dispatched and subscription paused after last permit consumed
             verify(mockStateStore).save(any(), any());
-
-            // The subscription should be paused after consuming the last permit,
-            // even though the dispatch ultimately fails and restores the permit.
-            // The pause happens in handleIncomingJob BEFORE handleDispatchFailure restores it.
-            // However, handleDispatchFailure may resume if permits > 0 after restore.
-            // Let's verify the dispatch was attempted:
-            verify(mockQueue).emit(eq(WORKER_GROUP_A), eq(event)); // Job was re-queued after send failure
+            verify(context.getResponseObserver()).onNext(any(WorkerJobResponse.class));
+            assertThat(context.getAvailablePermits()).isEqualTo(0);
+            assertThat(subscriber.isPaused.get()).isTrue();
         }
     }
 
@@ -616,6 +625,104 @@ class WorkerJobDispatcherTest {
             dispatcher.close();
             dispatcher.close();
         }
+    }
+
+    @Test
+    void shouldForwardNonMaintenanceClusterEventsToWorkers() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(context);
+
+        ClusterEvent event = new ClusterEvent(
+            ClusterEvent.EventType.PLUGINS_SYNC_REQUESTED,
+            LocalDateTime.now(),
+            "test plugin sync"
+        );
+
+        // When
+        clusterEventConsumer.accept(Either.left(event));
+
+        // Then — verify the event was sent to the worker's stream observer
+        verify(context.getResponseObserver()).onNext(any(WorkerJobResponse.class));
+    }
+
+    @Test
+    void shouldFilterOutMaintenanceEnterEvents() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(context);
+
+        ClusterEvent maintenanceEvent = new ClusterEvent(
+            ClusterEvent.EventType.MAINTENANCE_ENTER,
+            LocalDateTime.now(),
+            "entering maintenance"
+        );
+
+        // When
+        clusterEventConsumer.accept(Either.left(maintenanceEvent));
+
+        // Then — maintenance events should NOT be forwarded (they use heartbeat path)
+        verify(context.getResponseObserver(), never()).onNext(any(WorkerJobResponse.class));
+    }
+
+    @Test
+    void shouldFilterOutMaintenanceExitEvents() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(context);
+
+        ClusterEvent maintenanceEvent = new ClusterEvent(
+            ClusterEvent.EventType.MAINTENANCE_EXIT,
+            LocalDateTime.now(),
+            "exiting maintenance"
+        );
+
+        // When
+        clusterEventConsumer.accept(Either.left(maintenanceEvent));
+
+        // Then — maintenance events should NOT be forwarded (they use heartbeat path)
+        verify(context.getResponseObserver(), never()).onNext(any(WorkerJobResponse.class));
+    }
+
+    @Test
+    void shouldFilterOutKillSwitchSyncEvents() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(context);
+
+        ClusterEvent killSwitchEvent = new ClusterEvent(
+            ClusterEvent.EventType.KILL_SWITCH_SYNC_REQUESTED,
+            LocalDateTime.now(),
+            "kill switch sync"
+        );
+
+        // When
+        clusterEventConsumer.accept(Either.left(killSwitchEvent));
+
+        // Then — executor-only events should NOT be forwarded to workers
+        verify(context.getResponseObserver(), never()).onNext(any(WorkerJobResponse.class));
+    }
+
+    @Test
+    void shouldBroadcastClusterEventsToAllConnectedWorkers() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context1 = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        WorkerStreamContext<WorkerJobResponse> context2 = createWorkerContext("worker-2", WORKER_GROUP_B, 10);
+        dispatcher.registerWorker(context1);
+        dispatcher.registerWorker(context2);
+
+        ClusterEvent event = new ClusterEvent(
+            ClusterEvent.EventType.PLUGINS_SYNC_REQUESTED,
+            LocalDateTime.now(),
+            "plugin sync for all"
+        );
+
+        // When
+        clusterEventConsumer.accept(Either.left(event));
+
+        // Then — both workers should receive the event
+        verify(context1.getResponseObserver()).onNext(any(WorkerJobResponse.class));
+        verify(context2.getResponseObserver()).onNext(any(WorkerJobResponse.class));
     }
 
     /**

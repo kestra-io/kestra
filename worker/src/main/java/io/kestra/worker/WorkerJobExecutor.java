@@ -1,5 +1,6 @@
 package io.kestra.worker;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.worker.processors.WorkerJobProcessor;
@@ -20,6 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -34,6 +36,7 @@ public class WorkerJobExecutor {
     private final WorkerQueueRegistry workerQueueRegistry;
     private final WorkerJobProcessorFactory workerJobProcessorFactory;
     private final ExecutorsUtils executorsUtils;
+    private final MetricRegistry metricRegistry;
 
     private ExecutorService executorService;
     private List<WorkerJobConsumer> workerJobConsumers;
@@ -41,13 +44,18 @@ public class WorkerJobExecutor {
 
     private final AtomicBoolean started = new AtomicBoolean(false);
 
+    private static final AtomicInteger pendingJobCount = new AtomicInteger(0);
+    private static final AtomicInteger runningJobCount = new AtomicInteger(0);
+
     @Inject
     public WorkerJobExecutor(final WorkerQueueRegistry workerQueueRegistry,
                              final ExecutorsUtils executorsUtils,
-                             final WorkerJobProcessorFactory workerJobProcessorFactory) {
+                             final WorkerJobProcessorFactory workerJobProcessorFactory,
+                             final MetricRegistry metricRegistry) {
         this.workerJobProcessorFactory = workerJobProcessorFactory;
         this.workerQueueRegistry = workerQueueRegistry;
         this.executorsUtils = executorsUtils;
+        this.metricRegistry = metricRegistry;
     }
 
     public void start(final io.kestra.core.worker.models.WorkerContext context) {
@@ -71,6 +79,11 @@ public class WorkerJobExecutor {
                     .name("worker-consumer-" + i)
                     .start(consumer));
             }
+
+            // create metrics for pending and running job counts
+            String[] tags = {MetricRegistry.TAG_WORKER_GROUP, context.workerGroup() != null ? context.workerGroup() : "__default__"};
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_PENDING_COUNT, MetricRegistry.METRIC_WORKER_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION, runningJobCount, tags);
         } else {
             throw new IllegalStateException("already started");
         }
@@ -228,12 +241,21 @@ public class WorkerJobExecutor {
             }
 
             try {
+                pendingJobCount.incrementAndGet();
                 WorkerJobProcessor<WorkerJob> processor = workerJobProcessorFactory.create(workerContext, job);
                 running.set(processor);
                 workerJob.set(job);
 
-                // Submit task to thread pool; consumer waits
-                Future<?> future = taskExecutorService.submit(() -> processor.process(job));
+                // Submit the task to the thread pool; consumer waits
+                Future<?> future = taskExecutorService.submit(() -> {
+                    pendingJobCount.decrementAndGet();
+                    runningJobCount.incrementAndGet();
+                    try {
+                        processor.process(job);
+                    } finally {
+                        runningJobCount.decrementAndGet();
+                    }
+                });
                 future.get();
             } catch (ExecutionException | RejectedExecutionException e) {
                 // Task exception is fully contained — consumer never fails from task errors

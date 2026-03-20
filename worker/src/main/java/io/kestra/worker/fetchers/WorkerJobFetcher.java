@@ -10,14 +10,18 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
-import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +75,7 @@ public class WorkerJobFetcher extends WorkerLoop {
     private final WorkerControllerServiceStub workerControllerServiceStub;
     private final WorkerQueueRegistry workerQueueRegistry;
     private final ExecutionKilledManager executionKilledManager;
+    private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
 
     private WorkerQueue<WorkerJob> workerJobQueue;
     private WorkerContext workerContext;
@@ -113,15 +118,19 @@ public class WorkerJobFetcher extends WorkerLoop {
      *
      * @param workerControllerServiceStub the gRPC worker controller service stub.
      * @param workerQueueRegistry         the worker queue registry.
+     * @param executionKilledManager      the execution killed manager.
+     * @param clusterEventQueue           the local cluster event broadcast queue for re-emitting events received from the controller.
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
                             final WorkerQueueRegistry workerQueueRegistry,
-                            final ExecutionKilledManager executionKilledManager) {
+                            final ExecutionKilledManager executionKilledManager,
+                            @Nullable final BroadcastQueueInterface<ClusterEvent> clusterEventQueue) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
         this.executionKilledManager = executionKilledManager;
+        this.clusterEventQueue = clusterEventQueue;
     }
 
     /**
@@ -261,13 +270,26 @@ public class WorkerJobFetcher extends WorkerLoop {
             return;
         }
 
-        // Process kill commands
-        for (ByteString killData : response.getKillCommandsList()) {
+        // Process broadcast events (kill commands, cluster events, etc.)
+        for (ByteString eventData : response.getEventsList()) {
             try {
-                ExecutionKilled killed = MessageFormats.JSON.fromByteString(killData, ExecutionKilled.class);
-                executionKilledManager.onKillReceived(killed);
+                WorkerBroadcastEvent event = MessageFormats.JSON.fromByteString(eventData, WorkerBroadcastEvent.class);
+                switch (event) {
+                    case WorkerBroadcastEvent.KillEvent killEvent ->
+                        executionKilledManager.onKillReceived(killEvent.payload());
+                    case WorkerBroadcastEvent.ClusterBroadcast clusterBroadcast -> {
+                        if (clusterEventQueue != null) {
+                            log.debug("Received cluster event via gRPC: type={}", clusterBroadcast.payload().eventType());
+                            clusterEventQueue.emit(clusterBroadcast.payload());
+                        } else {
+                            log.warn("Received cluster event but no BroadcastQueue<ClusterEvent> is available, ignoring: type={}", clusterBroadcast.payload().eventType());
+                        }
+                    }
+                }
+            } catch (QueueException e) {
+                log.error("Error emitting cluster event to local queue: {}", e.getMessage(), e);
             } catch (Exception e) {
-                log.error("Error processing kill command: {}", e.getMessage(), e);
+                log.error("Error processing broadcast event: {}", e.getMessage(), e);
             }
         }
 
@@ -291,7 +313,7 @@ public class WorkerJobFetcher extends WorkerLoop {
         }
 
         // Send ACKs and request more permits based on remaining capacity
-        // Only send if there were jobs (kill-only responses don't need permit updates)
+        // Only send if there were jobs (event-only responses don't need permit updates)
         if (!acks.isEmpty()) {
             sendPermitsAndAcks(observer, calculatePermits(), acks);
         }

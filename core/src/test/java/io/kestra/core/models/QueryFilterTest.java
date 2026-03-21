@@ -4,6 +4,16 @@ import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.QueryFilter.Resource;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.models.dashboards.filters.Prefix;
+import io.kestra.core.models.dashboards.filters.EqualTo;
+import io.kestra.core.models.dashboards.filters.StartsWith;
+import io.kestra.core.models.dashboards.filters.Regex;
+import io.kestra.core.models.dashboards.filters.Contains;
+import io.kestra.core.models.dashboards.filters.In;
+import java.util.List;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -360,6 +370,51 @@ public class QueryFilterTest {
                 )
             )
         ).flatMap(s -> s);
+    }
+
+    @Test
+    void toDashboardFilterBuilder_prefix_shouldReturnPrefixFilter() {
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.PREFIX)
+            .value("io.kestra.tests")
+            .build();
+
+        enum TestField { NAMESPACE }
+        AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
+
+        assertThat(result).isInstanceOf(Prefix.class);
+        Prefix<TestField> prefix = (Prefix<TestField>) result;
+        assertThat(prefix.getValue()).isEqualTo("io.kestra.tests");
+        assertThat(prefix.getField()).isEqualTo(TestField.NAMESPACE);
+    }
+
+    @Test
+    void toDashboardFilterBuilder_equals_shouldReturnEqualToFilter() {
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.EQUALS)
+            .value("io.kestra.tests")
+            .build();
+
+        enum TestField { NAMESPACE }
+        AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
+
+        assertThat(result).isInstanceOf(EqualTo.class);
+    }
+
+    @Test
+    void toDashboardFilterBuilder_startsWith_shouldReturnStartsWithFilter() {
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.STARTS_WITH)
+            .value("io.kestra")
+            .build();
+
+        enum TestField { NAMESPACE }
+        AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
+
+        assertThat(result).isInstanceOf(StartsWith.class);
     }
 
     static Stream<Arguments> invalidOperationFilters() {

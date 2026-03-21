@@ -1,6 +1,8 @@
-import {onMounted, computed, ref} from "vue";
+import {onBeforeUnmount, onMounted, computed, ref, watch} from "vue";
 
 import {useRoute} from "vue-router";
+
+import debounce from "lodash/debounce";
 
 import {useDashboardStore} from "../../../stores/dashboard";
 
@@ -60,8 +62,26 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         return data.value;
     };
 
+    const debouncedRegenerate = debounce(() => {
+        void generate();
+    }, 500);
+
+    watch(
+        () => props.chart?.content,
+        (next, prev) => {
+            if (!includeHooks || next === prev) {
+                return;
+            }
+            debouncedRegenerate();
+        }
+    );
+
     onMounted(async () => {
         if (includeHooks) await generate();
+    });
+
+    onBeforeUnmount(() => {
+        debouncedRegenerate.cancel();
     });
 
     return {percentageShown, EMPTY_TEXT, data, generate};

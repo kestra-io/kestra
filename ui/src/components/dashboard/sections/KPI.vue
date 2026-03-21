@@ -27,7 +27,7 @@
     });
 
     const route = useRoute();
-    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props.dashboardId, {...props});
+    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props.dashboardId, props);
 
     function refresh() {
         return generate();

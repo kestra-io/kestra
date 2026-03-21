@@ -2,8 +2,8 @@
     <div class="dashboard-sections-container">
         <section id="charts" :class="{padding}">
             <div
-                v-for="chart in props.charts"
-                :key="`chart__${chart.id}`"
+                v-for="(chart, index) in props.charts"
+                :key="`chart__${index}`"
                 class="dashboard-block"
                 :class="{
                     [`dash-width-${chart.chartOptions?.width || 6}`]: true

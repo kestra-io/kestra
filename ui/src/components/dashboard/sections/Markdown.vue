@@ -7,7 +7,9 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref} from "vue";
+    import {onBeforeUnmount, PropType, watch, ref} from "vue";
+
+    import debounce from "lodash/debounce";
 
     import type {Chart} from "../composables/useDashboards";
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards";
@@ -44,7 +46,25 @@
         refresh
     });
 
+    const debouncedRefresh = debounce(() => {
+        void refresh();
+    }, 500);
+
     watch(() => route.params.filters, () => {
         refresh();
     }, {deep: true, immediate: true});
+
+    watch(
+        () => props.chart?.content,
+        (next, prev) => {
+            if (next === prev) {
+                return;
+            }
+            debouncedRefresh();
+        }
+    );
+
+    onBeforeUnmount(() => {
+        debouncedRefresh.cancel();
+    });
 </script>

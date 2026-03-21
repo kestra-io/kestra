@@ -34,7 +34,9 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref, computed} from "vue";
+    import {onBeforeUnmount, PropType, watch, ref, computed} from "vue";
+
+    import debounce from "lodash/debounce";
 
     import type {Chart} from "../types.ts";
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
@@ -140,9 +142,27 @@
         refresh
     });
 
+    const debouncedRefresh = debounce(() => {
+        void refresh();
+    }, 500);
+
     watch(() => route.params.filters, () => {
         refresh();
     }, {deep: true, immediate: true});
+
+    watch(
+        () => props.chart?.content,
+        (next, prev) => {
+            if (next === prev) {
+                return;
+            }
+            debouncedRefresh();
+        }
+    );
+
+    onBeforeUnmount(() => {
+        debouncedRefresh.cancel();
+    });
 </script>
 
 <style lang="scss" scoped>

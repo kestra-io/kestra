@@ -6,7 +6,12 @@
             />
 
             <el-form v-else labelPosition="top">
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchema" :transparent="v.fieldKey === 'inputs'" :merge="shouldMerge(v.schema)">
+                <Wrapper
+                    v-for="v in fieldsFromSchema"
+                    :key="v.fieldKey"
+                    :transparent="v.fieldKey === 'inputs'"
+                    :merge="shouldMerge(v.schema)"
+                >
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
@@ -53,13 +58,18 @@
     const {fieldsFromSchema, parsedSource} = useDashboardFields();
 
     const dashboardStore = useDashboardStore();
+    const pluginsStore = usePluginsStore();
 
     function shouldMerge(schema: any): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
-        return !complexObject
+        return !complexObject;
     }
 
     function onTaskUpdateField(key: string, val: any) {
+        if (deepEqual(parsedSource.value?.[key], val)) {
+            return;
+        }
+
         const app = {
             ...parsedSource.value,
             [key]: val,
@@ -69,8 +79,8 @@
     }
 
     provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
-        editorUpdate(yaml)
-    })
+        editorUpdate(yaml);
+    });
 
     function editorUpdate(source: string) {
         // if no-code would not change the structure of the app,
@@ -88,15 +98,15 @@
     }>();
 
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
-        emit("closeTask")
-    })
+        emit("closeTask");
+    });
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
-        emit("createTask", parentPath, blockSchemaPath, refPath, "after")
+        emit("createTask", parentPath, blockSchemaPath, refPath, "after");
     });
 
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (...args) => {
-        emit("editTask", ...args)
+        emit("editTask", ...args);
     });
 
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => dashboardStore.schema ?? {}));
@@ -115,14 +125,12 @@
     provide(ON_TASK_EDITOR_CLICK_INJECTION_KEY, (elt) => {
         const type = elt?.type;
         dashboardStore.loadChart(elt);
-        if(type){
+        if (type) {
             pluginsStore.updateDocumentation({cls: type});
-        }else{
-            pluginsStore.updateDocumentation(); 
+        } else {
+            pluginsStore.updateDocumentation();
         }
-    })
-
-    const pluginsStore = usePluginsStore();
+    });
 
     onActivated(() => {
         pluginsStore.updateDocumentation();

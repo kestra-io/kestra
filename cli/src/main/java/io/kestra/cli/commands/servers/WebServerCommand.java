@@ -8,6 +8,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.worker.Controller;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -32,10 +33,10 @@ public class WebServerCommand extends AbstractServerCommand {
     private IgnoreExecutionService ignoreExecutionService;
 
     @Inject
-    private Indexer indexer;
+    private Provider<Indexer> indexer;
 
     @Inject
-    private Controller controller;
+    private Provider<Controller> controller;
 
     @Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
     private boolean tutorialsDisabled = false;
@@ -78,13 +79,13 @@ public class WebServerCommand extends AbstractServerCommand {
         // start the indexer
         if (!indexerDisabled) {
             log.info("Starting an embedded indexer, this can be disabled by using `--no-indexer`.");
-            poolExecutor.execute(indexer);
+            poolExecutor.execute(indexer.get());
         }
 
         // start the controller
         if (!controllerDisabled) {
             log.info("Starting an embedded controller, this can be disabled by using `--no-controller`.");
-            poolExecutor.execute(controller::start);
+            poolExecutor.execute(controller.get()::start);
         }
 
         if (poolExecutor != null) {

@@ -26,12 +26,11 @@ public class VariableRenderer {
     public static final int MAX_RENDERING_AMOUNT = 100;
 
     private volatile PebbleEngine pebbleEngine;
-    private final PebbleEngineFactory pebbleEngineFactory;
     private final VariableConfiguration variableConfiguration;
 
     @Inject
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
-        this.pebbleEngineFactory = pebbleEngineFactory;
+        this.pebbleEngine = pebbleEngineFactory.create();
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
     }
 
@@ -40,13 +39,6 @@ public class VariableRenderer {
     }
 
     private PebbleEngine pebbleEngine() {
-        if (this.pebbleEngine == null) {
-            synchronized (this) {
-                if (this.pebbleEngine == null) {
-                    this.pebbleEngine = pebbleEngineFactory.create();
-                }
-            }
-        }
         return this.pebbleEngine;
     }
 

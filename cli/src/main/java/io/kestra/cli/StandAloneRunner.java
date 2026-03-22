@@ -9,6 +9,7 @@ import io.kestra.executor.DefaultExecutor;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,16 +37,16 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     private DefaultExecutor defaultExecutor;
 
     @Inject
-    private Controller controller;
+    private Provider<Controller> controllerProvider;
 
     @Inject
-    private Worker worker;
+    private Provider<Worker> workerProvider;
 
     @Inject
-    private Scheduler scheduler;
+    private Provider<Scheduler> schedulerProvider;
 
     @Inject
-    private Indexer indexer;
+    private Provider<Indexer> indexerProvider;
 
     @Value("${kestra.server.standalone.running.timeout:PT1M}")
     private Duration runningTimeout;
@@ -64,21 +65,25 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         poolExecutor.execute(defaultExecutor);
 
         if (controllerEnabled) {
+            Controller controller = controllerProvider.get();
             poolExecutor.execute(controller::start);
             servers.add(controller);
         }
 
         if (workerEnabled) {
+            Worker worker = workerProvider.get();
             poolExecutor.execute(() -> worker.start(workerThread, null));
             servers.add(worker);
         }
 
         if (schedulerEnabled) {
+            Scheduler scheduler = schedulerProvider.get();
             poolExecutor.execute(scheduler);
             servers.add(scheduler);
         }
 
         if (indexerEnabled) {
+            Indexer indexer = indexerProvider.get();
             poolExecutor.execute(indexer);
             servers.add(indexer);
         }

@@ -4,14 +4,15 @@ import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.commands.servers.WorkerCommand;
 import io.kestra.core.services.VersionService;
-import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.Optional;
 
 @Singleton
 public class DefaultStartupHook implements StartupHookInterface {
    @Inject
-   private BeanProvider<VersionService> versionService;
+   private Optional<VersionService> versionService;
 
    @Override
    public void start(AbstractCommand cmd) {

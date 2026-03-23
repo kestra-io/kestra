@@ -2,6 +2,7 @@ import {computed, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import {configureMonacoYaml} from "monaco-yaml";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import {yamlSchemas} from "override/utils/yamlSchemas";
 import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices";
 import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures";
@@ -9,11 +10,6 @@ import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
-import IPosition = monaco.IPosition;
-import IDisposable = monaco.IDisposable;
-import IModel = monaco.editor.IModel;
-import ProviderResult = monaco.languages.ProviderResult;
-import CompletionList = monaco.languages.CompletionList;
 import {
     endOfWordColumn,
     NO_SUGGESTIONS,
@@ -23,7 +19,11 @@ import {
 } from "./pebbleLanguageConfigurator";
 import {usePluginsStore} from "../../../stores/plugins";
 import {useBlueprintsStore} from "../../../stores/blueprints";
-import {languages} from "monaco-editor/esm/vs/editor/editor.api";
+import IPosition = monaco.IPosition;
+import IDisposable = monaco.IDisposable;
+import IModel = monaco.editor.IModel;
+import ProviderResult = monaco.languages.ProviderResult;
+import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
 
 type TaskLike = Record<string, unknown>;
@@ -38,10 +38,10 @@ function isTaskLike(value: unknown): value is TaskLike {
 }
 
 function filterMissingRequiredTaskProperties({
-    source,
-    cursorIndex,
-    requiredProperties,
-}: {
+                                                 source,
+                                                 cursorIndex,
+                                                 requiredProperties,
+                                             }: {
     source: string;
     cursorIndex: number;
     requiredProperties: string[];
@@ -60,7 +60,7 @@ function filterMissingRequiredTaskProperties({
         while (
             previousNonWhitespace > 0 &&
             /\s/.test(source.charAt(previousNonWhitespace))
-        ) {
+            ) {
             previousNonWhitespace--;
         }
         if (previousNonWhitespace !== safeCursorIndex) {
@@ -126,14 +126,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         const yamlCompletion = (
             StandaloneServices.get(ILanguageFeaturesService).completionProvider
                 ._entries as {
-                    selector: string;
-                    provider: {
-                        provideCompletionItems: (
-                            model: IModel,
-                            position: IPosition,
-                        ) => ProviderResult<CompletionList>;
-                    };
-                }[]
+                selector: string;
+                provider: {
+                    provideCompletionItems: (
+                        model: IModel,
+                        position: IPosition,
+                    ) => ProviderResult<CompletionList>;
+                };
+            }[]
         ).find((completion) => completion.selector === "yaml");
 
         if (yamlCompletion === undefined) {
@@ -195,6 +195,24 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     label: string;
                 })[]
             )
+                .map((s) => {
+                    const r = {...s};
+
+                    if (typeof r.insertText === "string") {
+                        r.insertText = r.insertText.replaceAll("\\\\\"", "\"");
+                    } else if (typeof r.insertText === "object" && r.insertText !== null) {
+                        const textObj = r.insertText as any;
+                        if (typeof textObj.value === "string") {
+                            textObj.value = textObj.value.replaceAll("\\\\\"", "\"");
+                        }
+                    }
+
+                    if (typeof r.filterText === "string") {
+                        r.filterText = r.filterText.replaceAll("\\\\\"", "\"");
+                    }
+
+                    return r;
+                })
                 // Monaco sometimes truncates labels with `...`; restore full labels when possible.
                 .map((suggestion) => {
                     if (
@@ -504,9 +522,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                             {
                                 insertText: snippet,
                                 insertTextRules:
-                                    monaco.languages
-                                        .CompletionItemInsertTextRule
-                                        .InsertAsSnippet,
+                                monaco.languages
+                                    .CompletionItemInsertTextRule
+                                    .InsertAsSnippet,
                                 range: new monaco.Range(
                                     position.lineNumber,
                                     position.column,
@@ -527,9 +545,12 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         enableForwardStability: true,
                     };
                 },
-                handleItemDidShow() { },
-                handlePartialAccept() { },
-                freeInlineCompletions() { },
+                handleItemDidShow() {
+                },
+                handlePartialAccept() {
+                },
+                freeInlineCompletions() {
+                },
             } as any),
         );
 

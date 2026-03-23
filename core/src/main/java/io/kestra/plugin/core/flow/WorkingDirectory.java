@@ -171,7 +171,34 @@ import jakarta.validation.constraints.NotNull;
                           const colors = require("colors");
                           console.log(colors.red("Hello"));
                 """
-        )
+                           ),
+        @Example(
+            full = true,
+            title = "A working directory with a cache of the Python virtual environment.",
+            code = """
+                id: python_cached_dependencies
+                namespace: company.team
+
+                tasks:
+                  - id: working_dir
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
+                    cache:
+                      patterns:
+                        - venv/**
+                      ttl: PT24H
+                    tasks:
+                      - id: python_script
+                        type: io.kestra.plugin.scripts.python.Commands
+                        taskRunner:
+                          type: io.kestra.plugin.core.runner.Process
+                        warningOnStdErr: false
+                        beforeCommands:
+                          - python -m venv venv
+                          - ./venv/bin/pip install pandas
+                        commands:
+                          - ./venv/bin/python -c "import pandas as pd; print(pd.__version__)"
+                """
+                           )
     },
     aliases = {"io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker"}
 )
@@ -185,6 +212,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         description = """
             When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the task run and saved in Kestra's internal storage.
             Then, at the beginning of the next task execution, the file archive is retrieved and the working directory is initialized with it.
+            
+            **Best Practice for Python Virtual Environments**: When caching Python virtual environments, use the full path to executables (e.g., `./venv/bin/pip` and `./venv/bin/python`) instead of attempting to activate the environment with `source` or `.` commands. This ensures compatibility across different shell environments and properly isolates dependencies within the cached venv.
             """
     )
     @PluginProperty

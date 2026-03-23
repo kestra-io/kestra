@@ -530,7 +530,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             if (flowId != null) {
                 select = select.and(field("namespace").eq(namespace));
             } else {
-                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").startsWith(namespace + ".")));
             }
         }
 

@@ -1678,6 +1678,7 @@
       }
     },
     "save task": "Taskを保存",
+    "save_and_execute": "保存して実行",
     "saved": "正常に保存されました",
     "saved done": "<em>{name}</em>は正常に保存されました",
     "scheduleDate": "スケジュール日付",
@@ -2056,6 +2057,108 @@
         "text": "----------\n\n * <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">ビデオチュートリアル</a> \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">ドキュメント</a> \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "チュートリアル"
       }
+    },
+    "welcome_copilot": {
+      "button_cta": "フローをゼロから作成",
+      "execute_hint": {
+        "description": "クリックしてワークフローを保存し、すぐに実行します。",
+        "title": "フローを保存して実行"
+      },
+      "flows": {
+        "buildDbtPipeline": {
+          "label": "dbtパイプラインを構築する",
+          "prompt": "Kestraのflowを作成し、dbtプロジェクトリポジトリをクローンして、DuckDBプロファイルでdbt buildを実行します。"
+        },
+        "buildDockerImageAndRunIt": {
+          "label": "Dockerイメージをビルドして実行する",
+          "prompt": "インラインDockerfileからDockerイメージをビルドし、結果として得られるコンテナを実行するKestra flowを作成します。"
+        },
+        "convertCsvToExcel": {
+          "label": "CSVをExcelに変換",
+          "prompt": "CSVファイルをダウンロードし、Ionに変換して、結果をExcelファイルとしてエクスポートするflowを作成します。"
+        },
+        "etlWorkflow": {
+          "label": "ETLワークフロー",
+          "prompt": "ETL flowを作成し、JSONデータをダウンロードし、Pythonで処理し、変換された結果をDuckDBでクエリします。"
+        },
+        "installNginxViaAnsible": {
+          "label": "Ansibleを使用してNginxをインストール",
+          "prompt": "Ansibleを使用してターゲットマシンにNginxをインストールし、インストールされたバージョンを確認するKestra flowを作成します。"
+        },
+        "jsonApiToDuckdb": {
+          "label": "JSON APIからDuckDBへ",
+          "prompt": "パブリックAPIからJSONファイルをダウンロードし、Pythonスクリプトで変換し、DuckDB Queries Taskで処理するflowを作成します。"
+        },
+        "manualApproval": {
+          "label": "手動承認",
+          "prompt": "承認後に初期処理ステップ、手動承認の一時停止、最終デプロイメントステップを含むflowを作成します。"
+        },
+        "microservicesApis": {
+          "label": "マイクロサービス & APIs",
+          "prompt": "WebサイトのAPIレスポンスをチェックし、ステータスコードが成功でない場合にSlackアラートを送信するflowを作成します。"
+        },
+        "scheduledPdfReports": {
+          "label": "スケジュールされたPDFレポート",
+          "prompt": "スケジュールされたflowを作成し、PDFレポートをダウンロードして、レポートが準備できたらSlack通知を送信します。"
+        },
+        "weeklySalesKpisToSlack": {
+          "label": "週次販売KPIをSlackへ",
+          "prompt": "毎週スケジュールされたflowを作成し、DuckDBで売上KPIを計算し、Slackにサマリーを投稿します。"
+        }
+      },
+      "help": {
+        "blueprints": {
+          "description": "一般的なワークフローパターンのための、すぐに使用できる例とテンプレートを探索してください。",
+          "title": "ブループリント"
+        },
+        "slack": {
+          "description": "アイデアやベストプラクティスを共有し、技術的な質問についてサポートを受けるために参加してください。",
+          "title": "Slackコミュニティ"
+        },
+        "tutorial": {
+          "description": "ガイド付きステップで最初のflowを作成して実行する方法を学びましょう。",
+          "title": "チュートリアルを開始"
+        }
+      },
+      "need_help": "お困りですか？",
+      "placeholder_prompt": "毎朝9時に挨拶メッセージを送ってください。",
+      "remaining_quota": "あなたにはあと{count}回のAI生成が残っています",
+      "show_less": "プロンプトを減らす",
+      "show_more": "さらにプロンプトを表示",
+      "success_page": {
+        "description": "Kestraの基本を学びました。ここから旅を続けるためのリソースをいくつかご紹介します。",
+        "items": {
+          "blueprints": {
+            "description": "一般的なユースケースのための事前構築されたワークフローテンプレート",
+            "title": "ブループリント"
+          },
+          "demo": {
+            "description": "パーソナライズされたデモでKestra Enterprise Editionを体験する",
+            "title": "デモを取得"
+          },
+          "slack": {
+            "description": "他のユーザーとつながり、コミュニティからサポートを受ける",
+            "title": "Slack コミュニティ"
+          },
+          "tutorial": {
+            "description": "Kestraのすべての機能のインタラクティブウォークスルー",
+            "title": "チュートリアルを開始"
+          },
+          "videos": {
+            "description": "高度な機能のためのステップバイステップのビデオガイド",
+            "title": "ビデオチュートリアル"
+          }
+        },
+        "restart": "チュートリアルを再起動",
+        "title": "すべての準備が整いました！"
+      },
+      "success_popup": {
+        "description": "最初のflowを正常に実行しました！Kestraのプロになる道を進んでいます。",
+        "explore": "さらに探索する",
+        "title": "おめでとうございます！",
+        "tutorial": "詳細チュートリアル"
+      },
+      "title": "ワークフローにアイデアを変える"
     },
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",

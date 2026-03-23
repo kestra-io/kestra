@@ -282,7 +282,8 @@ public class FlowInputOutput {
             final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, true);
             final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
-            boolean isInputEnabled = dependencies.isEmpty() || dependencies.values().stream().allMatch(InputAndValue::enabled);
+            boolean isInputEnabled = dependencies.isEmpty() ||
+                dependencies.values().stream().allMatch(it -> it.enabled() && it.value() != null);
 
             final Optional<String> dependsOnCondition = Optional.ofNullable(input.getDependsOn()).map(DependsOn::condition);
             if (dependsOnCondition.isPresent() && isInputEnabled) {

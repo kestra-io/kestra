@@ -14,12 +14,14 @@
         closeOnPressEscape?: boolean
         showClose?: boolean
         isFullScreen?: boolean
+        withHeader: boolean
     }>(), {
         closeOnClickModal: undefined,
         closeOnPressEscape: undefined,
         showClose: undefined,
         isFullScreen: false,
-        title: undefined
+        title: undefined,
+        withHeader: true,
     })
 
     const filteredProps = useFilteredProps(props)
@@ -70,9 +72,6 @@
 
 <style lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-     button.full-screen {
-         font-size: 24px;
-     }
 
     .kel-drawer {
         &.ltr,

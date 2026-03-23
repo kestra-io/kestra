@@ -98,7 +98,7 @@ export const NoHeader: Story = {
         template: `
             <div style="padding:24px">
                 <ks-button type="primary" @click="visible = true">Open drawer without header</ks-button>
-                <ks-drawer v-model="visible" :show-close="false" destroy-on-close>
+                <ks-drawer v-model="visible" :with-header="false" destroy-on-close>
                     <div style="padding:24px">
                         <p style="margin:0 0 16px">No header bar. Manage close with your own UI.</p>
                         <ks-button type="primary" @click="visible = false">Dismiss</ks-button>

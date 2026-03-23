@@ -4,7 +4,6 @@
         @update:model-value="onInput"
         filterable
         clearable
-        :persistent="false"
         allowCreate
         :placeholder="task.namespace ? 'Select' : 'Select namespace first'"
         :disabled="!task.namespace"

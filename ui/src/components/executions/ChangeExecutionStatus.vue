@@ -22,7 +22,6 @@
             <ks-select
                 :required="true"
                 v-model="selectedStatus"
-                :persistent="false"
             >
                 <ks-option
                     v-for="item in states"

@@ -27,7 +27,8 @@
     const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
 
     defineExpose({
-        scrollTo: (...args: any[]) => scrollbarRef.value?.scrollTo(...args),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        scrollTo: (...args: any[]) => (scrollbarRef.value?.scrollTo as any)(...args),
         setScrollTop: (top: number) => scrollbarRef.value?.setScrollTop(top),
         setScrollLeft: (left: number) => scrollbarRef.value?.setScrollLeft(left),
         update: () => scrollbarRef.value?.update(),

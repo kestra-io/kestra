@@ -52,9 +52,9 @@
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         append: (data: any, parent: any) => treeRef.value?.append(data, parent),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getCheckedNodes: (...args: any[]) => treeRef.value?.getCheckedNodes(...args),
+        getCheckedNodes: (...args: any[]) => (treeRef.value?.getCheckedNodes as any)(...args),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setCheckedKeys: (...args: any[]) => treeRef.value?.setCheckedKeys(...args),
+        setCheckedKeys: (...args: any[]) => (treeRef.value?.setCheckedKeys as any)(...args),
         getCurrentKey: () => treeRef.value?.getCurrentKey(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setCurrentKey: (key: any) => treeRef.value?.setCurrentKey(key),

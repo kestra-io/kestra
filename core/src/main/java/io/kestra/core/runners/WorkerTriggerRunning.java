@@ -2,7 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.utils.IdUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -23,9 +23,6 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
     private AbstractTrigger trigger;
 
     @NotNull
-    private TriggerContext triggerContext;
-
-    @NotNull
     private WorkerTriggerData data;
 
     /**
@@ -33,13 +30,17 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
      */
     @Override
     public String uid() {
-        return triggerContext.uid();
+        return IdUtils.fromParts(
+            data.tenantId(),
+            data.namespace(),
+            data.flowId(),
+            trigger.getId()
+        );
     }
 
     public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance) {
         return WorkerTriggerRunning.builder()
             .trigger(workerTrigger.getTrigger())
-            .triggerContext(workerTrigger.getTriggerContext())
             .data(workerTrigger.getData())
             .workerInstance(workerInstance)
             .build();

@@ -293,12 +293,10 @@ class RunContextTest {
 
         WorkerTrigger workerTrigger = WorkerTrigger.builder()
             .trigger(trigger)
-            .triggerContext(mockedTrigger.getValue().context())
-            .data(WorkerTriggerData.from(mockedTrigger.getKey()))
+            .data(WorkerTriggerData.from(mockedTrigger.getKey(), mockedTrigger.getValue().context()))
             .build();
-
-        ConditionContext conditionContext = runContextInitializer.forWorker(workerTrigger);
-        trigger.evaluate(conditionContext, mockedTrigger.getValue().context());
+        
+        trigger.evaluate(runContextInitializer.forWorker(workerTrigger), TriggerContext.of(workerTrigger));
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
         assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage()).isEqualTo("john ****** doe");

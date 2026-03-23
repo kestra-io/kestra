@@ -1294,7 +1294,7 @@ public class ExecutorService {
                     "{} {} : {}",
                     in ? "<< IN " : ">> OUT",
                     workerTrigger.getClass().getSimpleName(),
-                    workerTrigger.getTriggerContext().uid()
+                    workerTrigger.uid()
                 );
             }
         }

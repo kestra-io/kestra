@@ -4,9 +4,11 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.WorkerTriggerData;
 import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -399,14 +401,18 @@ class ExecutionKilledManagerTest {
     }
 
     private static WorkerTrigger createMockWorkerTrigger(String namespace, String flowId, String triggerId, String tenantId) {
-        TriggerContext triggerContext = mock(TriggerContext.class);
-        when(triggerContext.getNamespace()).thenReturn(namespace);
-        when(triggerContext.getFlowId()).thenReturn(flowId);
-        when(triggerContext.getTriggerId()).thenReturn(triggerId);
-        when(triggerContext.getTenantId()).thenReturn(tenantId);
+        AbstractTrigger trigger = mock(AbstractTrigger.class);
+        when(trigger.getId()).thenReturn(triggerId);
+
+        WorkerTriggerData data = mock(WorkerTriggerData.class);
+        when(data.tenantId()).thenReturn(tenantId);
+        when(data.namespace()).thenReturn(namespace);
+        when(data.flowId()).thenReturn(flowId);
 
         WorkerTrigger workerTrigger = mock(WorkerTrigger.class);
-        when(workerTrigger.getTriggerContext()).thenReturn(triggerContext);
+        when(workerTrigger.getTrigger()).thenReturn(trigger);
+        when(workerTrigger.getData()).thenReturn(data);
+        when(workerTrigger.triggerId()).thenReturn(TriggerId.of(tenantId, namespace, flowId, triggerId));
         when(workerTrigger.uid()).thenReturn("trigger-" + namespace + "-" + flowId + "-" + triggerId);
         return workerTrigger;
     }

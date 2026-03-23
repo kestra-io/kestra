@@ -4,6 +4,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTrigger;
 import org.reactivestreams.Publisher;
@@ -17,12 +18,14 @@ import static io.kestra.core.models.flows.State.Type.SUCCESS;
 public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable {
     RealtimeTriggerInterface streamingTrigger;
     ConditionContext conditionContext;
+    TriggerContext triggerContext;
     Consumer<? super Throwable> onError;
     Consumer<Execution> onNext;
 
     public WorkerTriggerRealtimeCallable(
         RunContext runContext,
         ConditionContext conditionContext,
+        TriggerContext triggerContext,
         WorkerTrigger workerTrigger,
         RealtimeTriggerInterface realtimeTrigger,
         Consumer<? super Throwable> onError,
@@ -31,6 +34,7 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
         super(runContext, realtimeTrigger.getClass().getName(), workerTrigger);
         this.streamingTrigger = realtimeTrigger;
         this.conditionContext = conditionContext;
+        this.triggerContext = triggerContext;
         this.onError = onError;
         this.onNext = onNext;
     }
@@ -42,7 +46,7 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
             try {
                 evaluate = streamingTrigger.evaluate(
                     conditionContext.withRunContext(runContext),
-                    workerTrigger.getTriggerContext()
+                    triggerContext
                 );
             } catch (Exception e) {
                 // If the Publisher cannot be created, we create a failed execution

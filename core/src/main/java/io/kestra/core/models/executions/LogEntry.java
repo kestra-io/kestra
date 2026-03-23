@@ -2,9 +2,11 @@ package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
@@ -95,7 +97,7 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .build();
     }
 
-    public static LogEntry of(FlowInterface flow, AbstractTrigger abstractTrigger) {
+    public static LogEntry of(FlowId flow, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
@@ -105,11 +107,11 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .build();
     }
 
-    public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger) {
+    public static LogEntry of(TriggerId trigger, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
+            .tenantId(trigger.getTenantId())
+            .namespace(trigger.getNamespace())
+            .flowId(trigger.getFlowId())
             .triggerId(abstractTrigger.getId())
             .executionId(abstractTrigger.getId())
             .build();

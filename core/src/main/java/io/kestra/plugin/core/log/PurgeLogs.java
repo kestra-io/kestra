@@ -68,7 +68,7 @@ import java.util.List;
         )
     }
 )
-public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
+public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output>  {
     @Schema(
         title = "Namespace of logs that need to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."

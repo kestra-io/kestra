@@ -32,7 +32,7 @@ public class WorkerTask extends WorkerJob {
     private WorkerTaskData data;
 
     @Nullable
-    private ExecutionKind  executionKind;
+    private ExecutionKind executionKind;
 
     /**
      * {@inheritDoc}

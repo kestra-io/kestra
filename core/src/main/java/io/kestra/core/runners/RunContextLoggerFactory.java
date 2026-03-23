@@ -1,10 +1,10 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerId;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
@@ -54,16 +54,16 @@ public class RunContextLoggerFactory {
         );
     }
 
-    public RunContextLogger create(TriggerContext triggerContext, AbstractTrigger trigger) {
+    public RunContextLogger create(TriggerId triggerId, AbstractTrigger trigger) {
         return new RunContextLogger(
             logEmitter,
-            LogEntry.of(triggerContext, trigger),
+            LogEntry.of(triggerId, trigger),
             trigger.getLogLevel(),
             trigger.isLogToFile()
         );
     }
 
-    public RunContextLogger create(FlowInterface flow, AbstractTrigger trigger) {
+    public RunContextLogger create(FlowId flow, AbstractTrigger trigger) {
         return new RunContextLogger(
             logEmitter,
             LogEntry.of(flow, trigger),

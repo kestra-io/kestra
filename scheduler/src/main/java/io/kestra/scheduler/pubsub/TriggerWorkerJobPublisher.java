@@ -57,8 +57,7 @@ public class TriggerWorkerJobPublisher {
         WorkerTrigger workerTrigger = WorkerTrigger
             .builder()
             .trigger(trigger)
-            .triggerContext(triggerState.context())
-            .data(WorkerTriggerData.from(conditionContext))
+            .data(WorkerTriggerData.from(conditionContext, triggerState.context()))
             .build();
         try {
             Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(flow, workerTrigger);

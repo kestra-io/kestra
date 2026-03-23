@@ -1,6 +1,7 @@
 package io.kestra.core.models.triggers;
 
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.WorkerTrigger;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -73,5 +74,15 @@ public class TriggerContext implements TriggerId {
     // This is a hack to make JavaDoc working as annotation processor didn't run before JavaDoc.
     // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
     public static abstract class TriggerContextBuilder<C extends TriggerContext, B extends TriggerContextBuilder<C, B>> {
+    }
+
+    public static TriggerContext of(WorkerTrigger trigger) {
+        return TriggerContext.builder()
+            .tenantId(trigger.getData().tenantId())
+            .namespace(trigger.getData().namespace())
+            .flowId(trigger.getData().flowId())
+            .triggerId(trigger.getTrigger().getId())
+            .date(trigger.getData().date())
+            .build();
     }
 }

@@ -81,8 +81,8 @@ public class ExecutionKilledManager {
             
             // Kill any matching running trigger jobs
             runningJobs.forEach((_, killableJob) -> {
-                if (killableJob.job() instanceof WorkerTrigger workerTrigger && killedTrigger.isEqual(workerTrigger.getTriggerContext())) {
-                    Logs.logTrigger(workerTrigger.getTriggerContext(), Level.INFO, "Killing running trigger");
+                if (killableJob.job() instanceof WorkerTrigger workerTrigger && killedTrigger.isEqual(workerTrigger.triggerId())) {
+                    Logs.logTrigger(workerTrigger.triggerId(), Level.INFO, "Killing running trigger");
                     killableJob.killAction().run();
                 }
             });

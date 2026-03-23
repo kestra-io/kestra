@@ -9,6 +9,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.IdUtils;
@@ -387,17 +388,16 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 WorkerTrigger workerTrigger = WorkerTrigger.builder()
                     .trigger(workerTriggerRunning.getTrigger())
                     .data(workerTriggerRunning.getData())
-                    .triggerContext(workerTriggerRunning.getTriggerContext())
                     .build();
                 workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
                 Logs.logTrigger(
-                    workerTriggerRunning.getTriggerContext(),
+                    workerTrigger.triggerId(),
                     Level.WARN,
                     "Re-emitting WorkerTrigger."
                 );
             } catch (QueueException e) {
                 Logs.logTrigger(
-                    workerTriggerRunning.getTriggerContext(),
+                    TriggerId.of(workerTriggerRunning.getData().tenantId(), workerTriggerRunning.getData().namespace(), workerTriggerRunning.getData().flowId(), workerTriggerRunning.getTrigger().getId()),
                     Level.ERROR,
                     "Unable to re-emit WorkerTrigger.",
                     e

@@ -357,12 +357,12 @@ public class MetricRegistry {
                 ),
                 workerGroupTags(workerGroup, tags)
             ),
-            TAG_NAMESPACE_ID, workerTrigger.getTriggerContext().getNamespace(),
-            TAG_FLOW_ID, workerTrigger.getTriggerContext().getFlowId()
+            TAG_NAMESPACE_ID, workerTrigger.triggerId().getNamespace(),
+            TAG_FLOW_ID, workerTrigger.triggerId().getFlowId()
         );
 
 
-        return workerTrigger.getTriggerContext().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, workerTrigger.getTriggerContext().getTenantId());
+        return workerTrigger.triggerId().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, workerTrigger.triggerId().getTenantId());
     }
 
     public String[] workerGroupTags(String workerGroup, String... tags) {

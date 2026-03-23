@@ -545,7 +545,7 @@ public class WorkerJobDispatcher {
             workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTaskRunning.of(workerTask, workerInstance));
         } else if (job instanceof WorkerTrigger workerTrigger) {
             workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTriggerRunning.of(workerTrigger, workerInstance));
-            triggerEventQueue.send(new TriggerReceived(TriggerId.of(workerTrigger.getTriggerContext()), context.getWorkerId()));
+            triggerEventQueue.send(new TriggerReceived(workerTrigger.triggerId(), context.getWorkerId()));
         }
     }
 

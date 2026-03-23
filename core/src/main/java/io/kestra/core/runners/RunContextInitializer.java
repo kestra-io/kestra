@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.Lists;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -276,26 +277,27 @@ public class RunContextInitializer {
     }
 
     /**
-     * Builds a {@link io.kestra.core.models.conditions.ConditionContext} for the given
-     * {@link WorkerTrigger} on the worker side, reconstructing the {@link RunContext}
-     * from {@link WorkerTriggerData} plus locally available state.
+     * Builds a {@link RunContext}, {@link TriggerContext}, and
+     * {@link ConditionContext} for the given
+     * {@link WorkerTrigger} on the worker side.
      *
      * @param workerTrigger The {@link WorkerTrigger} received from the wire.
-     * @return a fully initialized ConditionContext for trigger evaluation
+     * @return the reconstructed TriggerContext and ConditionContext
      */
-    public io.kestra.core.models.conditions.ConditionContext forWorker(final WorkerTrigger workerTrigger) {
+    public ConditionContext forWorker(final WorkerTrigger workerTrigger) {
         final WorkerTriggerData data = workerTrigger.getData();
-        final TriggerContext triggerContext = workerTrigger.getTriggerContext();
         final AbstractTrigger trigger = workerTrigger.getTrigger();
 
         // Reconstruct variables from wire data + locally available state
         Map<String, Object> variables = new HashMap<>(data.variables());
+        variables.put("flow", RunVariables.of(flow(data)));
+        variables.put("labels", data.flowLabels() != null ? io.kestra.core.models.Label.toNestedMap(data.flowLabels()) : Map.of());
         variables.put("envs", runContextCache.getEnvVars());
         variables.put("globals", runContextCache.getGlobalVars());
         variables.put("kestra", buildKestraConfig());
 
         final String triggerExecutionId = IdUtils.create();
-        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger);
+        final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTrigger.triggerId(), trigger);
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
 
         // Build a fresh RunContext
@@ -308,9 +310,9 @@ public class RunContextInitializer {
         runContext.setTraceParent(data.traceParent());
 
         final StorageContext storageContext = StorageContext.forTrigger(
-            triggerContext.getTenantId(),
-            triggerContext.getNamespace(),
-            triggerContext.getFlowId(),
+            data.tenantId(),
+            data.namespace(),
+            data.flowId(),
             triggerExecutionId,
             trigger.getId()
         );
@@ -321,10 +323,24 @@ public class RunContextInitializer {
         runContext.setTriggerExecutionId(triggerExecutionId);
         runContext.setTrigger(trigger);
 
-        return io.kestra.core.models.conditions.ConditionContext.builder()
-            .flow(data.flow())
+        return ConditionContext.builder()
+            .flow(flow(data))
             .runContext(runContext)
             .variables(data.conditionVariables())
+            .build();
+    }
+    /**
+     * Reconstructs a minimal {@link io.kestra.core.models.flows.GenericFlow} from
+     * {@link WorkerTriggerData} fields.
+     */
+    private static io.kestra.core.models.flows.GenericFlow flow(WorkerTriggerData data) {
+        return io.kestra.core.models.flows.GenericFlow.builder()
+            .id(data.flowId())
+            .namespace(data.namespace())
+            .tenantId(data.tenantId())
+            .revision(data.flowRevision())
+            .variables(data.flowVariables())
+            .labels(data.flowLabels())
             .build();
     }
 }

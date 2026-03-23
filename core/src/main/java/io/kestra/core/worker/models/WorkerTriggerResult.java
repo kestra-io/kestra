@@ -34,7 +34,7 @@ public record WorkerTriggerResult(
      */
     public static WorkerTriggerResult of(WorkerTrigger trigger, Execution execution) {
         return new WorkerTriggerResult(
-            TriggerId.of(trigger.getTriggerContext()),
+            trigger.triggerId(),
             TriggerType.from(trigger.getTrigger()),
             execution
         );

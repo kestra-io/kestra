@@ -5,6 +5,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.Contains;
 import io.kestra.core.models.dashboards.filters.GreaterThanOrEqualTo;
 import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
+import io.kestra.core.models.dashboards.filters.Prefix;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;

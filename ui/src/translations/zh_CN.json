@@ -1678,6 +1678,7 @@
       }
     },
     "save task": "保存任务",
+    "save_and_execute": "保存并执行",
     "saved": "保存成功",
     "saved done": "<em>{name}</em> 成功保存",
     "scheduleDate": "计划日期",
@@ -2056,6 +2057,108 @@
         "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">视频教程</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">文档</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "教程"
       }
+    },
+    "welcome_copilot": {
+      "button_cta": "从头创建flow",
+      "execute_hint": {
+        "description": "单击以保存您的工作流并立即运行。",
+        "title": "保存并执行您的flow"
+      },
+      "flows": {
+        "buildDbtPipeline": {
+          "label": "构建一个 dbt pipeline",
+          "prompt": "创建一个Kestra flow，克隆一个dbt项目仓库，并使用DuckDB配置文件运行dbt build。"
+        },
+        "buildDockerImageAndRunIt": {
+          "label": "构建一个Docker镜像并运行它",
+          "prompt": "创建一个 Kestra flow，从内联 Dockerfile 构建 Docker 镜像并运行生成的容器。"
+        },
+        "convertCsvToExcel": {
+          "label": "将CSV转换为Excel",
+          "prompt": "创建一个flow，下载CSV文件，将其转换为Ion，并将结果导出为Excel文件。"
+        },
+        "etlWorkflow": {
+          "label": "ETL 工作流",
+          "prompt": "创建一个ETL flow，下载JSON数据，用Python处理，并使用DuckDB查询转换后的结果。"
+        },
+        "installNginxViaAnsible": {
+          "label": "通过Ansible安装Nginx",
+          "prompt": "创建一个Kestra flow，使用Ansible在目标机器上安装Nginx并验证已安装的版本。"
+        },
+        "jsonApiToDuckdb": {
+          "label": "DuckDB 的 JSON API",
+          "prompt": "创建一个flow，从公共API下载JSON文件，使用Python脚本进行转换，并通过DuckDB Queries task进行处理。"
+        },
+        "manualApproval": {
+          "label": "人工审批",
+          "prompt": "创建一个flow，包含初始处理步骤、手动审批暂停，以及审批后的最终部署步骤。"
+        },
+        "microservicesApis": {
+          "label": "微服务和API",
+          "prompt": "创建一个flow，用于检查网站API响应，并在状态码不成功时发送Slack警报。"
+        },
+        "scheduledPdfReports": {
+          "label": "计划的PDF报告",
+          "prompt": "创建一个定时flow，当PDF报告准备好时下载并发送Slack通知。"
+        },
+        "weeklySalesKpisToSlack": {
+          "label": "每周销售KPI发送到Slack",
+          "prompt": "创建一个每周定时的flow，使用DuckDB计算销售KPI，并将摘要发布到Slack。"
+        }
+      },
+      "help": {
+        "blueprints": {
+          "description": "探索可直接使用的示例和模板，以适应常见的工作流模式。",
+          "title": "蓝图"
+        },
+        "slack": {
+          "description": "加入我们，分享想法和最佳实践，并获得技术问题的帮助。",
+          "title": "Slack 社区"
+        },
+        "tutorial": {
+          "description": "了解如何通过指南步骤创建并运行您的第一个flow。",
+          "title": "开始教程"
+        }
+      },
+      "need_help": "需要帮助？",
+      "placeholder_prompt": "每天早上9点发送问候消息给我。",
+      "remaining_quota": "您还有 {count} 次 AI 生成机会",
+      "show_less": "显示更少提示",
+      "show_more": "显示更多提示",
+      "success_page": {
+        "description": "您已经了解了Kestra的基础知识。以下是一些资源，帮助您继续您的旅程。",
+        "items": {
+          "blueprints": {
+            "description": "预构建工作流模板用于常见用例",
+            "title": "蓝图"
+          },
+          "demo": {
+            "description": "通过个性化演示探索 Kestra Enterprise Edition",
+            "title": "获取演示"
+          },
+          "slack": {
+            "description": "与其他用户联系并从社区获得帮助",
+            "title": "Slack 社区"
+          },
+          "tutorial": {
+            "description": "Kestra所有功能的互动演练",
+            "title": "开始教程"
+          },
+          "videos": {
+            "description": "高级功能的逐步视频指南",
+            "title": "视频教程"
+          }
+        },
+        "restart": "重新启动教程",
+        "title": "一切准备就绪！"
+      },
+      "success_popup": {
+        "description": "您已成功执行了您的第一个flow！您正在迈向成为Kestra专家的道路上。",
+        "explore": "探索更多",
+        "title": "恭喜！",
+        "tutorial": "深入教程"
+      },
+      "title": "将您的想法转化为workflow"
     },
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",

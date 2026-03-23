@@ -217,7 +217,7 @@ export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     // TODO: This was added as part of https://github.com/kestra-io/kestra/issues/10055
     // Idea is to separate the value to parts and only use the status
     // Needs to be made more generic and robust as part of the https://github.com/kestra-io/kestra/issues/9149#issuecomment-2969506266
-    const result = value.includes(",") ? value.split(",").pop()?.trim() : value;
+    const result = value?.includes(",") ? value.split(",").pop()?.trim() : value;
 
     let hex;
 
@@ -235,7 +235,7 @@ export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     let hash = 0x811c9dc5; // FNV offset basis (32-bit)
     const fnvPrime = 0x01000193; // FNV prime (32-bit)
 
-    for (let i = 0; i < value.length; i++) {
+    for (let i = 0; i < (value ?? "").length; i++) {
         hash ^= value.charCodeAt(i); // XOR with character code
         hash = (hash * fnvPrime) >>> 0; // Multiply by FNV prime and ensure 32-bit
     }

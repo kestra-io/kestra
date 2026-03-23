@@ -20,7 +20,7 @@ public interface IMetrics extends IData<IMetrics.Fields> {
         if (!namespaceFilters.isEmpty()) {
             updatedWhere.removeIf(filter -> filter.getField().equals(Fields.NAMESPACE));
             namespaceFilters.forEach(f -> {
-                updatedWhere.add(EqualTo.<Fields>builder().field(Fields.NAMESPACE).value(f.value()).build());
+                updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
             });
         }
 

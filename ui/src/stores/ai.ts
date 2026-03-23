@@ -2,6 +2,7 @@ import axios from "axios";
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {AiGenerationType} from "../utils/constants";
+import {getUid} from "../utils/uid";
 
 export const useAiStore = defineStore("ai", {
     actions: {
@@ -10,28 +11,38 @@ export const useAiStore = defineStore("ai", {
             return response.data ?? [];
         },
 
-        async generate({userPrompt, yaml, conversationId, providerId, type}: {userPrompt: string, yaml: string, conversationId: string, providerId?: string, type: AiGenerationType}) {
+        async generate({userPrompt, yaml, conversationId, providerId, type}: {userPrompt: string, yaml?: string, conversationId: string, providerId?: string, type: AiGenerationType}) {
             const response = await axios.post(`${apiUrl()}/ai/generate/${type}`, {
                 userPrompt,
-                yaml,
                 conversationId,
-                providerId
+                providerId,
+                ...(yaml !== undefined ? {yaml} : {}),
+            }, {
+                headers: {
+                    "X-Kestra-User-Id": getUid()
+                }
             });
 
-            return response.data;
+            const remainingQuota = response.headers["x-kestra-ai-quota"];
+            return {data: response.data, remainingQuota: remainingQuota ?? undefined};
         },
 
-        async generateFlow({userPrompt, yaml, conversationId, providerId, namespace, tenantId}: {userPrompt: string, yaml: string, conversationId: string, providerId?: string, namespace?: string, tenantId?: string, type: AiGenerationType}) {
+        async generateFlow({userPrompt, yaml, conversationId, providerId, namespace, tenantId}: {userPrompt: string, yaml?: string, conversationId: string, providerId?: string, namespace?: string, tenantId?: string, type: AiGenerationType}) {
             const response = await axios.post(`${apiUrl()}/ai/generate/flow`, {
                 userPrompt,
-                yaml,
                 conversationId,
                 providerId,
                 namespace,
-                tenantId
+                tenantId,
+                ...(yaml !== undefined ? {yaml} : {}),
+            }, {
+                headers: {
+                    "X-Kestra-User-Id": getUid()
+                }
             });
 
-            return response.data;
+            const remainingQuota = response.headers["x-kestra-ai-quota"];
+            return {data: response.data, remainingQuota: remainingQuota ?? undefined};
         }
 
     }

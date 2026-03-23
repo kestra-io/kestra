@@ -1678,6 +1678,7 @@
       }
     },
     "save task": "Zapisz Task",
+    "save_and_execute": "Zapisz i Wykonaj",
     "saved": "Pomyślnie zapisano",
     "saved done": "<em>{name}</em> został pomyślnie zapisany",
     "scheduleDate": "Data harmonogramu",
@@ -2056,6 +2057,108 @@
         "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Samouczki wideo</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Dokumentacja</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprinty</a>",
         "title": "Samouczek"
       }
+    },
+    "welcome_copilot": {
+      "button_cta": "Utwórz flow od podstaw",
+      "execute_hint": {
+        "description": "Kliknij, aby zapisać swój workflow i uruchomić go natychmiast.",
+        "title": "Zapisz i wykonaj swój flow"
+      },
+      "flows": {
+        "buildDbtPipeline": {
+          "label": "Zbuduj pipeline dbt",
+          "prompt": "Utwórz flow Kestra, który klonuje repozytorium projektu dbt i uruchamia dbt build z profilem DuckDB."
+        },
+        "buildDockerImageAndRunIt": {
+          "label": "Zbuduj obraz Docker i uruchom go",
+          "prompt": "Utwórz flow Kestra, który buduje obraz Docker z wbudowanego Dockerfile i uruchamia wynikowy kontener."
+        },
+        "convertCsvToExcel": {
+          "label": "Konwertuj CSV na Excel",
+          "prompt": "Utwórz flow, który pobiera plik CSV, konwertuje go na Ion i eksportuje wynik jako plik Excel."
+        },
+        "etlWorkflow": {
+          "label": "Przepływ pracy ETL",
+          "prompt": "Utwórz flow ETL, który pobiera dane JSON, przetwarza je za pomocą Pythona i zapytuje przekształcony wynik za pomocą DuckDB."
+        },
+        "installNginxViaAnsible": {
+          "label": "Zainstaluj Nginx za pomocą Ansible",
+          "prompt": "Utwórz flow Kestra, który instaluje Nginx na docelowej maszynie za pomocą Ansible i weryfikuje zainstalowaną wersję."
+        },
+        "jsonApiToDuckdb": {
+          "label": "JSON API do DuckDB",
+          "prompt": "Utwórz flow, który pobiera plik JSON z publicznego API, przekształca go za pomocą skryptu Python, a następnie przetwarza za pomocą zadania DuckDB Queries."
+        },
+        "manualApproval": {
+          "label": "Ręczna akceptacja",
+          "prompt": "Utwórz flow z początkowym krokiem przetwarzania, przerwą na ręczne zatwierdzenie i końcowym krokiem wdrożenia po zatwierdzeniu."
+        },
+        "microservicesApis": {
+          "label": "Mikrousługi i API",
+          "prompt": "Utwórz flow, który sprawdza odpowiedź API strony internetowej i wysyła alert Slack, gdy kod statusu nie jest sukcesem."
+        },
+        "scheduledPdfReports": {
+          "label": "Zaplanowane raporty PDF",
+          "prompt": "Utwórz zaplanowany flow, który pobiera raport PDF i wysyła powiadomienie Slack, gdy raport jest gotowy."
+        },
+        "weeklySalesKpisToSlack": {
+          "label": "Tygodniowe KPI sprzedaży do Slack",
+          "prompt": "Utwórz cotygodniowy zaplanowany flow, który oblicza KPI sprzedaży za pomocą DuckDB i publikuje podsumowanie na Slack."
+        }
+      },
+      "help": {
+        "blueprints": {
+          "description": "Odkryj gotowe do użycia przykłady i szablony dla typowych wzorców workflow.",
+          "title": "Blueprinty"
+        },
+        "slack": {
+          "description": "Dołącz do nas, aby dzielić się pomysłami i najlepszymi praktykami oraz uzyskać pomoc w kwestiach technicznych.",
+          "title": "Społeczność Slack"
+        },
+        "tutorial": {
+          "description": "Dowiedz się, jak utworzyć i uruchomić swój pierwszy flow z przewodnikiem krok po kroku.",
+          "title": "Rozpocznij samouczek"
+        }
+      },
+      "need_help": "Potrzebujesz pomocy?",
+      "placeholder_prompt": "Wyślij mi codzienną wiadomość powitalną o 9 rano.",
+      "remaining_quota": "Masz {count} generacji AI pozostałych",
+      "show_less": "Pokaż mniej podpowiedzi",
+      "show_more": "Pokaż więcej podpowiedzi",
+      "success_page": {
+        "description": "Poznałeś podstawy Kestra. Oto kilka zasobów, które pomogą Ci kontynuować podróż.",
+        "items": {
+          "blueprints": {
+            "description": "Szablony przepływów pracy dla typowych przypadków użycia",
+            "title": "Blueprinty"
+          },
+          "demo": {
+            "description": "Eksploruj Kestra Enterprise Edition z spersonalizowaną demonstracją",
+            "title": "Uzyskaj demo"
+          },
+          "slack": {
+            "description": "Połącz się z innymi użytkownikami i uzyskaj pomoc od społeczności",
+            "title": "Społeczność Slack"
+          },
+          "tutorial": {
+            "description": "Interaktywny przewodnik po wszystkich funkcjach Kestra",
+            "title": "Rozpocznij samouczek"
+          },
+          "videos": {
+            "description": "Przewodniki wideo krok po kroku dla zaawansowanych funkcji",
+            "title": "Samouczki wideo"
+          }
+        },
+        "restart": "Uruchom ponownie samouczek",
+        "title": "Wszystko gotowe!"
+      },
+      "success_popup": {
+        "description": "Pomyślnie wykonałeś swój pierwszy flow! Jesteś na dobrej drodze do zostania ekspertem Kestra.",
+        "explore": "Odkryj więcej",
+        "title": "Gratulacje!",
+        "tutorial": "Samouczek dogłębny"
+      },
+      "title": "Zamień swój pomysł na workflow"
     },
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",

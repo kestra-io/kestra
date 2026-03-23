@@ -103,7 +103,7 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.ENDS_WITH]: "Ends With",
     [Comparators.CONTAINS]: "Contains",
     [Comparators.REGEX]: "Matches Pattern",
-    [Comparators.PREFIX]: "Hierarchy",
+    [Comparators.PREFIX]: "Namespace Prefix",
 };
 
 export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {

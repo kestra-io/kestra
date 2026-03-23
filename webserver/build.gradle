@@ -16,6 +16,8 @@ dependencies {
     annotationProcessor project(':processor')
     implementation project(":core")
 
+    implementation "io.kestra.libs:copilot"
+
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
@@ -53,13 +55,17 @@ tasks.withType(JavaCompile).configureEach {
         "-Amicronaut.openapi.expand.version=${project.version}"
     ]
 }
-tasks.register('generateOpenapiSpec', Copy) {
-    def compileJavaProvider = tasks.named('compileJava')
+tasks.register('generateOpenapiSpec') {
+    dependsOn tasks.named('compileJava')
     def openapiSpecPath = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
+    def outputFile = file("${project.getParent().projectDir}/openapi.yml")
 
-    from(compileJavaProvider.map(compileTask -> compileTask.outputs.files.filter{File f -> f == file(openapiSpecPath)}.singleFile))
-    into file("${project.getParent().projectDir}")
-    rename { 'openapi.yml' }
+    inputs.file(openapiSpecPath)
+    outputs.file(outputFile)
+
+    doLast {
+        outputFile.bytes = openapiSpecPath.get().asFile.bytes
+    }
 }
 
 tasks.named('jar', Jar) {

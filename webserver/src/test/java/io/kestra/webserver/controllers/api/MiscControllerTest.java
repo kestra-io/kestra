@@ -49,6 +49,34 @@ class MiscControllerTest {
     private FlowRepositoryInterface flowRepository;
 
     @Test
+    void getExpressionFilters() {
+        List<String> response = client.toBlocking().retrieve(GET("/api/v1/pebble/filters"), Argument.LIST_OF_STRING);
+
+        assertThat(response).isNotNull();
+        assertThat(response).isNotEmpty();
+        // Kestra custom filters
+        assertThat(response).contains("jq", "toJson", "yaml", "slugify", "chunk", "flatten");
+        // Pebble core filters
+        assertThat(response).contains("capitalize", "upper", "lower", "trim", "first", "last");
+        // Should be sorted
+        assertThat(response).isSorted();
+    }
+
+    @Test
+    void getExpressionFunctions() {
+        List<String> response = client.toBlocking().retrieve(GET("/api/v1/pebble/functions"), Argument.LIST_OF_STRING);
+
+        assertThat(response).isNotNull();
+        assertThat(response).isNotEmpty();
+        // Kestra custom functions
+        assertThat(response).contains("now", "secret", "kv", "uuid", "json", "yaml");
+        // Pebble core functions
+        assertThat(response).contains("max", "min", "range");
+        // Should be sorted
+        assertThat(response).isSorted();
+    }
+
+    @Test
     void ping() {
         var response = client.toBlocking().retrieve("/ping", String.class);
 

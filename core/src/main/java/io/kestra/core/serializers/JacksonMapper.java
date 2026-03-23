@@ -24,7 +24,6 @@ import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.diff.JsonDiff;
 import io.kestra.core.plugins.PluginModule;
-import io.kestra.core.runners.RunContextModule;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
 import org.apache.commons.lang3.tuple.Pair;
@@ -146,7 +145,6 @@ public final class JacksonMapper {
             .registerModule(new ParameterNamesModule())
             .registerModules(new GuavaModule())
             .registerModule(new PluginModule())
-            .registerModule(new RunContextModule())
             .registerModule(durationDeserialization)
             .setTimeZone(TimeZone.getDefault());
     }

@@ -100,6 +100,7 @@
 );
 
 @use "element-plus/theme-chalk/src/dark/css-vars";
+@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
 :root {
     #{--kel-bg-color}: var(--ks-background-body);
@@ -163,4 +164,57 @@ html.dark {
     #{--kel-fill-color-blank}: var(--ks-gray-500);
 
     #{--kel-button-active-text-color}: var(--ks-content-primary);
+}
+
+// loading
+.kel-loading-mask {
+    -webkit-backdrop-filter: blur(3px) opacity(0.85);
+    backdrop-filter: blur(3px) opacity(0.85);
+    inset: 0;
+    background: none;
+    transition: backdrop-filter 0.2s;
+}
+
+// notifications
+.kel-notification {
+    --kel-notification-border-color: var(--ks-border-primary);
+    --kel-notification-title-color: var(--ks-content-primary);
+
+    .kel-notification__group {
+        flex-grow: 2;
+    }
+
+    .kel-notification__content {
+        text-align: left;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: var(--kel-font-size-small);
+        line-height: inherit;
+    }
+
+    &.kel-notification__large {
+        width: 70%;
+        @include res(xs) {
+            width: 95%;
+        }
+
+        @include res(md) {
+            width: 70%;
+        }
+
+        @include res(lg) {
+            width: 35%;
+            min-width: auto;
+        }
+    }
+}
+
+
+// message box
+.kel-message-box {
+    border: 1px solid var(--ks-border-primary);
+
+    .kel-message-box__headerbtn .kel-message-box__close {
+        color: var(--ks-content-primary);
+    }
 }

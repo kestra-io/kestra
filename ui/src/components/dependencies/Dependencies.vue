@@ -1,9 +1,9 @@
 <template>
-    <div v-if="!TESTING && isLoading" v-loading="true" class="h-100" />
+    <div v-if="!TESTING && isLoading" v-ks-loading="true" class="h-100" />
     <Empty v-else-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
     <ks-splitter v-else class="dependencies">
         <ks-splitter-panel id="graph" v-bind="PANEL">
-            <div v-loading="isRendering" ref="container" />
+            <div v-ks-loading="isRendering" ref="container" />
 
             <div class="controls">
                 <ks-button

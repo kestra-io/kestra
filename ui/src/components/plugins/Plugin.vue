@@ -63,7 +63,7 @@
         </template>
         <template #content>
             <div class="plugin-doc" v-if="pluginsStore.plugin">
-                <Suspense v-loading="isLoading">
+                <Suspense v-ks-loading="isLoading">
                     <SchemaToHtml
                         class="plugin-schema"
                         :darkMode="miscStore.theme === 'dark'"

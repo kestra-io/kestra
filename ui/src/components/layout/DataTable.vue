@@ -6,7 +6,7 @@
             </Collapse>
         </nav>
 
-        <ks-container direction="vertical" v-loading="isLoading">
+        <ks-container direction="vertical" v-ks-loading="isLoading">
             <slot name="top" />
 
             <slot name="table" />

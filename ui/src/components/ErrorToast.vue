@@ -127,7 +127,7 @@
             type: props.message.variant || "error",
             duration: 0,
             dangerouslyUseHTMLString: true,
-            customClass: "error-notification large"
+            customClass: "error-notification kel-notification__large"
         });
     });
 </script>

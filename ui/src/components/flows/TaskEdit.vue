@@ -14,7 +14,7 @@
                 <code>{{ taskId || task?.id || $t("add task") }}</code>
             </template>
             <template #footer>
-                <div v-loading="isLoading">
+                <div v-ks-loading="isLoading">
                     <ValidationError class="me-2" link :errors="errors" />
 
                     <ks-button

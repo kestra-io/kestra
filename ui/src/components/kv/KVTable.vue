@@ -63,7 +63,7 @@
                         :label="$t('key')"
                     >
                         <template #default="scope">
-                            <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                            <KsId v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
                         </template>
                     </ks-table-column>
                     <ks-table-column
@@ -258,7 +258,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import Id from "../Id.vue";
+    import {KsId} from "@kestra-io/ui-design-system";
     import IconButton from "../IconButton.vue";
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";

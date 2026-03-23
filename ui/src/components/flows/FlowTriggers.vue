@@ -50,7 +50,7 @@
         >
             <template #default="scope">
                 <template v-if="column.prop === 'workerId'">
-                    <Id
+                    <KsId
                         :value="scope.row.workerId"
                         :shrink="true"
                     />
@@ -276,7 +276,7 @@
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
 
-    import Id from "../Id.vue";
+    import {KsId} from "@kestra-io/ui-design-system";
     import IconButton from "../IconButton.vue";
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";

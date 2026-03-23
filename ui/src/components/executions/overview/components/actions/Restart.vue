@@ -64,9 +64,9 @@
                 {{ t("restart") }}
             </el-button>
         </template>
-    </el-dialog>
+    </ks-dialog>
 
-    <el-dialog
+    <ks-dialog
         v-if="enabled && isOpen && isReplay"
         v-model="isOpen"
         destroyOnClose
@@ -86,7 +86,7 @@
             <p class="mb-0">
                 {{ t("replay execution description") }}
             </p>
-            <Id :value="execution.id" :shrink="false" />
+            <KsId :value="execution.id" :shrink="false" />
 
             <h4 class="section-title">
                 {{ t("replay using") }}:
@@ -190,7 +190,7 @@
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import Id from "../../../../Id.vue"
+    import {KsId} from "@kestra-io/ui-design-system"
 
     defineOptions({inheritAttrs: false})
 

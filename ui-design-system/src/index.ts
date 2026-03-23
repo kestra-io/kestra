@@ -36,6 +36,7 @@ import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vu
 import KsEmpty from "./components/Data/KsEmpty.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
+import KsId from "./components/Data/KsId.vue"
 import KsIcon from "./components/Basic/KsIcon.vue"
 import KsInput from "./components/Form/KsInput.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
@@ -110,6 +111,7 @@ export {
     KsEmpty,
     KsForm,
     KsFormItem,
+    KsId,
     KsIcon,
     KsInput,
     KsInputNumber,
@@ -187,6 +189,7 @@ const KestraDesignSystem = {
         app.component("KsEmpty", KsEmpty)
         app.component("KsForm", KsForm)
         app.component("KsFormItem", KsFormItem)
+        app.component("KsId", KsId)
         app.component("KsIcon", KsIcon)
         app.component("KsInput", KsInput)
         app.component("KsInputNumber", KsInputNumber)
@@ -263,6 +266,7 @@ declare module "vue" {
         KsEmpty: typeof KsEmpty
         KsForm: typeof KsForm
         KsFormItem: typeof KsFormItem
+        KsId: typeof KsId
         KsIcon: typeof KsIcon
         KsInput: typeof KsInput
         KsInputNumber: typeof KsInputNumber

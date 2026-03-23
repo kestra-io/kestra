@@ -40,7 +40,7 @@
                         :label="keyOnly ? $t('secret.names') : $t('key')"
                     >
                         <template #default="scope">
-                            <Id v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
+                            <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
                         </template>
                     </ks-table-column>
 
@@ -236,7 +236,7 @@
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import Id from "../Id.vue";
+    import {KsId} from "@kestra-io/ui-design-system";
     import IconButton from "../IconButton.vue";
     import Labels from "../layout/Labels.vue";
     import KSFilter from "../filter/components/KSFilter.vue";

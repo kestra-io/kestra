@@ -161,7 +161,7 @@
                                     {{ invisibleSpace(scope.row.namespace) }}
                                 </template>
                                 <template v-else-if="col.prop === 'workerId'">
-                                    <Id
+                                    <KsId
                                         :value="scope.row.workerId"
                                         :shrink="true"
                                     />
@@ -358,7 +358,7 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import Id from "../Id.vue";
+    import {KsId} from "@kestra-io/ui-design-system";
     import IconButton from "../IconButton.vue";
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";

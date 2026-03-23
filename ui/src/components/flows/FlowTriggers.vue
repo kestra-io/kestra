@@ -247,7 +247,7 @@
         </template>
     </ks-dialog>
 
-    <Drawer
+    <ks-drawer
         v-if="isOpen"
         v-model="isOpen"
     >
@@ -257,7 +257,7 @@
 
         <Markdown v-if="triggerDefinition && (triggerDefinition as any).description" :source="(triggerDefinition as any).description" />
         <Vars :data="modalData" />
-    </Drawer>
+    </ks-drawer>
 </template>
 
 <script setup lang="ts">
@@ -279,7 +279,6 @@
 
     import Id from "../Id.vue";
     import IconButton from "../IconButton.vue";
-    import Drawer from "../Drawer.vue";
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
     import Vars from "../executions/Vars.vue";
@@ -292,7 +291,7 @@
 
     import action from "../../models/action";
     import permission from "../../models/permission";
-    
+
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
 
@@ -329,28 +328,28 @@
 
     const localOptionalColumns = ref([
         {
-            label: t("type"), 
-            prop: "type", 
-            default: true, 
+            label: t("type"),
+            prop: "type",
+            default: true,
             description: t("filter.table_column.flow_triggers.type")
         },
         {
-            label: t("workerId"), 
-            prop: "workerId", 
-            default: false, 
+            label: t("workerId"),
+            prop: "workerId",
+            default: false,
             description: t("filter.table_column.flow_triggers.workerId")
         },
         {
             label: t("next evaluation date"),
             prop: "nextEvaluationDate",
-            default: true, 
+            default: true,
             description: t("filter.table_column.flow_triggers.next execution date")
         }
     ]);
 
     const {
-        orderedColumns, 
-        visibleColumns: displayColumns, 
+        orderedColumns,
+        visibleColumns: displayColumns,
         updateVisibleColumns: updateDisplayColumns
     } = useTableColumns({
         columns: localOptionalColumns.value,

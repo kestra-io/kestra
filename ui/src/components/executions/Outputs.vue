@@ -3,19 +3,18 @@
         {{ $t("outputs") }}
     </ks-dropdown-item>
 
-    <Drawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
+    <ks-drawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
         <Vars
             :execution="props.execution"
             class="table-unrounded mt-1"
             :data="props.outputs"
         />
-    </Drawer>
+    </ks-drawer>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, type PropType} from "vue";
 
-    import Drawer from "../Drawer.vue";
     import Vars from "../executions/Vars.vue";
 
     import LocationExit from "vue-material-design-icons/LocationExit.vue";

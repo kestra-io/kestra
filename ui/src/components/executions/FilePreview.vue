@@ -8,7 +8,7 @@
     >
         {{ $t("preview.label") }}
     </ks-button>
-    <Drawer
+    <ks-drawer
         v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
     >
@@ -97,7 +97,7 @@
                 </template>
             </Editor>
         </template>
-    </Drawer>
+    </ks-drawer>
 </template>
 
 <script setup lang="ts">
@@ -109,7 +109,6 @@
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
     import Markdown from "../layout/Markdown.vue";
-    import Drawer from "../Drawer.vue";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 

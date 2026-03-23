@@ -7,13 +7,13 @@
             />
         </a>
 
-        <Drawer
+        <ks-drawer
             v-if="isOpen"
             v-model="isOpen"
             :title="title"
         >
             <Markdown class="markdown-tooltip" :source="description" />
-        </Drawer>
+        </ks-drawer>
     </span>
 </template>
 
@@ -21,7 +21,6 @@
     import {ref} from "vue";
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
     import Markdown from "./Markdown.vue";
-    import Drawer from "../Drawer.vue";
 
     defineProps({
         id: {

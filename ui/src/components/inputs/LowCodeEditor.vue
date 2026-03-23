@@ -32,7 +32,7 @@
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
 
-        <Drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
+        <ks-drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
                 <code>{{ selectedTask.id }}</code>
             </template>
@@ -84,7 +84,7 @@
                     class="mt-3"
                 />
             </div>
-        </Drawer>
+        </ks-drawer>
     </div>
 </template>
 
@@ -101,7 +101,6 @@
     // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Collapse from "../layout/Collapse.vue";
-    import Drawer from "../Drawer.vue";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 

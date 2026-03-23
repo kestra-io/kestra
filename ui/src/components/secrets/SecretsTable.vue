@@ -18,7 +18,7 @@
                     @update-properties="updateDisplayColumns"
                 />
             </template>
-            
+
             <template #table>
                 <SelectTable
                     :data="secrets"
@@ -32,8 +32,8 @@
                     class="fill-height"
                     :rowKey="(row: any) => `${row.namespace}-${row.key}`"
                 >
-                    <ks-table-column 
-                        prop="key" 
+                    <ks-table-column
+                        prop="key"
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="keyOnly ? $t('secret.names') : $t('key')"
@@ -72,7 +72,7 @@
 
                     <ks-table-column columnKey="locked" className="row-action">
                         <template #default="scope">
-                            <ks-tooltip 
+                            <ks-tooltip
                                 v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                                 transition=""
                                 :hideAfter="0"
@@ -101,7 +101,7 @@
                         </template>
                     </ks-table-column>
 
-                    <ks-table-column 
+                    <ks-table-column
                         v-if="!keyOnly && !paneView"
                         columnKey="update"
                         className="row-action"
@@ -118,7 +118,7 @@
                         </template>
                     </ks-table-column>
 
-                    <ks-table-column 
+                    <ks-table-column
                         v-if="!keyOnly && !paneView"
                         columnKey="delete"
                         className="row-action"
@@ -138,7 +138,7 @@
             </template>
         </DataTable>
 
-        <Drawer
+        <ks-drawer
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
@@ -165,7 +165,7 @@
                 </ks-form-item>
                 <ks-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
                     <ks-col :span="20">
-                        <MultilineSecret 
+                        <MultilineSecret
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
@@ -182,7 +182,7 @@
                     </ks-col>
                 </ks-form-item>
                 <ks-form-item :label="$t('secret.description')" prop="description">
-                    <ks-input 
+                    <ks-input
                         v-model="secret.description"
                         :placeholder="$t('secret.descriptionPlaceholder')"
                         required
@@ -214,7 +214,7 @@
                     {{ $t('save') }}
                 </ks-button>
             </template>
-        </Drawer>
+        </ks-drawer>
     </div>
 </template>
 
@@ -237,7 +237,6 @@
 
     import Id from "../Id.vue";
     import IconButton from "../IconButton.vue";
-    import Drawer from "../Drawer.vue";
     import Labels from "../layout/Labels.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import DataTable from "../layout/DataTable.vue";
@@ -256,7 +255,7 @@
     import {useSecretsFilter} from "../filter/configurations";
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
-    
+
     const secretsFilter = useSecretsFilter();
 
     interface SecretForm {
@@ -330,25 +329,25 @@
     const optionalColumns = computed(() => {
         const columns = [
             {
-                label: t("namespace"), 
-                prop: "namespace", 
-                default: true, 
+                label: t("namespace"),
+                prop: "namespace",
+                default: true,
                 description: t("filter.table_column.secrets.namespace")
             },
             {
-                label: t("description"), 
-                prop: "description", 
-                default: true, 
+                label: t("description"),
+                prop: "description",
+                default: true,
                 description: t("filter.table_column.secrets.description")
             },
             {
-                label: t("tags"), 
-                prop: "tags", 
+                label: t("tags"),
+                prop: "tags",
                 default: true,
                 description: t("filter.table_column.secrets.tags")
             }
         ];
-        
+
         return columns.filter(col => {
             if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false;
             if (col.prop === "description" && props.keyOnly) return false;
@@ -362,15 +361,15 @@
         storageKey: storageKey
     });
 
-    const visibleColumns = computed(() => 
+    const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
             ?.filter(Boolean) as any[]
     );
 
     const secretModalTitle = computed(() => {
-        return secret.value?.update 
-            ? t("secret.update", {name: secret.value?.key}) 
+        return secret.value?.update
+            ? t("secret.update", {name: secret.value?.key})
             : t("secret.add");
     });
 
@@ -469,12 +468,12 @@
             }));
 
             emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
-            
+
             let allSecrets = secretsResponse.results ?? [];
 
             if (props.includeInherited && props.namespace) {
                 const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
-                
+
                 for (const parentNs of parentNamespaces) {
                     const parentSecretsResponse = await secretsStore.find(loadQuery({
                         filters: {

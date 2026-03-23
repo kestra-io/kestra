@@ -48,6 +48,7 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import jakarta.annotation.Nullable;
@@ -558,7 +559,9 @@ public class JdbcExecutor implements ExecutorInterface {
             return;
         }
 
-        Executor result = executionRepository.lock(message.getId(), pair -> {
+        Executor result;
+        try {
+            result = executionRepository.lock(message.getId(), pair -> {
             Execution execution = pair.getLeft();
             ExecutorState executorState = pair.getRight();
 
@@ -770,6 +773,15 @@ public class JdbcExecutor implements ExecutorInterface {
                 }
             );
         });
+        } catch (UnexpectedRollbackException e) {
+            log.warn("Transaction rolled back while processing execution {}, re-emitting for reprocessing", message.getId(), e);
+            try {
+                executionQueue.emit(message);
+            } catch (QueueException qe) {
+                log.error("Unable to re-emit execution {} after transaction rollback", message.getId(), qe);
+            }
+            return;
+        }
 
         if (result != null) {
             this.toExecution(result);
@@ -803,7 +815,9 @@ public class JdbcExecutor implements ExecutorInterface {
             executorService.log(log, true, message);
         }
 
-        Executor executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {
+        Executor executor;
+        try {
+            executor = executionRepository.lock(message.getTaskRun().getExecutionId(), pair -> {
             Execution execution = pair.getLeft();
             Executor current = new Executor(execution, null);
 
@@ -843,6 +857,15 @@ public class JdbcExecutor implements ExecutorInterface {
 
             return null;
         });
+        } catch (UnexpectedRollbackException e) {
+            log.warn("Transaction rolled back while processing worker task result for execution {}, re-emitting for reprocessing", message.getTaskRun().getExecutionId(), e);
+            try {
+                workerTaskResultQueue.emit(message);
+            } catch (QueueException qe) {
+                log.error("Unable to re-emit worker task result for execution {} after transaction rollback", message.getTaskRun().getExecutionId(), qe);
+            }
+            return;
+        }
 
         if (executor != null) {
             this.toExecution(executor);

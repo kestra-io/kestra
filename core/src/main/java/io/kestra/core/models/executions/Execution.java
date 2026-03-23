@@ -42,6 +42,7 @@ import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -562,14 +563,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return Collections.emptyList();
         }
 
+        Map<String, List<ResolvedTask>> resolvedTasksByIds = resolvedTasks.stream().collect(Collectors.groupingBy(
+            resolvedTask -> resolvedTask.getTask().getId()
+        ));
+
         return this
             .getTaskRunList()
             .stream()
-            .filter(t -> resolvedTasks
-                .stream()
-                .anyMatch(
-                    resolvedTask -> FlowableUtils.isTaskRunFor(resolvedTask, t, parentTaskRun))
-            )
+            .filter(t -> FlowableUtils.isResolvedTaskFor(t, parentTaskRun, resolvedTasksByIds))
             .toList();
     }
 

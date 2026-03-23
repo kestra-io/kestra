@@ -16,6 +16,7 @@ import io.kestra.plugin.core.flow.Dag;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -460,14 +461,13 @@ public class FlowableUtils {
         if (concurrency > 0 && runningCount > concurrency) {
             return Collections.emptyList();
         }
-
+        Map<String, List<TaskRun>> taskRunsByIds = taskRuns.stream().collect(Collectors.groupingBy(
+            TaskRun::getTaskId
+        ));
         // find all not created tasks
         List<ResolvedTask> notFinds = currentTasks
             .stream()
-            .filter(resolvedTask -> taskRuns
-                .stream()
-                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
-            )
+            .filter(resolvedTask -> !FlowableUtils.isTaskRunFor(resolvedTask, parentTaskRun, taskRunsByIds))
             .toList();
 
         // first created, leave
@@ -565,13 +565,39 @@ public class FlowableUtils {
         return result;
     }
 
-    public static boolean isTaskRunFor(ResolvedTask resolvedTask, TaskRun taskRun, TaskRun parentTaskRun) {
-        return resolvedTask.getTask().getId().equals(taskRun.getTaskId()) &&
-            (
-                parentTaskRun == null || parentTaskRun.getId().equals(taskRun.getParentTaskRunId())
-            ) &&
-            (
-                resolvedTask.getValue() == null || resolvedTask.getValue().equals(taskRun.getValue())
+    public static boolean isResolvedTaskFor(TaskRun taskRun, TaskRun parentTaskRun, Map<String, List<ResolvedTask>> resolvedTasksByIds) {
+        if (parentTaskRun != null && !parentTaskRun.getId().equals(taskRun.getParentTaskRunId())) {
+            return false;
+        }
+
+        List<ResolvedTask> matchingTasks = resolvedTasksByIds.get(taskRun.getTaskId());
+        if (matchingTasks == null) {
+            return false;
+        }
+
+        for (ResolvedTask rt : matchingTasks) {
+            if (rt.getValue() == null || rt.getValue().equals(taskRun.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isTaskRunFor(ResolvedTask resolvedTask, TaskRun parentTaskRun, Map<String, List<TaskRun>> taskRunsByIds) {
+        List<TaskRun> matchingRuns = taskRunsByIds.get(resolvedTask.getTask().getId());
+        if (matchingRuns == null) {
+            return false;
+        }
+
+        for (TaskRun tr : matchingRuns) {
+            boolean isMatch = (
+                parentTaskRun == null || parentTaskRun.getId().equals(tr.getParentTaskRunId())
+            ) && (
+                resolvedTask.getValue() == null || resolvedTask.getValue().equals(tr.getValue())
             );
+            
+            if (isMatch) return true;
+        }
+        return false;
     }
 }

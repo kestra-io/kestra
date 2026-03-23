@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalStorage;
@@ -115,16 +116,14 @@ public class RunContextInitializer {
         Map<String, Object> variables = new HashMap<>(data.variables());
         variables.put("task", RunVariables.of(task));
         variables.put("taskrun", RunVariables.of(taskRun));
-        variables.put("envs", runContextCache.getEnvVars());
-        variables.put("globals", runContextCache.getGlobalVars());
-        variables.put("kestra", buildKestraConfig());
+        enrichVariablesWithWorkerState(variables);
 
         // Handle workerTaskrun value propagation (for WorkingDirectory subtasks)
         Map<String, Object> workerTaskRun = (Map<String, Object>) variables.get("workerTaskrun");
         if (workerTaskRun != null && workerTaskRun.containsKey("value")) {
-            Map<String, Object> taskrunMap = new HashMap<>((Map<String, Object>) variables.get("taskrun"));
-            taskrunMap.put("value", workerTaskRun.get("value"));
-            variables.put("taskrun", taskrunMap);
+            Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) variables.get("taskrun"));
+            taskrun.put("value", workerTaskRun.get("value"));
+            variables.put("taskrun", taskrun);
         }
 
         // Rehydrate outputs (EE override point)
@@ -134,18 +133,11 @@ public class RunContextInitializer {
         }
 
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTask);
-        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
+        addSecretConsumer(variables, runContextLogger);
 
         variables = variablesModifier.apply(variables);
 
-        // Build a fresh RunContext
-        DefaultRunContext runContext = new DefaultRunContext.Builder()
-            .withVariables(variables)
-            .withSecretInputs(data.secretInputs())
-            .build();
-
-        runContext.init(applicationContext);
-        runContext.setTraceParent(data.traceParent());
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent());
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
@@ -244,34 +236,13 @@ public class RunContextInitializer {
 
         runContext.init(applicationContext);
 
-        final String triggerExecutionId = IdUtils.create();
         final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger);
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
-        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
-
-        final StorageContext context = StorageContext.forTrigger(
-            triggerContext.getTenantId(),
-            triggerContext.getNamespace(),
-            triggerContext.getFlowId(),
-            triggerExecutionId,
-            trigger.getId()
-        );
-
-        final InternalStorage storage = new InternalStorage(
-            runContextLogger.logger(),
-            context,
-            storageInterface,
-            namespaceService,
-            namespaceFactory
-        );
-
-        runContext.setLogger(runContextLogger);
+        addSecretConsumer(variables, runContextLogger);
         runContext.setVariables(variables);
-        runContext.setStorage(storage);
-        runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(trigger.getType(), trigger.getClass()));
-        runContext.setTriggerExecutionId(triggerExecutionId);
-        runContext.setTrigger(trigger);
+
+        configureTrigger(runContext, runContextLogger, triggerContext, trigger);
 
         return runContext;
     }
@@ -292,36 +263,13 @@ public class RunContextInitializer {
         Map<String, Object> variables = new HashMap<>(data.variables());
         variables.put("flow", RunVariables.of(flow(data)));
         variables.put("labels", data.flowLabels() != null ? io.kestra.core.models.Label.toNestedMap(data.flowLabels()) : Map.of());
-        variables.put("envs", runContextCache.getEnvVars());
-        variables.put("globals", runContextCache.getGlobalVars());
-        variables.put("kestra", buildKestraConfig());
+        enrichVariablesWithWorkerState(variables);
 
-        final String triggerExecutionId = IdUtils.create();
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTrigger.triggerId(), trigger);
-        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
+        addSecretConsumer(variables, runContextLogger);
 
-        // Build a fresh RunContext
-        DefaultRunContext runContext = new DefaultRunContext.Builder()
-            .withVariables(variables)
-            .withSecretInputs(data.secretInputs())
-            .build();
-
-        runContext.init(applicationContext);
-        runContext.setTraceParent(data.traceParent());
-
-        final StorageContext storageContext = StorageContext.forTrigger(
-            data.tenantId(),
-            data.namespace(),
-            data.flowId(),
-            triggerExecutionId,
-            trigger.getId()
-        );
-
-        runContext.setLogger(runContextLogger);
-        runContext.setStorage(new InternalStorage(runContextLogger.logger(), storageContext, storageInterface, namespaceService, namespaceFactory));
-        runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(trigger.getType(), trigger.getClass()));
-        runContext.setTriggerExecutionId(triggerExecutionId);
-        runContext.setTrigger(trigger);
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent());
+        configureTrigger(runContext, runContextLogger, workerTrigger.triggerId(), trigger);
 
         return ConditionContext.builder()
             .flow(flow(data))
@@ -329,6 +277,56 @@ public class RunContextInitializer {
             .variables(data.conditionVariables())
             .build();
     }
+    /**
+     * Adds the secret consumer to the variables map, wiring it to the given logger.
+     */
+    private static void addSecretConsumer(Map<String, Object> variables, RunContextLogger logger) {
+        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) logger::usedSecret);
+    }
+
+    /**
+     * Enriches the given variables map with locally available worker state:
+     * environment variables, global variables, and kestra configuration.
+     */
+    private void enrichVariablesWithWorkerState(Map<String, Object> variables) {
+        variables.put("envs", runContextCache.getEnvVars());
+        variables.put("globals", runContextCache.getGlobalVars());
+        variables.put("kestra", buildKestraConfig());
+    }
+
+    /**
+     * Builds a new {@link DefaultRunContext} from the given variables and secret inputs,
+     * initializes it with the application context, and sets the trace parent.
+     */
+    private DefaultRunContext buildAndInitRunContext(Map<String, Object> variables,
+                                                     List<String> secretInputs,
+                                                     String traceParent) {
+        DefaultRunContext runContext = new DefaultRunContext.Builder()
+            .withVariables(variables)
+            .withSecretInputs(secretInputs)
+            .build();
+        runContext.init(applicationContext);
+        runContext.setTraceParent(traceParent);
+        return runContext;
+    }
+
+    /**
+     * Configures the given {@link DefaultRunContext} for trigger execution.
+     */
+    private void configureTrigger(DefaultRunContext runContext, RunContextLogger runContextLogger, TriggerId triggerId, AbstractTrigger trigger) {
+        final String triggerExecutionId = IdUtils.create();
+
+        final StorageContext storageContext = StorageContext.forTrigger(
+            triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId(), triggerExecutionId, triggerId.getTriggerId()
+        );
+
+        runContext.setLogger(runContextLogger);
+        runContext.setStorage(new InternalStorage(runContextLogger.logger(), storageContext, storageInterface, namespaceService, namespaceFactory));
+        runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(trigger.getType(), trigger.getClass()));
+        runContext.setTriggerExecutionId(triggerExecutionId);
+        runContext.setTrigger(trigger);
+    }
+
     /**
      * Reconstructs a minimal {@link io.kestra.core.models.flows.GenericFlow} from
      * {@link WorkerTriggerData} fields.

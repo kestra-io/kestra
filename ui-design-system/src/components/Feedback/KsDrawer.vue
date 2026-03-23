@@ -10,11 +10,12 @@
 
     const props = withDefaults(defineProps<{
         modelValue?: boolean
+        title?: string
         closeOnClickModal?: boolean
         closeOnPressEscape?: boolean
         showClose?: boolean
         isFullScreen?: boolean
-        withHeader: boolean
+        withHeader?: boolean
     }>(), {
         closeOnClickModal: undefined,
         closeOnPressEscape: undefined,
@@ -57,13 +58,13 @@
         :class="{'full-screen': fullScreen}"
     >
         <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.header" #header>
+        <template v-if="$slots.header || props.title" #header>
             <span>
-                {{ title }}
+                {{ props.title }}
                 <slot name="header" />
             </span>
-            <ks-button link class="full-screen">
-                <Fullscreen @click="toggleFullScreen" />
+            <ks-button link @click="toggleFullScreen">
+                <Fullscreen class="full-screen"/>
             </ks-button>
         </template>
         <template v-if="$slots.footer" #footer><slot name="footer" /></template>
@@ -74,6 +75,17 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .kel-drawer {
+
+        .kel-drawer__header {
+            .full-screen {
+                > .material-design-icon__svg {
+                    width: 1.5rem;
+                    height: 1.5rem;
+                    bottom: -0.250rem;
+                }
+            }
+        }
+
         &.ltr,
         &.rtl {
             width: 70%;

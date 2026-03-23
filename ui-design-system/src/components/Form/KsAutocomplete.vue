@@ -38,7 +38,7 @@
 <template>
     <el-autocomplete
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
+        @update:model-value="emit('update:modelValue', $event as string)"
         @select="emit('select', $event)"
     >
         <template v-if="$slots.default" #default="p"><slot v-bind="p" /></template>

@@ -26,14 +26,14 @@ export const Default: Story = {
     args: {value: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"},
 }
 
-export const Shrunk: Story = {
+export const Shrink: Story = {
     render: () => ({
         components: {KsId},
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
-                <ks-id value="a1b2c3d4-e5f6-7890-abcd-ef1234567890" />
-                <ks-id value="a1b2c3d4-e5f6-7890-abcd-ef1234567890" :size="12" />
                 <ks-id value="a1b2c3d4-e5f6-7890-abcd-ef1234567890" :shrink="false" />
+                <ks-id value="a1b2c3d4-e5f6-7890-abcd-ef1234567890" :shrink="true" :size="12" />
+                <ks-id value="a1b2c3d4-e5f6-7890-abcd-ef1234567890" :shrink="true" />
             </div>
         `,
     }),

@@ -1,5 +1,5 @@
 import {computed, h, ref, watch} from "vue";
-import {ElMessageBox} from "element-plus";
+import {KsMessageBox} from "@kestra-io/ui-design-system";
 import permission from "../models/permission";
 import action from "../models/action";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -252,7 +252,7 @@ export const useFlowStore = defineStore("flow", () => {
         let overrideFlow = false;
         if (flowErrors.value) {
             if (flowValidation.value?.outdated && isCreating.value) {
-                overrideFlow = await ElMessageBox({
+                overrideFlow = await KsMessageBox({
                     title: t("override.title"),
                     message: () => {
                         return h("div", null, [
@@ -283,7 +283,7 @@ export const useFlowStore = defineStore("flow", () => {
                 isCreating.value = false;
             } catch (error: any) {
                 if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
-                    const shouldRedirect = await ElMessageBox({
+                    const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
                         message: () => h(Markdown, {source: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
                         type: "warning",

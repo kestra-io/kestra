@@ -19,7 +19,7 @@
         'extra-small': global-var.$font-size-xs,
     ),
 
-    $colors:  (
+    $colors: (
         'white': global-var.$white,
         'black': global-var.$black,
         'primary': (
@@ -42,26 +42,63 @@
         ),
     ),
 
+    $box-shadow: (
+        '': (
+            global-var.$box-shadow
+        ),
+        'light': (
+            global-var.$box-shadow-sm
+        ),
+        'lighter': (
+            global-var.$box-shadow-sm
+        ),
+        'dark': (
+            global-var.$box-shadow-lg
+        ),
+    ),
+
     $border-radius: (
         'base': global-var.$border-radius,
         'small': global-var.$border-radius-sm,
         'round': global-var.$border-radius-lg,
     ),
+
     $input: (
         'bg-color': var(--ks-background-input),
     ),
+
     $checkbox: (
         'bg-color': var(--ks-background-input),
     ),
+
     $radio: (
         'input-bg-color': var(--ks-background-input),
     ),
+
     $select: (
         'input-color': var(--ks-background-input),
     ),
 );
 
 @use "element-plus/theme-chalk/src/index.scss";
+
+@forward 'element-plus/theme-chalk/src/dark/var.scss' as dark-* with (
+    $box-shadow: (
+        '': (
+            global-var.$box-shadow
+        ),
+        'light': (
+            global-var.$box-shadow-sm
+        ),
+        'lighter': (
+            global-var.$box-shadow-sm
+        ),
+        'dark': (
+            global-var.$box-shadow-lg
+        ),
+    ),
+);
+
 @use "element-plus/theme-chalk/src/dark/css-vars";
 
 :root {
@@ -91,12 +128,6 @@
     #{--kel-fill-color-dark}: var(--ks-gray-400); // used in buttons .is-text when active
     #{--kel-fill-color-darker}: var(--ks-gray-500); // not used at kestra
     #{--kel-fill-color-blank}: var(--ks-white); // used in many places --kel-input-background-color
-
-
-    #{--kel-box-shadow}: 0 .5rem 1rem rgba(#000, .15);
-    #{--kel-box-shadow-light}: 0 .125rem .25rem rgba(#000, .075);
-    #{--kel-box-shadow-lighter}: 0 1rem 3rem rgba(#000, .175);
-    #{--kel-box-shadow-dark}: 0 1rem 3rem rgba(#000, .175);
 
     #{--kel-menu-hover-bg-color}: var(--ks-button-background-secondary);
     #{--kel-menu-hover-text-color}: var(--ks-content-primary);

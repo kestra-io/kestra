@@ -13,10 +13,16 @@ $font-size-2xl : $font-size-base * 2.188;
 $font-size-3xl : $font-size-base * 3;
 $font-size-4xl : $font-size-base * 3.75;
 
-// grey
+// base colors
 $black: #14181f;
 $white: #ffffff;
 
+// shadow
+$box-shadow: 0 .5rem 1rem rgba($black, .15);
+$box-shadow-sm: 0 .125rem .25rem rgba($black, .075);
+$box-shadow-lg: 0 1rem 3rem rgba($black, .175);
+
+// grey
 $gray-50: #f9f9fa;
 $gray-100: #ecebef;
 $gray-200: #cfd3d6;

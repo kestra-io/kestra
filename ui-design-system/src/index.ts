@@ -2,6 +2,9 @@ import type {App} from "vue"
 import ElementPlus, {INSTALLED_KEY} from "element-plus"
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
+import {KsMessage} from "./components/Feedback/KsMessage"
+import {KsMessageBox} from "./components/Feedback/KsMessageBox"
+import {KsNotification} from "./components/Feedback/KsNotification"
 import KsConfigProvider from "./components/Configuration/KsConfigProvider.vue"
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
@@ -73,6 +76,9 @@ import KsUpload from "./components/Form/KsUpload.vue"
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {
     KsAlert,
+    KsMessage,
+    KsMessageBox,
+    KsNotification,
     KsAutocomplete,
     KsConfigProvider,
     KsAvatar,

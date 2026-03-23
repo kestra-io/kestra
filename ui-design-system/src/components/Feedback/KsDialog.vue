@@ -80,7 +80,7 @@
             border-top-right-radius: var(--kel-border-radius-round);
             border-top-left-radius: var(--kel-border-radius-round);
             background: var(--ks-dialog-header);
-            font-size: var(--font-size-lg);
+            font-size: var(--kel-font-size-medium);
 
             .kel-dialog__headerbtn {
                 height: 62px;

@@ -11,7 +11,8 @@
 <script setup lang="ts">
     import {computed, ref, h} from "vue";
 
-    import {ElCheckbox, ElMessageBox} from "element-plus";
+    import {ElCheckbox} from "element-plus";
+    import {KsMessageBox} from "@kestra-io/ui-design-system";
 
     import {
         Execution,
@@ -63,7 +64,7 @@
         const deleteMetrics = ref(true);
         const deleteStorage = ref(true);
 
-        ElMessageBox({
+        KsMessageBox({
             boxType: "confirm",
             title: t("confirmation"),
             showCancelButton: true,

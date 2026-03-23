@@ -77,7 +77,7 @@
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {ElMessage} from "element-plus"
+    import {KsMessage} from "@kestra-io/ui-design-system"
     import type {FormInstance} from "element-plus"
     import axios from "axios"
     import MailChecker from "mailchecker"
@@ -192,19 +192,19 @@
             const errors = await miscStore.loadBasicAuthValidationErrors()
             if (errors?.length) {
                 errors.forEach((error: string) => {
-                    ElMessage.error({
+                    KsMessage.error({
                         message: `${error}. ${t("setup.validation.config_message")}`,
                         duration: 5000,
                         showClose: false
                     })
                 })
             } else {
-                ElMessage.error({
+                KsMessage.error({
                     message: t("setup.validation.incorrect_creds")
                 })
             }
         } catch {
-            ElMessage.error({
+            KsMessage.error({
                 message: t("setup.validation.incorrect_creds")
             })
         }
@@ -267,7 +267,7 @@
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {
-                ElMessage.error("Login failed")
+                KsMessage.error("Login failed")
             }
         } finally {
             isLoading.value = false

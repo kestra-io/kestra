@@ -1,101 +1,106 @@
 import path from "path";
-import {defineConfig} from "vite";
+import {defineConfig, loadEnv} from "vite";
 import vue from "@vitejs/plugin-vue";
 
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
-export default defineConfig({
-    base: "",
-    build: {
-        outDir: "../webserver/src/main/resources/ui",
-        rollupOptions: {
-            output: {
-                advancedChunks: {
-                    groups: [
-                        {
-                            test: /src\/components\/dashboard/i,
-                            name: "dashboard",
-                        },
-                        {
-                            test: /src\/components\/flows/i,
-                            name: "flows",
-                        },
-                        {
-                            test: /(shiki\/langs)|(src\/utils\/markdownDeps)/,
-                            name: "markdownDeps",
-                        },
-                    ],
-                }
-            }
-        }
-    },
-    server: {
-        proxy: {
-            "^/api": {
-                target: "http://localhost:8080",
-                ws: true,
-                changeOrigin: true
-            }
-        },
-        fs: {
-            allow: [".", "../ui-design-system"]
-        }
-    },
-    resolve: {
-        alias: {
-            "override": path.resolve(__dirname, "src/override/"),
-            "kestra-api": path.resolve(__dirname, "src/generated/kestra-api/"),
-            "#imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "@storybook/addon-actions": "storybook/actions",
-        },
-    },
-    plugins: [
-        vue({
-            template: {
-                compilerOptions: {
-                    isCustomElement: (tag) => {
-                        return tag === "rapi-doc";
+export default defineConfig(({mode}) => {
+    process.env = {...process.env, ...loadEnv(mode, process.cwd())};
+
+    return {
+        base: "",
+        build: {
+            outDir: "../webserver/src/main/resources/ui",
+            rollupOptions: {
+                output: {
+                    advancedChunks: {
+                        groups: [
+                            {
+                                test: /src\/components\/dashboard/i,
+                                name: "dashboard",
+                            },
+                            {
+                                test: /src\/components\/flows/i,
+                                name: "flows",
+                            },
+                            {
+                                test: /(shiki\/langs)|(src\/utils\/markdownDeps)/,
+                                name: "markdownDeps",
+                            },
+                        ],
                     }
                 }
             }
-        }),
-        commit(),
-        codecovVitePlugin({
-            enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
-            bundleName: "ui",
-            uploadToken: process.env.CODECOV_TOKEN,
-            telemetry: false
-        }),
-    ],
-    assetsInclude: ["**/*.md"],
-    css: {
-        devSourcemap: true,
-        preprocessorOptions: {
-            scss: {
-                silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
+        },
+        server: {
+            proxy: {
+                "^/api": {
+                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    ws: true,
+                    changeOrigin: true
+                }
             },
-        }
-    },
-    optimizeDeps: {
-        include: [
-            "lodash",
-            // the 3 dependencies below are used by ui-libs
-            // optimizing them allows storybook to run properly
-            // without allowing interop in typescript
-            "dayjs",
-            "debug",
-            "@braintree/sanitize-url",
-            "monaco-yaml/yaml.worker",
-            "lodash-es",
-            "nprogress"
+            fs: {
+                allow: [".", "../ui-design-system"]
+            }
+        },
+        resolve: {
+            alias: [
+                {find: /^@kestra-io\/ui-design-system$/, replacement: path.resolve(__dirname, "../ui-design-system/src/index.ts")},
+                {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+                {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
+                {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "#build/mdc-image-component.mjs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "#mdc-imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "#mdc-configs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "@storybook/addon-actions", replacement: "storybook/actions"},
+            ],
+        },
+        plugins: [
+            vue({
+                template: {
+                    compilerOptions: {
+                        isCustomElement: (tag) => {
+                            return tag === "rapi-doc";
+                        }
+                    }
+                }
+            }),
+            commit(),
+            codecovVitePlugin({
+                enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+                bundleName: "ui",
+                uploadToken: process.env.CODECOV_TOKEN,
+                telemetry: false
+            }),
         ],
-        exclude: [
-            "* > @kestra-io/ui-libs",
-            "@kestra-io/ui-design-system"
-        ]
-    },
-})
+        assetsInclude: ["**/*.md"],
+        css: {
+            devSourcemap: true,
+            preprocessorOptions: {
+                scss: {
+                    silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
+                },
+            }
+        },
+        optimizeDeps: {
+            include: [
+                "lodash",
+                // the 3 dependencies below are used by ui-libs
+                // optimizing them allows storybook to run properly
+                // without allowing interop in typescript
+                "dayjs",
+                "debug",
+                "@braintree/sanitize-url",
+                "monaco-yaml/yaml.worker",
+                "lodash-es",
+                "nprogress"
+            ],
+            exclude: [
+                "* > @kestra-io/ui-libs",
+                "@kestra-io/ui-design-system"
+            ]
+        },
+    };
+});

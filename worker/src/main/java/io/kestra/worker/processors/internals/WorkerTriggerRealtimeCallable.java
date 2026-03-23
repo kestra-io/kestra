@@ -1,5 +1,6 @@
 package io.kestra.worker.processors.internals;
 
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
@@ -15,11 +16,13 @@ import static io.kestra.core.models.flows.State.Type.SUCCESS;
 
 public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable {
     RealtimeTriggerInterface streamingTrigger;
+    ConditionContext conditionContext;
     Consumer<? super Throwable> onError;
     Consumer<Execution> onNext;
 
     public WorkerTriggerRealtimeCallable(
         RunContext runContext,
+        ConditionContext conditionContext,
         WorkerTrigger workerTrigger,
         RealtimeTriggerInterface realtimeTrigger,
         Consumer<? super Throwable> onError,
@@ -27,6 +30,7 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
     ) {
         super(runContext, realtimeTrigger.getClass().getName(), workerTrigger);
         this.streamingTrigger = realtimeTrigger;
+        this.conditionContext = conditionContext;
         this.onError = onError;
         this.onNext = onNext;
     }
@@ -37,7 +41,7 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
 
             try {
                 evaluate = streamingTrigger.evaluate(
-                    workerTrigger.getConditionContext().withRunContext(runContext),
+                    conditionContext.withRunContext(runContext),
                     workerTrigger.getTriggerContext()
                 );
             } catch (Exception e) {

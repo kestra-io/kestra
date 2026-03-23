@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import lombok.Data;
@@ -27,7 +26,7 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
     private TriggerContext triggerContext;
 
     @NotNull
-    private ConditionContext conditionContext;
+    private WorkerTriggerData data;
 
     /**
      * {@inheritDoc}
@@ -41,7 +40,7 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
         return WorkerTriggerRunning.builder()
             .trigger(workerTrigger.getTrigger())
             .triggerContext(workerTrigger.getTriggerContext())
-            .conditionContext(workerTrigger.getConditionContext())
+            .data(workerTrigger.getData())
             .workerInstance(workerInstance)
             .build();
     }

@@ -13,6 +13,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerGroupMetaStore;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.services.WorkerGroupService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -53,12 +54,11 @@ public class TriggerWorkerJobPublisher {
             );
         }
         
-        // TODO - Do we really need to send all that data ???
         WorkerTrigger workerTrigger = WorkerTrigger
             .builder()
             .trigger(trigger)
             .triggerContext(triggerState.context())
-            .conditionContext(conditionContext)
+            .data(WorkerTriggerData.from(conditionContext))
             .build();
         try {
             Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(flow, workerTrigger);

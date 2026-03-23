@@ -386,7 +386,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
                 WorkerTrigger workerTrigger = WorkerTrigger.builder()
                     .trigger(workerTriggerRunning.getTrigger())
-                    .conditionContext(workerTriggerRunning.getConditionContext())
+                    .data(workerTriggerRunning.getData())
                     .triggerContext(workerTriggerRunning.getTriggerContext())
                     .build();
                 workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));

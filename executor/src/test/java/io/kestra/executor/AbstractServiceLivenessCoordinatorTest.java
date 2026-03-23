@@ -20,6 +20,7 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerReceived;
@@ -282,7 +283,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         return WorkerTrigger.builder()
             .trigger(trigger)
             .triggerContext(mockedTrigger.getValue().context())
-            .conditionContext(mockedTrigger.getKey())
+            .data(WorkerTriggerData.from(mockedTrigger.getKey()))
             .build();
     }
 

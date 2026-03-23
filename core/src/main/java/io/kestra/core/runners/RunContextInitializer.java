@@ -276,17 +276,55 @@ public class RunContextInitializer {
     }
 
     /**
-     * Creates a new {@link RunContext} instance from a given {@link WorkerTrigger}.
+     * Builds a {@link io.kestra.core.models.conditions.ConditionContext} for the given
+     * {@link WorkerTrigger} on the worker side, reconstructing the {@link RunContext}
+     * from {@link WorkerTriggerData} plus locally available state.
      *
-     * @param runContext    The {@link RunContext} to initialize.
-     * @param workerTrigger The {@link WorkerTrigger}.
-     * @return The {@link RunContext} to initialize
+     * @param workerTrigger The {@link WorkerTrigger} received from the wire.
+     * @return a fully initialized ConditionContext for trigger evaluation
      */
-    public RunContext forWorker(final DefaultRunContext runContext, final WorkerTrigger workerTrigger) {
-        return forScheduler(
-            runContext,
-            workerTrigger.getTriggerContext(),
-            workerTrigger.getTrigger()
+    public io.kestra.core.models.conditions.ConditionContext forWorker(final WorkerTrigger workerTrigger) {
+        final WorkerTriggerData data = workerTrigger.getData();
+        final TriggerContext triggerContext = workerTrigger.getTriggerContext();
+        final AbstractTrigger trigger = workerTrigger.getTrigger();
+
+        // Reconstruct variables from wire data + locally available state
+        Map<String, Object> variables = new HashMap<>(data.variables());
+        variables.put("envs", runContextCache.getEnvVars());
+        variables.put("globals", runContextCache.getGlobalVars());
+        variables.put("kestra", buildKestraConfig());
+
+        final String triggerExecutionId = IdUtils.create();
+        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger);
+        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
+
+        // Build a fresh RunContext
+        DefaultRunContext runContext = new DefaultRunContext.Builder()
+            .withVariables(variables)
+            .withSecretInputs(data.secretInputs())
+            .build();
+
+        runContext.init(applicationContext);
+        runContext.setTraceParent(data.traceParent());
+
+        final StorageContext storageContext = StorageContext.forTrigger(
+            triggerContext.getTenantId(),
+            triggerContext.getNamespace(),
+            triggerContext.getFlowId(),
+            triggerExecutionId,
+            trigger.getId()
         );
+
+        runContext.setLogger(runContextLogger);
+        runContext.setStorage(new InternalStorage(runContextLogger.logger(), storageContext, storageInterface, namespaceService, namespaceFactory));
+        runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(trigger.getType(), trigger.getClass()));
+        runContext.setTriggerExecutionId(triggerExecutionId);
+        runContext.setTrigger(trigger);
+
+        return io.kestra.core.models.conditions.ConditionContext.builder()
+            .flow(data.flow())
+            .runContext(runContext)
+            .variables(data.conditionVariables())
+            .build();
     }
 }

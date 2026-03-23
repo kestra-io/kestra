@@ -3,13 +3,14 @@ package io.kestra.worker.processors;
 import com.google.common.base.Throwables;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerService;
-import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.runners.WorkerTrigger;
@@ -83,8 +84,8 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
 
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
-                    DefaultRunContext runContext = (DefaultRunContext) workerTrigger.getConditionContext().getRunContext();
-                    runContextInitializer.forWorker(runContext, workerTrigger);
+                    ConditionContext conditionContext = runContextInitializer.forWorker(workerTrigger);
+                    RunContext runContext = conditionContext.getRunContext();
                     try {
 
                         Logs.logTrigger(
@@ -96,33 +97,34 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         );
 
                         if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                            WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
+                            WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, conditionContext, workerTrigger, pollingTrigger);
                             io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
                             if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleTriggerError(workerTrigger, workerCallable.getException());
+                                this.handleTriggerError(workerTrigger, conditionContext, workerCallable.getException());
                             }
 
                             if (!state.equals(FAILED)) {
-                                this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
+                                this.publishTriggerExecution(workerTrigger, conditionContext, workerCallable.getEvaluate());
                             }
                         } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
                             WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
                                 runContext,
+                                conditionContext,
                                 workerTrigger,
                                 streamingTrigger,
-                                throwable -> this.handleTriggerError(workerTrigger, throwable),
-                                execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution))
+                                throwable -> this.handleTriggerError(workerTrigger, conditionContext, throwable),
+                                execution -> this.publishTriggerExecution(workerTrigger, conditionContext, Optional.of(execution))
                             );
                             io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
                             // here the realtime trigger fail before the publisher being call so we create a fail execution
                             if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleRealtimeTriggerError(workerTrigger, workerCallable.getException());
+                                this.handleRealtimeTriggerError(workerTrigger, conditionContext, runContext, workerCallable.getException());
                             }
                         }
                     } catch (Exception e) {
-                        this.handleTriggerError(workerTrigger, e);
+                        this.handleTriggerError(workerTrigger, conditionContext, e);
                     } finally {
                         Logs.logTrigger(
                             workerTrigger.getTriggerContext(),
@@ -133,7 +135,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                             DurationFormatUtils.formatDurationHMS(stopWatch.getTime(TimeUnit.MILLISECONDS))
                         );
 
-                        workerTrigger.getConditionContext().getRunContext().cleanup();
+                        runContext.cleanup();
                     }
 
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
@@ -145,15 +147,15 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
             .increment();
     }
 
-    private void handleTriggerError(WorkerTrigger workerTrigger, Throwable e) {
+    private void handleTriggerError(WorkerTrigger workerTrigger, ConditionContext conditionContext, Throwable e) {
         String[] tags = metricRegistry.tags(workerTrigger, workerGroup);
 
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT_DESCRIPTION, tags)
             .increment();
 
-        logError(workerTrigger, e);
-        Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
+        logError(workerTrigger, conditionContext.getRunContext().logger(), e);
+        Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), conditionContext, workerTrigger.getTriggerContext(), (Output) null)
             .withState(FAILED) : null;
         if (execution != null) {
             RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)).forEach(workerLogQueue::put);
@@ -161,7 +163,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
         this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, execution));
     }
 
-    private void handleRealtimeTriggerError(WorkerTrigger workerTrigger, Throwable e) {
+    private void handleRealtimeTriggerError(WorkerTrigger workerTrigger, ConditionContext conditionContext, RunContext runContext, Throwable e) {
         String[] tags = metricRegistry.tags(workerTrigger, workerGroup);
 
         this.metricRegistry
@@ -170,11 +172,11 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
 
         // We create a FAILED execution, so the user is aware that the realtime trigger failed to be created
         var execution = TriggerService
-            .generateRealtimeExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), null)
+            .generateRealtimeExecution(workerTrigger.getTrigger(), conditionContext, workerTrigger.getTriggerContext(), null)
             .withState(FAILED);
 
         // We create an ERROR log attached to the execution
-        Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
+        Logger logger = runContext.logger();
         Logs.logExecution(
             execution,
             logger,
@@ -190,7 +192,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
         this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, execution));
     }
 
-    private void publishTriggerExecution(WorkerTrigger workerTrigger, Optional<Execution> evaluate) {
+    private void publishTriggerExecution(WorkerTrigger workerTrigger, ConditionContext conditionContext, Optional<Execution> evaluate) {
         metricRegistry
             .counter(
                 MetricRegistry.METRIC_WORKER_TRIGGER_EXECUTION_COUNT,
@@ -208,7 +210,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
             );
         }
 
-        var flow = workerTrigger.getConditionContext().getFlow();
+        var flow = conditionContext.getFlow();
         evaluate = evaluate.map(execution -> {
                 List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
                 executionLabels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
@@ -220,9 +222,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
     }
 
 
-    private void logError(WorkerTrigger workerTrigger, Throwable e) {
-        Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
-
+    private void logError(WorkerTrigger workerTrigger, Logger logger, Throwable e) {
         if (e instanceof InterruptedException || (e != null && e.getCause() instanceof InterruptedException)) {
             Logs.logTrigger(
                 workerTrigger.getTriggerContext(),

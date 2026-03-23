@@ -5,7 +5,6 @@ import KsAlert from "./components/Feedback/KsAlert.vue"
 import {KsMessage} from "./components/Feedback/KsMessage"
 import {KsMessageBox} from "./components/Feedback/KsMessageBox"
 import {KsNotification} from "./components/Feedback/KsNotification"
-import KsConfigProvider from "./components/Configuration/KsConfigProvider.vue"
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
@@ -81,7 +80,6 @@ export {
     KsMessageBox,
     KsNotification,
     KsAutocomplete,
-    KsConfigProvider,
     KsAvatar,
     KsBadge,
     KsBreadcrumb,
@@ -159,7 +157,6 @@ const KestraDesignSystem = {
 
         app.component("KsAlert", KsAlert)
         app.component("KsAutocomplete", KsAutocomplete)
-        app.component("KsConfigProvider", KsConfigProvider)
         app.component("KsAvatar", KsAvatar)
         app.component("KsBadge", KsBadge)
         app.component("KsBreadcrumb", KsBreadcrumb)
@@ -236,7 +233,6 @@ declare module "vue" {
     export interface GlobalComponents {
         KsAlert: typeof KsAlert
         KsAutocomplete: typeof KsAutocomplete
-        KsConfigProvider: typeof KsConfigProvider
         KsAvatar: typeof KsAvatar
         KsBadge: typeof KsBadge
         KsBreadcrumb: typeof KsBreadcrumb

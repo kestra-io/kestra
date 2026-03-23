@@ -73,7 +73,6 @@ public class DocumentationGenerator {
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
-        //noinspection unchecked
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTaskRunners(), (Class) TaskRunner.class, "task-runners"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getLogExporters(), (Class) LogExporter.class, "log-exporters"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getAdditionalPlugins(), AdditionalPlugin.class, "additional-plugins"));
@@ -83,7 +82,7 @@ public class DocumentationGenerator {
         return result;
     }
 
-    private static List<Document> index(RegisteredPlugin plugin) throws IOException {
+    public static List<Document> index(RegisteredPlugin plugin) throws IOException {
         Map<SubGroup, Map<String, List<ClassPlugin>>> groupedClass = DocumentationGenerator.indexGroupedClass(plugin);
 
 

@@ -13,37 +13,31 @@
         </div>
 
         <template v-if="props.elements">
-            <el-splitter
-                v-if="props.includeDebug"
-                :layout="verticalLayout ? 'vertical' : 'horizontal'"
-                lazy
-            >
-                <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
-                    <el-cascader-panel
-                        :options="filteredOptions"
-                        @expand-change="(p: string[]) => (path = p.join('.'))"
-                        class="debug"
-                    >
-                        <template #default="{data}">
-                            <div class="node">
-                                <div :title="data.label">
-                                    {{ data.label }}
-                                </div>
-                                <div v-if="data.value && data.children">
-                                    <code>{{ itemsCount(data) }}</code>
-                                </div>
+            <template v-if="props.includeDebug">
+                <el-cascader-panel
+                    :options="filteredOptions"
+                    @expand-change="(p: string[]) => (path = p.join('.'))"
+                >
+                    <template #default="{data}">
+                        <div class="node">
+                            <div :title="data.label">
+                                {{ data.label }}
                             </div>
-                        </template>
-                    </el-cascader-panel>
-                </el-splitter-panel>
-                <el-splitter-panel>
-                    <DebugPanel
-                        :property="props.includeDebug"
-                        :execution
-                        :path
-                    />
-                </el-splitter-panel>
-            </el-splitter>
+                            <div v-if="data.value && data.children">
+                                <code>{{ itemsCount(data) }}</code>
+                            </div>
+                        </div>
+                        <div v-if="isFile(data.value)" class="node buttons">
+                            <VarValue :value="data.value" :execution />
+                        </div>
+                    </template>
+                </el-cascader-panel>
+                <DebugPanel
+                    :property="props.includeDebug"
+                    :execution
+                    :path
+                />
+            </template>
 
             <el-cascader-panel v-else :options="filteredOptions">
                 <template #default="{data}">
@@ -54,6 +48,9 @@
                         <div v-if="data.value && data.children">
                             <code>{{ itemsCount(data) }}</code>
                         </div>
+                    </div>
+                    <div v-if="isFile(data.value)" class="node buttons">
+                        <VarValue :value="data.value" :execution />
                     </div>
                 </template>
             </el-cascader-panel>
@@ -68,9 +65,9 @@
 
     import DebugPanel from "./DebugPanel.vue";
 
-    import {Execution} from "../../../../../../stores/executions";
+    import VarValue from "../../../../VarValue.vue";
 
-    import {verticalLayout} from "../../../utils/layout";
+    import {Execution} from "../../../../../../stores/executions";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -99,6 +96,10 @@
     >();
 
     const path = ref<string>("");
+
+    const isFile = (value: unknown): value is string => {
+        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+    };
 
     const formatted = ref<Node[]>([]);
     const format = (obj: Record<string, any>): Node[] => {
@@ -187,12 +188,7 @@
 
     .el-cascader-panel {
         overflow: auto;
-
-        &.debug {
-            min-height: -webkit-fill-available;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
+        width: 100%;
     }
 
     .empty {
@@ -203,6 +199,10 @@
     :deep(.el-cascader-menu) {
         min-width: 300px;
         max-width: 300px;
+
+        &:last-child {
+            max-width: none;
+        }
 
         .el-cascader-menu__list {
             padding: 0;
@@ -217,13 +217,17 @@
             display: flex;
             justify-content: space-between;
 
+            &.buttons {
+                margin: 0.75rem 0;
+            }
+
             & > div {
                 overflow-x: auto;
             }
         }
 
         & .el-cascader-node {
-            height: 36px;
+            height: min-content;
             line-height: 36px;
             font-size: $font-size-sm;
             color: var(--ks-content-primary);

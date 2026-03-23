@@ -219,6 +219,8 @@
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
+                            const shouldShowOnboardingSuccessAnimation = this.$route.query.onboardingPreset === "true";
+
                             executeTask(this, this.flow, this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults, {
                                 redirect: this.redirect,
                                 newTab: this.newTab,
@@ -231,6 +233,10 @@
                                 ), "system.from:ui"],
                                 scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                                 nextStep: true,
+                                query: shouldShowOnboardingSuccessAnimation ? {
+                                    autoExpandGantt: "true",
+                                    onboardingSuccess: "true",
+                                } : undefined,
                             });
                         }
                         this.executeClicked = true;

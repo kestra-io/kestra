@@ -11,7 +11,7 @@
         >
             {{ $t('download') }}
         </el-button>
-        <FilePreview v-if="isFile(value)" :value="value.toString()" :executionId="execution.id" />
+        <FilePreview v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
@@ -36,6 +36,7 @@
         <Editor
             :readOnly="true"
             :input="true"
+            :showScroll="true"
             :fullHeight="false"
             :customHeight="Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length))"
             :navbar="false"
@@ -56,6 +57,7 @@
     import FilePreview from "./FilePreview.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
+    import {useAxios} from "../../utils/axios";
     import Utils from "../../utils/utils";
 
     interface Execution {
@@ -78,12 +80,8 @@
 
     const humanSize = ref<string>("");
 
-    const isFile = (value: unknown): value is string => {
-        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
-    };
-
     const isFileValid = (value: unknown): boolean => {
-        return isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B";
+        return Utils.isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B";
     };
 
     const isURI = (value: unknown): value is string => {
@@ -105,7 +103,7 @@
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
             return true;
         }
-        
+
         if (typeof value === "string") {
             try {
                 const parsed = JSON.parse(value);
@@ -114,7 +112,7 @@
                 return false;
             }
         }
-        
+
         return false;
     };
 
@@ -122,7 +120,7 @@
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
             return value;
         }
-        
+
         if (typeof value === "string") {
             try {
                 const parsed = JSON.parse(value);
@@ -133,7 +131,7 @@
                 return value;
             }
         }
-        
+
         return value;
     };
 
@@ -141,16 +139,13 @@
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
     };
 
+    const axios = useAxios();
+
     const getFileSize = async (): Promise<void> => {
-        if (isFile(props.value) && props.execution?.id) {
+        if (Utils.isFile(props.value) && props.execution?.id) {
             try {
-                const response = await fetch(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`, {
-                    method: "GET"
-                });
-                if (response.ok) {
-                    const data: FileMetadata = await response.json();
-                    humanSize.value = Utils.humanFileSize(data.size);
-                }
+                const response = await axios.get<FileMetadata>(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`);
+                humanSize.value = Utils.humanFileSize(response.data.size);
             } catch (error) {
                 console.error("Failed to fetch file size:", error);
             }

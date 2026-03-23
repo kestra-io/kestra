@@ -7,6 +7,7 @@
         :appendToBody="true"
         :class="{'full-screen': fullScreen}"
         ref="editorDomElement"
+        @before-close="emits('update:modelValue', false)"
     >
         <template #header>
             <span>
@@ -31,6 +32,8 @@
 <script setup lang="ts">
     import {ref} from "vue";
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+
+    const emits = defineEmits<{"update:modelValue": [value: boolean]}>();
 
     const props = defineProps({
         title: {

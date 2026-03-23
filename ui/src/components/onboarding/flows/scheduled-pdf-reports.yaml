@@ -1,0 +1,27 @@
+id: moose_734167
+namespace: company.team
+
+inputs:
+  - id: serverUrl
+    type: STRING
+    defaults: https://kestra.io
+    description: The URL of the server to download the PDF from.
+  - id: slackWebhookUrl
+    type: STRING
+    defaults: https://kestra.io/api/mock
+    description: The Slack incoming webhook URL.
+
+tasks:
+  - id: downloadPdf
+    type: io.kestra.plugin.core.http.Download
+    uri: https://huggingface.co/datasets/kestra/datasets/blob/main/pdf/product.pdf
+  - id: sendSlackAlert
+    type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+    url: "{{ inputs.slackWebhookUrl }}"
+    messageText: "PDF report downloaded successfully! File: {{ outputs.downloadPdf.uri }}"
+
+triggers:
+  - id: dailySchedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 0 * * *"
+    disabled: true

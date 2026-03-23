@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.executions.metrics.Gauge;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -213,6 +214,12 @@ class RunContextTest {
         runContext.metric(Counter.of("counter", 123D, "key", "value"));
         runContext.metric(Timer.of("duration", Duration.ofSeconds(123), "key", "value"));
 
+        Gauge gauge = Gauge.of("gauge", "Some gauge", 50D);
+        runContext.metric(gauge);
+        runContext.metric(Gauge.of("gauge", "Some gauge", 75D));
+
+        runContext.metric(Gauge.of("gauge", 99D, "key", "value"));
+
         assertThat(runContext.metrics().get(runContext.metrics().indexOf(counter)).getValue()).isEqualTo(42D);
         assertThat(metricRegistry.counter("counter", null).count()).isEqualTo(42D);
         assertThat(runContext.metrics().get(runContext.metrics().indexOf(timer)).getValue()).isEqualTo(Duration.ofSeconds(42));
@@ -223,6 +230,12 @@ class RunContextTest {
 
         assertThat(runContext.metrics().get(3).getValue()).isEqualTo(Duration.ofSeconds(123));
         assertThat(runContext.metrics().get(3).getTags().size()).isEqualTo(1);
+
+        // Gauge replaces value rather than accumulating
+        assertThat(runContext.metrics().get(runContext.metrics().indexOf(gauge)).getValue()).isEqualTo(75D);
+
+        assertThat(runContext.metrics().get(5).getValue()).isEqualTo(99D);
+        assertThat(runContext.metrics().get(5).getTags().size()).isEqualTo(1);
     }
 
     @Test

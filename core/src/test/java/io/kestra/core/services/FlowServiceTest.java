@@ -327,9 +327,24 @@ class FlowServiceTest {
 
     @Test
     void findByNamespacePrefix() {
-        FlowWithSource flow = create(null, "some.namespace","findByTest", "test", 1);
-        flowRepository.create(GenericFlow.of(flow));
-        assertThat(flowService.findByNamespacePrefix(null, "some.namespace").size()).isEqualTo(1);
+        FlowWithSource exactMatch = create(null, "prefix.namespace", "prefixExact", "test", 1);
+        flowRepository.create(GenericFlow.of(exactMatch));
+
+        FlowWithSource childMatch = create(null, "prefix.namespace.child", "prefixChild", "test", 1);
+        flowRepository.create(GenericFlow.of(childMatch));
+
+        FlowWithSource similarPrefix = create(null, "prefix.namespace2", "prefixSimilar", "test", 1);
+        flowRepository.create(GenericFlow.of(similarPrefix));
+
+        FlowWithSource differentNs = create(null, "other.namespace", "prefixOther", "test", 1);
+        flowRepository.create(GenericFlow.of(differentNs));
+
+        List<Flow> results = flowService.findByNamespacePrefix(null, "prefix.namespace");
+
+        assertThat(results)
+            .hasSize(2)
+            .extracting(Flow::getId)
+            .containsExactlyInAnyOrder("prefixExact", "prefixChild");
     }
 
     @Test

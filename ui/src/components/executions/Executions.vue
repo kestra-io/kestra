@@ -148,7 +148,7 @@
                                 </el-button>
                             </template>
 
-                            <el-form>
+                            <el-form labelPosition="top">
                                 <ElFormItem :label="$t('execution labels')">
                                     <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>
@@ -1009,7 +1009,8 @@
 
         ElMessageBox.confirm(
             t("bulk set labels", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
-            t("confirmation")
+            t("confirmation"),
+            {dangerouslyUseHTMLString: true}
         ).then(() => {
             if (queryBulkAction.value) {
                 return executionsStore

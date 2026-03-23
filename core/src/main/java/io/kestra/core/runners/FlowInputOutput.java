@@ -282,7 +282,8 @@ public class FlowInputOutput {
             final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, true);
             final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
-            boolean isInputEnabled = dependencies.isEmpty() || dependencies.values().stream().allMatch(InputAndValue::enabled);
+            boolean isInputEnabled = dependencies.isEmpty() ||
+                dependencies.values().stream().allMatch(it -> it.enabled() && it.value() != null);
 
             final Optional<String> dependsOnCondition = Optional.ofNullable(input.getDependsOn()).map(DependsOn::condition);
             if (dependsOnCondition.isPresent() && isInputEnabled) {
@@ -465,10 +466,11 @@ public class FlowInputOutput {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
-                        SecretInput secretInput = (SecretInput) data;
+                    if (data instanceof SecretInput secretInput) {
                         secretInput.validate(current.toString());
-                        String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
-                        yield  EncryptedString.from(encrypted);
+                    }
+                    String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
+                    yield EncryptedString.from(encrypted);
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation

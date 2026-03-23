@@ -28,8 +28,10 @@ public class ExecutionLogService {
         this.logRepository = logRepository;
     }
 
+    public record PurgeResult(int executionLogsDeleted, int nonExecutionLogsDeleted) {}
+
     /**
-     * Purges log entries matching the given criteria.
+     * Purges log entries matching the given criteria, with separate control over execution and non-execution logs.
      *
      * @param tenantId    the tenant identifier
      * @param namespace   the namespace of the flow
@@ -40,8 +42,18 @@ public class ExecutionLogService {
      * @param endDate     the end of the date range.
      * @return the number of log entries deleted
      */
-    public int purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
-        return logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate);
+    public PurgeResult purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
+        if (!purgeExecutionLogs && !purgeNonExecutionLogs) {
+            return new PurgeResult(0, 0);
+        }
+
+        int deleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
+
+        // When both types are purged in a single call, we can't distinguish the individual counts
+        return new PurgeResult(
+            purgeExecutionLogs ? deleted : 0,
+            !purgeExecutionLogs && purgeNonExecutionLogs ? deleted : 0
+        );
     }
 
 

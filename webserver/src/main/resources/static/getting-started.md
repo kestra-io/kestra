@@ -24,4 +24,4 @@ tasks:
 
 Finally, click on the Execute button to run your flow. You should see the friendly message ``Hello from the Editor!`` in the logs.
 
-For more information about the Code Editor, check out the [documentation](https://kestra.io/docs/developer-guide/namespace-files).
+For more information about the Code Editor, check out the [documentation](https://kestra.io/docs/developer-guide/namespace-files?utm_source=app&utm_medium=referral&utm_campaign=code-editor-help).

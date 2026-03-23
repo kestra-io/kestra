@@ -1,8 +1,10 @@
 import type {UserConfig} from "@hey-api/openapi-ts";
 import * as path from "path";
+import {fileURLToPath} from "url";
 import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const generateHash = (str: string) => {
   let hash = 0;

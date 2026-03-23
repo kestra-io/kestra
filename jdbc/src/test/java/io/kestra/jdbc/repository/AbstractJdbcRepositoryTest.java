@@ -28,7 +28,9 @@ public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.SCOPE,
         QueryFilter.Field.LABELS,
         QueryFilter.Field.TRIGGER_STATE,
-        QueryFilter.Field.METADATA
+        QueryFilter.Field.METADATA,
+        QueryFilter.Field.GROUP,
+        QueryFilter.Field.NAME
     );
 
     @Test
@@ -67,8 +69,8 @@ public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                 DSL.field(columnName).likeRegex(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.PREFIX, null)).isEqualTo(
-                DSL.field(columnName).like(assertValue + ".%")
-                    .or(DSL.field(columnName).eq(assertValue))
+                DSL.field(columnName).eq(assertValue)
+                    .or(DSL.field(columnName).startsWith(assertValue + "."))
             );
         });
     }

@@ -69,7 +69,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcCrudRep
             condition = condition.and(this.findCondition(query));
         }
         if (namespace != null) {
-            condition = condition.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+            condition = condition.and(DSL.or(field("namespace").eq(namespace), field("namespace").startsWith(namespace + ".")));
         }
 
         return condition;

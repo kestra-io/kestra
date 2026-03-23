@@ -72,6 +72,7 @@ import KsTimePicker from "./components/Form/KsTimePicker.vue"
 import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
+import {vKsLoading} from "./components/Feedback/KsLoading"
 
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {
@@ -114,6 +115,7 @@ export {
     KsInput,
     KsInputNumber,
     KsLink,
+    vKsLoading,
     KsMenu,
     KsMenuItem,
     KsOption,
@@ -152,7 +154,7 @@ export {
 const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
-            app.use(ElementPlus)
+            app.use(ElementPlus, {namespace: "kel"})
         }
 
         app.component("KsAlert", KsAlert)
@@ -223,6 +225,8 @@ const KestraDesignSystem = {
         app.component("KsTooltip", KsTooltip)
         app.component("KsTree", KsTree)
         app.component("KsUpload", KsUpload)
+
+        app.directive("ks-loading", vKsLoading)
     },
 }
 

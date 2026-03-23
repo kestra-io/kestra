@@ -959,7 +959,6 @@
                 type: "warning",
                 showIcon: true,
                 closable: false,
-                class: "custom-warning"
             }) : null,
             h(ElCheckbox, {
                 modelValue: deleteLogs.value,

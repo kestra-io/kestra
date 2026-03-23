@@ -53,7 +53,7 @@ export const Confirm: Story = {
         const btn = canvas.getByRole("button")
         await expect(btn).toBeTruthy()
         await userEvent.click(btn)
-        await expect(document.querySelector(".el-message-box")).toBeTruthy()
+        await expect(document.querySelector(".kel-message-box")).toBeTruthy()
     },
 }
 

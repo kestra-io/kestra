@@ -19,7 +19,7 @@
     </ks-form>
     <div @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
-            v-loading="isLoading || isPluginSchemaLoading"
+            v-ks-loading="isLoading || isPluginSchemaLoading"
             v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
             :modelValue="taskModel"

@@ -12,7 +12,7 @@
         :defaultTimeRange="false"
     />
 
-    <div v-bind="$attrs" v-loading="isLoading">
+    <div v-bind="$attrs" v-ks-loading="isLoading">
         <ks-card>
             <ks-tooltip
                 effect="light"

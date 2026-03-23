@@ -21,7 +21,7 @@
                 </template>
 
                 <template #table>
-                    <div v-loading="isLoading">
+                    <div v-ks-loading="isLoading">
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
                             <LogLine
                                 v-for="(log, i) in logsStore.logs"

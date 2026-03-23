@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
+    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-ks-loading="!blueprint">
         <template #additional-right>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
+    <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-ks-loading="!blueprint">
         <ks-card v-if="blueprint && kind === 'flow'">
             <div class="embedded-topology" v-if="flowGraph">
                 <LowCodeEditor

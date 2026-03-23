@@ -90,7 +90,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 position: "bottom-right",
                 type: "error",
                 duration: 0,
-                customClass: "large",
+                customClass: "kel-notification__large",
             ...options
         })
     }

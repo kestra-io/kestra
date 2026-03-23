@@ -7,20 +7,20 @@
             {{ transformValue }}
         </code>
     </ks-tooltip>
-    <code v-else :id="uid" class="ks-id text-nowrap" @click="emit('click')">
+    <code v-else :id="uid" class="ks-id text-nowrap" :class="{'ks-id--clickable': hasClickListener}" @click="emit('click')">
         {{ transformValue }}
     </code>
 </template>
 
 <script setup lang="ts">
-    import {computed, useAttrs, useId} from "vue"
+    import {computed, useAttrs, useId, getCurrentInstance} from "vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         value?: string
         shrink?: boolean
         size?: number
-    }>()
+    }>(), {shrink: true})
 
     const uid = useId()
 
@@ -30,21 +30,20 @@
 
     const attrs = useAttrs()
 
-    const shrink = computed(() => props.shrink ?? true)
     const size = computed(() => props.size ?? 8)
 
     const hasTooltip = computed(() => {
-        return shrink.value && props.value && props.value.length > size.value
+        return props.shrink && props.value && props.value.length > size.value
     })
 
-    const hasClickListener = computed(() => Boolean(attrs.onClick))
+    const hasClickListener = computed(() => Boolean(getCurrentInstance()?.vnode.props?.onClick))
 
     const transformValue = computed(() => {
         if (!props.value) {
             return ""
         }
 
-        if (!shrink.value) {
+        if (!props.shrink) {
             return props.value
         }
 

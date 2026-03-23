@@ -112,7 +112,7 @@
             "
             draggable
             nodeKey="id"
-            v-loading="filesStore.fileTree === undefined"
+            v-ks-loading="filesStore.fileTree === undefined"
             :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
             @node-drag-start="

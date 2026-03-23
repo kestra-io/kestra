@@ -141,7 +141,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                             .addAttempt(TaskRunAttempt.builder().workerId(workerId).state(new State().withState(SKIPPED)).build()));
                         workerTaskResultQueue.put(workerTaskResult);
                     } else {
-                        workerTaskResult = this.runTask(currentWorkerTask, false);
+                        workerTaskResult = this.runTask(currentWorkerTask, false,
+                            runContextInitializer.forWorkingDirectorySubtask(currentWorkerTask, runContext.workingDir()));
                     }
                 } catch (IllegalVariableEvaluationException e) {
                     RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
@@ -171,6 +172,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     }
 
     private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp) {
+        return runTask(workerTask, cleanUp, null);
+    }
+
+    private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp, DefaultRunContext providedRunContext) {
         String[] metricTags = metricRegistry.tags(workerTask, workerGroup);
 
         this.metricRegistry
@@ -206,7 +211,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
             workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
 
-            runContext = runContextInitializer.forWorker(workerTask);
+            runContext = providedRunContext != null ? providedRunContext : runContextInitializer.forWorker(workerTask);
             Optional<String> hash = Optional.empty();
 
             if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled()) {

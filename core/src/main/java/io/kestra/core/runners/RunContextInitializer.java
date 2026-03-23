@@ -87,7 +87,7 @@ public class RunContextInitializer {
      * @return a fully initialized RunContext ready for task execution
      */
     public DefaultRunContext forWorker(final WorkerTask workerTask) {
-        return forWorker(workerTask, Function.identity());
+        return forWorker(workerTask, Function.identity(), null);
     }
 
     /**
@@ -102,12 +102,28 @@ public class RunContextInitializer {
         return forWorker(workerTask, variables -> {
             variables.put("workerTaskrun", variables.get("taskrun"));
             return variables;
-        });
+        }, null);
+    }
+
+    /**
+     * Builds a {@link RunContext} for a subtask within a WorkingDirectory, reusing the parent's
+     * {@link WorkingDir} so that namespace files and prior subtask outputs remain accessible.
+     *
+     * @param workerTask The subtask's {@link WorkerTask}.
+     * @param workingDir The parent WorkingDirectory's {@link WorkingDir}.
+     * @return a fully initialized RunContext sharing the parent's working directory
+     */
+    public DefaultRunContext forWorkingDirectorySubtask(final WorkerTask workerTask, final WorkingDir workingDir) {
+        return forWorker(workerTask, variables -> {
+            variables.put("workerTaskrun", variables.get("taskrun"));
+            return variables;
+        }, workingDir);
     }
 
     @SuppressWarnings("unchecked")
     private DefaultRunContext forWorker(final WorkerTask workerTask,
-                                        final Function<Map<String, Object>, Map<String, Object>> variablesModifier) {
+                                        final Function<Map<String, Object>, Map<String, Object>> variablesModifier,
+                                        final WorkingDir workingDir) {
         final Task task = workerTask.getTask();
         final TaskRun taskRun = workerTask.getTaskRun();
         final WorkerTaskData data = workerTask.getData();
@@ -137,7 +153,7 @@ public class RunContextInitializer {
 
         variables = variablesModifier.apply(variables);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent());
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent(), workingDir);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
@@ -268,7 +284,7 @@ public class RunContextInitializer {
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTrigger.triggerId(), trigger);
         addSecretConsumer(variables, runContextLogger);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent());
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent(), null);
         configureTrigger(runContext, runContextLogger, workerTrigger.triggerId(), trigger);
 
         return ConditionContext.builder()
@@ -297,14 +313,21 @@ public class RunContextInitializer {
     /**
      * Builds a new {@link DefaultRunContext} from the given variables and secret inputs,
      * initializes it with the application context, and sets the trace parent.
+     *
+     * @param workingDir optional working directory to reuse (e.g. from a parent WorkingDirectory task);
+     *                   when non-null, {@code init()} will keep it instead of creating a new one.
      */
     private DefaultRunContext buildAndInitRunContext(Map<String, Object> variables,
                                                      List<String> secretInputs,
-                                                     String traceParent) {
-        DefaultRunContext runContext = new DefaultRunContext.Builder()
+                                                     String traceParent,
+                                                     WorkingDir workingDir) {
+        var builder = new DefaultRunContext.Builder()
             .withVariables(variables)
-            .withSecretInputs(secretInputs)
-            .build();
+            .withSecretInputs(secretInputs);
+        if (workingDir != null) {
+            builder = builder.withWorkingDir(workingDir);
+        }
+        DefaultRunContext runContext = builder.build();
         runContext.init(applicationContext);
         runContext.setTraceParent(traceParent);
         return runContext;

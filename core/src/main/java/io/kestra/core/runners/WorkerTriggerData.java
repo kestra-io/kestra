@@ -8,10 +8,11 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.micronaut.core.annotation.Nullable;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Wire-format carrying all data the worker needs to process a trigger.
@@ -32,30 +33,30 @@ public record WorkerTriggerData(
     @Nullable List<Label> flowLabels,
 
     // --- RunContext wire data ---
+    @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS)
     Map<String, Object> variables,
     List<String> secretInputs,
     @Nullable String traceParent,
 
     // --- Condition data ---
     Map<String, Object> conditionVariables
-) {
+) implements WorkerRunContextData {
 
     /**
      * Keys excluded from the variables map — rebuilt on the worker from
-     * explicit fields (identity, flow metadata) and local beans (envs, globals, kestra).
+     * explicit fields (identity, flow metadata) and local beans.
+     * <p>
+     * Includes {@code flow} and {@code labels} (rebuilt from explicit fields)
+     * plus the {@linkplain WorkerRunContextData#COMMON_RECONSTRUCTED_KEYS common keys}.
      */
-    static final Set<String> WORKER_RECONSTRUCTED_KEYS = Set.of(
-        "flow",
-        "labels",
-        "envs",
-        "globals",
-        "kestra",
-        RunVariables.SECRET_CONSUMER_VARIABLE_NAME
-    );
+    static final Set<String> WORKER_RECONSTRUCTED_KEYS = Stream.concat(
+        Stream.of("flow", "labels"),
+        COMMON_RECONSTRUCTED_KEYS.stream()
+    ).collect(Collectors.toUnmodifiableSet());
 
     /**
      * Creates a {@link WorkerTriggerData} from a {@link ConditionContext} and
-     * {@link TriggerContext}, stripping keys the worker can reconstruct locally.
+     * {@link TriggerContext}, stripping keys the worker can reconstructed locally.
      *
      * @param conditionContext the ConditionContext with RunContext and flow
      * @param triggerContext   the TriggerContext with identity and date
@@ -65,9 +66,6 @@ public record WorkerTriggerData(
         RunContext runContext = conditionContext.getRunContext();
         FlowInterface flow = conditionContext.getFlow();
 
-        Map<String, Object> filtered = new HashMap<>(runContext.getVariables());
-        WORKER_RECONSTRUCTED_KEYS.forEach(filtered::remove);
-
         return new WorkerTriggerData(
             triggerContext.getTenantId(),
             triggerContext.getNamespace(),
@@ -76,7 +74,7 @@ public record WorkerTriggerData(
             flow.getRevision(),
             flow.getVariables(),
             flow.getLabels(),
-            filtered,
+            WorkerRunContextData.filterVariables(runContext, WORKER_RECONSTRUCTED_KEYS),
             runContext.getSecretInputs(),
             runContext.getTraceParent(),
             conditionContext.getVariables()

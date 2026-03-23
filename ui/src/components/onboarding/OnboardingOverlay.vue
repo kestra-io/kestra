@@ -533,6 +533,7 @@
         onboardingStore.skip();
         onboardingStore.setEditorMode("normal");
         toggleExecuteFocusMode(false);
+        onboardingStore.reset();
     };
 
     const goToBlueprints = () => {

@@ -243,12 +243,10 @@
                 @update:model-value="onChange(input)"
             />
             <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
-            <template v-if="executeClicked">
-                <template v-for="err in input.errors ?? []" :key="err">
-                    <el-text type="warning">
-                        {{ err.message }}
-                    </el-text>
-                </template>
+            <template v-for="err in input.errors ?? []" :key="err.message">
+                <el-text type="warning">
+                    {{ err.message }}
+                </el-text>
             </template>
         </el-form-item>
         <div class="d-flex justify-content-end">

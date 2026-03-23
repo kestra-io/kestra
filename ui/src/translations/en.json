@@ -2069,6 +2069,109 @@
     "delete revision confirm": "Are you sure you want to delete revision {revision}?",
     "delete revision error": "Error deleting revision {revision} with error {error}",
     "no_history": "No history available",
-    "export_as": "Export as .{format}"
+    "export_as": "Export as .{format}",
+    "save_and_execute": "Save & Execute",
+    "welcome_copilot": {      
+        "button_cta": "Create flow from scratch",
+        "title": "Turn your idea into a workflow",
+        "need_help": "Need Help?",
+        "placeholder_prompt": "Send me a daily greeting message at 9am.",
+        "show_more": "Show more prompts",
+        "show_less": "Show fewer prompts",
+        "remaining_quota": "You have {count} AI generations left",
+        "execute_hint": {
+          "title": "Save & Execute your flow",
+          "description": "Click to save your workflow and run it immediately."
+        },
+        "success_popup": {
+          "title": "Congratulations!",
+          "description": "You've successfully executed your first flow! You're on your way to becoming a Kestra pro.",
+          "tutorial": "Deep Dive Tutorial",
+          "explore": "Explore More"
+        },
+        "success_page": {
+          "title": "You're all set!",
+          "description": "You've learned the basics of Kestra. Here are some resources to help you continue your journey.",
+          "restart": "Restart Tutorial",
+          "items": {
+            "tutorial": {
+              "title": "Start a Tutorial",
+              "description": "Interactive walkthrough of all Kestra features"
+            },
+            "blueprints": {
+              "title": "Blueprints",
+              "description": "Pre-built workflow templates for common use cases"
+            },
+            "slack": {
+              "title": "Slack Community",
+              "description": "Connect with other users and get help from the community"
+            },
+            "videos": {
+              "title": "Videos Tutorials",
+              "description": "Step-by-step video guides for advanced features"
+            },
+            "demo": {
+              "title": "Get a Demo",
+              "description": "Explore Kestra Enterprise Edition with a personalized demo"
+            }
+          }
+        },
+        "help": {
+          "tutorial": {
+            "title": "Start a Tutorial",
+            "description": "Learn how to create and run your first flow with guidet steps."
+          },
+          "blueprints": {
+            "title": "Blueprints",
+            "description": "Explore ready-to-use examples and templates for common workflow patterns."
+          },
+          "slack": {
+            "title": "Slack Community",
+            "description": "Join us to share ideas and best practices, and get help with technical questions."
+          }
+        },
+        "flows": {
+          "jsonApiToDuckdb": {
+            "label": "JSON API to DuckDB",
+            "prompt": "Create a flow that downloads a JSON file from a public API, transforms it with a Python script, and processes it with a DuckDB Queries task."
+          },
+          "installNginxViaAnsible": {
+            "label": "Install Nginx via Ansible",
+            "prompt": "Create a Kestra flow that installs Nginx on a target machine with Ansible and verifies the installed version."
+          },
+          "buildDbtPipeline": {
+            "label": "Build a dbt pipeline",
+            "prompt": "Create a Kestra flow that clones a dbt project repository and runs dbt build with a DuckDB profile."
+          },
+          "etlWorkflow": {
+            "label": "ETL Workflow",
+            "prompt": "Create an ETL flow that downloads JSON data, processes it with Python, and queries the transformed result with DuckDB."
+          },
+          "microservicesApis": {
+            "label": "Microservices & APIs",
+            "prompt": "Create a flow that checks a website API response and sends a Slack alert when the status code is not successful."
+          },
+          "buildDockerImageAndRunIt": {
+            "label": "Build a Docker image and run it",
+            "prompt": "Create a Kestra flow that builds a Docker image from an inline Dockerfile and runs the resulting container."
+          },
+          "manualApproval": {
+            "label": "Manual approval",
+            "prompt": "Create a flow with an initial processing step, a manual approval pause, and a final deployment step after approval."
+          },
+          "convertCsvToExcel": {
+            "label": "Convert a CSV to Excel",
+            "prompt": "Create a flow that downloads a CSV file, converts it to Ion, and exports the result as an Excel file."
+          },
+          "scheduledPdfReports": {
+            "label": "Scheduled PDF reports",
+            "prompt": "Create a scheduled flow that downloads a PDF report and sends a Slack notification when the report is ready."
+          },
+          "weeklySalesKpisToSlack": {
+            "label": "Weekly Sales KPIs to Slack",
+            "prompt": "Create a weekly scheduled flow that calculates sales KPIs with DuckDB and posts the summary to Slack."
+          }
+        }
+      }
   }
 }

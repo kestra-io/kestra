@@ -92,7 +92,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 tasks:
                   - id: extract
-                    type: io.kestra.plugin.jdbc.duckdb.Query
+                    type: io.kestra.plugin.jdbc.duckdb.Queries
                     sql: |
                       INSTALL httpfs;
                       LOAD httpfs;
@@ -102,7 +102,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                   - id: each
                     type: io.kestra.plugin.core.flow.ForEachItem
-                    items: "{{ outputs.extract.uri }}"
+                    items: "{{ outputs.extract.outputs[0].uri }}"
                     batch:
                       rows: 1
                     namespace: company.team

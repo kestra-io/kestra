@@ -17,6 +17,7 @@ import io.kestra.plugin.core.flow.Dag;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class FlowableUtils {
@@ -100,9 +101,8 @@ public class FlowableUtils {
         // last success, find next
         Optional<TaskRun> lastTerminated = execution.findLastTerminated(taskRuns);
         if (lastTerminated.isPresent()) {
-            int lastIndex = taskRuns.indexOf(lastTerminated.get());
-
-            if (currentTasks.size() > lastIndex + 1) {
+            int lastIndex = indexOfLastTerminatedInTasks(currentTasks, lastTerminated.get(), parentTaskRun);
+            if (lastIndex >= 0 && currentTasks.size() > lastIndex + 1) {
                 return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRun(execution));
             }
         }
@@ -154,9 +154,8 @@ public class FlowableUtils {
         // last success, find next
         Optional<TaskRun> lastTerminated = execution.findLastTerminated(taskRuns);
         if (lastTerminated.isPresent()) {
-            int lastIndex = taskRuns.indexOf(lastTerminated.get());
-
-            if (currentTasks.size() > lastIndex + 1) {
+            int lastIndex = indexOfLastTerminatedInTasks(currentTasks, lastTerminated.get(), parentTaskRun);
+            if (lastIndex >= 0 && currentTasks.size() > lastIndex + 1) {
                 return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRunIncrementIteration(execution, parentTaskRun.getIteration()));
             }
         }
@@ -563,6 +562,21 @@ public class FlowableUtils {
         }
 
         return result;
+    }
+
+    /**
+     * Returns the index of the given {@code lastTerminated} task run within {@code currentTasks},
+     * matching by task ID (and optionally by parent/value via {@link #isTaskRunFor}).
+     * Using this index instead of the position in the raw task-run list avoids off-by-N skipping
+     * when a task produces multiple task runs (e.g. WaitFor creates one per iteration).
+     *
+     * @return the 0-based index, or {@code -1} if not found
+     */
+    private static int indexOfLastTerminatedInTasks(List<ResolvedTask> currentTasks, TaskRun lastTerminated, TaskRun parentTaskRun) {
+        return IntStream.range(0, currentTasks.size())
+            .filter(i -> FlowableUtils.isTaskRunFor(currentTasks.get(i), lastTerminated, parentTaskRun))
+            .findFirst()
+            .orElse(-1);
     }
 
     public static boolean isTaskRunFor(ResolvedTask resolvedTask, TaskRun taskRun, TaskRun parentTaskRun) {

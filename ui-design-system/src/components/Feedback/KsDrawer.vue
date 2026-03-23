@@ -1,6 +1,8 @@
 <script setup lang="ts">
     import {ElDrawer, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+    import {ref} from "vue";
 
     provideGlobalConfig({namespace: "kel"})
 
@@ -8,18 +10,16 @@
 
     const props = withDefaults(defineProps<{
         modelValue?: boolean
-        destroyOnClose?: boolean
-        lockScroll?: boolean
         closeOnClickModal?: boolean
         closeOnPressEscape?: boolean
         showClose?: boolean
-        size?: string
-        appendToBody?: boolean
+        isFullScreen?: boolean
     }>(), {
-        lockScroll: undefined,
         closeOnClickModal: undefined,
         closeOnPressEscape: undefined,
         showClose: undefined,
+        isFullScreen: false,
+        title: undefined
     })
 
     const filteredProps = useFilteredProps(props)
@@ -34,22 +34,45 @@
         header?(): unknown
         footer?(): unknown
     }>()
+
+    const fullScreen = ref(props.isFullScreen);
+
+    const toggleFullScreen = () => {
+        fullScreen.value = !fullScreen.value;
+    }
+
 </script>
 
 <template>
     <el-drawer
+        destroyOnClose
+        lockScroll
+        size=""
+        :appendToBody="true"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @update:model-value="emit('update:modelValue', $event)"
         @before-close="emit('before-close', $event)"
+        :class="{'full-screen': fullScreen}"
     >
         <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.header" #header><slot name="header" /></template>
+        <template v-if="$slots.header" #header>
+            <span>
+                {{ title }}
+                <slot name="header" />
+            </span>
+            <ks-button link class="full-screen">
+                <Fullscreen @click="toggleFullScreen" />
+            </ks-button>
+        </template>
         <template v-if="$slots.footer" #footer><slot name="footer" /></template>
     </el-drawer>
 </template>
 
 <style lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+     button.full-screen {
+         font-size: 24px;
+     }
 
     .kel-drawer {
         &.ltr,
@@ -115,14 +138,14 @@
         .kel-drawer__header {
             padding: 1rem;
             margin-bottom: 0;
-            background-color: var(--ks-gray-300);
+            background-color: var(--ks-gray-100);
             border-bottom: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
             font-weight: bold;
-            font-size: var(--font-size-lg);
+            font-size: var(--kel-font-size-medium);
 
             html.dark & {
-                background-color: var(--ks-gray-100);
+                background-color: var(--ks-gray-900);
             }
         }
     }

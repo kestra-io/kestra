@@ -139,7 +139,7 @@
         </template>
     </DataTable>
 
-    <Drawer
+    <ks-drawer
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
@@ -235,15 +235,15 @@
                 {{ $t('save') }}
             </ks-button>
         </template>
-    </Drawer>
+    </ks-drawer>
 
-    <Drawer
+    <ks-drawer
         v-if="namespacesStore.inheritedKVModalVisible"
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
     >
         <InheritedKVs :namespace="namespacesStore?.namespace?.id" />
-    </Drawer>
+    </ks-drawer>
 </template>
 
 <script setup lang="ts">
@@ -260,7 +260,6 @@
 
     import Id from "../Id.vue";
     import IconButton from "../IconButton.vue";
-    import Drawer from "../Drawer.vue";
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
     import BulkSelect from "../layout/BulkSelect.vue";

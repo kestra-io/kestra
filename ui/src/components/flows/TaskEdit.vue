@@ -6,7 +6,7 @@
         ref="taskEdit"
     >
         <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
-        <Drawer
+        <ks-drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
@@ -77,7 +77,7 @@
                     </div>
                 </ks-tab-pane>
             </ks-tabs>
-        </Drawer>
+        </ks-drawer>
     </component>
 </template>
 
@@ -89,7 +89,6 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "../no-code/components/TaskEditor.vue";
-    import Drawer from "../Drawer.vue";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
@@ -164,7 +163,7 @@
             ? revisions.value?.[props.revision - 1]?.source
             : flowStore.flow?.source;
     });
-   
+
     const load = async (taskId: string) => {
         await flowStore.loadFlow({
             namespace: props.namespace,

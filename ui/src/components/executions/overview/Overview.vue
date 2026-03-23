@@ -89,7 +89,7 @@
                                         )
                                     "
                                 >
-                                    <Id
+                                    <KsId
                                         :value="execution.originalId"
                                         :shrink="false"
                                     />
@@ -197,7 +197,7 @@
 
     import DateAgo from "../../layout/DateAgo.vue";
     import ErrorAlert from "./components/main/ErrorAlert.vue";
-    import Id from "../../Id.vue";
+    import {KsId} from "@kestra-io/ui-design-system";
     import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";

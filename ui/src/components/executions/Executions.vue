@@ -174,7 +174,7 @@
                                     }"
                                     class="execution-id"
                                 >
-                                    <Id :value="scope.row?.id" :shrink="true" />
+                                    <KsId :value="scope.row?.id" :shrink="true" />
                                 </RouterLink>
                             </template>
                         </ks-table-column>
@@ -263,7 +263,7 @@
                                         }"
                                         class="execution-id"
                                     >
-                                        <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                                        <KsId :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
                                     </RouterLink>
                                     <span v-else>-</span>
                                 </template>
@@ -425,7 +425,7 @@
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import Id from "../Id.vue";
+    import {KsId} from "@kestra-io/ui-design-system";
     import IconButton from "../IconButton.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";

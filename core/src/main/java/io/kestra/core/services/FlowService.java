@@ -170,11 +170,16 @@ public class FlowService {
     /**
      * Delete a flow.
      */
-    public FlowWithSource delete(FlowWithSource flow) throws QueueException {
+    public FlowWithSource delete(FlowWithSource flow) {
         FlowWithSource deleted = flowRepository.delete(flow);
 
         // impact downstream consumers: topology, scheduler and flow metastore
-        impactDownstreamConsumers(deleted);
+        try {
+            impactDownstreamConsumers(deleted);
+        } catch (QueueException e) {
+            // TODO tmp fix for git-ee plugin, but we handle in some way this exception in the whole service
+            throw new RuntimeException(e);
+        }
 
         return deleted;
     }

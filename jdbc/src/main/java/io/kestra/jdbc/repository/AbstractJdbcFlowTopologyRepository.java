@@ -85,7 +85,7 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
             .transactionResult(configuration -> {
                 // Match flows that originate from the namespace or its children
                 Condition sourceCondition = field("source_namespace").eq(namespacePrefix)
-                    .or(field("source_namespace").likeIgnoreCase(namespacePrefix + ".%"));
+                    .or(field("source_namespace").startsWith(namespacePrefix + "."));
 
                 Condition tenantSource = buildTenantCondition("source", tenantId);
                 Condition tenantDest = buildTenantCondition("destination", tenantId);

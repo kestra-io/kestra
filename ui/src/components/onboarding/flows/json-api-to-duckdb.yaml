@@ -1,0 +1,56 @@
+id: data-engineering-pipeline
+namespace: company.team
+
+labels:
+  name: Data Engineering Pipeline
+
+inputs:
+  - id: columns_to_keep
+    type: ARRAY
+    itemType: STRING
+    defaults:
+      - brand
+      - price
+
+tasks:
+  - id: extract
+    type: io.kestra.plugin.core.http.Download
+    description: Download the raw products JSON data.
+    uri: https://dummyjson.com/products
+
+  - id: transform
+    type: io.kestra.plugin.scripts.python.Script
+    description: Filter the product fields and write a cleaned JSON file.
+    containerImage: python:3.13-alpine
+    inputFiles:
+      data.json: "{{ outputs.extract.uri }}"
+    outputFiles:
+      - "*.json"
+    script: |
+      import json
+      import os
+
+      with open("data.json", "r") as file:
+          data = json.load(file)
+
+      filtered_data = [
+          {column: product.get(column, "N/A") for column in {{ inputs.columns_to_keep }}}
+          for product in data["products"]
+      ]
+
+      with open("products.json", "w") as file:
+          json.dump(filtered_data, file, indent=4)
+
+  - id: query
+    type: io.kestra.plugin.jdbc.duckdb.Queries
+    description: Aggregate the cleaned data with DuckDB and store the result.
+    inputFiles:
+      products.json: "{{ outputs.transform.outputFiles['products.json'] }}"
+    sql: |
+      INSTALL json;
+      LOAD json;
+      SELECT brand, round(avg(price), 2) as avg_price
+      FROM read_json_auto('{{ workingDir }}/products.json')
+      GROUP BY brand
+      ORDER BY avg_price DESC;
+    fetchType: STORE

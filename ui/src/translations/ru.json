@@ -1678,6 +1678,7 @@
       }
     },
     "save task": "Сохранить задачу",
+    "save_and_execute": "Сохранить и выполнить",
     "saved": "Успешно сохранено",
     "saved done": "<em>{name}</em> успешно сохранен",
     "scheduleDate": "Дата расписания",
@@ -2056,6 +2057,108 @@
         "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Видеоуроки</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Документация</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "Учебник"
       }
+    },
+    "welcome_copilot": {
+      "button_cta": "Создать flow с нуля",
+      "execute_hint": {
+        "description": "Нажмите, чтобы сохранить ваш workflow и запустить его немедленно.",
+        "title": "Сохранить и выполнить ваш flow"
+      },
+      "flows": {
+        "buildDbtPipeline": {
+          "label": "Создать dbt pipeline",
+          "prompt": "Создайте flow в Kestra, который клонирует репозиторий проекта dbt и запускает dbt build с профилем DuckDB."
+        },
+        "buildDockerImageAndRunIt": {
+          "label": "Создайте Docker image и запустите его",
+          "prompt": "Создайте flow в Kestra, который собирает Docker-образ из встроенного Dockerfile и запускает полученный контейнер."
+        },
+        "convertCsvToExcel": {
+          "label": "Преобразовать CSV в Excel",
+          "prompt": "Создайте flow, который загружает CSV файл, преобразует его в Ion и экспортирует результат как Excel файл."
+        },
+        "etlWorkflow": {
+          "label": "ETL Workflow",
+          "prompt": "Создайте ETL flow, который загружает данные в формате JSON, обрабатывает их с помощью Python и выполняет запросы к преобразованному результату с помощью DuckDB."
+        },
+        "installNginxViaAnsible": {
+          "label": "Установить Nginx через Ansible",
+          "prompt": "Создайте flow Kestra, который устанавливает Nginx на целевой машине с помощью Ansible и проверяет установленную версию."
+        },
+        "jsonApiToDuckdb": {
+          "label": "JSON API в DuckDB",
+          "prompt": "Создайте flow, который загружает JSON файл из публичного API, преобразует его с помощью Python скрипта и обрабатывает с помощью DuckDB Queries task."
+        },
+        "manualApproval": {
+          "label": "Ручное одобрение",
+          "prompt": "Создайте flow с начальным этапом обработки, паузой для ручного утверждения и финальным этапом развертывания после утверждения."
+        },
+        "microservicesApis": {
+          "label": "Микросервисы и API",
+          "prompt": "Создайте flow, который проверяет ответ API веб-сайта и отправляет уведомление в Slack, если код состояния не успешен."
+        },
+        "scheduledPdfReports": {
+          "label": "Запланированные PDF отчеты",
+          "prompt": "Создайте запланированный flow, который загружает PDF отчет и отправляет уведомление в Slack, когда отчет готов."
+        },
+        "weeklySalesKpisToSlack": {
+          "label": "Еженедельные KPI продаж в Slack",
+          "prompt": "Создайте еженедельный запланированный flow, который вычисляет KPI продаж с помощью DuckDB и отправляет сводку в Slack."
+        }
+      },
+      "help": {
+        "blueprints": {
+          "description": "Исследуйте готовые примеры и шаблоны для общих паттернов workflow.",
+          "title": "Чертежи"
+        },
+        "slack": {
+          "description": "Присоединяйтесь к нам, чтобы делиться идеями и лучшими практиками, а также получать помощь с техническими вопросами.",
+          "title": "Сообщество Slack"
+        },
+        "tutorial": {
+          "description": "Узнайте, как создать и запустить ваш первый flow с пошаговыми инструкциями.",
+          "title": "Начать учебное пособие"
+        }
+      },
+      "need_help": "Нужна помощь?",
+      "placeholder_prompt": "Отправляйте мне ежедневное приветственное сообщение в 9 утра.",
+      "remaining_quota": "У вас осталось {count} AI generations",
+      "show_less": "Показать меньше подсказок",
+      "show_more": "Показать больше подсказок",
+      "success_page": {
+        "description": "Вы изучили основы Kestra. Вот некоторые ресурсы, которые помогут вам продолжить ваше путешествие.",
+        "items": {
+          "blueprints": {
+            "description": "Готовые шаблоны workflow для общих случаев использования",
+            "title": "Черновики"
+          },
+          "demo": {
+            "description": "Исследуйте Kestra Enterprise Edition с персонализированной демонстрацией",
+            "title": "Получить демо"
+          },
+          "slack": {
+            "description": "Подключитесь к другим пользователям и получите помощь от сообщества",
+            "title": "Сообщество Slack"
+          },
+          "tutorial": {
+            "description": "Интерактивное руководство по всем функциям Kestra",
+            "title": "Начать учебное пособие"
+          },
+          "videos": {
+            "description": "Пошаговые видеоинструкции по продвинутым функциям",
+            "title": "Видеоуроки"
+          }
+        },
+        "restart": "Перезапустить учебник",
+        "title": "Вы готовы!"
+      },
+      "success_popup": {
+        "description": "Вы успешно выполнили свой первый flow! Вы на пути к тому, чтобы стать профессионалом в Kestra.",
+        "explore": "Исследовать больше",
+        "title": "Поздравляем!",
+        "tutorial": "Углубленный учебник"
+      },
+      "title": "Превратите вашу идею в workflow"
     },
     "welcome_page": {
       "guide": "Нужна помощь в выполнении вашего первого flow?",

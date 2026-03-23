@@ -32,7 +32,8 @@
     "peerDependencies": {
         "bootstrap": "^5.3.8",
         "element-plus": ">=2.13.5",
-        "vue": "^3.5.0"
+        "vue": "^3.5.0",
+        "vue-material-design-icons": "^5.3.1"
     },
     "devDependencies": {
         "@storybook/addon-a11y": "^10.3.1",

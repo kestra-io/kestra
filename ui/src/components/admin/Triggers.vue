@@ -335,7 +335,7 @@
     import moment from "moment";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
-    import {ElMessage} from "element-plus";
+    import {KsMessage} from "@kestra-io/ui-design-system";
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -584,7 +584,7 @@
             triggerId: triggerId
         });
 
-        ElMessage({
+        KsMessage({
             message: t("unlock trigger.success"),
             type: "success"
         });
@@ -599,7 +599,7 @@
 
     const setDisabled = (trigger: any, value: boolean) => {
         if (trigger.codeDisabled) {
-            ElMessage({
+            KsMessage({
                 message: t("triggerflow disabled"),
                 type: "error",
                 showClose: true,

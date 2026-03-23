@@ -40,7 +40,7 @@
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-    import {ElMessageBox} from "element-plus";
+    import {KsMessageBox} from "@kestra-io/ui-design-system";
     import {useBookmarksStore} from "../../stores/bookmarks";
 
     const {t} = useI18n({useScope: "global"});
@@ -56,7 +56,7 @@
     const titleInput = ref<{ focus: () => void; select: () => void } | null>(null);
 
     function deleteBookmark() {
-        ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
+        KsMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
             type: "warning",
             confirmButtonText: t("ok"),
             cancelButtonText: t("close"),

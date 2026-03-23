@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
-    import {ElMessageBox} from "element-plus";
+    import {KsMessageBox} from "@kestra-io/ui-design-system";
     import {SavedFilter} from "../utils/filterTypes";
     import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons";
 
@@ -76,7 +76,7 @@
     }>();
 
     const deleteFilter = (savedFilter: SavedFilter) => {
-        ElMessageBox.confirm(t("filter.delete filter confirm"), t("confirmation"), {
+        KsMessageBox.confirm(t("filter.delete filter confirm"), t("confirmation"), {
             type: "warning",
             confirmButtonText: t("ok"),
             cancelButtonText: t("close"),

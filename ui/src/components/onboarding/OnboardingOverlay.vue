@@ -71,7 +71,7 @@
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {ElMessageBox} from "element-plus";
+    import {KsMessageBox} from "@kestra-io/ui-design-system";
     import {useFlowStore} from "../../stores/flow";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import {FIRST_FLOW_GUIDE_STEPS, FIRST_FLOW_STEP_IDS} from "./guides/firstFlowGuide";
@@ -512,7 +512,7 @@
 
         isCancelConfirmOpen.value = true;
         try {
-            await ElMessageBox.confirm(
+            await KsMessageBox.confirm(
                 t("onboarding.cancel_modal.description"),
                 t("onboarding.cancel_modal.title"),
                 {

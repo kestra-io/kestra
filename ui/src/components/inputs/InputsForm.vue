@@ -249,7 +249,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMessage} from "element-plus";
+    import {KsMessage} from "@kestra-io/ui-design-system";
     import type {FormItemRule} from "element-plus";
     import ValidationError from "../flows/ValidationError.vue";
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue";
@@ -488,7 +488,7 @@
             });
 
             if (!isAllowed) {
-                ElMessage.error(t("fileTypeNotAllowed", {types: acceptedTypes}));
+                KsMessage.error(t("fileTypeNotAllowed", {types: acceptedTypes}));
                 target.value = "";
                 return;
             }

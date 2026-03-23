@@ -4,7 +4,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElNotification} from "element-plus";
+    import {KsNotification} from "@kestra-io/ui-design-system";
     import {pageFromRoute} from "../utils/eventsRouter";
     import {h, onMounted, watch, computed, ref} from "vue";
     import ErrorToastContainer from "./ErrorToastContainer.vue";
@@ -112,7 +112,7 @@
 
         apiStore.events(error);
 
-        notifications.value = ElNotification({
+        notifications.value = KsNotification({
             title: title.value || "Error",
             message: h(ErrorToastContainer, {
                 message: {

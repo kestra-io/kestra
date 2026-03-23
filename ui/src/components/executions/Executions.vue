@@ -396,7 +396,8 @@
     import {useRoute, useRouter} from "vue-router";
     import {ref, computed, watch, h, useTemplateRef} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
+    import {ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
+    import {KsMessageBox} from "@kestra-io/ui-design-system";
 
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -966,7 +967,7 @@
                 "onUpdate:modelValue": (val: any) => (deleteStorage.value = Boolean(val)),
             }),
         ]);
-        ElMessageBox.confirm(message, t("confirmation")).then(() => {
+        KsMessageBox.confirm(message, t("confirmation")).then(() => {
             actionOptions.value.includeNonTerminated = includeNonTerminated.value;
             actionOptions.value.deleteLogs = deleteLogs.value;
             actionOptions.value.deleteMetrics = deleteMetrics.value;
@@ -997,7 +998,7 @@
             return;
         }
 
-        ElMessageBox.confirm(
+        KsMessageBox.confirm(
             t("bulk set labels", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
             t("confirmation"),
             {dangerouslyUseHTMLString: true}

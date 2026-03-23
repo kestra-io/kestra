@@ -3,11 +3,52 @@
 
 $prefix: 'kbs-';
 @import "bootstrap/scss/functions";
-@import "bootstrap/scss/variables.scss";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
 @import "bootstrap/scss/maps";
 @import "bootstrap/scss/mixins";
-@import "bootstrap/scss/root";
-@import "bootstrap/scss/reboot.scss";
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/utilities";
+@import "bootstrap/scss/utilities/api";
+
+// Inline only the root CSS vars consumed by reboot.scss (light + dark)
+:root {
+    --kbs-root-font-size: #{$font-size-root};
+    --kbs-font-sans-serif: #{inspect($font-family-sans-serif)};
+    --kbs-body-font-family: #{inspect($font-family-base)};
+    @include rfs($font-size-base, --kbs-body-font-size);
+    --kbs-body-font-weight: #{$font-weight-base};
+    --kbs-body-line-height: #{$line-height-base};
+    --kbs-body-text-align: #{$body-text-align};
+
+    --kbs-body-color: #{$body-color};
+    --kbs-body-bg: #{$body-bg};
+
+    --kbs-heading-color: #{$headings-color};
+
+    --kbs-link-color-rgb: #{to-rgb($link-color)};
+    --kbs-link-hover-color-rgb: #{to-rgb($link-hover-color)};
+
+    --kbs-code-color: #{$code-color};
+    --kbs-highlight-color: #{$mark-color};
+    --kbs-highlight-bg: #{$mark-bg};
+}
+
+html.dark {
+    color-scheme: dark;
+
+    --kbs-body-color: #{$body-color-dark};
+    --kbs-body-bg: #{$body-bg-dark};
+
+    --kbs-heading-color: #{$headings-color-dark};
+
+    --kbs-link-color-rgb: #{to-rgb($link-color-dark)};
+    --kbs-link-hover-color-rgb: #{to-rgb($link-hover-color-dark)};
+
+    --kbs-code-color: #{$code-color-dark};
+    --kbs-highlight-color: #{$mark-color-dark};
+    --kbs-highlight-bg: #{$mark-bg-dark};
+}
 
 a:hover {
     --kbs-link-color-rgb: var(--ks-content-link-hover);

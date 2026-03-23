@@ -3,10 +3,6 @@
         v-if="showTooltip && date"
         :key="uid('tooltip')"
         :content="inverted ? from : full"
-        :persistent="false"
-        transition=""
-        :hideAfter="0"
-        effect="light"
     >
         <span :class="className">
             {{ inverted ? full : from }}

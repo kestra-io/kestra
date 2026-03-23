@@ -116,7 +116,6 @@
                     v-if="hasTrigger(scope.row)"
                     :content="$t('trigger disabled')"
                     :disabled="!scope.row.sourceDisabled"
-                    effect="light"
                 >
                     <ks-switch
                         size="small"

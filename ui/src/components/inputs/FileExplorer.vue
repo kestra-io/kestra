@@ -26,11 +26,7 @@
             </ks-select>
             <ks-button-group class="d-flex">
                 <ks-tooltip
-                    effect="light"
                     :content="$t('namespace files.create.file')"
-                    transition=""
-                    :hideAfter="0"
-                    :persistent="false"
                     popperClass="text-base"
                 >
                     <ks-button class="px-2" @click="toggleDialog(true, 'file')">
@@ -38,11 +34,7 @@
                     </ks-button>
                 </ks-tooltip>
                 <ks-tooltip
-                    effect="light"
                     :content="$t('namespace files.create.folder')"
-                    transition=""
-                    :hideAfter="0"
-                    :persistent="false"
                     popperClass="text-base"
                 >
                     <ks-button
@@ -88,11 +80,7 @@
                     </template>
                 </ks-dropdown>
                 <ks-tooltip
-                    effect="light"
                     :content="$t('namespace files.export')"
-                    transition=""
-                    :hideAfter="0"
-                    :persistent="false"
                     popperClass="text-base"
                 >
                     <ks-button class="px-2" @click="exportFiles()">

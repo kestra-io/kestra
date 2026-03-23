@@ -20,7 +20,6 @@
                 >
                     <ks-tooltip
                         placement="top"
-                        effect="light"
                         :content="$t('filter.customize tooltip')"
                         :disabled="filter.readOnly?.value"
                     >
@@ -72,7 +71,6 @@
         <ks-tooltip
             v-if="filter.hasFilterKeys?.value"
             placement="top"
-            effect="light"
             :content="$t('filter.reset_all')"
             :disabled="filter.readOnly?.value"
         >

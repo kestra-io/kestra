@@ -32,7 +32,7 @@
                 >
                     <template #reference>
                         <ks-button size="default" class="columns-button" :icon="CogOutline">
-                            <ks-tooltip :content="$t('filter.customize columns')" placement="top" effect="light">
+                            <ks-tooltip :content="$t('filter.customize columns')" placement="top">
                                 <span>{{ $t("filter.columns") }}</span>
                             </ks-tooltip>
                         </ks-button>

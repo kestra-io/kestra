@@ -43,9 +43,6 @@
                 </ks-tag>
                 <ks-tooltip
                     v-if="!isAnyOf && hasTooltip"
-                    :persistent="false"
-                    :hideAfter="0"
-                    effect="light"
                     placement="left-start"
                     :showArrow="false"
                     popperClass="singleton-tooltip"

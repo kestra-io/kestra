@@ -2,10 +2,7 @@
     <div :id="containerID" />
     <ks-tooltip
         v-if="generated?.total > 0"
-        effect="light"
         placement="top"
-        :persistent="false"
-        :hideAfter="0"
         :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         :content="tooltipContent"
         rawContent

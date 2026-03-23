@@ -22,7 +22,6 @@
                 v-for="(plugin, index) in pluginsList"
                 :showAfter="1000"
                 :key="`${plugin.name}-${index}`"
-                effect="light"
             >
                 <template #content>
                     <div class="tasks-tooltips">

@@ -75,10 +75,6 @@
                         <template #default="scope">
                             <ks-tooltip
                                 v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
-                                transition=""
-                                :hideAfter="0"
-                                :persistent="false"
-                                effect="light"
                             >
                                 <template #content>
                                     <span v-html="$t('secret.isReadOnly')" />

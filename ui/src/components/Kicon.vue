@@ -1,14 +1,10 @@
 <template>
     <ks-tooltip
-        effect="light"
         v-if="tooltip"
         :content="tooltip"
         :rawContent="true"
         v-bind="placement ? {placement} : {}"
-        :persistent="false"
         :enterable="false"
-        transition=""
-        :hideAfter="0"
     >
         <span class="kicon">
             <slot />

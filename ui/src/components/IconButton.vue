@@ -1,14 +1,10 @@
 <template>
     <ks-tooltip
         v-if="tooltip"
-        effect="light"
         :content="tooltip"
         :rawContent="true"
         v-bind="placement ? {placement} : {}"
-        :persistent="false"
         :enterable="false"
-        transition=""
-        :hideAfter="0"
     >
         <ks-button
             v-bind="buttonAttrs"

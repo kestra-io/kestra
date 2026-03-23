@@ -1,10 +1,6 @@
 <template>
     <ks-tooltip
-        effect="light"
         placement="left"
-        :persistent="false"
-        :hideAfter="0"
-        transition=""
         :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         :disabled="!externalTooltip"
         :content="tooltipContent"

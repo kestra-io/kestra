@@ -3,7 +3,7 @@
         <canvas ref="canvasRef" />
 
         <nav v-if="rendered">
-            <ks-tooltip :content="$t('page.previous')" effect="light" :showAfter="1500">
+            <ks-tooltip :content="$t('page.previous')" :showAfter="1500">
                 <ks-button @click="onPrevPage">
                     <ChevronLeft />
                 </ks-button>
@@ -13,7 +13,7 @@
                 {{ $t("of") }}
                 {{ pdfDoc?.numPages }}
             </span>
-            <ks-tooltip :content="$t('page.next')" effect="light" :showAfter="1500">
+            <ks-tooltip :content="$t('page.next')" :showAfter="1500">
                 <ks-button @click="onNextPage">
                     <ChevronRight />
                 </ks-button>

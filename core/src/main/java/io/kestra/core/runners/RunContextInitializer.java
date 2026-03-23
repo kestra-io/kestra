@@ -14,6 +14,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -25,7 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * This class is responsible to initialize and hydrate a {@link DefaultRunContext} for a specific run context.
+ * This class is responsible to initialize and hydrate a {@link RunContext} for a specific run context.
  */
 @Singleton
 public class RunContextInitializer {
@@ -54,6 +55,14 @@ public class RunContextInitializer {
     @Inject
     protected RunContextCache runContextCache;
 
+    @Value("${kestra.environment.name}")
+    @Nullable
+    protected String kestraEnvironment;
+
+    @Value("${kestra.url}")
+    @Nullable
+    protected String kestraUrl;
+
     /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTask} for executor.
      *
@@ -67,71 +76,95 @@ public class RunContextInitializer {
     }
 
     /**
-     * Initializes the given {@link RunContext} for the given {@link WorkerTask}.
+     * Builds a {@link RunContext} for the given {@link WorkerTask} on the worker side.
+     * <p>
+     * Reconstructs the full variables map from {@link WorkerTaskData} plus locally available
+     * state (task, taskrun, envs, globals, kestra config, secret consumer).
      *
-     * @param runContext The runContext to initialize.
-     * @param workerTask The {@link WorkerTask}.
-     * @return The initialized runContext
+     * @param workerTask The {@link WorkerTask} received from the wire.
+     * @return a fully initialized RunContext ready for task execution
      */
-    public DefaultRunContext forWorker(final DefaultRunContext runContext,
-                                       final WorkerTask workerTask) {
-        return forWorker(runContext, workerTask, Function.identity());
+    public DefaultRunContext forWorker(final WorkerTask workerTask) {
+        return forWorker(workerTask, Function.identity());
     }
 
     /**
-     * Initializes the given {@link RunContext} for the given {@link WorkerTask}.
+     * Builds a {@link RunContext} for the given {@link WorkerTask} for a WorkingDirectory task.
+     * <p>
+     * Preserves the current taskrun as {@code workerTaskrun} before overwriting with the subtask's taskrun.
      *
-     * @param runContext The runContext to initialize.
      * @param workerTask The {@link WorkerTask}.
-     * @return The runContext to initialize
+     * @return a fully initialized RunContext
      */
-    public DefaultRunContext forWorkingDirectory(final DefaultRunContext runContext,
-                                                 final WorkerTask workerTask) {
-        return forWorker(runContext, workerTask, variables -> {
+    public DefaultRunContext forWorkingDirectory(final WorkerTask workerTask) {
+        return forWorker(workerTask, variables -> {
             variables.put("workerTaskrun", variables.get("taskrun"));
             return variables;
         });
     }
 
-
     @SuppressWarnings("unchecked")
-    private DefaultRunContext forWorker(final DefaultRunContext runContext,
-                                        final WorkerTask workerTask,
+    private DefaultRunContext forWorker(final WorkerTask workerTask,
                                         final Function<Map<String, Object>, Map<String, Object>> variablesModifier) {
-
-        runContext.init(applicationContext);
-
         final Task task = workerTask.getTask();
         final TaskRun taskRun = workerTask.getTaskRun();
+        final WorkerTaskData data = workerTask.getData();
 
-        // build new variables
-        Map<String, Object> enrichedVariables = new HashMap<>(runContext.getVariables());
-        enrichedVariables.put("taskrun", RunVariables.of(taskRun));
-        enrichedVariables.put("task", RunVariables.of(task));
-        enrichedVariables.put("envs", runContextCache.getEnvVars()); // inject local worker env vars
+        // Reconstruct full variables from wire data + locally available state
+        Map<String, Object> variables = new HashMap<>(data.variables());
+        variables.put("task", RunVariables.of(task));
+        variables.put("taskrun", RunVariables.of(taskRun));
+        variables.put("envs", runContextCache.getEnvVars());
+        variables.put("globals", runContextCache.getGlobalVars());
+        variables.put("kestra", buildKestraConfig());
 
-        Map<String, Object> workerTaskRun = (Map<String, Object>) enrichedVariables.get("workerTaskrun");
+        // Handle workerTaskrun value propagation (for WorkingDirectory subtasks)
+        Map<String, Object> workerTaskRun = (Map<String, Object>) variables.get("workerTaskrun");
         if (workerTaskRun != null && workerTaskRun.containsKey("value")) {
-            Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) enrichedVariables.get("taskrun"));
-            taskrun.put("value", workerTaskRun.get("value"));
-            enrichedVariables.put("taskrun", taskrun);
+            Map<String, Object> taskrunMap = new HashMap<>((Map<String, Object>) variables.get("taskrun"));
+            taskrunMap.put("value", workerTaskRun.get("value"));
+            variables.put("taskrun", taskrunMap);
         }
 
-        // rehydrate outputs
-        enrichedVariables.put("outputs", rehydrateOutputs((Map<String, Object>) enrichedVariables.get("outputs")));
+        // Rehydrate outputs (EE override point)
+        Object outputs = variables.getOrDefault("outputs", Map.of());
+        if (outputs instanceof Map) {
+            variables.put("outputs", rehydrateOutputs((Map<String, Object>) outputs));
+        }
 
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTask);
-        enrichedVariables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
+        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
 
-        enrichedVariables = variablesModifier.apply(enrichedVariables);
+        variables = variablesModifier.apply(variables);
 
-        runContext.setVariables(enrichedVariables);
+        // Build a fresh RunContext
+        DefaultRunContext runContext = new DefaultRunContext.Builder()
+            .withVariables(variables)
+            .withSecretInputs(data.secretInputs())
+            .build();
+
+        runContext.init(applicationContext);
+        runContext.setTraceParent(data.traceParent());
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
         runContext.setTask(task);
 
         return runContext;
+    }
+
+    /**
+     * Builds the kestra configuration map from local worker config values.
+     */
+    private Map<String, String> buildKestraConfig() {
+        Map<String, String> kestra = HashMap.newHashMap(2);
+        if (kestraEnvironment != null) {
+            kestra.put("environment", kestraEnvironment);
+        }
+        if (kestraUrl != null) {
+            kestra.put("url", kestraUrl);
+        }
+        return kestra;
     }
 
     /**

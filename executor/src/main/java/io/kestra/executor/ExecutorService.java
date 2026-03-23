@@ -500,7 +500,7 @@ public class ExecutorService {
 
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
-        List<WorkerTask> onPauses = new ArrayList<>();
+        List<ExecutorContext.ExecutorWorkerTask> onPauses = new ArrayList<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             if (taskRun.getState().isRunning()) {
@@ -594,15 +594,16 @@ public class ExecutorService {
             } else if (task instanceof Pause pause && pause.getOnPause() != null) {
                 // if a Pause task defines an onPause, we must create a TaskRun and a WorkerTask
                 RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                onPauses.add(WorkerTask.builder()
-                    .runContext(runContext)
+                WorkerTask pauseWorkerTask = WorkerTask.builder()
+                    .data(WorkerTaskData.from(runContext))
                     .taskRun(TaskRun.of(
                         executor.getExecution(),
                         ResolvedTask.of(pause.getOnPause())
                     ))
                     .task(pause.getOnPause())
                     .executionKind(executor.getExecution().getKind())
-                    .build());
+                    .build();
+                onPauses.add(new ExecutorContext.ExecutorWorkerTask(pauseWorkerTask, runContext));
             }
 
             // If the task is retrying
@@ -642,7 +643,7 @@ public class ExecutorService {
 
 
         if (!onPauses.isEmpty()) {
-            List<TaskRun> taskRuns = onPauses.stream().map(WorkerTask::getTaskRun).toList();
+            List<TaskRun> taskRuns = onPauses.stream().map(executorTask -> executorTask.workerTask().getTaskRun()).toList();
             executor.withTaskRun(taskRuns, "handlePauses");
             executor.withWorkerTasks(onPauses, "handlePauses");
         }
@@ -818,7 +819,7 @@ public class ExecutorService {
             .map(ContextPropagators::getTextMapPropagator);
 
         // submit TaskRun when receiving created, must be done after the state execution store
-        Map<Boolean, List<WorkerTask>> workerTasks = executor.getExecution()
+        Map<Boolean, List<ExecutorContext.ExecutorWorkerTask>> workerTasks = executor.getExecution()
             .getTaskRunList()
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated() && executor.getExecution().getFixtureForTaskRun(taskRun).isEmpty())
@@ -830,7 +831,7 @@ public class ExecutorService {
                     textMapPropagator.ifPresent(propagator -> propagator.inject(Context.current(), runContext, RunContextTextMapSetter.INSTANCE));
 
                     WorkerTask workerTask = WorkerTask.builder()
-                        .runContext(runContext)
+                        .data(WorkerTaskData.from(runContext))
                         .taskRun(taskRun)
                         .task(task)
                         .executionKind(executor.getExecution().getKind())
@@ -844,24 +845,24 @@ public class ExecutorService {
                         if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                             // Check whether at-least one worker is available
                             if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {
-                                return workerTask;
+                                return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
                             } else {
                                 WorkerGroup.Fallback fallback = workerGroup.map(wg -> wg.getFallback()).orElse(WorkerGroup.Fallback.WAIT);
                                 return switch (fallback) {
                                     case FAIL -> {
                                         runContext.logger()
                                             .error("No workers are available for worker group '{}', failing the task.", workerGroupKey);
-                                        yield workerTask.withTaskRun(workerTask.getTaskRun().fail());
+                                        yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
                                     }
                                     case CANCEL -> {
                                         runContext.logger()
                                             .info("No workers are available for worker group '{}', canceling the task.", workerGroupKey);
-                                        yield workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.CANCELLED));
+                                        yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.CANCELLED)), runContext);
                                     }
                                     case WAIT -> {
                                         runContext.logger()
                                             .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
-                                        yield workerTask;
+                                        yield new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
                                     }
                                 };
                             }
@@ -869,14 +870,14 @@ public class ExecutorService {
                             runContext.logger()
                                 .error("Cannot run task. No worker group exist for key '{}'.", workerGroupKey);
                             // fail the task-run because no worker can run the task
-                            return workerTask.withTaskRun(workerTask.getTaskRun().fail());
+                            return new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
                         }
                     } else {
-                        return workerTask;
+                        return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
                     }
                 })
             )
-            .collect(Collectors.groupingBy(workerTask -> workerTask.getTaskRun().getState().isFailed() || workerTask.getTaskRun().getState().getCurrent() == State.Type.CANCELLED));
+            .collect(Collectors.groupingBy(executorTask -> executorTask.workerTask().getTaskRun().getState().isFailed() || executorTask.workerTask().getTaskRun().getState().getCurrent() == State.Type.CANCELLED));
 
         // mock WorkerTaskResult for mocked execution
         // submit TaskRun when receiving created, must be done after the state execution store
@@ -953,18 +954,18 @@ public class ExecutorService {
         }
 
         // Ends FAILED or CANCELLED task runs by creating worker task results
-        List<WorkerTask> endedTasks = workerTasks.get(true);
+        List<ExecutorContext.ExecutorWorkerTask> endedTasks = workerTasks.get(true);
         if (endedTasks != null && !endedTasks.isEmpty()) {
             List<WorkerTaskResult> failed = endedTasks
                 .stream()
-                .map(workerTask -> WorkerTaskResult.builder().taskRun(workerTask.getTaskRun()).build())
+                .map(executorTask -> WorkerTaskResult.builder().taskRun(executorTask.workerTask().getTaskRun()).build())
                 .toList();
 
             this.addWorkerTaskResults(executor, failed);
         }
 
         // Send other TaskRun to the worker (create worker tasks)
-        List<WorkerTask> processingTasks = workerTasks.get(false);
+        List<ExecutorContext.ExecutorWorkerTask> processingTasks = workerTasks.get(false);
         if (processingTasks != null && !processingTasks.isEmpty() && !executor.getExecution().getState().isBreakpoint()) {
             executorToReturn = executorToReturn.withWorkerTasks(processingTasks, "handleWorkerTask");
 
@@ -984,7 +985,8 @@ public class ExecutorService {
         List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>();
 
         boolean haveFlows = executor.getWorkerTasks()
-            .removeIf(workerTask -> {
+            .removeIf(executorTask -> {
+                WorkerTask workerTask = executorTask.workerTask();
                 if (!(workerTask.getTask() instanceof ExecutableTask)) {
                     return false;
                 }
@@ -1002,7 +1004,7 @@ public class ExecutorService {
                     );
 
                     // handle runIf
-                    if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
+                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
                         executor.withExecution(
                             executor
                                 .getExecution()
@@ -1075,14 +1077,15 @@ public class ExecutorService {
         List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
 
         executor.getWorkerTasks()
-            .removeIf(workerTask -> {
+            .removeIf(executorTask -> {
+                WorkerTask workerTask = executorTask.workerTask();
                 if (!(workerTask.getTask() instanceof ExecutionUpdatableTask executionUpdatingTask)) {
                     return false;
                 }
 
                 try {
                     // Skip task if runIf condition is false
-                    if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
+                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
                         executor.withExecution(
                             executor
                                 .getExecution()
@@ -1097,7 +1100,7 @@ public class ExecutorService {
                         .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()))
                         .withState(State.Type.RUNNING);
 
-                    var newExecution = executionUpdatingTask.update(executor.getExecution(), workerTask.getRunContext());
+                    var newExecution = executionUpdatingTask.update(executor.getExecution(), executorTask.runContext());
                     if (newExecution.getState().getCurrent() == State.Type.KILLED) {
                         killQueue.emit(ExecutionKilledExecution.builder()
                             .state(ExecutionKilled.State.REQUESTED)
@@ -1112,7 +1115,7 @@ public class ExecutorService {
                     );
 
                     var terminalState = executionUpdatingTask
-                        .resolveState(workerTask.getRunContext(), executor.getExecution())
+                        .resolveState(executorTask.runContext(), executor.getExecution())
                         .orElse(State.Type.SUCCESS);
 
                     TaskRunAttempt terminalAttempt = runningTaskRun.lastAttempt().withState(terminalState);

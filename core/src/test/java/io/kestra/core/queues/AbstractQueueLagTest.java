@@ -100,7 +100,7 @@ public abstract class AbstractQueueLagTest {
         ResolvedTask resolvedTask = ResolvedTask.of(task);
 
         return WorkerJobEvent.of(WorkerTask.builder()
-            .runContext(runContextFactory.of(ImmutableMap.of()))
+            .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of())))
             .task(task)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build(), workerGroup);

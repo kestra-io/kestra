@@ -19,6 +19,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -121,7 +122,7 @@ class WorkerTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
         ResolvedTask resolvedTask = ResolvedTask.of(pause);
         WorkerTask workerTask = WorkerTask.builder()
-            .runContext(runContextFactory.of(Map.of("key", "value")))
+            .data(WorkerTaskData.from(runContextFactory.of(Map.of("key", "value"))))
             .task(flowableTask)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();
@@ -232,7 +233,7 @@ class WorkerTest {
         ResolvedTask resolvedTask = ResolvedTask.of(bash);
 
         return WorkerTask.builder()
-            .runContext(runContextFactory.of(Map.of("key", "value")))
+            .data(WorkerTaskData.from(runContextFactory.of(Map.of("key", "value"))))
             .task(bash)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();

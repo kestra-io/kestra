@@ -17,6 +17,7 @@ import io.kestra.core.queues.VNodeDispatchQueueInterface;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
@@ -262,7 +263,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         ResolvedTask resolvedTask = ResolvedTask.of(bash);
 
         return WorkerTask.builder()
-            .runContext(runContextFactory.of(ImmutableMap.of("key", "value")))
+            .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of("key", "value"))))
             .task(bash)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();

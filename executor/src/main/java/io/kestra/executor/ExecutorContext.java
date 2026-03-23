@@ -5,6 +5,7 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionDelay;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
@@ -15,6 +16,14 @@ import java.util.List;
 
 @Getter
 public class ExecutorContext {
+
+    /**
+     * Executor-local wrapper that pairs a {@link WorkerTask} (wire model) with its
+     * {@link RunContext} (needed for executor-side rendering like {@code runIf} and worker group keys).
+     * The RunContext does NOT travel to the worker — only the WorkerTask does.
+     */
+    public record ExecutorWorkerTask(WorkerTask workerTask, RunContext runContext) {}
+
     private Execution execution;
     private Exception exception;
     private final List<String> from = new ArrayList<>();
@@ -24,7 +33,7 @@ public class ExecutorContext {
     // And as we always use addAll the capacity of the list will grow to what's needed when used,
     // so we initialize them with 0 to save memory.
     private final List<TaskRun> nexts = new ArrayList<>(0);
-    private final List<WorkerTask> workerTasks = new ArrayList<>(0);
+    private final List<ExecutorWorkerTask> workerTasks = new ArrayList<>(0);
     private final List<ExecutionDelay> executionDelays = new ArrayList<>(0);
     private final List<SubflowExecution<?>> subflowExecutions = new ArrayList<>(0);
     private final List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>(0);
@@ -74,7 +83,7 @@ public class ExecutorContext {
         return this;
     }
 
-    public ExecutorContext withWorkerTasks(List<WorkerTask> workerTasks, String from) {
+    public ExecutorContext withWorkerTasks(List<ExecutorWorkerTask> workerTasks, String from) {
         this.workerTasks.addAll(workerTasks);
         this.from.add(from);
 

@@ -163,14 +163,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
                         executor
                             .getWorkerTasks()
-                            .forEach(throwConsumer(workerTask -> {
+                            .forEach(throwConsumer(executorTask -> {
+                                WorkerTask workerTask = executorTask.workerTask();
                                 try {
-                                    if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
+                                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
                                         workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED).addAttempt(TaskRunAttempt.builder().state(new State().withState(State.Type.SKIPPED)).build())));
                                     } else {
                                         if (workerTask.getTask().isSendToWorkerTask()) {
                                             Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
-                                            String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
+                                            String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> executorTask.runContext().render(workerGroup.getKey())))
                                                 .orElse(null);
                                             if (workerTask.getTask() instanceof WorkingDirectory) {
                                                 // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
@@ -203,7 +204,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     }
                                 } catch (Exception e) {
                                     workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
-                                    workerTask.getRunContext().logger().error("Failed to evaluate the runIf condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
+                                    executorTask.runContext().logger().error("Failed to evaluate the runIf condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
                                 }
                             }));
 

@@ -26,7 +26,7 @@ public class WorkerTaskRunning extends WorkerJobRunning {
     private Task task;
 
     @NotNull
-    private RunContext runContext;
+    private WorkerTaskData data;
 
     /**
      * {@inheritDoc}
@@ -41,7 +41,7 @@ public class WorkerTaskRunning extends WorkerJobRunning {
             .workerInstance(workerInstance)
             .taskRun(workerTask.getTaskRun())
             .task(workerTask.getTask())
-            .runContext(workerTask.getRunContext())
+            .data(workerTask.getData())
             .build();
     }
 }

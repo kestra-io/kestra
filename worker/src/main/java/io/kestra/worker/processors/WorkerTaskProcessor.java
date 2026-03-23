@@ -107,7 +107,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     }
 
     private void runWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory) {
-        DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(((DefaultRunContext) workerTask.getRunContext()), workerTask);
+        DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(workerTask);
         final RunContext workingDirectoryRunContext = runContext.clone();
 
         try {
@@ -185,6 +185,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 ));
         }
 
+        RunContext runContext = null;
         try {
             // Check if the execution has been killed before starting the task
             if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution())
@@ -205,7 +206,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
             workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
 
-            DefaultRunContext runContext = runContextInitializer.forWorker((DefaultRunContext) workerTask.getRunContext(), workerTask);
+            runContext = runContextInitializer.forWorker(workerTask);
             Optional<String> hash = Optional.empty();
 
             if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled()) {
@@ -255,7 +256,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             if (isStopped() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
                 // if the Worker is terminating and the task is not in success, it may have been terminated by the worker
                 // in this case; we return immediately without emitting any result as it would be resubmitted (except if WorkerTaskRestartStrategy is NEVER)
-                List<WorkerTaskResult> dynamicWorkerResults = workerTask.getRunContext().dynamicWorkerResults();
+                List<WorkerTaskResult> dynamicWorkerResults = runContext.dynamicWorkerResults();
                 List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
                 return new WorkerTaskResult(taskRunWithOutput.taskRun(), dynamicTaskRuns, taskRunWithOutput.outputs());
             }
@@ -277,7 +278,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             }
 
             // emit
-            List<WorkerTaskResult> dynamicWorkerResults = workerTask.getRunContext().dynamicWorkerResults();
+            List<WorkerTaskResult> dynamicWorkerResults = runContext.dynamicWorkerResults();
             List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
 
             TaskRun taskRun = taskRunWithOutput.taskRun().withState(state);
@@ -312,8 +313,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         } finally {
 
             // remove tmp directory
-            if (cleanUp) {
-                workerTask.getRunContext().cleanup();
+            if (cleanUp && runContext != null) {
+                runContext.cleanup();
             }
         }
     }

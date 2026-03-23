@@ -360,7 +360,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     WorkerTask workerTask = WorkerTask.builder()
                         .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
                         .task(workerTaskRunning.getTask())
-                        .runContext(workerTaskRunning.getRunContext())
+                        .data(workerTaskRunning.getData())
                         .build();
                     workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
                     Logs.logTaskRun(

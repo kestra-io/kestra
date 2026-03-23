@@ -26,7 +26,6 @@
                         filterable
                         clearable
                         :required="true"
-                        :persistent="false"
                         @change="getFilePreview"
                     >
                         <ks-option
@@ -43,7 +42,6 @@
                         filterable
                         clearable
                         :required="true"
-                        :persistent="false"
                         @change="getFilePreview"
                     >
                         <ks-option

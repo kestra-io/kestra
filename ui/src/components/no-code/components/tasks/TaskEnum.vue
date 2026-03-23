@@ -4,7 +4,6 @@
         @update:model-value="onInput"
         filterable
         clearable
-        :persistent="false"
         :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root?.split('.').pop() || 'value'}`"
     >
         <ks-option

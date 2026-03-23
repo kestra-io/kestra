@@ -3,7 +3,6 @@
         :modelValue="value"
         @update:model-value="emit('update:modelValue', $event)"
         filterable
-        :persistent="false"
         :placeholder="$t('revisions')"
     >
         <ks-option

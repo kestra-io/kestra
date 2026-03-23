@@ -6,7 +6,6 @@
         clearable
         multiple
         collapseTags
-        :persistent="false"
         :placeholder="$t('state')"
     >
         <ks-option

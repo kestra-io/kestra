@@ -21,7 +21,6 @@
         remoteShowSuffix?: boolean
         multiple?: boolean
         collapseTags?: boolean
-        persistent?: boolean
         required?: boolean
         valueKey?: string
         placement?: string
@@ -55,6 +54,7 @@
 
 <template>
     <el-select
+        :persistent="false"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"

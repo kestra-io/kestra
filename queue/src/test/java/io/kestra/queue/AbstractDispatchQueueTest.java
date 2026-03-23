@@ -188,7 +188,7 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue();
 
         // consume the remaining items from the queue
-        CountDownLatch remaining = new CountDownLatch(3);
+        CountDownLatch remaining = new CountDownLatch(13);
         subscriber = dispatchQueue
             .subscriber()
             .subscribe(e -> {

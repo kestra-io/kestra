@@ -52,6 +52,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
             "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")",
             "currentEachOutput(outputs=${1:outputs.forEach})",
+            "iterationOutput(taskId=${1:'myTaskId'}, iteration=${2:taskrun.iteration - 1})",
             "decrypt(key=${1:secret('encryption_key')}, encrypted=${2:outputs.request.encryptedBody})",
             "encrypt(key=${1:secret('encryption_key')}, plaintext=${2:'value_to_encrypt'})",
             "errorLogs()",

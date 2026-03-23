@@ -30,12 +30,16 @@
     const flowStore = useFlowStore();
     const authStore = useAuthStore();
     const onboardingV2Store = useOnboardingV2Store();
+    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset";
 
     const setupFlow = async () => {
         const blueprintId = route.query.blueprintId as string;
         const blueprintSource = route.query.blueprintSource as BlueprintType;
         const blueprintSourceYaml = route.query.blueprintSourceYaml as string;
         const isGuidedOnboarding = route.query.onboarding === "guided";
+        const onboardingPresetFlow = route.query.onboardingPreset === "true"
+            ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
+            : "";
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             permission.FLOW,
             action.CREATE,
@@ -49,6 +53,9 @@
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source;
+        } else if (onboardingPresetFlow) {
+            flowYaml = onboardingPresetFlow;
+            sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY);
         } else if (blueprintId && blueprintSourceYaml) {
             flowYaml = blueprintSourceYaml;
         } else if(blueprintId && blueprintSource === "community"){

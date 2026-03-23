@@ -15,11 +15,7 @@
     <div v-bind="$attrs" v-ks-loading="isLoading">
         <ks-card>
             <ks-tooltip
-                effect="light"
                 placement="bottom"
-                :persistent="false"
-                :hideAfter="0"
-                transition=""
                 :popperClass="
                     tooltipContent === '' ? 'd-none' : 'tooltip-stats'
                 "

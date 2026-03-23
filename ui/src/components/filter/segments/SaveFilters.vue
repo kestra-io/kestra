@@ -1,5 +1,5 @@
 <template>
-    <ks-tooltip :content="$t('filter.save filter tooltip')" placement="top" effect="light">
+    <ks-tooltip :content="$t('filter.save filter tooltip')" placement="top">
         <ks-button
             type="default"
             :disabled="disabled"

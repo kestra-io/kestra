@@ -39,7 +39,7 @@
         >
             <template #reference>
                 <ks-button type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
-                    <ks-tooltip :content="$t('filter.saved tooltip')" placement="top" effect="light">
+                    <ks-tooltip :content="$t('filter.saved tooltip')" placement="top">
                         <span class="saved-content">
                             {{ $t("filter.saved") }}
                             <ks-tag type="primary" effect="light" class="saved-count">
@@ -66,7 +66,6 @@
             v-if="filter.buttons.value?.tableOptions?.shown !== false"
             :content="$t('filter.show data options tooltip')"
             placement="top"
-            effect="light"
         >
             <ks-button
                 type="default"

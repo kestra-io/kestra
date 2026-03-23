@@ -220,7 +220,7 @@
                                     <code class="code-text">{{ scope.row?.flowRevision }}</code>
                                 </template>
                                 <template v-else-if="col.prop === 'inputs'">
-                                    <ks-tooltip effect="light">
+                                    <ks-tooltip>
                                         <template #content>
                                             <pre class="mb-0">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
                                         </template>
@@ -230,7 +230,7 @@
                                     </ks-tooltip>
                                 </template>
                                 <template v-else-if="col.prop === 'outputs'">
-                                    <ks-tooltip effect="light">
+                                    <ks-tooltip>
                                         <template #content>
                                             <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
                                         </template>
@@ -269,7 +269,7 @@
                                 </template>
                             </template>
                             <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
-                                <ks-tooltip :content="$t('taskid column details')" effect="light">
+                                <ks-tooltip :content="$t('taskid column details')">
                                     {{ scope.column.label }}
                                 </ks-tooltip>
                             </template>

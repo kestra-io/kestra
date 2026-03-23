@@ -115,7 +115,6 @@
                                 <ks-tooltip
                                     :content="$t('last trigger date tooltip')"
                                     placement="top"
-                                    effect="light"
                                     popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
@@ -125,7 +124,6 @@
                                 <ks-tooltip
                                     :content="$t('context updated date tooltip')"
                                     placement="top"
-                                    effect="light"
                                     popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
@@ -135,7 +133,6 @@
                                 <ks-tooltip
                                     :content="$t('next evaluation date tooltip')"
                                     placement="top"
-                                    effect="light"
                                     popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
@@ -220,7 +217,6 @@
                                         <ks-tooltip
                                             v-if="!scope.row.backfill.paused"
                                             :content="$t('backfill running')"
-                                            effect="light"
                                         >
                                             <PlayBox font />
                                         </ks-tooltip>
@@ -250,7 +246,6 @@
                                     v-if="!scope.row.missingSource"
                                     :content="$t('trigger disabled')"
                                     :disabled="!scope.row.codeDisabled"
-                                    effect="light"
                                 >
                                     <ks-switch
                                         :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
@@ -260,7 +255,7 @@
                                         :disabled="scope.row.codeDisabled"
                                     />
                                 </ks-tooltip>
-                                <ks-tooltip v-else :content="$t('flow source not found')" effect="light">
+                                <ks-tooltip v-else :content="$t('flow source not found')">
                                     <AlertCircle />
                                 </ks-tooltip>
                             </template>

@@ -5,11 +5,7 @@
                 <div class="text-nowrap">
                     <ks-button-group>
                         <ks-tooltip
-                            effect="light"
                             :content="$t('Fold content lines')"
-                            :persistent="false"
-                            transition=""
-                            :hideAfter="0"
                         >
                             <ks-button
                                 :icon="icon.UnfoldLessHorizontal"
@@ -18,11 +14,7 @@
                             />
                         </ks-tooltip>
                         <ks-tooltip
-                            effect="light"
                             :content="$t('Unfold content lines')"
-                            :persistent="false"
-                            transition=""
-                            :hideAfter="0"
                         >
                             <ks-button
                                 :icon="icon.UnfoldMoreHorizontal"

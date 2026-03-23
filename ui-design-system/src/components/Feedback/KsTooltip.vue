@@ -11,14 +11,13 @@
         trigger?: "click" | "hover" | "focus" | "contextmenu"
         placement?: string
         effect?: "light" | "dark"
-        persistent?: boolean
         enterable?: boolean
-        transition?: string
-        hideAfter?: number
         rawContent?: boolean
-        disabled?: boolean
+        disabled?: boolean,
+        autoClose?: boolean | number
     }>(), {
         enterable: undefined,
+        autoClose: undefined,
     })
 
     const filteredProps = useFilteredProps(props)
@@ -31,6 +30,9 @@
 
 <template>
     <el-tooltip
+        :persistent="false"
+        :hideAfter="0"
+        transition=""
         v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default><slot /></template>

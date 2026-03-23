@@ -7,15 +7,11 @@
 
         <!-- Errors -->
         <ks-tooltip
-            effect="light"
             v-if="errors"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
                 <ks-container class="validation-tooltip">
@@ -35,15 +31,11 @@
 
         <!-- Warnings -->
         <ks-tooltip
-            effect="light"
             v-if="warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
                 <ks-container class="validation-tooltip">
@@ -71,15 +63,11 @@
 
         <!-- Infos -->
         <ks-tooltip
-            effect="light"
             v-if="infos && !warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
                 <ks-container class="validation-tooltip">

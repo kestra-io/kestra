@@ -70,7 +70,7 @@
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">
-                                        <ks-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                        <ks-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000">
                                             <ks-button
                                                 type="primary"
                                                 size="default"

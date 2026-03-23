@@ -17,10 +17,6 @@
         <div style="flex:1" />
 
         <ks-tooltip
-            effect="light"
-            :persistent="false"
-            transition=""
-            :hideAfter="0"
             :disabled="!miscStore.configs?.commitId"
         >
             <template #content>
@@ -61,10 +57,6 @@
                         <div style="flex:1" />
 
                         <ks-tooltip
-                            effect="light"
-                            :persistent="false"
-                            transition=""
-                            :hideAfter="0"
                             :disabled="!miscStore.configs?.commitId"
                         >
                             <template #content>

@@ -3,13 +3,9 @@
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
         :enterable="false"
-        :persistent="false"
-        :hideAfter="0"
         :content="tooltip"
         popperClass="ks-restart-tooltip--no-pointer"
         rawContent
-        transition=""
-        effect="light"
     >
         <component
             v-if="component !== 'el-dropdown-item'"

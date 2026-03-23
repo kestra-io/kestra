@@ -26,7 +26,7 @@
                     </small>
                 </div>
                 <div class="action-buttons">
-                    <ks-tooltip :content="$t('filter.edit filter')" placement="top" effect="light">
+                    <ks-tooltip :content="$t('filter.edit filter')" placement="top">
                         <ks-button
                             link
                             size="small"
@@ -35,7 +35,7 @@
                             @click.stop="$emit('edit', savedFilter)"
                         />
                     </ks-tooltip>
-                    <ks-tooltip :content="$t('filter.delete filter')" placement="top" effect="light">
+                    <ks-tooltip :content="$t('filter.delete filter')" placement="top">
                         <ks-button
                             link
                             size="small"

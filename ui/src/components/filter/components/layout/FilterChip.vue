@@ -9,7 +9,6 @@
                 v-if="hasValue(filter.value)"
                 :content="formatTooltipValue(filter.value)"
                 placement="top"
-                effect="light"
             >
                 <component :is="renderValueResult" />
             </ks-tooltip>

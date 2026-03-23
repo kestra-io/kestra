@@ -349,7 +349,7 @@
 .radio-vertical {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; 
+    align-items: flex-start;
 }
 
 .modal-header :deep(.el-divider--horizontal) {
@@ -359,9 +359,9 @@
 .radio-item {
     :deep(.el-radio__input) {
         .el-radio__inner {
-            width: 18px; 
-            height: 18px; 
-            
+            width: 18px;
+            height: 18px;
+
             &::after {
                 width: 8px;
                 height: 8px;
@@ -369,26 +369,26 @@
             }
         }
     }
-    
+
     :deep(.el-radio__label) {
         font-size: 13px;
         color: var(--el-text-color-regular);
         padding-left: 8px;
     }
-    
-    
+
+
     &.is-checked {
         :deep(.el-radio__input) {
             .el-radio__inner {
                 border-color: var(--el-color-primary);
                 background-color: var(--el-color-primary);
-                
+
                 &::after {
                     background-color: white;
                 }
             }
         }
-        
+
         :deep(.el-radio__label) {
             color: var(--el-text-color-regular) !important;
         }

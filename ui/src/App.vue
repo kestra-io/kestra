@@ -1,13 +1,11 @@
 <template>
     <DocIdDisplay />
-    <el-config-provider>
-        <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
-        <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
-            <router-view />
-        </component>
-        <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
-        <UnsavedChangesDialog />
-    </el-config-provider>
+    <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
+    <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
+        <router-view />
+    </component>
+    <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
+    <UnsavedChangesDialog />
 </template>
 
 <script lang="ts" setup>

@@ -25,7 +25,6 @@
                 {"name": "KsCollapse", "source": {"symbol": "KsCollapse"}},
                 {"name": "KsCollapseItem", "source": {"symbol": "KsCollapseItem"}},
                 {"name": "KsColorPicker", "source": {"symbol": "KsColorPicker"}},
-                {"name": "KsConfigProvider", "source": {"symbol": "KsConfigProvider"}},
                 {"name": "KsContainer", "source": {"symbol": "KsContainer"}},
                 {"name": "KsDatePicker", "source": {"symbol": "KsDatePicker"}},
                 {"name": "KsDialog", "source": {"symbol": "KsDialog"}},

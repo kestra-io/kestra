@@ -96,14 +96,19 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             "userPrompt", flowGenerationPrompt.userPrompt()
         ));
 
-        String generatedFlow = flowAiCopilot.generateFlow(
-            this.pluginFinder(flowGenerationPrompt.conversationId()),
-            this.flowYamlBuilder(flowGenerationPrompt.conversationId()),
-            flowGenerationPrompt,
-            tenantId
-        );
+        try {
+            String generatedFlow = flowAiCopilot.generateFlow(
+                this.pluginFinder(flowGenerationPrompt.conversationId()),
+                this.flowYamlBuilder(flowGenerationPrompt.conversationId()),
+                flowGenerationPrompt,
+                tenantId
+            );
 
-        return this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow");
+            return this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow");
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "FlowGenerationError", Map.of(), "", "generatedFlow");
+            throw e;
+        }
     }
 
     @Override
@@ -113,13 +118,18 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             "userPrompt", dashboardGenerationPrompt.userPrompt()
         ));
 
-        String generatedDashboard = dashboardAiCopilot.generateDashboard(
-            this.pluginFinder(dashboardGenerationPrompt.conversationId()),
-            this.dashboardYamlBuilder(dashboardGenerationPrompt.conversationId()),
-            dashboardGenerationPrompt
-        );
+        try {
+            String generatedDashboard = dashboardAiCopilot.generateDashboard(
+                this.pluginFinder(dashboardGenerationPrompt.conversationId()),
+                this.dashboardYamlBuilder(dashboardGenerationPrompt.conversationId()),
+                dashboardGenerationPrompt
+            );
 
-        return this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard");
+            return this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard");
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "DashboardGenerationError", Map.of(), "", "generatedDashboard");
+            throw e;
+        }
     }
 
     public String displayName() {

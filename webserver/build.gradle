@@ -75,3 +75,7 @@ tasks.named('jar', Jar) {
 tasks.named('compileJava') {
     outputs.file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
 }
+
+tasks.withType(Test).configureEach { Test t ->
+    maxHeapSize = '5g'
+}

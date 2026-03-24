@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
@@ -20,7 +21,7 @@ import org.jooq.impl.SQLDataType;
 
 import java.util.*;
 
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject

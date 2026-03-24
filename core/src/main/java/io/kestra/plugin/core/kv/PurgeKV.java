@@ -12,6 +12,7 @@ import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.plugin.core.purge.PurgeTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -77,6 +78,7 @@ public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<Pu
     )
     @Builder.Default
     @Valid
+    @NotNull
     private Property<KvPurgeBehavior> behavior = Property.ofValue(Key.builder().expiredOnly(true).build());
 
     @Schema(
@@ -86,25 +88,12 @@ public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<Pu
     @Builder.Default
     private Property<Boolean> includeChildNamespaces = Property.ofValue(true);
 
-    /**
-     * @deprecated use behavior.type: key + behavior.expiredOnly instead. Setting this property will override the `behavior` property.
-     */
-    @Deprecated(since = "1.1.0", forRemoval = true)
-    private Property<Boolean> expiredOnly;
-
     @Override
     public Output run(RunContext runContext) throws Exception {
         List<String> kvNamespaces = findNamespaces(runContext);
         runContext.logger().info("purging {} namespaces: {}", kvNamespaces.size(), kvNamespaces);
         AtomicLong count = new AtomicLong();
-        KvPurgeBehavior renderedBehavior;
-        if (expiredOnly != null) {
-            renderedBehavior = Key.builder()
-                .expiredOnly(runContext.render(expiredOnly).as(Boolean.class).orElse(true))
-                .build();
-        } else {
-            renderedBehavior = runContext.render(behavior).as(KvPurgeBehavior.class).orElseThrow();
-        }
+        KvPurgeBehavior renderedBehavior = runContext.render(behavior).as(KvPurgeBehavior.class).orElseThrow();
 
         String tenantId = runContext.flowInfo().tenantId();
         String namespace = runContext.flowInfo().namespace();

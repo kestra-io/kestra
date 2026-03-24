@@ -1,6 +1,7 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.queues.QueueService;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -12,7 +13,7 @@ import org.jooq.Field;
 
 import java.util.Date;
 
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresTriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject

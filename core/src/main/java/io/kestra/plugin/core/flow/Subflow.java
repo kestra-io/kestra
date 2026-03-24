@@ -82,9 +82,6 @@ import java.util.Optional;
     aliases = {"io.kestra.core.tasks.flows.Subflow", "io.kestra.core.tasks.flows.Flow"}
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output>, ChildFlowInterface {
-
-    static final String PLUGIN_FLOW_OUTPUTS_ENABLED = "outputs.enabled";
-
     @NotEmpty
     @Schema(
         title = "The namespace of the subflow to be executed"
@@ -143,18 +140,6 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
     )
     private final Property<Boolean> inheritLabels = Property.ofValue(false);
-
-    /**
-     * @deprecated Output value should now be defined part of the Flow definition.
-     */
-    @Schema(
-        title = "Outputs from the subflow executions",
-        description = "Specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution." +
-            "This property is deprecated since v0.15.0, please use the `outputs` property on the Subflow definition for defining the output values available and exposed to this task execution."
-    )
-    @PluginProperty(dynamic = true)
-    @Deprecated(since = "0.15.0")
-    private Map<String, Object> outputs;
 
     @Schema(
         title = "Don't trigger the subflow now but schedule it on a specific date."
@@ -218,32 +203,6 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         VariablesService variablesService = ((DefaultRunContext) runContext).services().variablesService();
         if (this.wait) { // we only compute outputs if we wait for the subflow
             List<io.kestra.core.models.flows.Output> subflowOutputs = flow.getOutputs();
-
-            // region [deprecated] Subflow outputs feature
-            if (subflowOutputs == null && this.getOutputs() != null) {
-                boolean isOutputsAllowed = runContext
-                    .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
-                    .orElse(true);
-                if (isOutputsAllowed) {
-                    try {
-                        subflowOutputs = this.getOutputs().entrySet().stream()
-                            .<io.kestra.core.models.flows.Output>map(entry -> io.kestra.core.models.flows.Output
-                                .builder()
-                                .id(entry.getKey())
-                                .value(entry.getValue())
-                                .required(true)
-                                .build()
-                            )
-                            .toList();
-                    } catch (Exception e) {
-                        Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
-                        return failSubflowDueToOutput(runContext, taskRun, execution, e, variables);
-                    }
-                } else {
-                    runContext.logger().warn("Defining outputs inside the Subflow task is not allowed.");
-                }
-            }
-            //endregion
 
             if (subflowOutputs != null && !subflowOutputs.isEmpty()) {
                 try {

@@ -15,7 +15,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
-import io.kestra.plugin.core.trigger.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.With;
 
@@ -345,13 +344,6 @@ public final class RunVariables {
                         outputs = secret.decrypt(outputs);
                     }
                     builder.put("trigger", outputs);
-
-                    // temporal hack to add back the `schedule`variables
-                    // will be removed in 2.0
-                    if (Schedule.class.getName().equals(execution.getTrigger().getType())) {
-                        // add back its variables inside the `schedule` variables
-                        builder.put("schedule", execution.getTrigger().getVariables());
-                    }
                 }
 
                 if (execution.getLabels() != null) {

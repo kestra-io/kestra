@@ -1,6 +1,7 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import jakarta.inject.Inject;
@@ -10,7 +11,7 @@ import org.jooq.DMLQuery;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresFlowTopologyRepository extends AbstractJdbcFlowTopologyRepository {
     @Inject

@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.http;
 
 import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.client.configurations.SslOptions;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -19,7 +18,6 @@ import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -144,7 +142,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         }
         // we allow failed status code as it is the condition that must determine whether we trigger the flow
         options.setAllowFailed(Property.ofValue(true));
-        options.setSsl(this.options.getSsl() != null ? this.options.getSsl() : this.sslOptions);
+        options.setSsl(this.options.getSsl());
 
         var request = Request.builder()
             .uri(this.uri)
@@ -177,20 +175,5 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         }
 
         return Optional.empty();
-    }
-
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    private SslOptions sslOptions;
-
-    @Deprecated
-    public void sslOptions(SslOptions sslOptions) {
-        if (this.options == null) {
-            this.options = HttpConfiguration.builder()
-                .build();
-        }
-
-        this.sslOptions = sslOptions;
-        this.options.setSsl(sslOptions);
     }
 }

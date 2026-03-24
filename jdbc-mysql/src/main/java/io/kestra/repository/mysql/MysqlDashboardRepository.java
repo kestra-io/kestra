@@ -4,6 +4,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.QueryBuilderInterface;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
@@ -13,7 +14,7 @@ import org.jooq.Condition;
 
 import java.util.List;
 
-@Singleton
+@RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlDashboardRepository extends AbstractJdbcDashboardRepository {
     @Inject

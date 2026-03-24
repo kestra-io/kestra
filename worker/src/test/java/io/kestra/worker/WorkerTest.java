@@ -103,7 +103,7 @@ class WorkerTest {
         // Given
         Pause pause = Pause.builder()
             .type(Pause.class.getName())
-            .delay(Property.ofValue(Duration.ofSeconds(1)))
+            .pauseDuration(Property.ofValue(Duration.ofSeconds(1)))
             .id("unit-test")
             .build();
 

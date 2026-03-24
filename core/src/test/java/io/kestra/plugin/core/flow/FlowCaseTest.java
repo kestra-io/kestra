@@ -25,19 +25,15 @@ public class FlowCaseTest {
     private TaskOutputService taskOutputService;
 
     public void waitSuccess(String tenantId) throws Exception {
-        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", true, tenantId);
+        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, true, tenantId);
     }
 
     public void waitFailed(String tenantId) throws Exception {
-        this.run("THIRD", State.Type.FAILED, State.Type.FAILED, 4, "Error Trigger ! error-t1", true, tenantId);
-    }
-
-    public void invalidOutputs(String tenantId) throws Exception {
-        this.run("FIRST", State.Type.FAILED, State.Type.SUCCESS, 2, null, true, tenantId);
+        this.run("THIRD", State.Type.FAILED, State.Type.FAILED, 4, true, tenantId);
     }
 
     public void noLabels(String tenantId) throws Exception {
-        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", false, tenantId);
+        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, false, tenantId);
     }
 
     public void oldTaskName(String tenantId) throws Exception {
@@ -60,8 +56,7 @@ public class FlowCaseTest {
         assertThat(triggered.getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
     }
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
-    void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs, boolean testInherited, String tenantId) throws Exception {
+    void run(String input, State.Type fromState, State.Type triggerState, int count, boolean testInherited, String tenantId) throws Exception {
         Execution execution = runnerUtils.runOne(
             tenantId,
             "io.kestra.tests",
@@ -80,15 +75,7 @@ public class FlowCaseTest {
         assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(fromState);
         assertThat(execution.getState().getCurrent()).isEqualTo(fromState);
 
-        if (outputs != null) {
-            assertThat(((Map<String, String>) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("outputs")).get("extracted")).contains(outputs);
-        }
-
         assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("executionId")).isEqualTo(triggered.getId());
-
-        if (outputs != null) {
-            assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("state")).isEqualTo(triggered.getState().getCurrent().name());
-        }
 
         assertThat(triggered.getTrigger().getType()).isEqualTo("io.kestra.plugin.core.flow.Subflow");
         assertThat(triggered.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());

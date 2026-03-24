@@ -3,6 +3,7 @@ package io.kestra.repository.h2;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.repositories.QueryBuilderInterface;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
@@ -12,7 +13,7 @@ import org.jooq.Condition;
 
 import java.util.List;
 
-@Singleton
+@RepositoryBean
 @H2RepositoryEnabled
 public class H2DashboardRepository extends AbstractJdbcDashboardRepository {
     @Inject

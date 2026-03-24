@@ -1,6 +1,7 @@
 package io.kestra.repository.h2;
 
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -14,7 +15,7 @@ import org.jooq.impl.DSL;
 import java.util.Date;
 import java.util.List;
 
-@Singleton
+@RepositoryBean
 @H2RepositoryEnabled
 public class H2LogRepository extends AbstractJdbcLogRepository {
     @Inject

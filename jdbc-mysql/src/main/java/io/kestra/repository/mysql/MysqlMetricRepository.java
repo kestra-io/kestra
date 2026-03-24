@@ -1,6 +1,7 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcMetricRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -13,7 +14,7 @@ import org.jooq.impl.DSL;
 import java.sql.Timestamp;
 import java.util.Date;
 
-@Singleton
+@RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlMetricRepository extends AbstractJdbcMetricRepository {
     @Inject

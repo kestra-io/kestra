@@ -5,6 +5,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -15,7 +16,7 @@ import org.jooq.Condition;
 
 import java.util.Map;
 
-@Singleton
+@RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlFlowRepository extends AbstractJdbcFlowRepository {
     @Inject

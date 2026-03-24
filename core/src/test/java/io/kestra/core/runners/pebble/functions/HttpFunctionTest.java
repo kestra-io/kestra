@@ -163,8 +163,11 @@ class HttpFunctionTest {
                         url,
                         'GET',
                         options={
-                            'basicAuthUser': user,
-                            'basicAuthPassword': password
+                            'auth': {
+                                'type': 'BASIC',
+                                'username': user,
+                                'password': password
+                            }
                         }
                     )
                 }}""", Map.of(

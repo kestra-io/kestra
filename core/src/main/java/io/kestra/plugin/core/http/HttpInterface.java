@@ -1,8 +1,6 @@
 package io.kestra.plugin.core.http;
 
 import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.client.configurations.SslOptions;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -51,10 +49,4 @@ public interface HttpInterface {
             title = "The HTTP request options"
     )
     HttpConfiguration getOptions();
-
-    @Schema(
-        title = "The SSL request options",
-        description = "This property is deprecated. Instead use the `options.ssl` property."
-    )
-    SslOptions getSslOptions();
 }

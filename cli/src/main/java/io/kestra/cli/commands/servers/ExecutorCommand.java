@@ -47,30 +47,14 @@ public class ExecutorCommand extends AbstractServerCommand {
     @CommandLine.Option(names = "--tenant", description = "Tenant identifier, Required to load flows from path")
     private String tenantId;
 
-    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "deprecated - use '--ignore-executions' instead")
-    @Deprecated
-    private List<String> skipExecutions;
-
     @CommandLine.Option(names = {"--ignore-executions"}, split=",", description = "a list of execution identifiers to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreExecutions = Collections.emptyList();
-
-    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "deprecated - use '--ignore-flows' instead")
-    @Deprecated
-    private List<String> skipFlows;
 
     @CommandLine.Option(names = {"--ignore-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreFlows = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "deprecated - use 'ignore-namespaces' instead")
-    @Deprecated
-    private List<String> skipNamespaces;
-
     @CommandLine.Option(names = {"--ignore-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only")
     private List<String> ignoreNamespaces = Collections.emptyList();
-
-    @CommandLine.Option(names = {"--skip-tenants"}, split=",", description = "a list of tenants to skip, separated by a coma; for troubleshooting only")
-    @Deprecated
-    private List<String> skipTenants;
 
     @CommandLine.Option(names = {"--ignore-tenants"}, split=",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreTenants = Collections.emptyList();
@@ -90,10 +74,10 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.get().setIgnoredExecutions(skipExecutions != null ? skipExecutions : ignoreExecutions);
-        this.ignoreExecutionService.get().setIgnoredFlows(skipFlows != null ? skipFlows : ignoreFlows);
-        this.ignoreExecutionService.get().setIgnoredNamespaces(skipNamespaces != null ? skipNamespaces : ignoreNamespaces);
-        this.ignoreExecutionService.get().setIgnoredTenants(skipTenants != null ? skipTenants : ignoreTenants);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
 
         this.startExecutorService.get().applyOptions(startExecutors, notStartExecutors);
 

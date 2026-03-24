@@ -721,65 +721,6 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart_pause_last_failed.yaml"})
-    void restartExecutionFromLastFailedWithPauseExecution() throws TimeoutException, QueueException{
-        final String flowId = "restart_pause_last_failed";
-
-        // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, (BiFunction<FlowInterface, Execution, Map<String, Object>>) null);
-
-        assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        // Update task's command to make second execution successful
-        Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isTrue();
-
-        // Restart execution and wait until it finishes
-        ApiAsyncEvent restartedExec = client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/main/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
-            ApiAsyncEvent.class
-        );
-
-        assertThat(restartedExec).isNotNull();
-
-        Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> execution.getTaskRunList().size() == 5 && execution.getState().isTerminated(),
-            firstExecution,
-            Duration.ofSeconds(15)
-        );
-
-        assertThat(finishedRestartedExecution).isNotNull();
-        assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
-        assertThat(finishedRestartedExecution.getParentId()).isNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(5);
-        assertThat(finishedRestartedExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
-
-        IntStream
-            .range(0, 2)
-            .mapToObj(value -> finishedRestartedExecution.getTaskRunList().get(value)).forEach(taskRun -> {
-                assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-                assertThat(finishedRestartedExecution.getTaskRunList().get(3).getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
-                assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNotNull();
-            });
-
-        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNotNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().filter(state -> state.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size()).isEqualTo(2);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(4).getAttempts().size()).isEqualTo(1);
-
-        finishedRestartedExecution
-            .getTaskRunList()
-            .stream()
-            .map(TaskRun::getState)
-            .forEach(state -> assertThat(state.getCurrent()).isEqualTo(State.Type.SUCCESS));
-    }
-
-    @Test
     @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "downloadinternalstoragefilefromexecution")
     void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         String tenantId = "downloadinternalstoragefilefromexecution";

@@ -402,7 +402,7 @@ public class ExecutionService {
                     taskOutputService.saveOutputs(originalTaskRun, outputs);
 
                     // if it's a Pause task with no subtask, we terminate the task
-                    if (ListUtils.isEmpty(pauseTask.getTasks()) && ListUtils.isEmpty(pauseTask.getErrors()) && ListUtils.isEmpty(pauseTask.getFinally())) {
+                    if (ListUtils.isEmpty(pauseTask.getErrors()) && ListUtils.isEmpty(pauseTask.getFinally())) {
                         if (newState == State.Type.RUNNING) {
                             targetState = State.Type.SUCCESS;
                         } else if (newState == State.Type.KILLING) {

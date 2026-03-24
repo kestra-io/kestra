@@ -54,7 +54,7 @@ public class PurgeKVTest {
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
-    
+
     @Inject
     KVStoreService kvStoreService;
 
@@ -191,32 +191,6 @@ public class PurgeKVTest {
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
             .behavior(Property.ofValue(Key.builder().expiredOnly(false).build()))
-            .build();
-        Output output = purgeKV.run(runContext);
-
-        assertThat(output.getSize()).isEqualTo(4L);
-        assertThat(kvStore1.get(KEY_EXPIRED)).isEmpty();
-        assertThat(kvStore1.get(KEY)).isEmpty();
-        assertThat(kvStore1.get(KEY2_NEVER_EXPIRING)).isEmpty();
-        assertThat(kvStore1.get(KEY3_NEVER_EXPIRING)).isEmpty();
-    }
-
-    @Test
-    void expiredOnly_still_supported_and_overrides_behavior() throws Exception {
-        String namespace = "io.kestra." + IdUtils.create();
-        addNamespace(namespace);
-
-        RunContext runContext = runContextFactory.of(namespace);
-        KVStore kvStore1 = runContext.namespaceKv(namespace);
-        kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
-        kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
-        kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", (Duration) null), "unused"));
-        kvStore1.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
-
-        PurgeKV purgeKV = PurgeKV.builder()
-            .type(PurgeKV.class.getName())
-            .behavior(Property.ofValue(Key.builder().expiredOnly(true).build()))
-            .expiredOnly(Property.ofValue(false))
             .build();
         Output output = purgeKV.run(runContext);
 

@@ -1,6 +1,6 @@
 package io.kestra.cli.commands.sys;
 
-import io.kestra.cli.commands.flows.namespaces.FlowNamespaceUpdateCommand;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -8,7 +8,9 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,17 +26,9 @@ class ReindexCommandTest {
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
 
-            // we use the update command to add flows to extract
-            String[] updateArgs = {
-                "--server",
-                embeddedServer.getURL().toString(),
-                "--user",
-                "myuser:pass:word",
-                "io.kestra.cli",
-                directory.getPath(),
-            };
-            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, updateArgs);
-            assertThat(out.toString()).contains("3 flow(s)");
+            // load the flows
+            LocalFlowRepositoryLoader flowRepositoryLoader = ctx.getBean(LocalFlowRepositoryLoader.class);
+            flowRepositoryLoader.load(directory);
 
             // then we reindex them
             String[] reindexArgs = {
@@ -45,6 +39,8 @@ class ReindexCommandTest {
             assertThat(call).isZero();
             // in local it reindex 3 flows and in CI 4 for an unknown reason
             assertThat(out.toString()).contains("Successfully reindex");
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 }

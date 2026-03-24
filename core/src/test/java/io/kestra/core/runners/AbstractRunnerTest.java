@@ -331,14 +331,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/switch.yaml",
-        "flows/valids/task-flow.yaml",
-        "flows/valids/task-flow-inherited-labels.yaml"}, tenantId = TENANT_2)
-    public void invalidOutputs() throws Exception {
-        flowCaseTest.invalidOutputs(TENANT_2);
-    }
-
-    @Test
     @LoadFlows({"flows/valids/working-directory.yaml"})
     public void workerSuccess() throws Exception {
         workingDirectoryTest.success(runnerUtils);

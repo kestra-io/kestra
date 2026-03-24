@@ -30,11 +30,4 @@ public class RequestRunnerTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
-
-    @Test
-    @ExecuteFlow("sanity-checks/request-basicauth-deprecated.yaml")
-    void requestBasicAuthDeprecated(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-    }
 }

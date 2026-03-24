@@ -1646,6 +1646,7 @@
     "restart": "Перезапуск",
     "restart change revision": "Вы можете изменить редакцию, которая будет использоваться для нового выполнения.",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение <code>{id}</code>?",
+    "restart execution title": "Перезапустить выполнение",
     "restart latest revision": "Перезапустить последнюю редакцию",
     "restart tooltip": "Перезапустить выполнение с <code>{state}</code> task",
     "restart trigger": {

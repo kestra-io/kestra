@@ -1646,6 +1646,7 @@
     "restart": "再起動",
     "restart change revision": "新しい実行に使用されるリビジョンを変更できます。",
     "restart confirm": "実行<code>{id}</code>を再起動してもよろしいですか？",
+    "restart execution title": "実行の再起動",
     "restart latest revision": "最新のリビジョンを再起動",
     "restart tooltip": "<code>{state}</code>タスクから実行を再起動",
     "restart trigger": {

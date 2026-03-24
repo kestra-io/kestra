@@ -1646,6 +1646,7 @@
     "restart": "Riavvia",
     "restart change revision": "Puoi cambiare la revisione che verrà utilizzata per la nuova esecuzione.",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",
+    "restart execution title": "Riavvia esecuzione",
     "restart latest revision": "Riavvia ultima revisione",
     "restart tooltip": "Riavvia l'esecuzione dal task <code>{state}</code>",
     "restart trigger": {

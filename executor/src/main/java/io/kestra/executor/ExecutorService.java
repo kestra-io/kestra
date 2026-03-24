@@ -97,9 +97,6 @@ public class ExecutorService {
     @Inject
     private TaskOutputService taskOutputService;
 
-    @Inject
-    private Provider<FlowMetaStoreInterface> flowMetaStoreInterfaceProvider;
-
     public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
         // if concurrency was removed, it can be null as we always get the latest flow definition
         if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
@@ -1012,7 +1009,7 @@ public class ExecutorService {
                         executor.getExecution(),
                         executableTaskRun
                     );
-                    List<SubflowExecution<?>> subflowExecutions = executableTask.createSubflowExecutions(runContext, flowMetaStoreInterfaceProvider.get(), executor.getFlow(), executor.getExecution(), executableTaskRun);
+                    List<SubflowExecution<?>> subflowExecutions = executableTask.createSubflowExecutions(runContext, flowExecutorInterface, executor.getFlow(), executor.getExecution(), executableTaskRun);
                     if (subflowExecutions.isEmpty()) {
                         // if no executions we move the task to SUCCESS immediately
                         executor.withExecution(

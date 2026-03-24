@@ -760,6 +760,10 @@
         "description": "Filtruj według typu metryki",
         "label": "Metryka"
       },
+      "name": {
+        "description": "Filtruj według nazwy",
+        "label": "Nazwa"
+      },
       "namespace": {
         "description": "Filtruj według namespace",
         "label": "Namespace"
@@ -950,6 +954,10 @@
         "disabled": "Wyłączone",
         "enabled": "Włączone",
         "label": "Stan Trigger"
+      },
+      "type": {
+        "description": "Filtruj według typu",
+        "label": "Typ"
       },
       "update": "Aktualizuj",
       "username": {

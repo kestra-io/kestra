@@ -760,6 +760,10 @@
         "description": "मेट्रिक प्रकार द्वारा फ़िल्टर करें",
         "label": "मेट्रिक"
       },
+      "name": {
+        "description": "नाम से फ़िल्टर करें",
+        "label": "नाम"
+      },
       "namespace": {
         "description": "namespace द्वारा फ़िल्टर करें",
         "label": "Namespace"
@@ -950,6 +954,10 @@
         "disabled": "अक्षम",
         "enabled": "सक्रिय",
         "label": "ट्रिगर स्थिति"
+      },
+      "type": {
+        "description": "प्रकार के अनुसार फ़िल्टर करें",
+        "label": "प्रकार"
       },
       "update": "अपडेट",
       "username": {

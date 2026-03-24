@@ -760,6 +760,10 @@
         "description": "按指标类型筛选",
         "label": "指标"
       },
+      "name": {
+        "description": "按名称筛选",
+        "label": "名称"
+      },
       "namespace": {
         "description": "按namespace筛选",
         "label": "命名空间"
@@ -950,6 +954,10 @@
         "disabled": "禁用",
         "enabled": "启用",
         "label": "触发状态"
+      },
+      "type": {
+        "description": "按类型筛选",
+        "label": "类型"
       },
       "update": "更新",
       "username": {

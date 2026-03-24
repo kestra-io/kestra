@@ -760,6 +760,10 @@
         "description": "메트릭 유형별 필터",
         "label": "메트릭"
       },
+      "name": {
+        "description": "이름으로 필터링",
+        "label": "이름"
+      },
       "namespace": {
         "description": "namespace로 필터링",
         "label": "Namespace"
@@ -950,6 +954,10 @@
         "disabled": "비활성화됨",
         "enabled": "사용 가능",
         "label": "트리거 상태"
+      },
+      "type": {
+        "description": "유형별 필터",
+        "label": "유형"
       },
       "update": "업데이트",
       "username": {

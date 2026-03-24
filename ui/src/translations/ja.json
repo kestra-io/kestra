@@ -760,6 +760,10 @@
         "description": "メトリックタイプでフィルター",
         "label": "メトリック"
       },
+      "name": {
+        "description": "名前でフィルター",
+        "label": "名前"
+      },
       "namespace": {
         "description": "namespaceでフィルター",
         "label": "Namespace"
@@ -950,6 +954,10 @@
         "disabled": "無効",
         "enabled": "有効",
         "label": "トリガー状態"
+      },
+      "type": {
+        "description": "タイプでフィルター",
+        "label": "タイプ"
       },
       "update": "更新",
       "username": {

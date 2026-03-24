@@ -760,6 +760,10 @@
         "description": "Фильтр по типу метрики",
         "label": "Метрика"
       },
+      "name": {
+        "description": "Фильтр по имени",
+        "label": "Имя"
+      },
       "namespace": {
         "description": "Фильтр по namespace",
         "label": "Namespace"
@@ -950,6 +954,10 @@
         "disabled": "Отключено",
         "enabled": "Включено",
         "label": "Состояние Trigger"
+      },
+      "type": {
+        "description": "Фильтр по типу",
+        "label": "Тип"
       },
       "update": "Обновить",
       "username": {

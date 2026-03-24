@@ -760,6 +760,10 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": {
+        "description": "Filtrar por nome",
+        "label": "Nome"
+      },
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -950,6 +954,10 @@
         "disabled": "Desativado",
         "enabled": "Habilitado",
         "label": "Estado do Trigger"
+      },
+      "type": {
+        "description": "Filtrar por tipo",
+        "label": "Tipo"
       },
       "update": "Atualizar",
       "username": {

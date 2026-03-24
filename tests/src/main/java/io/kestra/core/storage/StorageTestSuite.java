@@ -178,6 +178,27 @@ public abstract class StorageTestSuite {
     }
 
     @Test
+    void filesByPrefixWithSpaceInFilename() throws Exception {
+        var namespaceName = "filesByPrefix_space_test_namespace";
+
+        // URI.create() rejects spaces, use new URI(null, null, path, null) to encode them
+        storageInterface.put(MAIN_TENANT, namespaceName,
+            new URI(null, null, "/" + namespaceName + "/file with space.txt", null),
+            new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, namespaceName,
+            new URI(null, null, "/" + namespaceName + "/folder/nested file.txt", null),
+            new ByteArrayInputStream(new byte[0]));
+
+        // Before the fix, this threw: IllegalArgumentException: Illegal character in path
+        List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName,
+            URI.create("kestra:///" + namespaceName + "/"), false);
+        assertThat(res).containsExactlyInAnyOrder(
+            new URI("kestra:///" + namespaceName + "/file%20with%20space.txt"),
+            new URI("kestra:///" + namespaceName + "/folder/nested%20file.txt")
+        );
+    }
+
+    @Test
     void objectsByPrefix() throws IOException {
         storageInterface.put(MAIN_TENANT, "some_namespace", URI.create("/some_namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put("tenant", "some_namespace", URI.create("/some_namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
@@ -298,6 +319,22 @@ public abstract class StorageTestSuite {
         list = storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage"));
         assertThat(list.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("root.yml", "level1", "another");
         assertThat(list.stream().filter(f -> f.getFileName().equals("root.yml")).findFirst().get().getMetadata()).containsEntry("someMetadata", "someValue");
+    }
+
+    @Test
+    void listWithSpaceInFilename() throws Exception {
+        String prefix = IdUtils.create();
+        String tenantId = IdUtils.create();
+
+        // putFile() uses new URI(path) internally which rejects spaces in paths.
+        // We call storageInterface.put() directly with a properly encoded URI instead.
+        URI fileWithSpace = new URI(null, null, "/" + prefix + "/storage/file with space.txt", null);
+        storageInterface.put(tenantId, null, fileWithSpace, new ByteArrayInputStream(CONTENT_STRING.getBytes()));
+
+        // Before the fix, this threw: IllegalArgumentException: Illegal character in path
+        List<FileAttributes> list = storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage"));
+        assertThat(list.stream().map(FileAttributes::getFileName).toList())
+            .containsExactlyInAnyOrder("file with space.txt");
     }
     //endregion
 

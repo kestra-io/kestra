@@ -112,17 +112,16 @@ public class LocalStorage implements StorageInterface {
         Files.walkFileTree(fsPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                String dirPath = dir.toString().replace("\\", "/");
                 if (includeDirectories) {
-                    uris.add(URI.create(dirPath + "/"));
+                    uris.add(URI.create(dir.toUri().getRawPath() + "/"));
                 }
-                return super.preVisitDirectory(Path.of(dirPath), attrs);
+                return super.preVisitDirectory(dir, attrs);
             }
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 if (!file.getFileName().toString().endsWith(".metadata")) {
-                    uris.add(URI.create(file.toString().replace("\\", "/")));
+                    uris.add(URI.create(file.toUri().getRawPath()));
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -135,10 +134,10 @@ public class LocalStorage implements StorageInterface {
             }
         });
 
-        URI fsPathUri = URI.create(fsPath.toString().replace("\\", "/"));
+        URI fsPathUri = URI.create(fsPath.toUri().getRawPath());
         return uris.stream().sorted(Comparator.reverseOrder())
             .map(fsPathUri::relativize)
-            .map(URI::getPath)
+            .map(URI::getRawPath)
             .filter(Predicate.not(String::isEmpty))
             .map(path ->
             {
@@ -160,11 +159,7 @@ public class LocalStorage implements StorageInterface {
                 .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
                 .map(throwFunction(file ->
                 {
-                    URI relative = URI.create(
-                        getLocalPath(tenantId, null).relativize(
-                            Path.of(file.toUri())
-                        ).toString().replace("\\", "/")
-                    );
+                    URI relative = toRelativeUri(getLocalPath(tenantId, null), file);
                     return getAttributes(tenantId, namespace, relative);
                 }))
                 .toList();
@@ -180,17 +175,30 @@ public class LocalStorage implements StorageInterface {
                 .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
                 .map(throwFunction(file ->
                 {
-                    URI relative = URI.create(
-                        getInstancePath(null).relativize(
-                            Path.of(file.toUri())
-                        ).toString().replace("\\", "/")
-                    );
+                    URI relative = toRelativeUri(getInstancePath(null), file);
                     return getInstanceAttributes(namespace, relative);
                 }))
                 .toList();
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException(e.getMessage());
         }
+    }
+
+    /**
+     * Converts a file path to a relative URI against the given base path.
+     * Uses the encoded raw path from file.toUri() to safely handle filenames
+     * containing special characters such as spaces or non-ASCII characters.
+     */
+    private static URI toRelativeUri(Path basePath, Path file) {
+        String baseRawPath = basePath.toUri().getRawPath();
+        if (!baseRawPath.endsWith("/")) {
+            baseRawPath += "/";
+        }
+        String fileRawPath = file.toUri().getRawPath();
+        String encodedRelative = fileRawPath.startsWith(baseRawPath)
+            ? fileRawPath.substring(baseRawPath.length())
+            : fileRawPath;
+        return URI.create(encodedRelative);
     }
 
     @Override

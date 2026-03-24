@@ -12,8 +12,6 @@ import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.Optional;
-
 @Singleton
 public class DefaultStartupHook implements StartupHookInterface {
     @Inject

@@ -68,6 +68,8 @@
     import InputText from "../inputs/InputText.vue";
     import {Schema} from "./getTaskComponent";
 
+    defineOptions({inheritAttrs: false});
+
     const props = defineProps<{
         disabled?: boolean;
         modelValue?: string;
@@ -211,6 +213,10 @@
     :deep(.el-input__wrapper),
     :deep(.editor-container) {
         box-shadow: none;
+    }
+
+    :deep(.ks-editor){
+        flex: 1;
     }
 
     :deep(.el-checkbox-button__inner) {

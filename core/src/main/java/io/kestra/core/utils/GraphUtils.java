@@ -143,9 +143,28 @@ public class GraphUtils {
             .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null && taskRunIds.contains(((AbstractGraphTask) task).getTaskRun().getId()))
             .toList();
 
-        Set<String> edgeUuid = selectedTaskRuns
+        // Collect UIDs of all GraphClusterRoot nodes for efficient lookup
+        Set<String> allClusterRootUids = nodes.stream()
+            .filter(GraphClusterRoot.class::isInstance)
+            .map(AbstractGraph::getUid)
+            .collect(Collectors.toSet());
+
+        // For each selected task, also find the containing cluster's root.
+        // Error handlers are connected to the cluster root (not the task node),
+        // so we must also traverse from root to capture them.
+        Set<String> startingUids = new HashSet<>();
+        for (AbstractGraph task : selectedTaskRuns) {
+            startingUids.add(task.getUid());
+            edges.stream()
+                .filter(edge -> edge.getTarget().equals(task.getUid()))
+                .map(FlowGraph.Edge::getSource)
+                .filter(allClusterRootUids::contains)
+                .forEach(startingUids::add);
+        }
+
+        Set<String> edgeUuid = startingUids
             .stream()
-            .flatMap(task -> recursiveEdge(edges, task.getUid()).stream())
+            .flatMap(uid -> recursiveEdge(edges, uid).stream())
             .map(FlowGraph.Edge::getSource)
             .collect(Collectors.toSet());
 

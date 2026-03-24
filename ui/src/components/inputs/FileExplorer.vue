@@ -726,11 +726,11 @@
         dropdowns.value[id]?.handleOpen();
     }
 
-    function dialogHandler() {
+    async function dialogHandler() {
         if (dialog.value.type === "file") {
-            addFile({creation: true});
+            await addFile({creation: true});
         } else {
-            addFolder(undefined, true);
+            await addFolder(undefined, true);
         }
     }
 

@@ -6,7 +6,7 @@
         </template>
         <template #additional-right>
             <slot name="additional-right" />
-            <div class="d-flex align-items-center gap-2" v-if="(isAllowedEdit || isAllowedTrigger) && $route.params.tab !== 'audit-logs'">
+            <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
                     <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
                         <el-button
@@ -34,12 +34,23 @@
                     </template>
                 </el-dropdown>
     
-                <div v-if="isAllowedTrigger">
-                    <TriggerFlow
-                        type="primary"
-                        :flowId="$route.params.flowId"
-                        :namespace="$route.params.namespace"
-                    />
+                <div v-if="primaryAction || fallbackToExecute">
+                    <div class="d-flex align-items-center gap-2">
+                        <component
+                            v-if="primaryAction"
+                            :is="primaryAction.component"
+                            v-bind="primaryAction.props"
+                            :execution="execution"
+                            type="primary"
+                        />
+
+                        <TriggerFlow
+                            v-else-if="fallbackToExecute"
+                            type="primary"
+                            :flowId="$route.params.flowId"
+                            :namespace="$route.params.namespace"
+                        />
+                    </div>
                 </div>
             </div>
         </template>
@@ -54,8 +65,12 @@
 
 <script>
     import {mapStores} from "pinia";
+    import {State} from "@kestra-io/ui-libs";
 
     import TriggerFlow from "../flows/TriggerFlow.vue";
+    import Pause from "./overview/components/actions/Pause.vue";
+    import Resume from "./overview/components/actions/Resume.vue";
+    import Restart from "./overview/components/actions/Restart.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -65,6 +80,9 @@
     export default {
         components: {
             TriggerFlow,
+            Pause,
+            Resume,
+            Restart,
             TopNavBar
         },
         props: {
@@ -83,6 +101,49 @@
             },
             isAllowedTrigger() {
                 return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+            },
+            hasVisibleActions() {
+                return this.isAllowedEdit || this.primaryAction || this.fallbackToExecute;
+            },
+            fallbackToExecute() {
+                return this.execution && this.isAllowedTrigger && !this.primaryAction;
+            },
+            primaryAction() {
+                if (!this.execution) {
+                    return null;
+                }
+
+                if (State.isPaused(this.execution.state.current)) {
+                    return {
+                        component: Resume,
+                        props: {}
+                    };
+                }
+
+                if (State.isRunning(this.execution.state.current)) {
+                    return {
+                        component: Pause,
+                        props: {}
+                    };
+                }
+
+                if (this.execution.state.current === State.FAILED) {
+                    return {
+                        component: Restart,
+                        props: {}
+                    };
+                }
+
+                if (State.getTerminatedStates().includes(this.execution.state.current)) {
+                    return {
+                        component: Restart,
+                        props: {
+                            isReplay: true
+                        }
+                    };
+                }
+
+                return null;
             },
             isATestExecution() {
                 return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");

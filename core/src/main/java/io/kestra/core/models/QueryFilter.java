@@ -68,7 +68,7 @@ public record QueryFilter(
             case ENDS_WITH -> EndsWith.<T>builder().field(field).value(value.toString()).build();
             case CONTAINS -> Contains.<T>builder().field(field).value(value.toString()).build();
             case REGEX -> Regex.<T>builder().field(field).value(value.toString()).build();
-            case PREFIX -> Regex.<T>builder().field(field).value("^" + value.toString().replace(".", "\\.") + "(?:\\..+)?$").build();
+            case PREFIX -> Prefix.<T>builder().field(field).value(value.toString()).build();
         };
     }
 

@@ -9,7 +9,6 @@ import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.URIInput;
-import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.secret.SecretNotFoundException;
@@ -535,36 +534,6 @@ class FlowInputOutputTest {
             InputOutputValidationException.class,
             () -> flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("duck", invalidUri))
         );
-    }
-
-    @Test
-    void shouldAcceptNullStringForNonRequiredIntInput() {
-        IntInput input = IntInput.builder()
-        .id("not_required")
-        .type(Type.INT)
-        .required(false)
-        .build();
-        
-        List<InputAndValue> result = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("not_required", "null")
-        );
-        
-        assertThat(result.getFirst().value()).isNull();
-    }
-
-    @Test
-    void shouldAcceptEmptyStringForNonRequiredIntInput() {
-        IntInput input = IntInput.builder()
-        .id("not_required")
-        .type(Type.INT)
-        .required(false)
-        .build();
-        
-        List<InputAndValue> result = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of()
-        );
-        
-        assertThat(result.getFirst().value()).isNull();
     }
 
     private static class MemoryCompletedPart implements CompletedPart {

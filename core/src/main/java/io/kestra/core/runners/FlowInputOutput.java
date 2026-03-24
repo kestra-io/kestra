@@ -459,12 +459,6 @@ public class FlowInputOutput {
 
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current, Data data) throws Exception {
         try {
-            if (current instanceof String s && (s.isBlank() || "null".equalsIgnoreCase(s.trim()))) {
-                switch (type) {
-                    case INT, FLOAT, DATE, DATETIME, DURATION -> { return null; }
-                    default -> {}
-                }
-            }
             return switch (type) {
                 case SELECT, ENUM, STRING, EMAIL -> current.toString();
                 case SECRET -> {

@@ -227,6 +227,7 @@
         "All blocked tasks will be executed."
       ]
     },
+    "restart execution title": "Restart execution",
     "replay execution title": "Replay execution",
     "replay execution description": "This will create a new execution based on the selected execution.",
     "replay using": "Replay using",

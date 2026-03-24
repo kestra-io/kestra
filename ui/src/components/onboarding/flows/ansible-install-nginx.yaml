@@ -1,0 +1,26 @@
+id: squid_173492
+namespace: company.team
+
+tasks:
+  - id: install_nginx
+    type: io.kestra.plugin.ansible.cli.AnsibleCLI
+    inputFiles:
+      inventory.ini: |
+        localhost ansible_connection=local
+      nginx_install.yml: |
+        ---
+        - hosts: localhost
+          tasks:
+            - name: Install nginx
+              ansible.builtin.package:
+                name: nginx
+                state: latest
+            - name: Verify nginx version
+              ansible.builtin.command: nginx -v
+              register: nginx_version
+            - name: Print nginx version
+              ansible.builtin.debug:
+                var: nginx_version.stderr
+    containerImage: cytopia/ansible:latest-tools
+    commands:
+      - ansible-playbook -v -i inventory.ini nginx_install.yml

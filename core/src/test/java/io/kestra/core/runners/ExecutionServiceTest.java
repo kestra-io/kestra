@@ -240,6 +240,33 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/parallel-nested.yaml"})
+    void replayParallelRestartsRunningSibling() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "parallel-nested");
+        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        TaskRun replayTarget = execution.findTaskRunByTaskIdAndValue("1-3-2_par", List.of());
+        TaskRun runningSibling = execution.findTaskRunByTaskIdAndValue("1-3-3_end", List.of());
+
+        Execution executionWithRunningSibling = execution.withTaskRunList(
+            execution.getTaskRunList()
+                .stream()
+                .map(taskRun -> taskRun.getId().equals(runningSibling.getId())
+                    ? taskRun.withState(State.Type.RUNNING)
+                    : taskRun)
+                .toList()
+        );
+
+        Execution restart = executionService.replay(executionWithRunningSibling, replayTarget.getId(), null);
+
+        TaskRun restartedSibling = restart.findTaskRunByTaskIdAndValue("1-3-3_end", List.of());
+        assertThat(restartedSibling.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restartedSibling.getId()).isNotEqualTo(runningSibling.getId());
+        assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
+    }
+
+    @Test
     @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml", tenantId = TENANT_2)
     void replayEachSeq(Execution execution) throws Exception {
         assertThat(execution.getTaskRunList()).hasSize(23);
@@ -466,6 +493,37 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(2);
         assertThat(restart.findTaskRunsByTaskId("make_error").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/replay-sequential-with-error-handler.yaml"})
+    void replaySequentialWithErrorHandler() throws Exception {
+        // Given: run the flow — failing-task fails, error-handler runs, sequential fails
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-sequential-with-error-handler");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // task runs: before, sequential, failing-task, error-handler = 4
+        assertThat(execution.getTaskRunList()).hasSize(4);
+
+        String sequentialTaskRunId = execution.findTaskRunByTaskIdAndValue("sequential", List.of()).getId();
+
+        // When: replay from the parent Sequential task
+        Execution replay = executionService.replay(execution, sequentialTaskRunId, null);
+
+        // Then: the stale error-handler task run must be removed
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.getTaskRunList()).hasSize(2); // before + sequential only
+        assertThat(replay.findTaskRunByTaskIdAndValue("sequential", List.of()).getState().getCurrent())
+            .isEqualTo(State.Type.RUNNING);
+        assertThat(replay.getTaskRunList().stream()
+            .noneMatch(tr -> tr.getTaskId().equals("error-handler"))).isTrue();
+
+        // And: the replayed execution should terminate (not hang indefinitely in RUNNING)
+        Execution result = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     @Test

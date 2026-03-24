@@ -2,6 +2,7 @@
     <TopNavBar v-if="topbar" :title="routeInfo.title" />
     <Layout
         :title="t(`demos.assets.title`)"
+        type="assets"
         :image="{
             source: img,
             alt: t(`demos.assets.title`)

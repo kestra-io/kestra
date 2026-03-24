@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
@@ -19,6 +20,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -366,6 +368,32 @@ public class FlowService {
     }
 
     public record Relocation(String from, String to) {}
+
+    public record TaskDeprecation(String taskId, String taskType, @Nullable String replacement) {}
+
+
+    public List<TaskDeprecation> findDeprecatedTasks(Flow flow) {
+        return flow.allTasksWithChilds().stream()
+            .flatMap(task -> {
+                String taskType = task.getType();
+                return pluginRegistry.findMetadataByIdentifier(taskType)
+                    .flatMap(metadata -> {
+                        // Case 1: task uses a deprecated alias name
+                        if (metadata.alias() != null) {
+                            boolean replacementDeprecated = Plugin.isDeprecated(metadata.type());
+                            String replacement = replacementDeprecated ? null : metadata.type().getName();
+                            return Optional.of(new TaskDeprecation(task.getId(), taskType, replacement));
+                        }
+                        // Case 2: task class itself is annotated @Deprecated
+                        if (Plugin.isDeprecated(metadata.type())) {
+                            return Optional.of(new TaskDeprecation(task.getId(), taskType, null));
+                        }
+                        return Optional.empty();
+                    })
+                    .stream();
+            })
+            .toList();
+    }
 
     @SuppressWarnings("unchecked")
     private List<Relocation> relocations(Map<String, Class<?>> aliases, Map<String, Object> stringObjectMap) {

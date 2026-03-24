@@ -697,6 +697,10 @@
       "drag to reorder columns": "열을 재정렬하려면 드래그하세요.",
       "edit filter": "필터 편집",
       "empty": "저장된 필터가 아직 없습니다.",
+      "enabled": {
+        "description": "사용 가능 여부로 필터링",
+        "label": "사용 가능"
+      },
       "end_date": "종료 날짜",
       "enter description": "필터 설명 입력",
       "enter label": "필터 label 입력",
@@ -756,7 +760,10 @@
         "description": "메트릭 유형별 필터",
         "label": "메트릭"
       },
-      "name": "이름",
+      "name": {
+        "description": "이름으로 필터링",
+        "label": "이름"
+      },
       "namespace": {
         "description": "namespace로 필터링",
         "label": "Namespace"
@@ -947,6 +954,10 @@
         "disabled": "비활성화됨",
         "enabled": "사용 가능",
         "label": "트리거 상태"
+      },
+      "type": {
+        "description": "유형별 필터",
+        "label": "유형"
       },
       "update": "업데이트",
       "username": {

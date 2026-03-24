@@ -37,6 +37,7 @@ import java.io.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +93,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 tasks:
                   - id: extract
-                    type: io.kestra.plugin.jdbc.duckdb.Query
+                    type: io.kestra.plugin.jdbc.duckdb.Queries
                     sql: |
                       INSTALL httpfs;
                       LOAD httpfs;
@@ -102,7 +103,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                   - id: each
                     type: io.kestra.plugin.core.flow.ForEachItem
-                    items: "{{ outputs.extract.uri }}"
+                    items: "{{ outputs.extract.outputs[0].uri }}"
                     batch:
                       rows: 1
                     namespace: company.team
@@ -599,11 +600,13 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             URI subflowOutputsBaseUri = URI.create(StorageContext.KESTRA_PROTOCOL + subflowOutputsBase + "/");
 
             if (runContext.storage().isFileExist(subflowOutputsBaseUri)) {
-                List<FileAttributes> list = runContext.storage().list(subflowOutputsBaseUri);;
+                List<FileAttributes> list = runContext.storage().list(subflowOutputsBaseUri);
 
                 if (!list.isEmpty()) {
                     // Merge outputs from each sub-flow into a single stored in the internal storage.
                     List<InputStream> streams = list.stream()
+                        .filter(attr -> attr.getType() == FileAttributes.FileType.Directory)
+                        .sorted(Comparator.comparingInt(attr -> Integer.parseInt(attr.getFileName())))
                         .map(throwFunction(attr -> {
                             URI file = subflowOutputsBaseUri.resolve(attr.getFileName() + "/outputs.ion");
                             return runContext.storage().getFile(file);

@@ -256,6 +256,7 @@ subprojects {subProj ->
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")
+                project.develocity.buildScan.value("${t.path}#maxHeapSize", t.maxHeapSize)
             }
             t.doLast {
                 logger.lifecycle("[TASK END]   ${t.path}")

@@ -70,3 +70,5 @@ public class JdbcQueueConfigurationTest {
         );
     }
 }
+
+

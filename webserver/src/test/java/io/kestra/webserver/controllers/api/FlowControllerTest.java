@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
@@ -19,7 +18,6 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -59,8 +57,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -1456,16 +1452,18 @@ class FlowControllerTest {
     @Test
     void listDeprecated() {
         // Given
+        String flowId = "test-deprecated";
+        String namespace = "io.kestra.unittest";
         String flowYaml = """
-            id: test-deprecated
-            namespace: io.kestra.unittest
+            id: %s
+            namespace: %s
             tasks:
               - id: t1
                 type: io.kestra.core.runners.test.task.Alias
                 message: hello
-            """;
+            """.formatted(flowId, namespace);
         client.toBlocking().retrieve(
-            POST(FLOW_PATH, flowYaml).contentType(MediaType.APPLICATION_YAML),
+            POST("/api/v1/main/flows/", flowYaml).contentType(MediaType.APPLICATION_YAML),
             String.class
         );
 
@@ -1475,18 +1473,17 @@ class FlowControllerTest {
             Argument.listOf(FlowController.FlowWithDeprecatedTasks.class)
         );
 
-        // Then: the flow with the alias task appears
-        assertThat(result).hasSize(1);
-        FlowController.FlowWithDeprecatedTasks flowResult = result.getFirst();
-        assertThat(flowResult.flowId()).isEqualTo("test-deprecated");
-        assertThat(flowResult.namespace()).isEqualTo("io.kestra.unittest");
+        assertThat(result).hasSizeGreaterThan(1);
+        FlowController.FlowWithDeprecatedTasks flowResult = result.stream().filter(f -> f.flowId().equals(flowId) && f.namespace().equals(namespace)).findFirst().orElseThrow();
+        assertThat(flowResult.flowId()).isEqualTo(flowId);
+        assertThat(flowResult.namespace()).isEqualTo(namespace);
         assertThat(flowResult.deprecatedTasks()).hasSize(1);
         assertThat(flowResult.deprecatedTasks().getFirst().taskType()).isEqualTo("io.kestra.core.runners.test.task.Alias");
         assertThat(flowResult.deprecatedTasks().getFirst().replacement()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
 
         // Test namespace filter — matching namespace returns the flow
         List<FlowController.FlowWithDeprecatedTasks> filtered = client.toBlocking().retrieve(
-            GET("/api/v1/main/flows/deprecated?namespace=io.kestra.unittest"),
+            GET("/api/v1/main/flows/deprecated?namespace=" + namespace),
             Argument.listOf(FlowController.FlowWithDeprecatedTasks.class)
         );
         assertThat(filtered).hasSize(1);

@@ -1646,6 +1646,7 @@
     "restart": "Reiniciar",
     "restart change revision": "Você pode alterar a revisão que será usada para a nova execução.",
     "restart confirm": "Tem certeza de que deseja reiniciar a execução <code>{id}</code>?",
+    "restart execution title": "Reiniciar execução",
     "restart latest revision": "Reiniciar última revisão",
     "restart tooltip": "Reiniciar a execução a partir da task <code>{state}</code>",
     "restart trigger": {

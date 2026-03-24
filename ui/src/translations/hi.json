@@ -1646,6 +1646,7 @@
     "restart": "पुनः प्रारंभ करें",
     "restart change revision": "आप उस पुनरीक्षण को बदल सकते हैं जिसका उपयोग नए निष्पादन के लिए किया जाएगा।",
     "restart confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः प्रारंभ करना चाहते हैं?",
+    "restart execution title": "प्रक्रिया पुनः प्रारंभ करें",
     "restart latest revision": "नवीनतम पुनरीक्षण पुनः प्रारंभ करें",
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
     "restart trigger": {

@@ -1646,6 +1646,7 @@
     "restart": "重新开始",
     "restart change revision": "你可以更改用于新执行的修订版。",
     "restart confirm": "确定要重新开始执行 <code>{id}</code> 吗？",
+    "restart execution title": "重新启动执行",
     "restart latest revision": "重新开始最新修订版",
     "restart tooltip": "从 <code>{state}</code> 任务重新开始执行",
     "restart trigger": {

@@ -1646,6 +1646,7 @@
     "restart": "Uruchom ponownie",
     "restart change revision": "Możesz zmienić wersję, która będzie używana do nowego wykonania.",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić wykonanie <code>{id}</code>?",
+    "restart execution title": "Uruchom ponownie wykonanie",
     "restart latest revision": "Uruchom ponownie najnowszą wersję",
     "restart tooltip": "Uruchom ponownie wykonanie od task <code>{state}</code>",
     "restart trigger": {

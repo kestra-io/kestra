@@ -1646,6 +1646,7 @@
     "restart": "재시작",
     "restart change revision": "선택하시는 수정본으로 재실행 할 수 있습니다.",
     "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
+    "restart execution title": "실행 다시 시작",
     "restart latest revision": "최신 수정본으로 재시작",
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
     "restart trigger": {

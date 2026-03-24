@@ -82,6 +82,10 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
             return;
         }
 
+        if (route.query.noRestore) {
+            return;
+        }
+
         if (Object.keys(route.query).length > 0 || (localStorageValue.value !== null && Object.keys(localStorageValue.value).length > 0)) {
             if (Object.keys(route.query).length === 0) {
                 window.sessionStorage.removeItem(localStorageName.value);

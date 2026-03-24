@@ -77,9 +77,10 @@
         const queries: Record<string, string> = {};
 
         queries["filters[triggerExecutionId][EQUALS]"] = props.executionId;
+        queries["noRestore"] = "true";
 
         if (state) {
-            queries["filters[state][EQUALS]"] = state;
+            queries["filters[state][IN]"] = state;
         }
 
         return {
@@ -134,3 +135,4 @@
         line-height: 1.0625rem;
     }
 </style>
+

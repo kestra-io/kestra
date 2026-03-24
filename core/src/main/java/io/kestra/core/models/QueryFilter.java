@@ -410,7 +410,7 @@ public record QueryFilter(
         SECURITY_INTEGRATION {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.ENABLED);
+                return List.of(Field.QUERY, Field.ENABLED);
             }
         },
         SECRET_METADATA {

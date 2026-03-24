@@ -122,4 +122,143 @@ class AiControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(200);
         assertThat(response.getBody().get()).isEqualTo(expectedFlowResponse.replace("\\n", "\n").replace("\\\"", "\""));
     }
+
+    @Test
+    void shouldGenerateFlowWhenYamlIsNull() {
+        // Regression test: null yaml caused Map.of() to throw NullPointerException
+        // before the fix that wraps it with Optional.ofNullable(...).orElse("")
+        extension.stubFor(post(anyUrl())
+            .inScenario("Null yaml flow generation")
+            .whenScenarioStateIs("Started")
+            .willReturn(
+                aResponse().withResponseBody(
+                    Body.fromJsonBytes("""
+                        {
+                           "responseId" : "abc123",
+                           "modelVersion" : "gemini-2.5-flash",
+                           "candidates" : [ {
+                             "content" : {
+                               "parts" : [ {
+                                 "text" : "io.kestra.plugin.core.log.Log"
+                               } ],
+                               "role" : "model"
+                             },
+                             "finishReason" : "STOP",
+                             "index" : 0
+                           } ],
+                           "usageMetadata" : {
+                             "promptTokenCount" : 100,
+                             "candidatesTokenCount" : 10,
+                             "totalTokenCount" : 110
+                           }
+                         }""".getBytes()
+                )))
+            .willSetStateTo("Tasks fetched"));
+
+        String expectedFlowResponse = "id: new-flow\\nnamespace: io.kestra.tests\\ntasks:\\n  - id: log\\n    type: io.kestra.plugin.core.log.Log";
+        extension.stubFor(post(anyUrl())
+            .inScenario("Null yaml flow generation")
+            .whenScenarioStateIs("Tasks fetched")
+            .willReturn(
+                aResponse().withResponseBody(
+                    Body.fromJsonBytes("""
+                        {
+                           "responseId" : "abc124",
+                           "modelVersion" : "gemini-2.5-flash",
+                           "candidates" : [ {
+                             "content" : {
+                               "parts" : [ {
+                                 "text" : "%s"
+                               } ],
+                               "role" : "model"
+                             },
+                             "finishReason" : "STOP",
+                             "index" : 0
+                           } ],
+                           "usageMetadata" : {
+                             "promptTokenCount" : 100,
+                             "candidatesTokenCount" : 10,
+                             "totalTokenCount" : 110
+                           }
+                         }""".formatted(expectedFlowResponse).getBytes()
+                ))));
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            // yaml=null simulates creating a new flow from scratch
+            HttpRequest.POST("/api/v1/main/ai/generate/flow", new AiController.FlowGenerationPrompt(IdUtils.create(), "Create a simple log flow", null, "io.kestra.tests", null)),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(200);
+        assertThat(response.getBody().get()).isEqualTo(expectedFlowResponse.replace("\\n", "\n"));
+    }
+
+    @Test
+    void shouldGenerateDashboardWhenYamlIsNull() {
+        // Regression test: null yaml caused Map.of() to throw NullPointerException
+        extension.stubFor(post(anyUrl())
+            .inScenario("Null yaml dashboard generation")
+            .whenScenarioStateIs("Started")
+            .willReturn(
+                aResponse().withResponseBody(
+                    Body.fromJsonBytes("""
+                        {
+                           "responseId" : "def123",
+                           "modelVersion" : "gemini-2.5-flash",
+                           "candidates" : [ {
+                             "content" : {
+                               "parts" : [ {
+                                 "text" : "io.kestra.plugin.core.log.Log"
+                               } ],
+                               "role" : "model"
+                             },
+                             "finishReason" : "STOP",
+                             "index" : 0
+                           } ],
+                           "usageMetadata" : {
+                             "promptTokenCount" : 100,
+                             "candidatesTokenCount" : 10,
+                             "totalTokenCount" : 110
+                           }
+                         }""".getBytes()
+                )))
+            .willSetStateTo("Tasks fetched"));
+
+        String expectedDashboardResponse = "id: new-dashboard\\ntitle: My Dashboard";
+        extension.stubFor(post(anyUrl())
+            .inScenario("Null yaml dashboard generation")
+            .whenScenarioStateIs("Tasks fetched")
+            .willReturn(
+                aResponse().withResponseBody(
+                    Body.fromJsonBytes("""
+                        {
+                           "responseId" : "def124",
+                           "modelVersion" : "gemini-2.5-flash",
+                           "candidates" : [ {
+                             "content" : {
+                               "parts" : [ {
+                                 "text" : "%s"
+                               } ],
+                               "role" : "model"
+                             },
+                             "finishReason" : "STOP",
+                             "index" : 0
+                           } ],
+                           "usageMetadata" : {
+                             "promptTokenCount" : 100,
+                             "candidatesTokenCount" : 10,
+                             "totalTokenCount" : 110
+                           }
+                         }""".formatted(expectedDashboardResponse).getBytes()
+                ))));
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            // yaml=null simulates creating a new dashboard from scratch
+            HttpRequest.POST("/api/v1/main/ai/generate/dashboard", new AiController.DashboardGenerationPrompt(IdUtils.create(), "Create a simple dashboard", null, null)),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(200);
+        assertThat(response.getBody().get()).isEqualTo(expectedDashboardResponse.replace("\\n", "\n"));
+    }
 }

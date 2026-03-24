@@ -1844,10 +1844,22 @@
             "label": "Namespace",
             "description": "Filter by namespace"
         },
+        "enabled": {
+          "label": "Enabled",
+          "description": "Filter by enabled"
+        },
+        "type": {
+          "label": "Type",
+          "description": "Filter by type"
+        },
         "username": {
           "label": "Username",
           "description": "Filter by username"
         },
+      "name": {
+        "label": "Name",
+        "description": "Filter by name"
+      },
         "group": {
           "label": "Group",
           "description": "Filter by group"

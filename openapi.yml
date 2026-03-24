@@ -4688,6 +4688,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BulkResponse"
+  /api/v1/{tenant}/flows/deprecated:
+    get:
+      tags:
+      - Flows
+      summary: List flows containing deprecated tasks
+      operationId: listDeprecated
+      parameters:
+      - name: namespace
+        in: query
+        description: A namespace filter prefix
+        explode: false
+        schema:
+          type: string
+          nullable: true
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: listDeprecated 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FlowController.FlowWithDeprecatedTasks"
   /api/v1/{tenant}/flows/disable/by-ids:
     post:
       tags:
@@ -9320,6 +9348,20 @@ components:
               \ is executed.  If no checks are defined, the flow executes normally."
             items:
               $ref: "#/components/schemas/Check"
+    FlowController.FlowWithDeprecatedTasks:
+      type: object
+      properties:
+        namespace:
+          type: string
+        flowId:
+          type: string
+        revision:
+          type: integer
+          format: int32
+        deprecatedTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/FlowService.TaskDeprecation"
     FlowController.TaskValidationType:
       type: string
       enum:
@@ -9528,6 +9570,16 @@ components:
       enum:
       - USER
       - SYSTEM
+    FlowService.TaskDeprecation:
+      type: object
+      properties:
+        taskId:
+          type: string
+        taskType:
+          type: string
+        replacement:
+          type: string
+          nullable: true
     FlowTopologyGraph:
       type: object
       properties:

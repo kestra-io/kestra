@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.hash.Hashing;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -63,6 +64,7 @@ import org.jooq.Configuration;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -1464,21 +1466,40 @@ public class JdbcExecutor implements ExecutorInterface {
         return taskRuns
             .stream()
             .anyMatch(taskRun -> {
-                // As retry is now handled outside the worker,
-                // we now add the attempt size to the deduplication key
-                String deduplicationKey = taskRun.getParentTaskRunId() + "-" +
+                String rawValue = String.valueOf(taskRun.getValue());
+
+                // 1. Generate original raw key (used for backward compatibility check)
+                String rawKey = taskRun.getParentTaskRunId() + "-" +
                     taskRun.getTaskId() + "-" +
-                    taskRun.getValue() + "-" +
+                    rawValue + "-" +
                     (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0)
                     + taskRun.getIteration();
 
-                if (executorState.getChildDeduplication().containsKey(deduplicationKey)) {
-                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
+                // 2. Generate optimized value part: only hash if value exceeds 1KB to maintain key semantic structure
+                String safeValue = (rawValue.length() > 1024) ?
+                    "hashed_" + Hashing.sha256().hashString(rawValue, StandardCharsets.UTF_8) : rawValue;
+
+                // 3. Construct the structured safe key
+                String safeKey = taskRun.getParentTaskRunId() + "-" +
+                    taskRun.getTaskId() + "-" +
+                    safeValue + "-" +
+                    (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0)
+                    + taskRun.getIteration();
+
+                // 4. Dual-check mechanism (compatible with existing in-flight jobs)
+                if (executorState.getChildDeduplication().containsKey(safeKey)) {
+                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), safeKey);
                     return false;
-                } else {
-                    executorState.getChildDeduplication().put(deduplicationKey, taskRun.getId());
-                    return true;
                 }
+
+                if (!safeKey.equals(rawKey) && executorState.getChildDeduplication().containsKey(rawKey)) {
+                    log.warn("Duplicate Nexts (Legacy) on execution '{}' with key '{}'", execution.getId(), rawKey);
+                    return false;
+                }
+
+                // 5. Registration: always store the safeKey to ensure safe database persistence
+                executorState.getChildDeduplication().put(safeKey, taskRun.getId());
+                return true;
             });
     }
 

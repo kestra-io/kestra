@@ -64,6 +64,7 @@ public class ExecutorService {
     @Inject
     private WorkerJobRunningStateStore workerJobRunningStateStore;
 
+    @Inject
     protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject

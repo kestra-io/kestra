@@ -496,6 +496,37 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/replay-sequential-with-error-handler.yaml"})
+    void replaySequentialWithErrorHandler() throws Exception {
+        // Given: run the flow — failing-task fails, error-handler runs, sequential fails
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-sequential-with-error-handler");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // task runs: before, sequential, failing-task, error-handler = 4
+        assertThat(execution.getTaskRunList()).hasSize(4);
+
+        String sequentialTaskRunId = execution.findTaskRunByTaskIdAndValue("sequential", List.of()).getId();
+
+        // When: replay from the parent Sequential task
+        Execution replay = executionService.replay(execution, sequentialTaskRunId, null);
+
+        // Then: the stale error-handler task run must be removed
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.getTaskRunList()).hasSize(2); // before + sequential only
+        assertThat(replay.findTaskRunByTaskIdAndValue("sequential", List.of()).getState().getCurrent())
+            .isEqualTo(State.Type.RUNNING);
+        assertThat(replay.getTaskRunList().stream()
+            .noneMatch(tr -> tr.getTaskId().equals("error-handler"))).isTrue();
+
+        // And: the replayed execution should terminate (not hang indefinitely in RUNNING)
+        Execution result = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     @LoadFlows({"flows/valids/each-pause.yaml"})
     void killExecutionWithFlowableTask() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "each-pause");

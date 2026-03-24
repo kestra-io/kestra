@@ -81,7 +81,7 @@
                         : undefined,
             ].filter(Boolean).join(""),
             props.root,
-        ].filter(p => p.length).join(".")}`;
+        ].filter(p => p?.length).join(".")}`;
     });
 
     function removeElement() {

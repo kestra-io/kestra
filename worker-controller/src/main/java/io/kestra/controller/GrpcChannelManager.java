@@ -218,16 +218,17 @@ public class GrpcChannelManager {
         }
 
         // Unregister the static name resolver provider to prevent memory leaks
-        // and allow clean re-initialization in tests
-        if (REGISTERED_RESOLVER_PROVIDER != null) {
+        // and allow clean re-initialization in tests.
+        // Use getAndSet to atomically retrieve and clear, preventing double-deregister races.
+        StaticNameResolverProvider provider = REGISTERED_RESOLVER_PROVIDER.getAndSet(null);
+        if (provider != null) {
+            STATIC_RESOLVER_REGISTERED.set(false);
             try {
-                NameResolverRegistry.getDefaultRegistry().deregister(REGISTERED_RESOLVER_PROVIDER.get());
+                NameResolverRegistry.getDefaultRegistry().deregister(provider);
                 log.debug("Unregistered static name resolver provider");
             } catch (Exception e) {
                 log.debug("Error while unregistering static name resolver provider", e);
             }
-            REGISTERED_RESOLVER_PROVIDER.set(null);
-            STATIC_RESOLVER_REGISTERED.set(false);
         }
 
         // Shutdown executor service

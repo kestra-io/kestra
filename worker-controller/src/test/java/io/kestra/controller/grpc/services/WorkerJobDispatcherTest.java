@@ -117,6 +117,7 @@ class WorkerJobDispatcherTest {
         if (dispatcher != null) {
             dispatcher.close();
         }
+        KestraContext.setContext(null);
     }
 
     private WorkerStreamContext<WorkerJobResponse> createWorkerContext(String workerId, String workerGroup, int maxConcurrency) {

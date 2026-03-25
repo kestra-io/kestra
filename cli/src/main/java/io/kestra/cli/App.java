@@ -68,33 +68,42 @@ public class App implements Callable<Integer> {
     }
 
     protected static int execute(Class<?> cls, String[] environments, String... args) {
-        // Log Bridge
-        SLF4JBridgeHandler.removeHandlersForRootLogger();
-        SLF4JBridgeHandler.install();
-
-        // Init ApplicationContext
-        CommandLine commandLine = getCommandLine(cls, args);
-
-        ApplicationContext applicationContext = App.applicationContext(cls, commandLine, environments);
-
-        Class<?> targetCommand = commandLine.getCommandSpec().userObject().getClass();
-
-        if (!AbstractCommand.class.isAssignableFrom(targetCommand) && args.length == 0) {
-            // if no command provided, show help
-            args = new String[]{"--help"};
-        }
-
-        // Call Picocli command
+        ApplicationContext applicationContext = null;
         int exitCode;
+
         try {
-             exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
-        } catch (CommandLine.InitializationException e){
-            System.err.println("Could not initialize picocli CommandLine, err: " + e.getMessage());
+            // Log Bridge
+            SLF4JBridgeHandler.removeHandlersForRootLogger();
+            SLF4JBridgeHandler.install();
+
+            // Init ApplicationContext
+            CommandLine commandLine = getCommandLine(cls, args);
+
+             applicationContext = App.applicationContext(cls, commandLine, environments);
+
+            Class<?> targetCommand = commandLine.getCommandSpec().userObject().getClass();
+
+            if (!AbstractCommand.class.isAssignableFrom(targetCommand) && args.length == 0) {
+                // if no command provided, show help
+                args = new String[]{"--help"};
+            }
+
+            // Call Picocli command
+            try {
+                exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
+            } catch (CommandLine.InitializationException e) {
+                System.err.println("Could not initialize picocli CommandLine, err: " + e.getMessage());
+                e.printStackTrace();
+                exitCode = 1;
+            }
+        } catch (Exception e) {
+            System.err.println("An unhandled error happened in App.java: " + e.getMessage());
             e.printStackTrace();
             exitCode = 1;
         }
-        applicationContext.close();
-
+        if(applicationContext != null){
+            applicationContext.close();
+        }
         // exit code
         return exitCode;
     }

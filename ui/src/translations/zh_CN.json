@@ -697,6 +697,10 @@
       "drag to reorder columns": "拖动以重新排序列",
       "edit filter": "编辑过滤器",
       "empty": "您还没有保存任何过滤器。",
+      "enabled": {
+        "description": "按启用筛选",
+        "label": "启用"
+      },
       "end_date": "结束日期",
       "enter description": "输入筛选器描述",
       "enter label": "输入过滤器标签",
@@ -756,7 +760,10 @@
         "description": "按指标类型筛选",
         "label": "指标"
       },
-      "name": "名称",
+      "name": {
+        "description": "按名称筛选",
+        "label": "名称"
+      },
       "namespace": {
         "description": "按namespace筛选",
         "label": "命名空间"
@@ -947,6 +954,10 @@
         "disabled": "禁用",
         "enabled": "启用",
         "label": "触发状态"
+      },
+      "type": {
+        "description": "按类型筛选",
+        "label": "类型"
       },
       "update": "更新",
       "username": {

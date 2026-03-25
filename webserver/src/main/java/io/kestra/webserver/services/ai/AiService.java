@@ -106,7 +106,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     @Override
     public GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
         AiService.GenerationContext ctx = this.beforeGeneration(userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration", Map.of(
-            "flowYaml", flowGenerationPrompt.getYaml(),
+            "flowYaml", Optional.ofNullable(flowGenerationPrompt.getYaml()).orElse(""),
             "userPrompt", flowGenerationPrompt.getUserPrompt()
         ));
 
@@ -125,7 +125,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     @Override
     public GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
         AiService.GenerationContext ctx = this.beforeGeneration(userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration", Map.of(
-            "dashboardYaml", dashboardGenerationPrompt.getYaml(),
+            "dashboardYaml", Optional.ofNullable(dashboardGenerationPrompt.getYaml()).orElse(""),
             "userPrompt", dashboardGenerationPrompt.getUserPrompt()
         ));
 

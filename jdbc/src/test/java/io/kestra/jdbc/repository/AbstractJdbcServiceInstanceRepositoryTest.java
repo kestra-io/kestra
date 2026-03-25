@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.repositories.AbstractServiceInstanceRepositoryTest;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
@@ -27,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @KestraTest
 @Execution(ExecutionMode.SAME_THREAD)
-public abstract class AbstractJdbcServiceInstanceRepositoryTest {
+public abstract class AbstractJdbcServiceInstanceRepositoryTest extends AbstractServiceInstanceRepositoryTest {
 
     @Inject
     protected AbstractJdbcServiceInstanceRepository repository;

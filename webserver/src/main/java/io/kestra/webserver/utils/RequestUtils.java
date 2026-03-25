@@ -5,8 +5,11 @@ import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceType;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
+import jakarta.annotation.Nullable;
 import org.slf4j.event.Level;
 
 import java.time.Duration;
@@ -280,6 +283,41 @@ public class RequestUtils {
         }
 
         return filters;
+    }
+
+    /**
+     * If {@code filters} is non-empty, returns it as-is; otherwise maps legacy service-instance
+     * {@code state} / {@code type} params to an equivalent {@link QueryFilter} list.
+     *
+     * @param filters the new filter list (may be null/empty)
+     * @param states  legacy state filter (may be null)
+     * @param types   legacy type filter (may be null)
+     * @return the resolved filter list
+     */
+    public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
+        @Nullable List<QueryFilter> filters,
+        @Nullable Set<Service.ServiceState> states,
+        @Nullable Set<ServiceType> types
+    ) {
+        if (filters != null && !filters.isEmpty()) {
+            return filters;
+        }
+        List<QueryFilter> result = new ArrayList<>();
+        if (states != null && !states.isEmpty()) {
+            result.add(QueryFilter.builder()
+                .field(QueryFilter.Field.STATE)
+                .operation(QueryFilter.Op.IN)
+                .value(states.stream().map(Enum::name).toList())
+                .build());
+        }
+        if (types != null && !types.isEmpty()) {
+            result.add(QueryFilter.builder()
+                .field(QueryFilter.Field.TYPE)
+                .operation(QueryFilter.Op.IN)
+                .value(types.stream().map(Enum::name).toList())
+                .build());
+        }
+        return result;
     }
 
     public static List<FlowScope> toFlowScopes(String value) {

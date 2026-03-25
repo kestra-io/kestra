@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.Service;
@@ -9,29 +10,32 @@ import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.server.ServiceType;
 import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import org.jooq.Table;
 import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
+import org.jooq.impl.DSL;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import static java.util.stream.Collectors.toCollection;
 import static org.jooq.impl.DSL.using;
+import static org.jooq.impl.DSL.quotedName;
 
 @Getter
 @Slf4j
@@ -252,26 +256,52 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      **/
     @Override
     public ArrayListTotal<ServiceInstance> find(final Pageable pageable,
-                                                final Set<Service.ServiceState> states,
-                                                final Set<ServiceType> types) {
+                                                @Nullable final List<QueryFilter> filters) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = using(configuration);
                 SelectConditionStep<Record1<Object>> select = context.select(VALUE_FIELD).from(table()).where("1=1");
-                if (states != null && !states.isEmpty()) {
-                    List<String> stateStrings = states.stream().map(Enum::name).collect(toCollection(ArrayList::new));
-                    // backward-compatibility: EMPTY was renamed to INACTIVE in Kestra 1.0
-                    if (stateStrings.contains(Service.ServiceState.INACTIVE.name())) {
-                        stateStrings.add("EMPTY");
-                    }
-                    select = select.and(STATE.in(stateStrings));
-                }
-                if (types != null && !types.isEmpty()) {
-                    select = select.and(TYPE.in(types.stream().map(Enum::name).toList()));
+                if (filters != null && !filters.isEmpty()) {
+                    select = select.and(
+                        this.filter(filters, CREATED_AT.getName(), QueryFilter.Resource.SERVICE_INSTANCE)
+                    );
                 }
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    protected Condition filter(List<QueryFilter> filters, String dateColumn, QueryFilter.Resource resource) {
+        return super.filter(ServiceInstanceRepositoryInterface.expandStateNamesForFilterQueryBackwardCompat(filters), dateColumn, resource);
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.TYPE) {
+            // The service type column is named "service_type", not "type"
+            return quotedName("service_type");
+        }
+        return super.getColumnName(field);
+    }
+
+    @Override
+    protected Condition generateStateCondition(Object value, QueryFilter.Op operation) {
+        List<String> stateNames = switch (value) {
+            case List<?> list -> list.stream().map(Object::toString).toList();
+            case String s -> List.of(s);
+            default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
+                "Field 'state' requires a String or List<String> value for service instances");
+        };
+        Field<String> stateField = DSL.field(org.jooq.impl.DSL.quotedName("state"), String.class);
+        return switch (operation) {
+            case EQUALS, IN -> stateField.in(stateNames);
+            case NOT_EQUALS, NOT_IN -> stateField.notIn(stateNames);
+            default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
+                "Unsupported operation for STATE: " + operation);
+        };
     }
 
     /**

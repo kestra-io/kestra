@@ -410,7 +410,7 @@ public record QueryFilter(
         SECURITY_INTEGRATION {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.ENABLED);
+                return List.of(Field.QUERY, Field.ENABLED);
             }
         },
         SECRET_METADATA {
@@ -499,6 +499,12 @@ public record QueryFilter(
                     Field.NAMESPACE,
                     Field.TYPE
                 );
+            }
+        },
+        SERVICE_INSTANCE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.STATE, Field.TYPE, Field.CREATED);
             }
         };
 

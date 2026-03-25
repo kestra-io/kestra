@@ -697,6 +697,10 @@
       "drag to reorder columns": "Przeciągnij, aby zmienić kolejność kolumn",
       "edit filter": "Edytuj filtr",
       "empty": "Nie masz jeszcze żadnego zapisanego filtra.",
+      "enabled": {
+        "description": "Filtruj według enabled",
+        "label": "Włączone"
+      },
       "end_date": "Data zakończenia",
       "enter description": "Wprowadź opis filtra",
       "enter label": "Wprowadź filtr label",
@@ -756,7 +760,10 @@
         "description": "Filtruj według typu metryki",
         "label": "Metryka"
       },
-      "name": "Nazwa",
+      "name": {
+        "description": "Filtruj według nazwy",
+        "label": "Nazwa"
+      },
       "namespace": {
         "description": "Filtruj według namespace",
         "label": "Namespace"
@@ -947,6 +954,10 @@
         "disabled": "Wyłączone",
         "enabled": "Włączone",
         "label": "Stan Trigger"
+      },
+      "type": {
+        "description": "Filtruj według typu",
+        "label": "Typ"
       },
       "update": "Aktualizuj",
       "username": {

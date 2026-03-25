@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -42,14 +43,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GrpcChannelManager {
 
-    private volatile ManagedChannel defaultChannel;
-
-    private final AtomicBoolean stopped = new AtomicBoolean(false);
-    private final AtomicBoolean staticResolverRegistered = new AtomicBoolean(false);
-
+    private static final AtomicBoolean STATIC_RESOLVER_REGISTERED = new AtomicBoolean(false);
     // Reference to the registered resolver provider for cleanup
-    private volatile StaticNameResolverProvider registeredResolverProvider;
-
+    private static final AtomicReference<StaticNameResolverProvider> REGISTERED_RESOLVER_PROVIDER = new AtomicReference<>();
+    
+    private volatile ManagedChannel defaultChannel;
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final GrpcChannelConfiguration grpcChannelConfiguration;
     private final GrpcConfiguration grpcConfiguration;
     private final WorkerControllersConfiguration controllersConfig;
@@ -136,10 +135,10 @@ public class GrpcChannelManager {
         log.info("Configuring static discovery with {} controller endpoint(s)", addresses.size());
 
         // Register the static name resolver provider only once, store reference for cleanup
-        if (staticResolverRegistered.compareAndSet(false, true)) {
+        if (STATIC_RESOLVER_REGISTERED.compareAndSet(false, true)) {
             StaticNameResolverProvider resolverProvider = new StaticNameResolverProvider(addresses);
             NameResolverRegistry.getDefaultRegistry().register(resolverProvider);
-            this.registeredResolverProvider = resolverProvider;
+            REGISTERED_RESOLVER_PROVIDER.set(resolverProvider);
         }
         return ManagedChannelBuilder.forTarget("static:///controllers");
     }
@@ -220,15 +219,15 @@ public class GrpcChannelManager {
 
         // Unregister the static name resolver provider to prevent memory leaks
         // and allow clean re-initialization in tests
-        if (this.registeredResolverProvider != null) {
+        if (REGISTERED_RESOLVER_PROVIDER != null) {
             try {
-                NameResolverRegistry.getDefaultRegistry().deregister(registeredResolverProvider);
+                NameResolverRegistry.getDefaultRegistry().deregister(REGISTERED_RESOLVER_PROVIDER.get());
                 log.debug("Unregistered static name resolver provider");
             } catch (Exception e) {
                 log.debug("Error while unregistering static name resolver provider", e);
             }
-            this.registeredResolverProvider = null;
-            this.staticResolverRegistered.set(false);
+            REGISTERED_RESOLVER_PROVIDER.set(null);
+            STATIC_RESOLVER_REGISTERED.set(false);
         }
 
         // Shutdown executor service

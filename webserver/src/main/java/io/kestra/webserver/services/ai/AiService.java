@@ -162,7 +162,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
                 "$ai_input_state", inputState
             ));
         }
-        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId));
+        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, ip, parentSpanId));
 
         return new GenerationContext(conversationId, ip, parentSpanId);
     }

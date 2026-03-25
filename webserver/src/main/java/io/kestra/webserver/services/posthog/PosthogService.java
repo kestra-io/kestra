@@ -5,6 +5,7 @@ import com.posthog.java.PostHog;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import jakarta.annotation.PreDestroy;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 @Slf4j
 @Singleton
+@Requires(notEnv = "test")
 public class PosthogService {
     private final PostHog postHog;
 

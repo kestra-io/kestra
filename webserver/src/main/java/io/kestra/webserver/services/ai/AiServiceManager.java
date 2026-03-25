@@ -8,6 +8,7 @@ import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.value.PropertyResolver;
 import jakarta.inject.Singleton;
@@ -34,7 +35,7 @@ public class AiServiceManager {
         io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
         VersionProvider versionProvider,
         InstanceService instanceService,
-        PosthogService posthogService,
+        @Nullable PosthogService posthogService,
         List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
         NamespaceContextTool namespaceContextTool
     ) {

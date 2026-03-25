@@ -16,6 +16,7 @@ import io.kestra.core.utils.QueueCache;
 
 import jakarta.inject.Inject;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

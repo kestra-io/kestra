@@ -1,6 +1,14 @@
 package io.kestra.core.runners;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import com.google.common.collect.Lists;
+
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
@@ -14,18 +22,12 @@ import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * This class is responsible to initialize and hydrate a {@link RunContext} for a specific run context.
@@ -99,7 +101,8 @@ public class RunContextInitializer {
      * @return a fully initialized RunContext
      */
     public DefaultRunContext forWorkingDirectory(final WorkerTask workerTask) {
-        return forWorker(workerTask, variables -> {
+        return forWorker(workerTask, variables ->
+        {
             variables.put("workerTaskrun", variables.get("taskrun"));
             return variables;
         }, null);
@@ -114,7 +117,8 @@ public class RunContextInitializer {
      * @return a fully initialized RunContext sharing the parent's working directory
      */
     public DefaultRunContext forWorkingDirectorySubtask(final WorkerTask workerTask, final WorkingDir workingDir) {
-        return forWorker(workerTask, variables -> {
+        return forWorker(workerTask, variables ->
+        {
             variables.put("workerTaskrun", variables.get("taskrun"));
             return variables;
         }, workingDir);
@@ -122,8 +126,8 @@ public class RunContextInitializer {
 
     @SuppressWarnings("unchecked")
     private DefaultRunContext forWorker(final WorkerTask workerTask,
-                                        final Function<Map<String, Object>, Map<String, Object>> variablesModifier,
-                                        final WorkingDir workingDir) {
+        final Function<Map<String, Object>, Map<String, Object>> variablesModifier,
+        final WorkingDir workingDir) {
         final Task task = workerTask.getTask();
         final TaskRun taskRun = workerTask.getTaskRun();
         final WorkerTaskData data = workerTask.getData();
@@ -187,25 +191,21 @@ public class RunContextInitializer {
     /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTaskResult} and parent {@link TaskRun}.
      *
-     * @param runContext       The {@link RunContext} to initialize.
+     * @param runContext The {@link RunContext} to initialize.
      * @param workerTaskResult The {@link WorkerTaskResult}.
-     * @param parent           The parent {@link TaskRun}.
+     * @param parent The parent {@link TaskRun}.
      * @return The {@link RunContext} to initialize
      */
     @SuppressWarnings("unchecked")
     public DefaultRunContext forWorker(final DefaultRunContext runContext,
-                                       final WorkerTaskResult workerTaskResult,
-                                       final TaskRun parent) {
+        final WorkerTaskResult workerTaskResult,
+        final TaskRun parent) {
         Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.ENVS, runContextCache.getEnvVars()); // inject local worker env vars
 
-        Map<String, Object> outputs = variables.containsKey("outputs") ?
-            new HashMap<>((Map<String, Object>) variables.get("outputs")) :
-            new HashMap<>();
+        Map<String, Object> outputs = variables.containsKey("outputs") ? new HashMap<>((Map<String, Object>) variables.get("outputs")) : new HashMap<>();
 
-        Map<String, Object> triggerOutputs = variables.containsKey("trigger") ?
-            new HashMap<>((Map<String, Object>) variables.get("trigger")) :
-            new HashMap<>();
+        Map<String, Object> triggerOutputs = variables.containsKey("trigger") ? new HashMap<>((Map<String, Object>) variables.get("trigger")) : new HashMap<>();
 
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> current = result;
@@ -241,14 +241,14 @@ public class RunContextInitializer {
     /**
      * Initializes the given {@link RunContext} for the given {@link TriggerContext} and {@link AbstractTrigger}.
      *
-     * @param runContext     The {@link RunContext} to initialize.
+     * @param runContext The {@link RunContext} to initialize.
      * @param triggerContext The {@link TriggerContext}.
-     * @param trigger        The {@link AbstractTrigger}.
+     * @param trigger The {@link AbstractTrigger}.
      * @return The {@link RunContext} to initialize
      */
     public DefaultRunContext forScheduler(final DefaultRunContext runContext,
-                                          final TriggerContext triggerContext,
-                                          final AbstractTrigger trigger) {
+        final TriggerContext triggerContext,
+        final AbstractTrigger trigger) {
 
         runContext.init(applicationContext);
 
@@ -293,6 +293,7 @@ public class RunContextInitializer {
             .variables(data.conditionVariables())
             .build();
     }
+
     /**
      * Adds the secret consumer to the variables map, wiring it to the given logger.
      */
@@ -315,12 +316,12 @@ public class RunContextInitializer {
      * initializes it with the application context, and sets the trace parent.
      *
      * @param workingDir optional working directory to reuse (e.g. from a parent WorkingDirectory task);
-     *                   when non-null, {@code init()} will keep it instead of creating a new one.
+     *        when non-null, {@code init()} will keep it instead of creating a new one.
      */
     private DefaultRunContext buildAndInitRunContext(Map<String, Object> variables,
-                                                     List<String> secretInputs,
-                                                     String traceParent,
-                                                     WorkingDir workingDir) {
+        List<String> secretInputs,
+        String traceParent,
+        WorkingDir workingDir) {
         var builder = new DefaultRunContext.Builder()
             .withVariables(variables)
             .withSecretInputs(secretInputs);

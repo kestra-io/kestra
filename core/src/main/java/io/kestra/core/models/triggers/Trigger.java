@@ -1,8 +1,13 @@
 package io.kestra.core.models.triggers;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.Set;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
+
 import io.micronaut.core.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,14 +16,10 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.Set;
-
 /**
  * DON'T USE THIS CLASS - ONLY REQUIRED FOR 2.0 MIGRATION
  */
-@Deprecated(forRemoval = true, since="2.0.0")
+@Deprecated(forRemoval = true, since = "2.0.0")
 @SuperBuilder(toBuilder = true)
 @ToString
 @EqualsAndHashCode(callSuper = true)
@@ -51,7 +52,7 @@ public class Trigger extends TriggerContext implements HasUID {
     public static TriggerBuilder<?, ?> builder() {
         return new TriggerBuilderImpl();
     }
-    
+
     // This is a hack to make JavaDoc working as annotation processor didn't run before JavaDoc.
     // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
     public static abstract class TriggerBuilder<C extends Trigger, B extends TriggerBuilder<C, B>> extends TriggerContextBuilder<C, B> {

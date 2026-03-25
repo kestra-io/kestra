@@ -1,14 +1,16 @@
 package io.kestra.queue.jdbc.client;
 
+import java.util.List;
+import java.util.function.Consumer;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.queue.QueueService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.List;
-import java.util.function.Consumer;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JdbcBroadcastSubscriber<T extends Event> extends JdbcSubscriber<T> {
@@ -20,8 +22,7 @@ public class JdbcBroadcastSubscriber<T extends Event> extends JdbcSubscriber<T> 
         JdbcQueueClient jdbcQueueClient,
         String queueName,
         MetricRegistry metricRegistry,
-        IgnoreExecutionService ignoreExecutionService
-    ) {
+        IgnoreExecutionService ignoreExecutionService) {
         super(cls, queueService, jdbcQueueClient, queueName, metricRegistry, ignoreExecutionService);
     }
 

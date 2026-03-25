@@ -1,11 +1,12 @@
 package io.kestra.worker.queues;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.micrometer.core.instrument.Counter;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
+
+import io.kestra.core.metrics.MetricRegistry;
+
+import io.micrometer.core.instrument.Counter;
 
 /**
  * Decorate a queue with monitoring capabilities.
@@ -25,7 +26,7 @@ public class MonitoredWorkerQueue<T> extends AbstractDelegateWorkerQueue<T> {
     public MonitoredWorkerQueue(MetricRegistry metricRegistry, String queueName, WorkerQueue<T> queue) {
         super(queue);
 
-        String[] tags = new String[]{"name", queueName};
+        String[] tags = new String[] { "name", queueName };
         metricRegistry.gauge(QUEUE_SIZE, "Current number of items in the queue", (Supplier<Integer>) this::size, tags);
         metricRegistry.gauge(QUEUE_REMAINING_CAPACITY, "Remaining capacity in the queue", (Supplier<Integer>) this::remainingCapacity, tags);
         this.enqueuedCounter = metricRegistry.counter(QUEUE_ENQUEUED, "Number of items enqueued", tags);

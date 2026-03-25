@@ -1,13 +1,13 @@
 package io.kestra.queue;
 
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
-
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A {@link KestraContext} that intercepts {@link #shutdown()} to prevent actual ApplicationContext closure
@@ -46,14 +46,49 @@ public class NoOpShutdownContext extends KestraContext {
         shutdownCalled.set(true);
     }
 
-    @Override public ServerType getServerType() { return delegate != null ? delegate.getServerType() : null; }
+    @Override
+    public ServerType getServerType() {
+        return delegate != null ? delegate.getServerType() : null;
+    }
 
-    @Override public int getAllocatedCpuCores() {return delegate != null ? delegate.getAllocatedCpuCores() : Runtime.getRuntime().availableProcessors();}
-    @Override public Optional<Integer> getWorkerMaxNumThreads() { return delegate != null ? delegate.getWorkerMaxNumThreads() : Optional.empty(); }
-    @Override public Optional<String> getWorkerGroupKey() { return delegate != null ? delegate.getWorkerGroupKey() : Optional.empty(); }
-    @Override public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) { if (delegate != null) delegate.injectWorkerConfigs(maxNumThreads, workerGroupKey); }
-    @Override public String getVersion() { return delegate != null ? delegate.getVersion() : "test"; }
-    @Override public PluginRegistry getPluginRegistry() { return delegate != null ? delegate.getPluginRegistry() : null; }
-    @Override public StorageInterface getStorageInterface() { return delegate != null ? delegate.getStorageInterface() : null; }
-    @Override public Set<String> getEnvironments() { return delegate != null ? delegate.getEnvironments() : Set.of(); }
+    @Override
+    public int getAllocatedCpuCores() {
+        return delegate != null ? delegate.getAllocatedCpuCores() : Runtime.getRuntime().availableProcessors();
+    }
+
+    @Override
+    public Optional<Integer> getWorkerMaxNumThreads() {
+        return delegate != null ? delegate.getWorkerMaxNumThreads() : Optional.empty();
+    }
+
+    @Override
+    public Optional<String> getWorkerGroupKey() {
+        return delegate != null ? delegate.getWorkerGroupKey() : Optional.empty();
+    }
+
+    @Override
+    public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) {
+        if (delegate != null)
+            delegate.injectWorkerConfigs(maxNumThreads, workerGroupKey);
+    }
+
+    @Override
+    public String getVersion() {
+        return delegate != null ? delegate.getVersion() : "test";
+    }
+
+    @Override
+    public PluginRegistry getPluginRegistry() {
+        return delegate != null ? delegate.getPluginRegistry() : null;
+    }
+
+    @Override
+    public StorageInterface getStorageInterface() {
+        return delegate != null ? delegate.getStorageInterface() : null;
+    }
+
+    @Override
+    public Set<String> getEnvironments() {
+        return delegate != null ? delegate.getEnvironments() : Set.of();
+    }
 }

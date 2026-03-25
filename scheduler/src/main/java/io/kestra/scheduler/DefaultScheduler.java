@@ -1,25 +1,5 @@
 package io.kestra.scheduler;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.runners.Scheduler;
-import io.kestra.core.scheduler.SchedulerClock;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.scheduler.vnodes.VNodesAssigner;
-import io.kestra.core.server.AbstractService;
-import io.kestra.core.server.ServiceStateChangeEvent;
-import io.kestra.core.server.ServiceType;
-import io.kestra.core.services.MaintenanceService;
-import io.kestra.core.utils.Disposable;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.micronaut.context.annotation.Primary;
-import io.micronaut.context.event.ApplicationEventPublisher;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,6 +12,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.runners.Scheduler;
+import io.kestra.core.scheduler.SchedulerClock;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.scheduler.vnodes.VNodesAssigner;
+import io.kestra.core.server.AbstractService;
+import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
+import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.utils.Disposable;
+import io.kestra.core.utils.ExecutorsUtils;
+
+import io.micronaut.context.annotation.Primary;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Default {@link Scheduler} implementation.
@@ -65,35 +67,35 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
     // Consumers
     private final List<Disposable> consumerDisposables = new ArrayList<>();
-    
+
     private Disposable maintenanceListener;
 
     private final Set<Integer> currentVNodesAssignment = new HashSet<>();
-    
+
     private Disposable rebalanceDisposable;
 
     @Inject
     public DefaultScheduler(final TriggerSchedulingLoopFactory schedulerEventLoopFactory,
-                            final VNodesAssigner vNodesAssigner,
-                            final ExecutorsUtils executorsUtils,
-                            final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-                            final TriggerEventQueue triggerEventQueue,
-                            @Named("cached") final TriggerStateStore triggerStateStore,
-                            final MetricRegistry metricRegistry,
-                            final MaintenanceService maintenanceService) {
+        final VNodesAssigner vNodesAssigner,
+        final ExecutorsUtils executorsUtils,
+        final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        final TriggerEventQueue triggerEventQueue,
+        @Named("cached") final TriggerStateStore triggerStateStore,
+        final MetricRegistry metricRegistry,
+        final MaintenanceService maintenanceService) {
         this(schedulerEventLoopFactory, vNodesAssigner, executorsUtils, eventPublisher, triggerEventQueue, triggerStateStore, metricRegistry, maintenanceService, SchedulerClock.getClock());
     }
 
     @VisibleForTesting
     public DefaultScheduler(final TriggerSchedulingLoopFactory schedulerEventLoopFactory,
-                            final VNodesAssigner vNodesAssigner,
-                            final ExecutorsUtils executorsUtils,
-                            final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-                            final TriggerEventQueue triggerEventQueue,
-                            final TriggerStateStore triggerStateStore,
-                            final MetricRegistry metricRegistry,
-                            final MaintenanceService maintenanceService,
-                            final Clock clock) {
+        final VNodesAssigner vNodesAssigner,
+        final ExecutorsUtils executorsUtils,
+        final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        final TriggerEventQueue triggerEventQueue,
+        final TriggerStateStore triggerStateStore,
+        final MetricRegistry metricRegistry,
+        final MaintenanceService maintenanceService,
+        final Clock clock) {
         super(ServiceType.SCHEDULER, eventPublisher);
         this.schedulerEventLoopFactory = schedulerEventLoopFactory;
         this.executorsUtils = executorsUtils;
@@ -139,10 +141,10 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
         this.schedulingLoops = new ArrayList<>(maxThreads);
 
-       final AtomicInteger metricAssignedVNodesCount = this.metricRegistry.gauge(
-           MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT,
-           MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION, new AtomicInteger(0)
-       );
+        final AtomicInteger metricAssignedVNodesCount = this.metricRegistry.gauge(
+            MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT,
+            MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION, new AtomicInteger(0)
+        );
 
         // Subscribe to trigger vNodes assignment/revocation
         this.rebalanceDisposable = vNodesAssigner.subscribe(this.getId(), new VNodesAssigner.VNodeAssignmentListener() {
@@ -153,7 +155,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 }
 
                 metricAssignedVNodesCount.set(0);
-                
+
                 // Stop the WorkerTriggerResult/TriggerEvent Queues consumption
                 stopAllConsumers();
 
@@ -181,7 +183,8 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 }
 
                 // Assign scheduling-loops to VNodes
-                schedulingLoops.forEach(schedulingLoop -> {
+                schedulingLoops.forEach(schedulingLoop ->
+                {
                     // Compute vNodes assignments for the current event-loop
                     Set<Integer> assignments = vNodes.stream()
                         .filter(vNodeId -> vNodeId % maxThreads == schedulingLoop.id())
@@ -190,7 +193,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 });
 
                 currentVNodesAssignment.addAll(vNodes);
-                
+
                 // Restart scheduling only if not in maintenance mode
                 if (!maintenanceService.isInMaintenanceMode()) {
                     startScheduling();
@@ -223,12 +226,12 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         }
         log.info("Scheduler started with {} thread(s) [timezone={}]", maxThreads, SchedulerClock.getClock().getZone());
     }
-    
+
     private void startScheduling() {
         if (schedulingLoops.isEmpty()) {
             return; // nothing to start
         }
-        
+
         // (Re)start the Queues consumption
         startTriggerEventConsumers();
 
@@ -243,17 +246,17 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
         List<CompletableFuture<Void>> pausable = schedulingLoops.stream()
             .filter(TriggerSchedulingLoop::isRunning)
-            .map(schedulingLoop ->
-                schedulingLoop.doOnEndLoop(() -> {
-                    // Pause the scheduling loop
-                    schedulingLoop.pause();
+            .map(schedulingLoop -> schedulingLoop.doOnEndLoop(() ->
+            {
+                // Pause the scheduling loop
+                schedulingLoop.pause();
 
-                    // Ensure all the trigger events for this scheduling loop are processed
-                    schedulingLoop.processTriggerEvents();
+                // Ensure all the trigger events for this scheduling loop are processed
+                schedulingLoop.processTriggerEvents();
 
-                    // Revoke all vNodes assignment
-                    schedulingLoop.setAssignments(Set.of());
-                })).toList();
+                // Revoke all vNodes assignment
+                schedulingLoop.setAssignments(Set.of());
+            })).toList();
 
         // Wait for all scheduling loop to be effectively paused
         if (!pausable.isEmpty()) {
@@ -277,7 +280,8 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     private void startTriggerEventConsumers() {
         Map<Integer, TriggerSchedulingLoop> schedulingLoopByVNode = getSchedulingLoopByVNode();
 
-        consumerDisposables.add(triggerEventQueue.subscribe(currentVNodesAssignment, (vNode, events) -> {
+        consumerDisposables.add(triggerEventQueue.subscribe(currentVNodesAssignment, (vNode, events) ->
+        {
             // Get the scheduling-loop for the event vNode.
             TriggerSchedulingLoop schedulingLoop = schedulingLoopByVNode.get(vNode);
             if (schedulingLoop != null) {
@@ -299,9 +303,10 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
      */
     private Map<Integer, TriggerSchedulingLoop> getSchedulingLoopByVNode() {
         return schedulingLoops.stream()
-            .flatMap(schedulingLoop -> schedulingLoop.assignments()
-                .stream()
-                .map(vNodeAssignment -> Map.entry(vNodeAssignment, schedulingLoop))
+            .flatMap(
+                schedulingLoop -> schedulingLoop.assignments()
+                    .stream()
+                    .map(vNodeAssignment -> Map.entry(vNodeAssignment, schedulingLoop))
             )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
@@ -314,7 +319,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (!this.started.compareAndSet(true, false)) {
             return ServiceState.TERMINATED_GRACEFULLY; // Already shut down or not started.
         }
-        
+
         if (rebalanceDisposable != null) {
             rebalanceDisposable.dispose();
         }
@@ -325,7 +330,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (this.maintenanceListener != null) {
             this.maintenanceListener.dispose();
         }
-        
+
         // Stop all scheduling loops
         stopAllSchedulingLoop(true);
 
@@ -352,7 +357,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         }
         return terminated ? ServiceState.TERMINATED_GRACEFULLY : ServiceState.TERMINATED_FORCED;
     }
- 
+
     @VisibleForTesting
     List<TriggerSchedulingLoop> schedulingLoops() {
         return schedulingLoops;

@@ -1,11 +1,11 @@
 package io.kestra.webserver.models.events;
 
+import java.time.Instant;
+import java.util.Optional;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.Instant;
-import java.util.Optional;
 
 @Getter
 public class OssAuthEvent extends Event {

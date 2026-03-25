@@ -7,6 +7,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.MessageHandler;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,8 @@ public class MultipleConditionEventMessageHandler implements MessageHandler<Mult
     @Override
     public void handle(MultipleConditionEvent message) {
         flowTriggerService.computeExecutionsFromFlowTriggerPreconditions(message.execution(), message.flow(), multipleConditionStateStore)
-            .forEach(exec -> {
+            .forEach(exec ->
+            {
                 try {
                     executionQueue.emit(exec);
                 } catch (QueueException e) {

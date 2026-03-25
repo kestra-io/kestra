@@ -8,11 +8,10 @@ import java.util.Optional;
  * A generic bath message.
  *
  * @param records the records of the batch.
- * @param <T>     the record type.
+ * @param <T> the record type.
  */
 public record BatchMessage<T>(
-    List<T> records
-) {
+    List<T> records) {
     public static <T> BatchMessage<T> of(List<T> records) {
         return new BatchMessage<>(records);
     }

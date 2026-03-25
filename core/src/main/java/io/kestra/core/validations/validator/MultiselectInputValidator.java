@@ -3,6 +3,7 @@ package io.kestra.core.validations.validator;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.validations.MultiselectInputValidation;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -18,13 +19,14 @@ public class MultiselectInputValidator implements ConstraintValidator<Multiselec
             return true; // nulls are allowed according to spec
         }
 
-        if (value.getItemType() == Type.ARRAY
-            || value.getItemType() == Type.SECRET
-            || value.getItemType() == Type.MULTISELECT
-            || value.getItemType() == Type.SELECT
+        if (
+            value.getItemType() == Type.ARRAY
+                || value.getItemType() == Type.SECRET
+                || value.getItemType() == Type.MULTISELECT
+                || value.getItemType() == Type.SELECT
         ) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("`itemType` cannot be "+ value.getItemType())
+            context.buildConstraintViolationWithTemplate("`itemType` cannot be " + value.getItemType())
                 .addConstraintViolation();
             return false;
         }

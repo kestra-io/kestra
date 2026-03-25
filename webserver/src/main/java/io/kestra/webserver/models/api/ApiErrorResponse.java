@@ -1,9 +1,9 @@
 package io.kestra.webserver.models.api;
 
+import java.util.Objects;
+
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-
-import java.util.Objects;
 
 public class ApiErrorResponse {
 

@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
+
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
@@ -22,7 +23,7 @@ public class OutputController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{executionId}/{taskRunId}")
-    @Operation(tags = {"Outputs"}, summary = "Get task run outputs")
+    @Operation(tags = { "Outputs" }, summary = "Get task run outputs")
     public TaskOutput getTaskRunOutputs(
         @Parameter(description = "The execution id") @PathVariable String executionId, // executionId is used in EE to check RBAC
         @Parameter(description = "The task run id") @PathVariable String taskRunId) {

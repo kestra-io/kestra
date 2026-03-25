@@ -1,13 +1,15 @@
 package io.kestra.worker.stores;
 
-import io.kestra.core.worker.Controller;
-import io.kestra.core.worker.models.WorkerInfo;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.test.annotation.MockBean;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
+
+import io.kestra.core.worker.Controller;
+import io.kestra.core.worker.models.WorkerInfo;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.annotation.MockBean;
+import jakarta.inject.Inject;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

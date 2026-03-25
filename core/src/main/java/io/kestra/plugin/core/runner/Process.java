@@ -1,17 +1,5 @@
 package io.kestra.plugin.core.runner;
 
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.tasks.runners.*;
-import io.kestra.core.runners.RunContext;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,6 +7,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.tasks.runners.*;
+import io.kestra.core.runners.RunContext;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -138,7 +140,6 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
         Thread stdOut = Thread.startVirtualThread(stdOutRunnable);
         Thread stdErr = Thread.startVirtualThread(stdErrRunnable);
 
-
         try {
             int exitCode = process.waitFor();
 
@@ -176,7 +177,8 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
     }
 
     private void killDescendantsOf(ProcessHandle process, Logger logger) {
-        process.descendants().forEach(processHandle -> {
+        process.descendants().forEach(processHandle ->
+        {
             if (!processHandle.destroy()) {
                 logger.warn("Descendant process {} of {} couldn't be killed", processHandle.pid(), process.pid());
             }

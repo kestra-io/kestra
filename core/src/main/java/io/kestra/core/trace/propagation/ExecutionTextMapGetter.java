@@ -1,10 +1,11 @@
 package io.kestra.core.trace.propagation;
 
-import io.kestra.core.models.executions.Execution;
-import io.opentelemetry.context.propagation.TextMapGetter;
-
-import jakarta.annotation.Nullable;
 import java.util.List;
+
+import io.kestra.core.models.executions.Execution;
+
+import io.opentelemetry.context.propagation.TextMapGetter;
+import jakarta.annotation.Nullable;
 
 public class ExecutionTextMapGetter implements TextMapGetter<Execution> {
     public static final ExecutionTextMapGetter INSTANCE = new ExecutionTextMapGetter();
@@ -21,7 +22,7 @@ public class ExecutionTextMapGetter implements TextMapGetter<Execution> {
             return null;
         }
 
-        return switch(key) {
+        return switch (key) {
             case "traceparent" -> carrier.getTraceParent();
             default -> null;
         };

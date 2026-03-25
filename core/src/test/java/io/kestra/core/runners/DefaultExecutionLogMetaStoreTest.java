@@ -1,15 +1,17 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
-import java.time.Instant;
-import java.util.List;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.*;
 

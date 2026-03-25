@@ -1,5 +1,8 @@
 package io.kestra.queue.jdbc;
 
+import java.util.List;
+import java.util.Set;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
@@ -9,12 +12,8 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.queue.*;
 import io.kestra.queue.jdbc.client.JdbcDispatchSubscriber;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
+
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.Set;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends AbstractVNodeDispatchQueue<T> {
@@ -22,7 +21,8 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
     private final MetricRegistry metricRegistry;
     private final IgnoreExecutionService ignoreExecutionService;
 
-    public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
+    public JdbcVNodeDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = jdbcQueueClient;
@@ -36,21 +36,25 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
             this.queueName(),
             this.vNodeRoutingKey(this.queueService.computeVNode(key)),
             key,
-            new String(message));
+            new String(message)
+        );
     }
 
     @Override
     protected void doEmit(List<QueueRecord> messages) throws QueueException {
         String queueName = this.queueName();
-        jdbcQueueClient.publish(messages
-            .stream()
-            .map(e -> new JdbcQueueClient.PublishedMessage(
-                queueName,
-                this.vNodeRoutingKey(this.queueService.computeVNode(e.key())),
-                e.key(),
-                new String(e.value())
-            ))
-            .toList()
+        jdbcQueueClient.publish(
+            messages
+                .stream()
+                .map(
+                    e -> new JdbcQueueClient.PublishedMessage(
+                        queueName,
+                        this.vNodeRoutingKey(this.queueService.computeVNode(e.key())),
+                        e.key(),
+                        new String(e.value())
+                    )
+                )
+                .toList()
         );
     }
 

@@ -1,17 +1,19 @@
 package io.kestra.webserver.controllers.api;
 
+import java.nio.charset.StandardCharsets;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -49,8 +51,8 @@ class OutputControllerTest {
         String taskRunId = "notFound";
         String tenantId = TenantService.MAIN_TENANT;
 
-        assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(
+        assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executionId/" + taskRunId),
                 TaskOutput.class
             )

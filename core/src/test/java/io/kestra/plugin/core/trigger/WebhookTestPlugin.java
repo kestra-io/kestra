@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
+import java.util.Optional;
+
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
@@ -7,12 +9,11 @@ import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.micronaut.http.HttpStatus;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Mono;
-
-import java.util.Optional;
 
 @SuperBuilder
 @ToString

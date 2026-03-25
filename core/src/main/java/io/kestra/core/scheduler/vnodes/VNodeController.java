@@ -1,20 +1,5 @@
 package io.kestra.core.scheduler.vnodes;
 
-import io.kestra.core.lock.LockService;
-import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
-import io.kestra.core.scheduler.events.SchedulerEvent;
-import io.kestra.core.server.ServerInstance;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceLivenessStore;
-import io.kestra.core.server.ServiceType;
-import io.kestra.core.utils.Disposable;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -27,6 +12,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.lock.LockService;
+import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.events.SchedulerEvent;
+import io.kestra.core.scheduler.queue.SchedulerEventQueue;
+import io.kestra.core.server.ServerInstance;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceLivenessStore;
+import io.kestra.core.server.ServiceType;
+import io.kestra.core.utils.Disposable;
+
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Singleton;
+
 /**
  * Controls scheduler coordination and manages virtual node (VNode) assignments.
  * <p>
@@ -35,8 +37,10 @@ import java.util.stream.Collectors;
  * when the active set changes.
  * </p>
  *
- * <p>Only the elected {@link VNodeController} leader performs rebalance operations, ensuring consistency across
- * the cluster.</p>
+ * <p>
+ * Only the elected {@link VNodeController} leader performs rebalance operations, ensuring consistency across
+ * the cluster.
+ * </p>
  * <p>
  * This class is not thread-safe.
  */
@@ -56,9 +60,9 @@ public class VNodeController implements AutoCloseable {
     private Instant controllerEpoch;
 
     public VNodeController(LockService lockService,
-                           ServiceLivenessStore serviceLivenessStore,
-                           SchedulerEventQueue schedulerEventQueue,
-                           SchedulerConfiguration schedulerConfiguration) {
+        ServiceLivenessStore serviceLivenessStore,
+        SchedulerEventQueue schedulerEventQueue,
+        SchedulerConfiguration schedulerConfiguration) {
         this.serviceLivenessStore = serviceLivenessStore;
         this.schedulerConfiguration = schedulerConfiguration;
         this.schedulerEventQueue = schedulerEventQueue;
@@ -97,7 +101,8 @@ public class VNodeController implements AutoCloseable {
                     final CountDownLatch countDownLatch = new CountDownLatch(activeSchedulerServices.size());
                     final AtomicBoolean isControllerRejected = new AtomicBoolean(false);
                     final Set<String> replySchedulers = new HashSet<>();
-                    disposable = schedulerEventQueue.subscribe(event -> {
+                    disposable = schedulerEventQueue.subscribe(event ->
+                    {
                         if (event instanceof SchedulerEvent.VNodesAssignmentReply reply) {
                             Instant eventControllerEpoch = reply.controllerEpoch().truncatedTo(ChronoUnit.MILLIS);
                             if (reply.controllerId().equals(ServerInstance.INSTANCE_ID) && eventControllerEpoch.equals(controllerEpoch)) {
@@ -118,12 +123,14 @@ public class VNodeController implements AutoCloseable {
                         }
                     });
                     // [1] Broadcast an initial 'SchedulerListRequest' event to all supposed active schedulers
-                    schedulerEventQueue.send(new SchedulerEvent.VNodesAssignmentRequest(
-                        Instant.now(),
-                        ServerInstance.INSTANCE_ID,
-                        controllerEpoch,
-                        activeSchedulerServices
-                    ));
+                    schedulerEventQueue.send(
+                        new SchedulerEvent.VNodesAssignmentRequest(
+                            Instant.now(),
+                            ServerInstance.INSTANCE_ID,
+                            controllerEpoch,
+                            activeSchedulerServices
+                        )
+                    );
 
                     try {
                         // [2] Wait for 'SchedulerListReply' from schedulers
@@ -140,7 +147,10 @@ public class VNodeController implements AutoCloseable {
                         if (timeout) {
                             Set<String> timeoutSchedulers = new HashSet<>(activeSchedulerServices);
                             timeoutSchedulers.removeAll(replySchedulers);
-                            log.warn("VNode rebalancing in progress: {} scheduler(s) did not respond within the timeout period of {}. Affected schedulers: {}", timeoutSchedulers.size(), rebalanceTimeout, timeoutSchedulers);
+                            log.warn(
+                                "VNode rebalancing in progress: {} scheduler(s) did not respond within the timeout period of {}. Affected schedulers: {}", timeoutSchedulers.size(),
+                                rebalanceTimeout, timeoutSchedulers
+                            );
                         }
 
                         // [3] Compute the VNodes assignments
@@ -149,12 +159,14 @@ public class VNodeController implements AutoCloseable {
                             .assignVNodes();
 
                         // [4] Broadcast a 'SchedulerListRelease' event with all VNodes assignments to all effective active schedulers
-                        schedulerEventQueue.send(new SchedulerEvent.VNodesAssignmentRelease(
-                            Instant.now(),
-                            ServerInstance.INSTANCE_ID,
-                            controllerEpoch,
-                            assignments
-                        ));
+                        schedulerEventQueue.send(
+                            new SchedulerEvent.VNodesAssignmentRelease(
+                                Instant.now(),
+                                ServerInstance.INSTANCE_ID,
+                                controllerEpoch,
+                                assignments
+                            )
+                        );
 
                         localSchedulerServices = replySchedulers;
                         log.info("Completed VNodes rebalancing for schedulers: {}", localSchedulerServices);

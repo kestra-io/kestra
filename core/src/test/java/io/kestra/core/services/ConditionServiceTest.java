@@ -1,27 +1,30 @@
 package io.kestra.core.services;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.plugin.core.condition.ExecutionFlow;
-import io.kestra.plugin.core.condition.ExecutionNamespace;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.plugin.core.trigger.Schedule;
-import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.condition.ExecutionFlow;
+import io.kestra.plugin.core.condition.ExecutionNamespace;
+import io.kestra.plugin.core.trigger.Schedule;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,7 +57,6 @@ class ConditionServiceTest {
                 .build()
         );
 
-
         boolean valid = conditionService.valid(flow, conditions, conditionContext);
 
         assertThat(valid).isTrue();
@@ -80,7 +82,8 @@ class ConditionServiceTest {
 
         conditionService.valid(flow, conditions, conditionContext);
 
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.conditionservicetest") && logEntry.getFlowId().equals("exception"));
+        LogEntry matchingLog = TestsUtils
+            .awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.conditionservicetest") && logEntry.getFlowId().equals("exception"));
         assertThat(matchingLog).isNotNull();
     }
 }

@@ -1,10 +1,10 @@
 package io.kestra.core.scheduler.queue;
 
-import io.kestra.core.utils.Disposable;
-import io.kestra.core.scheduler.events.SchedulerEvent;
-
 import java.io.Closeable;
 import java.util.function.Consumer;
+
+import io.kestra.core.scheduler.events.SchedulerEvent;
+import io.kestra.core.utils.Disposable;
 
 /**
  * Represents a queue for publishing and subscribing to {@link SchedulerEvent} instances.
@@ -12,7 +12,7 @@ import java.util.function.Consumer;
  * This interface acts as a facade of an underlying queuing system, to only expose scheduler event related operations.
  */
 public interface SchedulerEventQueue extends Closeable {
-    
+
     /**
      * Publishes a {@link SchedulerEvent} to the queue.
      * <p>
@@ -23,7 +23,7 @@ public interface SchedulerEventQueue extends Closeable {
      * @throws IllegalStateException if the queue has been closed or is not accepting events.
      */
     void send(SchedulerEvent event);
-    
+
     /**
      * Subscribes a consumer to receive {@link SchedulerEvent} instances from the queue.
      * <p>

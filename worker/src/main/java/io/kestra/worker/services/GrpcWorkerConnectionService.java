@@ -1,16 +1,17 @@
 package io.kestra.worker.services;
 
-import io.grpc.Deadline;
+import java.util.concurrent.TimeUnit;
+
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc.ConnectControllerServiceBlockingStub;
 import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+
+import io.grpc.Deadline;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * gRPC-based implementation of {@link WorkerConnectionService}.
@@ -27,7 +28,7 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
 
     @Inject
     public GrpcWorkerConnectionService(ConnectControllerServiceBlockingStub connectControllerService,
-                                       WorkerControllersConfiguration workerControllersConfiguration) {
+        WorkerControllersConfiguration workerControllersConfiguration) {
         this.connectControllerService = connectControllerService;
         this.workerControllersConfiguration = workerControllersConfiguration;
     }

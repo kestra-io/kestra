@@ -1,14 +1,14 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerId;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.triggers.TriggerId;
 
 /**
  * Utility class for server logging
@@ -20,7 +20,8 @@ public final class Logs {
     private static final String TRIGGER_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[trigger: {}] ";
     private static final String TASKRUN_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[task: {}] [execution: {}] [taskrun: {}] ";
 
-    private Logs() {}
+    private Logs() {
+    }
 
     public static void logExecution(FlowId flow, Logger logger, Level level, String message, Object... args) {
         String finalMsg = FLOW_PREFIX_WITH_TENANT + message;

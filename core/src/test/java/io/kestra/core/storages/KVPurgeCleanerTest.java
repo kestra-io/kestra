@@ -1,9 +1,10 @@
 package io.kestra.core.storages;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -14,14 +15,16 @@ import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVPurgeCleaner;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import java.io.IOException;
-import java.time.Instant;
-import java.util.List;
-import org.junit.jupiter.api.Test;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest
 public class KVPurgeCleanerTest {
@@ -39,7 +42,7 @@ public class KVPurgeCleanerTest {
     private FlowRepositoryInterface flowRepository;
 
     @MockBean(FlowRepositoryInterface.class)
-    public FlowRepositoryInterface getFlowRepository(){
+    public FlowRepositoryInterface getFlowRepository() {
         return mock(FlowRepositoryInterface.class);
     }
 

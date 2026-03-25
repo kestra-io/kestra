@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import io.kestra.core.utils.Disposable;
+
 import jakarta.inject.Singleton;
 
 public interface MaintenanceService {
@@ -37,7 +38,7 @@ public interface MaintenanceService {
 
     /**
      * Noop {@link MaintenanceService} implementation.
-     *<p>
+     * <p>
      * Maintenance mode is EE feature.
      */
     @Singleton
@@ -50,7 +51,9 @@ public interface MaintenanceService {
 
         @Override
         public Disposable listen(MaintenanceListener listener) {
-           return Disposable.of(() -> {}); // NOOP
+            return Disposable.of(() ->
+            {
+            }); // NOOP
         }
     }
 }

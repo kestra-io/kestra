@@ -1,9 +1,5 @@
 package io.kestra.core.models.triggers.multipleflows;
 
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.triggers.TimeWindow;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -11,6 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.triggers.TimeWindow;
 
 import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
 
@@ -63,16 +64,17 @@ public interface MultipleConditionStateStore {
 
         return this.get(flow, multipleCondition.getId())
             .filter(m -> m.isValid(ZonedDateTime.now()))
-            .orElseGet(() -> MultipleConditionWindow.builder()
-                .namespace(flow.getNamespace())
-                .flowId(flow.getId())
-                .tenantId(flow.getTenantId())
-                .conditionId(multipleCondition.getId())
-                .start(startAndEnd.getLeft())
-                .end(startAndEnd.getRight())
-                .results(new HashMap<>())
-                .outputs(outputs)
-                .build()
+            .orElseGet(
+                () -> MultipleConditionWindow.builder()
+                    .namespace(flow.getNamespace())
+                    .flowId(flow.getId())
+                    .tenantId(flow.getTenantId())
+                    .conditionId(multipleCondition.getId())
+                    .start(startAndEnd.getLeft())
+                    .end(startAndEnd.getRight())
+                    .results(new HashMap<>())
+                    .outputs(outputs)
+                    .build()
             );
     }
 

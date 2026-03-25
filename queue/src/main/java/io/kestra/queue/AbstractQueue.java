@@ -1,20 +1,23 @@
 package io.kestra.queue;
 
-import com.google.common.base.CaseFormat;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.queues.GenericQueueInterface;
-import io.kestra.core.queues.event.Event;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.micrometer.core.instrument.Counter;
-import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.CaseFormat;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.GenericQueueInterface;
+import io.kestra.core.queues.event.Event;
+import io.kestra.core.utils.ExecutorsUtils;
+
+import io.micrometer.core.instrument.Counter;
+import jakarta.annotation.Nullable;
 
 abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractQueue.class);
@@ -58,7 +61,7 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
     }
 
     protected String vNodeRoutingKey(Integer vNode) {
-       return "vnode_" + vNode;
+        return "vnode_" + vNode;
     }
 
     protected List<String> queuesName(Set<Integer> vNodes) {

@@ -1,15 +1,16 @@
 package io.kestra.core.validations.validator;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
+
 import io.kestra.core.validations.TimezoneId;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
-
-import java.time.DateTimeException;
-import java.time.ZoneId;
 
 @Singleton
 public class TimezoneIdValidator implements ConstraintValidator<TimezoneId, String> {
@@ -27,7 +28,7 @@ public class TimezoneIdValidator implements ConstraintValidator<TimezoneId, Stri
         } catch (DateTimeException e) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("timezone '({validatedValue})' is not a valid time-zone ID")
-                    .addConstraintViolation();
+                .addConstraintViolation();
             return false;
         }
 

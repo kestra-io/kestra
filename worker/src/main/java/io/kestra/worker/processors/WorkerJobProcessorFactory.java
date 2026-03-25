@@ -10,14 +10,15 @@ import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.worker.models.WorkerContext;
-import io.kestra.worker.services.ExecutionKilledManager;
+import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.queues.WorkerQueueRegistry;
+import io.kestra.worker.services.ExecutionKilledManager;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

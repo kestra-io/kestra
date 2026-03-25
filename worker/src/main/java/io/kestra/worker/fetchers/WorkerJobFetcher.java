@@ -1,8 +1,16 @@
 package io.kestra.worker.fetchers;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.google.protobuf.ByteString;
-import io.grpc.stub.ClientCallStreamObserver;
-import io.grpc.stub.ClientResponseObserver;
+
 import io.kestra.controller.grpc.WorkerConnectionInfo;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.controller.grpc.WorkerJobPayload;
@@ -13,38 +21,31 @@ import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.server.ClusterEvent;
+import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.worker.models.WorkerContext;
-import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
+import io.kestra.worker.services.ExecutionKilledManager;
+
+import io.grpc.stub.ClientCallStreamObserver;
+import io.grpc.stub.ClientResponseObserver;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 
 /**
  * Component responsible for fetching worker jobs using the pull/ack bidirectional streaming pattern.
  * <p>
  * This client:
  * <ul>
- *   <li>Opens a bidirectional stream to the controller on startup</li>
- *   <li>Sends initial connection info (workerId, workerGroup, maxConcurrency) + initial permits</li>
- *   <li>Receives jobs from the controller and puts them in the local queue</li>
- *   <li>Sends ACKs for received jobs along with new permit requests</li>
+ * <li>Opens a bidirectional stream to the controller on startup</li>
+ * <li>Sends initial connection info (workerId, workerGroup, maxConcurrency) + initial permits</li>
+ * <li>Receives jobs from the controller and puts them in the local queue</li>
+ * <li>Sends ACKs for received jobs along with new permit requests</li>
  * </ul>
  * <p>
  * The controller only sends jobs when the worker has permits (capacity), providing flow control
@@ -56,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Singleton
 @Slf4j
 public class WorkerJobFetcher extends WorkerLoop {
-    
+
     /**
      * Interval for checking capacity changes and sending permit updates.
      */
@@ -117,15 +118,15 @@ public class WorkerJobFetcher extends WorkerLoop {
      * Creates a new {@code WorkerJobFetcher} instance.
      *
      * @param workerControllerServiceStub the gRPC worker controller service stub.
-     * @param workerQueueRegistry         the worker queue registry.
-     * @param executionKilledManager      the execution killed manager.
-     * @param clusterEventQueue           the local cluster event broadcast queue for re-emitting events received from the controller.
+     * @param workerQueueRegistry the worker queue registry.
+     * @param executionKilledManager the execution killed manager.
+     * @param clusterEventQueue the local cluster event broadcast queue for re-emitting events received from the controller.
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
-                            final WorkerQueueRegistry workerQueueRegistry,
-                            final ExecutionKilledManager executionKilledManager,
-                            @Nullable final BroadcastQueueInterface<ClusterEvent> clusterEventQueue) {
+        final WorkerQueueRegistry workerQueueRegistry,
+        final ExecutionKilledManager executionKilledManager,
+        @Nullable final BroadcastQueueInterface<ClusterEvent> clusterEventQueue) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
@@ -180,41 +181,40 @@ public class WorkerJobFetcher extends WorkerLoop {
         lastSentPermits.set(-1);
         streamCompleted = new CountDownLatch(1);
 
-        ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver =
-            new ClientResponseObserver<>() {
+        ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver = new ClientResponseObserver<>() {
 
-                @Override
-                public void beforeStart(ClientCallStreamObserver<WorkerJobRequest> requestStream) {
-                    requestObserverRef.set(requestStream);
-                }
+            @Override
+            public void beforeStart(ClientCallStreamObserver<WorkerJobRequest> requestStream) {
+                requestObserverRef.set(requestStream);
+            }
 
-                @Override
-                public void onNext(WorkerJobResponse response) {
-                    handleJobResponse(response);
-                }
+            @Override
+            public void onNext(WorkerJobResponse response) {
+                handleJobResponse(response);
+            }
 
-                @Override
-                public void onError(Throwable t) {
-                    if (!isRunning()) {
-                        log.debug("Stream closed during shutdown: {}", t.getMessage());
+            @Override
+            public void onError(Throwable t) {
+                if (!isRunning()) {
+                    log.debug("Stream closed during shutdown: {}", t.getMessage());
                     // log with WARN level if stream fails during normal operation because it will be automatically retried and can indicate transient issues
-                    } else if (t.getCause() != null) {
-                        log.warn("Stream error: {}. Cause: {}", t.getMessage(), t.getCause().getMessage());
-                    } else {
-                        log.warn("Stream error: {}", t.getMessage());
-                    }
-                    requestObserverRef.set(null);
-                    scheduleReconnectBackoff();
-                    streamCompleted.countDown();
+                } else if (t.getCause() != null) {
+                    log.warn("Stream error: {}. Cause: {}", t.getMessage(), t.getCause().getMessage());
+                } else {
+                    log.warn("Stream error: {}", t.getMessage());
                 }
+                requestObserverRef.set(null);
+                scheduleReconnectBackoff();
+                streamCompleted.countDown();
+            }
 
-                @Override
-                public void onCompleted() {
-                    log.trace("Stream completed by server");
-                    requestObserverRef.set(null);
-                    streamCompleted.countDown();
-                }
-            };
+            @Override
+            public void onCompleted() {
+                log.trace("Stream completed by server");
+                requestObserverRef.set(null);
+                streamCompleted.countDown();
+            }
+        };
 
         // Start the bidirectional stream
         workerControllerServiceStub.streamWorkerJobs(responseObserver);
@@ -243,22 +243,26 @@ public class WorkerJobFetcher extends WorkerLoop {
         WorkerJobRequest.Builder requestBuilder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
             .setPermits(initialPermits)
-            .setConnectionInfo(WorkerConnectionInfo.newBuilder()
-                .setWorkerId(workerContext.workerId())
-                .setWorkerGroup(workerGroup == null ? "" : workerGroup)
-                .setMaxConcurrency(workerContext.workerThreads())
-                .build());
+            .setConnectionInfo(
+                WorkerConnectionInfo.newBuilder()
+                    .setWorkerId(workerContext.workerId())
+                    .setWorkerGroup(workerGroup == null ? "" : workerGroup)
+                    .setMaxConcurrency(workerContext.workerThreads())
+                    .build()
+            );
 
         doSend(requestStream, requestBuilder.build());
         lastSentPermits.set(initialPermits);
         // Connection established - reset backoff so the next disconnection starts from the minimum delay
         currentReconnectDelayMs.set(MIN_RECONNECT_DELAY_MS);
         reconnectNotBefore.set(0L);
-        log.info("Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
+        log.info(
+            "Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
             WorkerGroup.forLog(workerGroup),
             workerContext.workerThreads(),
-            initialPermits);
+            initialPermits
+        );
     }
 
     /**

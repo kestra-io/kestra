@@ -1,20 +1,21 @@
 package io.kestra.core.models.collectors;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
 @Getter
@@ -79,14 +80,16 @@ public class FlowUsage {
         return allFlows
             .stream()
             .flatMap(Flow::allTasks)
-            .filter(t -> {
+            .filter(t ->
+            {
                 try {
                     return t.getClass().getMethod("getTaskRunner") != null;
                 } catch (NoSuchMethodException e) {
                     return false;
                 }
             })
-            .map(t -> {
+            .map(t ->
+            {
                 try {
                     TaskRunner<?> taskRunner = (TaskRunner<?>) t.getClass().getMethod("getTaskRunner").invoke(t);
                     return taskRunner != null ? taskRunner.getType() : null;

@@ -1,6 +1,22 @@
 package io.kestra.executor;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
@@ -39,29 +55,16 @@ import io.kestra.worker.WorkerJobExecutor;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.WorkerIOSender;
 import io.kestra.worker.services.WorkerConnectionService;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@KestraTest(environments =  {"test", "liveness"}, startRunner = true, startWorker = false, startScheduler = false)
+@KestraTest(environments = { "test", "liveness" }, startRunner = true, startWorker = false, startScheduler = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
 public abstract class AbstractServiceLivenessCoordinatorTest {
 
@@ -95,7 +98,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {WORKER_GROUP_KEY, "<null>"})
+    @ValueSource(strings = { WORKER_GROUP_KEY, "<null>" })
     public void shouldResubmitTaskWhenWorkerIsStopped(String workerGroupKey) throws Exception {
         workerGroupKey = "<null>".equals(workerGroupKey) ? null : workerGroupKey;
         CountDownLatch runningLatch = new CountDownLatch(1);
@@ -107,7 +110,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         final WorkerTask workerTask = workerTask(Duration.ofSeconds(5), workerGroupKey);
         final AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
-        workerTaskResultQueue.addListener(item -> {
+        workerTaskResultQueue.addListener(item ->
+        {
             if (item.uid().equals(workerTask.uid())) {
                 if (item.getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
                     resubmitLatch.countDown();
@@ -170,7 +174,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         ignoreExecutionService.setIgnoredExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
 
         var taskResults = new ArrayList<WorkerTaskResult>();
-        workerTaskResultQueue.addListener(item -> {
+        workerTaskResultQueue.addListener(item ->
+        {
             if (!item.uid().equals(workerTask.uid())) {
                 return;
             }
@@ -200,7 +205,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {WORKER_GROUP_KEY, "<null>"})
+    @ValueSource(strings = { WORKER_GROUP_KEY, "<null>" })
     public void shouldResubmitTriggerWhenWorkerIsStopped(String workerGroupKey) throws Exception {
         workerGroupKey = "<null>".equals(workerGroupKey) ? null : workerGroupKey;
         // Given - create first worker.
@@ -211,7 +216,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         CountDownLatch evaluatedLatch = new CountDownLatch(1);
         CountDownLatch receivedLatch = new CountDownLatch(1);
-        triggerEventQueue.addListener(event -> {
+        triggerEventQueue.addListener(event ->
+        {
             if (!event.uid().equals(workerTrigger.uid())) {
                 return;
             }
@@ -226,7 +232,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
         // WHEN - stop first worker.
-        worker.stopNow();  // simulate a non-graceful stop (hard shutdown, crash, etc.).
+        worker.stopNow(); // simulate a non-graceful stop (hard shutdown, crash, etc.).
 
         // WHEN - create second worker (this will revoke previously one).
         WorkerAgent newWorker = (WorkerAgent) newWorker();

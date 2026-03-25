@@ -23,5 +23,5 @@ public interface WorkerIOSender extends Runnable {
      * Stops the worker I/O sender.
      */
     void stop();
-    
+
 }

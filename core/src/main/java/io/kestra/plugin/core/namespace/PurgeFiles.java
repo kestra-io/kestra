@@ -1,16 +1,19 @@
 package io.kestra.plugin.core.namespace;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.plugin.core.purge.PurgeTask;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Builder;
@@ -18,9 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @SuperBuilder(toBuilder = true)
@@ -118,7 +118,6 @@ public class PurgeFiles extends Task implements PurgeTask<NamespaceFile>, Runnab
     public String filterTargetExtractor(NamespaceFile item) {
         return item.path();
     }
-
 
     @Builder
     @Getter

@@ -1,13 +1,13 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.contexts.KestraContext;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.*;
 
+import io.kestra.core.contexts.KestraContext;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -111,8 +111,8 @@ public class ExecutorsUtils {
     /**
      * Gracefully shutdown the given {@link ExecutorService} and wait for its termination within the specified timeout.
      *
-     * @param name             the name of the executor service, used for logging purposes.
-     * @param executorService  the executor service to shutdown.
+     * @param name the name of the executor service, used for logging purposes.
+     * @param executorService the executor service to shutdown.
      * @param awaitTermination the duration to wait for the executor service to terminate before forcing shutdown.
      */
     public static void closeExecutorService(String name, ExecutorService executorService, Duration awaitTermination) {

@@ -1,10 +1,11 @@
 package io.kestra.core.models.flows.input;
 
-import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
 import java.net.URI;
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import jakarta.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;

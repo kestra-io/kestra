@@ -1,5 +1,11 @@
 package io.kestra.jdbc.runner;
 
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -10,12 +16,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +35,8 @@ abstract public class JdbcQueueTest {
     void noGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        flowQueue.addListener(throwConsumer(flow -> {
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }
@@ -52,7 +55,8 @@ abstract public class JdbcQueueTest {
     void withGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        flowQueue.addListener(throwConsumer(flow -> {
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }
@@ -70,7 +74,8 @@ abstract public class JdbcQueueTest {
     @Test
     void withType() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        flowQueue.addListener(throwConsumer(flow -> {
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 // second one
                 flowQueue.emit(builder("io.kestra.f2"));
@@ -91,7 +96,8 @@ abstract public class JdbcQueueTest {
     @Test
     void withGroupAndType() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        flowQueue.addListener(throwConsumer(flow -> {
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }

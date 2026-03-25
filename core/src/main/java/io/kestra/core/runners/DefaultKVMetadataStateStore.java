@@ -1,17 +1,18 @@
 package io.kestra.core.runners;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Default implementation of {@link KVMetadataStateStore} that delegates
@@ -40,13 +41,14 @@ public class DefaultKVMetadataStateStore implements KVMetadataStateStore {
     /** {@inheritDoc} */
     @Override
     public List<PersistedKvMetadata> find(String tenantId, @Nullable String namespace) {
-        List<QueryFilter> filters = namespace == null ? List.of() : List.of(
-            QueryFilter.builder()
-                .field(QueryFilter.Field.NAMESPACE)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(namespace)
-                .build()
-        );
+        List<QueryFilter> filters = namespace == null ? List.of()
+            : List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(namespace)
+                    .build()
+            );
         return kvMetadataRepository.find(
             Pageable.UNPAGED,
             tenantId,
@@ -62,11 +64,13 @@ public class DefaultKVMetadataStateStore implements KVMetadataStateStore {
         return !kvMetadataRepository.find(
             Pageable.from(1, 1),
             tenantId,
-            List.of(QueryFilter.builder()
-                .field(QueryFilter.Field.NAMESPACE)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(namespace)
-                .build()),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(namespace)
+                    .build()
+            ),
             false,
             false
         ).isEmpty();

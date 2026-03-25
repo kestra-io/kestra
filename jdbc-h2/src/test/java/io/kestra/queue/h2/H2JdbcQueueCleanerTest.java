@@ -1,6 +1,7 @@
 package io.kestra.queue.h2;
 
 import io.kestra.jdbc.queue.AbstractJdbcQueueCleanerTest;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 

@@ -1,13 +1,14 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @SuperBuilder

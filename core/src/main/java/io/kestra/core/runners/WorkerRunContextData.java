@@ -1,11 +1,11 @@
 package io.kestra.core.runners;
 
-import io.micronaut.core.annotation.Nullable;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * Common wire-format fields for {@link RunContext} reconstruction on the worker side.
@@ -22,7 +22,8 @@ public sealed interface WorkerRunContextData permits WorkerTaskData, WorkerTrigg
     List<String> secretInputs();
 
     /** OpenTelemetry trace parent for distributed tracing. */
-    @Nullable String traceParent();
+    @Nullable
+    String traceParent();
 
     /**
      * Keys that every worker-side reconstruction strips — environment, globals,
@@ -38,7 +39,7 @@ public sealed interface WorkerRunContextData permits WorkerTaskData, WorkerTrigg
     /**
      * Filters a {@link RunContext}'s variables by removing the given reconstructed keys.
      *
-     * @param runContext    the RunContext whose variables to filter
+     * @param runContext the RunContext whose variables to filter
      * @param keysToRemove keys to strip from the variables map
      * @return a mutable copy of the variables with the specified keys removed
      */

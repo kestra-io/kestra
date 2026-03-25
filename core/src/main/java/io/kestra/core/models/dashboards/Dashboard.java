@@ -1,10 +1,16 @@
 package io.kestra.core.models.dashboards;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.kestra.core.models.SoftDeletable;
+
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.utils.IdUtils;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -15,10 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Objects;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -78,10 +80,14 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Dashboard dashboard = (Dashboard) o;
-        return deleted == dashboard.deleted && Objects.equals(tenantId, dashboard.tenantId) && Objects.equals(id, dashboard.id) && Objects.equals(title, dashboard.title) && Objects.equals(description, dashboard.description) && Objects.equals(timeWindow, dashboard.timeWindow) && Objects.equals(charts, dashboard.charts) && Objects.equals(sourceCode, dashboard.sourceCode);
+        return deleted == dashboard.deleted && Objects.equals(tenantId, dashboard.tenantId) && Objects.equals(id, dashboard.id) && Objects.equals(title, dashboard.title)
+            && Objects.equals(description, dashboard.description) && Objects.equals(timeWindow, dashboard.timeWindow) && Objects.equals(charts, dashboard.charts)
+            && Objects.equals(sourceCode, dashboard.sourceCode);
     }
 
     @Override

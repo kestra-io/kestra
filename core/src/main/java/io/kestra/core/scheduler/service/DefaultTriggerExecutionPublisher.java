@@ -1,16 +1,18 @@
 package io.kestra.core.scheduler.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContextLoggerFactory;
+
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublisher {
@@ -23,8 +25,8 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
 
     @Inject
     public DefaultTriggerExecutionPublisher(ApplicationEventPublisher<CrudEvent<Execution>> executionEventPublisher,
-                                            DispatchQueueInterface<Execution> executionQueue,
-                                            RunContextLoggerFactory runContextLoggerFactory) {
+        DispatchQueueInterface<Execution> executionQueue,
+        RunContextLoggerFactory runContextLoggerFactory) {
         this.executionEventPublisher = executionEventPublisher;
         this.executionQueue = executionQueue;
         this.runContextLoggerFactory = runContextLoggerFactory;

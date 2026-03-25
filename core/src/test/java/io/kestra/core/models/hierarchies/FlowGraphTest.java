@@ -1,27 +1,5 @@
 package io.kestra.core.models.hierarchies;
 
-import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.TestRunnerUtils;
-import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.serializers.YamlParser;
-import io.kestra.core.services.GraphService;
-import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.flow.Switch;
-import io.kestra.plugin.core.trigger.Schedule;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -31,6 +9,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.GraphService;
+import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.flow.Switch;
+import io.kestra.plugin.core.trigger.Schedule;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -224,7 +226,6 @@ class FlowGraphTest {
         assertThat(flowGraph.getClusters().size()).isEqualTo(1);
     }
 
-
     @Test
     void dag() throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/dag.yaml");
@@ -243,8 +244,11 @@ class FlowGraphTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/task-flow.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant1")
+    @LoadFlows(
+        value = { "flows/valids/task-flow.yaml",
+            "flows/valids/switch.yaml" },
+        tenantId = "tenant1"
+    )
     void subflow() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/task-flow.yaml", "tenant1");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
@@ -275,18 +279,25 @@ class FlowGraphTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/task-flow-dynamic.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant2")
+    @LoadFlows(
+        value = { "flows/valids/task-flow-dynamic.yaml",
+            "flows/valids/switch.yaml" },
+        tenantId = "tenant2"
+    )
     void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml", "tenant2").toBuilder().revision(1).build();
 
-        IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));
-        assertThat(illegalArgumentException.getMessage()).isEqualTo("Can't expand subflow task 'launch' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");
+        IllegalArgumentException illegalArgumentException = Assertions
+            .assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));
+        assertThat(illegalArgumentException.getMessage())
+            .isEqualTo("Can't expand subflow task 'launch' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");
 
-        Execution execution = runnerUtils.runOne("tenant2", "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
-            "namespace", f.getNamespace(),
-            "flowId", "switch"
-        ));
+        Execution execution = runnerUtils.runOne(
+            "tenant2", "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
+                "namespace", f.getNamespace(),
+                "flowId", "switch"
+            )
+        );
         FlowGraph flowGraph = graphService.flowGraph(flow, Collections.singletonList("root.launch"), execution);
 
         assertThat(flowGraph.getNodes().size()).isEqualTo(20);
@@ -421,16 +432,17 @@ class FlowGraphTest {
     }
 
     private static FlowGraph.Cluster cluster(FlowGraph flowGraph, String clusterIdRegex, String value) {
-        if(clusterIdRegex.equals("root")) {
+        if (clusterIdRegex.equals("root")) {
             String[] startEnd = new String[2];
-            flowGraph.getNodes().forEach(n -> {
-                if(!n.getUid().matches("root\\.[^.]*")) {
+            flowGraph.getNodes().forEach(n ->
+            {
+                if (!n.getUid().matches("root\\.[^.]*")) {
                     return;
                 }
 
-                if(n.getType().endsWith("GraphClusterRoot")) {
+                if (n.getType().endsWith("GraphClusterRoot")) {
                     startEnd[0] = n.getUid();
-                } else if(n.getType().endsWith("GraphClusterEnd")) {
+                } else if (n.getType().endsWith("GraphClusterEnd")) {
                     startEnd[1] = n.getUid();
                 }
             });
@@ -439,8 +451,10 @@ class FlowGraphTest {
         return flowGraph
             .getClusters()
             .stream()
-            .filter(e -> e.getCluster().uid.matches(clusterIdRegex)
-                && (value == null || e.getNodes().stream().anyMatch(n -> n.matches(e.getCluster().uid + "_" + value))))
+            .filter(
+                e -> e.getCluster().uid.matches(clusterIdRegex)
+                    && (value == null || e.getNodes().stream().anyMatch(n -> n.matches(e.getCluster().uid + "_" + value)))
+            )
             .findFirst()
             .orElseThrow();
     }

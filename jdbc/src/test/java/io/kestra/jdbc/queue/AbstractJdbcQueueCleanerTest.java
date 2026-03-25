@@ -1,11 +1,13 @@
 package io.kestra.jdbc.queue;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.queue.AbstractBroadcastQueueTest;
 import io.kestra.queue.jdbc.client.JdbcQueueCleaner;
+
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

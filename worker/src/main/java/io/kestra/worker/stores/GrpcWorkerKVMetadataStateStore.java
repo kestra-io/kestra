@@ -1,6 +1,11 @@
 package io.kestra.worker.stores;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.KVMetadataRequest;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
@@ -13,16 +18,13 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.runners.DefaultKVMetadataStateStore;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.worker.models.WorkerInfo;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Worker-side implementation of {@link KVMetadataStateStore} that communicates
@@ -39,14 +41,15 @@ import java.util.Optional;
 public class GrpcWorkerKVMetadataStateStore implements KVMetadataStateStore {
 
     private static final MessageFormat MESSAGE_FORMAT = MessageFormats.JSON;
-    private static final TypeReference<List<PersistedKvMetadata>> LIST_TYPE = new TypeReference<>() {};
+    private static final TypeReference<List<PersistedKvMetadata>> LIST_TYPE = new TypeReference<>() {
+    };
 
     private final KVMetadataServiceGrpc.KVMetadataServiceBlockingStub kvMetadataStub;
     private final WorkerInfo workerInfo;
 
     @Inject
     public GrpcWorkerKVMetadataStateStore(final KVMetadataServiceGrpc.KVMetadataServiceBlockingStub kvMetadataStub,
-                                          final WorkerInfo workerInfo) {
+        final WorkerInfo workerInfo) {
         this.kvMetadataStub = kvMetadataStub;
         this.workerInfo = workerInfo;
     }

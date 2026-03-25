@@ -1,5 +1,11 @@
 package io.kestra.queue;
 
+import java.time.Duration;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -7,12 +13,9 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.QueueCache;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
-import java.time.Duration;
-import java.util.List;import static org.assertj.core.api.Assertions.assertThat;
+import jakarta.inject.Inject;
+
 import static org.awaitility.Awaitility.await;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

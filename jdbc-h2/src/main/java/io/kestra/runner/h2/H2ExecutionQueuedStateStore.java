@@ -4,6 +4,7 @@ import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.jdbc.runner.AbstractJdbcExecutionQueuedStateStore;
 import io.kestra.repository.h2.H2Repository;
 import io.kestra.repository.h2.H2RepositoryEnabled;
+
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 

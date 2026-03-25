@@ -1,16 +1,18 @@
 package io.kestra.worker.stores;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc.NamespaceFileMetadataServiceBlockingStub;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,8 +37,10 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/scripts/main.py").size(42L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/scripts/main.py").size(42L).build()
+        );
 
         // When
         Optional<NamespaceFileMetadata> result = grpcWorkerNsStore.findByPath(tenantId, namespace, "/scripts/main.py", null, false);
@@ -69,10 +73,14 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
         String path = "/versioned.py";
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path(path).size(10L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path(path).size(20L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path(path).size(10L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path(path).size(20L).build()
+        );
 
         // When
         Optional<NamespaceFileMetadata> result = grpcWorkerNsStore.findByPath(tenantId, namespace, path, 1, false);
@@ -88,8 +96,10 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
         String path = "/deleted.py";
-        NamespaceFileMetadata saved = nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path(path).size(10L).build());
+        NamespaceFileMetadata saved = nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path(path).size(10L).build()
+        );
         nsStateStore.delete(saved);
 
         // When
@@ -107,16 +117,26 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/parent/").size(0L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/parent/a.py").size(10L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/parent/b.py").size(20L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/parent/sub/").size(0L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/parent/sub/deep.py").size(30L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/parent/").size(0L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/parent/a.py").size(10L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/parent/b.py").size(20L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/parent/sub/").size(0L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/parent/sub/deep.py").size(30L).build()
+        );
 
         // When
         List<NamespaceFileMetadata> result = grpcWorkerNsStore.findChildren(tenantId, namespace, "/parent/", false);
@@ -131,14 +151,22 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/dir/").size(0L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/dir/a.py").size(10L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/dir/sub/").size(0L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/dir/sub/b.py").size(20L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/dir/").size(0L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/dir/a.py").size(10L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/dir/sub/").size(0L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/dir/sub/b.py").size(20L).build()
+        );
 
         // When
         List<NamespaceFileMetadata> result = grpcWorkerNsStore.findChildren(tenantId, namespace, "/dir/", true);
@@ -153,10 +181,14 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/a.py").size(10L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/b.py").size(20L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/a.py").size(10L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/b.py").size(20L).build()
+        );
 
         // When
         List<NamespaceFileMetadata> result = grpcWorkerNsStore.findAll(tenantId, namespace, null);
@@ -171,10 +203,14 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/scripts/deploy.sh").size(10L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/config/app.yml").size(20L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/scripts/deploy.sh").size(10L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/config/app.yml").size(20L).build()
+        );
 
         // When
         List<NamespaceFileMetadata> result = grpcWorkerNsStore.findAll(tenantId, namespace, "deploy");
@@ -189,16 +225,24 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/one.py").size(10L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/two.py").size(20L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/three.py").size(30L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/one.py").size(10L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/two.py").size(20L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/three.py").size(30L).build()
+        );
 
         // When
-        List<NamespaceFileMetadata> result = grpcWorkerNsStore.findByPaths(tenantId, namespace,
-            List.of("/one.py", "/three.py"), false);
+        List<NamespaceFileMetadata> result = grpcWorkerNsStore.findByPaths(
+            tenantId, namespace,
+            List.of("/one.py", "/three.py"), false
+        );
 
         // Then
         assertThat(result).extracting(NamespaceFileMetadata::getPath)
@@ -213,10 +257,14 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
         String path = "/multi-version.py";
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path(path).size(10L).build());
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path(path).size(20L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path(path).size(10L).build()
+        );
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path(path).size(20L).build()
+        );
 
         // When
         List<NamespaceFileMetadata> result = grpcWorkerNsStore.findAllVersionsByPaths(tenantId, namespace, List.of(path));
@@ -231,8 +279,10 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        nsStateStore.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).path("/exists.py").size(10L).build());
+        nsStateStore.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).path("/exists.py").size(10L).build()
+        );
 
         // When / Then
         assertThat(grpcWorkerNsStore.existsByNamespace(tenantId, namespace)).isTrue();

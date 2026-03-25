@@ -1,6 +1,9 @@
 package io.kestra.worker.stores;
 
+import java.util.List;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import io.kestra.controller.grpc.ErrorLogsRequest;
 import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.controller.grpc.OpaqueData;
@@ -11,12 +14,11 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.runners.DefaultExecutionLogMetaStore;
 import io.kestra.core.runners.ExecutionLogMetaStore;
 import io.kestra.core.worker.models.WorkerInfo;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 /**
  * Worker-side implementation of {@link ExecutionLogMetaStore} that retrieves
@@ -30,7 +32,8 @@ import java.util.List;
 @Requires(property = "kestra.server-type", value = "WORKER")
 @Replaces(DefaultExecutionLogMetaStore.class)
 public class GrpcWorkerExecutionLogMetaStore implements ExecutionLogMetaStore {
-    private static final TypeReference<BatchMessage<LogEntry>> LIST_TYPE = new TypeReference<>() {};
+    private static final TypeReference<BatchMessage<LogEntry>> LIST_TYPE = new TypeReference<>() {
+    };
 
     private final ExecutionLogsServiceGrpc.ExecutionLogsServiceBlockingStub executionLogsServiceStub;
     private final WorkerInfo workerInfo;

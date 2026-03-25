@@ -1,16 +1,17 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskOutput;
-import io.kestra.core.repositories.TaskOutputRepositoryInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.repositories.TaskOutputRepositoryInterface;
+import io.kestra.jdbc.AbstractJdbcRepository;
 
 public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.AbstractJdbcRepository implements TaskOutputRepositoryInterface {
     public static final Field<String> TASK_RUN_ID_FIELD = field("task_run_id", String.class);
@@ -41,7 +42,8 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
         var condition = TASK_RUN_ID_FIELD.eq(taskRunId);
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select()
@@ -59,7 +61,8 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
         var condition = EXECUTION_ID_FIELD.eq(execution.getId());
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select()
@@ -75,7 +78,8 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
     public int purgeByExecutionIds(List<String> executionIds) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var delete = DSL
                     .using(configuration)
                     .delete(this.jdbcRepository.getTable())

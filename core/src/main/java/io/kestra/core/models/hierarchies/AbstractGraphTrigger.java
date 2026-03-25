@@ -2,6 +2,7 @@ package io.kestra.core.models.hierarchies;
 
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.scheduler.model.TriggerState;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

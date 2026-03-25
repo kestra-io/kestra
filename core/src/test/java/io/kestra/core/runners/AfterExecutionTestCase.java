@@ -1,13 +1,14 @@
 package io.kestra.core.runners;
 
+import java.util.Map;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.services.TaskOutputService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.Map;
 
 import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
@@ -32,7 +33,7 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getCurrent()).isEqualTo(SUCCESS);
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(taskRun.getState().getEndDate().orElseThrow());
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
-        Map<String, Object> outputs = (Map<String, Object> ) taskOutputService.getOutputs(afterExecution).get("values");
+        Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(afterExecution).get("values");
         assertThat(outputs.get("state")).isEqualTo("SUCCESS");
         // afterExecution should be able to access execution outputs
         assertThat(outputs.get("output")).isEqualTo("this is a task output used as a final flow output");
@@ -54,7 +55,7 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getCurrent()).isEqualTo(SUCCESS);
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(finallyTaskRun.getState().getEndDate().orElseThrow());
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
-        Map<String, Object> outputs = (Map<String, Object> ) taskOutputService.getOutputs(afterExecution).get("values");
+        Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(afterExecution).get("values");
         assertThat(outputs.get("state")).isEqualTo("SUCCESS");
     }
 
@@ -74,7 +75,7 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getCurrent()).isEqualTo(SUCCESS);
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(taskRun.getState().getEndDate().orElseThrow());
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
-        Map<String, Object> outputs = (Map<String, Object> ) taskOutputService.getOutputs(afterExecution).get("values");
+        Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(afterExecution).get("values");
         assertThat(outputs.get("state")).isEqualTo("FAILED");
     }
 }

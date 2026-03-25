@@ -1,5 +1,14 @@
 package io.kestra.scheduler;
 
+import java.time.Clock;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -11,6 +20,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -28,24 +38,16 @@ import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
+import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.Logs;
-import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.scheduler.internals.NextEvaluationDate;
-import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
-import io.kestra.core.scheduler.store.TriggerStateStore;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
-
-import java.time.Clock;
-import java.time.ZonedDateTime;
-import java.util.Optional;
 
 /**
  * Service responsible for handling {@link TriggerEvent events} and
@@ -65,11 +67,11 @@ public class TriggerEventHandler {
 
     @Inject
     public TriggerEventHandler(@Named("cached") TriggerStateStore triggerStateStore,
-                               FlowMetaStore flowStateStore,
-                               TriggerExecutionPublisher triggerExecutionPublisher,
-                               RunContextFactory runContextFactory,
-                               ConditionService conditionService,
-                               BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
+        FlowMetaStore flowStateStore,
+        TriggerExecutionPublisher triggerExecutionPublisher,
+        RunContextFactory runContextFactory,
+        ConditionService conditionService,
+        BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
@@ -111,16 +113,18 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onCreateBackfill(Clock clock, CreateBackfillTrigger event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             state = state
                 .lastEventId(clock, event.eventId())
-                .backfill(clock, Backfill
-                    .builder()
-                    .start(event.backfill().start())
-                    .end(event.backfill().end())
-                    .inputs(event.backfill().inputs())
-                    .labels(event.backfill().labels())
-                    .build()
+                .backfill(
+                    clock, Backfill
+                        .builder()
+                        .start(event.backfill().start())
+                        .end(event.backfill().end())
+                        .inputs(event.backfill().inputs())
+                        .labels(event.backfill().labels())
+                        .build()
                 );
 
             Pair<Flow, AbstractTrigger> pair = findTrigger(event, null);
@@ -149,7 +153,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onDeleteBackfillTrigger(Clock clock, DeleteBackfillTrigger event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             if (state.getBackfill() != null) {
                 ZonedDateTime nextEvaluationDate = state.getBackfill().getPreviousNextExecutionDate();
                 state = state
@@ -169,7 +174,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onSetPauseBackfillTrigger(Clock clock, SetPauseBackfillTrigger event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             if (state.getBackfill() != null) {
                 state = state
                     .lastEventId(clock, event.eventId())
@@ -185,7 +191,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onSetTriggerDisable(Clock clock, SetDisableTrigger event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             boolean wasDisabled = state.isDisabled();
             state = state
                 .lastEventId(clock, event.eventId())
@@ -208,11 +215,13 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
-        findTriggerState(event).ifPresent(state -> {
-            triggerStateStore.save(state
-                .lastEventId(clock, event.eventId())
-                .locked(clock, false)
-                .updateForExecutionState(clock, event.executionState())
+        findTriggerState(event).ifPresent(state ->
+        {
+            triggerStateStore.save(
+                state
+                    .lastEventId(clock, event.eventId())
+                    .locked(clock, false)
+                    .updateForExecutionState(clock, event.executionState())
             );
         });
     }
@@ -223,7 +232,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerEvaluated(Clock clock, TriggerEvaluated event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
             if (data.getLeft() == null) {
                 return;
@@ -254,7 +264,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerReceived(Clock clock, TriggerReceived event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             state = state
                 .lastEventId(clock, event.eventId())
                 .workerId(clock, event.workerId());
@@ -268,7 +279,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onResetTrigger(Clock clock, ResetTrigger event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             state = state
                 .lastEventId(clock, event.eventId())
                 .reset(clock);
@@ -282,7 +294,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerUpdated(Clock clock, TriggerUpdated event) {
-        findTriggerState(event).ifPresent(state -> {
+        findTriggerState(event).ifPresent(state ->
+        {
             Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
             if (data.getRight() != null) {
                 state = state
@@ -299,7 +312,8 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
-        triggerStateStore.findById(event.id()).ifPresent(state -> {
+        triggerStateStore.findById(event.id()).ifPresent(state ->
+        {
             triggerStateStore.delete(event.id());
             maySendExecutionKilled(event, state);
         });
@@ -308,13 +322,14 @@ public class TriggerEventHandler {
     private void maySendExecutionKilled(TriggerDeleted event, TriggerState state) {
         if (TriggerType.REALTIME.equals(state.getType())) {
             try {
-                this.executionKilledQueue.emit(ExecutionKilledTrigger
-                    .builder()
-                    .tenantId(state.getTenantId())
-                    .namespace(state.getNamespace())
-                    .flowId(state.getFlowId())
-                    .triggerId(state.getTriggerId())
-                    .build()
+                this.executionKilledQueue.emit(
+                    ExecutionKilledTrigger
+                        .builder()
+                        .tenantId(state.getTenantId())
+                        .namespace(state.getNamespace())
+                        .flowId(state.getFlowId())
+                        .triggerId(state.getTriggerId())
+                        .build()
                 );
             } catch (QueueException e) {
                 Logs.logTrigger(event.id(), Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);

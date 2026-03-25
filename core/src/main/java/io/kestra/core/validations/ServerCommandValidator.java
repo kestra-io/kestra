@@ -1,17 +1,18 @@
 package io.kestra.core.validations;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.ServerType;
 import io.kestra.core.utils.Enums;
+
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Context
@@ -28,7 +29,7 @@ public class ServerCommandValidator {
     );
 
     private final Environment environment;
-    
+
     private final ServerType serverType;
 
     @Inject
@@ -43,10 +44,11 @@ public class ServerCommandValidator {
         final List<Map.Entry<String, String>> missingProperties = required.entrySet().stream()
             .filter((property) -> !environment.containsProperty(property.getKey()))
             .toList();
- 
-        missingProperties.forEach(property -> log.error("""
-            Server configuration requires the '{}' property to be defined.
-            For more details, please follow the official setup guide at: {}""", property.getKey(), property.getValue())
+
+        missingProperties.forEach(
+            property -> log.error("""
+                Server configuration requires the '{}' property to be defined.
+                For more details, please follow the official setup guide at: {}""", property.getKey(), property.getValue())
         );
 
         if (!missingProperties.isEmpty()) {

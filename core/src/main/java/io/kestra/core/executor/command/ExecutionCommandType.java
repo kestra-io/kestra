@@ -1,6 +1,7 @@
 package io.kestra.core.executor.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+
 import io.kestra.core.utils.Enums;
 
 public enum ExecutionCommandType {

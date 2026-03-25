@@ -1,8 +1,5 @@
 package io.kestra.worker;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -10,6 +7,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract base class for implementing a worker loop that continuously processes jobs.
@@ -59,8 +59,8 @@ public abstract class WorkerLoop implements Runnable {
      * <p>
      * The loop terminates when:
      * <ul>
-     *   <li>The {@link #stop(Duration)} method is called</li>
-     *   <li>An {@link InterruptedException} is thrown</li>
+     * <li>The {@link #stop(Duration)} method is called</li>
+     * <li>An {@link InterruptedException} is thrown</li>
      * </ul>
      * <p>
      * When the loop exits, the {@link #cleanup()} hook is invoked.
@@ -155,7 +155,6 @@ public abstract class WorkerLoop implements Runnable {
         }
     }
 
-
     /**
      * Pauses the WorkerLoop.
      * <p>
@@ -197,7 +196,7 @@ public abstract class WorkerLoop implements Runnable {
     public void stop() {
         stop(Duration.ZERO);
     }
-    
+
     /**
      * Stops the WorkerLoop.
      * 
@@ -217,7 +216,7 @@ public abstract class WorkerLoop implements Runnable {
         if (timeout == null || timeout.isZero()) {
             return;
         }
-        
+
         try {
             if (!stopped.await(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
                 LOG.warn("Timeout while waiting for {} to complete", name);

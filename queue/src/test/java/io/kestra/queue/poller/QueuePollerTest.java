@@ -1,9 +1,9 @@
 package io.kestra.queue.poller;
 
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.ZonedDateTime;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +19,8 @@ class QueuePollerTest {
             5,
             true
         );
-        var queuePoller = new QueuePoller(config, () -> {
+        var queuePoller = new QueuePoller(config, () ->
+        {
             Thread.sleep(1); //  make sure the returned date is more than now
             return 0;
         });
@@ -40,7 +41,8 @@ class QueuePollerTest {
             5,
             true
         );
-        var queuePoller = new QueuePoller(config, () -> {
+        var queuePoller = new QueuePoller(config, () ->
+        {
             Thread.sleep(1); //  make sure the returned date is more than now
             return 1;
         });

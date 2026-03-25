@@ -7,11 +7,12 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
-import io.kestra.executor.*;
 import io.kestra.core.runners.SubflowExecutionEnd;
-import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.executor.*;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,8 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
             executorService.log(log, true, message);
         }
 
-        executionStateStore.lock(message.parentExecutionId(), execution -> {
+        executionStateStore.lock(message.parentExecutionId(), execution ->
+        {
             try {
                 FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.taskId());
@@ -57,7 +59,8 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
                     taskRun
                 );
 
-                SubflowExecutionResult subflowExecutionResult = ExecutableUtils.subflowExecutionResultFromChildExecution(runContext, childFlow, message.childExecution(), executableTask, taskRun, message.outputs());
+                SubflowExecutionResult subflowExecutionResult = ExecutableUtils
+                    .subflowExecutionResultFromChildExecution(runContext, childFlow, message.childExecution(), executableTask, taskRun, message.outputs());
                 if (subflowExecutionResult != null) {
                     try {
                         this.subflowExecutionResultQueue.emit(subflowExecutionResult);

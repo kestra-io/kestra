@@ -1,5 +1,9 @@
 package io.kestra.core.models.tasks;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -10,31 +14,27 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 /**
  * Interface for tasks that generates subflow execution(s). Those tasks are handled in the Executor.
  */
-public interface ExecutableTask<T extends Output>{
+public interface ExecutableTask<T extends Output> {
     /**
      * Creates a list of SubflowExecution for this task definition.
      * Each SubflowExecution will generate a subflow execution.
      */
     List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
-                                                      FlowMetaStoreInterface flowExecutorInterface,
-                                                      FlowInterface currentFlow, Execution currentExecution,
-                                                      TaskRun currentTaskRun) throws InternalException;
+        FlowMetaStoreInterface flowExecutorInterface,
+        FlowInterface currentFlow, Execution currentExecution,
+        TaskRun currentTaskRun) throws InternalException;
 
     /**
      * Creates a SubflowExecutionResult for a given SubflowExecution
      */
     Optional<SubflowExecutionResult> createSubflowExecutionResult(RunContext runContext,
-                                                                  TaskRun taskRun,
-                                                                  FlowInterface flow,
-                                                                  Execution execution,
-                                                                  Map<String, Object> outputs);
+        TaskRun taskRun,
+        FlowInterface flow,
+        Execution execution,
+        Map<String, Object> outputs);
 
     /**
      * Whether to wait for the execution(s) of the subflow before terminating this tasks

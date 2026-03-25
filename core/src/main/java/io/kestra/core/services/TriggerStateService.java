@@ -1,5 +1,8 @@
 package io.kestra.core.services;
 
+import java.time.Clock;
+import java.util.List;
+
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
@@ -13,7 +16,6 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.events.DeleteBackfillTrigger;
 import io.kestra.core.scheduler.events.ResetTrigger;
@@ -21,12 +23,11 @@ import io.kestra.core.scheduler.events.SetDisableTrigger;
 import io.kestra.core.scheduler.events.SetPauseBackfillTrigger;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
-
-import java.time.Clock;
-import java.util.List;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -43,9 +44,9 @@ public class TriggerStateService {
 
     @Inject
     public TriggerStateService(final TriggerRepositoryInterface triggerRepository,
-                               final FlowRepositoryInterface flowRepository,
-                               final TriggerEventQueue triggerEventQueue,
-                               final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
+        final FlowRepositoryInterface flowRepository,
+        final TriggerEventQueue triggerEventQueue,
+        final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
         this.triggerRepository = triggerRepository;
         this.triggerEventQueue = triggerEventQueue;
         this.executionKilledQueue = executionKilledQueue;
@@ -59,7 +60,7 @@ public class TriggerStateService {
      * @throws NotFoundException if trigger can be found.
      */
     public void deleteById(TriggerId trigger) throws NotFoundException {
-        getTriggerState(trigger);  // check if state exists.
+        getTriggerState(trigger); // check if state exists.
         triggerEventQueue.send(new TriggerDeleted(trigger));
     }
 
@@ -72,7 +73,8 @@ public class TriggerStateService {
      */
     public int deleteByIdyIds(List<TriggerId> triggers) throws NotFoundException {
         return triggers.stream()
-            .map(trigger -> {
+            .map(trigger ->
+            {
                 deleteById(trigger);
                 return 1;
             }).reduce(Integer::sum).orElse(0);
@@ -81,38 +83,39 @@ public class TriggerStateService {
     /**
      * Deletes all triggers matching the given filters.
      *
-     * @param tenant  the tenant identifier.
+     * @param tenant the tenant identifier.
      * @param filters the filters to match triggers.
      * @return the number of deleted triggers.
      * @throws NotFoundException if trigger can be found.
      */
     public int deleteAllTriggersMatching(String tenant, List<QueryFilter> filters) throws NotFoundException {
-        return triggerRepository.find(tenant, filters).map(throwFunction(trigger -> {
-                deleteById(trigger);
-                return 1;
-            }))
+        return triggerRepository.find(tenant, filters).map(throwFunction(trigger ->
+        {
+            deleteById(trigger);
+            return 1;
+        }))
             .reduce(Integer::sum)
             .blockOptional()
             .orElse(0);
     }
 
-
     /**
      * Toggles all triggers matching the given filters.
      *
-     * @param tenant  the tenant identifier.
+     * @param tenant the tenant identifier.
      * @param filters the filters to match triggers.
      * @throws NotFoundException if no trigger can be found.
      */
     public int toggleAllTriggersMatching(String tenant, List<QueryFilter> filters, boolean disabled) throws NotFoundException {
-        return triggerRepository.find(tenant, filters).map(throwFunction(trigger -> {
-                try {
-                    toggleTriggerById(trigger, disabled);
-                    return 1;
-                } catch (ConflictException e) {
-                    return 0;
-                }
-            }))
+        return triggerRepository.find(tenant, filters).map(throwFunction(trigger ->
+        {
+            try {
+                toggleTriggerById(trigger, disabled);
+                return 1;
+            } catch (ConflictException e) {
+                return 0;
+            }
+        }))
             .reduce(Integer::sum)
             .blockOptional()
             .orElse(0);
@@ -145,7 +148,7 @@ public class TriggerStateService {
     /**
      * Deletes all backfills for triggers matching the given filters.
      *
-     * @param tenant  the tenant identifier.
+     * @param tenant the tenant identifier.
      * @param filters the filters to match triggers.
      * @throws NotFoundException if no trigger can be found.
      */
@@ -163,7 +166,6 @@ public class TriggerStateService {
         return backfillsAction(Flux.fromIterable(triggers), BackfillAction.PAUSE);
     }
 
-
     /**
      * Resumes all backfills for the given triggers.
      *
@@ -177,7 +179,7 @@ public class TriggerStateService {
     /**
      * Pauses all backfills for triggers matching the given filters.
      *
-     * @param tenant  the tenant identifier.
+     * @param tenant the tenant identifier.
      * @param filters the filters to match triggers.
      * @throws NotFoundException if no trigger can be found.
      */
@@ -188,7 +190,7 @@ public class TriggerStateService {
     /**
      * Resumes all backfills for triggers matching the given filters.
      *
-     * @param tenant  the tenant identifier.
+     * @param tenant the tenant identifier.
      * @param filters the filters to match triggers.
      * @throws NotFoundException if no trigger can be found.
      */
@@ -203,7 +205,7 @@ public class TriggerStateService {
      * @throws NotFoundException if no trigger can be found.
      */
     public void createBackfill(TriggerId triggerId, CreateBackfillTrigger.Backfill backfill) {
-        getTriggerState(triggerId);  // check if state exists.
+        getTriggerState(triggerId); // check if state exists.
         triggerEventQueue.send(new CreateBackfillTrigger(TriggerId.of(triggerId), backfill));
     }
 
@@ -214,7 +216,7 @@ public class TriggerStateService {
      * @throws NotFoundException if no trigger can be found.
      */
     public void deleteBackfill(TriggerId triggerId) {
-        getTriggerState(triggerId);  // check if state exists.
+        getTriggerState(triggerId); // check if state exists.
         triggerEventQueue.send(new DeleteBackfillTrigger(TriggerId.of(triggerId)));
     }
 
@@ -225,7 +227,7 @@ public class TriggerStateService {
      * @throws NotFoundException if no trigger can be found.
      */
     public void setBackfillPaused(TriggerId triggerId, boolean paused) {
-        getTriggerState(triggerId);  // check if state exists.
+        getTriggerState(triggerId); // check if state exists.
         triggerEventQueue.send(new SetPauseBackfillTrigger(TriggerId.of(triggerId), paused));
     }
 
@@ -237,13 +239,14 @@ public class TriggerStateService {
      */
     public void resetTrigger(final TriggerId triggerId) throws NotFoundException, QueueException {
         getTriggerState(triggerId); // check if state exists.
-        this.executionKilledQueue.emit(ExecutionKilledTrigger
-            .builder()
-            .tenantId(triggerId.getTenantId())
-            .namespace(triggerId.getNamespace())
-            .flowId(triggerId.getFlowId())
-            .triggerId(triggerId.getTriggerId())
-            .build()
+        this.executionKilledQueue.emit(
+            ExecutionKilledTrigger
+                .builder()
+                .tenantId(triggerId.getTenantId())
+                .namespace(triggerId.getNamespace())
+                .flowId(triggerId.getFlowId())
+                .triggerId(triggerId.getTriggerId())
+                .build()
         );
         triggerEventQueue.send(new ResetTrigger(TriggerId.of(triggerId)));
     }
@@ -258,7 +261,8 @@ public class TriggerStateService {
      */
     public TriggerState unlockTriggerById(final TriggerId trigger) throws ConflictException, NotFoundException {
         return triggerRepository.findById(trigger)
-            .map(state -> {
+            .map(state ->
+            {
                 if (state.isLocked()) {
                     triggerEventQueue.send(new ResetTrigger(TriggerId.of(trigger)));
                     return state.locked(Clock.systemDefaultZone(), false);
@@ -280,7 +284,7 @@ public class TriggerStateService {
     /**
      * Unlocks triggers by query.
      *
-     * @param tenant  the tenant identifier.
+     * @param tenant the tenant identifier.
      * @param filters the query filters.
      * @return the number of triggers successfully unlocked.
      * @throws NotFoundException if a trigger can't be found.
@@ -291,21 +295,23 @@ public class TriggerStateService {
     }
 
     private int unlockAllTriggersByIds(final Flux<TriggerId> triggers) {
-        return triggers.map(trigger -> {
-                try {
-                    unlockTriggerById(trigger);
-                    return 1;
-                } catch (ConflictException ignored) {
-                    // Ignore exception when doing bulk action
-                    return 0;
-                }
-            }).reduce(Integer::sum)
+        return triggers.map(trigger ->
+        {
+            try {
+                unlockTriggerById(trigger);
+                return 1;
+            } catch (ConflictException ignored) {
+                // Ignore exception when doing bulk action
+                return 0;
+            }
+        }).reduce(Integer::sum)
             .blockOptional()
             .orElse(0);
     }
 
     private int backfillsAction(Flux<? extends TriggerId> triggers, BackfillAction action) {
-        return triggers.map(trigger -> {
+        return triggers.map(trigger ->
+        {
             try {
                 switch (action) {
                     case PAUSE:

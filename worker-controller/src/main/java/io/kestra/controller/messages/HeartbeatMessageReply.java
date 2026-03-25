@@ -1,6 +1,5 @@
 package io.kestra.controller.messages;
 
-
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateTransition;
 
@@ -10,6 +9,5 @@ import io.kestra.core.server.ServiceStateTransition;
 public record HeartbeatMessageReply(
     ServiceInstance instance,
     ServiceStateTransition.Result result,
-    boolean maintenance
-) {
+    boolean maintenance) {
 }

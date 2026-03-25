@@ -1,9 +1,12 @@
 package io.kestra.plugin.core.trigger;
 
+import java.util.Map;
+
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.validations.AbstractWebhookValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -14,8 +17,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
-
-import java.util.Map;
 
 /**
  * Abstract base class for webhook triggers that provides common properties and execution creation logic.
@@ -36,7 +37,8 @@ public abstract class AbstractWebhookTrigger extends AbstractTrigger {
         description = "The key is used for generating the webhook URL.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
-            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n" +
+            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n"
+            +
             "::\n"
     )
     @PluginProperty(dynamic = true)

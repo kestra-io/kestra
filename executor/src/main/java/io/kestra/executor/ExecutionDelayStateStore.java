@@ -1,9 +1,9 @@
 package io.kestra.executor;
 
-import io.kestra.core.runners.ExecutionDelay;
-
 import java.time.Instant;
 import java.util.function.Consumer;
+
+import io.kestra.core.runners.ExecutionDelay;
 
 /**
  * This state store is used by the {@link io.kestra.core.runners.Executor} to handle execution delays (Pause, retries, LoopUntil, ...).

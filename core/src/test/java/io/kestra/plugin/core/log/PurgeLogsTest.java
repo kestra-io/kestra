@@ -1,15 +1,9 @@
 package io.kestra.plugin.core.log;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.core.runners.TestRunnerUtils;
-import io.kestra.core.services.TaskOutputService;
-import jakarta.inject.Inject;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,7 +11,15 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 
-import java.time.Instant;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.TaskOutputService;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,25 +62,29 @@ class PurgeLogsTest {
     @LoadFlows("flows/valids/purge_logs_execution_only.yaml")
     void run_purge_execution_logs_only() throws Exception {
         // create an execution log (with executionId)
-        logRepository.save(LogEntry.builder()
-            .namespace("namespace")
-            .flowId("flowId")
-            .executionId("exec-123")
-            .tenantId(MAIN_TENANT)
-            .timestamp(Instant.now())
-            .level(Level.INFO)
-            .message("Execution log")
-            .build());
+        logRepository.save(
+            LogEntry.builder()
+                .namespace("namespace")
+                .flowId("flowId")
+                .executionId("exec-123")
+                .tenantId(MAIN_TENANT)
+                .timestamp(Instant.now())
+                .level(Level.INFO)
+                .message("Execution log")
+                .build()
+        );
 
         // create a non-execution log (without executionId)
-        logRepository.save(LogEntry.builder()
-            .namespace("namespace")
-            .flowId("flowId")
-            .tenantId(MAIN_TENANT)
-            .timestamp(Instant.now())
-            .level(Level.INFO)
-            .message("Non-execution log")
-            .build());
+        logRepository.save(
+            LogEntry.builder()
+                .namespace("namespace")
+                .flowId("flowId")
+                .tenantId(MAIN_TENANT)
+                .timestamp(Instant.now())
+                .level(Level.INFO)
+                .message("Non-execution log")
+                .build()
+        );
 
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_execution_only");
 
@@ -92,25 +98,29 @@ class PurgeLogsTest {
     @LoadFlows("flows/valids/purge_logs_trigger_only.yaml")
     void run_purge_non_execution_logs_only() throws Exception {
         // create an execution log (with executionId)
-        logRepository.save(LogEntry.builder()
-            .namespace("namespace")
-            .flowId("flowId")
-            .executionId("exec-456")
-            .tenantId(MAIN_TENANT)
-            .timestamp(Instant.now())
-            .level(Level.INFO)
-            .message("Execution log")
-            .build());
+        logRepository.save(
+            LogEntry.builder()
+                .namespace("namespace")
+                .flowId("flowId")
+                .executionId("exec-456")
+                .tenantId(MAIN_TENANT)
+                .timestamp(Instant.now())
+                .level(Level.INFO)
+                .message("Execution log")
+                .build()
+        );
 
         // create a non-execution log (without executionId)
-        logRepository.save(LogEntry.builder()
-            .namespace("namespace")
-            .flowId("flowId")
-            .tenantId(MAIN_TENANT)
-            .timestamp(Instant.now())
-            .level(Level.INFO)
-            .message("Non-execution log")
-            .build());
+        logRepository.save(
+            LogEntry.builder()
+                .namespace("namespace")
+                .flowId("flowId")
+                .tenantId(MAIN_TENANT)
+                .timestamp(Instant.now())
+                .level(Level.INFO)
+                .message("Non-execution log")
+                .build()
+        );
 
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_trigger_only");
 
@@ -136,54 +146,72 @@ class PurgeLogsTest {
 
     static Stream<Arguments> buildArguments() {
         return Stream.of(
-            Arguments.of(LogEntry.builder()
-                .namespace("purge.namespace")
-                .flowId("purgeFlowId")
-                .tenantId(MAIN_TENANT)
-                .timestamp(Instant.now().plus(5, ChronoUnit.HOURS))
-                .level(Level.INFO)
-                .message("Hello World")
-                .build(), 0, "The log is too recent to be found"),
-            Arguments.of(LogEntry.builder()
-                .namespace("purge.namespace")
-                .flowId("purgeFlowId")
-                .tenantId(MAIN_TENANT)
-                .timestamp(Instant.now().minus(5, ChronoUnit.HOURS))
-                .level(Level.INFO)
-                .message("Hello World")
-                .build(), 0, "The log is too old to be found"),
-            Arguments.of(LogEntry.builder()
-                .namespace("incorrect.namespace")
-                .flowId("purgeFlowId")
-                .tenantId(MAIN_TENANT)
-                .timestamp(Instant.now().minusSeconds(10))
-                .level(Level.INFO)
-                .message("Hello World")
-                .build(), 0, "The log has an incorrect namespace"),
-            Arguments.of(LogEntry.builder()
-                .namespace("purge.namespace")
-                .flowId("wrongFlowId")
-                .tenantId(MAIN_TENANT)
-                .timestamp(Instant.now().minusSeconds(10))
-                .level(Level.INFO)
-                .message("Hello World")
-                .build(), 0, "The log has an incorrect flow id"),
-            Arguments.of(LogEntry.builder()
-                .namespace("purge.namespace")
-                .flowId("purgeFlowId")
-                .tenantId(MAIN_TENANT)
-                .timestamp(Instant.now().minusSeconds(10))
-                .level(Level.WARN)
-                .message("Hello World")
-                .build(), 0, "The log has an incorrect LogLevel"),
-            Arguments.of(LogEntry.builder()
-                .namespace("purge.namespace")
-                .flowId("purgeFlowId")
-                .tenantId(MAIN_TENANT)
-                .timestamp(Instant.now().minusSeconds(10))
-                .level(Level.INFO)
-                .message("Hello World")
-                .build(), 1, "The log should be deleted")
+            Arguments.of(
+                LogEntry.builder()
+                    .namespace("purge.namespace")
+                    .flowId("purgeFlowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now().plus(5, ChronoUnit.HOURS))
+                    .level(Level.INFO)
+                    .message("Hello World")
+                    .build(),
+                0, "The log is too recent to be found"
+            ),
+            Arguments.of(
+                LogEntry.builder()
+                    .namespace("purge.namespace")
+                    .flowId("purgeFlowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now().minus(5, ChronoUnit.HOURS))
+                    .level(Level.INFO)
+                    .message("Hello World")
+                    .build(),
+                0, "The log is too old to be found"
+            ),
+            Arguments.of(
+                LogEntry.builder()
+                    .namespace("incorrect.namespace")
+                    .flowId("purgeFlowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now().minusSeconds(10))
+                    .level(Level.INFO)
+                    .message("Hello World")
+                    .build(),
+                0, "The log has an incorrect namespace"
+            ),
+            Arguments.of(
+                LogEntry.builder()
+                    .namespace("purge.namespace")
+                    .flowId("wrongFlowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now().minusSeconds(10))
+                    .level(Level.INFO)
+                    .message("Hello World")
+                    .build(),
+                0, "The log has an incorrect flow id"
+            ),
+            Arguments.of(
+                LogEntry.builder()
+                    .namespace("purge.namespace")
+                    .flowId("purgeFlowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now().minusSeconds(10))
+                    .level(Level.WARN)
+                    .message("Hello World")
+                    .build(),
+                0, "The log has an incorrect LogLevel"
+            ),
+            Arguments.of(
+                LogEntry.builder()
+                    .namespace("purge.namespace")
+                    .flowId("purgeFlowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now().minusSeconds(10))
+                    .level(Level.INFO)
+                    .message("Hello World")
+                    .build(),
+                1, "The log should be deleted"
+            )
         );
     }
 }

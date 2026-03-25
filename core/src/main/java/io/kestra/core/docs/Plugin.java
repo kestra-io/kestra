@@ -1,15 +1,16 @@
 package io.kestra.core.docs;
 
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.plugins.RegisteredPlugin;
+
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
 
@@ -69,14 +70,15 @@ public class Plugin {
             .getMainAttributes()
             .entrySet()
             .stream()
-            .map(e -> new AbstractMap.SimpleEntry<>(
-                e.getKey().toString(),
-                e.getValue().toString()
-            ))
+            .map(
+                e -> new AbstractMap.SimpleEntry<>(
+                    e.getKey().toString(),
+                    e.getValue().toString()
+                )
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        plugin.categories = subGroupInfos != null ?
-            Arrays.stream(subGroupInfos.categories()).toList() :
-            registeredPlugin
+        plugin.categories = subGroupInfos != null ? Arrays.stream(subGroupInfos.categories()).toList()
+            : registeredPlugin
                 .allClass()
                 .stream()
                 .map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class))
@@ -109,7 +111,7 @@ public class Plugin {
      * Filters the given list of class all internal Plugin, as well as, all legacy org.kestra classes.
      * Those classes are only filtered from the documentation to ensure backward compatibility.
      *
-     * @param list              The list of classes?
+     * @param list The list of classes?
      * @return a filtered streams.
      */
     private static List<PluginElementMetadata> filterAndGetTypeWithMetadata(final List<? extends Class<?>> list, Predicate<Class<?>> clazzFilter) {
@@ -118,7 +120,8 @@ public class Plugin {
             .filter(not(io.kestra.core.models.Plugin::isInternal))
             .filter(clazzFilter)
             .filter(c -> !c.getName().startsWith("org.kestra."))
-            .map(c -> {
+            .map(c ->
+            {
                 Schema schema = c.getAnnotation(Schema.class);
 
                 var title = Optional.ofNullable(schema).map(Schema::title).filter(t -> !t.isEmpty()).orElse(null);
@@ -130,5 +133,6 @@ public class Plugin {
             .toList();
     }
 
-    public record PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {}
+    public record PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {
+    }
 }

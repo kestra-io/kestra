@@ -1,5 +1,7 @@
 package io.kestra.executor.handler;
 
+import java.util.Optional;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -9,11 +11,10 @@ import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 @Singleton
 @Slf4j
@@ -32,7 +33,8 @@ public class ExecutionMessageHandler implements ExecutorMessageHandler<Execution
             return Optional.empty();
         } catch (QueueException e) {
             // If we cannot send the execution event, we fail the execution
-            return executionStateStore.lock(message.getId(), execution -> {
+            return executionStateStore.lock(message.getId(), execution ->
+            {
                 try {
                     Execution failed = execution.failedExecutionFromExecutor(e).execution().withState(State.Type.FAILED);
                     ExecutionEvent event = new ExecutionEvent(failed, ExecutionEventType.TERMINATED);

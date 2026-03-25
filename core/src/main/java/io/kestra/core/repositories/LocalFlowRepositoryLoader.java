@@ -1,19 +1,5 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.serializers.YamlParser;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.utils.Rethrow;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -30,6 +16,22 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.FileUtils;
+
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.Rethrow;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -60,10 +62,14 @@ public class LocalFlowRepositoryLoader {
                 for (Path path1 : fileSystem.getRootDirectories()) {
                     try (var files = Files.walk(path1)) {
                         files.filter(path -> Files.isRegularFile(path) && path.startsWith(substring))
-                            .forEach(throwConsumer(path -> FileUtils.copyURLToFile(
-                                path.toUri().toURL(),
-                                tempDirectory.resolve(path.toString().substring(1)).toFile())
-                            ));
+                            .forEach(
+                                throwConsumer(
+                                    path -> FileUtils.copyURLToFile(
+                                        path.toUri().toURL(),
+                                        tempDirectory.resolve(path.toString().substring(1)).toFile()
+                                    )
+                                )
+                            );
                     }
                 }
 
@@ -86,7 +92,8 @@ public class LocalFlowRepositoryLoader {
 
         try (Stream<Path> pathStream = Files.walk(basePath.toPath())) {
             pathStream.filter(YamlParser::isValidExtension)
-                .forEach(Rethrow.throwConsumer(file -> {
+                .forEach(Rethrow.throwConsumer(file ->
+                {
                     try {
                         String source = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
                         GenericFlow parsed = GenericFlow.fromYaml(tenantId, source);

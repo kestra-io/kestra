@@ -1,11 +1,12 @@
 package io.kestra.core.events;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.jdbc.JdbcMapper;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

@@ -1,24 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.State.History;
-import io.kestra.core.models.flows.State.Type;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,6 +12,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.History;
+import io.kestra.core.models.flows.State.Type;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.storages.StorageInterface;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -119,7 +119,6 @@ public class FlowConcurrencyCaseTest {
         Execution secondExecutionResult = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution2);
         Execution firstExecutionResult = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
 
-
         assertThat(firstExecutionResult.getId()).isEqualTo(execution1.getId());
         assertThat(firstExecutionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(secondExecutionResult.getId()).isEqualTo(execution2.getId());
@@ -138,7 +137,6 @@ public class FlowConcurrencyCaseTest {
         Execution secondExecutionResult = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.CANCELLED), execution2);
         Execution firstExecutionResult = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
 
-
         assertThat(firstExecutionResult.getId()).isEqualTo(execution1.getId());
         assertThat(firstExecutionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(secondExecutionResult.getId()).isEqualTo(execution2.getId());
@@ -150,10 +148,11 @@ public class FlowConcurrencyCaseTest {
     public void flowConcurrencyWithForEachItem(String tenantId) throws QueueException, URISyntaxException, IOException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution forEachItem = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-for-each-item", null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5));
+        Execution forEachItem = runnerUtils.runOneUntilRunning(
+            tenantId, NAMESPACE, "flow-concurrency-for-each-item", null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5)
+        );
         assertThat(forEachItem.getState().getCurrent()).isEqualTo(Type.RUNNING);
-
 
         Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), forEachItem);
         assertThat(terminated.getState().getCurrent()).isEqualTo(Type.SUCCESS);
@@ -161,16 +160,20 @@ public class FlowConcurrencyCaseTest {
         List<Execution> executions = runnerUtils.awaitFlowExecutionNumber(2, tenantId, NAMESPACE, "flow-concurrency-queue");
 
         assertThat(executions).extracting(e -> e.getState().getCurrent()).containsOnly(Type.SUCCESS);
-        assertThat(executions.stream()
-            .map(e -> e.getState().getHistories())
-            .flatMap(List::stream)
-            .map(History::getState)
-            .toList()).contains(Type.QUEUED);
+        assertThat(
+            executions.stream()
+                .map(e -> e.getState().getHistories())
+                .flatMap(List::stream)
+                .map(History::getState)
+                .toList()
+        ).contains(Type.QUEUED);
     }
 
     public void flowConcurrencyQueueRestarted(String tenantId) throws Exception {
-        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE,
-            "flow-concurrency-queue-fail", null, null, Duration.ofSeconds(30));
+        Execution execution1 = runnerUtils.runOneUntilRunning(
+            tenantId, NAMESPACE,
+            "flow-concurrency-queue-fail", null, null, Duration.ofSeconds(30)
+        );
         Flow flow = flowRepository
             .findById(tenantId, NAMESPACE, "flow-concurrency-queue-fail", Optional.empty())
             .orElseThrow();
@@ -232,13 +235,14 @@ public class FlowConcurrencyCaseTest {
         Execution queued = runnerUtils.awaitFlowExecution(e -> e.getState().isQueued(), tenantId, NAMESPACE, "flow-concurrency-parallel-subflow-kill-child");
 
         // Kill the parent
-        killQueue.emit(ExecutionKilledExecution
-            .builder()
-            .state(ExecutionKilled.State.REQUESTED)
-            .executionId(parent.getId())
-            .isOnKillCascade(true)
-            .tenantId(tenantId)
-            .build()
+        killQueue.emit(
+            ExecutionKilledExecution
+                .builder()
+                .state(ExecutionKilled.State.REQUESTED)
+                .executionId(parent.getId())
+                .isOnKillCascade(true)
+                .tenantId(tenantId)
+                .build()
         );
 
         Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), queued);
@@ -261,13 +265,14 @@ public class FlowConcurrencyCaseTest {
             assertThat(execution3.getState().getCurrent()).isEqualTo(Type.QUEUED);
 
             // we kill execution 1, execution 2 should run but not execution 3
-            killQueue.emit(ExecutionKilledExecution
-                .builder()
-                .state(ExecutionKilled.State.REQUESTED)
-                .executionId(execution1.getId())
-                .isOnKillCascade(true)
-                .tenantId(tenantId)
-                .build()
+            killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution1.getId())
+                    .isOnKillCascade(true)
+                    .tenantId(tenantId)
+                    .build()
             );
 
             Execution killed = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.KILLED), execution1);
@@ -306,13 +311,14 @@ public class FlowConcurrencyCaseTest {
             assertThat(execution3.getState().getCurrent()).isEqualTo(Type.QUEUED);
 
             // we kill execution 2, execution 3 should not run
-            killQueue.emit(ExecutionKilledExecution
-                .builder()
-                .state(ExecutionKilled.State.REQUESTED)
-                .executionId(execution2.getId())
-                .isOnKillCascade(true)
-                .tenantId(tenantId)
-                .build()
+            killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution2.getId())
+                    .isOnKillCascade(true)
+                    .tenantId(tenantId)
+                    .build()
             );
 
             Execution killed = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.KILLED), execution2);

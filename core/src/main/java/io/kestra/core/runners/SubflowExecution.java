@@ -1,19 +1,20 @@
 package io.kestra.core.runners;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
-
-import jakarta.validation.constraints.NotNull;
 import lombok.With;
-
-import java.util.Map;
 
 @Data
 @Builder

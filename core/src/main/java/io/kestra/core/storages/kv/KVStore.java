@@ -1,8 +1,5 @@
 package io.kestra.core.storages.kv;
 
-import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.storages.StorageContext;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -10,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.storages.StorageContext;
 
 /**
  * Service interface for accessing the files attached to a namespace Key-Value store.
@@ -46,8 +45,8 @@ public interface KVStore {
     /**
      * Puts the given K/V entry.
      *
-     * @param key       The entry key - cannot be {@code null}.
-     * @param value     The entry value - cannot be {@code null}.
+     * @param key The entry key - cannot be {@code null}.
+     * @param value The entry value - cannot be {@code null}.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
     default void put(String key, KVValueAndMetadata value) throws IOException {
@@ -57,8 +56,8 @@ public interface KVStore {
     /**
      * Puts the given K/V entry.
      *
-     * @param key       The entry key - cannot be {@code null}.
-     * @param value     The entry value - cannot be {@code null}.
+     * @param key The entry key - cannot be {@code null}.
+     * @param value The entry value - cannot be {@code null}.
      * @param overwrite Specifies whether to overwrite the existing value.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
@@ -69,7 +68,7 @@ public interface KVStore {
      *
      * @param key The entry key - cannot be {@code null}.
      * @return The {@link KVValue}, otherwise {@link Optional#empty()} if no entry exist for the given key.
-     * @throws IOException              if an error occurred while executing the operation on the K/V store.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
      * @throws ResourceExpiredException if the entry expired.
      */
     Optional<KVValue> getValue(String key) throws IOException, ResourceExpiredException;
@@ -93,7 +92,7 @@ public interface KVStore {
     /**
      * Finds the K/V store entry for the given key.
      *
-     * @return  The {@link KVEntry} or {@link Optional#empty()} if entry exists or the entry expired.
+     * @return The {@link KVEntry} or {@link Optional#empty()} if entry exists or the entry expired.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
     Optional<KVEntry> get(String key) throws IOException;
@@ -112,7 +111,7 @@ public interface KVStore {
     /**
      * Finds a KV entry with associated metadata for a given key.
      *
-     * @param key   the KV entry key.
+     * @param key the KV entry key.
      * @return an optional of {@link KVValueAndMetadata}.
      *
      * @throws UncheckedIOException if an error occurred while executing the operation on the K/V store.
@@ -120,15 +119,15 @@ public interface KVStore {
     default Optional<KVValueAndMetadata> findMetadataAndValue(final String key) throws UncheckedIOException {
         try {
             return get(key).flatMap(entry ->
-                {
-                    try {
-                        return getValue(entry.key()).map(current -> new KVValueAndMetadata(new KVMetadata(entry.description(), entry.expirationDate()), current.value()));
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    } catch (ResourceExpiredException e) {
-                        return Optional.empty();
-                    }
+            {
+                try {
+                    return getValue(entry.key()).map(current -> new KVValueAndMetadata(new KVMetadata(entry.description(), entry.expirationDate()), current.value()));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                } catch (ResourceExpiredException e) {
+                    return Optional.empty();
                 }
+            }
             );
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -148,7 +147,9 @@ public interface KVStore {
         }
 
         if (!KEY_VALIDATOR_PATTERN.matcher(key).matches()) {
-            throw new IllegalArgumentException("Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.");
+            throw new IllegalArgumentException(
+                "Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only."
+            );
         }
     }
 }

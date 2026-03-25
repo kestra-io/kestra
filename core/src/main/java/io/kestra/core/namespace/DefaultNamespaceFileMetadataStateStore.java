@@ -1,19 +1,20 @@
 package io.kestra.core.namespace;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Default implementation of {@link NamespaceFileMetadataStateStore} that delegates
@@ -37,11 +38,13 @@ public class DefaultNamespaceFileMetadataStateStore implements NamespaceFileMeta
     @Override
     public Optional<NamespaceFileMetadata> findByPath(String tenantId, String namespace, String path, @Nullable Integer version, boolean allowDeleted) throws IOException {
         if (version != null) {
-            return repository.find(Pageable.from(1, 1), tenantId, List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(path).build(),
-                QueryFilter.builder().field(QueryFilter.Field.VERSION).operation(QueryFilter.Op.EQUALS).value(version).build()
-            ), allowDeleted, FetchVersion.ALL).stream().findFirst();
+            return repository.find(
+                Pageable.from(1, 1), tenantId, List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                    QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(path).build(),
+                    QueryFilter.builder().field(QueryFilter.Field.VERSION).operation(QueryFilter.Op.EQUALS).value(version).build()
+                ), allowDeleted, FetchVersion.ALL
+            ).stream().findFirst();
         }
 
         return repository.findByPath(tenantId, namespace, path).filter(m -> allowDeleted || !m.isDeleted());
@@ -55,16 +58,20 @@ public class DefaultNamespaceFileMetadataStateStore implements NamespaceFileMeta
             normalizedParentPath = normalizedParentPath + "/";
         }
 
-        List<QueryFilter> filters = new java.util.ArrayList<>(List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()
-        ));
+        List<QueryFilter> filters = new java.util.ArrayList<>(
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()
+            )
+        );
 
         if (normalizedParentPath != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.PARENT_PATH)
-                .operation(recursive ? QueryFilter.Op.STARTS_WITH : QueryFilter.Op.EQUALS)
-                .value(normalizedParentPath)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.PARENT_PATH)
+                    .operation(recursive ? QueryFilter.Op.STARTS_WITH : QueryFilter.Op.EQUALS)
+                    .value(normalizedParentPath)
+                    .build()
+            );
         }
 
         return repository.find(Pageable.UNPAGED, tenantId, filters, false);
@@ -75,7 +82,8 @@ public class DefaultNamespaceFileMetadataStateStore implements NamespaceFileMeta
     public List<NamespaceFileMetadata> findAll(String tenantId, String namespace, @Nullable String containing) {
         List<QueryFilter> filters = Stream.concat(
             Stream.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()),
-            Optional.ofNullable(containing).flatMap(p -> {
+            Optional.ofNullable(containing).flatMap(p ->
+            {
                 if (p.equals("/")) {
                     return Optional.empty();
                 }
@@ -89,19 +97,23 @@ public class DefaultNamespaceFileMetadataStateStore implements NamespaceFileMeta
     /** {@inheritDoc} */
     @Override
     public List<NamespaceFileMetadata> findByPaths(String tenantId, String namespace, List<String> paths, boolean allowDeleted) {
-        return repository.find(Pageable.UNPAGED, tenantId, List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-            QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(paths).build()
-        ), allowDeleted);
+        return repository.find(
+            Pageable.UNPAGED, tenantId, List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(paths).build()
+            ), allowDeleted
+        );
     }
 
     /** {@inheritDoc} */
     @Override
     public List<NamespaceFileMetadata> findAllVersionsByPaths(String tenantId, String namespace, List<String> paths) {
-        return repository.find(Pageable.UNPAGED, tenantId, List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-            QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(paths).build()
-        ), true, FetchVersion.ALL);
+        return repository.find(
+            Pageable.UNPAGED, tenantId, List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(paths).build()
+            ), true, FetchVersion.ALL
+        );
     }
 
     /** {@inheritDoc} */
@@ -110,11 +122,13 @@ public class DefaultNamespaceFileMetadataStateStore implements NamespaceFileMeta
         return !repository.find(
             Pageable.from(1, 1),
             tenantId,
-            List.of(QueryFilter.builder()
-                .field(QueryFilter.Field.NAMESPACE)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(namespace)
-                .build()),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(namespace)
+                    .build()
+            ),
             false
         ).isEmpty();
     }

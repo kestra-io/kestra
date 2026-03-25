@@ -1,19 +1,13 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.kestra.core.runners.TransactionContext;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceLivenessStore;
-import io.kestra.core.server.ServiceStateTransition;
-import io.kestra.core.server.ServiceType;
-import io.kestra.jdbc.runner.JdbcTransactionContext;
-import io.micronaut.data.model.Pageable;
-import jakarta.annotation.Nullable;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.jooq.Condition;
 import org.jooq.Configuration;
@@ -24,20 +18,26 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import org.jooq.Table;
-import org.jooq.TransactionalCallable;
-import org.jooq.TransactionalRunnable;
 import org.jooq.impl.DSL;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceLivenessStore;
+import io.kestra.core.server.ServiceStateTransition;
+import io.kestra.core.server.ServiceType;
+import io.kestra.jdbc.runner.JdbcTransactionContext;
 
-import static org.jooq.impl.DSL.using;
+import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
 import static org.jooq.impl.DSL.quotedName;
+import static org.jooq.impl.DSL.using;
 
 @Getter
 @Slf4j
@@ -66,17 +66,15 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     }
 
     private Optional<ServiceInstance> findById(final String id,
-                                              final DSLContext dslContext,
-                                              final boolean isForUpdate) {
+        final DSLContext dslContext,
+        final boolean isForUpdate) {
 
         SelectConditionStep<Record1<Object>> query = dslContext
             .select(VALUE_FIELD)
             .from(table())
             .where(SERVICE_ID.eq(id));
 
-        return isForUpdate ?
-            this.jdbcRepository.fetchOne(query.forUpdate()) :
-            this.jdbcRepository.fetchOne(query);
+        return isForUpdate ? this.jdbcRepository.fetchOne(query.forUpdate()) : this.jdbcRepository.fetchOne(query);
     }
 
     /**
@@ -94,7 +92,8 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     @Override
     public List<ServiceInstance> findAllInstancesInState(final Service.ServiceState state) {
         return this.jdbcRepository.getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var query = using(configuration)
                     .select(VALUE_FIELD)
                     .from(table())
@@ -108,7 +107,8 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      **/
     @Override
     public List<ServiceInstance> findAllInstancesBetween(final ServiceType type, final Instant from, final Instant to) {
-        return jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+        return jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             SelectConditionStep<Record1<Object>> query = using(configuration)
                 .select(VALUE_FIELD)
                 .from(table())
@@ -121,21 +121,20 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     }
 
     public List<ServiceInstance> findAllInstancesInStates(final Configuration configuration,
-                                                          final Set<Service.ServiceState> states,
-                                                          final boolean isForUpdate) {
+        final Set<Service.ServiceState> states,
+        final boolean isForUpdate) {
         SelectConditionStep<Record1<Object>> query = using(configuration)
             .select(VALUE_FIELD)
             .from(table())
             .where(STATE.in(states.stream().map(Enum::name).toList()));
 
-        return isForUpdate ?
-            this.jdbcRepository.fetch(query.forUpdate().skipLocked()) :
-            this.jdbcRepository.fetch(query);
+        return isForUpdate ? this.jdbcRepository.fetch(query.forUpdate().skipLocked()) : this.jdbcRepository.fetch(query);
     }
 
     @Override
     public void processAllNonRunningInstances(BiConsumer<TransactionContext, ServiceInstance> consumer) {
-        jdbcRepository.getDslContextWrapper().transaction(configuration -> {
+        jdbcRepository.getDslContextWrapper().transaction(configuration ->
+        {
             var dslContext = DSL.using(configuration);
             var query = dslContext
                 .select(VALUE_FIELD)
@@ -149,7 +148,8 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
 
     @Override
     public void processInstanceInStates(Set<Service.ServiceState> states, BiConsumer<TransactionContext, ServiceInstance> consumer) {
-        jdbcRepository.getDslContextWrapper().transaction(configuration -> {
+        jdbcRepository.getDslContextWrapper().transaction(configuration ->
+        {
             var dslContext = DSL.using(configuration);
             var query = dslContext
                 .select(VALUE_FIELD)
@@ -178,15 +178,13 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * @return the list of {@link ServiceInstance}.
      */
     public List<ServiceInstance> findAllInstancesInNotRunningState(final Configuration configuration,
-                                                                   final boolean isForUpdate) {
+        final boolean isForUpdate) {
         SelectConditionStep<Record1<Object>> query = using(configuration)
             .select(VALUE_FIELD)
             .from(table())
             .where(STATE.eq(Service.ServiceState.NOT_RUNNING.name()));
 
-        return isForUpdate ?
-            this.jdbcRepository.fetch(query.forUpdate().skipLocked()) :
-            this.jdbcRepository.fetch(query);
+        return isForUpdate ? this.jdbcRepository.fetch(query.forUpdate().skipLocked()) : this.jdbcRepository.fetch(query);
     }
 
     @Override
@@ -227,8 +225,10 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     public List<ServiceInstance> findAll() {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> this.jdbcRepository.fetch(
-                using(configuration).select(VALUE_FIELD).from(table()))
+            .transactionResult(
+                configuration -> this.jdbcRepository.fetch(
+                    using(configuration).select(VALUE_FIELD).from(table())
+                )
             );
     }
 
@@ -237,10 +237,11 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      **/
     @Override
     public ArrayListTotal<ServiceInstance> find(final Pageable pageable,
-                                                @Nullable final List<QueryFilter> filters) {
+        @Nullable final List<QueryFilter> filters) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = using(configuration);
                 SelectConditionStep<Record1<Object>> select = context.select(VALUE_FIELD).from(table()).where("1=1");
                 if (filters != null && !filters.isEmpty()) {
@@ -274,14 +275,16 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             case List<?> list -> list.stream().map(Object::toString).toList();
             case String s -> List.of(s);
             default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
-                "Field 'state' requires a String or List<String> value for service instances");
+                "Field 'state' requires a String or List<String> value for service instances"
+            );
         };
         Field<String> stateField = DSL.field(org.jooq.impl.DSL.quotedName("state"), String.class);
         return switch (operation) {
             case EQUALS, IN -> stateField.in(stateNames);
             case NOT_EQUALS, NOT_IN -> stateField.notIn(stateNames);
             default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
-                "Unsupported operation for STATE: " + operation);
+                "Unsupported operation for STATE: " + operation
+            );
         };
     }
 
@@ -290,9 +293,9 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      **/
     @Override
     public ServiceStateTransition.Response mayTransitServiceTo(final TransactionContext txContext,
-                                                               final ServiceInstance instance,
-                                                               final Service.ServiceState newState,
-                                                               final String reason) {
+        final ServiceInstance instance,
+        final Service.ServiceState newState,
+        final String reason) {
         ImmutablePair<ServiceInstance, ServiceInstance> result = mayUpdateStatusById(
             txContext,
             instance,
@@ -309,12 +312,12 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * @param instance the new service instance.
      * @param newState the new state of the service.
      * @return an {@link Optional} of {@link ImmutablePair} holding the old (left), and new {@link ServiceInstance} or {@code null} if transition failed (right).
-     * Otherwise, an {@link Optional#empty()} if the no service can be found.
+     *         Otherwise, an {@link Optional#empty()} if the no service can be found.
      */
     private ImmutablePair<ServiceInstance, ServiceInstance> mayUpdateStatusById(final TransactionContext txContext,
-                                                                                final ServiceInstance instance,
-                                                                                final Service.ServiceState newState,
-                                                                                final String reason) {
+        final ServiceInstance instance,
+        final Service.ServiceState newState,
+        final String reason) {
         // Find the ServiceInstance to be updated
         var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
         Optional<ServiceInstance> optional = findById(instance.uid(), dslContext, true);

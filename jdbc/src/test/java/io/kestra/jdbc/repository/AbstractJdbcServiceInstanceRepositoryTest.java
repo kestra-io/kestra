@@ -1,18 +1,5 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.repositories.AbstractServiceInstanceRepositoryTest;
-import io.kestra.core.server.*;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.Network;
-import io.kestra.jdbc.JdbcTestUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -20,6 +7,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.repositories.AbstractServiceInstanceRepositoryTest;
+import io.kestra.core.server.*;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.Network;
+import io.kestra.jdbc.JdbcTestUtils;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
@@ -195,23 +197,17 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest extends Abstract
             return List.of(NotRunningServiceInstance);
         }
 
-        public static final ServiceInstance RunningServiceInstance =
-            serviceInstanceFor(Service.ServiceState.RUNNING);
+        public static final ServiceInstance RunningServiceInstance = serviceInstanceFor(Service.ServiceState.RUNNING);
 
-        public static final ServiceInstance PendingShutdownServiceInstance =
-            serviceInstanceFor(Service.ServiceState.TERMINATING);
+        public static final ServiceInstance PendingShutdownServiceInstance = serviceInstanceFor(Service.ServiceState.TERMINATING);
 
-        public static final ServiceInstance GracefulShutdownServiceInstance =
-            serviceInstanceFor(Service.ServiceState.TERMINATED_GRACEFULLY);
+        public static final ServiceInstance GracefulShutdownServiceInstance = serviceInstanceFor(Service.ServiceState.TERMINATED_GRACEFULLY);
 
-        public static final ServiceInstance ForcedShutdownServiceInstance =
-            serviceInstanceFor(Service.ServiceState.TERMINATED_FORCED);
+        public static final ServiceInstance ForcedShutdownServiceInstance = serviceInstanceFor(Service.ServiceState.TERMINATED_FORCED);
 
-        public static final ServiceInstance NotRunningServiceInstance =
-            serviceInstanceFor(Service.ServiceState.NOT_RUNNING);
+        public static final ServiceInstance NotRunningServiceInstance = serviceInstanceFor(Service.ServiceState.NOT_RUNNING);
 
-        public static final ServiceInstance EmptyServiceInstance =
-            serviceInstanceFor(Service.ServiceState.INACTIVE);
+        public static final ServiceInstance EmptyServiceInstance = serviceInstanceFor(Service.ServiceState.INACTIVE);
 
         public static ServiceInstance serviceInstanceFor(final Service.ServiceState state) {
             ServerConfig config = new ServerConfig(

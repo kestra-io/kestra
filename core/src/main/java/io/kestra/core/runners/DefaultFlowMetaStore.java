@@ -1,6 +1,11 @@
 package io.kestra.core.runners;
 
+import java.util.Collection;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
@@ -10,14 +15,11 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.PluginDefaultService;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Collection;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 @Slf4j
@@ -45,7 +47,8 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     @PostConstruct
     void start() {
         // listen to flow updates from the flow queue
-        this.subscriber = this.flowQueue.subscriber().subscribe(either -> {
+        this.subscriber = this.flowQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.error("Unable to deserialize a flow event: {}", either.getRight().getMessage());
             } else {
@@ -81,7 +84,7 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Optional<FlowInterface> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
         FlowWithSource flow = cache.get(FlowId.uidWithoutRevision(tenantId, namespace, id));
         // as we only keep the last version of a flow, we need to check if the revision is the one we asked for

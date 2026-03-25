@@ -1,7 +1,11 @@
 package io.kestra.core.models.triggers;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerTrigger;
+
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -11,9 +15,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.time.ZonedDateTime;
-import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -32,7 +33,7 @@ public class TriggerContext implements TriggerId {
 
     @NotNull
     private String triggerId;
-    
+
     /**
      * The timestamp when this trigger was last executed.
      */
@@ -47,7 +48,7 @@ public class TriggerContext implements TriggerId {
 
     @Nullable
     private List<State.Type> stopAfter;
-    
+
     @Schema(defaultValue = "false")
     private Boolean disabled = Boolean.FALSE;
 
@@ -66,7 +67,7 @@ public class TriggerContext implements TriggerId {
     public static TriggerContextBuilder<?, ?> builder() {
         return new TriggerContextBuilderImpl();
     }
-    
+
     public Boolean getDisabled() {
         return this.disabled != null ? this.disabled : Boolean.FALSE;
     }

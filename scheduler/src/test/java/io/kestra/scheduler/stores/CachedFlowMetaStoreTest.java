@@ -1,17 +1,18 @@
 package io.kestra.scheduler.stores;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.scheduler.Fixtures;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -20,8 +21,7 @@ class CachedFlowMetaStoreTest {
 
     // Use 1 vNode so all flows hash to vNode 0
     private static final int TEST_VNODE_COUNT = 1;
-    private static final SchedulerConfiguration SCHEDULER_CONFIGURATION =
-        new SchedulerConfiguration(TEST_VNODE_COUNT, Duration.ofSeconds(5), 100);
+    private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(TEST_VNODE_COUNT, Duration.ofSeconds(5), 100);
 
     private FlowMetaStore delegate;
     private CachedFlowMetaStore cachedStore;

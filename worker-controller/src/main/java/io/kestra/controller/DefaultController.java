@@ -1,12 +1,13 @@
 package io.kestra.controller;
 
-import io.grpc.Grpc;
-import io.grpc.InsecureServerCredentials;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
-import io.grpc.protobuf.services.HealthStatusManager;
-import io.grpc.protobuf.services.ProtoReflectionServiceV1;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerControllerService;
@@ -14,16 +15,17 @@ import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.worker.Controller;
+
+import io.grpc.Grpc;
+import io.grpc.InsecureServerCredentials;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
+import io.grpc.protobuf.services.HealthStatusManager;
+import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The Controller service that manages worker nodes.
@@ -47,7 +49,7 @@ public class DefaultController extends AbstractService implements Controller {
     protected final HealthStatusManager healthStatusManager;
 
     protected final ControllerConfiguration controllerConfiguration;
-    
+
     protected final GrpcConfiguration grpcConfiguration;
 
     @Inject
@@ -95,7 +97,7 @@ public class DefaultController extends AbstractService implements Controller {
             LOG.info("gRPC proto reflection is enabled");
             serverBuilder = serverBuilder.addService(ProtoReflectionServiceV1.newInstance());
         }
-        
+
         // Configure maxConnectionAge for load balancing across multiple controllers
         // This forces workers to periodically reconnect, redistributing them across available controllers
         if (controllerConfiguration.maxConnectionAge() != null && !controllerConfiguration.maxConnectionAge().isZero()) {

@@ -1,11 +1,13 @@
 package io.kestra.executor.handler;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.executions.Execution;
-import jakarta.inject.Inject;
+import java.util.Collections;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

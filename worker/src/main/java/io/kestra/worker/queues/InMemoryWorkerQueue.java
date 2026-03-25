@@ -1,6 +1,5 @@
 package io.kestra.worker.queues;
 
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Default in-memory {@link WorkerQueue} based on {@link LinkedBlockingQueue}.
  *
- * @param <T>   the event type.
+ * @param <T> the event type.
  */
 public class InMemoryWorkerQueue<T> implements WorkerQueue<T> {
 
@@ -93,7 +92,6 @@ public class InMemoryWorkerQueue<T> implements WorkerQueue<T> {
     public int capacity() {
         return this.capacity;
     }
-
 
     /**
      * {@inheritDoc}

@@ -1,17 +1,19 @@
 package io.kestra.cli.commands.sys;
 
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.runtime.server.EmbeddedServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,7 +35,7 @@ class ReindexCommandTest {
             // then we reindex them
             String[] reindexArgs = {
                 "--type",
-               "flow",
+                "flow",
             };
             Integer call = PicocliRunner.call(ReindexCommand.class, ctx, reindexArgs);
             assertThat(call).isZero();

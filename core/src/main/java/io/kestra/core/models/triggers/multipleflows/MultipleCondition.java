@@ -1,14 +1,15 @@
 package io.kestra.core.models.triggers.multipleflows;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.utils.Rethrow;
-import org.slf4j.Logger;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionContext, InternalException> {
     String getId();
@@ -36,14 +37,15 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
         Map<String, Boolean> results = getConditions()
             .keySet()
             .stream()
-            .map(condition -> new AbstractMap.SimpleEntry<>(
-                condition,
-                (triggerExecutionWindow.isPresent() &&
-                    triggerExecutionWindow.get().getResults() != null &&
-                    triggerExecutionWindow.get().getResults().containsKey(condition) &&
-                    triggerExecutionWindow.get().getResults().get(condition)
+            .map(
+                condition -> new AbstractMap.SimpleEntry<>(
+                    condition,
+                    (triggerExecutionWindow.isPresent() &&
+                        triggerExecutionWindow.get().getResults() != null &&
+                        triggerExecutionWindow.get().getResults().containsKey(condition) &&
+                        triggerExecutionWindow.get().getResults().get(condition))
                 )
-            ))
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         long validatedCount = results

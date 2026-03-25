@@ -1,8 +1,10 @@
 package io.kestra.controller.grpc.services;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.fasterxml.jackson.core.type.TypeReference;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
+
 import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.grpc.WorkerConnectionInfo;
 import io.kestra.controller.grpc.WorkerControllerService;
@@ -15,7 +17,6 @@ import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
@@ -26,12 +27,12 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.worker.models.WorkerTriggerResult;
+
+import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
 @Slf4j
@@ -66,8 +67,8 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
      * <p>
      * The worker sends:
      * <ul>
-     *   <li>First message: connection info + initial permits</li>
-     *   <li>Subsequent messages: new permits + ACKs for received jobs</li>
+     * <li>First message: connection info + initial permits</li>
+     * <li>Subsequent messages: new permits + ACKs for received jobs</li>
      * </ul>
      * <p>
      * The controller sends jobs only when the worker has capacity (permits > 0).
@@ -75,14 +76,14 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
      */
     @Override
     public StreamObserver<WorkerJobRequest> streamWorkerJobs(StreamObserver<WorkerJobResponse> responseObserver) {
-        ServerCallStreamObserver<WorkerJobResponse> serverObserver =
-            (ServerCallStreamObserver<WorkerJobResponse>) responseObserver;
+        ServerCallStreamObserver<WorkerJobResponse> serverObserver = (ServerCallStreamObserver<WorkerJobResponse>) responseObserver;
 
         // Context holder - populated when first message is received
         final AtomicReference<WorkerStreamContext<WorkerJobResponse>> contextRef = new AtomicReference<>();
 
         // Set up cancellation handler - must be done before returning the StreamObserver
-        serverObserver.setOnCancelHandler(() -> {
+        serverObserver.setOnCancelHandler(() ->
+        {
             WorkerStreamContext<WorkerJobResponse> ctx = contextRef.get();
             if (ctx != null) {
                 log.info("Worker [{}] stream cancelled", ctx.getWorkerId());
@@ -170,7 +171,8 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     public void sendWorkerTaskResults(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
         BatchMessage<WorkerTaskResult> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.WORKER_TASK_RESULT);
-        message.records().forEach(workerTaskResult -> {
+        message.records().forEach(workerTaskResult ->
+        {
             try {
                 workerTaskResultQueue.emit(workerTaskResult);
             } catch (QueueException e) {
@@ -202,7 +204,8 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     public void sendWorkerTriggerResults(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
         BatchMessage<WorkerTriggerResult> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.WORKER_TRIGGER_RESULT);
-        message.records().forEach(workerTriggerResult -> {
+        message.records().forEach(workerTriggerResult ->
+        {
             // Get if an Execution is attached to the TriggerResult.
             Execution execution = workerTriggerResult.execution();
             if (execution != null) {

@@ -1,12 +1,16 @@
 package io.kestra.scheduler.pubsub;
 
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.utils.Logs;
-import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
@@ -14,37 +18,35 @@ import io.kestra.core.runners.WorkerGroupMetaStore;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.utils.Logs;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
-
-import java.util.Optional;
 
 //TODO should not be part of the scheduler
 @Singleton
 public class TriggerWorkerJobPublisher {
-    
+
     private static final Logger log = LoggerFactory.getLogger(TriggerWorkerJobPublisher.class);
-    
+
     private final WorkerGroupMetaStore workerGroupMetaStore;
     private final WorkerGroupService workerGroupService;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
-    
+
     @Inject
     public TriggerWorkerJobPublisher(
-            WorkerGroupMetaStore workerGroupMetaStore,
-            WorkerGroupService workerGroupService,
-            KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue) {
+        WorkerGroupMetaStore workerGroupMetaStore,
+        WorkerGroupService workerGroupService,
+        KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue) {
         this.workerGroupMetaStore = workerGroupMetaStore;
         this.workerGroupService = workerGroupService;
         this.workerJobEventQueue = workerJobEventQueue;
     }
-    
+
     public void send(TriggerState triggerState, AbstractTrigger trigger, FlowInterface flow, ConditionContext conditionContext) throws InternalException {
-        
+
         if (log.isDebugEnabled()) {
             Logs.logTrigger(
                 triggerState,
@@ -53,7 +55,7 @@ public class TriggerWorkerJobPublisher {
                 triggerState.getEvaluatedAt()
             );
         }
-        
+
         WorkerTrigger workerTrigger = WorkerTrigger
             .builder()
             .trigger(trigger)
@@ -72,16 +74,18 @@ public class TriggerWorkerJobPublisher {
                         this.workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
                     } else {
                         WorkerGroup.Fallback fallback = workerGroup.map(WorkerGroup::getFallback).orElse(WorkerGroup.Fallback.WAIT);
-                        switch(fallback) {
+                        switch (fallback) {
                             case FAIL -> runContext.logger()
                                 .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
                             case CANCEL -> runContext.logger()
                                 .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
-                            case WAIT -> {runContext.logger()
-                                .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
+                            case WAIT -> {
+                                runContext.logger()
+                                    .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
                                 this.workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
                             }
-                        };
+                        }
+                        ;
                     }
                 } else {
                     runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);

@@ -1,19 +1,21 @@
 package io.kestra.jdbc.repository;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
+
 import io.micronaut.data.model.Pageable;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Base JDBC repository for CRUD operations.
@@ -22,8 +24,10 @@ import java.util.Optional;
  * If the child repository uses a default filter, it should override it.
  * <p>
  * For example, to avoid supporting allowDeleted:
- * <pre>{@code
- * @Override
+ * 
+ * <pre>
+ * {@code
+ * &#64;Override
  * protected Condition defaultFilter(String tenantId) {
  *     return buildTenantCondition(tenantId);
  * }
@@ -32,7 +36,8 @@ import java.util.Optional;
  * protected Condition defaultFilter() {
  *     return DSL.trueCondition();
  * }
- * }</pre>
+ * }
+ * </pre>
  *
  * @param <T> the type of the persisted entity.
  */
@@ -94,22 +99,23 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     public T update(T current) {
 
         if (!(current instanceof HasUID hasUID)) {
-            throw new IllegalArgumentException( "Cannot update entity: '" + current.getClass().getName() + "' doesn't implement HasUID");
+            throw new IllegalArgumentException("Cannot update entity: '" + current.getClass().getName() + "' doesn't implement HasUID");
         }
 
         String uid = hasUID.uid();
 
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSL.using(configuration)
                     .update(this.jdbcRepository.getTable())
                     .set(this.jdbcRepository.persistFields((current)))
                     .where(KEY_FIELD.eq(uid))
                     .execute();
 
-            return current;
-        });
+                return current;
+            });
     }
 
     @SuppressWarnings("unchecked")
@@ -157,7 +163,8 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     protected final <F> Optional<T> findOne(Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
@@ -208,7 +215,8 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     protected final <F> List<T> find(Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
@@ -258,28 +266,32 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      */
     @SafeVarargs
     protected final <F> Flux<T> findAsync(Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
-        return Flux.create(emitter -> this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                DSLContext context = DSL.using(configuration);
+        return Flux.create(
+            emitter -> this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration ->
+                {
+                    DSLContext context = DSL.using(configuration);
 
-                var select = context
-                    .select(VALUE_FIELD)
-                    .from(this.jdbcRepository.getTable())
-                    .where(defaultFilter)
-                    .and(condition);
+                    var select = context
+                        .select(VALUE_FIELD)
+                        .from(this.jdbcRepository.getTable())
+                        .where(defaultFilter)
+                        .and(condition);
 
-                if (orderByFields != null) {
-                    select.orderBy(orderByFields);
-                }
+                    if (orderByFields != null) {
+                        select.orderBy(orderByFields);
+                    }
 
-                try (var stream = select.fetchSize(FETCH_SIZE).stream()){
-                    stream.map((Record record) -> jdbcRepository.map(record))
-                        .forEach(emitter::next);
-                } finally {
-                    emitter.complete();
-                }
-            }), FluxSink.OverflowStrategy.BUFFER);
+                    try (var stream = select.fetchSize(FETCH_SIZE).stream()) {
+                        stream.map((Record record) -> jdbcRepository.map(record))
+                            .forEach(emitter::next);
+                    } finally {
+                        emitter.complete();
+                    }
+                }),
+            FluxSink.OverflowStrategy.BUFFER
+        );
     }
 
     /**
@@ -315,7 +327,8 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     protected final <F> ArrayListTotal<T> findPage(Pageable pageable, Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 var select = context
@@ -349,7 +362,8 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     protected List<T> findAll(Condition defaultFilter) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
@@ -377,23 +391,27 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findAll(Condition)
      */
     protected Flux<T> findAllAsync(Condition defaultFilter) {
-        return Flux.create(emitter -> this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                DSLContext context = DSL.using(configuration);
+        return Flux.create(
+            emitter -> this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration ->
+                {
+                    DSLContext context = DSL.using(configuration);
 
-                var select = context
-                    .select(VALUE_FIELD)
-                    .from(this.jdbcRepository.getTable())
-                    .where(defaultFilter);
+                    var select = context
+                        .select(VALUE_FIELD)
+                        .from(this.jdbcRepository.getTable())
+                        .where(defaultFilter);
 
-                try (var stream = select.fetchSize(FETCH_SIZE).stream()){
-                    stream.map((Record record) -> jdbcRepository.map(record))
-                        .forEach(emitter::next);
-                } finally {
-                    emitter.complete();
-                }
-            }), FluxSink.OverflowStrategy.BUFFER);
+                    try (var stream = select.fetchSize(FETCH_SIZE).stream()) {
+                        stream.map((Record record) -> jdbcRepository.map(record))
+                            .forEach(emitter::next);
+                    } finally {
+                        emitter.complete();
+                    }
+                }),
+            FluxSink.OverflowStrategy.BUFFER
+        );
     }
 
     /**
@@ -403,7 +421,8 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     public List<T> findAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)

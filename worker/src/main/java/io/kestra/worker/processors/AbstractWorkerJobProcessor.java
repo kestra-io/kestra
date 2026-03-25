@@ -1,19 +1,20 @@
 package io.kestra.worker.processors;
 
+import java.util.ConcurrentModificationException;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
-import io.kestra.worker.services.ExecutionKilledManager;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.AbstractWorkerCallable;
-import io.opentelemetry.api.common.Attributes;
+import io.kestra.worker.services.ExecutionKilledManager;
 
-import java.util.ConcurrentModificationException;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import io.opentelemetry.api.common.Attributes;
 
 public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements WorkerJobProcessor<T> {
 
@@ -30,10 +31,10 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
     public AbstractWorkerJobProcessor(String workerGroup,
-                                      MetricRegistry metricRegistry,
-                                      WorkerSecurityService workerSecurityService,
-                                      Tracer tracer,
-                                      ExecutionKilledManager executionKilledManager) {
+        MetricRegistry metricRegistry,
+        WorkerSecurityService workerSecurityService,
+        Tracer tracer,
+        ExecutionKilledManager executionKilledManager) {
         this.workerGroup = workerGroup;
         this.tracer = tracer;
         this.metricRegistry = metricRegistry;

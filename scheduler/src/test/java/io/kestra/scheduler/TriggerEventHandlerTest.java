@@ -1,11 +1,22 @@
 package io.kestra.scheduler;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
@@ -23,21 +34,12 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -143,13 +145,15 @@ class TriggerEventHandlerTest {
         Mockito.verify(executionKilledQueue, Mockito.only()).emit(Mockito.any(ExecutionKilled.class));
     }
 
-
     @Test
     void shouldUpdateTriggerGivenExistingFlowWhenTriggerUpdated() {
         // GIVEN
         triggerStateStore.save(triggerState);
-        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(
-                build -> build.disabled(true).build())
+        handler = newTriggerEventHandler(
+            List.of(
+                Fixtures.defaultFlow(
+                    build -> build.disabled(true).build()
+                )
             )
         );
         TriggerUpdated event = new TriggerUpdated(triggerId, Fixtures.defaultFlow().getRevision());
@@ -291,10 +295,11 @@ class TriggerEventHandlerTest {
         // GIVEN
         triggerStateStore.save(triggerState);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
-        TriggerEvaluated event = new TriggerEvaluated(triggerId, Execution.builder()
-            .id(IdUtils.create())
-            .state(new State())
-            .build()
+        TriggerEvaluated event = new TriggerEvaluated(
+            triggerId, Execution.builder()
+                .id(IdUtils.create())
+                .state(new State())
+                .build()
         );
 
         // WHEN

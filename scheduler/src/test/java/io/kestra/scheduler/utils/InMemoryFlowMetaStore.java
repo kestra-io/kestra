@@ -1,12 +1,12 @@
 package io.kestra.scheduler.utils;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.scheduler.stores.FlowMetaStore;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * In-memory implementation of FlowMetaStore.
@@ -14,17 +14,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * This class MUST only be used for testing purpose.
  */
 public final class InMemoryFlowMetaStore implements FlowMetaStore {
-    
+
     // Map from FlowId to FlowWithSource
     private final Map<Integer, Map<String, FlowWithSource>> flowStoresByVNode = new ConcurrentHashMap<>();
-    
+
     private final int vnodes;
-    
+
     public InMemoryFlowMetaStore(int vnodes, List<FlowWithSource> flows) {
         this.vnodes = vnodes;
         flows.forEach(this::add);
     }
-    
+
     /**
      * Adds or replaces a FlowWithSource in the store.
      *
@@ -32,11 +32,11 @@ public final class InMemoryFlowMetaStore implements FlowMetaStore {
      */
     public void add(FlowWithSource flow) {
         int vNode = VNodes.computeVNodeFromFlow(flow, vnodes);
-        
+
         Map<String, FlowWithSource> store = flowStoresByVNode.computeIfAbsent(vNode, (key) -> new ConcurrentHashMap<>());
         store.put(flow.uidWithoutRevision(), flow);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -45,7 +45,7 @@ public final class InMemoryFlowMetaStore implements FlowMetaStore {
         int vNode = VNodes.computeVNodeFromFlow(flowId, vnodes);
         return Optional.ofNullable(flowStoresByVNode.get(vNode)).map(store -> store.get(FlowId.uidWithoutRevision(flowId)));
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -54,17 +54,17 @@ public final class InMemoryFlowMetaStore implements FlowMetaStore {
         if (vNodes == null || vNodes.isEmpty()) {
             return Collections.emptyList();
         }
-        
+
         List<FlowWithSource> result = new ArrayList<>();
         for (Integer vNode : vNodes) {
             Map<String, FlowWithSource> store = flowStoresByVNode.get(vNode);
             if (store != null) {
-               result.addAll(store.values()); 
+                result.addAll(store.values());
             }
         }
         return result;
     }
-    
+
     /**
      * Clears all data from the in-memory store.
      */

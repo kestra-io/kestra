@@ -1,18 +1,20 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.micronaut.core.annotation.Nullable;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.triggers.TriggerContext;
+
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * Wire-format carrying all data the worker needs to process a trigger.
@@ -33,14 +35,12 @@ public record WorkerTriggerData(
     @Nullable List<Label> flowLabels,
 
     // --- RunContext wire data ---
-    @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS)
-    Map<String, Object> variables,
+    @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS) Map<String, Object> variables,
     List<String> secretInputs,
     @Nullable String traceParent,
 
     // --- Condition data ---
-    Map<String, Object> conditionVariables
-) implements WorkerRunContextData {
+    Map<String, Object> conditionVariables) implements WorkerRunContextData {
 
     /**
      * Keys excluded from the variables map — rebuilt on the worker from
@@ -59,7 +59,7 @@ public record WorkerTriggerData(
      * {@link TriggerContext}, stripping keys the worker can reconstructed locally.
      *
      * @param conditionContext the ConditionContext with RunContext and flow
-     * @param triggerContext   the TriggerContext with identity and date
+     * @param triggerContext the TriggerContext with identity and date
      * @return a new WorkerTriggerData suitable for wire transport
      */
     public static WorkerTriggerData from(ConditionContext conditionContext, TriggerContext triggerContext) {

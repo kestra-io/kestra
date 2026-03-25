@@ -1,22 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.runners.KVMetadataStateStore;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.KVStoreService;
-import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVEntry;
-import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVValueAndMetadata;
-import io.kestra.core.storages.kv.KVValue;
-import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -28,6 +11,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.runners.KVMetadataStateStore;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVEntry;
+import io.kestra.core.storages.kv.KVMetadata;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,9 +66,10 @@ class InternalKVStoreTest {
         List<KVEntry> list = kv.list();
         assertThat(list.size()).isEqualTo(2);
 
-        list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
+        list.forEach(kvEntry ->
+        {
+            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
+            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
         });
 
         Map<String, KVEntry> map = list.stream().collect(Collectors.toMap(KVEntry::key, Function.identity()));
@@ -74,13 +77,17 @@ class InternalKVStoreTest {
         assertThat(map.size()).isEqualTo(2);
 
         KVEntry myKeyValue = map.get(TEST_KV_KEY);
-        assertThat(myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
-            myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())).isTrue();
+        assertThat(
+            myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
+                myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())
+        ).isTrue();
         assertThat(myKeyValue.description()).isEqualTo(description);
 
         KVEntry mySecondKeyValue = map.get("my-second-key");
-        assertThat(mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
-            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())).isTrue();
+        assertThat(
+            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
+                mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())
+        ).isTrue();
         assertThat(mySecondKeyValue.description()).isNull();
     }
 
@@ -217,10 +224,12 @@ class InternalKVStoreTest {
         URI kvStorageUri = URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(kv.namespace()) + "/" + key + ".ion");
         String value = "someValue";
         KVValueAndMetadata kvValueAndMetadata = new KVValueAndMetadata(new KVMetadata("some description", Instant.now().plus(Duration.ofMinutes(5))), value);
-        storageInterface.put(TenantService.MAIN_TENANT, kv.namespace(), kvStorageUri, new StorageObject(
-            kvValueAndMetadata.metadataAsMap(),
-            new ByteArrayInputStream(JacksonMapper.ofIon().writeValueAsBytes(kvValueAndMetadata.value()))
-        ));
+        storageInterface.put(
+            TenantService.MAIN_TENANT, kv.namespace(), kvStorageUri, new StorageObject(
+                kvValueAndMetadata.metadataAsMap(),
+                new ByteArrayInputStream(JacksonMapper.ofIon().writeValueAsBytes(kvValueAndMetadata.value()))
+            )
+        );
 
         // When
         Optional<KVValue> result = kv.getValue(key);
@@ -246,7 +255,7 @@ class InternalKVStoreTest {
 
         Assertions.assertDoesNotThrow(() -> KVStore.validateKey("AN_UPPER.CASE-key"));
     }
-    
+
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
         return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface, kvMetadataStateStore);

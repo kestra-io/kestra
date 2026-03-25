@@ -1,12 +1,12 @@
 package io.kestra.core.models.hierarchies;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.utils.GraphUtils;
-import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.utils.GraphUtils;
+
+import lombok.*;
 
 @Value
 @Builder(toBuilder = true)
@@ -20,18 +20,22 @@ public class FlowGraph {
         return FlowGraph.builder()
             .nodes(GraphUtils.nodes(graph))
             .edges(GraphUtils.edges(graph))
-            .clusters(GraphUtils.clusters(graph, new ArrayList<>())
-                .stream()
-                .map(g -> new Cluster(g.getKey(), g.getKey().getGraph()
-                    .nodes()
+            .clusters(
+                GraphUtils.clusters(graph, new ArrayList<>())
                     .stream()
-                    .map(AbstractGraph::getUid)
-                    .toList(),
-                    g.getValue(),
-                    g.getKey().getRoot().getUid(),
-                    g.getKey().getEnd().getUid()
-                ))
-                .toList()
+                    .map(
+                        g -> new Cluster(
+                            g.getKey(), g.getKey().getGraph()
+                                .nodes()
+                                .stream()
+                                .map(AbstractGraph::getUid)
+                                .toList(),
+                            g.getValue(),
+                            g.getKey().getRoot().getUid(),
+                            g.getKey().getEnd().getUid()
+                        )
+                    )
+                    .toList()
             )
             .build();
     }
@@ -42,10 +46,11 @@ public class FlowGraph {
      */
     public FlowGraph forExecution() {
         return this.toBuilder()
-            .nodes(this.nodes
-                .stream()
-                .map(AbstractGraph::forExecution)
-                .toList()
+            .nodes(
+                this.nodes
+                    .stream()
+                    .map(AbstractGraph::forExecution)
+                    .toList()
             )
             .build();
     }

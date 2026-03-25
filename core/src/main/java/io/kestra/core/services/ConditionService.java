@@ -1,6 +1,10 @@
 package io.kestra.core.services;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.cronutils.utils.VisibleForTesting;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -13,10 +17,8 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.ListUtils;
-import io.micronaut.core.annotation.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -145,7 +147,8 @@ public class ConditionService {
     public boolean valid(FlowInterface flow, List<Condition> list, ConditionContext conditionContext) {
         return list
             .stream()
-            .allMatch(condition -> {
+            .allMatch(condition ->
+            {
                 try {
                     return condition.test(conditionContext);
                 } catch (Exception e) {

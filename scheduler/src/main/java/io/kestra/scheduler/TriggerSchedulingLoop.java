@@ -1,13 +1,5 @@
 package io.kestra.scheduler;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.scheduler.events.TriggerEvent;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -24,6 +16,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.scheduler.events.TriggerEvent;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 /**
  * The scheduling loop is responsible for periodically invoking the {@link TriggerScheduler#onSchedule} method
@@ -71,26 +73,29 @@ public class TriggerSchedulingLoop implements Runnable {
     /**
      * Creates a new {@link TriggerSchedulingLoop} instance.
      *
-     * @param schedulingLoopId    the scheduling-loop identifier.
-     * @param triggerScheduler    the {@link TriggerScheduler}.
+     * @param schedulingLoopId the scheduling-loop identifier.
+     * @param triggerScheduler the {@link TriggerScheduler}.
      * @param triggerEventHandler the {@link TriggerEventHandler}.
-     * @param metricRegistry      the {@link MeterRegistry}.
-     * @param clock               the {@link Clock}.
+     * @param metricRegistry the {@link MeterRegistry}.
+     * @param clock the {@link Clock}.
      */
     public TriggerSchedulingLoop(int schedulingLoopId,
-                                 TriggerScheduler triggerScheduler,
-                                 TriggerEventHandler triggerEventHandler,
-                                 MetricRegistry metricRegistry,
-                                 Clock clock) {
+        TriggerScheduler triggerScheduler,
+        TriggerEventHandler triggerEventHandler,
+        MetricRegistry metricRegistry,
+        Clock clock) {
         this.schedulingLoopId = schedulingLoopId;
         this.triggerScheduler = triggerScheduler;
         this.triggerEventHandler = triggerEventHandler;
         this.clock = clock;
 
-        String[] tags = {"thread-id", String.valueOf(schedulingLoopId)};
-        this.metricEventLoopTickTimer = metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION_DESCRIPTION, tags);
-        this.metricEventLoopEventCounter = metricRegistry.counter(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT_DESCRIPTION, tags);
-        this.metricEventLoopProcessTimer = metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION, tags);
+        String[] tags = { "thread-id", String.valueOf(schedulingLoopId) };
+        this.metricEventLoopTickTimer = metricRegistry
+            .timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION_DESCRIPTION, tags);
+        this.metricEventLoopEventCounter = metricRegistry
+            .counter(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT_DESCRIPTION, tags);
+        this.metricEventLoopProcessTimer = metricRegistry
+            .timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION, tags);
     }
 
     /**
@@ -278,7 +283,8 @@ public class TriggerSchedulingLoop implements Runnable {
      */
     public CompletableFuture<Void> doOnEndLoop(final Runnable action) {
         final CompletableFuture<Void> future = new CompletableFuture<>();
-        internalLoopCallables.add(() -> {
+        internalLoopCallables.add(() ->
+        {
             try {
                 action.run();
                 future.complete(null);
@@ -337,8 +343,10 @@ public class TriggerSchedulingLoop implements Runnable {
     public int processTriggerEvents() {
         List<CompletableTriggerEvent> drained = new ArrayList<>();
         triggerEventQueue.drainTo(drained);
-        drained.forEach(item -> {
-            metricEventLoopProcessTimer.record(() -> {
+        drained.forEach(item ->
+        {
+            metricEventLoopProcessTimer.record(() ->
+            {
                 try {
                     triggerEventHandler.handle(clock, item.vnode(), item.event());
                 } catch (Exception e) {
@@ -382,7 +390,7 @@ public class TriggerSchedulingLoop implements Runnable {
             this.event = Objects.requireNonNull(event, "event must not be null");
             this.vnode = Objects.requireNonNull(vnode, "vnode must not be null");
         }
-        
+
         public TriggerEvent event() {
             return event;
         }

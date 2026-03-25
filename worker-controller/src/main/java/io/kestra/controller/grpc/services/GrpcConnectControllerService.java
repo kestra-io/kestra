@@ -1,12 +1,12 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
 import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.grpc.WorkerControllerService;
-import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.services.WorkerGroupService;
+
+import io.grpc.stub.StreamObserver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
      * Resolves the worker group based on the provided worker group key using the
      * {@link WorkerGroupService}.
      *
-     * @param request          the connect request containing the worker group key
+     * @param request the connect request containing the worker group key
      * @param responseObserver the response observer to send the resolved worker group
      */
     @Override

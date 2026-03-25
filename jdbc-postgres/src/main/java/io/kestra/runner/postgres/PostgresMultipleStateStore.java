@@ -4,6 +4,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.runner.AbstractJdbcMultipleStateStore;
 import io.kestra.repository.postgres.PostgresRepository;
 import io.kestra.repository.postgres.PostgresRepositoryEnabled;
+
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 

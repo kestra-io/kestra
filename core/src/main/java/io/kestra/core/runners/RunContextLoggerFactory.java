@@ -1,13 +1,15 @@
 package io.kestra.core.runners;
 
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.event.Level;
 
 /**
  * Factory for constructing new {@link RunContextLogger} objects.

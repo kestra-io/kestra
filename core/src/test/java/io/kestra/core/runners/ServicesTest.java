@@ -1,11 +1,13 @@
 package io.kestra.core.runners;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.repositories.FlowRepositoryInterface;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;

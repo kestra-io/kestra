@@ -1,12 +1,12 @@
 package io.kestra.executor;
 
+import java.time.Instant;
+import java.util.function.Consumer;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.runners.RunContext;
-
-import java.time.Instant;
-import java.util.function.Consumer;
 
 /**
  * This state store is used by the {@link io.kestra.core.runners.Executor} to handle flow SLA.

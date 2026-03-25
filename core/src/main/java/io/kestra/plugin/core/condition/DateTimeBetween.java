@@ -1,23 +1,22 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.ZonedDateTime;
+import java.util.Map;
+
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.ZonedDateTime;
-import java.util.Map;
-
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -79,7 +78,7 @@ import jakarta.validation.constraints.NotNull;
                 """
         ),
     },
-    aliases = {"io.kestra.core.models.conditions.types.DateTimeBetweenCondition", "io.kestra.plugin.core.condition.DateTimeBetweenCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.DateTimeBetweenCondition", "io.kestra.plugin.core.condition.DateTimeBetweenCondition" }
 )
 public class DateTimeBetween extends Condition implements ScheduleCondition {
     @NotNull

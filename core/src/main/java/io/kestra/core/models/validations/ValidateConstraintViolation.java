@@ -1,12 +1,13 @@
 package io.kestra.core.models.validations;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @Getter

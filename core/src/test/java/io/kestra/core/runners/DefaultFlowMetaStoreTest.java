@@ -1,5 +1,12 @@
 package io.kestra.core.runners;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
@@ -13,13 +20,8 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -166,7 +168,8 @@ class DefaultFlowMetaStoreTest {
     void findByIdFromTask() throws FlowProcessingException, QueueException {
         FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
 
-        Optional<FlowInterface> maybeFlow = flowMetaStore.findByIdFromTask(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty(), test.getTenantId(), test.getNamespace(), test.getId());
+        Optional<FlowInterface> maybeFlow = flowMetaStore
+            .findByIdFromTask(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty(), test.getTenantId(), test.getNamespace(), test.getId());
 
         assertThat(maybeFlow).isPresent();
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
@@ -177,7 +180,8 @@ class DefaultFlowMetaStoreTest {
     @Test
     void findByIdFromTaskShouldReturnEmptyForAbsentFlow() {
         Flow test = createFlow();
-        Optional<FlowInterface> maybeFlow = flowMetaStore.findByIdFromTask(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty(), test.getTenantId(), test.getNamespace(), test.getId());
+        Optional<FlowInterface> maybeFlow = flowMetaStore
+            .findByIdFromTask(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty(), test.getTenantId(), test.getNamespace(), test.getId());
 
         assertThat(maybeFlow).isEmpty();
     }

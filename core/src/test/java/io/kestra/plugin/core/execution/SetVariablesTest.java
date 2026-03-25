@@ -1,14 +1,16 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.services.TaskOutputService;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

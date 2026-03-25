@@ -1,7 +1,15 @@
 package io.kestra.core.services;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.*;
@@ -13,15 +21,9 @@ import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.MapUtils;
+
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -38,7 +40,8 @@ public class TaskOutputService {
     private final NamespaceFactory namespaceFactory;
     private final int limit;
 
-    public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory, @Value("${kestra.task.outputs.limit:-1}") int limit) {
+    public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
+        @Value("${kestra.task.outputs.limit:-1}") int limit) {
         this.outputRepository = outputRepository;
         this.storageInterface = storageInterface;
         this.namespaceFactory = namespaceFactory;
@@ -78,8 +81,8 @@ public class TaskOutputService {
         if (!MapUtils.isEmpty(outputMap)) {
             try {
                 byte[] value = ION_MAPPER.writeValueAsBytes(outputMap);
-                var output = shouldStoreInInternalStorage(value) ? storeToInternalStorage(taskRun, value) :
-                    new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), value, null);
+                var output = shouldStoreInInternalStorage(value) ? storeToInternalStorage(taskRun, value)
+                    : new TaskOutput(taskRun.getId(), taskRun.getTenantId(), taskRun.getExecutionId(), value, null);
                 outputRepository.save(output);
             } catch (JsonProcessingException e) {
                 throw new InternalException(e);
@@ -115,7 +118,7 @@ public class TaskOutputService {
     /**
      * Get the outputs of a task run. This method will read the outputs from the database or from the internal storage depending on where they are stored.
      */
-    public Map<String, Object> getOutputs(TaskRun taskRun)  throws InternalException {
+    public Map<String, Object> getOutputs(TaskRun taskRun) throws InternalException {
         return outputRepository.findById(taskRun.getTenantId(), taskRun.getId())
             .map(throwFunction(output -> readOutput(taskRun, output)))
             .orElse(Collections.emptyMap());
@@ -131,10 +134,12 @@ public class TaskOutputService {
         }
 
         // we pre-compute the map of taskrun by id to avoid traversing the list of all taskrun for each taskrun
-        Map<String, TaskRun> byIds = execution.getTaskRunList().stream().collect(Collectors.toMap(
-            taskRun -> taskRun.getId(),
-            taskRun -> taskRun
-        ));
+        Map<String, TaskRun> byIds = execution.getTaskRunList().stream().collect(
+            Collectors.toMap(
+                taskRun -> taskRun.getId(),
+                taskRun -> taskRun
+            )
+        );
 
         // load all outputs
         List<TaskOutput> allTaskOutputs = outputRepository.findByExecution(execution);
@@ -142,7 +147,8 @@ public class TaskOutputService {
         Map<String, Object> result = new LinkedHashMap<>();
         execution.getTaskRunList().stream()
             .collect(Collectors.groupingBy(taskRun -> taskRun.getTaskId()))
-            .forEach((taskId, taskRuns) -> {
+            .forEach((taskId, taskRuns) ->
+            {
                 Map<String, Object> taskOutputs = new LinkedHashMap<>();
                 for (TaskRun current : taskRuns) {
                     var outputs = allTaskOutputs.stream().filter(it -> it.taskRunId().equals(current.getId())).findAny();

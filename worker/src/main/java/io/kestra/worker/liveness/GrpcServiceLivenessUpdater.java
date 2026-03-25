@@ -1,5 +1,8 @@
 package io.kestra.worker.liveness;
 
+import java.util.Objects;
+import java.util.UUID;
+
 import io.kestra.controller.grpc.HeartbeatRequest;
 import io.kestra.controller.grpc.HeartbeatResponse;
 import io.kestra.controller.grpc.LivenessControllerServiceGrpc.LivenessControllerServiceBlockingStub;
@@ -13,13 +16,11 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
+
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.Objects;
-import java.util.UUID;
 
 /**
  * An implementation of the ServiceLivenessUpdater interface that uses gRPC to update the liveness
@@ -69,18 +70,20 @@ public class GrpcServiceLivenessUpdater implements ServiceLivenessUpdater {
     }
 
     protected HeartbeatMessageReply sendHeartbeatMessage(ServiceInstance instance, Service.ServiceState newState, String reason) {
-        HeartbeatResponse response = client.heartbeat(HeartbeatRequest
-            .newBuilder()
-            .setHeader(RequestOrResponseHeader
+        HeartbeatResponse response = client.heartbeat(
+            HeartbeatRequest
                 .newBuilder()
-                .setClientId(instance.uid())
-                .setClientVersion(KestraContext.getContext().getVersion())
-                .setMessageFormat(MessageFormats.JSON.name())
-                .setCorrelationId(UUID.randomUUID().toString())
+                .setHeader(
+                    RequestOrResponseHeader
+                        .newBuilder()
+                        .setClientId(instance.uid())
+                        .setClientVersion(KestraContext.getContext().getVersion())
+                        .setMessageFormat(MessageFormats.JSON.name())
+                        .setCorrelationId(UUID.randomUUID().toString())
+                        .build()
+                )
+                .setMessage(MessageFormats.JSON.toByteString(new HeartbeatMessage(instance, newState, reason)))
                 .build()
-            )
-            .setMessage(MessageFormats.JSON.toByteString(new HeartbeatMessage(instance, newState, reason)))
-            .build()
         );
 
         return MessageFormat

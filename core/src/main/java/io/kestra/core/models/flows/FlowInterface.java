@@ -1,21 +1,5 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.kestra.core.models.SoftDeletable;
-import io.kestra.core.models.HasSource;
-import io.kestra.core.models.HasUID;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.TenantInterface;
-import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.tasks.WorkerGroup;
-import io.kestra.core.queues.event.BroadcastEvent;
-import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.serializers.JacksonMapper;
-
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -24,6 +8,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import io.kestra.core.models.HasSource;
+import io.kestra.core.models.HasUID;
+import io.kestra.core.models.Label;
+import io.kestra.core.models.SoftDeletable;
+import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.queues.event.BroadcastEvent;
+import io.kestra.core.serializers.JacksonMapper;
 
 /**
  * The base interface for FLow.
@@ -86,29 +86,28 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
      * <p>
      * This method is used to compare if two flow revisions are equal.
      *
-     * @param flow  The flow to compare.
+     * @param flow The flow to compare.
      * @return {@code true} if both flows are the same. Otherwise {@code false}
      */
     @JsonIgnore
     default boolean isSameWithSource(final FlowInterface flow) {
-        return
-            Objects.equals(this.uidWithoutRevision(), flow.uidWithoutRevision()) &&
-                Objects.equals(this.isDeleted(), flow.isDeleted()) &&
-                Objects.equals(this.isDisabled(), flow.isDisabled()) &&
-                Objects.equals(sourceWithoutRevision(this.getSource()), sourceWithoutRevision(flow.getSource()));
+        return Objects.equals(this.uidWithoutRevision(), flow.uidWithoutRevision()) &&
+            Objects.equals(this.isDeleted(), flow.isDeleted()) &&
+            Objects.equals(this.isDisabled(), flow.isDisabled()) &&
+            Objects.equals(sourceWithoutRevision(this.getSource()), sourceWithoutRevision(flow.getSource()));
     }
 
     /**
      * Checks whether this flow matches the given {@link FlowId}.
      *
-     * @param that  The {@link FlowId}.
+     * @param that The {@link FlowId}.
      * @return {@code true} if the passed id matches this flow.
      */
     @JsonIgnore
     default boolean isSameId(FlowId that) {
-        if (that == null) return false;
-        return
-            Objects.equals(this.getTenantId(), that.getTenantId()) &&
+        if (that == null)
+            return false;
+        return Objects.equals(this.getTenantId(), that.getTenantId()) &&
             Objects.equals(this.getNamespace(), that.getNamespace()) &&
             Objects.equals(this.getId(), that.getId());
     }
@@ -116,8 +115,8 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
     /**
      * Static method for removing the 'revision' field from a flow.
      *
-     * @param source    The source.
-     * @return  The source without revision.
+     * @param source The source.
+     * @return The source without revision.
      */
     static String sourceWithoutRevision(final String source) {
         return YAML_REVISION_MATCHER.matcher(source).replaceFirst("");
@@ -162,11 +161,13 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
         /**
          * Dirty hack but only concern previous flow with no source code in org.yaml.snakeyaml.emitter.Emitter:
+         * 
          * <pre>
          * if (previousSpace) {
-         *   spaceBreak = true;
+         *     spaceBreak = true;
          * }
          * </pre>
+         * 
          * This control will detect ` \n` as a no valid entry on a string and will break the multiline to transform in single line
          *
          * @param object the object to fix
@@ -177,19 +178,24 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
                 return mapValue
                     .entrySet()
                     .stream()
-                    .map(entry -> new AbstractMap.SimpleEntry<>(
-                        fixSnakeYaml(entry.getKey()),
-                        fixSnakeYaml(entry.getValue())
-                    ))
+                    .map(
+                        entry -> new AbstractMap.SimpleEntry<>(
+                            fixSnakeYaml(entry.getKey()),
+                            fixSnakeYaml(entry.getValue())
+                        )
+                    )
                     .filter(entry -> entry.getValue() != null)
-                    .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (u, v) -> {
-                            throw new IllegalStateException(String.format("Duplicate key %s", u));
-                        },
-                        LinkedHashMap::new
-                    ));
+                    .collect(
+                        Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (u, v) ->
+                            {
+                                throw new IllegalStateException(String.format("Duplicate key %s", u));
+                            },
+                            LinkedHashMap::new
+                        )
+                    );
             } else if (object instanceof Collection<?> collectionValue) {
                 return collectionValue
                     .stream()

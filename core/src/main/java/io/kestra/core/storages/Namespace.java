@@ -1,11 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-import io.kestra.core.namespace.NamespaceFileService;
-import io.kestra.core.utils.PathMatcherPredicate;
-import jakarta.annotation.Nullable;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -13,6 +7,14 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.namespace.NamespaceFileService;
+import io.kestra.core.utils.PathMatcherPredicate;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Service interface for accessing the files attached to a namespace (a.k.a., Namespace Files).
@@ -110,7 +112,7 @@ public interface Namespace {
      * @param version optionally a file version, otherwise will retrieve the latest.
      * @return the {@link InputStream}.
      * @throws IllegalArgumentException if the given {@link Path} is {@code null} or invalid.
-     * @throws IOException              if an error happens while accessing the file.
+     * @throws IOException if an error happens while accessing the file.
      */
     InputStream getFileContent(Path path, @Nullable Integer version) throws IOException;
 

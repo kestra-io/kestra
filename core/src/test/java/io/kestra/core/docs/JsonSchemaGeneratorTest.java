@@ -1,5 +1,15 @@
 package io.kestra.core.docs;
 
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.Helpers;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Example;
@@ -25,21 +35,13 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -83,7 +85,8 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     @Test
     void flow() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
@@ -124,7 +127,8 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     @Test
     void task() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
@@ -138,7 +142,8 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     @Test
     void taskRunner() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Map<String, Object> generate = jsonSchemaGenerator.schemas(TaskRunner.class);
@@ -152,7 +157,8 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     @Test
     void logShipper() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Map<String, Object> generate = jsonSchemaGenerator.schemas(LogExporter.class);
@@ -166,24 +172,28 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     @Test
     void trigger() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
-            assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(4),
-                hasKey("conditions"),
-                hasKey("stopAfter"),
-                hasKey("type"),
-                hasKey("allowConcurrent")
-            ));
+            assertThat(
+                (Map<String, Object>) jsonSchema.get("properties"), allOf(
+                    Matchers.aMapWithSize(4),
+                    hasKey("conditions"),
+                    hasKey("stopAfter"),
+                    hasKey("type"),
+                    hasKey("allowConcurrent")
+                )
+            );
         });
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void dag() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Dag.class);
@@ -198,7 +208,8 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     @Test
     void returnTask() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Map<String, Object> returnSchema = jsonSchemaGenerator.schemas(Return.class);
@@ -279,14 +290,19 @@ class JsonSchemaGeneratorTest {
     @SuppressWarnings("unchecked")
     @Test
     void dashboard() throws URISyntaxException {
-        Helpers.runApplicationContext((applicationContext) -> {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Dashboard.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
             String executionTimeSeriesColumnDescriptorExecutionFieldsKey = "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__";
             assertThat(
-                properties(definitions.get("io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.IExecutions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields___"))
+                properties(
+                    definitions.get(
+                        "io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.IExecutions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields___"
+                    )
+                )
                     .get("data")
                     .get("$ref"),
                 Matchers.is("#/definitions/" + executionTimeSeriesColumnDescriptorExecutionFieldsKey)
@@ -294,10 +310,13 @@ class JsonSchemaGeneratorTest {
 
             String timeseriesColumnDescriptorExecutionFields = "io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields_";
             assertThat(
-                ((Map<String, String>) properties(definitions.get("io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__"))
+                ((Map<String, String>) properties(
+                    definitions.get(
+                        "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__"
+                    )
+                )
                     .get("columns")
-                    .get("additionalProperties")
-                ).get("$ref"),
+                    .get("additionalProperties")).get("$ref"),
                 Matchers.is("#/definitions/" + timeseriesColumnDescriptorExecutionFields)
             );
 
@@ -305,9 +324,7 @@ class JsonSchemaGeneratorTest {
 
             // We verify that it holds TimeSeries-specific props
             assertThat(
-                ((List<String>) (
-                    executionTimeseriesProps.get("graphStyle")
-                ).get("enum")).toArray(),
+                ((List<String>) (executionTimeseriesProps.get("graphStyle")).get("enum")).toArray(),
                 Matchers.arrayContainingInAnyOrder(Arrays.stream(GraphStyle.values()).map(Object::toString).toArray())
             );
 
@@ -327,12 +344,14 @@ class JsonSchemaGeneratorTest {
 
         // Assert that properties that are part of type resolution are set as const from their default value
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, cls);
-        assertThat(((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
-            .get("io.kestra.core.models.tasks.retrys.Constant")
-            .get("properties"))
-            .get("type")
-            .get("const"),
-            is(new Constant().getType()));
+        assertThat(
+            ((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
+                .get("io.kestra.core.models.tasks.retrys.Constant")
+                .get("properties"))
+                .get("type")
+                .get("const"),
+            is(new Constant().getType())
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -358,7 +377,7 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    public static class TaskWithEnum extends ParentClass implements RunnableTask<VoidOutput>  {
+    public static class TaskWithEnum extends ParentClass implements RunnableTask<VoidOutput> {
 
         @PluginProperty
         @Schema(title = "Title from the attribute")
@@ -375,7 +394,7 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @Schema(
             title = "Title from the attribute",
-            oneOf = {String.class, Example[].class, Example.class}
+            oneOf = { String.class, Example[].class, Example.class }
         )
         private Object testObject;
 
@@ -386,7 +405,9 @@ class JsonSchemaGeneratorTest {
 
         @Schema(title = "Title from the enum")
         private enum TestEnum {
-            VALUE1, VALUE2, VALUE3
+            VALUE1,
+            VALUE2,
+            VALUE3
         }
 
         @Schema(title = "Test class")
@@ -402,7 +423,7 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    public static class TaskWithSubTaskAndSubTrigger extends Task implements RunnableTask<VoidOutput>  {
+    public static class TaskWithSubTaskAndSubTrigger extends Task implements RunnableTask<VoidOutput> {
 
         @PluginProperty
         @Schema(title = "Subtask")
@@ -476,9 +497,9 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    public static class TaskWithDynamicDocumentedFields extends Task implements RunnableTask<VoidOutput>  {
+    public static class TaskWithDynamicDocumentedFields extends Task implements RunnableTask<VoidOutput> {
 
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
         @Schema(
             title = "integerPropertyWithDefault title",
             description = "integerPropertyWithDefault description"
@@ -486,7 +507,7 @@ class JsonSchemaGeneratorTest {
         @Builder.Default
         protected Property<Integer> integerPropertyWithDefault = Property.ofValue(10000);
 
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
         @Schema(
             title = "stringPropertyWithDefault title",
             description = "stringPropertyWithDefault description"
@@ -494,15 +515,14 @@ class JsonSchemaGeneratorTest {
         @Builder.Default
         protected Property<String> stringPropertyWithDefault = Property.ofValue("my string");
 
-
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
         @Schema(
             title = "stringProperty title",
             description = "stringProperty description"
         )
         protected Property<String> stringProperty;
 
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
         @Schema(
             title = "integerProperty title",
             description = "integerProperty description"

@@ -1,7 +1,11 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.plugin.core.flow.Dag;
+import java.util.ArrayList;
+import java.util.List;
+
 import io.kestra.core.validations.DagTaskValidation;
+import io.kestra.plugin.core.flow.Dag;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -9,11 +13,8 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Singleton
-public class DagTaskValidator  implements ConstraintValidator<DagTaskValidation, Dag> {
+public class DagTaskValidator implements ConstraintValidator<DagTaskValidation, Dag> {
     @Override
     public boolean isValid(
         @Nullable Dag value,
@@ -35,7 +36,7 @@ public class DagTaskValidator  implements ConstraintValidator<DagTaskValidation,
         List<String> invalidDependencyIds = value.dagCheckNotExistTask(taskDepends);
         if (!invalidDependencyIds.isEmpty()) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate( "Not existing task id in dependency: " + String.join(", ", invalidDependencyIds))
+            context.buildConstraintViolationWithTemplate("Not existing task id in dependency: " + String.join(", ", invalidDependencyIds))
                 .addConstraintViolation();
             return false;
         }

@@ -33,7 +33,7 @@ public interface WorkerQueue<T> {
      * If no elements are available, the method blocks for at most the given duration.
      *
      * @param maxMessages the maximum number of messages to retrieve
-     * @param timeout     the maximum time to wait
+     * @param timeout the maximum time to wait
      * @return a list of elements retrieved from the queue (maybe empty if timeout expires)
      * @throws InterruptedException if interrupted while waiting
      */

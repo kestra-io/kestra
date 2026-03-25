@@ -1,8 +1,14 @@
 package io.kestra.worker.senders;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
+import java.time.Duration;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
@@ -11,15 +17,11 @@ import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
-import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
+import jakarta.annotation.Nullable;
 
 /**
  * Sends worker data to the controller via gRPC.
@@ -38,9 +40,18 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
 
     /** Default response observer: ignores successful responses, logs errors. */
     private static final StreamObserver<OpaqueData> DEFAULT_OBSERVER = new StreamObserver<>() {
-        @Override public void onNext(OpaqueData value) {}
-        @Override public void onError(Throwable t) { LOG.error("Error while sending request", t); }
-        @Override public void onCompleted() {}
+        @Override
+        public void onNext(OpaqueData value) {
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            LOG.error("Error while sending request", t);
+        }
+
+        @Override
+        public void onCompleted() {
+        }
     };
 
     private final WorkerQueueRegistry workerQueueRegistry;
@@ -65,21 +76,21 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
     /**
      * Creates a new {@code GrpcWorkerIOSender} instance.
      *
-     * @param workerQueueRegistry               the worker queue factory.
-     * @param name                              the name of the sender.
-     * @param eventType                         the event type.
-     * @param sendStrategy                      the strategy for sending data (per-item or batch).
-     * @param grpcSendMethod                    the gRPC method to call for sending data.
+     * @param workerQueueRegistry the worker queue factory.
+     * @param name the name of the sender.
+     * @param eventType the event type.
+     * @param sendStrategy the strategy for sending data (per-item or batch).
+     * @param grpcSendMethod the gRPC method to call for sending data.
      * @param fallbackMapperOnResourceExhausted optional mapper applied to each item when the server rejects the
-     *                                          message with {@code RESOURCE_EXHAUSTED}; the mapped item is
-     *                                          re-sent once. Pass {@code null} to disable fallback.
+     *        message with {@code RESOURCE_EXHAUSTED}; the mapped item is
+     *        re-sent once. Pass {@code null} to disable fallback.
      */
     GrpcWorkerIOSender(final WorkerQueueRegistry workerQueueRegistry,
-                       final String name,
-                       final Class<T> eventType,
-                       final SendStrategy sendStrategy,
-                       final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
-                       @Nullable final Function<T, T> fallbackMapperOnResourceExhausted) {
+        final String name,
+        final Class<T> eventType,
+        final SendStrategy sendStrategy,
+        final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
+        @Nullable final Function<T, T> fallbackMapperOnResourceExhausted) {
         super(name);
         this.eventType = eventType;
         this.workerQueueRegistry = workerQueueRegistry;
@@ -141,7 +152,8 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      * @param results the results to send.
      */
     void send(final List<T> results) {
-        if (results== null || results.isEmpty()) return;
+        if (results == null || results.isEmpty())
+            return;
 
         switch (sendStrategy) {
             case PER_ITEM -> results.forEach(result -> sendOpaqueData(BatchMessage.of(List.of(result))));
@@ -175,7 +187,8 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         }
 
         @Override
-        public void onNext(OpaqueData value) {}
+        public void onNext(OpaqueData value) {
+        }
 
         @Override
         public void onError(Throwable t) {
@@ -193,7 +206,8 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         }
 
         @Override
-        public void onCompleted() {}
+        public void onCompleted() {
+        }
 
         private static boolean isResourceExhausted(final Throwable t) {
             return t instanceof StatusRuntimeException sre

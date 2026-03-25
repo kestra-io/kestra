@@ -9,6 +9,5 @@ import io.kestra.core.server.ServiceInstance;
 public record HeartbeatMessage(
     ServiceInstance instance,
     Service.ServiceState newState,
-    String reason
-) {
+    String reason) {
 }

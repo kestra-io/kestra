@@ -1,5 +1,13 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.KVMetadataStateStore;
@@ -10,14 +18,8 @@ import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,8 +80,7 @@ public class KvFunctionTest {
         Map<String, Object> variables = getVariables(tenant, "my.company.team");
 
         // When
-        Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
-            variableRenderer.render("{{ kv('my-key', namespace='kv.inherited') }}", variables));
+        Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ kv('my-key', namespace='kv.inherited') }}", variables));
     }
 
     @Test
@@ -125,7 +126,8 @@ public class KvFunctionTest {
 
         kv.put("another-expired-key", new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "anyValue"));
 
-        IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ kv('another-expired-key') }}", variables));
+        IllegalVariableEvaluationException exception = Assertions
+            .assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ kv('another-expired-key') }}", variables));
 
         assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The requested value has expired ({{ kv('another-expired-key') }}:1)");
     }
@@ -137,12 +139,14 @@ public class KvFunctionTest {
         Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
 
         // When
-        IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> {
+        IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ kv('my-key', errorOnMissing=true) }}", variables);
         });
 
         // Then
-        assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key', errorOnMissing=true) }}:1)");
+        assertThat(exception.getMessage())
+            .isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key', errorOnMissing=true) }}:1)");
     }
 
     @Test
@@ -154,7 +158,8 @@ public class KvFunctionTest {
         IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ kv('my-key') }}", variables));
 
         // Then
-        assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key') }}:1)");
+        assertThat(exception.getMessage())
+            .isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key') }}:1)");
     }
 
 }

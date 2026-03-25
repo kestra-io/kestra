@@ -1,17 +1,19 @@
 package io.kestra.worker.stores;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.controller.grpc.KVMetadataServiceGrpc.KVMetadataServiceBlockingStub;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,9 +38,11 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        kvStateStore.save(PersistedKvMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).name("myKey").version(1)
-            .created(Instant.now()).build());
+        kvStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).name("myKey").version(1)
+                .created(Instant.now()).build()
+        );
 
         // When
         Optional<PersistedKvMetadata> result = grpcWorkerKvStore.findByName(tenantId, namespace, "myKey");
@@ -69,12 +73,16 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        kvStateStore.save(PersistedKvMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).name("key1").version(1)
-            .created(Instant.now()).build());
-        kvStateStore.save(PersistedKvMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).name("key2").version(1)
-            .created(Instant.now()).build());
+        kvStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).name("key1").version(1)
+                .created(Instant.now()).build()
+        );
+        kvStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).name("key2").version(1)
+                .created(Instant.now()).build()
+        );
 
         // When
         List<PersistedKvMetadata> result = grpcWorkerKvStore.find(tenantId, namespace);
@@ -102,9 +110,11 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        kvStateStore.save(PersistedKvMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).name("key").version(1)
-            .created(Instant.now()).build());
+        kvStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).name("key").version(1)
+                .created(Instant.now()).build()
+        );
 
         // When / Then
         assertThat(grpcWorkerKvStore.existsByNamespace(tenantId, namespace)).isTrue();
@@ -143,9 +153,11 @@ class GrpcWorkerKVMetadataStateStoreTest extends AbstractGrpcMetaStoreTest {
         // Given
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
-        PersistedKvMetadata saved = kvStateStore.save(PersistedKvMetadata.builder()
-            .tenantId(tenantId).namespace(namespace).name("to-delete").version(1)
-            .created(Instant.now()).build());
+        PersistedKvMetadata saved = kvStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(tenantId).namespace(namespace).name("to-delete").version(1)
+                .created(Instant.now()).build()
+        );
 
         // When
         PersistedKvMetadata deleted = grpcWorkerKvStore.delete(saved);

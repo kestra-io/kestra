@@ -19,10 +19,10 @@ public class QueuePoller {
      * Creates a new {@link QueuePoller} instance.
      *
      * @param configuration the {@link QueuePollerConfiguration}.
-     * @param pollingQuery         the query to be executed.
+     * @param pollingQuery the query to be executed.
      */
     public QueuePoller(final QueuePollerConfiguration configuration,
-                       final Callable<Integer> pollingQuery) {
+        final Callable<Integer> pollingQuery) {
         this.configuration = Objects.requireNonNull(configuration);
         this.pollingQuery = Objects.requireNonNull(pollingQuery);
     }

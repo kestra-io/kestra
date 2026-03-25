@@ -1,21 +1,23 @@
 package io.kestra.core.scheduler.queue;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.utils.Disposable;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Default implementation of {@link SchedulerEventQueue} using a broadcast queue.
@@ -54,12 +56,14 @@ public class DefaultSchedulerEventQueue implements SchedulerEventQueue {
         QueueSubscriber<SchedulerEvent> subscriber = schedulerEventQueue.subscriber();
         Disposable disposable = Disposable.of(subscriber::close);
         subscribers.add(disposable);
-        subscriber.subscribe(either -> {
+        subscriber.subscribe(either ->
+        {
             either.fold(
                 Optional::ofNullable,
-                e -> {
+                e ->
+                {
                     LOG.warn("Failed to deserialize event. Cause: {}", e.getMessage());
-                    return Optional.<SchedulerEvent>empty();
+                    return Optional.<SchedulerEvent> empty();
                 }
             ).ifPresent(consumer);
         });

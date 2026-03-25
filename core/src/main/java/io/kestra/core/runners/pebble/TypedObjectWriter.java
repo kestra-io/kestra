@@ -1,10 +1,10 @@
 package io.kestra.core.runners.pebble;
 
-import io.pebbletemplates.pebble.extension.writer.SpecializedWriter;
-import lombok.SneakyThrows;
-
 import java.io.IOException;
 import java.util.Arrays;
+
+import io.pebbletemplates.pebble.extension.writer.SpecializedWriter;
+import lombok.SneakyThrows;
 
 public class TypedObjectWriter extends OutputWriter implements SpecializedWriter {
     private Object current;
@@ -109,7 +109,8 @@ public class TypedObjectWriter extends OutputWriter implements SpecializedWriter
     }
 
     public static boolean isConcatenableScalar(final Object obj) {
-        if (obj == null) return false;
+        if (obj == null)
+            return false;
 
         Class<?> clazz = obj.getClass();
 

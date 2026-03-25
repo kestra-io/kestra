@@ -1,5 +1,9 @@
 package io.kestra.controller.config;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
@@ -7,10 +11,6 @@ import io.micronaut.core.bind.annotation.Bindable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
 
 import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_PORT;
 import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_PORT_STRING;
@@ -20,11 +20,12 @@ import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_P
  * <p>
  * Supports two discovery strategies:
  * <ul>
- *   <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
- *   <li>DNS: DNS SRV/A record resolution with gRPC load-balancing</li>
+ * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
+ * <li>DNS: DNS SRV/A record resolution with gRPC load-balancing</li>
  * </ul>
  * <p>
  * Example configuration:
+ * 
  * <pre>
  * kestra:
  *   worker:
@@ -46,24 +47,17 @@ import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_P
 @ConfigurationProperties("kestra.worker.controllers")
 public record WorkerControllersConfiguration(
     @NotNull
-    @Bindable(defaultValue = "STATIC")
-    DiscoveryType type,
+    @Bindable(defaultValue = "STATIC") DiscoveryType type,
 
-    @Nullable
-    StaticConfig staticConfig,
+    @Nullable StaticConfig staticConfig,
 
-    @Nullable
-    DnsConfig dnsConfig,
+    @Nullable DnsConfig dnsConfig,
 
-    @Valid
-    LoadBalancing loadBalancing,
+    @Valid LoadBalancing loadBalancing,
 
-    @Valid
-    HealthCheck healthCheck,
+    @Valid HealthCheck healthCheck,
 
-    @Valid
-    WaitForReady waitForReady
-) {
+    @Valid WaitForReady waitForReady) {
     /**
      * Service discovery type.
      */
@@ -81,18 +75,15 @@ public record WorkerControllersConfiguration(
     @ConfigurationProperties("static")
     @Requires(property = "kestra.worker.controllers.type", value = "STATIC")
     public record StaticConfig(
-        List<Endpoint> endpoints
-    ) {
+        List<Endpoint> endpoints) {
     }
 
     /**
      * A single controller endpoint.
      */
     public record Endpoint(
-        @NotBlank(message = "Host is required")
-        String host,
-        Integer port
-    ) {
+        @NotBlank(message = "Host is required") String host,
+        Integer port) {
 
         @Override
         public Integer port() {
@@ -108,15 +99,11 @@ public record WorkerControllersConfiguration(
     public record DnsConfig(
         String hostname,
 
-        @Bindable(defaultValue = DEFAULT_GRPC_PORT_STRING)
-        int defaultPort,
+        @Bindable(defaultValue = DEFAULT_GRPC_PORT_STRING) int defaultPort,
 
-        @Bindable(defaultValue = "SRV")
-        DnsRecordType recordType,
+        @Bindable(defaultValue = "SRV") DnsRecordType recordType,
 
-        @Bindable(defaultValue = "PT30S")
-        Duration refreshInterval
-    ) {
+        @Bindable(defaultValue = "PT30S") Duration refreshInterval) {
         /**
          * DNS record type for discovery.
          */
@@ -137,9 +124,7 @@ public record WorkerControllersConfiguration(
      */
     @ConfigurationProperties("load-balancing")
     public record LoadBalancing(
-        @Bindable(defaultValue = "ROUND_ROBIN")
-        Policy policy
-    ) {
+        @Bindable(defaultValue = "ROUND_ROBIN") Policy policy) {
         /**
          * Load balancing policy.
          */
@@ -152,9 +137,9 @@ public record WorkerControllersConfiguration(
              * Pick first available endpoint.
              */
             PICK_FIRST("pick_first");
-            
+
             private final String grpcName;
-            
+
             Policy(String grpcName) {
                 this.grpcName = grpcName;
             }
@@ -163,7 +148,7 @@ public record WorkerControllersConfiguration(
                 return grpcName;
             }
         }
-        
+
     }
 
     /**
@@ -171,11 +156,8 @@ public record WorkerControllersConfiguration(
      */
     @ConfigurationProperties("health-check")
     public record HealthCheck(
-        @Bindable(defaultValue = "true")
-        boolean enabled
-    ) {
+        @Bindable(defaultValue = "true") boolean enabled) {
     }
-
 
     /**
      * Wait-for-ready configuration for gRPC calls. When enabled, workers will wait for the controller to be ready before making gRPC calls.
@@ -184,10 +166,7 @@ public record WorkerControllersConfiguration(
      */
     @ConfigurationProperties("wait-for-ready")
     public record WaitForReady(
-        @Bindable(defaultValue = "true")
-        boolean enabled,
-        @Bindable(defaultValue = "PT30S")
-        Duration deadline
-    ) {
+        @Bindable(defaultValue = "true") boolean enabled,
+        @Bindable(defaultValue = "PT30S") Duration deadline) {
     }
 }

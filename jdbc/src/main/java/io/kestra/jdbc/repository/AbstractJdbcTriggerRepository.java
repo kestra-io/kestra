@@ -1,5 +1,15 @@
 package io.kestra.jdbc.repository;
 
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -19,18 +29,10 @@ import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
+
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
-
-import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepository<TriggerState> implements TriggerRepositoryInterface, TriggerStateStore {
 
@@ -67,7 +69,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<TriggerState> jdbcRepository,
-                                         JdbcFilterService filterService) {
+        JdbcFilterService filterService) {
         super(jdbcRepository);
         this.filterService = filterService;
     }
@@ -81,7 +83,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     public List<TriggerState> findAll(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
@@ -96,7 +99,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     public List<TriggerState> findAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 SelectJoinStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
@@ -110,7 +114,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     public TriggerState create(TriggerState trigger) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSL.using(configuration)
                     .insertInto(this.jdbcRepository.getTable())
                     .set(KEY_FIELD, trigger.uid())
@@ -125,7 +130,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     public void delete(TriggerId trigger) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 DSL.using(configuration)
                     .delete(this.jdbcRepository.getTable())
                     .where(KEY_FIELD.eq(trigger.uid()))
@@ -201,11 +207,11 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         DataFilter<Triggers.Fields, ? extends ColumnDescriptor<Triggers.Fields>> descriptors,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Pageable pageable
-    ) {
+        Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Map<String, ? extends ColumnDescriptor<Triggers.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
@@ -252,8 +258,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
-    public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+    public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<ITriggers.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
@@ -294,11 +302,12 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     public List<TriggerState> findAllForVNodes(Set<Integer> vNodes) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> DSL.using(configuration)
-                .select(VALUE_FIELD)
-                .from(this.jdbcRepository.getTable())
-                .where(VNODE_FIELD.in(vNodes))
-                .fetch()
+            .transactionResult(
+                configuration -> DSL.using(configuration)
+                    .select(VALUE_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(VNODE_FIELD.in(vNodes))
+                    .fetch()
             )
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }
@@ -311,14 +320,15 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         final long epochMilli = now.toInstant().toEpochMilli();
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> DSL.using(configuration)
-                .select(VALUE_FIELD)
-                .from(this.jdbcRepository.getTable())
-                .where(NEXT_EVALUATION_EPOCH_FIELD.le(epochMilli).or(NEXT_EVALUATION_EPOCH_FIELD.isNull()))
-                .and(LOCKED_FIELD.isNull().or(LOCKED_FIELD.eq(locked)))
-                .and(VNODE_FIELD.in(vNodes))
-                .orderBy(NEXT_EVALUATION_EPOCH_FIELD.asc())
-                .fetch()
+            .transactionResult(
+                configuration -> DSL.using(configuration)
+                    .select(VALUE_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(NEXT_EVALUATION_EPOCH_FIELD.le(epochMilli).or(NEXT_EVALUATION_EPOCH_FIELD.isNull()))
+                    .and(LOCKED_FIELD.isNull().or(LOCKED_FIELD.eq(locked)))
+                    .and(VNODE_FIELD.in(vNodes))
+                    .orderBy(NEXT_EVALUATION_EPOCH_FIELD.asc())
+                    .fetch()
             )
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }
@@ -331,13 +341,15 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     public List<Trigger> findAllForAllTenantsV1() {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 SelectJoinStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable());
 
-                return select.fetch().map(record -> {
+                return select.fetch().map(record ->
+                {
                     String json = record.get("value", String.class);
                     try {
                         return JdbcMapper.of().readValue(json, Trigger.class);

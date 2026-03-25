@@ -3,8 +3,8 @@ package io.kestra.repository.postgres;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcTaskOutputRepository;
+
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 
 @RepositoryBean
 @PostgresRepositoryEnabled

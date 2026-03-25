@@ -1,5 +1,8 @@
 package io.kestra.executor.handler;
 
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -14,15 +17,13 @@ import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
-import io.kestra.executor.ExecutorService;
 import io.kestra.executor.ExecutorMessageHandler;
+import io.kestra.executor.ExecutorService;
 import io.kestra.plugin.core.flow.ForEachItem;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Map;
-import java.util.Optional;
 
 @Singleton
 @Slf4j
@@ -51,7 +52,8 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
             executorService.log(log, true, message);
         }
 
-        return executionStateStore.lock(message.getParentTaskRun().getExecutionId(), execution -> {
+        return executionStateStore.lock(message.getParentTaskRun().getExecutionId(), execution ->
+        {
             ExecutorContext current = new ExecutorContext(execution);
 
             if (execution.hasTaskRunJoinable(message.getParentTaskRun())) { // TODO if we remove this check, we can avoid adding 'iteration' on the 'isSame()' method

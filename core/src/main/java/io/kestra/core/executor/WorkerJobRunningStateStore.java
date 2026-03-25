@@ -1,11 +1,11 @@
 package io.kestra.core.executor;
 
+import java.util.function.BiConsumer;
+
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerJobRunning;
 import io.kestra.core.runners.WorkerTask;
-
-import java.util.function.BiConsumer;
 
 /**
  * State store containing all workers' jobs in RUNNING state.
@@ -48,7 +48,7 @@ public interface WorkerJobRunningStateStore {
      * This is used by the {@link}
      *
      * @implNote Implementors that support transaction must use the provided {@link TransactionContext} to attach to the current transaction.
-     * Implementors must use some sort of transaction (FOR UPDATE SKIP LOCKED or {@link io.kestra.core.lock.LockService#tryLock(String, String, Runnable)}) for accuracy.
+     *           Implementors must use some sort of transaction (FOR UPDATE SKIP LOCKED or {@link io.kestra.core.lock.LockService#tryLock(String, String, Runnable)}) for accuracy.
      */
     void processWorkerJobsForDeadWorker(TransactionContext txContext, String workersUid, BiConsumer<TransactionContext, WorkerJobRunning> consumer);
 }

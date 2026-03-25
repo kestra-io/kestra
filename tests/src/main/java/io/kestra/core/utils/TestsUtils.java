@@ -1,32 +1,5 @@
 package io.kestra.core.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.Files;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.QueueSubscriber;
-import io.kestra.core.queues.event.BroadcastEvent;
-import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.serializers.JacksonMapper;
-import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Flux;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -42,6 +15,35 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.Files;
+
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.queues.event.BroadcastEvent;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.serializers.JacksonMapper;
+
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
@@ -75,23 +77,25 @@ abstract public class TestsUtils {
         // We take the stacktrace from the util caller to troubleshoot more easily
         StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[4];
         String[] packageSplit = stackTraceElement.getClassName().split("\\.");
-        return new String[]{packageSplit[packageSplit.length - 1].toLowerCase(), stackTraceElement.getMethodName().toLowerCase()};
+        return new String[] { packageSplit[packageSplit.length - 1].toLowerCase(), stackTraceElement.getMethodName().toLowerCase() };
     }
 
     /**
      * there is at least one bug in {@link io.kestra.cli.services.FileChangedEventListener#getTenantIdFromPath(Path)} forbidding use to use '_' character
+     * 
      * @param prefix
      * @return
      */
     public static String randomString(String... prefix) {
         if (prefix.length == 0) {
-            prefix = new String[]{String.join("-", stackTraceToParts())};
+            prefix = new String[] { String.join("-", stackTraceToParts()) };
         }
         var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
         var validTenantPrefixes = Arrays.stream(prefix)
             .map(s -> s.replaceAll("[.$<>]", "-"))
             .map(String::toLowerCase)
-            .peek(p -> {
+            .peek(p ->
+            {
                 if (!p.matches(tenantRegex)) {
                     throw new IllegalArgumentException("random tenant prefix %s should match tenant regex %s".formatted(p, tenantRegex));
                 }
@@ -99,7 +103,7 @@ abstract public class TestsUtils {
         String[] parts = Stream
             .concat(validTenantPrefixes.stream(), Stream.of(IdUtils.create().toLowerCase()))
             .toArray(String[]::new);
-        return IdUtils.fromPartsAndSeparator('-',parts);
+        return IdUtils.fromPartsAndSeparator('-', parts);
     }
 
     public static <T> T map(String path, Class<T> cls) throws IOException {
@@ -142,7 +146,8 @@ abstract public class TestsUtils {
     public static List<LogEntry> awaitLogs(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Predicate<Integer> countMatcher) {
         AtomicReference<List<LogEntry>> matchingLogs = new AtomicReference<>();
         try {
-            Await.until(() -> {
+            Await.until(() ->
+            {
                 matchingLogs.set(
                     Collections.synchronizedList(logs)
                         .stream()
@@ -150,14 +155,15 @@ abstract public class TestsUtils {
                         .collect(Collectors.toList())
                 );
 
-                if(countMatcher == null){
+                if (countMatcher == null) {
                     return !matchingLogs.get().isEmpty();
                 }
 
                 int matchingLogsCount = matchingLogs.get().size();
                 return countMatcher.test(matchingLogsCount);
             }, Duration.ofMillis(10), Duration.ofMillis(1000));
-        } catch (TimeoutException e) {}
+        } catch (TimeoutException e) {
+        }
 
         return matchingLogs.get();
     }
@@ -184,8 +190,8 @@ abstract public class TestsUtils {
     }
 
     public static Execution mockExecution(FlowInterface flow,
-                                          Map<String, Object> inputs,
-                                          Map<String, Object> outputs) {
+        Map<String, Object> inputs,
+        Map<String, Object> outputs) {
         return Execution.builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -246,7 +252,6 @@ abstract public class TestsUtils {
         return runContext;
     }
 
-
     public static <T> Flux<T> receive(QueueInterface<T> queue, Consumer<Either<T, DeserializationException>> consumer) {
         return TestsUtils.receive(queue, null, null, consumer, null);
     }
@@ -254,7 +259,8 @@ abstract public class TestsUtils {
     public static <T> Flux<T> receive(QueueInterface<T> queue, String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer, Duration timeout) {
         List<T> elements = new CopyOnWriteArrayList<>();
         AtomicReference<DeserializationException> exceptionRef = new AtomicReference<>();
-        Consumer<Either<T, DeserializationException>> eitherConsumer = (either) -> {
+        Consumer<Either<T, DeserializationException>> eitherConsumer = (either) ->
+        {
             if (either.isLeft()) {
                 elements.add(either.getLeft());
             } else {
@@ -268,15 +274,16 @@ abstract public class TestsUtils {
         Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer, false) : queue.receive(consumerGroup, queueType, eitherConsumer, false);
         queueConsumersCancellations.get().add(receiveCancellation);
 
-        return Flux.<T>create(sink -> {
-                DeserializationException exception = exceptionRef.get();
-                if (exception == null) {
-                    elements.forEach(sink::next);
-                    sink.complete();
-                } else {
-                    sink.error(exception);
-                }
-            })
+        return Flux.<T> create(sink ->
+        {
+            DeserializationException exception = exceptionRef.get();
+            if (exception == null) {
+                elements.forEach(sink::next);
+                sink.complete();
+            } else {
+                sink.error(exception);
+            }
+        })
             .timeout(Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)))
             .doFinally(signalType -> receiveCancellation.run());
     }
@@ -288,7 +295,8 @@ abstract public class TestsUtils {
     public static <T extends BroadcastEvent> Flux<T> receive(BroadcastQueueInterface<T> queue, Consumer<Either<T, DeserializationException>> consumer, Duration timeout) {
         List<T> elements = new CopyOnWriteArrayList<>();
         AtomicReference<DeserializationException> exceptionRef = new AtomicReference<>();
-        Consumer<Either<T, DeserializationException>> eitherConsumer = (either) -> {
+        Consumer<Either<T, DeserializationException>> eitherConsumer = (either) ->
+        {
             if (either.isLeft()) {
                 elements.add(either.getLeft());
             } else {
@@ -302,15 +310,16 @@ abstract public class TestsUtils {
         QueueSubscriber<T> receiveCancellation = queue.subscriber().subscribe(eitherConsumer);
         subscribers.get().add(receiveCancellation);
 
-        return Flux.<T>create(sink -> {
-                DeserializationException exception = exceptionRef.get();
-                if (exception == null) {
-                    elements.forEach(sink::next);
-                    sink.complete();
-                } else {
-                    sink.error(exception);
-                }
-            })
+        return Flux.<T> create(sink ->
+        {
+            DeserializationException exception = exceptionRef.get();
+            if (exception == null) {
+                elements.forEach(sink::next);
+                sink.complete();
+            } else {
+                sink.error(exception);
+            }
+        })
             .timeout(Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)))
             .doFinally(signalType -> receiveCancellation.close());
     }
@@ -324,7 +333,7 @@ abstract public class TestsUtils {
             return JacksonMapper.ofJson().writeValueAsString(object);
         } catch (JsonProcessingException e) {
             log.error("failed to serialize object to json string", e);
-            return object !=null ?  object.toString() : "null";
+            return object != null ? object.toString() : "null";
         }
     }
 }

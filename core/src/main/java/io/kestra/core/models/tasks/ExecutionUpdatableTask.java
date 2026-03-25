@@ -1,11 +1,11 @@
 package io.kestra.core.models.tasks;
 
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContext;
-
-import java.util.Optional;
 
 /**
  * Interface for tasks that modify the execution at runtime.

@@ -1,8 +1,13 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -21,17 +26,13 @@ import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString

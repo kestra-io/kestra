@@ -1,10 +1,12 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
+import io.kestra.core.junit.annotations.KestraTest;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;

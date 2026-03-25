@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @ConfigurationProperties(value = "kestra.queue")
-public class QueueConfiguration{
+public class QueueConfiguration {
 
     @NotNull
     String type;
@@ -20,7 +20,7 @@ public class QueueConfiguration{
 
     @Getter
     @ConfigurationProperties("message-protection")
-    public static class MessageProtection{
+    public static class MessageProtection {
         Boolean enabled = false;
         Integer limit;
     }

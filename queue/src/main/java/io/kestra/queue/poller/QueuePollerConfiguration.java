@@ -7,12 +7,13 @@ import java.util.List;
 
 /**
  * Poller configuration:
+ * 
  * @param minPollInterval the minimum poll interval
  * @param maxPollInterval the maximum poll interval
  * @param pollSwitchInterval the switch interval: after this duration, if no poll queries return an item, switch to maxPollInterval
  * @param pollSize the maximum number of items returned by a poll query, if a poll query returns this: we repoll immediately
  * @param switchSteps the number of switch steps: if minPollInterval == maxPollInterval, only one step will be computed: the minPollInterval,
- *                    otherwise we compute steps by starting from maxPollInterval then divide it by 2 switchSteps times or until we reach minPollInterval.
+ *        otherwise we compute steps by starting from maxPollInterval then divide it by 2 switchSteps times or until we reach minPollInterval.
  * @param immediateRepoll if true, when a poll query returns items, we repoll immediately
  */
 public record QueuePollerConfiguration(
@@ -21,14 +22,13 @@ public record QueuePollerConfiguration(
     Duration pollSwitchInterval,
     Integer pollSize,
     Integer switchSteps,
-    Boolean immediateRepoll
-) {
+    Boolean immediateRepoll) {
 
     /**
      * Compute the poll steps:
      * <ul>
-     *     <li>If maxPollInterval == minPollInterval: return a single step with minPollInterval</li>
-     *     <li>Otherwise, we compute steps by starting from maxPollInterval then divide it by 2 switchSteps times or until we reach minPollInterval</li>
+     * <li>If maxPollInterval == minPollInterval: return a single step with minPollInterval</li>
+     * <li>Otherwise, we compute steps by starting from maxPollInterval then divide it by 2 switchSteps times or until we reach minPollInterval</li>
      * </ul>
      *
      * @throws IllegalArgumentException if maxPollInteval is less than minPollInterval

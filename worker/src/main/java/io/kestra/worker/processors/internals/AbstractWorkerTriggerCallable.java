@@ -1,11 +1,12 @@
 package io.kestra.worker.processors.internals;
 
+import java.time.Duration;
+
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTrigger;
-import lombok.Getter;
 
-import java.time.Duration;
+import lombok.Getter;
 
 abstract class AbstractWorkerTriggerCallable extends AbstractWorkerCallable {
     // This duration is by design low as we don't want to hang a thread for too long when we kill a trigger

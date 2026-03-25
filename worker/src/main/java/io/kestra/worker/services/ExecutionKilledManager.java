@@ -1,7 +1,13 @@
 package io.kestra.worker.services;
 
+import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.event.Level;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
@@ -10,22 +16,19 @@ import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.utils.Logs;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages execution-killed state and kill callbacks for the worker.
  * <p>
  * This class:
  * <ul>
- *   <li>Maintains a cache of killed execution IDs for pre-processing checks</li>
- *   <li>Tracks running jobs with their kill callbacks</li>
- *   <li>Matches incoming kill events against running jobs and invokes callbacks</li>
+ * <li>Maintains a cache of killed execution IDs for pre-processing checks</li>
+ * <li>Tracks running jobs with their kill callbacks</li>
+ * <li>Matches incoming kill events against running jobs and invokes callbacks</li>
  * </ul>
  */
 @Singleton
@@ -69,18 +72,22 @@ public class ExecutionKilledManager {
                 .increment();
 
             // Kill any matching running jobs
-            runningJobs.forEach((_, killableJob) -> {
+            runningJobs.forEach((_, killableJob) ->
+            {
                 if (killableJob.job() instanceof WorkerTask workerTask && killedExecution.isEqual(workerTask)) {
                     Logs.logTaskRun(workerTask.getTaskRun(), Level.INFO, "Killing running task");
                     killableJob.killAction().run();
                 }
             });
         } else if (killed instanceof ExecutionKilledTrigger killedTrigger) {
-            log.info("[tenant: {}] [namespace: {}] [flow: {}] [trigger: {}] Received kill command",
-                killedTrigger.getTenantId(), killedTrigger.getNamespace(), killedTrigger.getFlowId(), killedTrigger.getTriggerId());
-            
+            log.info(
+                "[tenant: {}] [namespace: {}] [flow: {}] [trigger: {}] Received kill command",
+                killedTrigger.getTenantId(), killedTrigger.getNamespace(), killedTrigger.getFlowId(), killedTrigger.getTriggerId()
+            );
+
             // Kill any matching running trigger jobs
-            runningJobs.forEach((_, killableJob) -> {
+            runningJobs.forEach((_, killableJob) ->
+            {
                 if (killableJob.job() instanceof WorkerTrigger workerTrigger && killedTrigger.isEqual(workerTrigger.triggerId())) {
                     Logs.logTrigger(workerTrigger.triggerId(), Level.INFO, "Killing running trigger");
                     killableJob.killAction().run();
@@ -92,8 +99,8 @@ public class ExecutionKilledManager {
     /**
      * Registers a running job with its kill callback.
      *
-     * @param jobUid     the unique identifier of the job
-     * @param job        the worker job
+     * @param jobUid the unique identifier of the job
+     * @param job the worker job
      * @param killAction the action to invoke to kill the job
      */
     public void register(String jobUid, WorkerJob job, Runnable killAction) {
@@ -119,5 +126,6 @@ public class ExecutionKilledManager {
         return killedExecutions.getIfPresent(executionId) != null;
     }
 
-    record KillableJob(WorkerJob job, Runnable killAction) {}
+    record KillableJob(WorkerJob job, Runnable killAction) {
+    }
 }

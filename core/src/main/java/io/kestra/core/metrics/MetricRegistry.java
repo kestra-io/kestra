@@ -1,5 +1,13 @@
 package io.kestra.core.metrics;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Supplier;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -10,20 +18,12 @@ import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
+
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.search.Search;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Supplier;
-
-import java.util.function.Supplier;
 
 @Singleton
 @Slf4j
@@ -160,7 +160,7 @@ public class MetricRegistry {
      * Sentinel value representing logical absence of label.
      * <br />
      * <a href="https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html?utm_source=chatgpt.com#_limitation_on_same_name_with_different_set_of_tag_keys">
-     *     Micrometer - Limitation on same name with different set of tag keys
+     * Micrometer - Limitation on same name with different set of tag keys
      * </a>
      */
     public static final String TAG_LABEL_PLACEHOLDER = "__none__";
@@ -192,32 +192,32 @@ public class MetricRegistry {
     /**
      * Register a gauge that reports the value of the {@link Number}.
      *
-     * @param name   Name of the gauge being registered.
+     * @param name Name of the gauge being registered.
      * @param description The metric description
      * @param number Thread-safe implementation of {@link Number} used to access the value.
-     * @param tags   Sequence of dimensions for breaking down the name.
-     * @param <T>    The type of the number from which the gauge value is extracted.
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @param <T> The type of the number from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
+     *         statement.
      */
     public <T extends Number> T gauge(String name, String description, T number, String... tags) {
-        gauge(name, description, (Supplier<T>)() -> number, tags);
+        gauge(name, description, (Supplier<T>) () -> number, tags);
         return number;
     }
 
     /**
      * Register a gauge that reports the value of the {@link Number}.
      *
-     * @param name   Name of the gauge being registered.
+     * @param name Name of the gauge being registered.
      * @param description The metric description
      * @param supplier A function that yields a double value for the gauge.
-     * @param tags   Sequence of dimensions for breaking down the name.
-     * @param <T>    The type of the number from which the gauge value is extracted.
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @param <T> The type of the number from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
+     *         statement.
      */
     public <T extends Number> Gauge gauge(String name, String description, Supplier<T> supplier, String... tags) {
-        return Gauge.builder(metricName(name),supplier)
+        return Gauge.builder(metricName(name), supplier)
             .description(description)
             .tags(tags)
             .register(this.meterRegistry);
@@ -255,6 +255,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Meter in the meter registry
+     * 
      * @param name The base metric name
      */
     public Search find(String name) {
@@ -263,6 +264,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Counter in the meter registry
+     * 
      * @param name The base metric name
      */
     public Counter findCounter(String name) {
@@ -271,6 +273,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Gauge in the meter registry
+     * 
      * @param name The base metric name
      */
     public Gauge findGauge(String name) {
@@ -279,6 +282,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Gauges in the meter registry
+     * 
      * @param name The base metric name
      */
     public Collection<Gauge> findGauges(String name) {
@@ -287,6 +291,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Timer in the meter registry
+     * 
      * @param name The base metric name
      */
     public Timer findTimer(String name) {
@@ -295,6 +300,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing DistributionSummary in the meter registry
+     * 
      * @param name The base metric name
      */
     public DistributionSummary findDistributionSummary(String name) {
@@ -303,6 +309,7 @@ public class MetricRegistry {
 
     /**
      * Remove existing Meter in the meter registry
+     * 
      * @param meter The meter to remove
      */
     public void removeMeter(Meter meter) {
@@ -361,14 +368,12 @@ public class MetricRegistry {
             TAG_FLOW_ID, workerTrigger.triggerId().getFlowId()
         );
 
-
         return workerTrigger.triggerId().getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, workerTrigger.triggerId().getTenantId());
     }
 
     public String[] workerGroupTags(String workerGroup, String... tags) {
         return ArrayUtils.addAll(tags, TAG_WORKER_GROUP, workerGroup != null ? workerGroup : "__default__");
     }
-
 
     /**
      * Return tags for current {@link WorkerTaskResult}
@@ -409,7 +414,7 @@ public class MetricRegistry {
      * @return tags to apply to metrics
      */
     public String[] tags(Task task) {
-        return new String[]{
+        return new String[] {
             TAG_TASK_TYPE, task.getType(),
         };
     }
@@ -421,7 +426,7 @@ public class MetricRegistry {
      * @return tags to apply to metrics
      */
     public String[] tags(AbstractTrigger trigger) {
-        var baseTags = new String[]{
+        var baseTags = new String[] {
             TAG_TRIGGER_TYPE, trigger.getType(),
         };
         var labelTags = getLabelTags(trigger.getLabels());
@@ -435,7 +440,7 @@ public class MetricRegistry {
      * @return tags to apply to metrics
      */
     public String[] tags(Execution execution) {
-        var baseTags = new String[]{
+        var baseTags = new String[] {
             TAG_FLOW_ID, execution.getFlowId(),
             TAG_NAMESPACE_ID, execution.getNamespace(),
             TAG_STATE, execution.getState().getCurrent().name(),
@@ -452,7 +457,7 @@ public class MetricRegistry {
      * @return tags to apply to metrics
      */
     public String[] tags(TriggerId triggerId) {
-        var baseTags = new String[]{
+        var baseTags = new String[] {
             TAG_FLOW_ID, triggerId.getFlowId(),
             TAG_NAMESPACE_ID, triggerId.getNamespace()
         };
@@ -466,12 +471,11 @@ public class MetricRegistry {
      * @return tags to apply to metrics
      */
     public String[] tags(ExecutionKilled executionKilled) {
-        var baseTags = new String[]{
+        var baseTags = new String[] {
             TAG_EXECUTION_KILLED_TYPE, executionKilled.getType(),
         };
         return executionKilled.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, executionKilled.getTenantId());
     }
-
 
     /**
      * Return globals tags
@@ -496,23 +500,25 @@ public class MetricRegistry {
     }
 
     private String[] getTenantTag(@Nullable String tenantId) {
-        return tenantId == null ? null : new String[]{TAG_TENANT_ID, tenantId};
+        return tenantId == null ? null : new String[] { TAG_TENANT_ID, tenantId };
     }
 
     /**
      * Speed-optimized version of {@link Label}s to tags conversion.
+     * 
      * @param labels The labels to evaluate against configured keys
      * @return tags based on matching label keys
      */
     private String[] getLabelTags(@NonNull List<Label> labels) {
         final List<String> configuredKeys = metricConfig.getLabels();
-        if (configuredKeys == null) return null;
+        if (configuredKeys == null)
+            return null;
 
         int size = configuredKeys.size() * 2;
         String[] tags = new String[size];
         int i = 0;
 
-        for(String labelKey : configuredKeys) {
+        for (String labelKey : configuredKeys) {
             tags[i++] = TAG_LABEL_PREFIX + "_" + labelKey;
             String labelValue = TAG_LABEL_PLACEHOLDER;
 
@@ -529,4 +535,3 @@ public class MetricRegistry {
         return tags;
     }
 }
-

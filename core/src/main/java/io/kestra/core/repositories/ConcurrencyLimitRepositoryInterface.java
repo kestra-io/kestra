@@ -1,10 +1,11 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.runners.ConcurrencyLimit;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.runners.ConcurrencyLimit;
+
+import jakarta.validation.constraints.NotNull;
 
 public interface ConcurrencyLimitRepositoryInterface {
     /**

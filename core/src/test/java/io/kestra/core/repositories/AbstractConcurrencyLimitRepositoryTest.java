@@ -1,12 +1,14 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.ConcurrencyLimit;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.runners.ConcurrencyLimit;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,9 +30,8 @@ public abstract class AbstractConcurrencyLimitRepositoryTest {
     void update() {
         ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository.update(create("update"));
 
-        ConcurrencyLimit updated =  concurrencyLimit.withRunning(99);
+        ConcurrencyLimit updated = concurrencyLimit.withRunning(99);
         concurrencyLimitRepository.update(updated);
-
 
         var limit = concurrencyLimitRepository.findById("tenant", "namespace", "update");
         assertThat(limit).isNotEmpty();

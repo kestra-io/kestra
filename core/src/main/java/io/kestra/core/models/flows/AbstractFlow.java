@@ -1,11 +1,17 @@
 package io.kestra.core.models.flows;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import io.kestra.core.models.Label;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -14,10 +20,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -80,7 +82,6 @@ public abstract class AbstractFlow implements FlowInterface {
         additionalProperties = Schema.AdditionalPropertiesValue.FALSE
     )
     Map<String, Object> variables;
-
 
     @Valid
     private WorkerGroup workerGroup;

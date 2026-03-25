@@ -1,22 +1,5 @@
 package io.kestra.queue.jdbc.client;
 
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.UnsupportedMessageException;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import io.kestra.jdbc.JdbcQueueItem;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.runner.JdbcQueueConfiguration;
-import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.exception.DataException;
-import org.jooq.impl.DSL;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +8,25 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.zip.CRC32;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.exception.DataException;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.UnsupportedMessageException;
+import io.kestra.jdbc.AbstractJdbcRepository;
+import io.kestra.jdbc.JdbcQueueItem;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.runner.JdbcQueueConfiguration;
+
+import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import lombok.Getter;
 
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
@@ -54,7 +56,8 @@ public class JdbcQueueClient {
     }
 
     public static Integer queueNameToType(String value) {
-        return QUEUE_NAME_CRC32.computeIfAbsent(value, s -> {
+        return QUEUE_NAME_CRC32.computeIfAbsent(value, s ->
+        {
             CRC32 crc32 = new CRC32();
             crc32.update(value.getBytes());
 
@@ -64,7 +67,8 @@ public class JdbcQueueClient {
 
     public void publish(String queue, @Nullable String routingKey, String key, String value) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration -> {
+            dslContextWrapper.transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Map<Field<Object>, Object> fields = HashMap.newHashMap(5);
@@ -91,7 +95,8 @@ public class JdbcQueueClient {
     }
 
     public Integer queueLag(String queue, @Nullable String routingKey) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             DSLContext ctx = DSL.using(configuration);
 
             var condition = field("type").eq(queueNameToType(queue));
@@ -108,11 +113,13 @@ public class JdbcQueueClient {
         });
     }
 
-    public record PublishedMessage(String queue, String routingKey, String key, String value) {}
+    public record PublishedMessage(String queue, String routingKey, String key, String value) {
+    }
 
     public void publish(List<PublishedMessage> messages) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration -> {
+            dslContextWrapper.transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 InsertValuesStepN<Record> insert = context
@@ -144,7 +151,8 @@ public class JdbcQueueClient {
     }
 
     public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, Consumer<byte[]> consumer) {
-        return dslContextWrapper.transactionResult(conf -> {
+        return dslContextWrapper.transactionResult(conf ->
+        {
             DSLContext context = DSL.using(conf);
 
             SelectConditionStep<Record> select = context.select(DSL.asterisk())
@@ -167,7 +175,8 @@ public class JdbcQueueClient {
             if (!queueItems.isEmpty()) {
                 List<Long> processedItems = queueItems
                     .stream()
-                    .map(queueItem -> {
+                    .map(queueItem ->
+                    {
                         consumer.accept(queueItem.value().getBytes());
                         return queueItem.offset();
                     })
@@ -187,7 +196,8 @@ public class JdbcQueueClient {
     }
 
     public Integer subscribeDispatchBatch(String queue, List<String> routingKeys, Consumer<List<byte[]>> consumer) {
-        return dslContextWrapper.transactionResult(conf -> {
+        return dslContextWrapper.transactionResult(conf ->
+        {
             DSLContext context = DSL.using(conf);
 
             SelectConditionStep<Record> select = context.select(DSL.asterisk())
@@ -225,7 +235,8 @@ public class JdbcQueueClient {
     }
 
     public @Nullable Long fetchMaxOffset(String queue) {
-        Long initialOffset = dslContextWrapper.transactionResult(conf -> {
+        Long initialOffset = dslContextWrapper.transactionResult(conf ->
+        {
             DSLContext context = DSL.using(conf);
 
             return context.select(DSL.max(field("offset")))
@@ -238,7 +249,8 @@ public class JdbcQueueClient {
     }
 
     protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, Consumer<byte[]> consumer) {
-        return dslContextWrapper.transactionResult(conf -> {
+        return dslContextWrapper.transactionResult(conf ->
+        {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 
@@ -257,7 +269,8 @@ public class JdbcQueueClient {
 
             if (!queueItems.isEmpty()) {
                 queueItems
-                    .forEach(queueItem -> {
+                    .forEach(queueItem ->
+                    {
                         consumer.accept(queueItem.value().getBytes());
                     });
 
@@ -273,7 +286,8 @@ public class JdbcQueueClient {
     }
 
     public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, Consumer<List<byte[]>> consumer) {
-        return dslContextWrapper.transactionResult(conf -> {
+        return dslContextWrapper.transactionResult(conf ->
+        {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 

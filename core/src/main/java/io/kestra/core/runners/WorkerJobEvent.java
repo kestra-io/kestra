@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.KeyedDispatchEvent;
+
 import jakarta.annotation.Nullable;
 
 /**
@@ -13,13 +14,12 @@ import jakarta.annotation.Nullable;
  * The key is the worker group key (null or empty string for the default group).
  *
  * @param workerGroupKey The worker group key for routing. Null or empty string means the default worker group.
- * @param job            The actual worker job payload.
+ * @param job The actual worker job payload.
  *
  */
 public record WorkerJobEvent(
     String workerGroupKey,
-    WorkerJob job
-) implements KeyedDispatchEvent, HasUID {
+    WorkerJob job) implements KeyedDispatchEvent, HasUID {
 
     public WorkerJobEvent {
         workerGroupKey = normalizeWorkerGroup(workerGroupKey);
@@ -28,7 +28,7 @@ public record WorkerJobEvent(
     /**
      * Creates a WorkerJobEvent for a WorkerTask.
      *
-     * @param workerTask     the worker task
+     * @param workerTask the worker task
      * @param workerGroupKey the worker group key (can be null for default group)
      * @return a new WorkerJobEvent
      */
@@ -39,7 +39,7 @@ public record WorkerJobEvent(
     /**
      * Creates a WorkerJobEvent for a WorkerTrigger.
      *
-     * @param workerTrigger  the worker trigger
+     * @param workerTrigger the worker trigger
      * @param workerGroupKey the worker group key (can be null for default group)
      * @return a new WorkerJobEvent
      */
@@ -50,7 +50,7 @@ public record WorkerJobEvent(
     /**
      * Creates a WorkerJobEvent from an existing WorkerJob.
      *
-     * @param job            the worker job
+     * @param job the worker job
      * @param workerGroupKey the worker group key (can be null for default group)
      * @return a new WorkerJobEvent
      */

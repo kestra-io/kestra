@@ -1,19 +1,20 @@
 package io.kestra.plugin.core.http;
 
+import java.util.Map;
+
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.models.property.Property;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface HttpInterface {
     @Schema(
-            title = "The fully-qualified URI that points to the HTTP destination"
+        title = "The fully-qualified URI that points to the HTTP destination"
     )
     Property<String> getUri();
 
     @Schema(
-            title = "The HTTP method to use"
+        title = "The HTTP method to use"
     )
     Property<String> getMethod();
 
@@ -26,27 +27,27 @@ public interface HttpInterface {
     Property<Map<String, Object>> getParams();
 
     @Schema(
-            title = "The full body as a string"
+        title = "The full body as a string"
     )
     Property<String> getBody();
 
     @Schema(
-            title = "The form data to be send"
+        title = "The form data to be send"
     )
     Property<Map<String, Object>> getFormData();
 
     @Schema(
-            title = "The request content type"
+        title = "The request content type"
     )
     Property<String> getContentType();
 
     @Schema(
-            title = "The headers to pass to the request"
+        title = "The headers to pass to the request"
     )
     Property<Map<CharSequence, CharSequence>> getHeaders();
 
     @Schema(
-            title = "The HTTP request options"
+        title = "The HTTP request options"
     )
     HttpConfiguration getOptions();
 }

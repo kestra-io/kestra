@@ -1,8 +1,8 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.validations.FilesVersionBehaviorValidation;
-import io.kestra.core.validations.KvVersionBehaviorValidation;
 import io.kestra.plugin.core.namespace.Version;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;

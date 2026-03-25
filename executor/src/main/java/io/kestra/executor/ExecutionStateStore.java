@@ -1,9 +1,9 @@
 package io.kestra.executor;
 
-import io.kestra.core.models.executions.Execution;
-
 import java.util.Optional;
 import java.util.function.Function;
+
+import io.kestra.core.models.executions.Execution;
 
 /**
  * This state store is used by the {@link io.kestra.core.runners.Executor} to lock for processing an execution each time it receives a message.

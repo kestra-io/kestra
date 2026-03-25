@@ -1,7 +1,15 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -20,19 +28,12 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.SwitchTaskValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -202,10 +203,11 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     public Switch.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
         return Output.builder()
             .value(rendererValue(runContext))
-            .defaults(cases
-                .entrySet()
-                .stream()
-                .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
+            .defaults(
+                cases
+                    .entrySet()
+                    .stream()
+                    .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
             )
             .build();
     }

@@ -1,6 +1,7 @@
 package io.kestra.worker.processors;
 
 import io.kestra.core.runners.WorkerJob;
+
 import io.micronaut.core.annotation.Blocking;
 
 /**
@@ -9,7 +10,7 @@ import io.micronaut.core.annotation.Blocking;
  * @param <T> the type of {@link WorkerJob} to be processed
  */
 public interface WorkerJobProcessor<T extends WorkerJob> {
-    
+
     /**
      * Processes the given {@link WorkerJob}.
      * <p>
@@ -20,7 +21,7 @@ public interface WorkerJobProcessor<T extends WorkerJob> {
      */
     @Blocking
     void process(T workerJob);
-    
+
     /**
      * Signals the currently running job to stop, if any.
      * <p>

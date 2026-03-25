@@ -1,12 +1,11 @@
 package io.kestra.core.events;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedEpochGenerator;
-
-import java.util.UUID;
 
 /**
  * Strongly-typed wrapper around a UUIDv7 identifier used for Kestra events.
@@ -49,7 +48,8 @@ public record EventId(@JsonValue UUID value) implements Comparable<EventId> {
     @Override
     public int compareTo(EventId other) {
         int cmp = Long.compareUnsigned(this.value.getMostSignificantBits(), other.value.getMostSignificantBits());
-        if (cmp != 0) return cmp;
+        if (cmp != 0)
+            return cmp;
         return Long.compareUnsigned(this.value.getLeastSignificantBits(), other.value.getLeastSignificantBits());
     }
 

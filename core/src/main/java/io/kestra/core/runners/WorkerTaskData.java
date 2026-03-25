@@ -1,13 +1,14 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.micronaut.core.annotation.Nullable;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * Wire-format for the execution context sent with a {@link WorkerTask}.
@@ -15,17 +16,15 @@ import java.util.stream.Stream;
  * Carries the variables map (minus keys the worker reconstructs locally),
  * plus metadata needed to initialize a {@link RunContext} on the worker side.
  *
- * @param variables    The variables map, stripped of worker-reconstructed keys.
+ * @param variables The variables map, stripped of worker-reconstructed keys.
  * @param secretInputs List of input keys that are secrets (for log masking).
- * @param traceParent  OpenTelemetry trace parent for distributed tracing.
+ * @param traceParent OpenTelemetry trace parent for distributed tracing.
  */
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public record WorkerTaskData(
-    @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS)
-    Map<String, Object> variables,
+    @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS) Map<String, Object> variables,
     List<String> secretInputs,
-    @Nullable String traceParent
-) implements WorkerRunContextData {
+    @Nullable String traceParent) implements WorkerRunContextData {
 
     /**
      * Keys excluded from the wire format — the worker reconstructs them locally.

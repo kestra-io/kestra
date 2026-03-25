@@ -1,24 +1,25 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.runners.pebble.PebbleUtils;
-import io.micronaut.context.annotation.Property;
-import io.micronaut.test.annotation.MockBean;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
+import java.time.Instant;
+import java.util.Map;
+
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.event.Level;
 
-import java.time.Instant;
-import java.util.Map;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.runners.pebble.PebbleUtils;
+
+import io.micronaut.context.annotation.Property;
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,14 +1,5 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.runners.TransactionContext;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceStateTransition;
-import io.kestra.core.server.ServiceType;
-import io.micronaut.data.model.Pageable;
-import jakarta.annotation.Nullable;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +7,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceStateTransition;
+import io.kestra.core.server.ServiceType;
+
+import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
 
 /**
  * Repository service for storing service instance.
@@ -43,37 +44,41 @@ public interface ServiceInstanceRepositoryInterface {
      * Find service instances.
      *
      * @param pageable The {@link Pageable}.
-     * @param filters  The list of {@link QueryFilter} to apply.
+     * @param filters The list of {@link QueryFilter} to apply.
      * @return a list of {@link ServiceInstance}.
      */
     ArrayListTotal<ServiceInstance> find(Pageable pageable,
-                                         @Nullable List<QueryFilter> filters);
+        @Nullable List<QueryFilter> filters);
 
     /**
      * Find service instances.
      *
      * @param pageable The {@link Pageable}.
-     * @param states   The set of states to filter on.
-     * @param types    The set of types to filter on.
+     * @param states The set of states to filter on.
+     * @param types The set of types to filter on.
      * @return a list of {@link ServiceInstance}.
      */
     default ArrayListTotal<ServiceInstance> find(Pageable pageable,
-                                                  @Nullable Set<Service.ServiceState> states,
-                                                  @Nullable Set<ServiceType> types) {
+        @Nullable Set<Service.ServiceState> states,
+        @Nullable Set<ServiceType> types) {
         List<QueryFilter> filters = new ArrayList<>();
         if (states != null && !states.isEmpty()) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.STATE)
-                .operation(QueryFilter.Op.IN)
-                .value(states.stream().map(Enum::name).toList())
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.STATE)
+                    .operation(QueryFilter.Op.IN)
+                    .value(states.stream().map(Enum::name).toList())
+                    .build()
+            );
         }
         if (types != null && !types.isEmpty()) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.TYPE)
-                .operation(QueryFilter.Op.IN)
-                .value(types.stream().map(Enum::name).toList())
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.TYPE)
+                    .operation(QueryFilter.Op.IN)
+                    .value(types.stream().map(Enum::name).toList())
+                    .build()
+            );
         }
         return find(pageable, filters);
     }
@@ -98,12 +103,12 @@ public interface ServiceInstanceRepositoryInterface {
      *
      * @param type The service type.
      * @param from The date from (inclusive)
-     * @param to   The date to (exclusive)
+     * @param to The date to (exclusive)
      * @return the list of {@link ServiceInstance}.
      */
     List<ServiceInstance> findAllInstancesBetween(final ServiceType type,
-                                                  final Instant from,
-                                                  final Instant to);
+        final Instant from,
+        final Instant to);
 
     /**
      * Finds all service instances which are NOT {@link Service.ServiceState#RUNNING}, then process them using the consumer.
@@ -119,14 +124,15 @@ public interface ServiceInstanceRepositoryInterface {
      * @return an optional of the {@link ServiceInstance} or {@link Optional#empty()} if the service is not running.
      */
     ServiceStateTransition.Response mayTransitServiceTo(final TransactionContext txContext,
-                                                        final ServiceInstance instance,
-                                                        final Service.ServiceState newState,
-                                                        final String reason);
+        final ServiceInstance instance,
+        final Service.ServiceState newState,
+        final String reason);
 
     /**
      * Finds all service instances that are in the states, then process them using the consumer.
      */
     void processInstanceInStates(Set<Service.ServiceState> states, BiConsumer<TransactionContext, ServiceInstance> consumer);
+
     /**
      * Purge all instances in the EMPTY state older than the until date.
      *
@@ -173,7 +179,8 @@ public interface ServiceInstanceRepositoryInterface {
         if (filters == null || filters.isEmpty()) {
             return filters;
         }
-        return filters.stream().map(filter -> {
+        return filters.stream().map(filter ->
+        {
             if (filter.field() != QueryFilter.Field.STATE) {
                 return filter;
             }
@@ -181,7 +188,8 @@ public interface ServiceInstanceRepositoryInterface {
                 case List<?> list -> list.stream().map(Object::toString).toList();
                 case String s -> List.of(s);
                 default -> throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
-                    "STATE requires a String or List value");
+                    "STATE requires a String or List value"
+                );
             };
             List<String> expanded = expandStateNamesForBackwardCompat(stateNames);
             if (expanded == stateNames) {

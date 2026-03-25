@@ -1,10 +1,8 @@
 package io.kestra.core.scheduler.events;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.kestra.core.utils.Enums;
 
-import java.util.Locale;
-import java.util.regex.Pattern;
+import io.kestra.core.utils.Enums;
 
 /**
  * Supported event or command types for trigger.
@@ -25,7 +23,7 @@ public enum TriggerEventType {
     SET_DISABLE_TRIGGER,
     // ERROR
     INVALID;
-    
+
     @JsonCreator
     static TriggerEventType from(final String s) {
         return Enums.getForNameIgnoreCase(s, TriggerEventType.class, INVALID);

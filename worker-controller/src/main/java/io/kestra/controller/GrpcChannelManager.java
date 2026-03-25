@@ -1,22 +1,5 @@
 package io.kestra.controller;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.grpc.Channel;
-import io.grpc.EquivalentAddressGroup;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.NameResolverRegistry;
-import io.kestra.controller.config.GrpcChannelConfiguration;
-import io.kestra.controller.config.GrpcConfiguration;
-import io.kestra.controller.config.WorkerControllersConfiguration;
-import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
-import io.kestra.core.contexts.KestraContext;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +9,32 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.controller.config.GrpcChannelConfiguration;
+import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.config.WorkerControllersConfiguration;
+import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
+import io.kestra.core.contexts.KestraContext;
+
+import io.grpc.Channel;
+import io.grpc.EquivalentAddressGroup;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.NameResolverRegistry;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Manages gRPC channels for worker-to-controller communication.
  * <p>
  * Supports two service discovery strategies:
  * <ul>
- *   <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
- *   <li>DNS: DNS SRV/A record resolution with gRPC load-balancing</li>
+ * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
+ * <li>DNS: DNS SRV/A record resolution with gRPC load-balancing</li>
  * </ul>
  * <p>
  */
@@ -59,8 +61,8 @@ public class GrpcChannelManager {
      * Creates a new {@link GrpcChannelManager} instance.
      *
      * @param grpcChannelConfiguration the gRPC channel configuration.
-     * @param grpcConfiguration        the global gRPC configuration.
-     * @param controllersConfig        the multi-endpoint controllers configuration.
+     * @param grpcConfiguration the global gRPC configuration.
+     * @param controllersConfig the multi-endpoint controllers configuration.
      */
     @Inject
     public GrpcChannelManager(GrpcChannelConfiguration grpcChannelConfiguration, GrpcConfiguration grpcConfiguration, WorkerControllersConfiguration controllersConfig) {
@@ -88,7 +90,7 @@ public class GrpcChannelManager {
     public Channel getDefaultChannel() {
         return defaultChannel;
     }
-    
+
     /**
      * Create a new gRPC Channel.
      * <p>
@@ -124,7 +126,8 @@ public class GrpcChannelManager {
         }
 
         List<EquivalentAddressGroup> addresses = staticConfig.endpoints().stream()
-            .map(e -> {
+            .map(e ->
+            {
                 log.debug("Adding static controller endpoint: {}:{}", e.host(), e.port());
                 return new EquivalentAddressGroup(new InetSocketAddress(e.host(), e.port()));
             })

@@ -2,6 +2,7 @@ package io.kestra.core.models.flows;
 
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.FlowValidation;
+
 import jakarta.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

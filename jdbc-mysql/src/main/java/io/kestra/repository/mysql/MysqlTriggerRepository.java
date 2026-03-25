@@ -1,26 +1,27 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.repositories.RepositoryBean;
-import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
-import io.kestra.jdbc.services.JdbcFilterService;
-import io.kestra.core.scheduler.model.TriggerState;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
+import java.util.Date;
+import java.util.List;
+
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import java.util.Date;
-import java.util.List;
+import io.kestra.core.repositories.RepositoryBean;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
+import io.kestra.jdbc.services.JdbcFilterService;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 @RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlTriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject
     public MysqlTriggerRepository(@Named("triggers") MysqlRepository<TriggerState> repository,
-                                  JdbcFilterService filterService) {
+        JdbcFilterService filterService) {
         super(repository, filterService);
     }
 

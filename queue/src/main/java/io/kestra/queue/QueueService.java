@@ -1,7 +1,11 @@
 package io.kestra.queue;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -13,15 +17,12 @@ import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
+
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
 
 @Slf4j
 @Singleton
@@ -64,13 +65,19 @@ public class QueueService {
         try {
             byte[] serialize = MAPPER.writeValueAsBytes(message);
 
-            if (queueConfiguration.getMessageProtection() != null && queueConfiguration.getMessageProtection().getEnabled() && serialize.length >= queueConfiguration.getMessageProtection().getLimit()) {
+            if (
+                queueConfiguration.getMessageProtection() != null && queueConfiguration.getMessageProtection().getEnabled()
+                    && serialize.length >= queueConfiguration.getMessageProtection().getLimit()
+            ) {
                 metricRegistry
-                    .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName()).increment();
+                    .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName())
+                    .increment();
 
                 // we let terminated execution messages to go through anyway
                 if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("[" + cls.getSimpleName() + "] message of size " + serialize.length + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit());
+                    throw new MessageTooBigException(
+                        "[" + cls.getSimpleName() + "] message of size " + serialize.length + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit()
+                    );
                 }
             }
 

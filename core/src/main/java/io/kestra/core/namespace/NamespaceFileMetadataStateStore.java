@@ -1,11 +1,12 @@
 package io.kestra.core.namespace;
 
-import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-import jakarta.annotation.Nullable;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Abstraction layer for namespace file metadata operations, used by {@link io.kestra.core.storages.InternalNamespace}.
@@ -24,10 +25,10 @@ public interface NamespaceFileMetadataStateStore {
      * Find a namespace file metadata entry by tenant, namespace, and path.
      * Optionally filter by a specific version and/or include deleted entries.
      *
-     * @param tenantId     the tenant ID
-     * @param namespace    the namespace
-     * @param path         the file path
-     * @param version      optional version number (if {@code null}, returns the latest non-deleted entry)
+     * @param tenantId the tenant ID
+     * @param namespace the namespace
+     * @param path the file path
+     * @param version optional version number (if {@code null}, returns the latest non-deleted entry)
      * @param allowDeleted whether to include deleted entries
      * @return an optional namespace file metadata entry
      * @throws IOException if an I/O error occurs
@@ -38,10 +39,10 @@ public interface NamespaceFileMetadataStateStore {
      * Find all non-deleted namespace file metadata entries for a given tenant and namespace,
      * optionally filtered by path prefix and containing text.
      *
-     * @param tenantId  the tenant ID
+     * @param tenantId the tenant ID
      * @param namespace the namespace
      * @param parentPath optional parent path prefix filter (for children queries)
-     * @param recursive  whether to search recursively under parentPath
+     * @param recursive whether to search recursively under parentPath
      * @return list of active namespace file metadata entries
      */
     List<NamespaceFileMetadata> findChildren(String tenantId, String namespace, @Nullable String parentPath, boolean recursive);
@@ -50,8 +51,8 @@ public interface NamespaceFileMetadataStateStore {
      * Find all non-deleted namespace file metadata entries for a given tenant and namespace,
      * optionally filtered by a containing substring.
      *
-     * @param tenantId   the tenant ID
-     * @param namespace  the namespace
+     * @param tenantId the tenant ID
+     * @param namespace the namespace
      * @param containing optional path substring filter (can be {@code null})
      * @return list of active namespace file metadata entries
      */
@@ -61,9 +62,9 @@ public interface NamespaceFileMetadataStateStore {
      * Find namespace file metadata entries by tenant, namespace, and a list of paths.
      * Used for move and delete operations.
      *
-     * @param tenantId     the tenant ID
-     * @param namespace    the namespace
-     * @param paths        the list of paths to search for
+     * @param tenantId the tenant ID
+     * @param namespace the namespace
+     * @param paths the list of paths to search for
      * @param allowDeleted whether to include deleted entries
      * @return list of matching namespace file metadata entries
      */
@@ -73,9 +74,9 @@ public interface NamespaceFileMetadataStateStore {
      * Find all versions of namespace file metadata entries by tenant, namespace, and a list of paths.
      * Used for move operations that need to access version history.
      *
-     * @param tenantId     the tenant ID
-     * @param namespace    the namespace
-     * @param paths        the list of paths to search for
+     * @param tenantId the tenant ID
+     * @param namespace the namespace
+     * @param paths the list of paths to search for
      * @return list of all versions of matching namespace file metadata entries
      */
     List<NamespaceFileMetadata> findAllVersionsByPaths(String tenantId, String namespace, List<String> paths);
@@ -83,7 +84,7 @@ public interface NamespaceFileMetadataStateStore {
     /**
      * Check whether any non-deleted namespace file entries exist in the given namespace.
      *
-     * @param tenantId  the tenant ID
+     * @param tenantId the tenant ID
      * @param namespace the namespace
      * @return {@code true} if at least one active namespace file entry exists
      */

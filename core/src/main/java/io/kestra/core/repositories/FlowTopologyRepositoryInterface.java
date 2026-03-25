@@ -1,10 +1,9 @@
 package io.kestra.core.repositories;
 
+import java.util.List;
 
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.topologies.FlowTopology;
-
-import java.util.List;
 
 public interface FlowTopologyRepositoryInterface {
     List<FlowTopology> findByFlow(String tenantId, String namespace, String flowId, Boolean destinationOnly);

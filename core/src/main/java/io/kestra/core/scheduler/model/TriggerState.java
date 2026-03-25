@@ -1,6 +1,13 @@
 package io.kestra.core.scheduler.model;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
@@ -10,16 +17,11 @@ import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.SchedulerClock;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Immutable class representing the state of a trigger.
@@ -175,9 +177,9 @@ public final class TriggerState implements TriggerId {
     }
 
     /**
-     * Updates this trigger state for the given  {@code nextEvaluationDate}.
+     * Updates this trigger state for the given {@code nextEvaluationDate}.
      *
-     * @param clock              the scheduler clock.
+     * @param clock the scheduler clock.
      * @param nextEvaluationDate the next evaluation date.
      * @return a new {@link TriggerState}
      */
@@ -186,9 +188,9 @@ public final class TriggerState implements TriggerId {
     }
 
     /**
-     * Updates this trigger state for the given  {@code nextEvaluationDate}.
+     * Updates this trigger state for the given {@code nextEvaluationDate}.
      *
-     * @param clock              the scheduler clock.
+     * @param clock the scheduler clock.
      * @param nextEvaluationDate the next evaluation date.
      * @return a new {@link TriggerState}
      */
@@ -202,7 +204,7 @@ public final class TriggerState implements TriggerId {
     /**
      * Updates this trigger state for the given {@link Backfill}.
      *
-     * @param clock    the scheduler clock.
+     * @param clock the scheduler clock.
      * @param backfill the backfill.
      * @return a new {@link TriggerState}
      */
@@ -221,7 +223,7 @@ public final class TriggerState implements TriggerId {
     /**
      * Updates this trigger state for the given {@link Execution}.
      *
-     * @param clock     the scheduler clock.
+     * @param clock the scheduler clock.
      * @param execution the execution.
      * @return a new {@link TriggerState}
      */
@@ -242,7 +244,7 @@ public final class TriggerState implements TriggerId {
 
         return update(clock).disabled(disabled).build();
     }
-    
+
     /**
      * Resets this trigger state.
      *

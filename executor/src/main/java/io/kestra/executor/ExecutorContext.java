@@ -1,5 +1,8 @@
 package io.kestra.executor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -9,10 +12,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
-import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
+import lombok.Getter;
 
 @Getter
 public class ExecutorContext {
@@ -22,7 +23,8 @@ public class ExecutorContext {
      * {@link RunContext} (needed for executor-side rendering like {@code runIf} and worker group keys).
      * The RunContext does NOT travel to the worker — only the WorkerTask does.
      */
-    public record ExecutorWorkerTask(WorkerTask workerTask, RunContext runContext) {}
+    public record ExecutorWorkerTask(WorkerTask workerTask, RunContext runContext) {
+    }
 
     private Execution execution;
     private Exception exception;

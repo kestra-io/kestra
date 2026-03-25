@@ -1,30 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
-import io.kestra.core.models.flows.check.Check;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.TaskForExecution;
-import io.kestra.core.models.triggers.AbstractTriggerForExecution;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.plugin.core.debug.Return;
-import io.kestra.webserver.responses.PagedResults;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.*;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.client.multipart.MultipartBody;
-import io.micronaut.reactor.http.client.ReactorHttpClient;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +12,34 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.TaskForExecution;
+import io.kestra.core.models.triggers.AbstractTriggerForExecution;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.webserver.responses.PagedResults;
+
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.*;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.GET;
@@ -72,13 +75,17 @@ class ExecutionControllerTest {
 
     private MultipartBody createExecutionInputsFlowBody() {
         // Trigger execution
-        File applicationFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
-        ).getPath());
+        File applicationFile = new File(
+            Objects.requireNonNull(
+                ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
+            ).getPath()
+        );
 
-        File logbackFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("logback.xml")
-        ).getPath());
+        File logbackFile = new File(
+            Objects.requireNonNull(
+                ExecutionControllerTest.class.getClassLoader().getResource("logback.xml")
+            ).getPath()
+        );
 
         return MultipartBody.builder()
             .addPart("string", "myString")
@@ -96,7 +103,8 @@ class ExecutionControllerTest {
 
     @Test
     void webhookFlowNotFound() {
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class,
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .POST(
@@ -109,7 +117,8 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
-        exception = assertThrows(HttpClientResponseException.class,
+        exception = assertThrows(
+            HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .PUT(
@@ -122,7 +131,8 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
-        exception = assertThrows(HttpClientResponseException.class,
+        exception = assertThrows(
+            HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .POST(
@@ -135,7 +145,8 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
-        exception = assertThrows(HttpClientResponseException.class,
+        exception = assertThrows(
+            HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 GET("/api/v1/main/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13"),
                 Execution.class
@@ -144,7 +155,8 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
-        exception = assertThrows(HttpClientResponseException.class,
+        exception = assertThrows(
+            HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .POST(
@@ -159,12 +171,12 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/webhook-dynamic-key.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook-dynamic-key.yaml" })
     void webhookDynamicKey() {
         Execution execution = client.toBlocking().retrieve(
             GET(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
-                ),
+                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
+            ),
             Execution.class
         );
 
@@ -173,13 +185,13 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/webhook-secret-key.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook-secret-key.yaml" })
     @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
     void webhookDynamicKeyFromASecret() {
         Execution execution = client.toBlocking().retrieve(
             GET(
-                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
-                ),
+                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
+            ),
             Execution.class
         );
 
@@ -188,9 +200,10 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/webhook-with-condition.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook-with-condition.yaml" })
     void webhookWithCondition() {
-        record Hello(String hello) {}
+        record Hello(String hello) {
+        }
 
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
@@ -219,9 +232,10 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/webhook-inputs.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook-inputs.yaml" })
     void webhookWithInputs() {
-        record Hello(String hello) {}
+        record Hello(String hello) {
+        }
 
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
@@ -238,9 +252,9 @@ class ExecutionControllerTest {
 
     @Test
     void resolveAbsoluteDateTime() {
-        final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6,10, 0, ZoneId.systemDefault());
+        final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6, 10, 0, ZoneId.systemDefault());
         final Duration offset = Duration.ofSeconds(5L);
-        final ZonedDateTime baseTimestamp = ZonedDateTime.of(2024, 2, 3, 5, 6,10, 0, ZoneId.systemDefault());
+        final ZonedDateTime baseTimestamp = ZonedDateTime.of(2024, 2, 3, 5, 6, 10, 0, ZoneId.systemDefault());
 
         assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null)).isEqualTo(absoluteTimestamp);
         assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp)).isEqualTo(baseTimestamp.minus(offset));
@@ -277,7 +291,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    @LoadFlows(value = {"flows/valids/full.yaml"})
+    @LoadFlows(value = { "flows/valids/full.yaml" })
     void getExecutionFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/flows/io.kestra.tests/full"),
@@ -290,7 +304,7 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/full.yaml"})
+    @LoadFlows(value = { "flows/valids/full.yaml" })
     void getExecutionFlowForExecutionWithOldUrl() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/flows/io.kestra.tests/full"),
@@ -304,7 +318,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    @LoadFlows(value = {"flows/valids/webhook.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook.yaml" })
     void getExecutionFlowForExecutionById() {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
@@ -328,7 +342,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"})
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void getExecutionDistinctNamespaceExecutables() {
         List<String> result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/namespaces"),
@@ -340,7 +354,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows(value = {"flows/valids/webhook.yaml", "flows/valids/minimal.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook.yaml", "flows/valids/minimal.yaml" })
     void getExecutionFlowFromNamespace() {
         List<FlowForExecution> result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/namespaces/io.kestra.tests/flows"),
@@ -352,27 +366,41 @@ class ExecutionControllerTest {
 
     @Test
     void badQueryFilters() {
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(GET(
-                "/api/v1/main/executions/search?filters[triggerId][EQUALS]=test"), PagedResults.class));
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[triggerId][EQUALS]=test"
+                ), PagedResults.class
+            )
+        );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(exception.getMessage()).isEqualTo("Invalid query filters: Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND");
+        assertThat(exception.getMessage()).isEqualTo(
+            "Invalid query filters: Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND"
+        );
 
-        exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(GET(
-                "/api/v1/main/executions/search?filters[startDate][EQUALS]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][EQUALS]=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+        exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?filters[startDate][EQUALS]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][EQUALS]=2023-06-05T00:00:00.000%2B02:00"
+                ), PagedResults.class
+            )
+        );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
 
-        HttpClientResponseException exception_oldParameters = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(GET(
-                "/api/v1/main/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+        HttpClientResponseException exception_oldParameters = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/main/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"
+                ), PagedResults.class
+            )
+        );
         assertThat(exception_oldParameters.getStatus().getCode()).isEqualTo(422);
         assertThat(exception_oldParameters.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"})
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void scheduleDate() {
         // given
         ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1);
@@ -414,7 +442,7 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"})
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.
         // adding it would mean updating the Execution itself, which is too annoying, so for the test we just deserialize to a Map.
@@ -430,14 +458,16 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"})
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
     void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
-        var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=system.label:system", null)
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-            Execution.class
-        ));
+        var error = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=system.label:system", null)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                Execution.class
+            )
+        );
 
         assertThat(error.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
@@ -451,17 +481,16 @@ class ExecutionControllerTest {
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () ->
-                client.toBlocking().retrieve(
-                    HttpRequest.POST("/api/v1/main/executions/" + namespaceId + "/" + flowId, null),
-                    Execution.class
-                )
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/executions/" + namespaceId + "/" + flowId, null),
+                Execution.class
+            )
         );
         assertThat(e.getMessage()).contains("No VM provided");
     }
 
     void createFlowWithFailingCheck(String namespaceId, String flowId) {
-         Flow create = Flow.builder()
+        Flow create = Flow.builder()
             .id(flowId)
             .tenantId(MAIN_TENANT)
             .namespace(namespaceId)
@@ -474,7 +503,5 @@ class ExecutionControllerTest {
             Flow.class
         );
     }
-
-
 
 }

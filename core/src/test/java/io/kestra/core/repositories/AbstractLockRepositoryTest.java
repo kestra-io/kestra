@@ -1,12 +1,14 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.lock.Lock;
-import jakarta.inject.Inject;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 
-import java.util.List;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.lock.Lock;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

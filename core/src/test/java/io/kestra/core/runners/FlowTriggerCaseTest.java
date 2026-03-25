@@ -1,17 +1,18 @@
 package io.kestra.core.runners;
 
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.services.TaskOutputService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,14 +36,16 @@ public class FlowTriggerCaseTest {
 
         Execution flowListenerNoInput = runnerUtils.awaitFlowExecution(
             e -> e.getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE,
-            "trigger-flow-listener-no-inputs");
+            "trigger-flow-listener-no-inputs"
+        );
         Execution flowListener = runnerUtils.awaitFlowExecution(
             e -> e.getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE,
-            "trigger-flow-listener");
+            "trigger-flow-listener"
+        );
         Execution flowListenerNamespace = runnerUtils.awaitFlowExecution(
             e -> e.getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE,
-            "trigger-flow-listener-namespace-condition");
-
+            "trigger-flow-listener-namespace-condition"
+        );
 
         assertThat(flowListener.getTaskRunList().size()).isEqualTo(1);
         assertThat(flowListener.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -78,7 +81,8 @@ public class FlowTriggerCaseTest {
             4,
             MAIN_TENANT,
             "io.kestra.tests.trigger.pause",
-            "trigger-flow-listener-with-pause");
+            "trigger-flow-listener-with-pause"
+        );
 
         assertThat(triggeredExec.size()).isEqualTo(4);
         List<Execution> sortedExecs = triggeredExec.stream()
@@ -98,7 +102,8 @@ public class FlowTriggerCaseTest {
             5,
             tenantId,
             "io.kestra.tests.trigger.concurrency",
-            "trigger-flow-listener-with-concurrency-limit");
+            "trigger-flow-listener-with-concurrency-limit"
+        );
 
         assertThat(triggeredExec.size()).isEqualTo(5);
         assertThat(triggeredExec.stream().anyMatch(e -> e.getOutputs().get("status").equals("RUNNING") && e.getOutputs().get("executionId").equals(execution1.getId()))).isTrue();

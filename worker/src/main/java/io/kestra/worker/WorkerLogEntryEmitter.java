@@ -1,19 +1,21 @@
 package io.kestra.worker;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
+
 import com.google.common.base.Suppliers;
+
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.runners.DefaultLogEntryEmitter;
 import io.kestra.core.runners.LogEntryEmitter;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Supplier;
 
 /**
  * Implementation of {@link LogEntryEmitter} that emits log entries to intra worker queue {@link WorkerQueue}.
@@ -22,7 +24,7 @@ import java.util.function.Supplier;
 @Requires(property = "kestra.server-type", value = "WORKER")
 @Replaces(DefaultLogEntryEmitter.class)
 public class WorkerLogEntryEmitter implements LogEntryEmitter {
-    
+
     private final Supplier<WorkerQueue<LogEntry>> workerLogQueue;
 
     /**

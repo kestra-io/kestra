@@ -1,18 +1,20 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.plugin.core.trigger.Schedule;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.plugin.core.debug.Return;
-import io.kestra.plugin.core.log.Log;
-import io.kestra.core.utils.IdUtils;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.trigger.Schedule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,16 +24,22 @@ class FlowWithSourceTest {
         FlowWithSource flow = FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
-            .tasks(List.of(
-                Return.builder()
-                    .id(IdUtils.create())
-                    .type(Return.class.getName())
-                    .format(Property.ofValue("123456789 \n123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789\n" +
-                        "123456789 \n" +
-                        "123456789 \n" +
-                        "123456789     \n"))
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id(IdUtils.create())
+                        .type(Return.class.getName())
+                        .format(
+                            Property.ofValue(
+                                "123456789 \n123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789\n" +
+                                    "123456789 \n" +
+                                    "123456789 \n" +
+                                    "123456789     \n"
+                            )
+                        )
+                        .build()
+                )
+            )
             .build();
 
         flow = flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
@@ -47,13 +55,15 @@ class FlowWithSourceTest {
         FlowWithSource.FlowWithSourceBuilder<?, ?> builder = FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
-            .tasks(List.of(
-                Log.builder()
-                    .id(IdUtils.create())
-                    .type(Log.class.getName())
-                    .message("Hello World")
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Hello World")
+                        .build()
+                )
+            )
             .triggers(List.of(Schedule.builder().id("schedule").cron("0 1 9 * * *").build()));
 
         FlowWithSource flow = builder
@@ -75,48 +85,66 @@ class FlowWithSourceTest {
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .description("description")
-            .labels(List.of(
-                new Label("key", "value")
-            ))
-            .inputs(List.of(
-                StringInput.builder().id("strInput").build()
-            ))
-            .variables(Map.of(
-                "varKey", "varValue"
-            ))
-            .tasks(List.of(
-                Log.builder()
-                    .id(IdUtils.create())
-                    .type(Log.class.getName())
-                    .message("Hello World")
-                    .build()
-            ))
-            .errors(List.of(
-                Log.builder()
-                    .id(IdUtils.create())
-                    .type(Log.class.getName())
-                    .message("Error")
-                    .build()
-            ))
-            ._finally(List.of(
-                Log.builder()
-                    .id(IdUtils.create())
-                    .type(Log.class.getName())
-                    .message("Finally")
-                    .build()
-            ))
-            .triggers(List.of(
-                Schedule.builder().id("schedule").cron("0 1 9 * * *").build()
-            ))
-            .pluginDefaults(List.of(
-                PluginDefault.builder()
-                    .type(Log.class.getName())
-                    .forced(true)
-                    .values(Map.of(
-                        "message", "Default message"
-                    ))
-                    .build()
-            ))
+            .labels(
+                List.of(
+                    new Label("key", "value")
+                )
+            )
+            .inputs(
+                List.of(
+                    StringInput.builder().id("strInput").build()
+                )
+            )
+            .variables(
+                Map.of(
+                    "varKey", "varValue"
+                )
+            )
+            .tasks(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Hello World")
+                        .build()
+                )
+            )
+            .errors(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Error")
+                        .build()
+                )
+            )
+            ._finally(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Finally")
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder().id("schedule").cron("0 1 9 * * *").build()
+                )
+            )
+            .pluginDefaults(
+                List.of(
+                    PluginDefault.builder()
+                        .type(Log.class.getName())
+                        .forced(true)
+                        .values(
+                            Map.of(
+                                "message", "Default message"
+                            )
+                        )
+                        .build()
+                )
+            )
             .concurrency(
                 Concurrency.builder()
                     .behavior(Concurrency.Behavior.CANCEL)

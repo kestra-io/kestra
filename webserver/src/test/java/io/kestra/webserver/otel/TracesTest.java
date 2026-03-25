@@ -1,5 +1,10 @@
 package io.kestra.webserver.otel;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
 import io.kestra.core.models.executions.Execution;
@@ -7,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.webserver.tenants.TenantValidationFilter;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
@@ -18,16 +24,12 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@KestraTest(startRunner = true, environments = {"test", "otel"})
+@KestraTest(startRunner = true, environments = { "test", "otel" })
 public class TracesTest {
     @RegisterExtension
     static final OpenTelemetryExtension otelTesting = OpenTelemetryExtension.create();
@@ -50,7 +52,7 @@ public class TracesTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void runningAFlowShouldGenerateTraces(String tenantId) {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
 

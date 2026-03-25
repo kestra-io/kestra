@@ -1,12 +1,12 @@
 package io.kestra.core.repositories;
 
-import io.micronaut.context.annotation.Requires;
-import jakarta.inject.Singleton;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Singleton;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -18,6 +18,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Singleton
 @Requires(property = "kestra.server-type", notEquals = "WORKER")
 @Retention(RUNTIME)
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
+@Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD })
 public @interface RepositoryBean {
 }

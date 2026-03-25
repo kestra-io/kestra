@@ -1,6 +1,13 @@
 package io.kestra.cli.commands.servers;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -8,15 +15,10 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 @CommandLine.Command(
     name = "executor",
@@ -35,28 +37,35 @@ public class ExecutorCommand extends AbstractServerCommand {
     @Inject
     private StartExecutorService startExecutorService;
 
-    @CommandLine.Option(names = {"-f", "--flow-path"}, description = "Tenant identifier required to load flows from the specified path")
+    @CommandLine.Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
 
     @CommandLine.Option(names = "--tenant", description = "Tenant identifier, Required to load flows from path")
     private String tenantId;
 
-    @CommandLine.Option(names = {"--ignore-executions"}, split=",", description = "a list of execution identifiers to ignore, separated by a coma; for troubleshooting only")
+    @CommandLine.Option(names = { "--ignore-executions" }, split = ",", description = "a list of execution identifiers to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreExecutions = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--ignore-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to ignore, separated by a coma; for troubleshooting only")
+    @CommandLine.Option(names = { "--ignore-flows" }, split = ",", description = "a list of flow identifiers (namespace.flowId) to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreFlows = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--ignore-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only")
+    @CommandLine.Option(
+        names = { "--ignore-namespaces" }, split = ",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only"
+    )
     private List<String> ignoreNamespaces = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--ignore-tenants"}, split=",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
+    @CommandLine.Option(names = { "--ignore-tenants" }, split = ",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreTenants = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--start-executors"}, split=",", description = "List of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue; for debugging only")
+    @CommandLine.Option(
+        names = { "--start-executors" }, split = ",", description = "List of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue; for debugging only"
+    )
     private List<String> startExecutors = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--not-start-executors"}, split=",", description = "Lst of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue; for debugging only")
+    @CommandLine.Option(
+        names = { "--not-start-executors" }, split = ",",
+        description = "Lst of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue; for debugging only"
+    )
     private List<String> notStartExecutors = Collections.emptyList();
 
     @SuppressWarnings("unused")

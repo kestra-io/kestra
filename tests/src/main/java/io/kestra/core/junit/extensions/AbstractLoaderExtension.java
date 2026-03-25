@@ -1,15 +1,5 @@
 package io.kestra.core.junit.extensions;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.serializers.YamlParser;
-import io.kestra.core.utils.TestsUtils;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.data.model.Pageable;
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -17,13 +7,25 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
+
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.utils.TestsUtils;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.data.model.Pageable;
+
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 
 public abstract class AbstractLoaderExtension {
 
     protected ApplicationContext context;
 
-    protected void loadApplicationContext(ExtensionContext extensionContext){
+    protected void loadApplicationContext(ExtensionContext extensionContext) {
         if (context == null) {
             extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())).put("test", "bla");
 
@@ -32,7 +34,8 @@ public abstract class AbstractLoaderExtension {
 
             if (context == null) {
                 throw new IllegalStateException(
-                    "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'");
+                    "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'"
+                );
             }
         }
     }
@@ -42,7 +45,8 @@ public abstract class AbstractLoaderExtension {
         loadApplicationContext(extensionContext);
 
         LocalFlowRepositoryLoader repositoryLoader = context.getBean(
-            LocalFlowRepositoryLoader.class);
+            LocalFlowRepositoryLoader.class
+        );
 
         for (String path : paths) {
             URL resource = loadFile(path);
@@ -67,7 +71,8 @@ public abstract class AbstractLoaderExtension {
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> flowIds.contains(flow.getId()))
             .filter(flow -> tenantId.equals(flow.getTenantId()))
-            .forEach(flow -> {
+            .forEach(flow ->
+            {
                 flowRepository.deleteWithoutAcl(flow);
                 executionRepository.findByFlowId(tenantId, flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                     .forEach(executionRepository::delete);

@@ -1,11 +1,11 @@
 package io.kestra.core.queues;
 
+import java.util.List;
+import java.util.function.Consumer;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.utils.Either;
-
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * A subscriber for consuming messages from a queue.
@@ -20,7 +20,7 @@ public interface QueueSubscriber<T extends Event> {
      * Starts a subscription to consume messages one by one from the queue.
      *
      * @param consumer the consumer that will process messages; receives either a successfully
-     *                 deserialized event or a {@link DeserializationException}
+     *        deserialized event or a {@link DeserializationException}
      * @return this subscriber instance for method chaining
      *
      * @see #subscribeBatch(Consumer)
@@ -31,7 +31,7 @@ public interface QueueSubscriber<T extends Event> {
      * Starts a subscription to consume messages in batch from the queue.
      *
      * @param consumer the consumer that will process messages; receives a list of either a successfully
-     *                 deserialized event or a {@link DeserializationException}
+     *        deserialized event or a {@link DeserializationException}
      * @return this subscriber instance for method chaining
      *
      * @see #subscribe(Consumer)

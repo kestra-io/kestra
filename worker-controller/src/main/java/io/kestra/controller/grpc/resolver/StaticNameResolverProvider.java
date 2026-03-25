@@ -1,11 +1,11 @@
 package io.kestra.controller.grpc.resolver;
 
+import java.net.URI;
+import java.util.List;
+
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
-
-import java.net.URI;
-import java.util.List;
 
 /**
  * A gRPC NameResolverProvider that provides static list of controller endpoints.
@@ -14,6 +14,7 @@ import java.util.List;
  * of controller addresses for load balancing.
  * <p>
  * Usage:
+ * 
  * <pre>
  * ManagedChannelBuilder.forTarget("static:///controllers")
  * </pre>

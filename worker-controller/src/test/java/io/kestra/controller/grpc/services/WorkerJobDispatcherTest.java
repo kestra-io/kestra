@@ -1,30 +1,5 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
-import io.kestra.controller.grpc.WorkerJobResponse;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.executor.WorkerJobRunningStateStore;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.KeyedDispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueSubscriber;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.runners.WorkerJobEvent;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.server.ClusterEvent;
-import io.kestra.core.utils.Either;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +12,33 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.controller.grpc.WorkerJobResponse;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerJobEvent;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.server.ClusterEvent;
+import io.kestra.core.utils.Either;
+
+import io.grpc.stub.StreamObserver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -91,14 +93,16 @@ class WorkerJobDispatcherTest {
         // Mock cluster event queue subscriber and capture the consumer
         @SuppressWarnings("unchecked")
         QueueSubscriber<ClusterEvent> clusterEventSubscriber = mock(QueueSubscriber.class);
-        when(clusterEventSubscriber.subscribe(any())).thenAnswer(invocation -> {
+        when(clusterEventSubscriber.subscribe(any())).thenAnswer(invocation ->
+        {
             clusterEventConsumer = invocation.getArgument(0);
             return clusterEventSubscriber;
         });
         when(mockClusterEventQueue.subscriber()).thenReturn(clusterEventSubscriber);
 
         // Create mock subscribers for each group
-        when(mockQueue.subscriber(anyString())).thenAnswer(invocation -> {
+        when(mockQueue.subscriber(anyString())).thenAnswer(invocation ->
+        {
             String group = invocation.getArgument(0);
             MockQueueSubscriber subscriber = new MockQueueSubscriber(group);
             createdSubscribers.add(subscriber);
@@ -496,11 +500,11 @@ class WorkerJobDispatcherTest {
             // When
             for (int i = 0; i < numWorkers; i++) {
                 final int workerId = i;
-                executor.submit(() -> {
+                executor.submit(() ->
+                {
                     try {
                         barrier.await(); // Sync start
-                        WorkerStreamContext<WorkerJobResponse> context =
-                            createWorkerContext("worker-" + workerId, WORKER_GROUP_A, 10);
+                        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-" + workerId, WORKER_GROUP_A, 10);
                         dispatcher.registerWorker(context);
                     } catch (Exception e) {
                         // Ignore
@@ -535,10 +539,10 @@ class WorkerJobDispatcherTest {
             for (int i = 0; i < numIterations; i++) {
                 final String workerId = "worker-" + i;
 
-                executor.submit(() -> {
+                executor.submit(() ->
+                {
                     try {
-                        WorkerStreamContext<WorkerJobResponse> context =
-                            createWorkerContext(workerId, WORKER_GROUP_A, 10);
+                        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext(workerId, WORKER_GROUP_A, 10);
                         dispatcher.registerWorker(context);
                     } catch (Exception e) {
                         errors.incrementAndGet();
@@ -547,7 +551,8 @@ class WorkerJobDispatcherTest {
                     }
                 });
 
-                executor.submit(() -> {
+                executor.submit(() ->
+                {
                     try {
                         dispatcher.unregisterWorker(workerId);
                     } catch (Exception e) {
@@ -578,7 +583,8 @@ class WorkerJobDispatcherTest {
             // When - permits are SET (not added), so concurrent updates with increasing values
             for (int i = 0; i < numUpdates; i++) {
                 final int permits = i + 1;
-                executor.submit(() -> {
+                executor.submit(() ->
+                {
                     try {
                         dispatcher.onPermitsReceived(context, permits);
                     } finally {

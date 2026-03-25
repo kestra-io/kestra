@@ -1,33 +1,36 @@
 package io.kestra.executor;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+
+import org.slf4j.event.Level;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.*;
+import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
-import io.kestra.core.scheduler.vnodes.VNodeController;
+
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
 
 import static io.kestra.core.server.Service.ServiceState.*;
 
@@ -43,13 +46,11 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
     private static final int DEFAULT_SCHEDULE_JITTER_MAX_MS = 500;
 
-    private static final String DEFAULT_REASON_FOR_DISCONNECTED =
-        "The service was detected as non-responsive after the session timeout. " +
-            "Service transitioned to the 'DISCONNECTED' state.";
+    private static final String DEFAULT_REASON_FOR_DISCONNECTED = "The service was detected as non-responsive after the session timeout. " +
+        "Service transitioned to the 'DISCONNECTED' state.";
 
-    private static final String DEFAULT_REASON_FOR_NOT_RUNNING =
-        "The service was detected as non-responsive or terminated after termination grace period. " +
-            "Service transitioned to the 'NOT_RUNNING' state.";
+    private static final String DEFAULT_REASON_FOR_NOT_RUNNING = "The service was detected as non-responsive or terminated after termination grace period. " +
+        "Service transitioned to the 'NOT_RUNNING' state.";
 
     private static final String TASK_NAME = "service-liveness-coordinator-task";
 
@@ -76,22 +77,22 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     /**
      * Creates a new {@link DefaultServiceLivenessCoordinator} instance.
      *
-     * @param store        The {@link ServiceInstanceRepositoryInterface}.
+     * @param store The {@link ServiceInstanceRepositoryInterface}.
      * @param serverConfig The server configuration.
      */
     @Inject
     public DefaultServiceLivenessCoordinator(final ServiceLivenessStore store,
-                                             final ServiceRegistry serviceRegistry,
-                                             final ServiceLivenessUpdater serviceLivenessUpdater,
-                                             final ServiceInstanceRepositoryInterface serviceInstanceRepository,
-                                             final LockService lockService,
-                                             final KillSwitchService killSwitchService,
-                                             final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
-                                             final WorkerJobRunningStateStore workerJobRunningStateStore,
-                                             final ServerConfig serverConfig,
-                                             final MetricRegistry metricRegistry,
-                                             final VNodeController vNodeController,
-                                             @Value("${kestra.server.service.purge.retention}") final Duration purgeRetention) {
+        final ServiceRegistry serviceRegistry,
+        final ServiceLivenessUpdater serviceLivenessUpdater,
+        final ServiceInstanceRepositoryInterface serviceInstanceRepository,
+        final LockService lockService,
+        final KillSwitchService killSwitchService,
+        final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
+        final WorkerJobRunningStateStore workerJobRunningStateStore,
+        final ServerConfig serverConfig,
+        final MetricRegistry metricRegistry,
+        final VNodeController vNodeController,
+        @Value("${kestra.server.service.purge.retention}") final Duration purgeRetention) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
         this.serviceLivenessUpdater = serviceLivenessUpdater;
@@ -111,9 +112,11 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      **/
     @Override
     protected void onSchedule(Instant now) throws Exception {
-        if (Optional.ofNullable(serviceRegistry.get(ServiceType.EXECUTOR))
-            .filter(service -> service.instance().is(RUNNING))
-            .isEmpty()) {
+        if (
+            Optional.ofNullable(serviceRegistry.get(ServiceType.EXECUTOR))
+                .filter(service -> service.instance().is(RUNNING))
+                .isEmpty()
+        ) {
             log.debug(
                 "The liveness coordinator task was temporarily disabled. Executor is not yet in the RUNNING state."
             );
@@ -146,7 +149,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      * @param now the time of the execution.
      */
     protected void handleAllWorkersForUncleanShutdown(Instant now) {
-        serviceInstanceRepository.processAllNonRunningInstances((txContext, serviceInstance) -> {
+        serviceInstanceRepository.processAllNonRunningInstances((txContext, serviceInstance) ->
+        {
             if (!serviceInstance.is(ServiceType.WORKER)) {
                 return;
             }
@@ -163,7 +167,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
             // Transit GRACEFUL or UNCLEAN SHUTDOWN worker to NOT_RUNNING.
             if (isUncleanShutdownService || serviceInstance.is(Service.ServiceState.TERMINATED_GRACEFULLY)) {
-                serviceInstanceRepository.mayTransitServiceTo(txContext,
+                serviceInstanceRepository.mayTransitServiceTo(
+                    txContext,
                     serviceInstance,
                     Service.ServiceState.NOT_RUNNING,
                     DEFAULT_REASON_FOR_NOT_RUNNING
@@ -188,7 +193,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      */
     protected void handleAllNonRespondingServices(Instant now) {
         // Retrieves all services that are supposed to be running.
-        serviceInstanceRepository.processInstanceInStates(allRunningStates(), (txContext, serviceInstance) -> {
+        serviceInstanceRepository.processInstanceInStates(allRunningStates(), (txContext, serviceInstance) ->
+        {
             // Detect and handle non-responding services.
             if (isNonRespondingService(serviceInstance, now)) {
                 // Attempt to transit all non-responding services to DISCONNECTED.
@@ -200,8 +206,10 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 );
 
                 // Eventually restart worker tasks
-                if (serviceInstance.is(ServiceType.WORKER) &&
-                    serviceInstance.config().workerTaskRestartStrategy().equals(WorkerTaskRestartStrategy.IMMEDIATELY)) {
+                if (
+                    serviceInstance.is(ServiceType.WORKER) &&
+                        serviceInstance.config().workerTaskRestartStrategy().equals(WorkerTaskRestartStrategy.IMMEDIATELY)
+                ) {
                     log.info("Trigger task restart for non-responding worker after timeout: {}.", serviceInstance.uid());
                     reEmitWorkerJobsForWorker(txContext, serviceInstance.uid());
                 }
@@ -226,11 +234,11 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT, MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION)
             .increment();
 
-        workerJobRunningStateStore.processWorkerJobsForDeadWorker(txContext, id, (txContext2, workerJobRunning) -> {
+        workerJobRunningStateStore.processWorkerJobsForDeadWorker(txContext, id, (txContext2, workerJobRunning) ->
+        {
             resubmitWorkerJobRunning(txContext2, workerJobRunning);
         });
     }
-
 
     /**
      * {@inheritDoc}
@@ -269,7 +277,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
         // warn
         if (isNonResponding) {
-            log.warn("Detected non-responding service [id={}, type={}, hostname={}] after timeout ({}ms).",
+            log.warn(
+                "Detected non-responding service [id={}, type={}, hostname={}] after timeout ({}ms).",
                 instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
@@ -284,7 +293,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private void handleAllServiceInNotRunningState() {
         // Soft delete all services which are NOT_RUNNING anymore.
         store.findAllInstancesInStates(Set.of(Service.ServiceState.NOT_RUNNING))
-            .forEach(instance -> {
+            .forEach(instance ->
+            {
                 safelyUpdate(instance, Service.ServiceState.INACTIVE, null);
                 mayReleaseLocksForService(instance, "service inactive");
             });
@@ -306,8 +316,10 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             store.findAllInstancesInStates(Set.of(CREATED, RUNNING))
                 .stream()
                 .filter(instance -> instance.createdAt().isAfter(lastScheduledExecution()))
-                .forEach(instance -> {
-                    log.debug("Detected new service [id={}, type={}, hostname={}] (started at: {}).",
+                .forEach(instance ->
+                {
+                    log.debug(
+                        "Detected new service [id={}, type={}, hostname={}] (started at: {}).",
                         instance.uid(),
                         instance.type(),
                         instance.server().hostname(),
@@ -318,13 +330,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     private void safelyUpdate(final ServiceInstance instance,
-                              final Service.ServiceState state,
-                              final String reason) {
+        final Service.ServiceState state,
+        final String reason) {
         try {
             update(instance, state, reason);
         } catch (Exception e) {
             // Log and ignore exception - it's safe to ignore error because the run() method is supposed to schedule at fix rate.
-            log.error("Unexpected error while service [id={}, type={}, hostname={}] transition from {} to {}.",
+            log.error(
+                "Unexpected error while service [id={}, type={}, hostname={}] transition from {} to {}.",
                 instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
@@ -336,9 +349,10 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     private void maybeLogNonRespondingAfterTerminationGracePeriod(final ServiceInstance instance,
-                                                                  final Instant now) {
+        final Instant now) {
         if (instance.state().isDisconnectedOrTerminating()) {
-            log.warn("Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
+            log.warn(
+                "Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
                 instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
@@ -397,7 +411,10 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 );
             } catch (QueueException e) {
                 Logs.logTrigger(
-                    TriggerId.of(workerTriggerRunning.getData().tenantId(), workerTriggerRunning.getData().namespace(), workerTriggerRunning.getData().flowId(), workerTriggerRunning.getTrigger().getId()),
+                    TriggerId.of(
+                        workerTriggerRunning.getData().tenantId(), workerTriggerRunning.getData().namespace(), workerTriggerRunning.getData().flowId(),
+                        workerTriggerRunning.getTrigger().getId()
+                    ),
                     Level.ERROR,
                     "Unable to re-emit WorkerTrigger.",
                     e

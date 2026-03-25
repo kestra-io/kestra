@@ -1,6 +1,15 @@
 package io.kestra.core.queues;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -10,17 +19,11 @@ import io.kestra.core.runners.*;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -45,7 +48,8 @@ public abstract class AbstractQueueLagTest {
     void shouldReturnZeroLag_whenAllMessagesConsumed() throws Exception {
         // Given
         CountDownLatch consumedLatch = new CountDownLatch(1);
-        QueueSubscriber<WorkerJobEvent> closeConsumer = workerJobQueue.subscriber(NO_LAG_TEST_WORKER_GROUP_NAME).subscribe(either -> {
+        QueueSubscriber<WorkerJobEvent> closeConsumer = workerJobQueue.subscriber(NO_LAG_TEST_WORKER_GROUP_NAME).subscribe(either ->
+        {
             consumedLatch.countDown();
         });
 
@@ -65,7 +69,8 @@ public abstract class AbstractQueueLagTest {
     void shouldReturnPositiveLag_whenMessagesProducedAfterConsumerStopped() throws Exception {
         // Given
         CountDownLatch consumedLatch = new CountDownLatch(1);
-        QueueSubscriber<WorkerJobEvent> closeConsumer = workerJobQueue.subscriber(NO_LAG_TEST_WORKER_GROUP_NAME).subscribe(either -> {
+        QueueSubscriber<WorkerJobEvent> closeConsumer = workerJobQueue.subscriber(NO_LAG_TEST_WORKER_GROUP_NAME).subscribe(either ->
+        {
             consumedLatch.countDown();
         });
 
@@ -99,13 +104,15 @@ public abstract class AbstractQueueLagTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
         ResolvedTask resolvedTask = ResolvedTask.of(task);
 
-        return WorkerJobEvent.of(WorkerTask.builder()
-            .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of())))
-            .task(task)
-            .taskRun(TaskRun.of(execution, resolvedTask))
-            .build(), workerGroup);
+        return WorkerJobEvent.of(
+            WorkerTask.builder()
+                .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of())))
+                .task(task)
+                .taskRun(TaskRun.of(execution, resolvedTask))
+                .build(),
+            workerGroup
+        );
     }
-
 
     @MockBean
     @Replaces(WorkerGroupMetaStore.class)

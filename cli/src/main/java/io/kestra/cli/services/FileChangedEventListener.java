@@ -1,5 +1,13 @@
 package io.kestra.cli.services;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithPath;
@@ -10,6 +18,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.PluginDefaultService;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.io.watch.FileWatchConfiguration;
 import jakarta.annotation.Nullable;
@@ -17,15 +26,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
-import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -70,17 +71,20 @@ public class FileChangedEventListener {
             this.setup(paths);
 
             // Init existing flows not already in files
-            flowRepositoryInterface.findAllForAllTenants().forEach(flow -> {
+            flowRepositoryInterface.findAllForAllTenants().forEach(flow ->
+            {
                 flowToFile(flow, this.buildPath(flow));
                 flows.add(FlowWithPath.of(flow, this.buildPath(flow).toString()));
             });
 
             // Listen for new/updated/deleted flows
-            flowQueue.addListener(current -> {
+            flowQueue.addListener(current ->
+            {
                 // If deleted
                 if (current.isDeleted()) {
                     this.flows.stream().filter(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst()
-                        .ifPresent(flowWithPath -> {
+                        .ifPresent(flowWithPath ->
+                        {
                             deleteFile(Paths.get(flowWithPath.getPath()));
                         });
                     this.flows.removeIf(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision()));
@@ -160,7 +164,8 @@ public class FileChangedEventListener {
                                     flows.stream()
                                         .filter(flow -> flow.getPath().equals(filePath.toString()))
                                         .findFirst()
-                                        .ifPresent(throwConsumer(flowWithPath -> {
+                                        .ifPresent(throwConsumer(flowWithPath ->
+                                        {
                                             flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
                                             this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
                                         }));
@@ -173,7 +178,8 @@ public class FileChangedEventListener {
                             flows.stream()
                                 .filter(flow -> flow.getPath().equals(filePath.toString()))
                                 .findFirst()
-                                .ifPresent(throwConsumer(flowWithPath -> {
+                                .ifPresent(throwConsumer(flowWithPath ->
+                                {
                                     flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
                                     this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
                                 }));

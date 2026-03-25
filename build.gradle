@@ -38,6 +38,9 @@ plugins {
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.0" apply false
+
+    // Formatting
+    id "io.kestra.gradle.spotless-conventions" version "1.0.3"
 }
 
 idea {
@@ -90,6 +93,9 @@ allprojects {
 
     if (it.name != 'platform') {
         group = "io.kestra"
+
+        // Formatting
+        apply plugin: "io.kestra.gradle.spotless-conventions"
 
         java {
             toolchain {

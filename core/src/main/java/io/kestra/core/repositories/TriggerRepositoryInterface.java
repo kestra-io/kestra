@@ -1,17 +1,18 @@
 package io.kestra.core.repositories;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.plugin.core.dashboard.data.Triggers;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Repository interface for searching for trigger states.
@@ -43,7 +44,7 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
     /**
      * Searches for all trigger states matching the given criterion.
      *
-     * @param from     the pageable.
+     * @param from the pageable.
      * @param tenantId the tenant identifier - cannot be {@code null}
      * @return the list of matching trigger states.
      */
@@ -52,9 +53,9 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
     /**
      * Searches for all trigger states matching the given tenant and filters.
      *
-     * @param from     the pageable.
+     * @param from the pageable.
      * @param tenantId the tenant identifier - cannot be {@code null}
-     * @param filters  the query filters.
+     * @param filters the query filters.
      * @return the list of matching trigger states.
      */
     ArrayListTotal<TriggerState> find(Pageable from, String tenantId, List<QueryFilter> filters);
@@ -72,7 +73,6 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
      */
     Flux<TriggerState> find(String tenantId, List<QueryFilter> filters);
 
-
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();
     }
@@ -84,4 +84,3 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
     @Deprecated(forRemoval = true)
     List<Trigger> findAllForAllTenantsV1();
 }
-

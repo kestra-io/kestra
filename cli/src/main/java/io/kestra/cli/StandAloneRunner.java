@@ -1,18 +1,5 @@
 package io.kestra.cli;
 
-import io.kestra.core.runners.*;
-import io.kestra.core.server.Service;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.worker.Controller;
-import io.kestra.executor.DefaultExecutor;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,14 +8,33 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.kestra.core.runners.*;
+import io.kestra.core.server.Service;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.Controller;
+import io.kestra.executor.DefaultExecutor;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Value;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 @SuppressWarnings("try")
 @Slf4j
 public class StandAloneRunner implements Runnable, AutoCloseable {
-    @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    @Setter protected boolean schedulerEnabled = true;
-    @Setter protected boolean workerEnabled = true;
-    @Setter protected boolean indexerEnabled = true;
-    @Setter protected boolean controllerEnabled = true;
+    @Setter
+    protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    @Setter
+    protected boolean schedulerEnabled = true;
+    @Setter
+    protected boolean workerEnabled = true;
+    @Setter
+    protected boolean indexerEnabled = true;
+    @Setter
+    protected boolean controllerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -82,7 +88,8 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
             throw new RuntimeException(
                 servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
                     .map(Service::getClass)
-                    .toList() + " not started in time");
+                    .toList() + " not started in time"
+            );
         }
     }
 

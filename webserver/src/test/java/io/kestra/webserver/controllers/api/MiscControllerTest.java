@@ -1,5 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
@@ -9,6 +13,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -19,9 +24,6 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
 import static io.micronaut.http.HttpRequest.GET;
@@ -108,22 +110,29 @@ class MiscControllerTest {
 
             assertThat(response).containsExactly("error1", "error2");
         } finally {
-            if (settingRepository.findByKey(BASIC_AUTH_ERROR_CONFIG).isPresent()){
+            if (settingRepository.findByKey(BASIC_AUTH_ERROR_CONFIG).isPresent()) {
                 settingRepository.delete(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).build());
             }
         }
     }
 
     @Test
-    void saveInvalidBasicAuthConfig(){
+    void saveInvalidBasicAuthConfig() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth",
-                new BasicAuthCredentials("uid", "invalid", "invalid"))));
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/basicAuth",
+                    new BasicAuthCredentials("uid", "invalid", "invalid")
+                )
+            )
+        );
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(e.getResponse().getBody(JsonError.class)).isPresent();
         JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
-        assertThat(jsonError.getMessage()).isEqualTo("Invalid username for Basic Authentication. Please provide a valid email address., Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number: Resource fails validation");
+        assertThat(jsonError.getMessage()).isEqualTo(
+            "Invalid username for Basic Authentication. Please provide a valid email address., Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number: Resource fails validation"
+        );
     }
 
     @FlakyTest
@@ -140,8 +149,8 @@ class MiscControllerTest {
                 () -> client.toBlocking().retrieve("/api/v1/main/dashboards", MiscController.Configuration.class)
             )
                 .as("expect 401 for unauthenticated GET /api/v1/main/dashboards")
-                .isInstanceOfSatisfying(HttpClientResponseException.class, ex ->
-                    assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+                .isInstanceOfSatisfying(
+                    HttpClientResponseException.class, ex -> assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
                 );
 
             assertThatThrownBy(
@@ -151,14 +160,16 @@ class MiscControllerTest {
                     MiscController.Configuration.class
                 )
             ).as("expect 401 for GET /api/v1/main/dashboards with wrong password")
-                .isInstanceOfSatisfying(HttpClientResponseException.class, ex ->
-                    assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+                .isInstanceOfSatisfying(
+                    HttpClientResponseException.class, ex -> assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
                 );
 
-            assertThatCode(() -> client.toBlocking().retrieve(
-                GET("/api/v1/main/dashboards")
-                    .basicAuth(username, password),
-                MiscController.Configuration.class)
+            assertThatCode(
+                () -> client.toBlocking().retrieve(
+                    GET("/api/v1/main/dashboards")
+                        .basicAuth(username, password),
+                    MiscController.Configuration.class
+                )
             ).as("expect success GET /api/v1/main/dashboards with good password")
                 .doesNotThrowAnyException();
         } finally {
@@ -193,19 +204,26 @@ class MiscControllerTest {
                 deleted: false
                 """.formatted(flowId, namespace, key);
 
-            assertThatCode(() -> client.toBlocking().retrieve(
-                POST("/api/v1/main/flows", flowWithWebhook)
-                    .contentType(MediaType.APPLICATION_YAML)
-                    .basicAuth(username, password),
-                FlowWithSource.class)
+            assertThatCode(
+                () -> client.toBlocking().retrieve(
+                    POST("/api/v1/main/flows", flowWithWebhook)
+                        .contentType(MediaType.APPLICATION_YAML)
+                        .basicAuth(username, password),
+                    FlowWithSource.class
+                )
             ).as("can create a Flow with webhook when authenticated")
                 .doesNotThrowAnyException();
 
-            assertThatCode(() -> client.toBlocking().retrieve(POST("/api/v1/main/executions/webhook/{namespace}/{flowId}/{key}"
-                    .replace("{namespace}", namespace)
-                    .replace("{flowId}", flowId)
-                    .replace("{key}", key)
-                , flowWithWebhook), FlowWithSource.class)
+            assertThatCode(
+                () -> client.toBlocking().retrieve(
+                    POST(
+                        "/api/v1/main/executions/webhook/{namespace}/{flowId}/{key}"
+                            .replace("{namespace}", namespace)
+                            .replace("{flowId}", flowId)
+                            .replace("{key}", key),
+                        flowWithWebhook
+                    ), FlowWithSource.class
+                )
             ).as("can trigger this Flow webhook when not authenticated")
                 .doesNotThrowAnyException();
         } finally {

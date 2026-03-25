@@ -1,20 +1,19 @@
 package io.kestra.worker.senders;
 
+import org.slf4j.event.Level;
+
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.GrpcWorkerIOSender.SendStrategy;
+
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.slf4j.event.Level;
-
-import java.util.Map;
 
 /**
  * Micronaut factory that creates all {@link WorkerIOSender} instances.
@@ -39,7 +38,8 @@ public class WorkerIOSenderFactory {
             WorkerTaskResult.class,
             SendStrategy.PER_ITEM,
             controllerServiceStub::sendWorkerTaskResults,
-            result -> {
+            result ->
+            {
                 Logs.logTaskRun(result.getTaskRun(), Level.ERROR, "Failed to send result. Cause: outputs exceeds maximum size.");
                 return result.withTaskRun(result.getTaskRun().fail()).withOutputs(null);
             }

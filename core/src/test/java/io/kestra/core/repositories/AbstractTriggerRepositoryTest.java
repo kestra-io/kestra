@@ -1,27 +1,5 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.QueryFilter.Field;
-import io.kestra.core.models.QueryFilter.Op;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
-import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.scheduler.model.TriggerState;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.event.Level;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -32,6 +10,29 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.event.Level;
+
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +61,7 @@ public abstract class AbstractTriggerRepositoryTest {
             .workerId("workerId");
     }
 
-    protected static TriggerState generateDefaultTrigger(String tenantId){
+    protected static TriggerState generateDefaultTrigger(String tenantId) {
         return TriggerState.builder()
             .tenantId(tenantId)
             .triggerId("triggerId")
@@ -73,7 +74,7 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all(QueryFilter filter){
+    void should_find_all(QueryFilter filter) {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         triggerStateStore.save(generateDefaultTrigger(tenant));
 
@@ -84,7 +85,7 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all_async(QueryFilter filter){
+    void should_find_all_async(QueryFilter filter) {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         triggerStateStore.save(generateDefaultTrigger(tenant));
 
@@ -108,7 +109,7 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all(QueryFilter filter){
+    void should_fail_to_find_all(QueryFilter filter) {
         assertThrows(InvalidQueryFiltersException.class, () -> triggerRepository.find(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter)));
     }
 
@@ -295,7 +296,7 @@ public abstract class AbstractTriggerRepositoryTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"io.kestra.unittest1", "myflow1", "mytrigger1"})
+    @ValueSource(strings = { "io.kestra.unittest1", "myflow1", "mytrigger1" })
     void shouldFindGivenFulltextSearchQuery(String query) {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -314,13 +315,14 @@ public abstract class AbstractTriggerRepositoryTest {
     void shouldCountForNullTenant() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerStateStore.save(TriggerState
-            .builder()
-            .tenantId(tenant)
-            .triggerId(IdUtils.create())
-            .flowId(IdUtils.create())
-            .namespace("io.kestra.unittest")
-            .build()
+        triggerStateStore.save(
+            TriggerState
+                .builder()
+                .tenantId(tenant)
+                .triggerId(IdUtils.create())
+                .flowId(IdUtils.create())
+                .namespace("io.kestra.unittest")
+                .build()
         );
         // When
         long count = triggerRepository.countAll(tenant);
@@ -344,11 +346,13 @@ public abstract class AbstractTriggerRepositoryTest {
             assertThat(all.stream().map(TriggerState::getTriggerId).toList())
                 .containsExactlyInAnyOrder(savedA.getTriggerId(), savedB.getTriggerId());
 
-            List<QueryFilter> filters = List.of(QueryFilter.builder()
-                .field(QueryFilter.Field.FLOW_ID)
-                .operation(QueryFilter.Op.EQUALS)
-                .value("flowA")
-                .build());
+            List<QueryFilter> filters = List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.FLOW_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("flowA")
+                    .build()
+            );
 
             List<TriggerState> filtered = triggerRepository.find(tenant, filters).collectList().block();
             assertThat(filtered).hasSize(1);

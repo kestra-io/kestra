@@ -1,17 +1,15 @@
 package io.kestra.queue;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.KeyedDispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.queues.event.KeyedDispatchEvent;
-import io.kestra.core.utils.ExecutorsUtils;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.event.KeyedDispatchEvent;
+import io.kestra.core.utils.ExecutorsUtils;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -43,7 +41,8 @@ public abstract class AbstractKeyedDispatchQueue<T extends KeyedDispatchEvent> e
 
     @Override
     public CompletionStage<Void> emitAsync(String routingKey, T message) {
-        return CompletableFuture.runAsync(() -> {
+        return CompletableFuture.runAsync(() ->
+        {
             try {
                 emit(routingKey, message);
             } catch (QueueException e) {
@@ -54,7 +53,8 @@ public abstract class AbstractKeyedDispatchQueue<T extends KeyedDispatchEvent> e
 
     @Override
     public CompletionStage<Void> emitAsync(String routingKey, List<T> messages) {
-        return CompletableFuture.runAsync(() -> {
+        return CompletableFuture.runAsync(() ->
+        {
             try {
                 emit(routingKey, messages);
             } catch (QueueException e) {

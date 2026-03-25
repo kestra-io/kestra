@@ -1,5 +1,7 @@
 package io.kestra.queue.jdbc;
 
+import java.util.List;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
@@ -11,9 +13,8 @@ import io.kestra.queue.QueueRecord;
 import io.kestra.queue.QueueService;
 import io.kestra.queue.jdbc.client.JdbcDispatchSubscriber;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends AbstractKeyedDispatchQueue<T> {
@@ -21,7 +22,8 @@ public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends Abstra
     private final MetricRegistry metricRegistry;
     private final IgnoreExecutionService ignoreExecutionService;
 
-    public JdbcKeyedDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient JdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry, IgnoreExecutionService ignoreExecutionService) {
+    public JdbcKeyedDispatchQueue(Class<T> cls, QueueService queueService, JdbcQueueClient JdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService) {
         super(cls, queueService, executorsUtils, metricRegistry);
 
         this.jdbcQueueClient = JdbcQueueClient;
@@ -55,10 +57,11 @@ public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends Abstra
     @Override
     protected void doEmit(String routingKey, List<QueueRecord> messages) throws QueueException {
         String queueName = this.queueName();
-        jdbcQueueClient.publish(messages
-            .stream()
-            .map(e -> new JdbcQueueClient.PublishedMessage(queueName, routingKey, e.key(), new String(e.value())))
-            .toList()
+        jdbcQueueClient.publish(
+            messages
+                .stream()
+                .map(e -> new JdbcQueueClient.PublishedMessage(queueName, routingKey, e.key(), new String(e.value())))
+                .toList()
         );
     }
 }

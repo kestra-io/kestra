@@ -1,5 +1,10 @@
 package io.kestra.indexer;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
@@ -7,19 +12,14 @@ import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
-import io.kestra.core.runners.IndexingRepository;
 import io.kestra.core.runners.Indexer;
+import io.kestra.core.runners.IndexingRepository;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
+import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.kestra.core.services.IgnoreExecutionService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -27,7 +27,8 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This class is responsible for batch-indexing asynchronously queue messages.<p>
+ * This class is responsible for batch-indexing asynchronously queue messages.
+ * <p>
  */
 @SuppressWarnings("this-escape")
 @Slf4j
@@ -59,8 +60,7 @@ public class DefaultIndexer implements Indexer {
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         IgnoreExecutionService ignoreExecutionService,
-        QueueService queueService
-    ) {
+        QueueService queueService) {
         this.logRepository = logRepository;
         this.logQueue = logQueue;
         this.metricRepository = metricRepositor;
@@ -87,7 +87,8 @@ public class DefaultIndexer implements Indexer {
     }
 
     protected <T extends DispatchEvent> void sendBatch(DispatchQueueInterface<T> queueInterface, IndexingRepository<T> indexingRepository) {
-        this.subscribers.addFirst(queueInterface.subscriber().subscribeBatch(eithers -> {
+        this.subscribers.addFirst(queueInterface.subscriber().subscribeBatch(eithers ->
+        {
             // first, log all deserialization issues
             eithers.stream().filter(either -> either.isRight()).forEach(either -> log.error("unable to deserialize an item: {}", either.getRight().getMessage()));
 
@@ -95,7 +96,8 @@ public class DefaultIndexer implements Indexer {
             List<T> items = eithers.stream()
                 .filter(either -> either.isLeft())
                 .map(either -> either.getLeft())
-                .filter(it -> {
+                .filter(it ->
+                {
                     if (ignoreExecutionService.ignoreIndexerRecord(queueService.key(it))) {
                         log.warn("Skipping indexer record for key: {}", queueService.key(it));
                         return false;
@@ -107,11 +109,14 @@ public class DefaultIndexer implements Indexer {
             if (!ListUtils.isEmpty(items)) {
                 String itemClassName = items.getFirst().getClass().getName();
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, MetricRegistry.METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION, "type", itemClassName).increment();
-                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", itemClassName).increment(items.size());
+                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", itemClassName)
+                    .increment(items.size());
 
-                this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", itemClassName).record(() -> {
+                this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", itemClassName).record(() ->
+                {
                     int saved = indexingRepository.saveBatch(items);
-                    this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", itemClassName).increment(saved);
+                    this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", itemClassName)
+                        .increment(saved);
                 });
             }
         }));
@@ -127,11 +132,13 @@ public class DefaultIndexer implements Indexer {
     public String getId() {
         return id;
     }
+
     /** {@inheritDoc} **/
     @Override
     public ServiceType getType() {
         return ServiceType.INDEXER;
     }
+
     /** {@inheritDoc} **/
     @Override
     public ServiceState getState() {

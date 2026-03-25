@@ -1,27 +1,5 @@
 package io.kestra.scheduler.internals;
 
-import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Schedulable;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.services.PluginDefaultService;
-import io.kestra.core.utils.Logs;
-import io.kestra.scheduler.SchedulableTriggerFetcher;
-import io.kestra.scheduler.models.TriggerEvaluationContext;
-import io.kestra.scheduler.stores.FlowMetaStore;
-import io.kestra.core.scheduler.store.TriggerStateStore;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
-
 import java.time.Clock;
 import java.time.DateTimeException;
 import java.time.ZoneId;
@@ -32,6 +10,30 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Schedulable;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.Logs;
+import io.kestra.scheduler.SchedulableTriggerFetcher;
+import io.kestra.scheduler.models.TriggerEvaluationContext;
+import io.kestra.scheduler.stores.FlowMetaStore;
+
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetcher {
@@ -47,9 +49,9 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
     private final PluginDefaultService pluginDefaultService;
 
     public DefaultSchedulableTriggerFetcher(RunContextFactory runContextFactory,
-                                            @Named("cached") TriggerStateStore triggerStateStore,
-                                            FlowMetaStore flowMetaStore,
-                                            PluginDefaultService pluginDefaultService) {
+        @Named("cached") TriggerStateStore triggerStateStore,
+        FlowMetaStore flowMetaStore,
+        PluginDefaultService pluginDefaultService) {
         this.runContextFactory = runContextFactory;
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
@@ -65,13 +67,16 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
 
         return triggers.stream()
             .filter(triggerState -> !triggerState.isDisabled())
-            .map(triggerState -> {
-                Optional<FlowWithSource> maybeFlowTrigger = flowMetaStore.find(FlowId.of(
-                    triggerState.getTenantId(),
-                    triggerState.getNamespace(),
-                    triggerState.getFlowId(),
-                    null
-                ));
+            .map(triggerState ->
+            {
+                Optional<FlowWithSource> maybeFlowTrigger = flowMetaStore.find(
+                    FlowId.of(
+                        triggerState.getTenantId(),
+                        triggerState.getNamespace(),
+                        triggerState.getFlowId(),
+                        null
+                    )
+                );
 
                 // Check whether the Flow still exists
                 if (maybeFlowTrigger.isEmpty()) {

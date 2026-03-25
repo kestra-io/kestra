@@ -1,26 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.*;
-import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.flow.Subflow;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.client.multipart.MultipartBody;
-import io.micronaut.reactor.http.client.ReactorHttpClient;
-import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -31,12 +10,35 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.junit.jupiter.api.AfterEach;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.*;
+import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.flow.Subflow;
+
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
+import jakarta.inject.Inject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class NamespaceFileControllerTest {
@@ -120,15 +122,14 @@ class NamespaceFileControllerTest {
         assertThat(res.getType()).isEqualTo(FileAttributes.FileType.File);
     }
 
-
-
     @Test
     void getRevisions() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
 
-        List<NamespaceFileRevision> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/revisions?path=/test.txt"), Argument.of(List.class, NamespaceFileRevision.class));
+        List<NamespaceFileRevision> res = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/revisions?path=/test.txt"), Argument.of(List.class, NamespaceFileRevision.class));
         assertThat(res).containsExactlyInAnyOrder(new NamespaceFileRevision(1));
 
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 2".getBytes()));
@@ -164,14 +165,23 @@ class NamespaceFileControllerTest {
     void listNamespaceDirectoryFilesNotExisting() {
         String namespace = TestsUtils.randomNamespace();
         // Root directory will be automatically created
-        assertThat(storageInterface.exists(
-            TENANT_ID, namespace, toNamespacedStorageUri(namespace, null))).isFalse();
+        assertThat(
+            storageInterface.exists(
+                TENANT_ID, namespace, toNamespacedStorageUri(namespace, null)
+            )
+        ).isFalse();
         List<FileAttributes> res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory"), TestFileAttributes[].class));
-        assertThat(storageInterface.exists(
-            TENANT_ID, namespace, toNamespacedStorageUri(namespace, null))).isTrue();
+        assertThat(
+            storageInterface.exists(
+                TENANT_ID, namespace, toNamespacedStorageUri(namespace, null)
+            )
+        ).isTrue();
         assertThat(res.size()).isEqualTo(0);
 
-        HttpClientResponseException notFoundException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/not_existing_directory"), TestFileAttributes[].class));
+        HttpClientResponseException notFoundException = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/not_existing_directory"), TestFileAttributes[].class)
+        );
         assertThat(notFoundException.getMessage()).contains("Directory not found: /not_existing_directory");
     }
 
@@ -191,15 +201,17 @@ class NamespaceFileControllerTest {
     @Test
     void createNamespaceDirectoryException() {
         String namespace = TestsUtils.randomNamespace();
-    assertThrows(
-        HttpClientResponseException.class,
-        () ->
-            client
+        assertThrows(
+            HttpClientResponseException.class,
+            () -> client
                 .toBlocking()
                 .exchange(
                     HttpRequest.POST(
                         "/api/v1/main/namespaces/" + namespace + "/files/directory?path=/_flows",
-                        null)));
+                        null
+                    )
+                )
+        );
     }
 
     @Test
@@ -229,14 +241,16 @@ class NamespaceFileControllerTest {
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "_flows", "Hello".getBytes())
             .build();
-        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows", body)
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
-        ));
+        assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml"})
+    @LoadFlows({ "flows/valids/task-flow.yaml" })
     void createGetFileContent_AddFlow() throws IOException {
         String namespace = TestsUtils.randomNamespace();
         String flowSource = flowRepository.findByIdWithSource(TENANT_ID, "io.kestra.tests", "task-flow").get().getSource();
@@ -259,7 +273,7 @@ class NamespaceFileControllerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml"})
+    @LoadFlows({ "flows/valids/task-flow.yaml" })
     void createGetFileContent_ExtractZip() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
@@ -270,8 +284,10 @@ class NamespaceFileControllerTest {
         namespaceStorage.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("folder_file".getBytes()));
         storageInterface.createDirectory(TENANT_ID, namespace, toNamespacedStorageUri(namespaceToExport, URI.create("/empty_folder")));
 
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespaceToExport + "/files/export"),
-            Argument.of(byte[].class));
+        byte[] zip = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/namespaces/" + namespaceToExport + "/files/export"),
+            Argument.of(byte[].class)
+        );
         File temp = File.createTempFile("files", ".zip");
         Files.write(temp.toPath(), zip);
 
@@ -342,7 +358,9 @@ class NamespaceFileControllerTest {
     void forbiddenPaths() {
         String namespace = TestsUtils.randomNamespace();
         assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/test.yml")));
-        assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/_flows/test.yml"), TestFileAttributes.class));
+        assertForbiddenErrorThrown(
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/_flows/test.yml"), TestFileAttributes.class)
+        );
         assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/_flows"), TestFileAttributes[].class));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/_flows/test&to=/foo", null)));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=/_flows/test", null)));

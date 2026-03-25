@@ -1,6 +1,7 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.kestra.controller.grpc.HeartbeatRequest;
 import io.kestra.controller.grpc.HeartbeatResponse;
 import io.kestra.controller.grpc.LivenessControllerServiceGrpc;
@@ -12,24 +13,24 @@ import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
+
+import io.grpc.stub.StreamObserver;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class GrpcLivenessControllerService extends LivenessControllerServiceGrpc.LivenessControllerServiceImplBase implements WorkerControllerService {
 
     private final ServiceLivenessUpdater serviceLivenessUpdater;
-    
+
     private final AtomicBoolean maintenanceMode = new AtomicBoolean(false);
 
     private final Disposable maintenanceListenerDisposable;
 
     @Inject
     public GrpcLivenessControllerService(ServiceLivenessUpdater serviceLivenessUpdater,
-                                         MaintenanceService maintenanceService) {
+        MaintenanceService maintenanceService) {
         this.serviceLivenessUpdater = serviceLivenessUpdater;
         this.maintenanceMode.set(maintenanceService.isInMaintenanceMode());
         this.maintenanceListenerDisposable = maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
@@ -44,7 +45,7 @@ public class GrpcLivenessControllerService extends LivenessControllerServiceGrpc
             }
         });
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -63,15 +64,20 @@ public class GrpcLivenessControllerService extends LivenessControllerServiceGrpc
             response = new ServiceStateTransition.Response(ServiceStateTransition.Result.SUCCEEDED, message.instance());
         }
 
-        responseObserver.onNext(HeartbeatResponse
-            .newBuilder()
-            .setHeader(request.getHeader())
-            .setMessage(messageFormat.toByteString(new HeartbeatMessageReply(
-                response.instance(),
-                response.result(),
-                maintenanceMode.get()
-            )))
-            .build()
+        responseObserver.onNext(
+            HeartbeatResponse
+                .newBuilder()
+                .setHeader(request.getHeader())
+                .setMessage(
+                    messageFormat.toByteString(
+                        new HeartbeatMessageReply(
+                            response.instance(),
+                            response.result(),
+                            maintenanceMode.get()
+                        )
+                    )
+                )
+                .build()
         );
         responseObserver.onCompleted();
     }

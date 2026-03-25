@@ -1,15 +1,17 @@
 package io.kestra.controller.resolver;
 
-import io.grpc.EquivalentAddressGroup;
-import io.grpc.NameResolver;
-import io.kestra.controller.grpc.resolver.StaticNameResolver;
-import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
-import org.junit.jupiter.api.Test;
-
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.controller.grpc.resolver.StaticNameResolver;
+import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
+
+import io.grpc.EquivalentAddressGroup;
+import io.grpc.NameResolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

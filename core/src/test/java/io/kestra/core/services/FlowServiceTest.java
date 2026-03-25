@@ -1,5 +1,17 @@
 package io.kestra.core.services;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.*;
@@ -17,20 +29,10 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -63,11 +65,15 @@ class FlowServiceTest {
             .namespace(namespace)
             .tenantId(tenantId)
             .revision(revision)
-            .tasks(Collections.singletonList(Return.builder()
-                .id(taskId)
-                .type(Return.class.getName())
-                .format(Property.ofValue("test"))
-                .build()))
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id(taskId)
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
             .build();
 
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
@@ -378,9 +384,11 @@ class FlowServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result).contains(failCheck);
         assertThat(result)
-            .anyMatch(c -> c.getMessage().contains("Failed to evaluate check condition") &&
-                c.getBehavior() == Check.Behavior.BLOCK_EXECUTION &&
-                c.getStyle() == Check.Style.ERROR);
+            .anyMatch(
+                c -> c.getMessage().contains("Failed to evaluate check condition") &&
+                    c.getBehavior() == Check.Behavior.BLOCK_EXECUTION &&
+                    c.getStyle() == Check.Style.ERROR
+            );
     }
 
     @Test
@@ -417,7 +425,8 @@ class FlowServiceTest {
             .build();
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        flowQueue.addListener(f -> {
+        flowQueue.addListener(f ->
+        {
             if (f.getId().equals(flow.getId())) {
                 countDownLatch.countDown();
             }
@@ -465,7 +474,8 @@ class FlowServiceTest {
             .build();
 
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        flowQueue.addListener(f -> {
+        flowQueue.addListener(f ->
+        {
             if (f.getId().equals(flow.getId())) {
                 countDownLatch.countDown();
             }
@@ -519,7 +529,8 @@ class FlowServiceTest {
             .build();
 
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        flowQueue.addListener(f -> {
+        flowQueue.addListener(f ->
+        {
             if (f.getId().equals(flow.getId())) {
                 countDownLatch.countDown();
             }

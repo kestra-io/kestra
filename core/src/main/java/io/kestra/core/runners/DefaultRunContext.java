@@ -1,35 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.google.common.base.CaseFormat;
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.Plugin;
-import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.assets.AssetManagerFactory;
-import io.kestra.core.plugins.PluginConfigurations;
-import io.kestra.core.services.KVStoreService;
-import io.kestra.core.storages.Storage;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
-import io.kestra.core.utils.VersionProvider;
-import io.micronaut.context.ApplicationContext;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validator;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.With;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,6 +10,39 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.google.common.base.CaseFormat;
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.assets.AssetManagerFactory;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Plugin;
+import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.Storage;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.VersionProvider;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.With;
 
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -79,11 +82,11 @@ public class DefaultRunContext extends RunContext {
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-
     /**
      * Creates a new {@link DefaultRunContext} instance.
      */
-    public DefaultRunContext() {}
+    public DefaultRunContext() {
+    }
 
     /**
      * {@inheritDoc}
@@ -332,10 +335,14 @@ public class DefaultRunContext extends RunContext {
         return inline
             .entrySet()
             .stream()
-            .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), allVariables),
-                this.render(entry.getValue(), allVariables)
-            )))
+            .map(
+                throwFunction(
+                    entry -> new AbstractMap.SimpleEntry<>(
+                        this.render(entry.getKey(), allVariables),
+                        this.render(entry.getValue(), allVariables)
+                    )
+                )
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -510,7 +517,7 @@ public class DefaultRunContext extends RunContext {
             logger().warn("Unable to cleanup worker task", ex);
         }
 
-        if (logger != null){
+        if (logger != null) {
             logger.resetMDC();
         }
     }
@@ -552,8 +559,8 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Optional<T> pluginConfiguration(final String name) {
-        Objects.requireNonNull(name,"Cannot get plugin configuration from null name");
-        return Optional.ofNullable((T)pluginConfiguration.get(name));
+        Objects.requireNonNull(name, "Cannot get plugin configuration from null name");
+        return Optional.ofNullable((T) pluginConfiguration.get(name));
     }
 
     /**
@@ -632,7 +639,7 @@ public class DefaultRunContext extends RunContext {
         }
         Map<?, ?> taskrun = (Map<?, ?>) variables.get("taskrun");
 
-        return taskrun.get("value") == null ?  (Map<String, Object>) outputs : (Map<String, Object>) outputs.get(taskrun.get("value"));
+        return taskrun.get("value") == null ? (Map<String, Object>) outputs : (Map<String, Object>) outputs.get(taskrun.get("value"));
     }
 
     /**

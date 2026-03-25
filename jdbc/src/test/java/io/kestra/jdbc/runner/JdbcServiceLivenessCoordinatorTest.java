@@ -1,9 +1,11 @@
 package io.kestra.jdbc.runner;
 
+import org.junit.jupiter.api.*;
+
 import io.kestra.executor.AbstractServiceLivenessCoordinatorTest;
 import io.kestra.jdbc.JdbcTestUtils;
+
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.*;
 
 public abstract class JdbcServiceLivenessCoordinatorTest extends AbstractServiceLivenessCoordinatorTest {
     @Inject

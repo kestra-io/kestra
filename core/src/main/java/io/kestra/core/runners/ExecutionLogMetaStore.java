@@ -1,8 +1,8 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.LogEntry;
-
 import java.util.List;
+
+import io.kestra.core.models.executions.LogEntry;
 
 public interface ExecutionLogMetaStore {
     /**

@@ -1,20 +1,5 @@
 package io.kestra.cli;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.commands.servers.ServerCommandInterface;
-import io.kestra.cli.services.StartupHookInterface;
-import io.kestra.core.plugins.PluginManager;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.webserver.services.FlowAutoLoaderService;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
-import io.micronaut.http.uri.UriBuilder;
-import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
-import io.micronaut.runtime.server.EmbeddedServer;
-import jakarta.inject.Provider;
-import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.utils.Rethrow;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -25,7 +10,24 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.cli.commands.servers.ServerCommandInterface;
+import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.plugins.PluginManager;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.utils.Rethrow;
+import io.kestra.webserver.services.FlowAutoLoaderService;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
+import io.micronaut.http.uri.UriBuilder;
+import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
+import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -51,10 +53,10 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     protected PluginRegistry pluginRegistry;
 
-    @Option(names = {"-c", "--config"}, description = "Path to a configuration file")
+    @Option(names = { "-c", "--config" }, description = "Path to a configuration file")
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
 
-    @Option(names = {"-p", "--plugins"}, description = "Path to plugins directory")
+    @Option(names = { "-p", "--plugins" }, description = "Path to plugins directory")
     protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
 
     @Override
@@ -145,7 +147,8 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
         applicationContext
             .findBean(EmbeddedServer.class)
-            .ifPresent(server -> {
+            .ifPresent(server ->
+            {
                 server.start();
 
                 if (this.endpointConfiguration.getPort().isPresent()) {
@@ -178,22 +181,25 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     }
 
     protected void shutdownHook(boolean logShutdown, Rethrow.RunnableChecked<Exception> run) {
-        Runtime.getRuntime().addShutdownHook(new Thread(
-            () -> {
-                if (logShutdown) {
-                    log.warn("Shutdown signal received. Initiating graceful shutdown.");
-                }
-                try {
-                    run.run();
-                } catch (Exception e) {
-                    log.error("Failed to complete graceful shutdown", e);
-                }
-            },
-            "command-shutdown"
-        ));
+        Runtime.getRuntime().addShutdownHook(
+            new Thread(
+                () ->
+                {
+                    if (logShutdown) {
+                        log.warn("Shutdown signal received. Initiating graceful shutdown.");
+                    }
+                    try {
+                        run.run();
+                    } catch (Exception e) {
+                        log.error("Failed to complete graceful shutdown", e);
+                    }
+                },
+                "command-shutdown"
+            )
+        );
     }
 
-    @SuppressWarnings({"unused"})
+    @SuppressWarnings({ "unused" })
     public Map<String, Object> propertiesFromConfig() {
         if (this.config.toFile().exists()) {
             YamlPropertySourceLoader yamlPropertySourceLoader = new YamlPropertySourceLoader();

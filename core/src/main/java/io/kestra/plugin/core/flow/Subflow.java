@@ -1,7 +1,15 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -27,6 +35,7 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.validations.NoSystemLabelValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -37,13 +46,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -79,7 +81,7 @@ import java.util.Optional;
                 """
         )
     },
-    aliases = {"io.kestra.core.tasks.flows.Subflow", "io.kestra.core.tasks.flows.Flow"}
+    aliases = { "io.kestra.core.tasks.flows.Subflow", "io.kestra.core.tasks.flows.Flow" }
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output>, ChildFlowInterface {
     @NotEmpty
@@ -112,7 +114,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Schema(
         title = "The labels to pass to the subflow to be executed",
-        implementation = Object.class, oneOf = {List.class, Map.class}
+        implementation = Object.class, oneOf = { List.class, Map.class }
     )
     @PluginProperty(dynamic = true)
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
@@ -159,10 +161,10 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Override
     public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
-                                                             FlowMetaStoreInterface flowExecutorInterface,
-                                                             FlowInterface currentFlow,
-                                                             Execution currentExecution,
-                                                             TaskRun currentTaskRun) throws InternalException {
+        FlowMetaStoreInterface flowExecutorInterface,
+        FlowInterface currentFlow,
+        Execution currentExecution,
+        TaskRun currentTaskRun) throws InternalException {
         Map<String, Object> inputs = new HashMap<>();
         if (this.inputs != null) {
             inputs.putAll(runContext.render(this.inputs));
@@ -179,8 +181,9 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             labels,
             runContext.render(inheritLabels).as(Boolean.class).orElseThrow(),
             scheduleDate,
-    null)
-            .<List<SubflowExecution<?>>>map(subflowExecution -> List.of(subflowExecution))
+            null
+        )
+            .<List<SubflowExecution<?>>> map(subflowExecution -> List.of(subflowExecution))
             .orElse(Collections.emptyList());
     }
 
@@ -226,10 +229,12 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         }
 
         if (finalState.isFailed()) {
-            String log = String.format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in FAILED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
+            String log = String
+                .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in FAILED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
             runContext.logger().error(log);
         } else if (finalState == State.Type.WARNING) {
-            String log = String.format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in WARNING state", execution.getId(),  execution.getFlowId(), execution.getNamespace());
+            String log = String
+                .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in WARNING state", execution.getId(), execution.getFlowId(), execution.getNamespace());
             runContext.logger().warn(log);
         }
 
@@ -243,12 +248,14 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             .withState(state)
             .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()));
 
-        return Optional.of(SubflowExecutionResult.builder()
-            .executionId(execution.getId())
-            .state(State.Type.FAILED)
-            .parentTaskRun(taskRun)
-            .outputs(outputs)
-            .build());
+        return Optional.of(
+            SubflowExecutionResult.builder()
+                .executionId(execution.getId())
+                .state(State.Type.FAILED)
+                .parentTaskRun(taskRun)
+                .outputs(outputs)
+                .build()
+        );
     }
 
     @Override

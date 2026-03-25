@@ -1,45 +1,5 @@
 package io.kestra.scheduler;
 
-import io.kestra.core.junit.annotations.FlakyTest;
-import io.kestra.core.lock.LockService;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.scheduler.SchedulerClock;
-import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.scheduler.vnodes.VNodeController;
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceLivenessStore;
-import io.kestra.core.server.ServiceStateChangeEvent;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.MaintenanceService;
-import io.kestra.core.services.PluginDefaultService;
-import io.kestra.core.utils.Disposable;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
-import io.kestra.scheduler.internals.SchedulableEvaluator;
-import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
-import io.kestra.scheduler.stores.CachedFlowMetaStore;
-import io.kestra.scheduler.stores.CachedTriggerStateStore;
-import io.kestra.scheduler.stores.FlowMetaStore;
-import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
-import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
-import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
-import io.kestra.scheduler.utils.InMemoryTriggerEventQueue;
-import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
-import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -55,11 +15,51 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import io.kestra.core.junit.annotations.FlakyTest;
+import io.kestra.core.lock.LockService;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.scheduler.SchedulerClock;
+import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.queue.SchedulerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.scheduler.vnodes.VNodeController;
+import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceLivenessStore;
+import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.Disposable;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
+import io.kestra.scheduler.internals.SchedulableEvaluator;
+import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
+import io.kestra.scheduler.stores.CachedFlowMetaStore;
+import io.kestra.scheduler.stores.CachedTriggerStateStore;
+import io.kestra.scheduler.stores.FlowMetaStore;
+import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
+import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
+import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
+import io.kestra.scheduler.utils.InMemoryTriggerEventQueue;
+import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
+
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @MicronautTest
 class DefaultSchedulerTest {
@@ -202,19 +202,19 @@ class DefaultSchedulerTest {
     @Test
     void shouldNotStartSchedulingLoopAfterRebalanceGivenMaintenanceModeTrue() {
         // GIVEN
-       try (DefaultScheduler scheduler = createDefaultScheduler();) {
-           // WHEN
-           scheduler.start(2);
-           maintenanceService.setMaintenanceMode(true); // switch to maintenance mode
+        try (DefaultScheduler scheduler = createDefaultScheduler();) {
+            // WHEN
+            scheduler.start(2);
+            maintenanceService.setMaintenanceMode(true); // switch to maintenance mode
 
-           serviceLivenessStore.put(scheduler);
-           vNodeController.checkServicesAndRebalanceVNodes(); // manually rebalance vNodes
+            serviceLivenessStore.put(scheduler);
+            vNodeController.checkServicesAndRebalanceVNodes(); // manually rebalance vNodes
 
-           // THEN
-           List<TriggerSchedulingLoop> schedulingLoops = scheduler.schedulingLoops();
-           assertThat(schedulingLoops.size()).isEqualTo(2);
-           assertThat(schedulingLoops).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
-       }
+            // THEN
+            List<TriggerSchedulingLoop> schedulingLoops = scheduler.schedulingLoops();
+            assertThat(schedulingLoops.size()).isEqualTo(2);
+            assertThat(schedulingLoops).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+        }
     }
 
     @Test
@@ -310,7 +310,8 @@ class DefaultSchedulerTest {
 
         public void setMaintenanceMode(boolean maintenanceMode) {
             this.maintenanceMode.set(maintenanceMode);
-            Optional.ofNullable(listener.get()).ifPresent(listener -> {
+            Optional.ofNullable(listener.get()).ifPresent(listener ->
+            {
                 if (maintenanceMode) {
                     listener.onMaintenanceModeEnter();
                 } else {
@@ -338,18 +339,20 @@ class DefaultSchedulerTest {
          * @param service the instance to add or update.
          */
         public void put(Service service) {
-            put(new ServiceInstance(
-                service.getId(),
-                service.getType(),
-                service.getState(),
-                null,
-                Instant.now(),
-                Instant.now(),
-                List.of(),
-                null,
-                Map.of(),
-                service.getMetrics()
-            ));
+            put(
+                new ServiceInstance(
+                    service.getId(),
+                    service.getType(),
+                    service.getState(),
+                    null,
+                    Instant.now(),
+                    Instant.now(),
+                    List.of(),
+                    null,
+                    Map.of(),
+                    service.getMetrics()
+                )
+            );
         }
 
         /**

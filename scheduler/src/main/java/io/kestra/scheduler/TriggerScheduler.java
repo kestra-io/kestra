@@ -1,6 +1,25 @@
 package io.kestra.scheduler;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+
 import com.google.common.base.Throwables;
+
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.Condition;
@@ -21,6 +40,10 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.PluginDefaultService;
@@ -29,35 +52,15 @@ import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
-import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
-import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
-import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodes;
+
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
-
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Service responsible for evaluating and scheduling triggers.
@@ -91,16 +94,16 @@ public class TriggerScheduler {
 
     @Inject
     public TriggerScheduler(@Named("cached") TriggerStateStore triggerStateStore,
-                            FlowMetaStore flowMetaStore,
-                            MetricRegistry metricRegistry,
-                            RunContextFactory runContextFactory,
-                            ConditionService conditionService,
-                            PluginDefaultService pluginDefaultService,
-                            SchedulableEvaluator schedulableEvaluator,
-                            DefaultSchedulableTriggerFetcher schedulableTriggerFetcher,
-                            TriggerWorkerJobPublisher triggerWorkerJobPublisher,
-                            TriggerExecutionPublisher triggerExecutionPublisher,
-                            SchedulerConfiguration schedulerConfiguration) {
+        FlowMetaStore flowMetaStore,
+        MetricRegistry metricRegistry,
+        RunContextFactory runContextFactory,
+        ConditionService conditionService,
+        PluginDefaultService pluginDefaultService,
+        SchedulableEvaluator schedulableEvaluator,
+        DefaultSchedulableTriggerFetcher schedulableTriggerFetcher,
+        TriggerWorkerJobPublisher triggerWorkerJobPublisher,
+        TriggerExecutionPublisher triggerExecutionPublisher,
+        SchedulerConfiguration schedulerConfiguration) {
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
         this.runContextFactory = runContextFactory;
@@ -124,23 +127,23 @@ public class TriggerScheduler {
             .timer(MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION, MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION_DESCRIPTION);
     }
 
-
     /**
      * Initializes all triggers for the given set of virtual nodes (vNodes).
      * <p>
      * This method is expected to be invoked by a {@link TriggerSchedulingLoop} on any vNodes assignment changes.
      * </p>
      *
-     * @param clock             the scheduler's clock, used to obtain the current time reference and perform time-based evaluations.
-     * @param scheduledTime     the target time for which triggers should be evaluated and potentially scheduled;
-     *                          represents the scheduler’s current cycle timestamp.
+     * @param clock the scheduler's clock, used to obtain the current time reference and perform time-based evaluations.
+     * @param scheduledTime the target time for which triggers should be evaluated and potentially scheduled;
+     *        represents the scheduler’s current cycle timestamp.
      * @param vNodesAssignments the set of virtual node identifiers whose associated triggers should be initialized.
      */
     public void onStart(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         log.info("Starting trigger scheduling for {} vNodes", vNodesAssignments);
 
         Map<String, TriggerState> triggers = triggerStateStore.findAllForVNodes(vNodesAssignments).stream()
-            .collect(Collectors.toMap(TriggerId::uid, Function.identity(), (existing, replacement) -> {
+            .collect(Collectors.toMap(TriggerId::uid, Function.identity(), (existing, replacement) ->
+            {
                 // duplicate keys could only happen in unit-tests
                 log.warn("Detected duplicate keys for triggers: {}", TriggerId.of(replacement));
                 return existing;
@@ -151,11 +154,14 @@ public class TriggerScheduler {
             .map(flow -> pluginDefaultService.injectAllDefaults(flow, log))
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
-            .flatMap(flow -> flow.getTriggers().stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .map(trigger -> Pair.of(flow, trigger)))
+            .flatMap(
+                flow -> flow.getTriggers().stream()
+                    .filter(trigger -> trigger instanceof WorkerTriggerInterface)
+                    .map(trigger -> Pair.of(flow, trigger))
+            )
             .distinct()
-            .forEach(flowAndTrigger -> {
+            .forEach(flowAndTrigger ->
+            {
                 final FlowWithSource flow = flowAndTrigger.getLeft();
                 final AbstractTrigger trigger = flowAndTrigger.getRight();
 
@@ -193,7 +199,8 @@ public class TriggerScheduler {
                     RunContext runContext = runContextFactory.of(flow, trigger);
 
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-                    RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedulableTrigger.getRecoverMissedSchedules()).orElseGet(() -> schedulableTrigger.defaultRecoverMissedSchedules(runContext));
+                    RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedulableTrigger.getRecoverMissedSchedules())
+                        .orElseGet(() -> schedulableTrigger.defaultRecoverMissedSchedules(runContext));
                     try {
                         TriggerState currentTriggerState = triggerState;
                         switch (recoverMissedSchedules) {
@@ -230,9 +237,9 @@ public class TriggerScheduler {
      * triggers are processed in a timely manner.
      * </p>
      *
-     * @param clock             the scheduler's clock, used to obtain the current time reference and perform time-based evaluations.
-     * @param scheduledTime     the target time for which triggers should be evaluated and potentially scheduled;
-     *                          represents the scheduler’s current cycle timestamp.
+     * @param clock the scheduler's clock, used to obtain the current time reference and perform time-based evaluations.
+     * @param scheduledTime the target time for which triggers should be evaluated and potentially scheduled;
+     *        represents the scheduler’s current cycle timestamp.
      * @param vNodesAssignments the set of virtual node identifiers whose associated triggers should be evaluated.
      */
     public void onSchedule(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
@@ -259,9 +266,9 @@ public class TriggerScheduler {
     /**
      * Evaluates the given trigger context.
      *
-     * @param clock         the scheduler's clock.
+     * @param clock the scheduler's clock.
      * @param scheduledTime the scheduler’s current cycle timestamp.
-     * @param context       the {@link TriggerEvaluationContext}.
+     * @param context the {@link TriggerEvaluationContext}.
      */
     private void evaluate(Clock clock, ZonedDateTime scheduledTime, TriggerEvaluationContext context) {
 
@@ -332,14 +339,15 @@ public class TriggerScheduler {
             log(clock, triggerContext, maybeExecution.get());
             triggerState = triggerState
                 .updateForExecution(clock, maybeExecution.get())
-                .locked(clock, !((AbstractTrigger)trigger).isAllowConcurrent());
+                .locked(clock, !((AbstractTrigger) trigger).isAllowConcurrent());
         }
         // Save the final trigger state
         triggerStateStore.save(triggerState);
 
         // May send a new execution - if Schedulable trigger or on error
         final String tenantId = triggerState.getTenantId();
-        maybeExecution.ifPresent(execution -> {
+        maybeExecution.ifPresent(execution ->
+        {
             execution = execution
                 .withScheduleDate(scheduleTime.toInstant())
                 .withTenantId(tenantId);
@@ -361,8 +369,9 @@ public class TriggerScheduler {
     }
 
     private void processWorkerTrigger(Clock clock, TriggerState triggerState, TriggerEvaluationContext triggerEvaluationContext, WorkerTriggerInterface trigger) {
-        final boolean mustBeLocked = trigger instanceof RealtimeTriggerInterface || !((AbstractTrigger)trigger).isAllowConcurrent();
-        updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, triggerEvaluationContext).ifPresent(state -> {
+        final boolean mustBeLocked = trigger instanceof RealtimeTriggerInterface || !((AbstractTrigger) trigger).isAllowConcurrent();
+        updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, triggerEvaluationContext).ifPresent(state ->
+        {
             try {
                 this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext());
                 state = state.locked(clock, mustBeLocked);
@@ -382,8 +391,9 @@ public class TriggerScheduler {
     private Optional<TriggerState> updateNextEvaluationDateAndGetOnSuccess(Clock clock, TriggerState currentTriggerState, TriggerEvaluationContext lastTriggerEvaluationContext) {
         Logger logger = lastTriggerEvaluationContext.conditionContext().getRunContext().logger();
         try {
-            ZonedDateTime nextEvaluationDate = NextEvaluationDate.get(clock, lastTriggerEvaluationContext.trigger(), lastTriggerEvaluationContext.triggerState().context(), lastTriggerEvaluationContext.conditionContext());
-           return Optional.of(currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate));
+            ZonedDateTime nextEvaluationDate = NextEvaluationDate
+                .get(clock, lastTriggerEvaluationContext.trigger(), lastTriggerEvaluationContext.triggerState().context(), lastTriggerEvaluationContext.conditionContext());
+            return Optional.of(currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate));
         } catch (Exception e) {
             if (e instanceof InvalidTriggerConfigurationException) {
                 // disable trigger on invalid configuration
@@ -412,9 +422,10 @@ public class TriggerScheduler {
 
         ZonedDateTime now = ZonedDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
 
-        if (execution.getTrigger() != null &&
-            execution.getTrigger().getVariables() != null &&
-            execution.getTrigger().getVariables().containsKey("next")
+        if (
+            execution.getTrigger() != null &&
+                execution.getTrigger().getVariables() != null &&
+                execution.getTrigger().getVariables().containsKey("next")
         ) {
             Object nextVariable = execution.getTrigger().getVariables().get("next");
 

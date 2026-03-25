@@ -1,10 +1,12 @@
 package io.kestra.core.validations;
 
-import io.kestra.plugin.core.trigger.Webhook;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.plugin.core.trigger.Webhook;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

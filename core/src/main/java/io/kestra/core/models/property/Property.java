@@ -1,5 +1,11 @@
 package io.kestra.core.models.property;
 
+import java.io.IOException;
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,21 +14,17 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextProperty;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-
-import java.io.IOException;
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -216,7 +218,8 @@ public class Property<T> {
             else {
                 List<?> asRawList = deserialize(property.expression, List.class);
                 property.value = (T) asRawList.stream()
-                    .map(throwFunction(item -> {
+                    .map(throwFunction(item ->
+                    {
                         Object rendered = null;
                         if (item instanceof String str) {
                             rendered = context.render(str, variables);
@@ -256,8 +259,9 @@ public class Property<T> {
      *
      * @see RunContextProperty#asMap(Class, Class, Map)
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables)
+        throws IllegalVariableEvaluationException {
         if (property.skipCache || property.value == null) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
 
@@ -288,7 +292,8 @@ public class Property<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Property<?> property = (Property<?>) o;
         return Objects.equals(expression, property.expression);
     }

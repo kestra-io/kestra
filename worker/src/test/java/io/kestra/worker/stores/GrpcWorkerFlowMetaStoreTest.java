@@ -1,5 +1,9 @@
 package io.kestra.worker.stores;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceBlockingStub;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -10,10 +14,8 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,11 +64,15 @@ class GrpcWorkerFlowMetaStoreTest extends AbstractGrpcMetaStoreTest {
             .tenantId(TenantService.MAIN_TENANT)
             .namespace(namespace)
             .id(IdUtils.create())
-            .tasks(List.of(Return.builder()
-                .id("return")
-                .format(Property.ofValue("format"))
-                .type(Return.class.getName())
-                .build()))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id("return")
+                        .format(Property.ofValue("format"))
+                        .type(Return.class.getName())
+                        .build()
+                )
+            )
             .build();
     }
 }

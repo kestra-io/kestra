@@ -1,16 +1,17 @@
 package io.kestra.core.models.triggers;
 
+import java.time.DateTimeException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.scheduler.SchedulerClock;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.DateTimeException;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.Optional;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface PollingTriggerInterface extends WorkerTriggerInterface {
     @Schema(

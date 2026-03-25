@@ -1,34 +1,37 @@
 package io.kestra.core.models.executions;
 
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Gauge;
 import io.kestra.core.models.executions.metrics.Timer;
+
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import jakarta.validation.constraints.NotNull;
-
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = Counter.class, name = "counter"),
-    @JsonSubTypes.Type(value = Gauge.class, name = "gauge"),
-    @JsonSubTypes.Type(value = Timer.class, name = "timer"),
-})
+@JsonSubTypes(
+    {
+        @JsonSubTypes.Type(value = Counter.class, name = "counter"),
+        @JsonSubTypes.Type(value = Gauge.class, name = "gauge"),
+        @JsonSubTypes.Type(value = Timer.class, name = "timer"),
+    }
+)
 @ToString
-@EqualsAndHashCode(exclude="timestamp")
+@EqualsAndHashCode(exclude = "timestamp")
 @Getter
 @NoArgsConstructor
 abstract public class AbstractMetricEntry<T> {
@@ -69,9 +72,9 @@ abstract public class AbstractMetricEntry<T> {
 
     protected String[] tagsAsArray(Map<String, String> others) {
         return Stream.concat(
-                Optional.ofNullable(this.tags).map(Map::entrySet).stream().flatMap(Collection::stream),
-                others.entrySet().stream()
-            )
+            Optional.ofNullable(this.tags).map(Map::entrySet).stream().flatMap(Collection::stream),
+            others.entrySet().stream()
+        )
             .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
             .toList()
             .toArray(String[]::new);

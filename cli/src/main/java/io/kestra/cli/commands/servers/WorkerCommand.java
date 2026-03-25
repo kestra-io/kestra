@@ -1,15 +1,16 @@
 package io.kestra.cli.commands.servers;
 
+import java.util.Map;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-
-import java.util.Map;
 
 @CommandLine.Command(
     name = "worker",
@@ -20,10 +21,10 @@ public class WorkerCommand extends AbstractServerCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Option(names = {"-t", "--thread"}, description = "The max number of worker threads, defaults to eight times the number of available processors")
+    @Option(names = { "-t", "--thread" }, description = "The max number of worker threads, defaults to eight times the number of available processors")
     private int thread = Worker.defaultNumThreads();
 
-    @Option(names = {"-g", "--worker-group"}, description = "The worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")
+    @Option(names = { "-g", "--worker-group" }, description = "The worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")
     private String workerGroupKey = null;
 
     @SuppressWarnings("unused")

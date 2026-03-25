@@ -1,10 +1,11 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.regex.Pattern;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 
-import java.util.regex.Pattern;
+import jakarta.validation.ConstraintViolationException;
 
 public class EmailInput extends Input<String> {
 
@@ -12,7 +13,7 @@ public class EmailInput extends Input<String> {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if(!Pattern.matches(EMAIL_PATTERN, input)){
+        if (!Pattern.matches(EMAIL_PATTERN, input)) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "The input must be a valid email",
                 this,

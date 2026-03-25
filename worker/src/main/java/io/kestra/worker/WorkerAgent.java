@@ -1,25 +1,5 @@
 package io.kestra.worker;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.runners.Worker;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.server.AbstractService;
-import io.kestra.core.server.Metric;
-import io.kestra.core.server.ServerConfig;
-import io.kestra.core.server.ServiceStateChangeEvent;
-import io.kestra.core.server.ServiceType;
-import io.kestra.core.services.MaintenanceService;
-import io.kestra.core.utils.Disposable;
-import io.kestra.core.worker.models.WorkerContext;
-import io.kestra.worker.fetchers.WorkerJobFetcher;
-import io.kestra.worker.senders.WorkerIOSender;
-import io.kestra.worker.services.WorkerConnectionService;
-import io.micronaut.context.event.ApplicationEventPublisher;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Awaitility;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -37,6 +17,28 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.awaitility.Awaitility;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.runners.Worker;
+import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.server.AbstractService;
+import io.kestra.core.server.Metric;
+import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
+import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.utils.Disposable;
+import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.fetchers.WorkerJobFetcher;
+import io.kestra.worker.senders.WorkerIOSender;
+import io.kestra.worker.services.WorkerConnectionService;
+
+import io.micronaut.context.event.ApplicationEventPublisher;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
@@ -81,8 +83,7 @@ public class WorkerAgent extends AbstractService implements Worker {
         List<WorkerIOSender> workerIOSenders,
         MaintenanceService maintenanceService,
         MetricRegistry metricRegistry,
-        ServerConfig serverConfig
-    ) {
+        ServerConfig serverConfig) {
         super(ServiceType.WORKER, eventPublisher);
         this.workerConnectionService = workerConnectionService;
         this.workerJobExecutor = workerJobExecutor;
@@ -130,7 +131,7 @@ public class WorkerAgent extends AbstractService implements Worker {
 
         this.setState(ServiceState.CREATED);
 
-        String[] tags = workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, workerGroup};
+        String[] tags = workerGroup == null ? new String[0] : new String[] { MetricRegistry.TAG_WORKER_GROUP, workerGroup };
         // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION, numThreads, tags);
 
@@ -272,7 +273,8 @@ public class WorkerAgent extends AbstractService implements Worker {
         final AtomicReference<ServiceState> shutdownState = new AtomicReference<>();
         // Initiate shutdown
         Thread.ofVirtual().name("worker-shutdown").start(
-            () -> {
+            () ->
+            {
                 try {
                     long remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
                     boolean gracefullyShutdown = this.workerJobExecutor.shutdown(Duration.ofMillis(remaining));
@@ -288,7 +290,8 @@ public class WorkerAgent extends AbstractService implements Worker {
         Awaitility.await()
             .pollInterval(Duration.ofSeconds(1))
             .ignoreExceptions()
-            .until(() -> {
+            .until(() ->
+            {
                 ServiceState serviceState = shutdownState.get();
                 if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
                     log.info("All worker jobs are terminated");

@@ -1,5 +1,9 @@
 package io.kestra.executor.handler;
 
+import java.util.Collections;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -8,10 +12,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.WorkerTaskResult;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,11 +31,13 @@ class WorkerTaskResultMessageHandlerTest {
     @Test
     void shouldReturnEmptyForNonExistingExecution() {
         var workerTaskResult = WorkerTaskResult.builder()
-            .taskRun(TaskRun.builder()
-                .executionId("execution")
-                .id("taskrun")
-                .taskId("task")
-                .build())
+            .taskRun(
+                TaskRun.builder()
+                    .executionId("execution")
+                    .id("taskrun")
+                    .taskId("task")
+                    .build()
+            )
             .build();
 
         var maybeExecutor = workerTaskResultMessageHandler.handle(workerTaskResult);
@@ -72,11 +76,13 @@ class WorkerTaskResultMessageHandlerTest {
         var execution = Execution.newExecution(flow, Collections.emptyList());
         executionRepository.save(execution);
         var workerTaskResult = WorkerTaskResult.builder()
-            .taskRun(TaskRun.builder()
-                .executionId(execution.getId())
-                .id("taskrun")
-                .taskId("task")
-                .build())
+            .taskRun(
+                TaskRun.builder()
+                    .executionId(execution.getId())
+                    .id("taskrun")
+                    .taskId("task")
+                    .build()
+            )
             .build();
 
         var maybeExecutor = workerTaskResultMessageHandler.handle(workerTaskResult);

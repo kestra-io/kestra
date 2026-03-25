@@ -1,5 +1,10 @@
 package io.kestra.executor.handler;
 
+import java.time.Instant;
+import java.util.Collections;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.GenericFlow;
@@ -8,11 +13,8 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.util.Collections;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

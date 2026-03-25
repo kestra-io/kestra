@@ -1,17 +1,18 @@
 package io.kestra.webserver.utils.filepreview;
 
-import io.kestra.core.serializers.FileSerde;
+import java.io.*;
+import java.util.Map;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.io.*;
-import java.util.Map;
+import io.kestra.core.serializers.FileSerde;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class IonFileRenderTest {
     @ParameterizedTest
-    @CsvSource({"0, false", "100, false", "101, true"})
+    @CsvSource({ "0, false", "100, false", "101, true" })
     void testTruncatedByLineCount(int lineCount, boolean truncated) throws IOException {
         File tempFile = File.createTempFile("unit", ".ion");
 

@@ -1,8 +1,8 @@
 package io.kestra.core.exceptions;
 
-import io.kestra.core.models.executions.Execution;
-
 import java.io.Serial;
+
+import io.kestra.core.models.executions.Execution;
 
 /**
  * Exception that can be thrown when a Flow is not found.

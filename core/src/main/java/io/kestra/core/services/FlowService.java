@@ -1,12 +1,28 @@
 package io.kestra.core.services;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.Plugin;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -23,16 +39,17 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerUpdated;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
+
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -40,21 +57,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ClassUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Provides business logic for manipulating flow objects.
@@ -110,7 +112,7 @@ public class FlowService {
      * <p>
      * The validation of the flow is done from the source after injecting all plugin default values.
      *
-     * @param flow             The flow.
+     * @param flow The flow.
      * @return The created {@link FlowWithSource}.
      */
     public FlowWithSource create(GenericFlow flow) throws FlowProcessingException, QueueException {
@@ -141,7 +143,7 @@ public class FlowService {
      * <p>
      * The validation of the flow is done from the source after injecting all plugin default values.
      *
-     * @param flow             The flow.
+     * @param flow The flow.
      * @return The created {@link FlowWithSource}.
      */
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws FlowProcessingException, QueueException {
@@ -199,14 +201,12 @@ public class FlowService {
     private void updateTopology(FlowWithSource flow) {
         flowTopologyRepository.save(
             flow,
-            (flow.isDeleted() ?
-                Stream.<FlowTopology>empty() :
-                flowTopologyService
+            (flow.isDeleted() ? Stream.<FlowTopology> empty()
+                : flowTopologyService
                     .topology(
                         flow,
                         flowRepository.findAllWithSource(flow.getTenantId())
-                    )
-            )
+                    ))
                 .distinct()
                 .toList()
         );
@@ -216,12 +216,10 @@ public class FlowService {
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
         if (flow.isDeleted() || previous != null) {
-            List<AbstractTrigger> triggersDeleted = flow.isDeleted() ?
-                ListUtils.emptyOnNull(flow.getTriggers()) :
-                FlowService.findRemovedTrigger(flow, previous);
+            List<AbstractTrigger> triggersDeleted = flow.isDeleted() ? ListUtils.emptyOnNull(flow.getTriggers()) : FlowService.findRemovedTrigger(flow, previous);
 
-            triggersDeleted.forEach(trigger ->
-                sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+            triggersDeleted.forEach(
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
             );
         }
 
@@ -229,14 +227,14 @@ public class FlowService {
             FlowService.findUpdatedTrigger(flow, previous)
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(trigger ->
-                    sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+                .forEach(
+                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
             FlowService.findNewTrigger(flow, previous)
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(trigger ->
-                    sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+                .forEach(
+                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
             return;
         }
@@ -245,8 +243,8 @@ public class FlowService {
             flow.getTriggers()
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(trigger ->
-                    sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+                .forEach(
+                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
         }
     }
@@ -274,7 +272,7 @@ public class FlowService {
      * variable error, the corresponding {@link Check} is added to the returned list.
      * </p>
      *
-     * @param flow   the flow containing the checks to evaluate
+     * @param flow the flow containing the checks to evaluate
      * @param inputs the input values used when evaluating the conditions
      * @return a list of checks whose conditions evaluated to {@code false} or failed to evaluate
      */
@@ -289,19 +287,21 @@ public class FlowService {
                         falseConditions.add(check);
                     }
                 } catch (IllegalVariableEvaluationException e) {
-                    log.debug("[tenant: {}] [namespace: {}] [flow: {}] Failed to evaluate check condition. Cause.: {}",
+                    log.debug(
+                        "[tenant: {}] [namespace: {}] [flow: {}] Failed to evaluate check condition. Cause.: {}",
                         flow.getTenantId(),
                         flow.getNamespace(),
                         flow.getId(),
                         e.getMessage(),
                         e
                     );
-                    falseConditions.add(Check
-                        .builder()
-                        .message("Failed to evaluate check condition. Cause: " + e.getMessage())
-                        .behavior(Check.Behavior.BLOCK_EXECUTION)
-                        .style(Check.Style.ERROR)
-                        .build()
+                    falseConditions.add(
+                        Check
+                            .builder()
+                            .message("Failed to evaluate check condition. Cause: " + e.getMessage())
+                            .behavior(Check.Behavior.BLOCK_EXECUTION)
+                            .style(Check.Style.ERROR)
+                            .build()
                     );
                 }
             }
@@ -313,14 +313,15 @@ public class FlowService {
     /**
      * Validates the given flow sources.
      *
-     * @param tenantId    The tenant identifier.
+     * @param tenantId The tenant identifier.
      * @param flowSources The flow sources to validate.
      * @return The list of validation constraint violations.
      */
     public List<ValidateConstraintViolation> validate(final String tenantId, final List<FlowSource> flowSources) {
         AtomicInteger index = new AtomicInteger(0);
         List<ValidateConstraintViolation> constraints = new ArrayList<>();
-        flowSources.forEach(flowSource -> {
+        flowSources.forEach(flowSource ->
+        {
             ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> constraintsBuilder = ValidateConstraintViolation.builder();
             constraintsBuilder.index(index.getAndIncrement());
             constraintsBuilder.filename(flowSource.filename());
@@ -390,9 +391,9 @@ public class FlowService {
 
         if (dryRun) {
             return maybeExisting
-                .map(previous -> previous.isSameWithSource(flowToImport) && !previous.isDeleted() ?
-                    previous :
-                    FlowWithSource.of(flowToImport.toBuilder().revision(previous.getRevision() + 1).build(), source)
+                .map(
+                    previous -> previous.isSameWithSource(flowToImport) && !previous.isDeleted() ? previous
+                        : FlowWithSource.of(flowToImport.toBuilder().revision(previous.getRevision() + 1).build(), source)
                 )
                 .orElseGet(() -> FlowWithSource.of(flowToImport, source).toBuilder().tenantId(tenantId).revision(1).build());
         } else {
@@ -426,7 +427,6 @@ public class FlowService {
         return deprecationTraversal("", flow).toList();
     }
 
-
     public List<String> warnings(Flow flow, String tenantId) {
         if (flow == null) {
             return Collections.emptyList();
@@ -438,14 +438,19 @@ public class FlowService {
             .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
             .map(io.kestra.plugin.core.trigger.Flow.class::cast)
             .toList();
-        flowTriggers.forEach(flowTrigger -> {
+        flowTriggers.forEach(flowTrigger ->
+        {
             if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
-                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+                warnings.add(
+                    "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId()
+                        + "'."
+                );
             }
         });
 
         // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
-        flow.allTasksWithChilds().forEach(task -> {
+        flow.allTasksWithChilds().forEach(task ->
+        {
             if (!(task instanceof RunnableTask<?>)) {
                 if (task.getTimeout() != null && !(task instanceof Pause)) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
@@ -466,11 +471,13 @@ public class FlowService {
         try {
             Map<String, Class<?>> aliases = pluginRegistry.plugins().stream()
                 .flatMap(plugin -> plugin.getAliases().values().stream())
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (existing, duplicate) -> existing
-                ));
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existing, duplicate) -> existing
+                    )
+                );
             Map<String, Object> stringObjectMap = JacksonMapper.ofYaml().readValue(flowSource, JacksonMapper.MAP_TYPE_REFERENCE);
             return relocations(aliases, stringObjectMap);
         } catch (JsonProcessingException e) {
@@ -488,7 +495,8 @@ public class FlowService {
 
         List<String> violations = new ArrayList<>();
 
-        subFlows.forEach(subflow -> {
+        subFlows.forEach(subflow ->
+        {
             String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
             String subflowId = subflow.getFlowId();
             String namespace = subflow.getNamespace();
@@ -511,17 +519,20 @@ public class FlowService {
         return violations;
     }
 
-    public record Relocation(String from, String to) {}
+    public record Relocation(String from, String to) {
+    }
 
-    public record TaskDeprecation(String taskId, String taskType, @Nullable String replacement) {}
-
+    public record TaskDeprecation(String taskId, String taskType, @Nullable String replacement) {
+    }
 
     public List<TaskDeprecation> findDeprecatedTasks(Flow flow) {
         return flow.allTasksWithChilds().stream()
-            .flatMap(task -> {
+            .flatMap(task ->
+            {
                 String taskType = task.getType();
                 return pluginRegistry.findMetadataByIdentifier(taskType)
-                    .flatMap(metadata -> {
+                    .flatMap(metadata ->
+                    {
                         // Case 1: task uses a deprecated alias name
                         if (metadata.alias() != null) {
                             boolean replacementDeprecated = Plugin.isDeprecated(metadata.type());
@@ -552,7 +563,8 @@ public class FlowService {
             }
 
             if (entry.getValue() instanceof List<?> value) {
-                List<Relocation> listAliases = value.stream().flatMap(item -> {
+                List<Relocation> listAliases = value.stream().flatMap(item ->
+                {
                     if (item instanceof Map<?, ?> map) {
                         return relocations(aliases, (Map<String, Object>) map).stream();
                     }
@@ -565,7 +577,6 @@ public class FlowService {
         return relocations;
     }
 
-
     private Stream<String> deprecationTraversal(String prefix, Object object) {
         if (object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) || String.class.equals(object.getClass())) {
             return Stream.empty();
@@ -574,7 +585,8 @@ public class FlowService {
         return Stream.concat(
             object.getClass().isAnnotationPresent(Deprecated.class) ? Stream.of(prefix) : Stream.empty(),
             allGetters(object.getClass())
-                .flatMap(method -> {
+                .flatMap(method ->
+                {
                     try {
                         Object fieldValue = method.invoke(object);
 
@@ -617,7 +629,8 @@ public class FlowService {
         // Use a Map to track the latest version of each flow
         Map<String, FlowInterface> latestFlows = new HashMap<>();
 
-        stream.forEach(flow -> {
+        stream.forEach(flow ->
+        {
             String uid = flow.uidWithoutRevision();
             FlowInterface existing = latestFlows.get(uid);
 
@@ -642,9 +655,10 @@ public class FlowService {
     public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(previous.getTriggers())
             .stream()
-            .filter(p -> ListUtils.emptyOnNull(flow.getTriggers())
-                .stream()
-                .noneMatch(c -> c.getId().equals(p.getId()))
+            .filter(
+                p -> ListUtils.emptyOnNull(flow.getTriggers())
+                    .stream()
+                    .noneMatch(c -> c.getId().equals(p.getId()))
             )
             .toList();
     }
@@ -652,9 +666,10 @@ public class FlowService {
     public static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
-            .filter(oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
-                .stream()
-                .anyMatch(trigger -> trigger.getId().equals(oldTrigger.getId()) && !EqualsBuilder.reflectionEquals(trigger, oldTrigger))
+            .filter(
+                oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
+                    .stream()
+                    .anyMatch(trigger -> trigger.getId().equals(oldTrigger.getId()) && !EqualsBuilder.reflectionEquals(trigger, oldTrigger))
             )
             .toList();
     }
@@ -662,9 +677,10 @@ public class FlowService {
     public static List<AbstractTrigger> findNewTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
-            .filter(oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
-                .stream()
-                .noneMatch(trigger -> trigger.getId().equals(oldTrigger.getId()))
+            .filter(
+                oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
+                    .stream()
+                    .noneMatch(trigger -> trigger.getId().equals(oldTrigger.getId()))
             )
             .toList();
     }
@@ -693,13 +709,13 @@ public class FlowService {
      * Gets the executable flow for the given namespace, id, and revision.
      * Warning: this method bypasses ACL so someone with only execution right can create a flow execution
      *
-     * @param tenant    Rhe tenant ID.
+     * @param tenant Rhe tenant ID.
      * @param namespace The flow's namespace.
-     * @param id        The flow's ID.
-     * @param revision  The flow's revision.
+     * @param id The flow's ID.
+     * @param revision The flow's revision.
      * @return The {@link Flow}.
      * @throws NoSuchElementException if the requested flow does not exist.
-     * @throws IllegalStateException  if the requested flow is not executable.
+     * @throws IllegalStateException if the requested flow is not executable.
      */
     public Flow getFlowIfExecutableOrThrow(final String tenant, final String namespace, final String id, final Optional<Integer> revision) {
         Optional<Flow> optional = flowRepository.findByIdWithoutAcl(tenant, namespace, id, revision);
@@ -719,7 +735,8 @@ public class FlowService {
     }
 
     public Stream<FlowTopology> findDependencies(final String tenant, final String namespace, final String id, boolean destinationOnly, boolean expandAll) {
-        return expandAll ? recursiveFlowTopology(new ArrayList<>(), tenant, namespace, id, destinationOnly) : flowTopologyRepository.findByFlow(tenant, namespace, id, destinationOnly).stream();
+        return expandAll ? recursiveFlowTopology(new ArrayList<>(), tenant, namespace, id, destinationOnly)
+            : flowTopologyRepository.findByFlow(tenant, namespace, id, destinationOnly).stream();
     }
 
     private Stream<FlowTopology> recursiveFlowTopology(List<String> visitedTopologies, String tenantId, String namespace, String id, boolean destinationOnly) {
@@ -730,14 +747,16 @@ public class FlowService {
         return flowTopologies.stream()
             // ignore already visited topologies
             .filter(x -> !visitedTopologies.contains(x.uid()))
-            .flatMap(topology -> {
+            .flatMap(topology ->
+            {
                 visitedTopologies.add(topology.uid());
                 Stream<FlowTopology> subTopologies = Stream
                     .of(topology.getDestination(), topology.getSource())
                     // ignore already visited nodes
                     .filter(x -> !visitedNodes.contains(x.getId()))
                     // recursively visit children and parents nodes
-                    .flatMap(relationNode -> {
+                    .flatMap(relationNode ->
+                    {
                         visitedNodes.add(relationNode.getId());
                         return recursiveFlowTopology(visitedTopologies, relationNode.getTenantId(), relationNode.getNamespace(), relationNode.getId(), destinationOnly);
                     });

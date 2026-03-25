@@ -1,5 +1,9 @@
 package io.kestra.core.runners;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
@@ -7,9 +11,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.plugin.core.debug.Return;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,15 +26,15 @@ class FlowableUtilsTest {
             .state(new State().withState(State.Type.RUNNING))
             .build();
 
-        ResolvedTask taskA   = resolvedTask("task_a");
+        ResolvedTask taskA = resolvedTask("task_a");
         ResolvedTask waitFor = resolvedTask("wait_for");
-        ResolvedTask taskB   = resolvedTask("task_b");
-        ResolvedTask taskC   = resolvedTask("task_c");
+        ResolvedTask taskB = resolvedTask("task_b");
+        ResolvedTask taskC = resolvedTask("task_c");
 
-        TaskRun taskATaskRun        = TaskRun.of(base, taskA).withState(State.Type.SUCCESS);
+        TaskRun taskATaskRun = TaskRun.of(base, taskA).withState(State.Type.SUCCESS);
         TaskRun waitForTaskRunIter1 = TaskRun.of(base, waitFor).withState(State.Type.SUCCESS);
         TaskRun waitForTaskRunIter2 = TaskRun.of(base, waitFor).withState(State.Type.SUCCESS);
-        TaskRun taskBTaskRun        = TaskRun.of(base, taskB).withState(State.Type.SUCCESS);
+        TaskRun taskBTaskRun = TaskRun.of(base, taskB).withState(State.Type.SUCCESS);
 
         Execution execution = base.toBuilder()
             .taskRunList(List.of(taskATaskRun, waitForTaskRunIter1, waitForTaskRunIter2, taskBTaskRun))

@@ -1,16 +1,5 @@
 package io.kestra.worker;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.worker.processors.WorkerJobProcessor;
-import io.kestra.worker.processors.WorkerJobProcessorFactory;
-import io.kestra.worker.queues.WorkerQueue;
-import io.kestra.worker.queues.WorkerQueueRegistry;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +12,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.worker.processors.WorkerJobProcessor;
+import io.kestra.worker.processors.WorkerJobProcessorFactory;
+import io.kestra.worker.queues.WorkerQueue;
+import io.kestra.worker.queues.WorkerQueueRegistry;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Components responsible for executing {@link io.kestra.core.runners.WorkerJob}s
@@ -49,9 +50,9 @@ public class WorkerJobExecutor {
 
     @Inject
     public WorkerJobExecutor(final WorkerQueueRegistry workerQueueRegistry,
-                             final ExecutorsUtils executorsUtils,
-                             final WorkerJobProcessorFactory workerJobProcessorFactory,
-                             final MetricRegistry metricRegistry) {
+        final ExecutorsUtils executorsUtils,
+        final WorkerJobProcessorFactory workerJobProcessorFactory,
+        final MetricRegistry metricRegistry) {
         this.workerJobProcessorFactory = workerJobProcessorFactory;
         this.workerQueueRegistry = workerQueueRegistry;
         this.executorsUtils = executorsUtils;
@@ -75,13 +76,15 @@ public class WorkerJobExecutor {
                 );
                 this.workerJobConsumers.add(consumer);
                 // Consumers on virtual threads — they only poll and wait
-                this.consumerThreads.add(Thread.ofVirtual()
-                    .name("worker-consumer-" + i)
-                    .start(consumer));
+                this.consumerThreads.add(
+                    Thread.ofVirtual()
+                        .name("worker-consumer-" + i)
+                        .start(consumer)
+                );
             }
 
             // create metrics for pending and running job counts
-            String[] tags = {MetricRegistry.TAG_WORKER_GROUP, context.workerGroup() != null ? context.workerGroup() : "__default__"};
+            String[] tags = { MetricRegistry.TAG_WORKER_GROUP, context.workerGroup() != null ? context.workerGroup() : "__default__" };
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_PENDING_COUNT, MetricRegistry.METRIC_WORKER_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION, runningJobCount, tags);
         } else {
@@ -212,10 +215,10 @@ public class WorkerJobExecutor {
         private final ExecutorService taskExecutorService;
 
         public WorkerJobConsumer(int index,
-                                 WorkerQueue<WorkerJob> workerJobQueue,
-                                 WorkerJobProcessorFactory workerJobProcessorFactory,
-                                 io.kestra.core.worker.models.WorkerContext workerContext,
-                                 ExecutorService taskExecutorService) {
+            WorkerQueue<WorkerJob> workerJobQueue,
+            WorkerJobProcessorFactory workerJobProcessorFactory,
+            io.kestra.core.worker.models.WorkerContext workerContext,
+            ExecutorService taskExecutorService) {
             super("WorkerJobConsumer-" + index);
             this.workerJobQueue = workerJobQueue;
             this.workerJobProcessorFactory = workerJobProcessorFactory;
@@ -247,7 +250,8 @@ public class WorkerJobExecutor {
                 workerJob.set(job);
 
                 // Submit the task to the thread pool; consumer waits
-                Future<?> future = taskExecutorService.submit(() -> {
+                Future<?> future = taskExecutorService.submit(() ->
+                {
                     pendingJobCount.decrementAndGet();
                     runningJobCount.incrementAndGet();
                     try {

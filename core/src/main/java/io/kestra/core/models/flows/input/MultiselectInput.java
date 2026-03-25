@@ -1,5 +1,8 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.*;
+import java.util.function.Function;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
@@ -7,6 +10,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.MultiselectInputValidation;
 import io.kestra.core.validations.Regex;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -15,9 +19,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.*;
-import java.util.function.Function;
 
 @SuperBuilder
 @Getter
@@ -41,7 +42,6 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     )
     @Builder.Default
     private Type itemType = Type.STRING;
-
 
     @Schema(
         title = "If the user can provide customs value."
@@ -74,13 +74,15 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
         if (!this.getAllowCustomValue()) {
             for (String input : inputs) {
                 if (!this.values.contains(input)) {
-                    violations.add(ManualConstraintViolation.of(
-                        "value `" + input + "` doesn't match the values `" + this.values + "`",
-                        this,
-                        MultiselectInput.class,
-                        getId(),
-                        input
-                    ));
+                    violations.add(
+                        ManualConstraintViolation.of(
+                            "value `" + input + "` doesn't match the values `" + this.values + "`",
+                            this,
+                            MultiselectInput.class,
+                            getId(),
+                            input
+                        )
+                    );
                 }
             }
         }

@@ -1,18 +1,21 @@
 package io.kestra.core.utils;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.BroadcastEvent;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A cache backed by a queue.
+ * 
  * @param <T> the item of the cache
  */
 @Slf4j
@@ -51,7 +54,8 @@ public class QueueCache<T extends SoftDeletable<T> & HasUID & BroadcastEvent> im
 
     public void start() {
         // listen to item updates from the queue
-        this.subscriber = queue.subscriber().subscribe(either -> {
+        this.subscriber = queue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.error("Unable to deserialize a message: {}", either.getRight().getMessage());
             } else {

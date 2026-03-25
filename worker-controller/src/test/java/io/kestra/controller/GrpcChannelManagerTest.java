@@ -1,7 +1,14 @@
 package io.kestra.controller;
 
-import io.grpc.Channel;
-import io.grpc.ManagedChannel;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.controller.config.GrpcChannelConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.config.WorkerControllersConfiguration;
@@ -12,14 +19,9 @@ import io.kestra.controller.config.WorkerControllersConfiguration.HealthCheck;
 import io.kestra.controller.config.WorkerControllersConfiguration.LoadBalancing;
 import io.kestra.controller.config.WorkerControllersConfiguration.StaticConfig;
 import io.kestra.core.contexts.KestraContext;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -379,9 +381,9 @@ class GrpcChannelManagerTest {
     void shouldApplyChannelConfiguration() {
         // Given
         GrpcChannelConfiguration channelConfig = new GrpcChannelConfiguration(
-            5,                        // maxRetryAttempts
-            Duration.ofMinutes(30),   // keepAliveTime
-            Duration.ofSeconds(15)    // shutdownTimeout
+            5, // maxRetryAttempts
+            Duration.ofMinutes(30), // keepAliveTime
+            Duration.ofSeconds(15) // shutdownTimeout
         );
         WorkerControllersConfiguration config = createStaticConfig(
             List.of(new Endpoint("localhost", 9096))
@@ -447,8 +449,7 @@ class GrpcChannelManagerTest {
 
     private static WorkerControllersConfiguration createStaticConfigWithLoadBalancing(
         List<Endpoint> endpoints,
-        LoadBalancing.Policy policy
-    ) {
+        LoadBalancing.Policy policy) {
         return new WorkerControllersConfiguration(
             DiscoveryType.STATIC,
             new StaticConfig(endpoints),
@@ -461,8 +462,7 @@ class GrpcChannelManagerTest {
 
     private static WorkerControllersConfiguration createStaticConfigWithHealthCheck(
         List<Endpoint> endpoints,
-        boolean healthCheckEnabled
-    ) {
+        boolean healthCheckEnabled) {
         return new WorkerControllersConfiguration(
             DiscoveryType.STATIC,
             new StaticConfig(endpoints),
@@ -497,9 +497,9 @@ class GrpcChannelManagerTest {
 
     private static GrpcChannelConfiguration createDefaultChannelConfig() {
         return new GrpcChannelConfiguration(
-            10,                      // maxRetryAttempts
-            Duration.ofHours(1),     // keepAliveTime
-            Duration.ofSeconds(30)   // shutdownTimeout
+            10, // maxRetryAttempts
+            Duration.ofHours(1), // keepAliveTime
+            Duration.ofSeconds(30) // shutdownTimeout
         );
     }
 

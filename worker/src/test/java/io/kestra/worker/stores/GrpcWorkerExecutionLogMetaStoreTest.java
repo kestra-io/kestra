@@ -1,16 +1,18 @@
 package io.kestra.worker.stores;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
 import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
-import java.time.Instant;
-import java.util.List;
+import jakarta.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.*;
 

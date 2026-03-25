@@ -1,5 +1,12 @@
 package io.kestra.core.services;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.PersistedKvMetadata;
@@ -11,18 +18,12 @@ import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreException;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -47,8 +48,8 @@ public class KVStoreService {
     /**
      * Gets access to the Key-Value store for the given namespace.
      *
-     * @param tenant        The tenant ID.
-     * @param namespace     The namespace of the K/V store.
+     * @param tenant The tenant ID.
+     * @param namespace The namespace of the K/V store.
      * @return The {@link KVStore}.
      */
     public KVStore get(String tenant, String namespace) {
@@ -59,8 +60,8 @@ public class KVStoreService {
     /**
      * Gets access to the Key-Value store for the given namespace.
      *
-     * @param tenant        The tenant ID.
-     * @param namespace     The namespace of the K/V store.
+     * @param tenant The tenant ID.
+     * @param namespace The namespace of the K/V store.
      * @param fromNamespace The namespace from which the K/V store is accessed.
      * @return The {@link KVStore}.
      */
@@ -80,15 +81,16 @@ public class KVStoreService {
     /**
      * Lists K/V store entries with pagination, filtering, and version control.
      *
-     * @param pageable       The pagination parameters.
-     * @param filters        The query filters.
-     * @param allowDeleted   Whether to include deleted entries.
-     * @param allowExpired   Whether to include expired entries.
-     * @param fetchBehavior  The version fetch behavior.
+     * @param pageable The pagination parameters.
+     * @param filters The query filters.
+     * @param allowDeleted Whether to include deleted entries.
+     * @param allowExpired Whether to include expired entries.
+     * @param fetchBehavior The version fetch behavior.
      * @return The paginated list of {@link KVEntry}.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
-    public ArrayListTotal<KVEntry> list(Pageable pageable, String tenant, String namespace, List<QueryFilter> filters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior) throws IOException {
+    public ArrayListTotal<KVEntry> list(Pageable pageable, String tenant, String namespace, List<QueryFilter> filters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior)
+        throws IOException {
         if (namespace != null) {
             filters = Stream.concat(
                 filters.stream(),
@@ -112,8 +114,9 @@ public class KVStoreService {
 
     /**
      * Lists all the K/V store entries, expired or not.
-     * @param tenant        The tenant ID.
-     * @param namespace     The namespace of the K/V store.
+     * 
+     * @param tenant The tenant ID.
+     * @param namespace The namespace of the K/V store.
      * @return The list of all {@link KVEntry}.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
@@ -133,7 +136,8 @@ public class KVStoreService {
 
         long actualDeletedEntries = kvEntries.stream()
             .map(entry -> KVStore.storageUri(entry.key(), namespace, entry.version()))
-            .map(throwFunction(uri -> {
+            .map(throwFunction(uri ->
+            {
                 boolean deleted = this.storage.delete(tenant, namespace, uri);
                 URI metadataURI = URI.create(uri.getPath() + ".metadata");
                 if (this.storage.exists(tenant, namespace, metadataURI)) {
@@ -154,8 +158,8 @@ public class KVStoreService {
     /**
      * Checks if access to the given namespace is allowed from the specified namespace and if the namespace exists.
      *
-     * @param tenant        The tenant ID.
-     * @param namespace     The namespace of the K/V store.
+     * @param tenant The tenant ID.
+     * @param namespace The namespace of the K/V store.
      * @param fromNamespace The namespace from which the K/V store is accessed.
      */
     public void checkAccessNamespaceIsAllowed(String tenant, String namespace, @Nullable String fromNamespace) {
@@ -164,8 +168,10 @@ public class KVStoreService {
             try {
                 namespaceService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
             } catch (IllegalArgumentException e) {
-                throw new KVStoreException(String.format(
-                    "Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.", namespace, fromNamespace)
+                throw new KVStoreException(
+                    String.format(
+                        "Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.", namespace, fromNamespace
+                    )
                 );
             }
         }
@@ -175,10 +181,12 @@ public class KVStoreService {
         if (checkIfNamespaceExists && !namespaceService.isNamespaceExists(tenant, namespace)) {
             // if it didn't exist, we still check if there are KV as you can add KV without creating a namespace in DB or having flows in it
             if (!kvMetadataStateStore.existsByNamespace(tenant, namespace)) {
-                throw new KVStoreException(String.format(
-                    "Cannot access the KV store. The namespace '%s' does not exist.",
-                    namespace
-                ));
+                throw new KVStoreException(
+                    String.format(
+                        "Cannot access the KV store. The namespace '%s' does not exist.",
+                        namespace
+                    )
+                );
             }
         }
     }

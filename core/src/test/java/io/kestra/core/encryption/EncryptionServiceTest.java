@@ -1,8 +1,8 @@
 package io.kestra.core.encryption;
 
-import org.junit.jupiter.api.Test;
-
 import java.security.GeneralSecurityException;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

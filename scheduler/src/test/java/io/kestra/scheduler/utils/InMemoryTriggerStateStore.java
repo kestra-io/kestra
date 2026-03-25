@@ -1,13 +1,13 @@
 package io.kestra.scheduler.utils;
 
-import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.scheduler.store.TriggerStateStore;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 
 /**
  * In-memory implementation of {@link TriggerStateStore}.
@@ -81,4 +81,3 @@ public class InMemoryTriggerStateStore implements TriggerStateStore {
         return store.size();
     }
 }
-

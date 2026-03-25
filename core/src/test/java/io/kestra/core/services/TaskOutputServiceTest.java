@@ -1,6 +1,12 @@
 package io.kestra.core.services;
 
+import java.util.Collections;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -13,13 +19,10 @@ import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import lombok.Builder;
 import lombok.Getter;
-import org.junit.jupiter.api.Test;
-
-import java.util.Collections;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +42,9 @@ class TaskOutputServiceTest {
         Map<String, Object> outputs = taskOutputService.computeOutputs(execution);
         assertThat(outputs).hasSize(10);
         String json = JacksonMapper.ofJson().writeValueAsString(outputs);
-        assertThat(json).isEqualTo("{\"2-1_each\":{},\"2_each\":{},\"2_end\":{\"value\":\"2_end\"},\"2-1_switch-letter-a\":{\"a\":{\"value\":\"2-1_switch-letter-a\"}},\"2-1_switch-letter-b\":{\"b\":{\"value\":\"2-1_switch-letter-b\"}},\"2-1-1_switch\":{\"b\":{\"1\":{\"defaults\":false,\"value\":\"1\"},\"2\":{\"defaults\":false,\"value\":\"2\"}}},\"2-1_switch\":{\"a\":{\"defaults\":false,\"value\":\"a\"},\"b\":{\"defaults\":false,\"value\":\"b\"}},\"2-1-1_switch-number-1\":{\"b\":{\"1\":{\"value\":\"1\"}}},\"t1\":{\"value\":\"t1\"},\"2-1-1_switch-number-2\":{\"b\":{\"2\":{\"value\":\"2 b\"}}}}");
+        assertThat(json).isEqualTo(
+            "{\"2-1_each\":{},\"2_each\":{},\"2_end\":{\"value\":\"2_end\"},\"2-1_switch-letter-a\":{\"a\":{\"value\":\"2-1_switch-letter-a\"}},\"2-1_switch-letter-b\":{\"b\":{\"value\":\"2-1_switch-letter-b\"}},\"2-1-1_switch\":{\"b\":{\"1\":{\"defaults\":false,\"value\":\"1\"},\"2\":{\"defaults\":false,\"value\":\"2\"}}},\"2-1_switch\":{\"a\":{\"defaults\":false,\"value\":\"a\"},\"b\":{\"defaults\":false,\"value\":\"b\"}},\"2-1-1_switch-number-1\":{\"b\":{\"1\":{\"value\":\"1\"}}},\"t1\":{\"value\":\"t1\"},\"2-1-1_switch-number-2\":{\"b\":{\"2\":{\"value\":\"2 b\"}}}}"
+        );
     }
 
     @Test
@@ -52,7 +57,9 @@ class TaskOutputServiceTest {
         assertThat(outputs).hasSize(5);
 
         String json = JacksonMapper.ofJson().writeValueAsString(outputs);
-        assertThat(json).isEqualTo("{\"not-json\":{\"value 1\":{\"value\":\"not-json > STRING > value 1\"}},\"2_end\":{\"value\":\"2_end\"},\"1_each\":{},\"json\":{\"{\\\"value\\\":\\\"my-value\\\",\\\"key\\\":\\\"my-key\\\"}\":{\"value\":\"json > JSON > [\\\"my-key\\\"] > [\\\"my-value\\\"]\"},\"{\\\"value\\\":{\\\"sub\\\":1,\\\"bool\\\":true},\\\"key\\\":\\\"my-complex\\\"}\":{\"value\":\"json > JSON > [\\\"my-complex\\\"] > [{\\\"sub\\\":1,\\\"bool\\\":true}]\"}},\"is-json\":{\"value 1\":{\"defaults\":false,\"value\":\"false\"},\"{\\\"value\\\":\\\"my-value\\\",\\\"key\\\":\\\"my-key\\\"}\":{\"defaults\":true,\"value\":\"true\"},\"{\\\"value\\\":{\\\"sub\\\":1,\\\"bool\\\":true},\\\"key\\\":\\\"my-complex\\\"}\":{\"defaults\":true,\"value\":\"true\"}}}");
+        assertThat(json).isEqualTo(
+            "{\"not-json\":{\"value 1\":{\"value\":\"not-json > STRING > value 1\"}},\"2_end\":{\"value\":\"2_end\"},\"1_each\":{},\"json\":{\"{\\\"value\\\":\\\"my-value\\\",\\\"key\\\":\\\"my-key\\\"}\":{\"value\":\"json > JSON > [\\\"my-key\\\"] > [\\\"my-value\\\"]\"},\"{\\\"value\\\":{\\\"sub\\\":1,\\\"bool\\\":true},\\\"key\\\":\\\"my-complex\\\"}\":{\"value\":\"json > JSON > [\\\"my-complex\\\"] > [{\\\"sub\\\":1,\\\"bool\\\":true}]\"}},\"is-json\":{\"value 1\":{\"defaults\":false,\"value\":\"false\"},\"{\\\"value\\\":\\\"my-value\\\",\\\"key\\\":\\\"my-key\\\"}\":{\"defaults\":true,\"value\":\"true\"},\"{\\\"value\\\":{\\\"sub\\\":1,\\\"bool\\\":true},\\\"key\\\":\\\"my-complex\\\"}\":{\"defaults\":true,\"value\":\"true\"}}}"
+        );
     }
 
     @Test
@@ -65,7 +72,9 @@ class TaskOutputServiceTest {
         assertThat(outputs).hasSize(4);
 
         String json = JacksonMapper.ofJson().writeValueAsString(outputs);
-        assertThat(json).isEqualTo("{\"after_if\":{\"value 2\":{\"value\":\"After if: value 2\"}},\"before_if\":{\"value 1\":{\"value\":\"Before if: value 1\"},\"value 2\":{\"value\":\"Before if: value 2\"},\"value 3\":{\"value\":\"Before if: value 3\"}},\"for_each\":{},\"if\":{\"value 1\":{\"evaluationResult\":false},\"value 2\":{\"evaluationResult\":true},\"value 3\":{\"evaluationResult\":false}}}");
+        assertThat(json).isEqualTo(
+            "{\"after_if\":{\"value 2\":{\"value\":\"After if: value 2\"}},\"before_if\":{\"value 1\":{\"value\":\"Before if: value 1\"},\"value 2\":{\"value\":\"Before if: value 2\"},\"value 3\":{\"value\":\"Before if: value 3\"}},\"for_each\":{},\"if\":{\"value 1\":{\"evaluationResult\":false},\"value 2\":{\"evaluationResult\":true},\"value 3\":{\"evaluationResult\":false}}}"
+        );
     }
 
     @Test
@@ -385,4 +394,3 @@ class TaskOutputServiceTest {
         private final Boolean success;
     }
 }
-

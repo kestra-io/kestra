@@ -1,20 +1,21 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.utils.MapUtils;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Retrieves the outputs of a parent.
  * By default, it retrieves the output of the direct parent.
  * If an index is passed to the function, it retrieves the outputs of this specific parent (start at 0)
  */
-public class ParentOutputFunction  implements Function {
+public class ParentOutputFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of("index");
@@ -37,9 +38,9 @@ public class ParentOutputFunction  implements Function {
         return retrieveOutput(context, parent);
     }
 
-    private Object retrieveOutput(EvaluationContext context, Map<?,?> parent) {
+    private Object retrieveOutput(EvaluationContext context, Map<?, ?> parent) {
         String id = (String) ((Map<?, ?>) parent.get("task")).get("id");
-        String value = (String) MapUtils.emptyOnNull((Map<?,?>) parent.get("taskrun")).get("value");
+        String value = (String) MapUtils.emptyOnNull((Map<?, ?>) parent.get("taskrun")).get("value");
         Map<?, ?> outputs = (Map<?, ?>) context.getVariable("outputs");
         Map<?, ?> parentOutput = (Map<?, ?>) outputs.get(id);
         if (parentOutput != null) {

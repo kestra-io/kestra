@@ -1,5 +1,18 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
@@ -10,6 +23,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
@@ -18,10 +32,10 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
-import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -30,18 +44,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.awaitility.Awaitility;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
@@ -88,8 +90,11 @@ class TriggerControllerTest {
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET(
-            TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
+        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET(
+                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"
+            ), Argument.of(PagedResults.class, TriggerController.Triggers.class)
+        );
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
@@ -114,8 +119,11 @@ class TriggerControllerTest {
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET(
-            TRIGGER_PATH + "/search?filters[q][EQUALS]=%s".formatted(flow.getNamespace())), Argument.of(PagedResults.class, TriggerController.Triggers.class));
+        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET(
+                TRIGGER_PATH + "/search?filters[q][EQUALS]=%s".formatted(flow.getNamespace())
+            ), Argument.of(PagedResults.class, TriggerController.Triggers.class)
+        );
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
@@ -142,8 +150,10 @@ class TriggerControllerTest {
 
         // WHEN
         PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
-            HttpRequest.GET(TRIGGER_PATH
-                + "/search?filters[namespace][STARTS_WITH]=%s&sort=triggerId:asc".formatted(flow.getNamespace())),
+            HttpRequest.GET(
+                TRIGGER_PATH
+                    + "/search?filters[namespace][STARTS_WITH]=%s&sort=triggerId:asc".formatted(flow.getNamespace())
+            ),
             Argument.of(PagedResults.class, TriggerController.Triggers.class)
         );
 
@@ -168,11 +178,15 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(trigger);
 
         // WHEN
-        HttpResponse<Object> exchange = client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
-            trigger.getNamespace(),
-            trigger.getFlowId(),
-            trigger.getTriggerId()
-        ), null));
+        HttpResponse<Object> exchange = client.toBlocking().exchange(
+            HttpRequest.POST(
+                (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                    trigger.getNamespace(),
+                    trigger.getFlowId(),
+                    trigger.getTriggerId()
+                ), null
+            )
+        );
 
         // THEN
         assertThat(exchange.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
@@ -185,28 +199,40 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(trigger);
 
         // WHEN
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
-                trigger.getNamespace(),
-                trigger.getFlowId(),
-                trigger.getTriggerId()
-            ), null)));
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
 
         // THEN
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).isEqualTo("Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
-            .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId()));
+        assertThat(e.getMessage()).isEqualTo(
+            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
+                .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
+        );
     }
 
     @Test
     void shouldGetNotFoundWhenUnlockingTriggerGivenUnlocked() {
         // WHEN
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
-                "???",
-                "???",
-                "???"
-            ), null)));
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        "???",
+                        "???",
+                        "???"
+                    ), null
+                )
+            )
+        );
         // THEN
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(e.getMessage()).isEqualTo("Not Found");
@@ -230,8 +256,13 @@ class TriggerControllerTest {
         jdbcTriggerRepository.create(trigger);
 
         // WHEN
-        HttpResponse<?> restarted = client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH
-            + "/%s/%s/%s/restart".formatted(flow.getNamespace(), flow.getId(), trigger.getTriggerId())), null));
+        HttpResponse<?> restarted = client.toBlocking().exchange(
+            HttpRequest.POST(
+                (TRIGGER_PATH
+                    + "/%s/%s/%s/restart".formatted(flow.getNamespace(), flow.getId(), trigger.getTriggerId())),
+                null
+            )
+        );
 
         // THEN
         assertThat(restarted.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
@@ -239,8 +270,9 @@ class TriggerControllerTest {
 
     @Test
     void shouldGetNotFoundWhenRestartingTriggerGivenNotExist() {
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().
-            exchange(HttpRequest.POST((TRIGGER_PATH + "/???/???/???/restart"), null)));
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/???/???/???/restart"), null))
+        );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
@@ -256,8 +288,11 @@ class TriggerControllerTest {
             .toList();
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.DELETE(
-            TRIGGER_PATH + "/delete/by-triggers", triggers), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.DELETE(
+                TRIGGER_PATH + "/delete/by-triggers", triggers
+            ), BulkResponse.class
+        );
 
         // THEN
         assertThat(bulkResponse.getCount()).isEqualTo(2);
@@ -306,8 +341,11 @@ class TriggerControllerTest {
 
         // WHEN
         List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/unlock/by-triggers", triggers), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/unlock/by-triggers", triggers
+            ), BulkResponse.class
+        );
 
         // THEN
         assertThat(bulkResponse.getCount()).isEqualTo(0);
@@ -321,8 +359,11 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(state);
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null
+            ), BulkResponse.class
+        );
 
         // THEN
         assertThat(bulkResponse.getCount()).isEqualTo(1);
@@ -336,8 +377,11 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(state);
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null
+            ), BulkResponse.class
+        );
 
         // THEN
         assertThat(bulkResponse.getCount()).isEqualTo(0);
@@ -361,8 +405,11 @@ class TriggerControllerTest {
             .toList();
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)
+            ), BulkResponse.class
+        );
 
         // THEN
         assertThat(bulkResponse.getCount()).isEqualTo(2);
@@ -391,8 +438,11 @@ class TriggerControllerTest {
             .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)
+            ), BulkResponse.class
+        );
 
         // THEN
         assertThat(bulkResponse.getCount()).isEqualTo(2);
@@ -418,8 +468,11 @@ class TriggerControllerTest {
         TriggerState toDisable = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=true".formatted(namespace), null), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=true".formatted(namespace), null
+            ), BulkResponse.class
+        );
 
         // THEN
         assertThat(bulkResponse.getCount()).isEqualTo(2);
@@ -433,9 +486,13 @@ class TriggerControllerTest {
     @Test
     void disableByTriggersBadRequest() {
         HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.POST(
-                    TRIGGER_PATH + "/set-disabled/by-triggers", new SetDisabledRequest(null, null)),
-                BulkResponse.class));
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    TRIGGER_PATH + "/set-disabled/by-triggers", new SetDisabledRequest(null, null)
+                ),
+                BulkResponse.class
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
@@ -445,22 +502,28 @@ class TriggerControllerTest {
             .tenantId(TENANT_ID)
             .namespace("ns-" + IdUtils.create().toLowerCase())
             .id(IdUtils.create())
-            .tasks(Collections.singletonList(Return.builder()
-                .id("task")
-                .type(Return.class.getName())
-                .format(Property.ofValue("return data"))
-                .build()))
-            .triggers(List.of(
-                Schedule.builder()
-                    .id("trigger-nextexec-schedule")
-                    .type(Schedule.class.getName())
-                    .cron("*/1 * * * *")
-                    .build(),
-                PollingTrigger.builder()
-                    .id("trigger-nextexec-polling")
-                    .type(PollingTrigger.class.getName())
-                    .build()
-            ))
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id("trigger-nextexec-schedule")
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .build(),
+                    PollingTrigger.builder()
+                        .id("trigger-nextexec-polling")
+                        .type(PollingTrigger.class.getName())
+                        .build()
+                )
+            )
             .build();
     }
 
@@ -480,17 +543,24 @@ class TriggerControllerTest {
             .id(IdUtils.create())
             .tenantId(TENANT_ID)
             .namespace(namespace)
-            .tasks(Collections.singletonList(Return.builder()
-                .id("task")
-                .type(Return.class.getName())
-                .format(Property.ofValue("return data"))
-                .build()))
-            .triggers(List.of(Schedule.builder()
-                .id(IdUtils.create())
-                .type(Schedule.class.getName())
-                .cron("*/1 * * * *")
-                .build()
-            ))
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id(IdUtils.create())
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .build()
+                )
+            )
             .build();
     }
 
@@ -506,8 +576,8 @@ class TriggerControllerTest {
     }
 
     private List<TriggerState> createTriggersFromFlow(Flow flow) {
-        return flow.getTriggers().stream().map(it ->
-            TriggerState.builder()
+        return flow.getTriggers().stream().map(
+            it -> TriggerState.builder()
                 .flowId(flow.getId())
                 .tenantId(flow.getTenantId())
                 .namespace(flow.getNamespace())

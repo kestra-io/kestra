@@ -1,12 +1,13 @@
 package io.kestra.core.scheduler.vnodes;
 
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.triggers.TriggerId;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.triggers.TriggerId;
 
 /**
  * Utility class for computing vNodes.
@@ -18,7 +19,7 @@ public final class VNodes {
     /**
      * Computes the consistent hash for the given key.
      *
-     * @param key   the key.
+     * @param key the key.
      * @return a hash.
      */
     public static int hash(final String key) {
@@ -29,7 +30,7 @@ public final class VNodes {
     /**
      * Computes the vNode owning the given trigger.
      *
-     * @param id         the trigger id.
+     * @param id the trigger id.
      * @param vNodeCount the total number of vNodes.
      * @return a vNode id.
      */
@@ -41,7 +42,7 @@ public final class VNodes {
     /**
      * Computes the vNode owning the given flow.
      *
-     * @param id         the flow id.
+     * @param id the flow id.
      * @param vNodeCount the total number of vNodes.
      * @return a vNode id.
      */

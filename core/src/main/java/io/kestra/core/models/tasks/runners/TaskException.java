@@ -1,8 +1,8 @@
 package io.kestra.core.models.tasks.runners;
 
-import lombok.Getter;
-
 import java.io.Serial;
+
+import lombok.Getter;
 
 @Getter
 public class TaskException extends Exception {

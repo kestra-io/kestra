@@ -1,28 +1,27 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.models.FetchVersion;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.kv.PersistedKvMetadata;
-import io.micronaut.data.model.Pageable;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.kv.PersistedKvMetadata;
+
+import io.micronaut.data.model.Pageable;
 
 public interface KvMetadataRepositoryInterface {
     Optional<PersistedKvMetadata> findByName(
         String tenantId,
         String namespace,
-        String name
-    ) throws IOException;
+        String name) throws IOException;
 
     default ArrayListTotal<PersistedKvMetadata> find(
         Pageable pageable,
         String tenantId,
         List<QueryFilter> filters,
         boolean allowDeleted,
-        boolean allowExpired
-    ) {
+        boolean allowExpired) {
         return this.find(pageable, tenantId, filters, allowDeleted, allowExpired, FetchVersion.LATEST);
     }
 
@@ -32,8 +31,7 @@ public interface KvMetadataRepositoryInterface {
         List<QueryFilter> filters,
         boolean allowDeleted,
         boolean allowExpired,
-        FetchVersion fetchBehavior
-    );
+        FetchVersion fetchBehavior);
 
     PersistedKvMetadata save(PersistedKvMetadata item);
 
@@ -43,6 +41,7 @@ public interface KvMetadataRepositoryInterface {
 
     /**
      * Purge (hard delete) a list of persisted kv metadata. If no version is specified, all versions are purged.
+     * 
      * @param persistedKvsMetadata the list of persisted kv metadata to purge
      * @return the number of purged persisted kv metadata
      */

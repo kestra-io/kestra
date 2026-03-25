@@ -1,16 +1,19 @@
 package io.kestra.jdbc.runner;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.executor.WorkerJobRunningStateStore;
-import io.kestra.core.runners.WorkerJobRunning;
-import io.kestra.core.runners.TransactionContext;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.function.BiConsumer;
+
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
-import java.util.List;
-import java.util.function.BiConsumer;
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.runners.WorkerJobRunning;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdbcRepository implements WorkerJobRunningStateStore {
@@ -39,7 +42,8 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
             var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
             deleteByKey(dslContext, key);
         } else {
-            this.jdbcRepository.getDslContextWrapper().transaction(configuration -> {
+            this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
+            {
                 var dslContext = DSL.using(configuration);
                 deleteByKey(dslContext, key);
             });
@@ -48,8 +52,8 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
 
     private void deleteByKey(DSLContext dslContext, String key) {
         dslContext
-            .transaction(configuration ->
-                DSL
+            .transaction(
+                configuration -> DSL
                     .using(configuration)
                     .deleteFrom(this.jdbcRepository.getTable())
                     .where(field("key").eq(key))
@@ -61,7 +65,8 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     public List<WorkerJobRunning> findAll() {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select((field("value")))
@@ -75,8 +80,8 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     public void deleteByKey(String key) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration ->
-                DSL
+            .transaction(
+                configuration -> DSL
                     .using(configuration)
                     .deleteFrom(this.jdbcRepository.getTable())
                     .where(field("key").eq(key))
@@ -100,7 +105,8 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
         } else {
             this.jdbcRepository
                 .getDslContextWrapper()
-                .transaction(configuration -> {
+                .transaction(configuration ->
+                {
                     DSL.using(configuration)
                         .select(field("value"))
                         .from(this.jdbcRepository.getTable())
@@ -113,4 +119,3 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
         }
     }
 }
-

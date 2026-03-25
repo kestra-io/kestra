@@ -1,6 +1,7 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
+import java.util.List;
+
 import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
@@ -8,11 +9,11 @@ import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.runners.ExecutionLogMetaStore;
 import io.kestra.core.worker.models.WorkerInfo;
+
+import io.grpc.stub.StreamObserver;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 /**
  * gRPC service implementation for worker meta store operations.

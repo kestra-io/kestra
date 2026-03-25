@@ -1,5 +1,10 @@
 package io.kestra.core.models.collectors;
 
+import java.lang.management.ManagementFactory;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -9,11 +14,6 @@ import oshi.hardware.ComputerSystem;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.NetworkIF;
 import oshi.software.os.OperatingSystem;
-
-import java.lang.management.ManagementFactory;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuperBuilder
 @Getter
@@ -86,32 +86,32 @@ public class HostUsage {
 
         return HostUsage.builder()
             .uuid(hostUuid)
-            .hardware(HostUsage.Hardware.builder()
-                .logicalProcessorCount(processor.getLogicalProcessorCount())
-                .physicalProcessorCount(processor.getPhysicalProcessorCount())
-                .maxFreq(processor.getMaxFreq())
-                .memory(hardware.getMemory().getTotal())
-                .knownVmMacAddr(hardware.getNetworkIFs().stream().anyMatch(NetworkIF::isKnownVmMacAddr))
-                .knownDockerMacAddr(hardware.getNetworkIFs().stream().anyMatch(networkIF -> networkIF.getMacaddr().startsWith("02:42:ac")))
-                .build()
+            .hardware(
+                HostUsage.Hardware.builder()
+                    .logicalProcessorCount(processor.getLogicalProcessorCount())
+                    .physicalProcessorCount(processor.getPhysicalProcessorCount())
+                    .maxFreq(processor.getMaxFreq())
+                    .memory(hardware.getMemory().getTotal())
+                    .knownVmMacAddr(hardware.getNetworkIFs().stream().anyMatch(NetworkIF::isKnownVmMacAddr))
+                    .knownDockerMacAddr(hardware.getNetworkIFs().stream().anyMatch(networkIF -> networkIF.getMacaddr().startsWith("02:42:ac")))
+                    .build()
             )
-            .os(HostUsage.Os.builder()
-                .family(operatingSystem.getFamily())
-                .version(operatingSystem.getVersionInfo().getVersion())
-                .codeName(operatingSystem.getVersionInfo().getCodeName())
-                .buildNumber(operatingSystem.getVersionInfo().getBuildNumber())
-                .build()
+            .os(
+                HostUsage.Os.builder()
+                    .family(operatingSystem.getFamily())
+                    .version(operatingSystem.getVersionInfo().getVersion())
+                    .codeName(operatingSystem.getVersionInfo().getCodeName())
+                    .buildNumber(operatingSystem.getVersionInfo().getBuildNumber())
+                    .build()
             )
-            .jvm(HostUsage.Jvm.builder()
-                .name(ManagementFactory.getRuntimeMXBean().getVmName())
-                .vendor(ManagementFactory.getRuntimeMXBean().getVmVendor())
-                .version(ManagementFactory.getRuntimeMXBean().getVmVersion())
-                .build()
+            .jvm(
+                HostUsage.Jvm.builder()
+                    .name(ManagementFactory.getRuntimeMXBean().getVmName())
+                    .vendor(ManagementFactory.getRuntimeMXBean().getVmVendor())
+                    .version(ManagementFactory.getRuntimeMXBean().getVmVersion())
+                    .build()
             )
             .build();
     }
 
 }
-
-
-

@@ -1,5 +1,9 @@
 package io.kestra.executor.handler;
 
+import java.util.Collections;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -8,10 +12,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.SubflowExecutionResult;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,12 +33,14 @@ class SubflowExecutionResultMessageHandlerTest {
         var subflowExecutionResult = SubflowExecutionResult.builder()
             .executionId("execution")
             .state(State.Type.SUCCESS)
-            .parentTaskRun(TaskRun.builder()
-                .id("parent")
-                .flowId("flow")
-                .namespace("namespace")
-                .executionId("execution")
-                .build())
+            .parentTaskRun(
+                TaskRun.builder()
+                    .id("parent")
+                    .flowId("flow")
+                    .namespace("namespace")
+                    .executionId("execution")
+                    .build()
+            )
             .build();
 
         var maybeExecutor = subflowExecutionResultMessageHandler.handle(subflowExecutionResult);
@@ -54,12 +58,14 @@ class SubflowExecutionResultMessageHandlerTest {
         var subflowExecutionResult = SubflowExecutionResult.builder()
             .executionId(execution.getId())
             .state(State.Type.SUCCESS)
-            .parentTaskRun(TaskRun.builder()
-                .id("parent")
-                .flowId(parentExecution.getFlowId())
-                .namespace(parentExecution.getNamespace())
-                .executionId(parentExecution.getId())
-                .build())
+            .parentTaskRun(
+                TaskRun.builder()
+                    .id("parent")
+                    .flowId(parentExecution.getFlowId())
+                    .namespace(parentExecution.getNamespace())
+                    .executionId(parentExecution.getId())
+                    .build()
+            )
             .build();
 
         var maybeExecutor = subflowExecutionResultMessageHandler.handle(subflowExecutionResult);

@@ -1,5 +1,8 @@
 package io.kestra.worker.stores;
 
+import java.util.Collection;
+import java.util.Optional;
+
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.NamespaceRequest;
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceBlockingStub;
@@ -10,14 +13,12 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.DefaultFlowMetaStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.worker.models.WorkerInfo;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Collection;
-import java.util.Optional;
 
 /**
  * Worker-side implementation of {@link FlowMetaStoreInterface} that retrieves
@@ -41,7 +42,7 @@ public class GrpcWorkerFlowMetaStore implements FlowMetaStoreInterface {
 
     @Inject
     public GrpcWorkerFlowMetaStore(WorkerFlowMetaStoreServiceBlockingStub workerFlowMetaStoreStub,
-                                   WorkerInfo workerInfo) {
+        WorkerInfo workerInfo) {
         this.workerFlowMetaStoreStub = workerFlowMetaStoreStub;
         this.workerInfo = workerInfo;
     }
@@ -55,7 +56,7 @@ public class GrpcWorkerFlowMetaStore implements FlowMetaStoreInterface {
             .setTenantId(tenant)
             .setNamespace(namespace)
             .build();
-        
+
         BooleanResponse namespaceExists = workerFlowMetaStoreStub.isNamespaceExists(request);
         return namespaceExists.getValue();
     }

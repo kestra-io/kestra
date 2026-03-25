@@ -1,15 +1,16 @@
 package io.kestra.core.runners;
 
+import java.util.Optional;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
-
-import java.util.Optional;
-import jakarta.validation.constraints.NotNull;
 
 @Value
 @AllArgsConstructor

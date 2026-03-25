@@ -14,23 +14,25 @@ public class TestUtilsController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/failing-with-400-client-error", produces = "application/json")
     public String failingWith400ClientError() {
-        if(true){
+        if (true) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "a client error message");
         }
         return "";
     }
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/failing-with-500-server-error", produces = "application/json")
     public String failingWith500ServerError() {
-        if(true){
+        if (true) {
             throw new RuntimeException("an unhandled server error message");
         }
         return "";
     }
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/failing-with-server-error-with-no-error-message", produces = "application/json")
     public String failingWithServerErrorWithNoErrorMessage() {
-        if(true){
+        if (true) {
             throw new NullPointerException();
         }
         return "";

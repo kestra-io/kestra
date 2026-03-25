@@ -1,14 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.models.FetchVersion;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
-import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,8 +9,16 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+
+import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
+
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
  * The default {@link Namespace} implementation.
@@ -42,32 +41,32 @@ public class InternalNamespace implements Namespace {
     /**
      * Creates a new {@link InternalNamespace} instance.
      *
-     * @param tenant     The tenant.
-     * @param namespace  The namespace.
-     * @param storage    The storage.
+     * @param tenant The tenant.
+     * @param namespace The namespace.
+     * @param storage The storage.
      * @param stateStore The namespace file metadata state store (used for worker-safe operations).
      */
     public InternalNamespace(final String tenant,
-                             final String namespace,
-                             final StorageInterface storage,
-                             final NamespaceFileMetadataStateStore stateStore) {
+        final String namespace,
+        final StorageInterface storage,
+        final NamespaceFileMetadataStateStore stateStore) {
         this(log, tenant, namespace, storage, stateStore);
     }
 
     /**
      * Creates a new {@link InternalNamespace} instance.
      *
-     * @param logger     The logger to be used by this class.
-     * @param tenant     The tenant.
-     * @param namespace  The namespace.
-     * @param storage    The storage.
+     * @param logger The logger to be used by this class.
+     * @param tenant The tenant.
+     * @param namespace The namespace.
+     * @param storage The storage.
      * @param stateStore The namespace file metadata state store (used for worker-safe operations).
      */
     public InternalNamespace(final Logger logger,
-                             final String tenant,
-                             final String namespace,
-                             final StorageInterface storage,
-                             final NamespaceFileMetadataStateStore stateStore) {
+        final String tenant,
+        final String namespace,
+        final StorageInterface storage,
+        final NamespaceFileMetadataStateStore stateStore) {
         this.logger = Objects.requireNonNull(logger, "logger cannot be null");
         this.namespace = Objects.requireNonNull(namespace, "namespace cannot be null");
         this.storage = Objects.requireNonNull(storage, "storage cannot be null");
@@ -132,11 +131,13 @@ public class InternalNamespace implements Namespace {
         final Path normalizedTarget = NamespaceFile.normalize(target);
 
         if (exists(normalizedTarget)) {
-            throw new IOException(String.format(
-                "File '%s' already exists in namespace '%s'.",
-                normalizedTarget,
-                namespace
-            ));
+            throw new IOException(
+                String.format(
+                    "File '%s' already exists in namespace '%s'.",
+                    normalizedTarget,
+                    namespace
+                )
+            );
         }
 
         // Get all metadata for source and its descendants, all versions
@@ -183,21 +184,26 @@ public class InternalNamespace implements Namespace {
             }
         } catch (Exception e) {
             // Rollback: purge all already-created target entries (longest paths first to handle children before parents)
-            logger.warn("Move from '{}' to '{}' failed after creating {} of {} entries, rolling back.",
-                normalizedSource, normalizedTarget, results.size(), allMetas.size(), e);
+            logger.warn(
+                "Move from '{}' to '{}' failed after creating {} of {} entries, rolling back.",
+                normalizedSource, normalizedTarget, results.size(), allMetas.size(), e
+            );
             results.stream()
                 .sorted(Comparator.comparing((Pair<NamespaceFile, NamespaceFile> p) -> p.getRight().path().length()).reversed())
-                .forEach(pair -> {
+                .forEach(pair ->
+                {
                     try {
                         this.purge(pair.getRight());
                     } catch (IOException rollbackEx) {
                         logger.error("Failed to rollback created file '{}' during move rollback.", pair.getRight().path(), rollbackEx);
                     }
                 });
-            throw new IOException(String.format(
-                "Failed to move '%s' to '%s' in namespace '%s'. All changes have been rolled back.",
-                normalizedSource, normalizedTarget, namespace
-            ), e);
+            throw new IOException(
+                String.format(
+                    "Failed to move '%s' to '%s' in namespace '%s'. All changes have been rolled back.",
+                    normalizedSource, normalizedTarget, namespace
+                ), e
+            );
         }
 
         // Phase 2: All copies succeeded — now purge the source entries
@@ -325,11 +331,13 @@ public class InternalNamespace implements Namespace {
                     .build()
             );
 
-            logger.debug(String.format(
-                "File '%s' added to namespace '%s'.",
-                normalizedPath,
-                namespace
-            ));
+            logger.debug(
+                String.format(
+                    "File '%s' added to namespace '%s'.",
+                    normalizedPath,
+                    namespace
+                )
+            );
 
             createdFiles.add(namespaceFile);
         } else if (onAlreadyExist == Conflicts.OVERWRITE || inRepository.get().isDeleted()) {
@@ -351,12 +359,14 @@ public class InternalNamespace implements Namespace {
         } else {
             // At this point, the file exists and we have to decide what to do based on the conflict strategy
             switch (onAlreadyExist) {
-                case ERROR -> throw new IOException(String.format(
-                    "File '%s' already exists in namespace '%s' and conflict is set to %s",
-                    normalizedPath,
-                    namespace,
-                    Conflicts.ERROR
-                ));
+                case ERROR -> throw new IOException(
+                    String.format(
+                        "File '%s' already exists in namespace '%s' and conflict is set to %s",
+                        normalizedPath,
+                        namespace,
+                        Conflicts.ERROR
+                    )
+                );
                 case SKIP -> logger.debug("File '{}' already exists in namespace '{}' and conflict is set to {}. Skipping.", normalizedPath, namespace, Conflicts.SKIP);
             }
         }

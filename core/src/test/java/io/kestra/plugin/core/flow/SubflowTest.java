@@ -1,19 +1,11 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Output;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.State.History;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.InputAndOutput;
-import io.kestra.core.runners.SubflowExecutionResult;
-import io.kestra.core.runners.Services;
-import io.kestra.core.services.VariablesService;
-import io.micronaut.context.ApplicationContext;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,11 +15,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.History;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.InputAndOutput;
+import io.kestra.core.runners.Services;
+import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.services.VariablesService;
+
+import io.micronaut.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,7 +39,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 class SubflowTest {
 
-    private static final State DEFAULT_SUCCESS_STATE = State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now())));
+    private static final State DEFAULT_SUCCESS_STATE = State.of(
+        State.Type.SUCCESS,
+        List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now()))
+    );
     public static final String EXECUTION_ID = "executionId";
 
     @Mock
@@ -72,7 +77,8 @@ class SubflowTest {
             taskRun,
             Flow.builder().build(),
             Execution.builder().build(),
-            Collections.emptyMap());
+            Collections.emptyMap()
+        );
 
         assertThat(result).isEmpty();
     }
@@ -92,7 +98,8 @@ class SubflowTest {
             TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
             flow,
             Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build(),
-            Collections.emptyMap());
+            Collections.emptyMap()
+        );
 
         // Then
         assertTrue(result.isPresent());

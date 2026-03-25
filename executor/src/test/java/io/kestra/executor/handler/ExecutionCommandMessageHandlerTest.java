@@ -1,5 +1,12 @@
 package io.kestra.executor.handler;
 
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.EventId;
 import io.kestra.core.executor.command.*;
@@ -15,13 +22,8 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.ExecutorContext;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -142,10 +144,13 @@ class ExecutionCommandMessageHandlerTest {
         var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
         var execution = Execution.newExecution(flow, Collections.emptyList())
             .withBreakpoints(List.of(Breakpoint.of("date")))
-            .withTaskRunList(List.of(TaskRun.builder()
-                .id("taskrun")
-                .state(new State(State.Type.BREAKPOINT))
-                .build())
+            .withTaskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id("taskrun")
+                        .state(new State(State.Type.BREAKPOINT))
+                        .build()
+                )
             )
             .withState(State.Type.BREAKPOINT);
         executionRepository.save(execution);
@@ -163,17 +168,19 @@ class ExecutionCommandMessageHandlerTest {
     void resume() {
         var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "pause-test").orElseThrow();
         var execution = Execution.newExecution(flow, Collections.emptyList())
-            .withTaskRunList(List.of(
-                TaskRun.builder()
-                    .id(IdUtils.create())
-                    .taskId("pause")
-                    .executionId("execution")
-                    .namespace(flow.getNamespace())
-                    .tenantId(flow.getTenantId())
-                    .flowId(flow.getId())
-                    .state(new State().withState(State.Type.PAUSED))
-                    .build()
-            ))
+            .withTaskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id(IdUtils.create())
+                        .taskId("pause")
+                        .executionId("execution")
+                        .namespace(flow.getNamespace())
+                        .tenantId(flow.getTenantId())
+                        .flowId(flow.getId())
+                        .state(new State().withState(State.Type.PAUSED))
+                        .build()
+                )
+            )
             .withState(State.Type.PAUSED);
         executionRepository.save(execution);
         var command = Resume.from(execution, io.kestra.plugin.core.flow.Pause.Resumed.now());

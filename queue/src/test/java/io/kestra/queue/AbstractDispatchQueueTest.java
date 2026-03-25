@@ -1,17 +1,5 @@
 package io.kestra.queue;
 
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.queues.*;
-import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -19,6 +7,19 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,7 +57,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 list.add(e.getLeft().id);
                 countDownLatch.countDown();
             });
@@ -80,8 +82,10 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
-            .subscribeBatch(items -> {
-                items.forEach(e -> {
+            .subscribeBatch(items ->
+            {
+                items.forEach(e ->
+                {
                     list.add(e.getLeft().id);
                     countDownLatch.countDown();
                 });
@@ -107,7 +111,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
     @Test
     void multipleConsumer() throws QueueException, InterruptedException {
-        int rand = ThreadLocalRandom.current().nextInt(10, 50);;
+        int rand = ThreadLocalRandom.current().nextInt(10, 50);
+        ;
         CountDownLatch countDownLatch = new CountDownLatch(rand);
         Collection<String> list = Collections.synchronizedCollection(new ArrayList<>());
         Collection<QueueSubscriber<TestDispatch>> subscribers = Collections.synchronizedCollection(new ArrayList<>());
@@ -115,14 +120,19 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         IntStream.range(0, 3)
             .boxed()
             .parallel()
-            .forEach(throwConsumer(i -> subscribers.add(
-                dispatchQueue
-                    .subscriber()
-                    .subscribe(e -> {
-                        list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
-                        countDownLatch.countDown();
-                    })
-            )));
+            .forEach(
+                throwConsumer(
+                    i -> subscribers.add(
+                        dispatchQueue
+                            .subscriber()
+                            .subscribe(e ->
+                            {
+                                list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
+                                countDownLatch.countDown();
+                            })
+                    )
+                )
+            );
 
         String prefix = this.keyPrefix();
         for (int i = 0; i < rand; i++) {
@@ -152,7 +162,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 if (e.getLeft().id == 2 && crashed.compareAndSet(false, true)) {
                     countDownLatch.countDown();
                     throw new RuntimeException("Boom");
@@ -164,10 +175,11 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
                 }
             });
 
-        dispatchQueue.emit(IntStream.range(1, 15)
-            .boxed()
-            .map(i -> new TestDispatch(prefix + "_" + IdUtils.create(), i))
-            .toList()
+        dispatchQueue.emit(
+            IntStream.range(1, 15)
+                .boxed()
+                .map(i -> new TestDispatch(prefix + "_" + IdUtils.create(), i))
+                .toList()
         );
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -183,7 +195,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         CountDownLatch remaining = new CountDownLatch(3);
         subscriber = dispatchQueue
             .subscriber()
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 remaining.countDown();
             });
         assertThat(remaining.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)).isEqualTo(true);
@@ -199,7 +212,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 list.add(Pair.of(Instant.now(), e.getLeft().id));
                 if (e.getLeft().id == 1) {
                     countDownLatchFirst.countDown();
@@ -272,7 +286,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 list.add(e.getLeft().id);
                 countDownLatch.countDown();
             });
@@ -299,8 +314,10 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
-            .subscribeBatch(items -> {
-                items.forEach(e -> {
+            .subscribeBatch(items ->
+            {
+                items.forEach(e ->
+                {
                     list.add(e.getLeft().id);
                     countDownLatch.countDown();
                 });

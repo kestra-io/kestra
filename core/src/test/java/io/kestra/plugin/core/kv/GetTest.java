@@ -1,5 +1,13 @@
 package io.kestra.plugin.core.kv;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -7,14 +15,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,11 +32,14 @@ class GetTest {
     void shouldGetGivenExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-                "key", TEST_KV_KEY,
-                "namespace", namespaceId
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
             )
-        ));
+        );
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
 
@@ -44,7 +49,6 @@ class GetTest {
             .namespace(Property.ofExpression("{{ inputs.namespace }}"))
             .key(Property.ofExpression("{{ inputs.key }}"))
             .build();
-
 
         final KVStore kv = runContext.namespaceKv(namespaceId);
 
@@ -60,11 +64,13 @@ class GetTest {
     void shouldGetGivenExistingKeyWithInheritance() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of(
-            "inputs", Map.of(
-                "key", TEST_KV_KEY
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY
+                )
             )
-        ));
+        );
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
 
@@ -73,7 +79,6 @@ class GetTest {
             .type(Get.class.getName())
             .key(Property.ofExpression("{{ inputs.key }}"))
             .build();
-
 
         final KVStore kv = runContext.namespaceKv("io.kestra");
 
@@ -89,12 +94,14 @@ class GetTest {
     void shouldGetGivenNonExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of(
-            "inputs", Map.of(
-                "key", TEST_KV_KEY,
-                "namespace", namespaceId
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
             )
-        ));
+        );
 
         Get get = Get.builder()
             .id(Get.class.getSimpleName())

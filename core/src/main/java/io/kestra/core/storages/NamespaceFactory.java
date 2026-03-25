@@ -1,9 +1,11 @@
 package io.kestra.core.storages;
 
+import org.slf4j.Logger;
+
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
 
 /**
  * Factory for creating {@link Namespace} instances.

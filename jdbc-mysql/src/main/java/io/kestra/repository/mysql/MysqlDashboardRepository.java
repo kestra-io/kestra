@@ -1,26 +1,26 @@
 package io.kestra.repository.mysql;
 
+import java.util.List;
+
+import org.jooq.Condition;
+
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
+
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.jooq.Condition;
-
-import java.util.List;
 
 @RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlDashboardRepository extends AbstractJdbcDashboardRepository {
     @Inject
     public MysqlDashboardRepository(@Named("dashboards") MysqlRepository<Dashboard> repository,
-                                    ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher,
-                                    List<QueryBuilderInterface<?>> queryBuilders) {
+        ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher,
+        List<QueryBuilderInterface<?>> queryBuilders) {
         super(repository, eventPublisher, queryBuilders);
     }
 

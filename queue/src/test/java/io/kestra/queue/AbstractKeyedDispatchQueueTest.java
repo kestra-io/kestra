@@ -1,16 +1,18 @@
 package io.kestra.queue;
 
-import io.kestra.core.queues.*;
-import io.kestra.core.queues.event.KeyedDispatchEvent;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.KeyedDispatchEvent;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +32,8 @@ public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestKeyedDispatch> subscriber = keyDispatchQueue
             .subscriber(groupKey)
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 list.add(e.getLeft().id);
                 countDownLatch.countDown();
             });
@@ -51,7 +54,8 @@ public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
     void multipleConsumer() throws QueueException, InterruptedException {
         String groupKey = IdUtils.create();
 
-        int rand = ThreadLocalRandom.current().nextInt(10, 50);;
+        int rand = ThreadLocalRandom.current().nextInt(10, 50);
+        ;
         CountDownLatch countDownLatch = new CountDownLatch(rand);
         Collection<String> list = Collections.synchronizedCollection(new ArrayList<>());
         Collection<QueueSubscriber<TestKeyedDispatch>> subscribers = Collections.synchronizedCollection(new ArrayList<>());
@@ -59,13 +63,19 @@ public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
         IntStream.range(0, 3)
             .boxed()
             .parallel()
-            .forEach(throwConsumer(i -> subscribers.add(keyDispatchQueue
-                .subscriber(groupKey)
-                .subscribe(e -> {
-                    list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
-                    countDownLatch.countDown();
-                })
-            )));
+            .forEach(
+                throwConsumer(
+                    i -> subscribers.add(
+                        keyDispatchQueue
+                            .subscriber(groupKey)
+                            .subscribe(e ->
+                            {
+                                list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
+                                countDownLatch.countDown();
+                            })
+                    )
+                )
+            );
 
         String prefix = this.keyPrefix();
         for (int i = 0; i < rand; i++) {
@@ -92,15 +102,19 @@ public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
 
         IntStream.range(0, 3)
             .boxed()
-            .forEach(throwConsumer(i -> {
+            .forEach(throwConsumer(i ->
+            {
                 map.put(i, Collections.synchronizedCollection(new ArrayList<>()));
 
-                subscribers.add(keyDispatchQueue
-                    .subscriber("group-" + i)
-                    .subscribe(e -> {
-                        map.get(i).add(e.getLeft().id);
-                        countDownLatch.countDown();
-                    }));
+                subscribers.add(
+                    keyDispatchQueue
+                        .subscriber("group-" + i)
+                        .subscribe(e ->
+                        {
+                            map.get(i).add(e.getLeft().id);
+                            countDownLatch.countDown();
+                        })
+                );
             }));
 
         String prefix = this.keyPrefix();
@@ -120,5 +134,6 @@ public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
         }
     }
 
-    public record TestKeyedDispatch(String key, Integer id) implements KeyedDispatchEvent {}
+    public record TestKeyedDispatch(String key, Integer id) implements KeyedDispatchEvent {
+    }
 }

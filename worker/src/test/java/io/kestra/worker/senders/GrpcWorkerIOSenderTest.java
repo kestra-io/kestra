@@ -1,32 +1,35 @@
 package io.kestra.worker.senders;
 
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 import com.fasterxml.jackson.core.type.TypeReference;
-import io.grpc.stub.StreamObserver;
+
 import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.grpc.services.GrpcWorkerControllerService;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.TaskRun;
-import io.micronaut.context.annotation.Property;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.worker.Controller;
 import io.kestra.core.worker.models.WorkerContext;
+
+import io.grpc.stub.StreamObserver;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -62,7 +65,8 @@ class GrpcWorkerIOSenderTest {
 
     @BeforeEach
     void setUp() {
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
@@ -132,6 +136,7 @@ class GrpcWorkerIOSenderTest {
     }
 
     private static BatchMessage<WorkerTaskResult> deserialize(OpaqueData data) {
-        return MessageFormats.JSON.fromByteString(data.getMessage(), new TypeReference<>() {});
+        return MessageFormats.JSON.fromByteString(data.getMessage(), new TypeReference<>() {
+        });
     }
 }

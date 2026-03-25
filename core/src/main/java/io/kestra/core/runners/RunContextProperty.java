@@ -1,14 +1,15 @@
 package io.kestra.core.runners;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -23,13 +24,13 @@ public class RunContextProperty<T> {
     private final RunContext runContext;
     private final Task task;
     private final AbstractTrigger trigger;
-    
+
     private final boolean skipCache;
 
     RunContextProperty(Property<T> property, RunContext runContext) {
         this(property, runContext, false);
     }
-    
+
     RunContextProperty(Property<T> property, RunContext runContext, boolean skipCache) {
         this.property = property;
         this.runContext = runContext;
@@ -48,7 +49,7 @@ public class RunContextProperty<T> {
             log.trace("Unable to do validation: no task or trigger found");
         }
     }
-    
+
     /**
      * Returns a new {@link RunContextProperty} that will always be rendered by evaluating
      * its original Pebble expression, without using any previously cached value.
@@ -77,7 +78,7 @@ public class RunContextProperty<T> {
         validate();
         return as;
     }
-    
+
     /**
      * Render a property with additional variables, then convert it to its target type and validate it.<br>
      *
@@ -142,7 +143,7 @@ public class RunContextProperty<T> {
      * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     @SuppressWarnings("unchecked")
-    public <K,V> T asMap(Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
+    public <K, V> T asMap(Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
         var as = Optional.ofNullable(getProperty())
             .map(throwFunction(prop -> Property.asMap(prop, this.runContext, keyClass, valueClass)))
             .orElse((T) Collections.emptyMap());
@@ -161,7 +162,7 @@ public class RunContextProperty<T> {
      * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     @SuppressWarnings("unchecked")
-    public <K,V> T asMap(Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public <K, V> T asMap(Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         var as = Optional.ofNullable(getProperty())
             .map(throwFunction(prop -> Property.asMap(prop, this.runContext, keyClass, valueClass, variables)))
             .orElse((T) Collections.emptyMap());
@@ -169,7 +170,7 @@ public class RunContextProperty<T> {
         validate();
         return as;
     }
-    
+
     private Property<T> getProperty() {
         return skipCache ? this.property.skipCache() : this.property;
     }

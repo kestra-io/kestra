@@ -1,13 +1,14 @@
 package io.kestra.core.models.executions;
 
+import java.net.URI;
+
 import io.kestra.core.models.flows.State;
+
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
-
-import java.net.URI;
 
 @Value
 @Builder

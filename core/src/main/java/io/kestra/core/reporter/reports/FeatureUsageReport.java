@@ -1,5 +1,8 @@
 package io.kestra.core.reporter.reports;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.models.collectors.ExecutionUsage;
@@ -11,14 +14,12 @@ import io.kestra.core.reporter.model.Count;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
-
-import java.time.Instant;
-import java.util.Objects;
 
 @Singleton
 public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.UsageEvent> {
@@ -30,8 +31,8 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
 
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
-                              ExecutionRepositoryInterface executionRepository,
-                              DashboardRepositoryInterface dashboardRepository) {
+        ExecutionRepositoryInterface executionRepository,
+        DashboardRepositoryInterface dashboardRepository) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;
         this.executionRepository = executionRepository;

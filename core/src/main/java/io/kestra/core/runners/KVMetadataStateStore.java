@@ -1,11 +1,12 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.kv.PersistedKvMetadata;
-import jakarta.annotation.Nullable;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.models.kv.PersistedKvMetadata;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Abstraction layer for KV metadata operations, used by {@link io.kestra.core.storages.kv.InternalKVStore}
@@ -24,9 +25,9 @@ public interface KVMetadataStateStore {
     /**
      * Find a KV metadata entry by tenant, namespace, and name.
      *
-     * @param tenantId  the tenant ID
+     * @param tenantId the tenant ID
      * @param namespace the namespace
-     * @param name      the key name
+     * @param name the key name
      * @return an optional KV metadata entry
      * @throws IOException if an I/O error occurs
      */
@@ -35,7 +36,7 @@ public interface KVMetadataStateStore {
     /**
      * Find all non-deleted, non-expired KV metadata entries for a given tenant and namespace.
      *
-     * @param tenantId  the tenant ID
+     * @param tenantId the tenant ID
      * @param namespace the namespace (maybe {@code null})
      * @return list of active KV metadata entries
      */
@@ -44,7 +45,7 @@ public interface KVMetadataStateStore {
     /**
      * Check whether any non-deleted, non-expired KV entries exist in the given namespace.
      *
-     * @param tenantId  the tenant ID
+     * @param tenantId the tenant ID
      * @param namespace the namespace
      * @return {@code true} if at least one active KV entry exists
      */
@@ -72,9 +73,9 @@ public interface KVMetadataStateStore {
     /**
      * Soft-delete a KV metadata entry by tenant, namespace, and name.
      *
-     * @param tenantId  the tenant ID
+     * @param tenantId the tenant ID
      * @param namespace the namespace
-     * @param name      the key name
+     * @param name the key name
      * @throws IOException if an I/O error occurs
      */
     default Optional<PersistedKvMetadata> deleteByName(String tenantId, String namespace, String name) throws IOException {

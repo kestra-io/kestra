@@ -1,17 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.server.Service;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.worker.Controller;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,14 +8,31 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.kestra.core.server.Service;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.Controller;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Value;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 @SuppressWarnings("try")
 @Slf4j
 @Singleton
 public class TestRunner implements Runnable, AutoCloseable {
-    @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 4;
-    @Setter private boolean schedulerEnabled = true;
-    @Setter private boolean workerEnabled = true;
-    @Setter private boolean workerControllerEnabled = true;
+    @Setter
+    private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 4;
+    @Setter
+    private boolean schedulerEnabled = true;
+    @Setter
+    private boolean workerEnabled = true;
+    @Setter
+    private boolean workerControllerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -82,7 +87,8 @@ public class TestRunner implements Runnable, AutoCloseable {
             throw new RuntimeException(
                 servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
                     .map(Service::getClass)
-                    .toList() + " not started in time");
+                    .toList() + " not started in time"
+            );
         }
     }
 

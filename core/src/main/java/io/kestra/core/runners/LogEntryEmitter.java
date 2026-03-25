@@ -1,9 +1,9 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.LogEntry;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import io.kestra.core.models.executions.LogEntry;
 
 /**
  * Interface for emitting log entries to the log queue and the follow log queue.

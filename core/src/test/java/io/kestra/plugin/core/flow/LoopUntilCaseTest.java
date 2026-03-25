@@ -1,17 +1,18 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -66,7 +67,7 @@ public class LoopUntilCaseTest {
 
         assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst())).isNotNull();
         assertThat((Integer) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(3);
-        Map<String,Object> values = (Map<String, Object>) taskOutputService.getOutputs(execution.getTaskRunList().getLast()).get("values");
+        Map<String, Object> values = (Map<String, Object>) taskOutputService.getOutputs(execution.getTaskRunList().getLast()).get("values");
         assertThat(values.get("count")).isEqualTo("4");
     }
 

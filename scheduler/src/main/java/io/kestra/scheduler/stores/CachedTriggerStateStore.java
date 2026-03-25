@@ -1,20 +1,22 @@
 package io.kestra.scheduler.stores;
 
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.scheduler.vnodes.VNodes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A decorator class adding caching capabilities on top of {@link TriggerStateStore}.
@@ -28,7 +30,7 @@ public class CachedTriggerStateStore implements TriggerStateStore {
     private final TriggerStateStore delegate;
     private final SchedulerConfiguration schedulerConfiguration;
     private final Map<Integer, Cache<String, TriggerState>> partitionedCache = new ConcurrentHashMap<>();
-    
+
     public CachedTriggerStateStore(TriggerStateStore delegate, SchedulerConfiguration schedulerConfiguration) {
         this.delegate = delegate;
         this.schedulerConfiguration = schedulerConfiguration;
@@ -94,7 +96,8 @@ public class CachedTriggerStateStore implements TriggerStateStore {
         }
 
         Optional<TriggerState> state = delegate.findById(triggerId);
-        state.ifPresent(s -> {
+        state.ifPresent(s ->
+        {
             partitionedCache
                 .computeIfAbsent(vnode, k -> newCache())
                 .put(s.uid(), s);
@@ -157,7 +160,8 @@ public class CachedTriggerStateStore implements TriggerStateStore {
         // Create or warm up caches for new vNodes
         AtomicInteger count = new AtomicInteger(0);
         for (Integer vnode : vNodes) {
-            partitionedCache.computeIfAbsent(vnode, key -> {
+            partitionedCache.computeIfAbsent(vnode, key ->
+            {
 
                 Cache<String, TriggerState> cache = newCache();
 

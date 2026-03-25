@@ -1,20 +1,22 @@
 package io.kestra.core.models.flows;
 
+import java.io.File;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.log.Log;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.io.File;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,7 +71,6 @@ class FlowTest {
 
         assertThat(validate.get().getMessage()).contains("Illegal flow id update");
     }
-
 
     @Test
     void switchTaskInvalid() {
@@ -172,6 +173,7 @@ class FlowTest {
 
         return YamlParser.parse(file, Flow.class);
     }
+
     @Test
     void illegalNamespaceUpdate() {
         Flow original = Flow.builder()

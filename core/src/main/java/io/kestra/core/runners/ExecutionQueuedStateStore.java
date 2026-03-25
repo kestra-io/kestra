@@ -1,9 +1,9 @@
 package io.kestra.core.runners;
 
+import java.util.function.BiConsumer;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
-
-import java.util.function.BiConsumer;
 
 /**
  * This state store is used by the {@link Executor} to handle execution queued by flow concurrency limit.

@@ -1,13 +1,15 @@
 package io.kestra.cli.commands.flows;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -40,11 +42,11 @@ public class FlowsSyncFromSourceCommand extends AbstractApiCommand {
                 // because when we update a flow from its source,
                 // we don't update it if no change is detected.
                 // The goal here is to force an update from the source for every flows
-                GenericFlow flow = GenericFlow.fromYaml(tenant,persistedFlow.getSource() + System.lineSeparator());
+                GenericFlow flow = GenericFlow.fromYaml(tenant, persistedFlow.getSource() + System.lineSeparator());
                 repository.update(flow, persistedFlow);
                 stdOut("- %s.%s".formatted(flow.getNamespace(), flow.getId()));
                 count++;
-            } catch (RuntimeException e){
+            } catch (RuntimeException e) {
                 String flowInError = persistedFlow.getNamespace() + "." + persistedFlow.getId();
                 stdErr("Unable to update flow %s".formatted(flowInError), e.getMessage());
                 flowsInError.add(flowInError);
@@ -64,6 +66,5 @@ public class FlowsSyncFromSourceCommand extends AbstractApiCommand {
     protected boolean loadExternalPlugins() {
         return true;
     }
-
 
 }

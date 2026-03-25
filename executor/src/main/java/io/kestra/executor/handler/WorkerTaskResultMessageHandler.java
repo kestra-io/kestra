@@ -1,18 +1,19 @@
 package io.kestra.executor.handler;
 
+import java.util.Optional;
+
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
-import io.kestra.executor.ExecutorService;
 import io.kestra.executor.ExecutorMessageHandler;
+import io.kestra.executor.ExecutorService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 @Singleton
 @Slf4j
@@ -32,7 +33,8 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
             executorService.log(log, true, message);
         }
 
-        return executionStateStore.lock(message.getTaskRun().getExecutionId(), execution -> {
+        return executionStateStore.lock(message.getTaskRun().getExecutionId(), execution ->
+        {
             ExecutorContext current = new ExecutorContext(execution);
 
             if (execution.hasTaskRunJoinable(message.getTaskRun())) {

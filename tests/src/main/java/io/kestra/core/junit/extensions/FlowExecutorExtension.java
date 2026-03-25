@@ -1,7 +1,15 @@
 package io.kestra.core.junit.extensions;
 
-import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
-import static io.kestra.core.utils.Rethrow.throwConsumer;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.Objects;
+
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.models.executions.Execution;
@@ -13,17 +21,10 @@ import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.TestsUtils;
-import io.micronaut.context.ApplicationContext;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.Objects;
+
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 public class FlowExecutorExtension extends AbstractLoaderExtension implements AfterEachCallback, ParameterResolver {
 

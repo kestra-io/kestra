@@ -1,9 +1,9 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.lock.Lock;
-
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.lock.Lock;
 
 /**
  * Low lever repository for locks.

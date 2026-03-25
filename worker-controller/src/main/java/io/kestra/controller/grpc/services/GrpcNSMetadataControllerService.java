@@ -1,6 +1,11 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
@@ -8,14 +13,11 @@ import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.worker.models.WorkerInfo;
+
+import io.grpc.stub.StreamObserver;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * gRPC service implementation for namespace file metadata operations.
@@ -33,7 +35,7 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
 
     @Inject
     public GrpcNSMetadataControllerService(final NamespaceFileMetadataStateStore stateStore,
-                                           final WorkerInfo workerInfo) {
+        final WorkerInfo workerInfo) {
         this.stateStore = stateStore;
         this.workerInfo = workerInfo;
     }
@@ -43,12 +45,15 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
         try {
             Integer version = request.hasVersion() ? request.getVersion() : null;
 
-            log.trace("Received findByPath request: tenantId={}, namespace={}, path={}, version={}, allowDeleted={}",
-                request.getTenantId(), request.getNamespace(), request.getPath(), version, request.getAllowDeleted());
+            log.trace(
+                "Received findByPath request: tenantId={}, namespace={}, path={}, version={}, allowDeleted={}",
+                request.getTenantId(), request.getNamespace(), request.getPath(), version, request.getAllowDeleted()
+            );
 
             Optional<NamespaceFileMetadata> result = stateStore.findByPath(
                 request.getTenantId(), request.getNamespace(), request.getPath(),
-                version, request.getAllowDeleted());
+                version, request.getAllowDeleted()
+            );
 
             OpaqueData response = OpaqueData.newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
@@ -66,12 +71,15 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
     @Override
     public void findChildren(NamespaceFileMetadataChildrenRequest request, StreamObserver<OpaqueData> responseObserver) {
         try {
-            log.trace("Received findChildren request: tenantId={}, namespace={}, parentPath={}, recursive={}",
-                request.getTenantId(), request.getNamespace(), request.getParentPath(), request.getRecursive());
+            log.trace(
+                "Received findChildren request: tenantId={}, namespace={}, parentPath={}, recursive={}",
+                request.getTenantId(), request.getNamespace(), request.getParentPath(), request.getRecursive()
+            );
 
             List<NamespaceFileMetadata> result = stateStore.findChildren(
                 request.getTenantId(), request.getNamespace(),
-                request.getParentPath(), request.getRecursive());
+                request.getParentPath(), request.getRecursive()
+            );
 
             OpaqueData response = OpaqueData.newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
@@ -91,11 +99,14 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
         try {
             String containing = request.hasContaining() ? request.getContaining() : null;
 
-            log.trace("Received findAll request: tenantId={}, namespace={}, containing={}",
-                request.getTenantId(), request.getNamespace(), containing);
+            log.trace(
+                "Received findAll request: tenantId={}, namespace={}, containing={}",
+                request.getTenantId(), request.getNamespace(), containing
+            );
 
             List<NamespaceFileMetadata> result = stateStore.findAll(
-                request.getTenantId(), request.getNamespace(), containing);
+                request.getTenantId(), request.getNamespace(), containing
+            );
 
             OpaqueData response = OpaqueData.newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
@@ -113,12 +124,15 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
     @Override
     public void findByPaths(NamespaceFileMetadataPathsRequest request, StreamObserver<OpaqueData> responseObserver) {
         try {
-            log.trace("Received findByPaths request: tenantId={}, namespace={}, paths={}, allowDeleted={}",
-                request.getTenantId(), request.getNamespace(), request.getPathsList(), request.getAllowDeleted());
+            log.trace(
+                "Received findByPaths request: tenantId={}, namespace={}, paths={}, allowDeleted={}",
+                request.getTenantId(), request.getNamespace(), request.getPathsList(), request.getAllowDeleted()
+            );
 
             List<NamespaceFileMetadata> result = stateStore.findByPaths(
                 request.getTenantId(), request.getNamespace(),
-                request.getPathsList(), request.getAllowDeleted());
+                request.getPathsList(), request.getAllowDeleted()
+            );
 
             OpaqueData response = OpaqueData.newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
@@ -136,11 +150,14 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
     @Override
     public void findAllVersionsByPaths(NamespaceFileMetadataPathsRequest request, StreamObserver<OpaqueData> responseObserver) {
         try {
-            log.trace("Received findAllVersionsByPaths request: tenantId={}, namespace={}, paths={}",
-                request.getTenantId(), request.getNamespace(), request.getPathsList());
+            log.trace(
+                "Received findAllVersionsByPaths request: tenantId={}, namespace={}, paths={}",
+                request.getTenantId(), request.getNamespace(), request.getPathsList()
+            );
 
             List<NamespaceFileMetadata> result = stateStore.findAllVersionsByPaths(
-                request.getTenantId(), request.getNamespace(), request.getPathsList());
+                request.getTenantId(), request.getNamespace(), request.getPathsList()
+            );
 
             OpaqueData response = OpaqueData.newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
@@ -158,8 +175,10 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
     @Override
     public void existsByNamespace(NamespaceRequest request, StreamObserver<BooleanResponse> responseObserver) {
         try {
-            log.trace("Received existsByNamespace request: tenantId={}, namespace={}",
-                request.getTenantId(), request.getNamespace());
+            log.trace(
+                "Received existsByNamespace request: tenantId={}, namespace={}",
+                request.getTenantId(), request.getNamespace()
+            );
 
             boolean exists = stateStore.existsByNamespace(request.getTenantId(), request.getNamespace());
 

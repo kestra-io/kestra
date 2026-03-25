@@ -1,6 +1,11 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -23,16 +28,13 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -186,7 +188,8 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Valid
     @Schema(
         title = "Inputs to be passed to the execution when it's resumed",
-        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
+        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task."
+    )
     @PluginProperty
     private List<Input<?>> onResume;
 

@@ -1,5 +1,7 @@
 package io.kestra.executor.handler;
 
+import java.util.Optional;
+
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.executor.command.*;
 import io.kestra.core.models.flows.State;
@@ -8,11 +10,10 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 @Singleton
 @Slf4j
@@ -23,8 +24,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
 
     @Inject
     public ExecutionCommandMessageHandler(ExecutionService executionService,
-                                          ExecutionStateStore executionStateStore,
-                                          FlowMetaStoreInterface flowMetaStore) {
+        ExecutionStateStore executionStateStore,
+        FlowMetaStoreInterface flowMetaStore) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
@@ -32,7 +33,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionCommand message) {
-        return executionStateStore.lock(message.executionId(), execution -> {
+        return executionStateStore.lock(message.executionId(), execution ->
+        {
             try {
                 var flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 var executorContext = new ExecutorContext(execution, flow);

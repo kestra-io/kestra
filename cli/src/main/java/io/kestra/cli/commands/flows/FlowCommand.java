@@ -1,9 +1,10 @@
 package io.kestra.cli.commands.flows;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -25,6 +26,6 @@ public class FlowCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.runCli(new String[]{"flow",  "--help"});
+        return App.runCli(new String[] { "flow", "--help" });
     }
 }

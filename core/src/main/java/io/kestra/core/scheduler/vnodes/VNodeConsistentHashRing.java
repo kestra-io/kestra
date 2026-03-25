@@ -15,14 +15,14 @@ import java.util.TreeMap;
  * distribution. VNodes are deterministically assigned to nodes based on hash values.
  */
 public class VNodeConsistentHashRing {
-    
+
     public static final int DEFAULT_TOKENS_PER_NODE = 8;
-    
+
     private final int vNodeCount;
     private final int tokensPerNode;
-    
+
     private final SortedMap<Integer, String> ring = new TreeMap<>();
-    
+
     /**
      * Static helper method for constructing a new {@link VNodeConsistentHashRing}.
      *
@@ -32,18 +32,18 @@ public class VNodeConsistentHashRing {
     public static VNodeConsistentHashRing of(int vNodeCount) {
         return new VNodeConsistentHashRing(vNodeCount, DEFAULT_TOKENS_PER_NODE);
     }
-    
+
     /**
      * Creates a new {@link VNodeConsistentHashRing} instance.
      *
-     * @param vNodeCount    the number of vNode count.
+     * @param vNodeCount the number of vNode count.
      * @param tokensPerNode the number of token per node.
      */
     public VNodeConsistentHashRing(int vNodeCount, int tokensPerNode) {
         this.vNodeCount = vNodeCount;
         this.tokensPerNode = tokensPerNode;
     }
-    
+
     /**
      * Adds multiple nodes to the ring.
      *
@@ -54,7 +54,7 @@ public class VNodeConsistentHashRing {
         nodeIds.forEach(this::addNode);
         return this;
     }
-    
+
     /**
      * Adds a node to the ring.
      *
@@ -68,7 +68,7 @@ public class VNodeConsistentHashRing {
         }
         return this;
     }
-    
+
     /**
      * Removes a node from the ring.
      *
@@ -77,7 +77,7 @@ public class VNodeConsistentHashRing {
     public void removeNode(final String nodeId) {
         ring.entrySet().removeIf(e -> e.getValue().equals(nodeId));
     }
-    
+
     /**
      * Computes the VNodes assignments for each service node added to the ring.
      *
@@ -87,7 +87,7 @@ public class VNodeConsistentHashRing {
         if (ring.isEmpty()) {
             return Map.of(); // fast path
         }
-        
+
         Map<String, Set<Integer>> assignment = new HashMap<>();
         for (int vnode = 0; vnode < vNodeCount; vnode++) {
             SortedMap<Integer, String> tail = ring.tailMap(VNodes.hash("vNode-" + vnode));

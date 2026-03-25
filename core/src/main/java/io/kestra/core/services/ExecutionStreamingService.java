@@ -1,26 +1,27 @@
 package io.kestra.core.services;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
-import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.FluxSink;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This service offers a fanout mechanism so a single consumer of the execution queue can dispatch execution
@@ -46,8 +47,7 @@ public class ExecutionStreamingService {
     public ExecutionStreamingService(
         BroadcastQueueInterface<FollowExecutionEvent> executionQueue,
         ExecutionService executionService,
-        ExecutionRepositoryInterface executionRepository
-    ) {
+        ExecutionRepositoryInterface executionRepository) {
         this.executionQueue = executionQueue;
         this.executionService = executionService;
         this.executionRepository = executionRepository;
@@ -56,7 +56,8 @@ public class ExecutionStreamingService {
     @PostConstruct
     void startQueueConsumer() {
         // Single queue consumer
-        this.queueSubscriber = executionQueue.subscriber().subscribe(either -> {
+        this.queueSubscriber = executionQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
                 return;
@@ -78,7 +79,8 @@ public class ExecutionStreamingService {
                     return;
                 }
 
-                executionSubscribers.values().forEach(pair -> {
+                executionSubscribers.values().forEach(pair ->
+                {
                     var sink = pair.getLeft();
                     var flow = pair.getRight();
                     try {

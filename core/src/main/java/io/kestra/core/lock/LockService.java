@@ -1,18 +1,18 @@
 package io.kestra.core.lock;
 
-import io.kestra.core.repositories.LockRepositoryInterface;
-import io.kestra.core.server.ServerInstance;
-import io.kestra.core.utils.Disposable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import io.kestra.core.repositories.LockRepositoryInterface;
+import io.kestra.core.server.ServerInstance;
+import io.kestra.core.utils.Disposable;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This service provides facility for executing Runnable and Callable tasks inside a lock.
@@ -40,6 +40,7 @@ public class LockService {
     /**
      * Executes a Runnable inside a lock.
      * If the lock is already taken, it will wait for at most the default lock timeout of 5mn.
+     * 
      * @see #doInLock(String, String, Duration, Runnable)
      *
      * @param category lock category, ex 'executions'
@@ -54,6 +55,7 @@ public class LockService {
     /**
      * Executes a Runnable inside a lock.
      * If the lock is already taken, it will wait for at most the <code>timeout</code> duration.
+     * 
      * @see #doInLock(String, String, Runnable)
      *
      * @param category lock category, ex 'executions'
@@ -73,7 +75,7 @@ public class LockService {
             unlock(category, id);
         }
     }
-    
+
     /**
      * Acquires the lock only if it is not held by another process at the time of invocation.
      * 
@@ -84,7 +86,7 @@ public class LockService {
     public Optional<Disposable> tryLock(String category, String id) {
         return lock(category, id, Duration.ZERO) ? Optional.of(Disposable.of(() -> this.unlock(category, id))) : Optional.empty();
     }
-    
+
     /**
      * Attempts to execute the provided {@code runnable} within a lock.
      * If the lock is already held by another process, the execution is skipped.
@@ -155,7 +157,7 @@ public class LockService {
     }
 
     private boolean lock(String category, String id, Duration timeout) throws LockException {
-        log.debug("Locking '{}'.'{}'", category,  id);
+        log.debug("Locking '{}'.'{}'", category, id);
         long deadline = System.currentTimeMillis() + timeout.toMillis();
         do {
             Optional<Lock> existing = lockRepository.findById(category, id);

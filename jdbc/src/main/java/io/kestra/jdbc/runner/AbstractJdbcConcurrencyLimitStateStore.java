@@ -1,24 +1,26 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.runners.ConcurrencyLimit;
-import io.kestra.core.runners.ExecutionQueuedStateStore;
-import io.kestra.core.runners.ExecutionRunning;
-import io.kestra.executor.ConcurrencyLimitStateStore;
-import io.kestra.core.runners.TransactionContext;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.*;
-import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.jooq.*;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ExecutionQueuedStateStore;
+import io.kestra.core.runners.ExecutionRunning;
+import io.kestra.core.runners.TransactionContext;
+import io.kestra.executor.ConcurrencyLimitStateStore;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcRepository implements ConcurrencyLimitStateStore {
@@ -40,14 +42,16 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
     public ExecutionRunning countThenProcess(FlowInterface flow, BiFunction<TransactionContext, ConcurrencyLimit, Pair<ExecutionRunning, ConcurrencyLimit>> consumer) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var dslContext = DSL.using(configuration);
 
                 // Note: ideally, we should emit an INSERT IGNORE or ON CONFLICT DO NOTHING but H2 didn't support it.
                 // So to avoid the case where no concurrency limit exist and two executors starts a flow concurrently, we select/insert and if the insert fail select again
                 // Anyway this would only occur once in a flow lifecycle so even if it's not elegant it should work
                 // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in postgres so we're sure it works their also.
-                var selected = fetchOne(dslContext, flow).orElseGet(() -> {
+                var selected = fetchOne(dslContext, flow).orElseGet(() ->
+                {
                     try {
                         var zeroConcurrencyLimit = ConcurrencyLimit.builder()
                             .tenantId(flow.getTenantId())
@@ -89,11 +93,13 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
     public int decrement(FlowInterface flow) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var dslContext = DSL.using(configuration);
 
                 return fetchOne(dslContext, flow).map(
-                    concurrencyLimit -> {
+                    concurrencyLimit ->
+                    {
                         int newLimit = concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1;
                         update(dslContext, concurrencyLimit.withRunning(newLimit));
                         return newLimit;
@@ -104,15 +110,17 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
 
     @Override
     public void decrementAndPop(FlowInterface flow, ExecutionQueuedStateStore executionQueuedStateStore,
-                                BiConsumer<TransactionContext, Execution> consumer) {
+        BiConsumer<TransactionContext, Execution> consumer) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 var dslContext = DSL.using(configuration);
 
                 // Decrement the counter
                 int newLimit = fetchOne(dslContext, flow).map(
-                    concurrencyLimit -> {
+                    concurrencyLimit ->
+                    {
                         int decremented = concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1;
                         update(dslContext, concurrencyLimit.withRunning(decremented));
                         return decremented;
@@ -126,7 +134,8 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
                         flow.getTenantId(),
                         flow.getNamespace(),
                         flow.getId(),
-                        (ctx, queued) -> {
+                        (ctx, queued) ->
+                        {
                             // Increment the counter for the newly running execution
                             increment(ctx, flow);
                             // Call the consumer
@@ -134,7 +143,9 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
                         }
                     );
                 } else {
-                    log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count. No new executions will be dequeued.", flow.getNamespace(), flow.getId());
+                    log.error(
+                        "Concurrency limit reached for flow {}.{} after decrementing the execution running count. No new executions will be dequeued.", flow.getNamespace(), flow.getId()
+                    );
                 }
             });
     }
@@ -157,7 +168,8 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
     public List<ConcurrencyLimit> find(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
@@ -198,7 +210,8 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
     public Optional<ConcurrencyLimit> findById(String tenantId, String namespace, String flowId) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)

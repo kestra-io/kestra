@@ -1,19 +1,19 @@
 package io.kestra.core.services;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.EnumSet;
-import java.util.Set;
 
 @Singleton
 public class ConcurrencyLimitService {
 
-    private static final Set<State.Type> VALID_TARGET_STATES =
-        EnumSet.of(State.Type.RUNNING, State.Type.CANCELLED, State.Type.FAILED);
+    private static final Set<State.Type> VALID_TARGET_STATES = EnumSet.of(State.Type.RUNNING, State.Type.CANCELLED, State.Type.FAILED);
 
     @Inject
     private ExecutionQueuedStateStore executionQueuedStateStore;

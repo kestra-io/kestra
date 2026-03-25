@@ -1,5 +1,15 @@
 package io.kestra.worker;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
@@ -27,17 +37,9 @@ import io.kestra.core.worker.Controller;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -203,7 +205,8 @@ class WorkerTest {
 
     @Test
     void shouldCreateInstanceGivenApplicationContext() {
-        assertThatCode(() -> {
+        assertThatCode(() ->
+        {
             try (var worker = applicationContext.getBean(Worker.class)) {
                 // do nothing
             }

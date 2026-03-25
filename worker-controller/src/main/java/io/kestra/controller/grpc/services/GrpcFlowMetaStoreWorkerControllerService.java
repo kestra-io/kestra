@@ -1,16 +1,18 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.NamespaceRequest;
 import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+
+import io.grpc.stub.StreamObserver;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * gRPC service implementation for worker meta store operations.

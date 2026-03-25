@@ -1,16 +1,29 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.log.Log;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.core.log.Log;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -20,16 +33,6 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static io.micronaut.http.HttpRequest.GET;
 import static io.micronaut.http.HttpRequest.POST;
@@ -64,15 +67,18 @@ class ErrorControllerTest {
         Map<String, Object> flow = ImmutableMap.of(
             "id", IdUtils.create(),
             "namespace", "io.kestra.test",
-            "tasks", Collections.singletonList(ImmutableMap.of(
-                "id", IdUtils.create(),
-                "type", "io.kestra.invalid"
-            ))
+            "tasks", Collections.singletonList(
+                ImmutableMap.of(
+                    "id", IdUtils.create(),
+                    "type", "io.kestra.invalid"
+                )
+            )
         );
         String yaml = JacksonMapper.ofYaml().writeValueAsString(flow);
 
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(POST("/api/v1/main/flows", yaml).contentType(MediaType.APPLICATION_YAML_TYPE), Argument.of(Flow.class), Argument.of(Object.class))
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(POST("/api/v1/main/flows", yaml).contentType(MediaType.APPLICATION_YAML_TYPE), Argument.of(Flow.class), Argument.of(Object.class))
         );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
@@ -87,18 +93,21 @@ class ErrorControllerTest {
 
     @Test
     void unknownProperties() {
-        Map<String, Object> flow =  ImmutableMap.of(
+        Map<String, Object> flow = ImmutableMap.of(
             "id", IdUtils.create(),
             "namespace", "io.kestra.test",
             "unknown", "properties",
-            "tasks", Collections.singletonList(ImmutableMap.of(
-                "id", IdUtils.create(),
-                "type", Log.class.getName(),
-                "message", "logging"
-            ))
+            "tasks", Collections.singletonList(
+                ImmutableMap.of(
+                    "id", IdUtils.create(),
+                    "type", Log.class.getName(),
+                    "message", "logging"
+                )
+            )
         );
 
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 POST("/api/v1/main/flows", JacksonMapper.ofYaml().writeValueAsString(flow)).contentType(MediaType.APPLICATION_YAML),
                 Argument.of(String.class),
                 Argument.of(JsonError.class)
@@ -114,9 +123,11 @@ class ErrorControllerTest {
 
     @Test
     void clientError400() {
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            GET("/test-utils/failing-with-400-client-error")
-        ));
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/test-utils/failing-with-400-client-error")
+            )
+        );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(BAD_REQUEST.getCode());
 
@@ -124,16 +135,20 @@ class ErrorControllerTest {
         assertThat(response).contains("a client error message");
 
         boolean foundAMatchingErrorLog = appender.getLogs().stream()
-            .anyMatch(log -> log.getLevel() == Level.ERROR &&
-                log.getFormattedMessage().contains("a client error message"));
+            .anyMatch(
+                log -> log.getLevel() == Level.ERROR &&
+                    log.getFormattedMessage().contains("a client error message")
+            );
         assertThat(foundAMatchingErrorLog).withFailMessage("Expected no logs for a client error").isEqualTo(false);
     }
 
     @Test
     void clientError500() {
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            GET("/test-utils/failing-with-500-server-error")
-        ));
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/test-utils/failing-with-500-server-error")
+            )
+        );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(INTERNAL_SERVER_ERROR.getCode());
 
@@ -141,20 +156,26 @@ class ErrorControllerTest {
         assertThat(response).contains("an unhandled server error message");
 
         boolean foundAMatchingErrorLog = appender.getLogs().stream()
-            .anyMatch(log -> log.getLevel() == Level.ERROR &&
-                log.getFormattedMessage().contains("an unhandled server error message"));
+            .anyMatch(
+                log -> log.getLevel() == Level.ERROR &&
+                    log.getFormattedMessage().contains("an unhandled server error message")
+            );
         assertThat(foundAMatchingErrorLog).withFailMessage("Expected a log for a server error").isEqualTo(true);
     }
 
     @Test
     void clientError500_withNoErrorMessage() {
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            GET("/test-utils/failing-with-server-error-with-no-error-message")
-        ));
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/test-utils/failing-with-server-error-with-no-error-message")
+            )
+        );
 
         boolean foundAMatchingErrorLog = appender.getLogs().stream()
-            .anyMatch(log -> log.getLevel() == Level.ERROR &&
-                log.getFormattedMessage().contains("Server error") && log.getThrowableProxy().getClassName().equals("java.lang.NullPointerException"));
+            .anyMatch(
+                log -> log.getLevel() == Level.ERROR &&
+                    log.getFormattedMessage().contains("Server error") && log.getThrowableProxy().getClassName().equals("java.lang.NullPointerException")
+            );
         assertThat(foundAMatchingErrorLog).withFailMessage("Expected error log not found").isEqualTo(true);
     }
 
@@ -164,16 +185,18 @@ class ErrorControllerTest {
         Map<String, Object> flow = ImmutableMap.of(
             "id", IdUtils.create(),
             "namespace", "io.kestra.test",
-            "tasks", Collections.singletonList(ImmutableMap.of(
-                "id", IdUtils.create(),
-                "type", Log.class.getName(),
-                "message", "Yeah !",
-                "level", "WRONG"
-            ))
+            "tasks", Collections.singletonList(
+                ImmutableMap.of(
+                    "id", IdUtils.create(),
+                    "type", Log.class.getName(),
+                    "message", "Yeah !",
+                    "level", "WRONG"
+                )
+            )
         );
 
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class))
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class))
         );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());

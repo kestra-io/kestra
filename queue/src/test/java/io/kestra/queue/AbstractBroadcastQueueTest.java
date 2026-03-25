@@ -1,18 +1,20 @@
 package io.kestra.queue;
 
-import io.kestra.core.queues.*;
-import io.kestra.core.queues.event.BroadcastEvent;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.Test;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.BroadcastEvent;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +32,8 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestBroadcast> subscriber = broadcastQueue
             .subscriber()
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 list.add(e.getLeft().id);
                 countDownLatch.countDown();
             });
@@ -56,7 +59,8 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
 
     @Test
     void multipleConsumer() throws QueueException, InterruptedException {
-        int rand = ThreadLocalRandom.current().nextInt(10, 50);;
+        int rand = ThreadLocalRandom.current().nextInt(10, 50);
+        ;
         CountDownLatch countDownLatch = new CountDownLatch(3 * rand);
         Collection<String> list = Collections.synchronizedCollection(new ArrayList<>());
         Collection<QueueSubscriber<TestBroadcast>> subscribers = Collections.synchronizedCollection(new ArrayList<>());
@@ -64,13 +68,19 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
         IntStream.range(0, rand)
             .boxed()
             .parallel()
-            .forEach(throwConsumer(i -> subscribers.add(broadcastQueue
-                .subscriber()
-                .subscribe(e -> {
-                    list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
-                    countDownLatch.countDown();
-                })
-            )));
+            .forEach(
+                throwConsumer(
+                    i -> subscribers.add(
+                        broadcastQueue
+                            .subscriber()
+                            .subscribe(e ->
+                            {
+                                list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
+                                countDownLatch.countDown();
+                            })
+                    )
+                )
+            );
 
         String prefix = this.keyPrefix();
         broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 1));
@@ -86,14 +96,16 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
         assertThat(list).hasSize(3 * rand);
         assertThat(list).contains("c000-i001", "c000-i002", "c000-i003");
         // all message sent to all consumers
-        IntStream.range(1, 4).boxed().forEach(i -> {
+        IntStream.range(1, 4).boxed().forEach(i ->
+        {
             assertThat(list.stream().filter(s -> s.endsWith(String.format("-i%03d", i))).count()).isEqualTo(rand);
         });
         // all consumers received all messages
-        IntStream.range(0, rand).boxed().forEach(i -> {
+        IntStream.range(0, rand).boxed().forEach(i ->
+        {
             assertThat(list.stream().filter(s -> s.startsWith(String.format("c%03d", i))).count()).isEqualTo(3L);
         });
-        assertThat(list).contains("c" + String.format("%03d", (rand - 1))  +"-i001", "c" + String.format("%03d",(rand - 1))  +"-i002", "c" + String.format("%03d",(rand - 1))  +"-i003");
+        assertThat(list).contains("c" + String.format("%03d", (rand - 1)) + "-i001", "c" + String.format("%03d", (rand - 1)) + "-i002", "c" + String.format("%03d", (rand - 1)) + "-i003");
     }
 
     @Test
@@ -105,7 +117,8 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
 
         QueueSubscriber<TestBroadcast> subscriber = broadcastQueue
             .subscriber()
-            .subscribe(e -> {
+            .subscribe(e ->
+            {
                 list.add(Pair.of(Instant.now(), e.getLeft().id));
                 if (e.getLeft().id == 1) {
                     countDownLatchFirst.countDown();
@@ -152,5 +165,6 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
-    public record TestBroadcast(String key, Integer id) implements BroadcastEvent {}
+    public record TestBroadcast(String key, Integer id) implements BroadcastEvent {
+    }
 }

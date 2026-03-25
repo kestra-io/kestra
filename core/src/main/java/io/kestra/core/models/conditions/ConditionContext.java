@@ -1,16 +1,16 @@
 package io.kestra.core.models.conditions;
 
-import io.kestra.core.models.flows.FlowInterface;
-import lombok.*;
+import java.util.HashMap;
+import java.util.Map;
+
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.runners.RunContext;
 
 import io.micronaut.core.annotation.Nullable;
-
-import java.util.HashMap;
-import java.util.Map;
 import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
 @Builder
 @Getter

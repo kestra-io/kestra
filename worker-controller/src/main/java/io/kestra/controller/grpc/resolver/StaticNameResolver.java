@@ -1,9 +1,9 @@
 package io.kestra.controller.grpc.resolver;
 
+import java.util.List;
+
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
-
-import java.util.List;
 
 /**
  * A gRPC NameResolver that resolves to a static list of controller addresses.
@@ -43,7 +43,6 @@ public class StaticNameResolver extends NameResolver {
     public void refresh() {
         resolve();
     }
-
 
     private void resolve() {
         if (listener != null) {

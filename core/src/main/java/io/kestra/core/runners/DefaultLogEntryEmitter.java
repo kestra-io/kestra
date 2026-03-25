@@ -1,14 +1,15 @@
 package io.kestra.core.runners;
 
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.List;
-import java.util.concurrent.CompletionStage;
 
 @Singleton
 @Requires(property = "kestra.queue.type")
@@ -19,7 +20,7 @@ public class DefaultLogEntryEmitter implements LogEntryEmitter {
 
     @Inject
     public DefaultLogEntryEmitter(DispatchQueueInterface<LogEntry> logQueue,
-                                  BroadcastQueueInterface<FollowLogEvent> followLogQueue) {
+        BroadcastQueueInterface<FollowLogEvent> followLogQueue) {
         this.logQueue = logQueue;
         this.followLogQueue = followLogQueue;
     }

@@ -1,7 +1,7 @@
 package io.kestra.worker;
 
-import io.grpc.Deadline;
-import io.grpc.stub.AbstractStub;
+import java.time.Duration;
+
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.*;
@@ -12,12 +12,13 @@ import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc.NamespaceFileM
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceBlockingStub;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceBlockingStub;
+
+import io.grpc.Deadline;
+import io.grpc.stub.AbstractStub;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.time.Duration;
 
 /**
  * Factory for creating gRPC stubs for worker services.

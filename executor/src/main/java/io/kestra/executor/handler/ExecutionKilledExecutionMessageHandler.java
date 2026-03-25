@@ -1,25 +1,26 @@
 package io.kestra.executor.handler;
 
+import java.util.Optional;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
-import io.kestra.executor.ExecutorService;
 import io.kestra.executor.ExecutorMessageHandler;
-import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.executor.ExecutorService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 @Singleton
 @Slf4j
@@ -57,13 +58,14 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
         // any remaining tasks for that executing regardless of if the execution exist or not.
         // Note, that this event will be a noop if all tasks for that execution are already killed or completed.
         try {
-            killQueue.emit(ExecutionKilledExecution
-                .builder()
-                .executionId(message.getExecutionId())
-                .isOnKillCascade(false)
-                .state(ExecutionKilled.State.EXECUTED)
-                .tenantId(message.getTenantId())
-                .build()
+            killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .executionId(message.getExecutionId())
+                    .isOnKillCascade(false)
+                    .state(ExecutionKilled.State.EXECUTED)
+                    .tenantId(message.getTenantId())
+                    .build()
             );
         } catch (QueueException e) {
             log.error("Unable to kill the execution {}", message.getExecutionId(), e);
@@ -77,7 +79,8 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
         if (isOnKillCascade) {
             executionService
                 .killSubflowExecutions(message.getTenantId(), message.getExecutionId())
-                .doOnNext(executionKilled -> {
+                .doOnNext(executionKilled ->
+                {
                     try {
                         killQueue.emit(executionKilled);
                     } catch (QueueException e) {
@@ -91,7 +94,8 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
     }
 
     private Optional<ExecutorContext> killingOrAfterKillState(final String executionId, Optional<State.Type> afterKillState) {
-        return executionStateStore.lock(executionId, execution -> {
+        return executionStateStore.lock(executionId, execution ->
+        {
             FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
 
             // remove it from the queued store if it was queued so it would not be restarted

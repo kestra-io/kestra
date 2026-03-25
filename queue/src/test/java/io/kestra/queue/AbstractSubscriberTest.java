@@ -1,5 +1,14 @@
 package io.kestra.queue;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -7,14 +16,6 @@ import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Either;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -96,7 +97,8 @@ class AbstractSubscriberTest {
         subscriber.markReady();
 
         // When/Then
-        assertThatNoException().isThrownBy(() -> {
+        assertThatNoException().isThrownBy(() ->
+        {
             subscriber.markEnd();
             subscriber.markEnd();
         });
@@ -222,7 +224,8 @@ class AbstractSubscriberTest {
         var waitCompleted = new CountDownLatch(1);
 
         // When
-        Thread waiter = Thread.ofVirtual().start(() -> {
+        Thread waiter = Thread.ofVirtual().start(() ->
+        {
             try {
                 waitStarted.countDown();
                 subscriber.waitIfPaused();
@@ -254,7 +257,8 @@ class AbstractSubscriberTest {
         var waitCompleted = new CountDownLatch(1);
 
         // Simulate a real subscriber loop: waitIfPaused → markEnd on exit
-        Thread waiter = Thread.ofVirtual().start(() -> {
+        Thread waiter = Thread.ofVirtual().start(() ->
+        {
             try {
                 subscriber.waitIfPaused();
             } catch (InterruptedException e) {
@@ -283,7 +287,8 @@ class AbstractSubscriberTest {
         subscriber.markEnd();
 
         // When/Then
-        assertThatNoException().isThrownBy(() -> {
+        assertThatNoException().isThrownBy(() ->
+        {
             subscriber.close();
             subscriber.close();
         });
@@ -321,7 +326,8 @@ class AbstractSubscriberTest {
 
         var closeCompleted = new CountDownLatch(1);
 
-        Thread loop = Thread.ofVirtual().start(() -> {
+        Thread loop = Thread.ofVirtual().start(() ->
+        {
             try {
                 subscriber.waitIfPaused();
             } catch (InterruptedException e) {
@@ -334,7 +340,8 @@ class AbstractSubscriberTest {
         Thread.sleep(50);
 
         // When
-        Thread closer = Thread.ofVirtual().start(() -> {
+        Thread closer = Thread.ofVirtual().start(() ->
+        {
             subscriber.close();
             closeCompleted.countDown();
         });
@@ -357,13 +364,15 @@ class AbstractSubscriberTest {
         var loopExited = new CountDownLatch(1);
 
         // When - start the subscriber loop (simulating subscribe)
-        Thread loop = Thread.ofVirtual().start(() -> {
+        Thread loop = Thread.ofVirtual().start(() ->
+        {
             subscriber.markReady();
             try {
                 while (subscriber.isActive()) {
                     loopEntered.countDown();
                     subscriber.waitIfPaused();
-                    if (!subscriber.isActive()) break;
+                    if (!subscriber.isActive())
+                        break;
                     messageProcessed.set(true);
                     break;
                 }
@@ -396,11 +405,13 @@ class AbstractSubscriberTest {
         subscriber.markReady();
 
         var loopExited = new CountDownLatch(1);
-        Thread loop = Thread.ofVirtual().start(() -> {
+        Thread loop = Thread.ofVirtual().start(() ->
+        {
             try {
                 while (subscriber.isActive()) {
                     subscriber.waitIfPaused();
-                    if (!subscriber.isActive()) break;
+                    if (!subscriber.isActive())
+                        break;
                     Thread.sleep(5);
                 }
             } catch (InterruptedException e) {
@@ -414,7 +425,8 @@ class AbstractSubscriberTest {
         // When - pause and close concurrently
         var errors = new AtomicReference<Throwable>();
 
-        Thread pauser = Thread.ofVirtual().start(() -> {
+        Thread pauser = Thread.ofVirtual().start(() ->
+        {
             try {
                 subscriber.pause();
             } catch (Throwable t) {
@@ -422,7 +434,8 @@ class AbstractSubscriberTest {
             }
         });
 
-        Thread closer = Thread.ofVirtual().start(() -> {
+        Thread closer = Thread.ofVirtual().start(() ->
+        {
             try {
                 subscriber.close();
             } catch (Throwable t) {

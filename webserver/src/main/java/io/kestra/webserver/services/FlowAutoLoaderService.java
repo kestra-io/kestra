@@ -1,5 +1,9 @@
 package io.kestra.webserver.services;
 
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+
 import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.services.FlowService;
@@ -8,6 +12,7 @@ import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.annotation.WebServerEnabled;
 import io.kestra.webserver.controllers.api.BlueprintController.ApiBlueprintItem;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpMethod;
@@ -18,10 +23,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
-
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -35,7 +36,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class FlowAutoLoaderService {
 
     public static final Pattern NAMESPACE_FROM_FLOW_SOURCE_PATTERN = Pattern.compile("^namespace: \\S*", Pattern.MULTILINE);
-    
+
     public static final String PURGE_SYSTEM_FLOW_BLUEPRINT_ID = "234";
 
     @Inject
@@ -44,10 +45,10 @@ public class FlowAutoLoaderService {
     @Inject
     @Client("api")
     protected HttpClient httpClient;
-    
-    @Inject 
+
+    @Inject
     protected KestraConfig kestraConfig;
-    
+
     @Inject
     private VersionProvider versionProvider;
 
@@ -58,18 +59,24 @@ public class FlowAutoLoaderService {
     public void load() {
         try {
             // Loads all flows.
-            Integer count = Mono.from(httpClient
+            Integer count = Mono.from(
+                httpClient
                     .exchange(
                         HttpRequest.create(HttpMethod.GET, "/v1/blueprints/kinds/flow/versions/" + versionProvider.getVersion() + "?tags=getting-started"),
                         Argument.of(PagedResults.class, ApiBlueprintItem.class)
-                    ))
-                .map(response -> ((PagedResults<ApiBlueprintItem>)response.body()).getResults())
+                    )
+            )
+                .map(response -> ((PagedResults<ApiBlueprintItem>) response.body()).getResults())
                 .flatMapIterable(Function.identity())
-                .flatMap(it -> Mono.from(httpClient
-                    .exchange(
-                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/kinds/flow/" + it.getId() + "/versions/" + versionProvider.getVersion() + "/source"),
-                        Argument.STRING
-                    )).mapNotNull(response -> {
+                .flatMap(
+                    it -> Mono.from(
+                        httpClient
+                            .exchange(
+                                HttpRequest.create(HttpMethod.GET, "/v1/blueprints/kinds/flow/" + it.getId() + "/versions/" + versionProvider.getVersion() + "/source"),
+                                Argument.STRING
+                            )
+                    ).mapNotNull(response ->
+                    {
                         String body = response.body();
                         if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
                             return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + kestraConfig.getSystemFlowNamespace());
@@ -77,14 +84,16 @@ public class FlowAutoLoaderService {
                         return body;
                     })
                 )
-                .map(throwFunction(source -> {
+                .map(throwFunction(source ->
+                {
                     GenericFlow flow = GenericFlow.fromYaml(tenantService.resolveTenant(), source);
                     flowService.create(flow);
                     log.debug("Loaded flow '{}/{}'.", flow.getNamespace(), flow.getId());
                     return 1;
                 }))
                 .onErrorReturn(0)
-                .onErrorContinue((throwable, o) -> {
+                .onErrorContinue((throwable, o) ->
+                {
                     // log error in debug to not spam user with stacktrace, e.g., flow maybe already registered.
                     log.debug("Failed to load a flow from community blueprints. Error: {}\n{}", throwable.getMessage(), o);
                 })
@@ -93,11 +102,16 @@ public class FlowAutoLoaderService {
                 .orElse(0);
             log.info(
                 "Loaded {} \"Getting Started\" flows from community blueprints. " +
-                "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.", count);
+                    "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.",
+                count
+            );
         } catch (Exception e) {
             // Kestra's API is likely to be unavailable.
-            log.warn("Unable to load \"Getting Started\" flows from community blueprints. " +
-                "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'. Cause: {}", e.getMessage());
+            log.warn(
+                "Unable to load \"Getting Started\" flows from community blueprints. " +
+                    "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'. Cause: {}",
+                e.getMessage()
+            );
         }
     }
 }

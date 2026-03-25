@@ -1,15 +1,16 @@
 package io.kestra.repository.mysql;
 
+import org.jooq.DMLQuery;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.jooq.DMLQuery;
-import org.jooq.DSLContext;
-import org.jooq.Record;
 
 @RepositoryBean
 @MysqlRepositoryEnabled

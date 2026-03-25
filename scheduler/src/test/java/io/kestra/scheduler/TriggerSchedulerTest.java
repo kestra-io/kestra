@@ -1,5 +1,21 @@
 package io.kestra.scheduler;
 
+import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
+
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
@@ -29,28 +45,14 @@ import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-
-import java.time.Clock;
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -142,11 +144,12 @@ class TriggerSchedulerTest {
     void shouldSucceedSchedulePollingTrigger() {
         // region [GIVEN]
 
-        FlowWithSource flow = Fixtures.flowWithTrigger(TestPollingTrigger.builder()
-            .id("polling")
-            .type(TestPollingTrigger.class.getName())
-            .interval(Duration.ofMinutes(30))
-            .build()
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestPollingTrigger.builder()
+                .id("polling")
+                .type(TestPollingTrigger.class.getName())
+                .interval(Duration.ofMinutes(30))
+                .build()
         );
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
@@ -168,11 +171,12 @@ class TriggerSchedulerTest {
     void shouldNotFailWhenSchedulingPollingTriggerGivenTooLargeInterval() {
         // region [GIVEN]
 
-        FlowWithSource flow = Fixtures.flowWithTrigger(TestPollingTrigger.builder()
-            .id("polling")
-            .type(TestPollingTrigger.class.getName())
-            .interval(Duration.parse("PT99999999898989981M"))
-            .build()
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestPollingTrigger.builder()
+                .id("polling")
+                .type(TestPollingTrigger.class.getName())
+                .interval(Duration.parse("PT99999999898989981M"))
+                .build()
         );
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
@@ -193,10 +197,11 @@ class TriggerSchedulerTest {
     @Test
     void shouldSucceedScheduleRealTimeTriggerGivenValidTimeZone() {
         // region [GIVEN]
-        FlowWithSource flow = Fixtures.flowWithTrigger(TestRealTimeTrigger.builder()
-            .id("realtime")
-            .type(TestRealTimeTrigger.class.getName())
-            .build()
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestRealTimeTrigger.builder()
+                .id("realtime")
+                .type(TestRealTimeTrigger.class.getName())
+                .build()
         );
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
@@ -218,10 +223,12 @@ class TriggerSchedulerTest {
     void shouldSucceedScheduleScheduleOnDateTriggerGivenValidTimeZone() {
         // region [GIVEN]
         SchedulerClock.setClock(Clock.fixed(Instant.parse("2025-10-31T00:00:00Z"), ZoneId.systemDefault()));
-        FlowWithSource flow = Fixtures.flowWithScheduleOnDate(TEST_TZ, List.of(
-            ZonedDateTime.parse("2025-11-02T00:00:00Z"),
-            ZonedDateTime.parse("2025-11-04T00:00:00Z")
-        ));
+        FlowWithSource flow = Fixtures.flowWithScheduleOnDate(
+            TEST_TZ, List.of(
+                ZonedDateTime.parse("2025-11-02T00:00:00Z"),
+                ZonedDateTime.parse("2025-11-04T00:00:00Z")
+            )
+        );
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
         // endregion [GIVEN]
@@ -239,7 +246,7 @@ class TriggerSchedulerTest {
 
         // THEN - on first date => execution
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        completeExecution();  // Simulate execution completed
+        completeExecution(); // Simulate execution completed
         triggerExecutionPublisher.clear();
 
         // WHEN - move forward another date
@@ -255,7 +262,7 @@ class TriggerSchedulerTest {
 
         // THEN - on second date => execution
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        completeExecution();  // Simulate execution completed
+        completeExecution(); // Simulate execution completed
         triggerExecutionPublisher.clear();
 
         // WHEN - move forward to the next date
@@ -271,18 +278,21 @@ class TriggerSchedulerTest {
     @FlakyTest
     void shouldSucceedScheduleConditionalScheduleTriggerGivenValidTimeZone() {
         // region [GIVEN]
-        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
-            // execute the workflow only if that day is the first Monday of the month.
-            .cron("0 0 * * *")
-            .conditions(List.of(
-                DayWeekInMonth.builder()
-                    .type(DayWeekInMonth.class.getName())
-                    .date(Property.ofExpression("{{ trigger.date }}"))
-                    .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
-                    .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                    .build()
-            ))
-            .build()
+        FlowWithSource flow = Fixtures.defaultFlow(
+            builder -> builder
+                // execute the workflow only if that day is the first Monday of the month.
+                .cron("0 0 * * *")
+                .conditions(
+                    List.of(
+                        DayWeekInMonth.builder()
+                            .type(DayWeekInMonth.class.getName())
+                            .date(Property.ofExpression("{{ trigger.date }}"))
+                            .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
+                            .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
+                            .build()
+                    )
+                )
+                .build()
         );
         // Start scheduler at some arbitrary date (e.g., 2025-11-01, which is a Saturday)
         SchedulerClock.setClock(Clock.fixed(Instant.parse("2025-11-01T00:00:00Z"), ZoneId.of("UTC")));
@@ -309,9 +319,10 @@ class TriggerSchedulerTest {
     @Test
     void shouldRecoverMissingScheduleGivenALL() {
         // region [GIVEN]
-        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ, builder -> builder
-            .recoverMissedSchedules(RecoverMissedSchedules.ALL)
-            .build()
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(
+            TEST_TZ, builder -> builder
+                .recoverMissedSchedules(RecoverMissedSchedules.ALL)
+                .build()
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
@@ -328,7 +339,8 @@ class TriggerSchedulerTest {
 
         // [WHEN]
         // Simulate multiple 'onSchedule'
-        IntStream.rangeClosed(0, 4).forEach(i -> {
+        IntStream.rangeClosed(0, 4).forEach(i ->
+        {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
@@ -369,9 +381,10 @@ class TriggerSchedulerTest {
     @Test
     void shouldRecoverMissingScheduleGivenLAST() {
         // region [GIVEN]
-        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ, builder -> builder
-            .recoverMissedSchedules(RecoverMissedSchedules.LAST)
-            .build()
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(
+            TEST_TZ, builder -> builder
+                .recoverMissedSchedules(RecoverMissedSchedules.LAST)
+                .build()
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
@@ -388,7 +401,8 @@ class TriggerSchedulerTest {
         // [WHEN]
         final ZonedDateTime expectedNextEvaluationNDate = ZonedDateTime.now(Clock.offset(initialSchedulerClock, Duration.ofHours(1)));
         // Simulate multiple 'onSchedule'
-        IntStream.rangeClosed(0, 1).forEach(i -> {
+        IntStream.rangeClosed(0, 1).forEach(i ->
+        {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
@@ -431,9 +445,10 @@ class TriggerSchedulerTest {
     @Test
     void shouldRecoverMissingScheduleGivenNONE() {
         // region [GIVEN]
-        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ, builder -> builder
-            .recoverMissedSchedules(RecoverMissedSchedules.NONE)
-            .build()
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(
+            TEST_TZ, builder -> builder
+                .recoverMissedSchedules(RecoverMissedSchedules.NONE)
+                .build()
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
@@ -478,9 +493,10 @@ class TriggerSchedulerTest {
 
         // WHEN
         TriggerState initialState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
-        triggerStateStore.save(initialState
-            .locked(SchedulerClock.getClock(), false)
-            .disabled(SchedulerClock.getClock(), true)
+        triggerStateStore.save(
+            initialState
+                .locked(SchedulerClock.getClock(), false)
+                .disabled(SchedulerClock.getClock(), true)
         );
 
         SchedulerClock.offset(Duration.ofMinutes(15));
@@ -519,14 +535,16 @@ class TriggerSchedulerTest {
 
         // Setup Backfill
         ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(1));
-        triggerStateStore.save(triggerState
-            .locked(SchedulerClock.getClock(), false)
-            .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
-            .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).build())
+        triggerStateStore.save(
+            triggerState
+                .locked(SchedulerClock.getClock(), false)
+                .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).build())
         );
 
         // Simulate multiple 'onSchedule'
-        IntStream.rangeClosed(0, 4).forEach(i -> {
+        IntStream.rangeClosed(0, 4).forEach(i ->
+        {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
@@ -580,7 +598,8 @@ class TriggerSchedulerTest {
     }
 
     private void completeExecution() {
-        triggerStateStore.findById(Fixtures.triggerId()).ifPresent(state -> {
+        triggerStateStore.findById(Fixtures.triggerId()).ifPresent(state ->
+        {
             TriggerState newState = state
                 .updateForExecutionState(SchedulerClock.getClock(), State.Type.SUCCESS)
                 .locked(SchedulerClock.getClock(), false);

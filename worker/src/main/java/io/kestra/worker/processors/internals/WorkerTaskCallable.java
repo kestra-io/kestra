@@ -1,7 +1,7 @@
 package io.kestra.worker.processors.internals;
 
-import dev.failsafe.Failsafe;
-import dev.failsafe.Timeout;
+import java.time.Duration;
+
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.flows.State;
@@ -10,9 +10,10 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.RunnableTaskException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTask;
-import lombok.Getter;
 
-import java.time.Duration;
+import dev.failsafe.Failsafe;
+import dev.failsafe.Timeout;
+import lombok.Getter;
 
 import static io.kestra.core.models.flows.State.Type.*;
 
@@ -65,16 +66,17 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
                     .build();
                 Failsafe
                     .with(taskTimeout)
-                    .onFailure(event -> metricRegistry
-                        .counter(
-                            MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
-                            MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION,
-                            metricRegistry.tags(
-                                this.workerTask,
-                                MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())
+                    .onFailure(
+                        event -> metricRegistry
+                            .counter(
+                                MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
+                                MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION,
+                                metricRegistry.tags(
+                                    this.workerTask,
+                                    MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())
+                                )
                             )
-                        )
-                        .increment()
+                            .increment()
                     )
                     .run(() -> taskOutput = task.run(runContext));
             } else {

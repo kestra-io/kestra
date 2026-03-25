@@ -1,15 +1,12 @@
 package io.kestra.core.queues;
 
+import java.io.Closeable;
+import java.util.List;
+import java.util.function.Consumer;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.Pauseable;
 import io.kestra.core.utils.Either;
-
-import java.io.Closeable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 public interface QueueInterface<T> extends Closeable, Pauseable {
     default void emit(T message) throws QueueException {
@@ -37,7 +34,6 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
     default void emitOnly(String consumerGroup, T message) throws QueueException {
         throw new UnsupportedOperationException();
     }
-
 
     void emitAsync(String consumerGroup, List<T> messages) throws QueueException;
 

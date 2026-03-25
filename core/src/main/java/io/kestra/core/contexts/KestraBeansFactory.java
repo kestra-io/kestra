@@ -1,11 +1,16 @@
 package io.kestra.core.contexts;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageInterfaceFactory;
+
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Factory;
@@ -19,10 +24,6 @@ import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.Validator;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
 
 import static io.kestra.core.storages.StorageInterfaceFactory.KESTRA_STORAGE_TYPE_CONFIG;
 
@@ -50,7 +51,7 @@ public class KestraBeansFactory {
     }
 
     @Singleton
-    public StorageInterfaceFactory storageInterfaceFactory(final PluginRegistry pluginRegistry){
+    public StorageInterfaceFactory storageInterfaceFactory(final PluginRegistry pluginRegistry) {
         return new StorageInterfaceFactory(pluginRegistry, validator);
     }
 
@@ -63,19 +64,20 @@ public class KestraBeansFactory {
     }
 
     public String getStoragePluginId(StorageInterfaceFactory storageInterfaceFactory) {
-        return storageType.orElseThrow(() -> new KestraRuntimeException(String.format(
-            "No storage configured through the application property '%s'. Supported types are: %s"
-            , KESTRA_STORAGE_TYPE_CONFIG,
-            storageInterfaceFactory.getLoggableStorageIds()
-        )));
+        return storageType.orElseThrow(
+            () -> new KestraRuntimeException(
+                String.format(
+                    "No storage configured through the application property '%s'. Supported types are: %s", KESTRA_STORAGE_TYPE_CONFIG,
+                    storageInterfaceFactory.getLoggableStorageIds()
+                )
+            )
+        );
     }
 
     @ConfigurationProperties("kestra")
     public record StorageConfig(
         @Nullable
-        @MapFormat(keyFormat = StringConvention.CAMEL_CASE, transformation = MapFormat.MapTransformation.NESTED)
-        Map<String, Object> storage
-    ) {
+        @MapFormat(keyFormat = StringConvention.CAMEL_CASE, transformation = MapFormat.MapTransformation.NESTED) Map<String, Object> storage) {
 
         /**
          * Returns the configuration for the configured storage.

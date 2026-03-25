@@ -1,5 +1,13 @@
 package io.kestra.executor;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -15,38 +23,31 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
+import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.SubflowExecutionEnd;
+import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.*;
-import io.kestra.core.runners.MultipleConditionEvent;
-import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.executor.handler.*;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.plugin.core.trigger.Webhook;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.*;
 
@@ -101,7 +102,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private ExecutionDelayStateStore executionDelayStateStore;
     @Inject
-    private SLAMonitorStateStore  slaMonitorStateStore;
+    private SLAMonitorStateStore slaMonitorStateStore;
     @Inject
     private ConcurrencyLimitStateStore concurrencyLimitStateStore;
     @Inject
@@ -143,7 +144,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final java.util.concurrent.ExecutorService executionExecutorService;
     private final int numberOfThreads;
 
-
     @Inject
     public DefaultExecutor(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher, ExecutorsUtils executorsUtils, @Value("${kestra.executor.thread-count:0}") int threadCount) {
         super(ServiceType.EXECUTOR, eventPublisher);
@@ -183,33 +183,38 @@ public class DefaultExecutor extends AbstractService implements Executor {
     public void run() {
         // listen to executor related queues
         this.queueSubscribers.addFirst(this.executionQueue.subscriber().subscribe(this::executionQueue));
-        this.queueSubscribers.addFirst(this.executionEventQueue.subscriber().subscribeBatch(
-            executions -> {
-                // process execution message grouped by executionId to avoid concurrency as the execution level as it would
-                List<CompletableFuture<Void>> perExecutionFutures = executions.stream()
-                    .filter(Either::isLeft)
-                    .collect(Collectors.groupingBy(either -> either.getLeft().executionId()))
-                    .values()
-                    .stream()
-                    .map(eithers -> CompletableFuture.runAsync(() -> {
-                        eithers.forEach(this::executionEventQueue);
-                    }, executionExecutorService))
-                    .toList();
+        this.queueSubscribers.addFirst(
+            this.executionEventQueue.subscriber().subscribeBatch(
+                executions ->
+                {
+                    // process execution message grouped by executionId to avoid concurrency as the execution level as it would
+                    List<CompletableFuture<Void>> perExecutionFutures = executions.stream()
+                        .filter(Either::isLeft)
+                        .collect(Collectors.groupingBy(either -> either.getLeft().executionId()))
+                        .values()
+                        .stream()
+                        .map(eithers -> CompletableFuture.runAsync(() ->
+                        {
+                            eithers.forEach(this::executionEventQueue);
+                        }, executionExecutorService))
+                        .toList();
 
-                // directly process deserialization issues as most of the time there will be none
-                executions.stream()
-                    .filter(Either::isRight)
-                    .forEach(either -> executionEventQueue(either));
+                    // directly process deserialization issues as most of the time there will be none
+                    executions.stream()
+                        .filter(Either::isRight)
+                        .forEach(either -> executionEventQueue(either));
 
-                CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
-            }
-        ));
-        this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribeBatch(workerTaskResults -> {
-                List<CompletableFuture<Void>> futures = workerTaskResults.stream()
-                    .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
-                    .toList();
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            }
+                    CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
+                }
+            )
+        );
+        this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribeBatch(workerTaskResults ->
+        {
+            List<CompletableFuture<Void>> futures = workerTaskResults.stream()
+                .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
+                .toList();
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        }
         ));
         this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
@@ -246,7 +251,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         // look at exceptions on the scheduledDelay thread
         Thread.ofVirtual().name("executor-delay-exception-watcher").start(
-            () -> {
+            () ->
+            {
                 Await.until(executionDelayFuture::isDone);
 
                 try {
@@ -266,7 +272,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         // look at exceptions on the scheduledSLAMonitorFuture thread
         Thread.ofVirtual().name("executor-sla-monitor-exception-watcher").start(
-            () -> {
+            () ->
+            {
                 Await.until(monitorSLAFuture::isDone);
 
                 try {
@@ -485,7 +492,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void killExecution(String tenantId, String executionId) {
-        executionStateStore.lock(executionId, execution -> {
+        executionStateStore.lock(executionId, execution ->
+        {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.KILLING).addLabel(new Label(Label.KILL_SWITCH, "killed"));
                 return new ExecutorContext(newExecution);
@@ -494,19 +502,22 @@ public class DefaultExecutor extends AbstractService implements Executor {
         });
 
         try {
-            killQueue.emit(ExecutionKilledExecution.builder()
-                .tenantId(tenantId)
-                .executionId(executionId)
-                .isOnKillCascade(true)
-                .state(ExecutionKilled.State.REQUESTED)
-                .build());
+            killQueue.emit(
+                ExecutionKilledExecution.builder()
+                    .tenantId(tenantId)
+                    .executionId(executionId)
+                    .isOnKillCascade(true)
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .build()
+            );
         } catch (QueueException e) {
             log.error("Unable to kill the execution {}", executionId, e);
         }
     }
 
     private void cancelExecution(String executionId) {
-        executionStateStore.lock(executionId, execution -> {
+        executionStateStore.lock(executionId, execution ->
+        {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
                 return new ExecutorContext(newExecution);
@@ -527,12 +538,17 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        executionDelayStateStore.processExpired(Instant.now(), executionDelay -> {
-            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution -> {
+        executionDelayStateStore.processExpired(Instant.now(), executionDelay ->
+        {
+            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution ->
+            {
                 ExecutorContext executor = new ExecutorContext(execution);
 
                 metricRegistry
-                    .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                    .counter(
+                        MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION,
+                        metricRegistry.tags(executor.getExecution())
+                    )
                     .increment();
 
                 try {
@@ -573,7 +589,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     }
                     // Handle WaitFor
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
-                        Execution newExecution  = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
+                        Execution newExecution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(newExecution, "continueLoop");
                     }
                 } catch (Exception e) {
@@ -592,8 +608,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        slaMonitorStateStore.processExpired(Instant.now(), slaMonitor -> {
-            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution -> {
+        slaMonitorStateStore.processExpired(Instant.now(), slaMonitor ->
+        {
+            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution ->
+            {
                 FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
                 if (sla.isEmpty()) {
@@ -621,7 +639,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         executor = executorService.processViolation(runContext, executor, violation.get());
 
                         metricRegistry
-                            .counter(MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                            .counter(
+                                MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())
+                            )
                             .increment();
                     }
                 } catch (Exception e) {
@@ -707,7 +727,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     String taskId = (String) execution.getTrigger().getVariables().get("taskId");
                     @SuppressWarnings("unchecked")
                     Map<String, Object> outputs = (Map<String, Object>) execution.getTrigger().getVariables().get("taskRunOutputs");
-                    SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs);
+                    SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(
+                        executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs
+                    );
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
                 }
 
@@ -736,10 +758,14 @@ public class DefaultExecutor extends AbstractService implements Executor {
                             concurrencyLimitStateStore.decrementAndPop(
                                 finalFlow,
                                 executionQueuedStateStore,
-                                throwBiConsumer((dslContext, queued) -> {
+                                throwBiConsumer((dslContext, queued) ->
+                                {
                                     var newExecution = queued.withState(State.Type.RUNNING);
                                     executionQueue.emit(newExecution);
-                                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                                    metricRegistry.counter(
+                                        MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION,
+                                        metricRegistry.tags(newExecution)
+                                    ).increment();
 
                                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
                                     processFlowTriggers(newExecution);
@@ -748,7 +774,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         } else {
                             int newLimit = concurrencyLimitStateStore.decrement(executor.getFlow());
                             if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
-                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
+                                log.error(
+                                    "Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.",
+                                    executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId()
+                                );
                             }
                         }
                     }
@@ -774,7 +803,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
         } catch (QueueException | FlowNotFoundException e) {
             if (!ignoreFailure) {
                 // If we cannot add the new worker task result to the execution, we fail it
-                executionStateStore.lock(executor.getExecution().getId(), execution -> {
+                executionStateStore.lock(executor.getExecution().getId(), execution ->
+                {
                     try {
                         Execution failed = execution.failedExecutionFromExecutor(e).execution().withState(State.Type.FAILED);
                         ExecutionEvent event = new ExecutionEvent(failed, ExecutionEventType.TERMINATED);

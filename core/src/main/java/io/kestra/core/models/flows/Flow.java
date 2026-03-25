@@ -1,5 +1,9 @@
 package io.kestra.core.models.flows;
 
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -20,6 +25,7 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -27,10 +33,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A serializable flow with no source.
@@ -57,7 +59,6 @@ public class Flow extends AbstractFlow implements HasUID {
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         });
-
 
     @Schema(
         type = "object",
@@ -119,20 +120,20 @@ public class Flow extends AbstractFlow implements HasUID {
 
     public Stream<String> allTypes() {
         return Stream.of(
-                Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
-                allTasks().map(Task::getType),
-                Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(PluginDefault::getType)
-            ).reduce(Stream::concat).orElse(Stream.empty())
+            Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
+            allTasks().map(Task::getType),
+            Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(PluginDefault::getType)
+        ).reduce(Stream::concat).orElse(Stream.empty())
             .distinct();
     }
 
     public Stream<Task> allTasks() {
         return Stream.of(
-                this.tasks != null ? this.tasks : Collections.<Task>emptyList(),
-                this.errors != null ? this.errors : Collections.<Task>emptyList(),
-                this._finally != null ? this._finally : Collections.<Task>emptyList(),
-                this.afterExecution != null ? this.afterExecution : Collections.<Task>emptyList()
-            )
+            this.tasks != null ? this.tasks : Collections.<Task> emptyList(),
+            this.errors != null ? this.errors : Collections.<Task> emptyList(),
+            this._finally != null ? this._finally : Collections.<Task> emptyList(),
+            this.afterExecution != null ? this.afterExecution : Collections.<Task> emptyList()
+        )
             .flatMap(Collection::stream);
     }
 
@@ -245,24 +246,28 @@ public class Flow extends AbstractFlow implements HasUID {
 
         // change flow id
         if (!updated.getId().equals(this.getId())) {
-            violations.add(ManualConstraintViolation.of(
-                "Illegal flow id update",
-                updated,
-                Flow.class,
-                "flow.id",
-                updated.getId()
-            ));
+            violations.add(
+                ManualConstraintViolation.of(
+                    "Illegal flow id update",
+                    updated,
+                    Flow.class,
+                    "flow.id",
+                    updated.getId()
+                )
+            );
         }
 
         // change flow namespace
         if (!updated.getNamespace().equals(this.getNamespace())) {
-            violations.add(ManualConstraintViolation.of(
-                "Illegal namespace update",
-                updated,
-                Flow.class,
-                "flow.namespace",
-                updated.getNamespace()
-            ));
+            violations.add(
+                ManualConstraintViolation.of(
+                    "Illegal namespace update",
+                    updated,
+                    Flow.class,
+                    "flow.namespace",
+                    updated.getNamespace()
+                )
+            );
         }
 
         if (!violations.isEmpty()) {

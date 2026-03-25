@@ -1,5 +1,21 @@
 package io.kestra.core.runners;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import org.slf4j.LoggerFactory;
+
+import com.cronutils.utils.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.executions.LogEntry;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -10,22 +26,9 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.util.LogbackMDCAdapter;
 import ch.qos.logback.core.AppenderBase;
-import com.cronutils.utils.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.LogEntry;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     private static final int MAX_MESSAGE_LENGTH = 1024 * 15;
@@ -84,21 +87,22 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
         List<LogEntry> result = new ArrayList<>();
         for (String s : split) {
-            result.add(LogEntry.builder()
-                .namespace(logEntry.getNamespace())
-                .tenantId(logEntry.getTenantId())
-                .flowId(logEntry.getFlowId())
-                .taskId(logEntry.getTaskId())
-                .executionId(logEntry.getExecutionId())
-                .executionKind(logEntry.getExecutionKind())
-                .taskRunId(logEntry.getTaskRunId())
-                .attemptNumber(logEntry.getAttemptNumber())
-                .triggerId(logEntry.getTriggerId())
-                .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
-                .message(s)
-                .timestamp(event.getInstant())
-                .thread(event.getThreadName())
-                .build()
+            result.add(
+                LogEntry.builder()
+                    .namespace(logEntry.getNamespace())
+                    .tenantId(logEntry.getTenantId())
+                    .flowId(logEntry.getFlowId())
+                    .taskId(logEntry.getTaskId())
+                    .executionId(logEntry.getExecutionId())
+                    .executionKind(logEntry.getExecutionKind())
+                    .taskRunId(logEntry.getTaskRunId())
+                    .attemptNumber(logEntry.getAttemptNumber())
+                    .triggerId(logEntry.getTriggerId())
+                    .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
+                    .message(s)
+                    .timestamp(event.getInstant())
+                    .thread(event.getThreadName())
+                    .build()
             );
         }
 
@@ -115,17 +119,19 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         List<LogEntry> result = new ArrayList<>(logEntry(event, event.getFormattedMessage(), null, logEntry));
 
         if (Throwables.getCausalChain(throwable).size() > 1 && !(throwable instanceof IllegalVariableEvaluationException)) {
-            result.addAll(logEntry(
-                event,
-                Throwables
-                    .getCausalChain(throwable)
-                    .stream()
-                    .skip(1)
-                    .map(Throwable::getMessage)
-                    .collect(Collectors.joining("\n")),
-                null,
-                logEntry
-            ));
+            result.addAll(
+                logEntry(
+                    event,
+                    Throwables
+                        .getCausalChain(throwable)
+                        .stream()
+                        .skip(1)
+                        .map(Throwable::getMessage)
+                        .collect(Collectors.joining("\n")),
+                    null,
+                    logEntry
+                )
+            );
         }
 
         result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, logEntry));
@@ -270,10 +276,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 return value
                     .entrySet()
                     .stream()
-                    .map(e -> new AbstractMap.SimpleEntry<>(
-                        recursive(e.getKey()),
-                        recursive(e.getValue())
-                    ))
+                    .map(
+                        e -> new AbstractMap.SimpleEntry<>(
+                            recursive(e.getKey()),
+                            recursive(e.getValue())
+                        )
+                    )
                     .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
             } else if (object instanceof Collection<?> value) {
                 return value

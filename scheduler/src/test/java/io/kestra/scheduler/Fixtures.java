@@ -1,5 +1,9 @@
 package io.kestra.scheduler;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.function.Function;
+
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -7,10 +11,6 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.plugin.core.trigger.ScheduleOnDates;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.function.Function;
 
 public interface Fixtures {
 
@@ -84,6 +84,6 @@ public interface Fixtures {
             .cron("*/15 * * * *")
             .timezone(timeZone);
 
-            return flowWithTrigger(builder.apply(schedule));
+        return flowWithTrigger(builder.apply(schedule));
     }
 }

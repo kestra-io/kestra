@@ -1,9 +1,9 @@
 package io.kestra.core.exceptions;
 
-import org.apache.commons.lang3.time.DurationFormatUtils;
-
 import java.io.Serial;
 import java.time.Duration;
+
+import org.apache.commons.lang3.time.DurationFormatUtils;
 
 public class TimeoutExceededException extends Exception {
     @Serial

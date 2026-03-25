@@ -1,5 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.Helpers;
 import io.kestra.core.docs.DocumentationWithSchema;
 import io.kestra.core.docs.InputType;
@@ -12,6 +18,7 @@ import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
@@ -19,11 +26,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -89,15 +91,18 @@ class PluginControllerTest {
             Argument.mapOf(String.class, PluginIcon.class)
         );
 
-        assertThat(list.entrySet().stream()
-            .filter(e -> e.getKey().equals(Log.class.getName()))
-            .findFirst().orElseThrow().getValue().getIcon()).isNotNull();
+        assertThat(
+            list.entrySet().stream()
+                .filter(e -> e.getKey().equals(Log.class.getName()))
+                .findFirst().orElseThrow().getValue().getIcon()
+        ).isNotNull();
         // test an alias
-        assertThat(list.entrySet().stream()
-            .filter(e -> e.getKey().equals("io.kestra.core.tasks.log.Log"))
-            .findFirst().orElseThrow().getValue().getIcon()).isNotNull();
+        assertThat(
+            list.entrySet().stream()
+                .filter(e -> e.getKey().equals("io.kestra.core.tasks.log.Log"))
+                .findFirst().orElseThrow().getValue().getIcon()
+        ).isNotNull();
     }
-
 
     @SuppressWarnings("unchecked")
     @Test
@@ -138,7 +143,6 @@ class PluginControllerTest {
         assertThat(doc.getMarkdown()).contains("io.kestra.core.plugins.test.DeprecatedTask");
         assertThat(doc.getMarkdown()).contains("::: warning\n");
     }
-
 
     @SuppressWarnings("unchecked")
     @Test
@@ -213,9 +217,12 @@ class PluginControllerTest {
     @Test
     void should_get_plugin_manifest_for_tasks() {
         PluginUiManifest manifest = client.toBlocking().retrieve(
-            HttpRequest.POST(PATH + "/pluginUiManifest", List.of(
-                new TaskWithVersion("io.kestra.plugin.redis.list.ListPop", null),
-                new TaskWithVersion("io.kestra.plugin.redis.json.Get", null))),
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest", List.of(
+                    new TaskWithVersion("io.kestra.plugin.redis.list.ListPop", null),
+                    new TaskWithVersion("io.kestra.plugin.redis.json.Get", null)
+                )
+            ),
             PluginUiManifest.class
         );
 
@@ -232,10 +239,13 @@ class PluginControllerTest {
     void should_not_get_plugin_manifest_for_groups() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.POST(PATH + "/pluginUiManifest",
-                    List.of(new TaskWithVersion("io.kestra.plugin.redis", null))),
+                HttpRequest.POST(
+                    PATH + "/pluginUiManifest",
+                    List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
+                ),
                 PluginUiManifest.class
-            ));
+            )
+        );
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
@@ -253,9 +263,10 @@ class PluginControllerTest {
     void should_not_get_plugin_ui_for_task() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            HttpRequest.GET(PATH + "/io.kestra.plugin.redis.list.ListPop/pluginUi/plugin-ui.js"),
-            String.class
-        ));
+                HttpRequest.GET(PATH + "/io.kestra.plugin.redis.list.ListPop/pluginUi/plugin-ui.js"),
+                String.class
+            )
+        );
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 }

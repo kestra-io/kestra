@@ -1,12 +1,12 @@
 package io.kestra.core.scheduler.store;
 
-import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.scheduler.model.TriggerState;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.scheduler.model.TriggerState;
 
 /**
  * Service interface providing read-write access to trigger states.
@@ -20,12 +20,12 @@ public interface TriggerStateStore {
     /**
      * Finds all {@link TriggerState} instances that are eligible to be scheduled as of the specified timestamp.
      *
-     * @param now    the current timestamp used to evaluate scheduling eligibility;
-     *               triggers with a next execution time less than or equal to this
-     *               value are considered eligible
+     * @param now the current timestamp used to evaluate scheduling eligibility;
+     *        triggers with a next execution time less than or equal to this
+     *        value are considered eligible
      * @param vNodes the set of virtual node identifiers used to restrict the search scope;
      * @param locked if {@code true}, only locked triggers are returned;
-     *               if {@code false}, only unlocked triggers are returned
+     *        if {@code false}, only unlocked triggers are returned
      * @return a list of triggers that are eligible for scheduling at the given time
      */
     List<TriggerState> findTriggersEligibleForScheduling(ZonedDateTime now, Set<Integer> vNodes, boolean locked);

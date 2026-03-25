@@ -12,7 +12,7 @@ public interface WorkerConnectionService {
     /**
      * Establishes a connection with the controller and resolves worker configuration.
      *
-     * @param workerId       the unique identifier of the worker
+     * @param workerId the unique identifier of the worker
      * @param workerGroupKey the worker group key from configuration (maybe null)
      * @return the connection result containing a resolved configuration
      * @throws WorkerConnectionFailedException if the connection attempt fails or is not authorized.

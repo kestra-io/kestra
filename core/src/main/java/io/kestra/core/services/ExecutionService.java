@@ -1,5 +1,17 @@
 package io.kestra.core.services;
 
+import java.io.IOException;
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.reactivestreams.Publisher;
+
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -30,6 +42,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.http.multipart.CompletedPart;
 import jakarta.annotation.Nullable;
@@ -40,19 +53,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.io.IOException;
-import java.net.URI;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.*;
 
@@ -90,19 +92,17 @@ public class ExecutionService {
         Execution execution = getExecution(tenant, executionId, withACL);
 
         if (!execution.getState().isPaused()) {
-            throw new IllegalStateException("Execution '"+ executionId + "' is not paused, can't resume it");
+            throw new IllegalStateException("Execution '" + executionId + "' is not paused, can't resume it");
         }
 
         return execution;
     }
 
     public Execution getExecution(final String tenant, final @NotNull String executionId, boolean withACL) {
-        Optional<Execution> maybeExecution = withACL ?
-            executionRepository.findById(tenant, executionId) :
-            executionRepository.findByIdWithoutAcl(tenant, executionId);
+        Optional<Execution> maybeExecution = withACL ? executionRepository.findById(tenant, executionId) : executionRepository.findByIdWithoutAcl(tenant, executionId);
 
         return maybeExecution
-            .orElseThrow(() -> new NoSuchElementException("Execution '"+ executionId + "' not found."));
+            .orElseThrow(() -> new NoSuchElementException("Execution '" + executionId + "' not found."));
     }
 
     /**
@@ -119,19 +119,23 @@ public class ExecutionService {
             Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
             if (parentTask instanceof FlowableTask<?> flowableTask) {
                 if (flowableTask.getErrors() != null) {
-                    List<Task> allErrors = Stream.concat(flowableTask.getErrors().stream()
-                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
-                                .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
-                            flowableTask.getErrors().stream())
+                    List<Task> allErrors = Stream.concat(
+                        flowableTask.getErrors().stream()
+                            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+                            .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
+                        flowableTask.getErrors().stream()
+                    )
                         .toList();
                     allErrors.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
                 }
 
                 if (flowableTask.getFinally() != null) {
-                    List<Task> allFinally = Stream.concat(flowableTask.getFinally().stream()
-                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
-                                .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
-                            flowableTask.getFinally().stream())
+                    List<Task> allFinally = Stream.concat(
+                        flowableTask.getFinally().stream()
+                            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
+                            .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
+                        flowableTask.getFinally().stream()
+                    )
                         .toList();
                     allFinally.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
                 }
@@ -148,7 +152,8 @@ public class ExecutionService {
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
-            .map(taskRun -> {
+            .map(taskRun ->
+            {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.resetAttempts().incrementIteration();
                 }
@@ -177,8 +182,9 @@ public class ExecutionService {
 
     public Execution restart(final Execution execution, Flow flow, @Nullable Integer revision, boolean emitEvent) throws Exception {
         if (!execution.getState().canBeRestarted()) {
-            throw new IllegalStateException("Execution must be terminated or paused and not killed to be restarted, " +
-                "current state is '" + execution.getState().getCurrent() + "' !"
+            throw new IllegalStateException(
+                "Execution must be terminated or paused and not killed to be restarted, " +
+                    "current state is '" + execution.getState().getCurrent() + "' !"
             );
         }
 
@@ -193,14 +199,18 @@ public class ExecutionService {
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
-            .map(throwFunction(originalTaskRun -> this.mapTaskRun(
-                flow,
-                originalTaskRun,
-                mappingTaskRunId,
-                newExecutionId,
-                State.Type.RESTARTED,
-                taskRunToRestart.contains(originalTaskRun.getId()))
-            ))
+            .map(
+                throwFunction(
+                    originalTaskRun -> this.mapTaskRun(
+                        flow,
+                        originalTaskRun,
+                        mappingTaskRunId,
+                        newExecutionId,
+                        State.Type.RESTARTED,
+                        taskRunToRestart.contains(originalTaskRun.getId())
+                    )
+                )
+            )
             .collect(Collectors.toCollection(ArrayList::new));
 
         // Worker task, we need to remove all child in order to be restarted
@@ -235,7 +245,7 @@ public class ExecutionService {
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels);
 
-        newExecution =  revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        newExecution = revision != null ? newExecution.withFlowRevision(revision) : newExecution;
 
         if (emitEvent) {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
@@ -282,14 +292,16 @@ public class ExecutionService {
             newTaskRuns.addAll(
                 execution.getTaskRunList()
                     .stream()
-                    .map(throwFunction(originalTaskRun -> {
+                    .map(throwFunction(originalTaskRun ->
+                    {
                         TaskRun newTaskRun = this.mapTaskRun(
-                                flow,
-                                originalTaskRun,
-                                mappingTaskRunId,
-                                newExecutionId,
-                                State.Type.RESTARTED,
-                                taskRunToRestart.contains(originalTaskRun.getId()));
+                            flow,
+                            originalTaskRun,
+                            mappingTaskRunId,
+                            newExecutionId,
+                            State.Type.RESTARTED,
+                            taskRunToRestart.contains(originalTaskRun.getId())
+                        );
                         taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
                         return newTaskRun;
                     }))
@@ -362,9 +374,10 @@ public class ExecutionService {
             newLabels.add(new Label(Label.REPLAY, "true"));
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels)
-            .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));;
+            .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
+        ;
 
-        newExecution =  revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        newExecution = revision != null ? newExecution.withFlowRevision(revision) : newExecution;
         if (emitEvent) {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
@@ -382,7 +395,7 @@ public class ExecutionService {
 
         // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
         if (execution.getState().canChangeStatus()) {
-            List<TaskRun> newTaskRuns =  newExecution.getTaskRunList();
+            List<TaskRun> newTaskRuns = newExecution.getTaskRunList();
             // We need to remove global error tasks and flowable error tasks if any
             flow
                 .allErrorsWithChildren()
@@ -397,7 +410,7 @@ public class ExecutionService {
             ListUtils.emptyOnNull(flow.getAfterExecution())
                 .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
 
-            newExecution =  newExecution.withTaskRunList(newTaskRuns);
+            newExecution = newExecution.withTaskRunList(newTaskRuns);
         } else {
             throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
@@ -411,7 +424,8 @@ public class ExecutionService {
     }
 
     @SuppressWarnings("deprecation")
-    private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs, @Nullable Pause.Resumed resumed) throws Exception {
+    private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs,
+        @Nullable Pause.Resumed resumed) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -449,7 +463,6 @@ public class ExecutionService {
                     }
                 }
                 newTaskRun = originalTaskRun.withState(targetState);
-
 
                 if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
                     List<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
@@ -494,8 +507,7 @@ public class ExecutionService {
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
-        int batchSize
-    ) throws IOException {
+        int batchSize) throws IOException {
         PurgeResult purgeResult = this.executionRepository
             .find(
                 null,
@@ -512,7 +524,8 @@ public class ExecutionService {
                 true
             )
             .buffer(batchSize)
-            .map(throwFunction(executions -> {
+            .map(throwFunction(executions ->
+            {
                 PurgeResult.PurgeResultBuilder<?, ?> builder = PurgeResult.builder();
 
                 if (purgeExecution) {
@@ -529,7 +542,8 @@ public class ExecutionService {
                 }
 
                 if (purgeStorage) {
-                    executions.forEach(throwConsumer(execution -> {
+                    executions.forEach(throwConsumer(execution ->
+                    {
                         URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
                         builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri).size());
                     }));
@@ -537,13 +551,14 @@ public class ExecutionService {
 
                 return (PurgeResult) builder.build();
             }))
-            .reduce((a, b) -> a
-                .toBuilder()
-                .executionsCount(a.getExecutionsCount() + b.getExecutionsCount())
-                .logsCount(a.getLogsCount() + b.getLogsCount())
-                .storagesCount(a.getStoragesCount() + b.getStoragesCount())
-                .metricsCount(a.getMetricsCount() + b.getMetricsCount())
-                .build()
+            .reduce(
+                (a, b) -> a
+                    .toBuilder()
+                    .executionsCount(a.getExecutionsCount() + b.getExecutionsCount())
+                    .logsCount(a.getLogsCount() + b.getLogsCount())
+                    .storagesCount(a.getStoragesCount() + b.getStoragesCount())
+                    .metricsCount(a.getMetricsCount() + b.getMetricsCount())
+                    .build()
             )
             .block();
 
@@ -558,8 +573,7 @@ public class ExecutionService {
         Execution execution,
         boolean deleteLogs,
         boolean deleteMetrics,
-        boolean deleteStorage
-    ) throws IOException {
+        boolean deleteStorage) throws IOException {
         this.executionRepository.purge(execution);
 
         if (deleteLogs) {
@@ -581,8 +595,8 @@ public class ExecutionService {
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
-     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behavior
-     * @param flow      the flow of the execution
+     * @param newState should be RUNNING or KILLING, other states may lead to undefined behavior
+     * @param flow the flow of the execution
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
@@ -596,12 +610,13 @@ public class ExecutionService {
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
-     * @param flow      the flow of the execution
+     * @param flow the flow of the execution
      * @return the execution in the new state.
      */
     public Mono<List<InputAndValue>> validateForResume(final Execution execution, FlowInterface flow) {
         return getFirstPausedTaskOr(execution, flow)
-            .flatMap(task -> {
+            .flatMap(task ->
+            {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
                     return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
                 } else {
@@ -616,13 +631,14 @@ public class ExecutionService {
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
-     * @param flow      the flow of the execution
-     * @param inputs    the onResume inputs
+     * @param flow the flow of the execution
+     * @param inputs the onResume inputs
      * @return the execution in the new state.
      */
     public Mono<List<InputAndValue>> validateForResume(final Execution execution, Flow flow, @Nullable Publisher<CompletedPart> inputs) {
         return getFirstPausedTaskOr(execution, flow)
-            .flatMap(task -> {
+            .flatMap(task ->
+            {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
                     return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
                 } else {
@@ -636,20 +652,22 @@ public class ExecutionService {
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
-     * @param flow      the flow of the execution
-     * @param inputs    the onResume inputs
+     * @param flow the flow of the execution
+     * @param inputs the onResume inputs
      * @return the execution in the new state.
      */
     public Mono<Map<String, Object>> readInputs(final Execution execution, FlowInterface flow, @Nullable Publisher<CompletedPart> inputs) {
         return getFirstPausedTaskOr(execution, flow)
-            .flatMap(task -> {
+            .flatMap(task ->
+            {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
                     return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
                 } else {
-                    return Mono.just(Collections.<String, Object>emptyMap());
+                    return Mono.just(Collections.<String, Object> emptyMap());
                 }
             })
-            .handle((resumeInputs, sink) -> {
+            .handle((resumeInputs, sink) ->
+            {
                 try {
                     sink.next(resumeInputs);
                 } catch (Exception e) {
@@ -658,8 +676,9 @@ public class ExecutionService {
             });
     }
 
-    private Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, FlowInterface flow){
-        return Mono.create(sink -> {
+    private Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, FlowInterface flow) {
+        return Mono.create(sink ->
+        {
             try {
                 final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
                 var runningTaskRun = execution
@@ -677,13 +696,13 @@ public class ExecutionService {
      * The execution must be paused or this call will throw an IllegalArgumentException.
      *
      * @param execution the execution to resume
-     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behavior
-     * @param flow      the flow of the execution
-     * @param inputs    the onResume inputs
+     * @param newState should be RUNNING or KILLING, other states may lead to undefined behavior
+     * @param flow the flow of the execution
+     * @param inputs the onResume inputs
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs,  @Nullable Pause.Resumed resumed) throws Exception {
+    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable Pause.Resumed resumed) throws Exception {
         var pausedTaskRun = execution
             .findFirstByState(State.Type.PAUSED);
 
@@ -725,7 +744,7 @@ public class ExecutionService {
      * Lookup for all executions triggered by given execution id, and returns all the relevant
      * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.
      *
-     * @param tenantId    of the parent execution.
+     * @param tenantId of the parent execution.
      * @param executionId of the parent execution.
      * @return a {@link Flux} of zero or more {@link ExecutionKilled}.
      */
@@ -740,17 +759,19 @@ public class ExecutionService {
         // subsequent kill events (that will be re-handled by the Executor).
 
         return executions
-            .filter(childExecution -> {
+            .filter(childExecution ->
+            {
                 State state = childExecution.getState();
                 return state.getCurrent() != State.Type.KILLING && state.getCurrent() != State.Type.KILLED;
             })
-            .map(childExecution -> ExecutionKilledExecution
-                .builder()
-                .executionId(childExecution.getId())
-                .isOnKillCascade(true)
-                .state(ExecutionKilled.State.REQUESTED) // Event will be reentrant in the Executor.
-                .tenantId(tenantId)
-                .build()
+            .map(
+                childExecution -> ExecutionKilledExecution
+                    .builder()
+                    .executionId(childExecution.getId())
+                    .isOnKillCascade(true)
+                    .state(ExecutionKilled.State.REQUESTED) // Event will be reentrant in the Executor.
+                    .tenantId(tenantId)
+                    .build()
             );
     }
 
@@ -837,7 +858,8 @@ public class ExecutionService {
     private Set<String> removeWorkerTask(Flow flow, Execution execution, Set<String> taskRunToRestart, Map<String, String> mappingTaskRunId) throws InternalException {
         Set<String> workerTaskRunId = taskRunToRestart
             .stream()
-            .filter(throwPredicate(s -> {
+            .filter(throwPredicate(s ->
+            {
                 TaskRun taskRun = execution.findTaskRunByTaskRunId(s);
                 Task task = flow.findTaskByTaskId(taskRun.getTaskId());
                 return (task instanceof WorkingDirectory);
@@ -872,10 +894,12 @@ public class ExecutionService {
         return execution
             .getTaskRunList()
             .stream()
-            .map(t -> new AbstractMap.SimpleEntry<>(
-                t.getId(),
-                keep ? t.getId() : IdUtils.create()
-            ))
+            .map(
+                t -> new AbstractMap.SimpleEntry<>(
+                    t.getId(),
+                    keep ? t.getId() : IdUtils.create()
+                )
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -885,8 +909,7 @@ public class ExecutionService {
         Map<String, String> mappingTaskRunId,
         String newExecutionId,
         State.Type newStateType,
-        Boolean toRestart
-    ) throws InternalException {
+        Boolean toRestart) throws InternalException {
         State alterState;
         if (Boolean.TRUE.equals(originalTaskRun.getDynamic())) {
             // dynamic task runs (task runs from dynamic worker task results) are fake task runs,
@@ -921,7 +944,7 @@ public class ExecutionService {
     /**
      * This method is used to retrieve previous existing execution
      *
-     * @param retry     The retry define in the flow of the failed execution
+     * @param retry The retry define in the flow of the failed execution
      * @param execution The failed execution
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */
@@ -961,7 +984,7 @@ public class ExecutionService {
         }
 
         if (execution.getState().getCurrent() == State.Type.QUEUED) {
-            newExecution = concurrencyLimitService.unqueue(execution,State.Type.RUNNING);
+            newExecution = concurrencyLimitService.unqueue(execution, State.Type.RUNNING);
         }
 
         if (execution.getState().getCurrent() == State.Type.PAUSED) {
@@ -1015,7 +1038,8 @@ public class ExecutionService {
 
         // continue the execution: SUSPENDED taskrun will go back to CREATED, so the executor will send them to the WORKER
         List<TaskRun> newTaskRuns = execution.getTaskRunList().stream().map(
-            taskRun -> {
+            taskRun ->
+            {
                 if (taskRun.getState().isBreakpoint()) {
                     return taskRun.withState(State.Type.CREATED);
                 }
@@ -1023,7 +1047,7 @@ public class ExecutionService {
             }
         ).toList();
 
-        Execution resumed =  execution.withState(State.Type.RUNNING)
+        Execution resumed = execution.withState(State.Type.RUNNING)
             .withTaskRunList(newTaskRuns)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 

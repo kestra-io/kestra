@@ -1,5 +1,11 @@
 package io.kestra.core.validations.validator;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.OrderBy;
@@ -7,6 +13,7 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.DataChartValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
@@ -14,12 +21,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class DataChartValidator implements ConstraintValidator<DataChartValidation, DataChart<?, ?>> {
@@ -40,7 +41,8 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
         Set<String> dataColumns = MapUtils.emptyOnNull(dataChart.getData().getColumns()).keySet();
         if (dataChart.getChartOptions() != null) {
             List<String> neededColumns = dataChart.getChartOptions().neededColumns();
-            neededColumns.forEach(column -> {
+            neededColumns.forEach(column ->
+            {
                 if (!dataColumns.contains(column)) {
                     violations.add("Column '" + column + "' is requested by the chart but not present in `data.columns` keys.");
                 }
@@ -49,14 +51,16 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         List<OrderBy> orderBy = dataChart.getData().getOrderBy();
         if (orderBy != null) {
-            orderBy.stream().map(OrderBy::getColumn).forEach(column -> {
+            orderBy.stream().map(OrderBy::getColumn).forEach(column ->
+            {
                 if (!dataColumns.contains(column)) {
                     violations.add("Column '" + column + "' is used in `orderBy` but not present in `data.columns` keys.");
                 }
             });
         }
 
-        dataChart.getData().getColumns().forEach((key, value) -> {
+        dataChart.getData().getColumns().forEach((key, value) ->
+        {
             if (value.getField() == null && value.getAgg() != AggregationType.COUNT) {
                 violations.add("Column '" + key + "' doesn't have a field to select from.");
             }
@@ -91,8 +95,10 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
             violations.add("Fields can only appear once in `data.columns`.");
         }
 
-        if (dataChart.getData().getColumns().entrySet().stream().anyMatch(entry -> entry.getValue().getField() != null && entry.getValue().getField().equals(Executions.Fields.LABELS))
-        && !repositoryType.equals("elasticsearch")) {
+        if (
+            dataChart.getData().getColumns().entrySet().stream().anyMatch(entry -> entry.getValue().getField() != null && entry.getValue().getField().equals(Executions.Fields.LABELS))
+                && !repositoryType.equals("elasticsearch")
+        ) {
             violations.add("LABELS column is only supported with an ElasticSearch database.");
         }
 

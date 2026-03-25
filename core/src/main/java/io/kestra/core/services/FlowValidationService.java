@@ -1,17 +1,5 @@
 package io.kestra.core.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.plugin.core.flow.Pause;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.commons.lang3.ClassUtils;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -20,6 +8,21 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import org.apache.commons.lang3.ClassUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Pause;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class FlowValidationService {
@@ -44,14 +47,19 @@ public class FlowValidationService {
             .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
             .map(io.kestra.plugin.core.trigger.Flow.class::cast)
             .toList();
-        flowTriggers.forEach(flowTrigger -> {
+        flowTriggers.forEach(flowTrigger ->
+        {
             if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
-                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+                warnings.add(
+                    "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId()
+                        + "'."
+                );
             }
         });
 
         // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
-        flow.allTasksWithChilds().forEach(task -> {
+        flow.allTasksWithChilds().forEach(task ->
+        {
             if (!(task instanceof RunnableTask<?>)) {
                 if (task.getTimeout() != null && !(task instanceof Pause)) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
@@ -72,11 +80,13 @@ public class FlowValidationService {
         try {
             Map<String, Class<?>> aliases = pluginRegistry.plugins().stream()
                 .flatMap(plugin -> plugin.getAliases().values().stream())
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (existing, duplicate) -> existing
-                ));
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existing, duplicate) -> existing
+                    )
+                );
             Map<String, Object> stringObjectMap = JacksonMapper.ofYaml().readValue(flowSource, JacksonMapper.MAP_TYPE_REFERENCE);
             return relocations(aliases, stringObjectMap);
         } catch (JsonProcessingException e) {
@@ -85,7 +95,8 @@ public class FlowValidationService {
         }
     }
 
-    public record Relocation(String from, String to) {}
+    public record Relocation(String from, String to) {
+    }
 
     public List<String> checkValidSubflows(Flow flow, String tenantId) {
         List<io.kestra.plugin.core.flow.Subflow> subFlows = ListUtils.emptyOnNull(flow.getTasks()).stream()
@@ -95,7 +106,8 @@ public class FlowValidationService {
 
         List<String> violations = new ArrayList<>();
 
-        subFlows.forEach(subflow -> {
+        subFlows.forEach(subflow ->
+        {
             String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
             String subflowId = subflow.getFlowId();
             String namespace = subflow.getNamespace();
@@ -131,7 +143,8 @@ public class FlowValidationService {
             }
 
             if (entry.getValue() instanceof List<?> value) {
-                List<Relocation> listAliases = value.stream().flatMap(item -> {
+                List<Relocation> listAliases = value.stream().flatMap(item ->
+                {
                     if (item instanceof Map<?, ?> map) {
                         return relocations(aliases, (Map<String, Object>) map).stream();
                     }
@@ -144,7 +157,6 @@ public class FlowValidationService {
         return relocations;
     }
 
-
     private Stream<String> deprecationTraversal(String prefix, Object object) {
         if (object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) || String.class.equals(object.getClass())) {
             return Stream.empty();
@@ -153,7 +165,8 @@ public class FlowValidationService {
         return Stream.concat(
             object.getClass().isAnnotationPresent(Deprecated.class) ? Stream.of(prefix) : Stream.empty(),
             allGetters(object.getClass())
-                .flatMap(method -> {
+                .flatMap(method ->
+                {
                     try {
                         Object fieldValue = method.invoke(object);
 

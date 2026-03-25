@@ -8,5 +8,5 @@ public record JdbcQueueItem(
     String routingKey,
     String key,
     String value,
-    Instant created
-) { }
+    Instant created) {
+}

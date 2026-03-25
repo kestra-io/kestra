@@ -1,8 +1,8 @@
 package io.kestra.controller.grpc;
 
-import io.grpc.BindableService;
-
 import java.io.Closeable;
+
+import io.grpc.BindableService;
 
 /**
  * gRPC service interface for worker-controller communication.

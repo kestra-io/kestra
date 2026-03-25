@@ -1,6 +1,13 @@
 package io.kestra.webserver.services;
 
+import java.time.Instant;
+import java.util.*;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
@@ -8,6 +15,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.webserver.models.events.OssAuthEvent;
+
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
@@ -20,11 +28,6 @@ import jakarta.inject.Singleton;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
-
-import java.time.Instant;
-import java.util.*;
-import java.util.regex.Pattern;
 
 @Context
 @Singleton
@@ -50,20 +53,24 @@ public class BasicAuthService {
     @Inject
     private ApplicationEventPublisher<OssAuthEvent> ossAuthEventPublisher;
 
-    public BasicAuthService(SettingRepositoryInterface settingRepository, BasicAuthConfiguration basicAuthConfiguration, InstanceService instanceService, ApplicationEventPublisher<OssAuthEvent> ossAuthEventPublisher) {
+    public BasicAuthService(SettingRepositoryInterface settingRepository, BasicAuthConfiguration basicAuthConfiguration, InstanceService instanceService,
+        ApplicationEventPublisher<OssAuthEvent> ossAuthEventPublisher) {
         this.settingRepository = settingRepository;
         this.basicAuthConfiguration = basicAuthConfiguration;
         this.instanceService = instanceService;
         this.ossAuthEventPublisher = ossAuthEventPublisher;
     }
 
-    public BasicAuthService() {}
+    public BasicAuthService() {
+    }
 
     @VisibleForTesting
     @PostConstruct
     public void init() {
-        if (basicAuthConfiguration == null ||
-            (StringUtils.isBlank(basicAuthConfiguration.getUsername()) && StringUtils.isBlank(basicAuthConfiguration.getPassword()))){
+        if (
+            basicAuthConfiguration == null ||
+                (StringUtils.isBlank(basicAuthConfiguration.getUsername()) && StringUtils.isBlank(basicAuthConfiguration.getPassword()))
+        ) {
             return;
         }
         try {
@@ -74,11 +81,13 @@ public class BasicAuthService {
             if (settingRepository.findByKey(BASIC_AUTH_ERROR_CONFIG).isPresent()) {
                 settingRepository.delete(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).build());
             }
-        } catch (ValidationErrorException e){
-            settingRepository.save(Setting.builder()
-                .key(BASIC_AUTH_ERROR_CONFIG)
-                .value(e.getInvalids())
-                .build());
+        } catch (ValidationErrorException e) {
+            settingRepository.save(
+                Setting.builder()
+                    .key(BASIC_AUTH_ERROR_CONFIG)
+                    .value(e.getInvalids())
+                    .build()
+            );
         }
     }
 
@@ -101,12 +110,14 @@ public class BasicAuthService {
             validationErrors.add("Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number");
         }
 
-        if ((basicAuthCredentials.getUsername() != null && basicAuthCredentials.getUsername().length() > EMAIL_PASSWORD_MAX_LEN) ||
-            (basicAuthCredentials.getPassword() != null && basicAuthCredentials.getPassword().length() > EMAIL_PASSWORD_MAX_LEN)) {
+        if (
+            (basicAuthCredentials.getUsername() != null && basicAuthCredentials.getUsername().length() > EMAIL_PASSWORD_MAX_LEN) ||
+                (basicAuthCredentials.getPassword() != null && basicAuthCredentials.getPassword().length() > EMAIL_PASSWORD_MAX_LEN)
+        ) {
             validationErrors.add("The length of email or password should not exceed 256 characters.");
         }
 
-        if (!validationErrors.isEmpty()){
+        if (!validationErrors.isEmpty()) {
             throw new ValidationErrorException(validationErrors);
         }
 
@@ -132,9 +143,10 @@ public class BasicAuthService {
                     .uid(basicAuthCredentials.getUid())
                     .iid(instanceService.fetch())
                     .date(Instant.now())
-                    .ossAuth(OssAuthEvent.OssAuth.builder()
-                        .email(basicAuthCredentials.getUsername())
-                        .build()
+                    .ossAuth(
+                        OssAuthEvent.OssAuth.builder()
+                            .email(basicAuthCredentials.getUsername())
+                            .build()
                     ).build()
             );
         }
@@ -148,7 +160,9 @@ public class BasicAuthService {
     }
 
     public ConfiguredBasicAuth configuration() {
-        return new ConfiguredBasicAuth(this.basicAuthConfiguration != null ? this.basicAuthConfiguration.realm : null, this.basicAuthConfiguration != null ? this.basicAuthConfiguration.openUrls : null);
+        return new ConfiguredBasicAuth(
+            this.basicAuthConfiguration != null ? this.basicAuthConfiguration.realm : null, this.basicAuthConfiguration != null ? this.basicAuthConfiguration.openUrls : null
+        );
     }
 
     public SaltedBasicAuthCredentials credentials() {
@@ -158,7 +172,7 @@ public class BasicAuthService {
             .orElse(null);
     }
 
-    public boolean isBasicAuthInitialized(){
+    public boolean isBasicAuthInitialized() {
         var credentials = credentials();
 
         return credentials != null &&
@@ -183,8 +197,7 @@ public class BasicAuthService {
             @Nullable String username,
             @Nullable String password,
             @Nullable String realm,
-            @Nullable List<String> openUrls
-        ) {
+            @Nullable List<String> openUrls) {
             this.username = username;
             this.password = password;
             this.realm = Optional.ofNullable(realm).orElse("Kestra");
@@ -194,8 +207,7 @@ public class BasicAuthService {
 
     public record ConfiguredBasicAuth(
         String realm,
-        List<String> openUrls
-    ) {
+        List<String> openUrls) {
     }
 
     @Getter

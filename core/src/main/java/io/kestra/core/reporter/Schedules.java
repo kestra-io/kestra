@@ -1,15 +1,15 @@
 package io.kestra.core.reporter;
 
-import io.kestra.core.reporter.Reportable.ReportingSchedule;
-
 import java.time.Duration;
 import java.time.Instant;
+
+import io.kestra.core.reporter.Reportable.ReportingSchedule;
 
 /**
  * Utility class providing common implementations of {@link Reportable.ReportingSchedule}.
  */
 public class Schedules {
-    
+
     /**
      * Creates a reporting schedule that triggers after the specified period has elapsed
      * since the last execution.
@@ -22,10 +22,10 @@ public class Schedules {
         if (period.isZero() || period.isNegative()) {
             throw new IllegalArgumentException("Period must be positive");
         }
-        
+
         return new ReportingSchedule() {
             private Instant lastRun = Instant.EPOCH;
-            
+
             @Override
             public boolean shouldRun(Instant now) {
                 if (Duration.between(lastRun, now).compareTo(period) >= 0) {
@@ -36,7 +36,7 @@ public class Schedules {
             }
         };
     }
-    
+
     /**
      * Creates a reporting schedule that triggers once every hour.
      *
@@ -45,7 +45,7 @@ public class Schedules {
     public static ReportingSchedule hourly() {
         return every(Duration.ofHours(1));
     }
-    
+
     /**
      * Creates a reporting schedule that triggers once every day.
      *

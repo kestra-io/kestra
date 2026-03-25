@@ -1,5 +1,10 @@
 package io.kestra.plugin.core.kv;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -9,17 +14,13 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.MapUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -183,8 +184,8 @@ public class Put extends Task implements RunnableTask<VoidOutput> {
             return false;
         }
 
-        return entries.stream().allMatch(item ->
-            item instanceof Map<?, ?> map &&
+        return entries.stream().allMatch(
+            item -> item instanceof Map<?, ?> map &&
                 map.containsKey("value") &&
                 map.keySet().stream().allMatch(fieldName -> "key".equals(fieldName) || "value".equals(fieldName))
         );

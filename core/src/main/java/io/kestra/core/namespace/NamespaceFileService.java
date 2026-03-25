@@ -1,5 +1,11 @@
 package io.kestra.core.namespace;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
@@ -7,16 +13,11 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -38,8 +39,8 @@ public class NamespaceFileService {
     private final Optional<NamespaceFileMetadataRepositoryInterface> namespaceFileMetadataRepository;
 
     @Inject
-    public NamespaceFileService(StorageInterface storage, 
-                                Optional<NamespaceFileMetadataRepositoryInterface> namespaceFileMetadataRepository) {
+    public NamespaceFileService(StorageInterface storage,
+        Optional<NamespaceFileMetadataRepositoryInterface> namespaceFileMetadataRepository) {
         this.storage = storage;
         this.namespaceFileMetadataRepository = namespaceFileMetadataRepository;
     }
@@ -47,11 +48,11 @@ public class NamespaceFileService {
     /**
      * Lists namespace file entries with pagination, filtering, and version control.
      *
-     * @param pageable      the pagination parameters.
-     * @param tenantId      the tenant ID.
-     * @param namespace     the namespace.
-     * @param filters       the query filters.
-     * @param allowDeleted  whether to include deleted entries.
+     * @param pageable the pagination parameters.
+     * @param tenantId the tenant ID.
+     * @param namespace the namespace.
+     * @param filters the query filters.
+     * @param allowDeleted whether to include deleted entries.
      * @param fetchBehavior the version fetch behavior.
      * @return the paginated list of {@link NamespaceFile}.
      */
@@ -73,7 +74,7 @@ public class NamespaceFileService {
     /**
      * Lists all namespace file entries, including deleted ones, across all versions.
      *
-     * @param tenantId  the tenant ID.
+     * @param tenantId the tenant ID.
      * @param namespace the namespace.
      * @return the list of all {@link NamespaceFile}.
      */
@@ -84,8 +85,8 @@ public class NamespaceFileService {
     /**
      * Purge (hard-delete) the provided namespace files. Removes both metadata and storage data.
      *
-     * @param tenantId       the tenant ID.
-     * @param namespace      the namespace.
+     * @param tenantId the tenant ID.
+     * @param namespace the namespace.
      * @param namespaceFiles the files to purge.
      * @return the number of purged files.
      * @throws IOException if an error occurred while executing the purge operation.
@@ -116,25 +117,27 @@ public class NamespaceFileService {
     /**
      * Gets the namespace file revisions for a specific file path.
      *
-     * @param tenantId  the tenant ID.
+     * @param tenantId the tenant ID.
      * @param namespace the namespace.
-     * @param path      the file path.
+     * @param path the file path.
      * @return the list of namespace file metadata for all versions.
      */
     public ArrayListTotal<NamespaceFileMetadata> findRevisions(String tenantId, String namespace, String path) {
-        return getRepository().find(Pageable.UNPAGED, tenantId, List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-            QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(path).build()
-        ), true, FetchVersion.ALL);
+        return getRepository().find(
+            Pageable.UNPAGED, tenantId, List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(path).build()
+            ), true, FetchVersion.ALL
+        );
     }
 
     /**
      * Finds namespace file metadata entries with pagination and filters.
      * Used by the controller for deletion zombie-awareness checks.
      *
-     * @param pageable     the pagination parameters.
-     * @param tenantId     the tenant ID.
-     * @param filters      the query filters.
+     * @param pageable the pagination parameters.
+     * @param tenantId the tenant ID.
+     * @param filters the query filters.
      * @param allowDeleted whether to include deleted entries.
      * @return the paginated list of {@link NamespaceFileMetadata}.
      */
@@ -143,8 +146,8 @@ public class NamespaceFileService {
     }
 
     private NamespaceFileMetadataRepositoryInterface getRepository() {
-        return this.namespaceFileMetadataRepository.orElseThrow(() ->
-            new IllegalStateException("The namespace file metadata repository is not available. This operation cannot be performed on a worker.")
+        return this.namespaceFileMetadataRepository.orElseThrow(
+            () -> new IllegalStateException("The namespace file metadata repository is not available. This operation cannot be performed on a worker.")
         );
     }
 }

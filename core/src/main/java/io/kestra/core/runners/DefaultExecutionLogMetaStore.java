@@ -1,11 +1,13 @@
 package io.kestra.core.runners;
 
+import org.slf4j.event.Level;
+
 import io.kestra.core.repositories.LogRepositoryInterface;
+
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.event.Level;
 
 @Singleton
 public class DefaultExecutionLogMetaStore implements ExecutionLogMetaStore {

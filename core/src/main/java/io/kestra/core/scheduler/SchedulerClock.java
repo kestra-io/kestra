@@ -14,21 +14,22 @@ import java.time.ZonedDateTime;
  * This class is thread-safe.
  */
 public final class SchedulerClock {
-    
+
     private static final SchedulerClock INSTANCE = new SchedulerClock();
-    
+
     /**
      * The current clock instance used by this scheduler.
      * <p>
      * Declared as volatile to ensure visibility across threads.
      */
     private volatile Clock clock = Clock.systemDefaultZone();
-    
+
     /**
      * Private constructor to enforce singleton pattern.
      */
-    private SchedulerClock() {}
-    
+    private SchedulerClock() {
+    }
+
     /**
      * Returns the current {@link Clock} instance used by this scheduler.
      *
@@ -37,7 +38,7 @@ public final class SchedulerClock {
     public static Clock getClock() {
         return INSTANCE.clock;
     }
-    
+
     /**
      * Replaces the current clock with the given {@link Clock} instance.
      * <p>
@@ -52,7 +53,7 @@ public final class SchedulerClock {
         }
         INSTANCE.clock = clock;
     }
-    
+
     /**
      * Updates the current clock with the specified duration added.
      *
@@ -63,7 +64,7 @@ public final class SchedulerClock {
             INSTANCE.clock = Clock.offset(INSTANCE.clock, duration);
         }
     }
-    
+
     /**
      * Returns the current {@link ZonedDateTime} according to the scheduler's clock.
      *

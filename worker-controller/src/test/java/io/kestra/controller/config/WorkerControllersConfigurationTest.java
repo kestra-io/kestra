@@ -1,11 +1,12 @@
 package io.kestra.controller.config;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.PropertySource;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.PropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

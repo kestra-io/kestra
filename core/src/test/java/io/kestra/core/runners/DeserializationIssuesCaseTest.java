@@ -1,28 +1,18 @@
 package io.kestra.core.runners;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
 import io.kestra.core.scheduler.events.TriggerEvent;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.worker.models.WorkerTriggerResult;
-import io.micronaut.context.ApplicationContext;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -167,12 +157,13 @@ public class DeserializationIssuesCaseTest {
     @Inject
     protected BroadcastQueueInterface<FlowInterface> flowQueue;
 
-    public record QueueMessage(Class<?> type, String key, String value) {}
-
+    public record QueueMessage(Class<?> type, String key, String value) {
+    }
 
     public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        workerTaskResultQueue.addListener(workerTaskResult -> {
+        workerTaskResultQueue.addListener(workerTaskResult ->
+        {
             if (workerTaskResult.getTaskRun().getId().equals(INVALID_WORKER_TASK_KEY)) {
                 countDownLatch.countDown();
             }
@@ -184,7 +175,8 @@ public class DeserializationIssuesCaseTest {
 
     public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        triggerEventQueue.addListener(triggerEvent -> {
+        triggerEventQueue.addListener(triggerEvent ->
+        {
             if (triggerEvent.id().uid().equals(INVALID_WORKER_TRIGGER_KEY)) {
                 countDownLatch.countDown();
             }
@@ -196,7 +188,8 @@ public class DeserializationIssuesCaseTest {
 
     public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        var subscriber = flowQueue.subscriber().subscribe(either -> {
+        var subscriber = flowQueue.subscriber().subscribe(either ->
+        {
             if (either.isLeft()) {
                 FlowInterface flowInterface = either.getLeft();
                 if (flowInterface.uid().equals("company.team_hello-world_2")) {

@@ -1,23 +1,24 @@
 package io.kestra.controller.grpc.services;
 
-import io.grpc.stub.StreamObserver;
-import io.kestra.core.runners.WorkerJob;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Instant;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import io.kestra.core.runners.WorkerJob;
+
+import io.grpc.stub.StreamObserver;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Holds the state for a single worker's bidirectional stream connection.
  * <p>
  * This class tracks:
  * <ul>
- *   <li>Available permits (how many jobs we can send to this worker)</li>
- *   <li>In-flight jobs (sent but not yet ACKed by the worker)</li>
- *   <li>Connection metadata (workerId, workerGroup, etc.)</li>
+ * <li>Available permits (how many jobs we can send to this worker)</li>
+ * <li>In-flight jobs (sent but not yet ACKed by the worker)</li>
+ * <li>Connection metadata (workerId, workerGroup, etc.)</li>
  * </ul>
  * <p>
  * Thread-safe: all operations are safe for concurrent access from multiple threads.
@@ -56,15 +57,15 @@ public class WorkerStreamContext<T> {
     /**
      * Creates a new worker stream context.
      *
-     * @param workerId         unique identifier for this worker instance
-     * @param workerGroup      worker group this worker belongs to (may be null for default)
-     * @param maxConcurrency   maximum concurrent jobs this worker can handle
+     * @param workerId unique identifier for this worker instance
+     * @param workerGroup worker group this worker belongs to (may be null for default)
+     * @param maxConcurrency maximum concurrent jobs this worker can handle
      * @param responseObserver gRPC stream observer for sending jobs to the worker
      */
     public WorkerStreamContext(String workerId,
-                               String workerGroup,
-                               int maxConcurrency,
-                               StreamObserver<T> responseObserver) {
+        String workerGroup,
+        int maxConcurrency,
+        StreamObserver<T> responseObserver) {
         this.workerId = workerId;
         this.workerGroup = workerGroup == null || workerGroup.isEmpty() ? "" : workerGroup;
         this.maxConcurrency = maxConcurrency;
@@ -129,7 +130,7 @@ public class WorkerStreamContext<T> {
      * Tracks a job as in-flight (sent to worker, awaiting ACK).
      *
      * @param jobId the job's unique identifier
-     * @param job   the worker job
+     * @param job the worker job
      */
     public void trackInFlight(String jobId, WorkerJob job) {
         inFlightJobs.put(jobId, new PendingJob(jobId, job, Instant.now()));
@@ -192,8 +193,8 @@ public class WorkerStreamContext<T> {
     /**
      * Represents a job that has been sent to a worker but not yet acknowledged.
      *
-     * @param jobId  unique identifier of the job
-     * @param job    the worker job
+     * @param jobId unique identifier of the job
+     * @param job the worker job
      * @param sentAt when the job was sent to the worker
      */
     public record PendingJob(String jobId, WorkerJob job, Instant sentAt) {

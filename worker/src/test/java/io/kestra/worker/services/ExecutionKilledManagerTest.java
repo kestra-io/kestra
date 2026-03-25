@@ -1,5 +1,10 @@
 package io.kestra.worker.services;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -9,11 +14,8 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
-import io.micrometer.core.instrument.Counter;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import io.micrometer.core.instrument.Counter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -96,7 +98,9 @@ class ExecutionKilledManagerTest {
         WorkerTask mockTask = createMockWorkerTask("exec-1", "tenant-1");
 
         // When
-        manager.register("job-1", mockTask, () -> {});
+        manager.register("job-1", mockTask, () ->
+        {
+        });
 
         // Then
         manager.unregister("job-1");
@@ -234,10 +238,12 @@ class ExecutionKilledManagerTest {
     void shouldIncrementMetricOnKill() {
         // Given
         Counter mockCounter = mock(Counter.class);
-        when(metricRegistry.counter(
-            eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT),
-            eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION)
-        )).thenReturn(mockCounter);
+        when(
+            metricRegistry.counter(
+                eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT),
+                eq(MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION)
+            )
+        ).thenReturn(mockCounter);
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")
@@ -373,7 +379,9 @@ class ExecutionKilledManagerTest {
     void shouldPreserveKilledStateAfterJobUnregisters() {
         // Given
         WorkerTask mockTask = createMockWorkerTask("exec-1", null);
-        manager.register("job-1", mockTask, () -> {});
+        manager.register("job-1", mockTask, () ->
+        {
+        });
 
         ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
             .executionId("exec-1")

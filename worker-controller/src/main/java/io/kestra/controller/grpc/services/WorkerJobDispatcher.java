@@ -1,9 +1,24 @@
 package io.kestra.controller.grpc.services;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
+
+import javax.annotation.concurrent.ThreadSafe;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.ByteString;
+
 import io.kestra.controller.grpc.WorkerJobPayload;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
@@ -23,41 +38,29 @@ import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.*;
-import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.Either;
 import io.kestra.core.worker.WorkerBroadcastEvent;
+
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.concurrent.ThreadSafe;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Stream;
-
 /**
  * Central coordinator for dispatching {@link WorkerJob} to workers using the pull/ack pattern.
  * <p>
  * This component:
  * <ul>
- *   <li>Manages all active worker stream connections</li>
- *   <li>Subscribes to the {@link KeyedDispatchQueueInterface} per worker group</li>
- *   <li>Dispatches jobs to workers based on their available permits</li>
- *   <li>Uses pause/resume for backpressure when no workers have capacity</li>
+ * <li>Manages all active worker stream connections</li>
+ * <li>Subscribes to the {@link KeyedDispatchQueueInterface} per worker group</li>
+ * <li>Dispatches jobs to workers based on their available permits</li>
+ * <li>Uses pause/resume for backpressure when no workers have capacity</li>
  * </ul>
  * <p>
  * When no workers have capacity, the subscription is paused and the job is re-queued.
@@ -142,7 +145,8 @@ public class WorkerJobDispatcher {
 
         // Subscribe to execution killed events
         this.killQueueSubscriber = executionKilledQueue.subscriber();
-        this.killQueueSubscriber.subscribe(either -> {
+        this.killQueueSubscriber.subscribe(either ->
+        {
             if (either.isRight()) {
                 log.error("Deserialization error for ExecutionKilled: {}", either.getRight().getMessage());
                 return;
@@ -156,7 +160,8 @@ public class WorkerJobDispatcher {
         // Subscribe to cluster events to forward them to gRPC workers
         if (clusterEventQueue != null) {
             this.clusterEventSubscriber = clusterEventQueue.subscriber();
-            this.clusterEventSubscriber.subscribe(either -> {
+            this.clusterEventSubscriber.subscribe(either ->
+            {
                 if (either.isRight()) {
                     log.error("Deserialization error for ClusterEvent: {}", either.getRight().getMessage());
                     return;
@@ -207,7 +212,8 @@ public class WorkerJobDispatcher {
     private void broadcastEvent(WorkerBroadcastEvent event, String description) {
         ByteString eventData = MessageFormats.JSON.toByteString(event);
 
-        activeStreams.forEach((workerId, context) -> {
+        activeStreams.forEach((workerId, context) ->
+        {
             try {
                 WorkerJobResponse response = WorkerJobResponse.newBuilder()
                     .setHeader(RequestOrResponseHeaderFactory.create(workerId))
@@ -265,7 +271,7 @@ public class WorkerJobDispatcher {
     private GroupState createGroupState(String workerGroup) {
         String workerGroupOrNull = workerGroup.isEmpty() ? null : workerGroup;
         QueueSubscriber<WorkerJobEvent> subscriber = workerJobEventQueue.subscriber(workerGroupOrNull);
-        subscriber.pause();  // Start paused until workers connect with permits
+        subscriber.pause(); // Start paused until workers connect with permits
         subscriber.subscribe(either -> handleIncomingJob(workerGroup, either));
         log.info("Created queue subscription for worker group '{}' (initially paused)", WorkerGroup.forLog(workerGroup));
         return new GroupState(subscriber);
@@ -331,7 +337,7 @@ public class WorkerJobDispatcher {
      * The permits value represents the worker's total remaining capacity.
      * Resumes the queue subscription if any worker has capacity, pauses otherwise.
      *
-     * @param context    the worker stream context
+     * @param context the worker stream context
      * @param newPermits the worker's total remaining capacity (0 or more)
      */
     public void onPermitsReceived(WorkerStreamContext<WorkerJobResponse> context, int newPermits) {
@@ -371,7 +377,7 @@ public class WorkerJobDispatcher {
      * Removes jobs from the controller's in-memory tracking.
      *
      * @param context the worker stream context
-     * @param jobIds  list of job UIDs that were received
+     * @param jobIds list of job UIDs that were received
      */
     public void onAcksReceived(WorkerStreamContext<WorkerJobResponse> context, List<String> jobIds) {
         for (String jobId : jobIds) {
@@ -399,8 +405,10 @@ public class WorkerJobDispatcher {
         // Pre-dispatch killed check: if the execution is already killed, produce a KILLED result directly
         if (job instanceof WorkerTask workerTask) {
             String executionId = workerTask.getTaskRun().getExecutionId();
-            if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution())
-                && killedExecutionIds.getIfPresent(executionId) != null) {
+            if (
+                !Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution())
+                    && killedExecutionIds.getIfPresent(executionId) != null
+            ) {
                 log.info("Skipping dispatch of task '{}' for killed execution '{}'", job.uid(), executionId);
                 try {
                     workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.KILLED)));
@@ -455,7 +463,9 @@ public class WorkerJobDispatcher {
                     } else if ("trigger".equals(type)) {
                         // try to deserialize the triggerContext to fail it
                         var triggerContext = MAPPER.treeToValue(job.get("triggerContext"), TriggerContext.class);
-                        var workerTriggerResult = new TriggerEvaluated(TriggerId.of(triggerContext.getTenantId(), triggerContext.getNamespace(), triggerContext.getFlowId(), triggerContext.getTriggerId()), null);
+                        var workerTriggerResult = new TriggerEvaluated(
+                            TriggerId.of(triggerContext.getTenantId(), triggerContext.getNamespace(), triggerContext.getFlowId(), triggerContext.getTriggerId()), null
+                        );
                         this.triggerEventQueue.send(workerTriggerResult);
                     }
                 }
@@ -508,7 +518,7 @@ public class WorkerJobDispatcher {
      * If sending fails, the permit is restored and the job is re-queued.
      */
     private void dispatchJobToWorker(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
-                                     WorkerJobEvent originalEvent) {
+        WorkerJobEvent originalEvent) {
         String jobId = job.uid();
 
         // 1. PERSIST before sending (critical for recovery)
@@ -521,10 +531,12 @@ public class WorkerJobDispatcher {
         try {
             WorkerJobResponse response = WorkerJobResponse.newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(context.getWorkerId()))
-                .addJobs(WorkerJobPayload.newBuilder()
-                    .setJobId(jobId)
-                    .setJobData(MessageFormats.JSON.toByteString(job))
-                    .build())
+                .addJobs(
+                    WorkerJobPayload.newBuilder()
+                        .setJobId(jobId)
+                        .setJobData(MessageFormats.JSON.toByteString(job))
+                        .build()
+                )
                 .build();
 
             context.sendResponse(response);
@@ -554,7 +566,7 @@ public class WorkerJobDispatcher {
      * Restores the permit and re-queues the job.
      */
     private void handleDispatchFailure(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
-                                       WorkerJobEvent originalEvent) {
+        WorkerJobEvent originalEvent) {
         // Restore permit to the worker
         context.addPermits(1);
 
@@ -635,7 +647,8 @@ public class WorkerJobDispatcher {
         }
 
         // Close all queue subscriptions
-        groupStates.forEach((group, state) -> {
+        groupStates.forEach((group, state) ->
+        {
             state.lock.lock();
             try {
                 // Mark as closing - no new operations
@@ -646,7 +659,8 @@ public class WorkerJobDispatcher {
         });
 
         // Complete all active worker streams so gRPC can release them
-        activeStreams.forEach((workerId, context) -> {
+        activeStreams.forEach((workerId, context) ->
+        {
             try {
                 context.getResponseObserver().onCompleted();
             } catch (Exception e) {
@@ -706,8 +720,7 @@ public class WorkerJobDispatcher {
     private record GroupState(
         QueueSubscriber<WorkerJobEvent> subscriber,
         AtomicBoolean isPaused,
-        ReentrantLock lock
-    ) {
+        ReentrantLock lock) {
 
         public GroupState(QueueSubscriber<WorkerJobEvent> subscriber) {
             this(subscriber, new AtomicBoolean(true), new ReentrantLock());

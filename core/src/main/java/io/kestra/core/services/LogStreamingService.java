@@ -1,20 +1,22 @@
 package io.kestra.core.services;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.FollowLogEvent;
+
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.FluxSink;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This service offers a fanout mechanism so a single consumer of the log queue can dispatch log messages to multiple consumers.
@@ -36,7 +38,8 @@ public class LogStreamingService {
 
     @PostConstruct
     void startQueueConsumer() {
-        this.queueSubscriber = logQueue.subscriber().subscribe(either -> {
+        this.queueSubscriber = logQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.error("Unable to deserialize log: {}", either.getRight().getMessage());
                 return;
@@ -56,7 +59,8 @@ public class LogStreamingService {
             Map<String, Pair<FluxSink<Event<FollowLogEvent>>, List<String>>> executionSubscribers = subscribers.get(current.executionId());
 
             if (executionSubscribers != null && !executionSubscribers.isEmpty()) {
-                executionSubscribers.values().forEach(pair -> {
+                executionSubscribers.values().forEach(pair ->
+                {
                     var sink = pair.getLeft();
                     var levels = pair.getRight();
 

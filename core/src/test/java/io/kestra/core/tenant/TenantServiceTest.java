@@ -1,8 +1,9 @@
 package io.kestra.core.tenant;
 
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,7 +18,7 @@ class TenantServiceTest {
         assertThat(tenant).isEqualTo("main");
     }
 
-     @Test
+    @Test
     void listTenants() {
         var tenants = tenantService.listTenants();
         assertThat(tenants).containsExactly("main");

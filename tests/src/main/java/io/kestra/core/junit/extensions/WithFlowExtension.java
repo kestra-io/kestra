@@ -1,10 +1,7 @@
 package io.kestra.core.junit.extensions;
 
-import io.kestra.core.junit.annotations.WithFlow;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.utils.TestsUtils;
 import java.net.URISyntaxException;
-import lombok.SneakyThrows;
+
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -12,11 +9,16 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
+import io.kestra.core.junit.annotations.WithFlow;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.utils.TestsUtils;
+
+import lombok.SneakyThrows;
+
 public class WithFlowExtension extends AbstractLoaderExtension implements
     ParameterResolver, AfterEachCallback {
 
-    private static final ExtensionContext.Namespace NAMESPACE =
-        ExtensionContext.Namespace.create(WithFlowExtension.class);
+    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(WithFlowExtension.class);
 
     private static final String KEY_TENANT_ID = "tenantId";
 

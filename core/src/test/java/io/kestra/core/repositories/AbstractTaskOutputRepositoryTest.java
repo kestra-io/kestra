@@ -1,17 +1,19 @@
 package io.kestra.core.repositories;
 
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,9 +23,10 @@ public abstract class AbstractTaskOutputRepositoryTest {
     protected TaskOutputRepositoryInterface taskOutputRepository;
 
     private Execution createExecution(String tenant, String executionId, String... taskRunId) {
-        List<TaskRun> taskRuns = taskRunId == null ? Collections.emptyList() : Arrays.asList(taskRunId).stream()
-            .map(id -> TaskRun.builder().id(id).build())
-            .toList();
+        List<TaskRun> taskRuns = taskRunId == null ? Collections.emptyList()
+            : Arrays.asList(taskRunId).stream()
+                .map(id -> TaskRun.builder().id(id).build())
+                .toList();
         return Execution.builder()
             .id(executionId)
             .tenantId(tenant)
@@ -146,7 +149,6 @@ public abstract class AbstractTaskOutputRepositoryTest {
 
         Execution execution1 = createExecution(tenant, executionId1, taskRunId1);
         Execution execution2 = createExecution(tenant, executionId2, taskRunId2);
-
 
         byte[] value1 = "output 1".getBytes(StandardCharsets.UTF_8);
         byte[] value2 = "output 2".getBytes(StandardCharsets.UTF_8);

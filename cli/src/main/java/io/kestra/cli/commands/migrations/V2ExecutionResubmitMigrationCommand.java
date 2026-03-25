@@ -1,6 +1,9 @@
 package io.kestra.cli.commands.migrations;
 
+import java.util.List;
+
 import com.github.javaparser.utils.Log;
+
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.QueryFilter;
@@ -12,12 +15,11 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ListUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
-
-import java.util.List;
 
 @CommandLine.Command(
     name = "execution-resubmit",
@@ -39,12 +41,15 @@ public class V2ExecutionResubmitMigrationCommand extends AbstractCommand {
         Log.info("🔁 Starting running and created execution resubmission...");
         List<String> tenants = tenantService.listTenants();
         QueryFilter filter = QueryFilter.builder().field(QueryFilter.Field.STATE).value(List.of(State.Type.RUNNING, State.Type.CREATED)).operation(QueryFilter.Op.IN).build();
-        tenants.forEach(tenant -> {
+        tenants.forEach(tenant ->
+        {
             Log.info("Resubmitting executions for tenant: " + tenant);
             long count = repository.findAsync(tenant, List.of(filter))
-                .doOnNext(execution -> {
+                .doOnNext(execution ->
+                {
                     // save outputs in the new table
-                    ListUtils.emptyOnNull(execution.getTaskRunList()).forEach(taskRun -> {
+                    ListUtils.emptyOnNull(execution.getTaskRunList()).forEach(taskRun ->
+                    {
                         try {
                             taskOutputService.saveOutputs(taskRun, taskRun.getOutputs());
                         } catch (InternalException e) {

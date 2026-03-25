@@ -1,26 +1,29 @@
 package io.kestra.core.scheduler.events;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.Set;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRequest.class, name = "VNODES_ASSIGNMENT_REQUEST"),
-    @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentReply.class, name = "VNODES_ASSIGNMENT_REPLY"),
-    @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRelease.class, name = "VNODES_ASSIGNMENT_RELEASE"),
-    @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRejected.class, name = "VNODES_ASSIGNMENT_REJECTED"),
-})
+@JsonSubTypes(
+    {
+        @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRequest.class, name = "VNODES_ASSIGNMENT_REQUEST"),
+        @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentReply.class, name = "VNODES_ASSIGNMENT_REPLY"),
+        @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRelease.class, name = "VNODES_ASSIGNMENT_RELEASE"),
+        @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRejected.class, name = "VNODES_ASSIGNMENT_REJECTED"),
+    }
+)
 public interface SchedulerEvent extends BroadcastEvent, HasUID {
 
     /**
@@ -78,13 +81,12 @@ public interface SchedulerEvent extends BroadcastEvent, HasUID {
         Instant timestamp,
         String controllerId,
         Instant controllerEpoch,
-        Set<String> schedulers
-    ) implements VNodesAssignmentEvent {
-        
+        Set<String> schedulers) implements VNodesAssignmentEvent {
+
         public VNodesAssignmentRequest(Instant timestamp,
-                                       String controllerId,
-                                       Instant controllerEpoch,
-                                       Set<String> schedulers) {
+            String controllerId,
+            Instant controllerEpoch,
+            Set<String> schedulers) {
             this(IdUtils.create(), timestamp, controllerId, controllerEpoch, schedulers);
         }
     }
@@ -97,13 +99,12 @@ public interface SchedulerEvent extends BroadcastEvent, HasUID {
         Instant timestamp,
         String controllerId,
         Instant controllerEpoch,
-        String schedulerId
-    ) implements VNodesAssignmentEvent {
+        String schedulerId) implements VNodesAssignmentEvent {
 
         public VNodesAssignmentReply(Instant timestamp,
-                                     String controllerId,
-                                     Instant controllerEpoch,
-                                     String schedulerId) {
+            String controllerId,
+            Instant controllerEpoch,
+            String schedulerId) {
             this(IdUtils.create(), timestamp, controllerId, controllerEpoch, schedulerId);
         }
     }
@@ -117,13 +118,12 @@ public interface SchedulerEvent extends BroadcastEvent, HasUID {
         Instant timestamp,
         String controllerId,
         Instant controllerEpoch,
-        Map<String, Set<Integer>> assignments
-    ) implements VNodesAssignmentEvent {
+        Map<String, Set<Integer>> assignments) implements VNodesAssignmentEvent {
 
         public VNodesAssignmentRelease(Instant timestamp,
-                                       String controllerId,
-                                       Instant controllerEpoch,
-                                       Map<String, Set<Integer>> assignments) {
+            String controllerId,
+            Instant controllerEpoch,
+            Map<String, Set<Integer>> assignments) {
             this(IdUtils.create(), timestamp, controllerId, controllerEpoch, assignments);
         }
     }
@@ -136,12 +136,11 @@ public interface SchedulerEvent extends BroadcastEvent, HasUID {
         String uid,
         Instant timestamp,
         String controllerId,
-        Instant controllerEpoch
-    ) implements VNodesAssignmentEvent {
+        Instant controllerEpoch) implements VNodesAssignmentEvent {
 
         public VNodesAssignmentRejected(Instant timestamp,
-                                        String controllerId,
-                                        Instant controllerEpoch) {
+            String controllerId,
+            Instant controllerEpoch) {
             this(IdUtils.create(), timestamp, controllerId, controllerEpoch);
         }
     }

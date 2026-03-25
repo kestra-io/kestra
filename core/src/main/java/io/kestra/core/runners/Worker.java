@@ -1,8 +1,8 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.server.Service;
-
 import java.util.List;
+
+import io.kestra.core.server.Service;
 
 /**
  * The worker service interface.
@@ -21,7 +21,7 @@ public interface Worker extends Service {
     /**
      * Starts the worker service.
      *
-     * @param numThreads     the number of threads.
+     * @param numThreads the number of threads.
      * @param workerGroupKey the worker group key.
      */
     void start(int numThreads, String workerGroupKey);

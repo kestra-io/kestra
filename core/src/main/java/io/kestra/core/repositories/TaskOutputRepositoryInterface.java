@@ -1,11 +1,10 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskOutput;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskOutput;
 
 /**
  * Repository for task outputs, used to store and retrieve the outputs of tasks.

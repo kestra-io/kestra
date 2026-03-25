@@ -1,12 +1,13 @@
 package io.kestra.core.runners;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.event.DispatchEvent;
-
-import java.util.Map;
 
 public record SubflowExecutionEnd(
     Execution childExecution,

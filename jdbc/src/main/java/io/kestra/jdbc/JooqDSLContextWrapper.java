@@ -1,17 +1,20 @@
 package io.kestra.jdbc;
 
-import io.kestra.core.models.tasks.retrys.Random;
-import io.kestra.core.utils.RetryUtils;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.function.Predicate;
+
+import javax.sql.DataSource;
+
 import org.jooq.DSLContext;
 import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
 
-import java.sql.SQLException;
-import java.time.Duration;
-import java.util.function.Predicate;
-import javax.sql.DataSource;
+import io.kestra.core.models.tasks.retrys.Random;
+import io.kestra.core.utils.RetryUtils;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class JooqDSLContextWrapper {
@@ -19,8 +22,8 @@ public class JooqDSLContextWrapper {
 
     /**
      * @param dataSource explicit dependency to ensure Micronaut destroys this bean before the DataSource.
-     *                   Without it, the @EachBean-derived DSLContext/Configuration may be destroyed
-     *                   together with the DataSource, leaving this wrapper with a stale DSLContext.
+     *        Without it, the @EachBean-derived DSLContext/Configuration may be destroyed
+     *        together with the DataSource, leaving this wrapper with a stale DSLContext.
      */
     @Inject
     public JooqDSLContextWrapper(DSLContext dslContext, DataSource dataSource) {
@@ -38,8 +41,9 @@ public class JooqDSLContextWrapper {
         );
     }
 
-    private static  <E extends Throwable> Predicate<E> predicate() {
-        return (e) -> {
+    private static <E extends Throwable> Predicate<E> predicate() {
+        return (e) ->
+        {
             if (!(e.getCause() instanceof SQLException)) {
                 return false;
             }
@@ -55,17 +59,18 @@ public class JooqDSLContextWrapper {
             }
 
             return
-                // standard deadlock
-                cause.getSQLState().equals("40001") ||
-                // postgres deadlock
+            // standard deadlock
+            cause.getSQLState().equals("40001") ||
+            // postgres deadlock
                 cause.getSQLState().equals("40P01");
         };
     }
 
     public void transaction(TransactionalRunnable transactional) {
-        this.<Void>retryer().runRetryIf(
+        this.<Void> retryer().runRetryIf(
             predicate(),
-            () -> {
+            () ->
+            {
                 dslContext.transaction(transactional);
                 return null;
             }
@@ -73,7 +78,7 @@ public class JooqDSLContextWrapper {
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        return this.<T>retryer().runRetryIf(
+        return this.<T> retryer().runRetryIf(
             predicate(),
             () -> dslContext.transactionResult(transactional)
         );

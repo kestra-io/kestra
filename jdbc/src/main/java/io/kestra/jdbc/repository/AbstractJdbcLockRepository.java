@@ -1,16 +1,17 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.lock.Lock;
-import io.kestra.core.repositories.LockRepositoryInterface;
-import io.kestra.core.utils.IdUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.jooq.Field;
 import org.jooq.SQLDialect;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import io.kestra.core.lock.Lock;
+import io.kestra.core.repositories.LockRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
 
 public class AbstractJdbcLockRepository extends AbstractJdbcRepository implements LockRepositoryInterface {
     private final io.kestra.jdbc.AbstractJdbcRepository<Lock> jdbcRepository;
@@ -22,7 +23,8 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
     @Override
     public Optional<Lock> findById(String category, String id) {
         return jdbcRepository.getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -37,7 +39,8 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
         try {
             Map<Field<Object>, Object> finalFields = this.jdbcRepository.persistFields(newLock);
             return jdbcRepository.getDslContextWrapper()
-                .transactionResult(configuration -> {
+                .transactionResult(configuration ->
+                {
                     var dslContext = DSL.using(configuration);
                     var insert = dslContext
                         .insertInto(this.jdbcRepository.getTable())
@@ -62,8 +65,8 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
     @Override
     public void deleteById(String category, String id) {
         this.jdbcRepository.getDslContextWrapper()
-            .transaction(configuration ->
-                DSL.using(configuration)
+            .transaction(
+                configuration -> DSL.using(configuration)
                     .delete(this.jdbcRepository.getTable())
                     .where(field("key").eq(IdUtils.fromParts(category, id)))
                     .execute()
@@ -73,15 +76,16 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
     @Override
     public List<Lock> deleteByOwner(String owner) {
         return this.jdbcRepository.getDslContextWrapper()
-            .transactionResult(configuration -> {
-                    var select = DSL.using(configuration)
-                        .select(field("value"))
-                        .from(this.jdbcRepository.getTable())
-                        .where(field("owner").eq(owner));
-                    var locks = this.jdbcRepository.fetch(select.forUpdate());
-                    locks.forEach(lock -> this.jdbcRepository.delete(lock));
-                    return locks;
-                }
+            .transactionResult(configuration ->
+            {
+                var select = DSL.using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(field("owner").eq(owner));
+                var locks = this.jdbcRepository.fetch(select.forUpdate());
+                locks.forEach(lock -> this.jdbcRepository.delete(lock));
+                return locks;
+            }
             );
     }
 }

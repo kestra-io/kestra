@@ -1,13 +1,14 @@
 package io.kestra.cli.commands.servers;
 
+import java.util.Map;
+
 import io.kestra.core.models.ServerType;
 import io.kestra.core.utils.Await;
 import io.kestra.core.worker.Controller;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
-
-import java.util.Map;
 
 @Command(
     name = "controller",

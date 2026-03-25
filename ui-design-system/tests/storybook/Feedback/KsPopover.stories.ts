@@ -33,7 +33,7 @@ export const Default: Story = {
         },
         template: `
             <div style="padding:48px">
-                <ks-popover placement="bottom" :width="200" trigger="click" v-model:visible="visible">
+                <ks-popover title="This is title" placement="bottom" :width="200" trigger="click" v-model:visible="visible">
                     <p>This is popover content.</p>
                     <ks-button size="small" @click="visible = false">Close</ks-button>
                     <template #reference>
@@ -49,21 +49,89 @@ export const Default: Story = {
 export const Triggers: Story = {
     render: () => ({
         components: {KsButton, KsPopover},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
         template: `
             <div style="padding:48px;display:flex;gap:16px;flex-wrap:wrap">
-                <ks-popover placement="top" :width="160" trigger="hover">
-                    <p style="margin:0">Hover popover</p>
-                    <template #reference><ks-button>Hover</ks-button></template>
-                </ks-popover>
-                <ks-popover placement="top" :width="160" trigger="click">
-                    <p style="margin:0">Click popover</p>
-                    <template #reference><ks-button>Click</ks-button></template>
-                </ks-popover>
-                <ks-popover placement="top" :width="160" trigger="focus">
-                    <p style="margin:0">Focus popover</p>
+                <ks-popover
+                    placement="top-start"
+                    title="Title"
+                    :width="200"
+                    trigger="hover"
+                    content="this is content, this is content, this is content"
+                >
                     <template #reference>
-                        <input placeholder="Focus me" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px" />
+                        <ks-button>Hover to activate</ks-button>
                     </template>
+                </ks-popover>
+
+                <ks-popover
+                    placement="bottom"
+                    title="Title"
+                    :width="200"
+                    trigger="click"
+                    content="this is content, this is content, this is content"
+                >
+                    <template #reference>
+                        <ks-button>Click to activate</ks-button>
+                    </template>
+                </ks-popover>
+
+                <ks-popover
+                    placement="right"
+                    title="Title"
+                    :width="200"
+                    trigger="focus"
+                    content="this is content, this is content, this is content"
+                >
+                    <template #reference>
+                        <ks-button>Focus to activate</ks-button>
+                    </template>
+                </ks-popover>
+
+                <ks-popover
+                    title="Title"
+                    :width="200"
+                    trigger="contextmenu"
+                    content="this is content, this is content, this is content"
+                >
+                    <template #reference>
+                        <ks-button>contextmenu to activate</ks-button>
+                    </template>
+                </ks-popover>
+
+                <ks-popover
+                    :visible="visible"
+                    placement="bottom"
+                    title="Title"
+                    :width="200"
+                    content="this is content, this is content, this is content"
+                >
+                    <template #reference>
+                        <ks-button @click="visible = !visible">Manual to activate</ks-button>
+                    </template>
+                </ks-popover>
+            </div>
+        `,
+    }),
+}
+
+/** Theme – dark and light */
+export const Theme: Story = {
+    render: () => ({
+        components: {KsButton, KsPopover},
+        template: `
+            <div style="padding:48px;display:flex;gap:16px">
+                <ks-popover placement="top" trigger="hover" title="This is title" :width="160" effect="dark">
+                    <p style="margin:0">This is dark</p>
+                    <template #reference><ks-button>Dark</ks-button></template>
+                </ks-popover>
+
+                <ks-popover placement="top" trigger="hover" title="This is title" :width="160" effect="light">
+                    <p style="margin:0">This is light</p>
+                    <template #reference><ks-button>Light</ks-button></template>
                 </ks-popover>
             </div>
         `,
@@ -99,7 +167,7 @@ export const RichContent: Story = {
         },
         template: `
             <div style="padding:48px">
-                <ks-popover placement="right" :width="280" trigger="click" v-model:visible="visible">
+                <ks-popover :width="280" v-model:visible="visible">
                     <div>
                         <p style="font-weight:600;margin:0 0 8px">Flow: etl-pipeline</p>
                         <p style="font-size:13px;opacity:0.7;margin:0 0 4px">Namespace: company.data</p>

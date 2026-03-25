@@ -1,5 +1,5 @@
 <template>
-    <ks-tooltip v-if="hasTooltip" transition="" placement="top" effect="light">
+    <ks-tooltip v-if="hasTooltip" placement="top">
         <template #content>
             <code>{{ value }}</code>
         </template>

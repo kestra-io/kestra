@@ -20,7 +20,7 @@ dependencies {
     def kafkaVersion = "4.2.0"
     def opensearchVersion = "3.7.0"
     def opensearchRestVersion = "3.5.0"
-    def flyingSaucerVersion = "10.1.0"
+    def flyingSaucerVersion = "10.2.0"
     def jacksonVersion = "2.21.1"
     def jacksonAnnotationsVersion = "2.21"
     def jugVersion = "5.2.0"

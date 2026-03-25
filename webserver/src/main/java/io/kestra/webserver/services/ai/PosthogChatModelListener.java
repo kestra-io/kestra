@@ -12,6 +12,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.posthog.PosthogService;
 import io.micrometer.core.instrument.Clock;
+import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.Optional;
 
 @Singleton
 @Slf4j
+@Requires(beans = PosthogService.class)
 public class PosthogChatModelListener implements ChatModelListener {
     @Inject
     private PosthogService posthogService;

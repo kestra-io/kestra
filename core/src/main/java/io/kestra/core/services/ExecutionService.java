@@ -999,15 +999,21 @@ public class ExecutionService {
     }
 
     /**
-     * Remove true if the execution is terminated, including afterExecution tasks.
+     * Remove true if the execution is terminated, including afterExecution tasks if it's not a loop execution.
      */
     public boolean isTerminated(Flow flow, Execution execution) {
         if (!execution.getState().isTerminated()) {
             return false;
         }
 
-        List<ResolvedTask> afterExecution = resolveAfterExecutionTasks(flow);
-        return execution.isTerminated(afterExecution);
+        // only process after execution tasks if not a loop execution
+        if (execution.getKind() != ExecutionKind.LOOP) {
+            List<ResolvedTask> afterExecution = resolveAfterExecutionTasks(flow);
+            return execution.isTerminated(afterExecution);
+        } else {
+            // for loop executions, if the execution is terminated, there is nothing else to check
+            return true;
+        }
     }
 
     /**

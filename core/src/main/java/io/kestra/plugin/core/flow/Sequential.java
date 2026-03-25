@@ -99,6 +99,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
         return subGraph;
     }
 
+    @Override
     public List<Task> allChildTasks() {
         return Stream
             .concat(

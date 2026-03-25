@@ -78,13 +78,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     @Inject
+    private DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue;
+    @Inject
     private KillSwitchService killSwitchService;
     @Inject
     private ExecutorService executorService;
     @Inject
     private ExecutionService executionService;
-    @Inject
-    private VariablesService variablesService;
     @Inject
     private FlowTriggerService flowTriggerService;
     @Inject
@@ -130,6 +130,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
     @Inject
     private MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
+    @Inject
+    private TerminatedLoopExecutionMessageHandler terminatedLoopExecutionMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> executionDelayFuture;
@@ -220,6 +222,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribe(this::subflowExecutionEndQueue));
         this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
+        this.queueSubscribers.addFirst(this.terminatedLoopExecutionQueue.subscriber().subscribe(this::loopExecutionTerminatedQueue));
         this.queueSubscribers.addFirst(this.killQueue.subscriber().subscribe(this::killQueue));
 
         // Register maintenance listener
@@ -467,6 +470,18 @@ public class DefaultExecutor extends AbstractService implements Executor {
         MultipleConditionEvent multipleConditionEvent = either.getLeft();
 
         multipleConditionEventMessageHandler.handle(multipleConditionEvent);
+    }
+
+    private void loopExecutionTerminatedQueue(Either<TerminatedLoopExecution, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize a terminated loop execution event: {}", either.getRight().getMessage());
+            return;
+        }
+
+        TerminatedLoopExecution terminatedLoopExecution = either.getLeft();
+
+        Optional<ExecutorContext> maybeExecutor = terminatedLoopExecutionMessageHandler.handle(terminatedLoopExecution);
+        maybeExecutor.ifPresent(this::toExecution);
     }
 
     private void handleKillSwitchedExecution(EvaluationType evaluationType, Execution message) {
@@ -731,6 +746,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs
                     );
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
+                }
+
+                // if it was a loop execution, we send a terminated loop execution message to the parent execution
+                if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
+                    var terminatedLoopExecution = new TerminatedLoopExecution(executor.getExecution().getLoopRun(), executor.getExecution().getId(), executor.getExecution().getState().getCurrent());
+                    terminatedLoopExecutionQueue.emit(terminatedLoopExecution);
                 }
 
                 // purge SLA monitors

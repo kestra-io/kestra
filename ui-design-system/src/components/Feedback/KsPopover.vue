@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import {ElPopover, provideGlobalConfig} from "element-plus"
+    import {ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
@@ -11,17 +12,31 @@
         placement?: string
         trigger?: "click" | "hover" | "focus" | "contextmenu"
         width?: number | string
+        effect?: "light" | "dark"
         popperClass?: string
         showArrow?: boolean
         disabled?: boolean
+        title?: string
+        content?: string
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["visible"])
 
     const emit = defineEmits<{
         "update:visible": [value: boolean]
         hide: []
     }>()
+
+    const internalVisible = ref(false)
+
+    watch(() => props.visible, (val) => {
+        if (val !== undefined) internalVisible.value = val
+    }, {immediate: true})
+
+    function handleUpdateVisible(v: boolean) {
+        internalVisible.value = v
+        emit("update:visible", v)
+    }
 
     defineSlots<{
         default?(): unknown
@@ -31,8 +46,12 @@
 
 <template>
     <el-popover
+        :persistent="false"
+        :hideAfter="0"
+        transition=""
+        :visible="internalVisible"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:visible="emit('update:visible', $event)"
+        @update:visible="handleUpdateVisible"
         @hide="emit('hide')"
     >
         <template v-if="$slots.default" #default><slot /></template>
@@ -40,52 +59,3 @@
     </el-popover>
 </template>
 
-<style lang="scss">
-    .kel-popper {
-        border-radius: var(--kel-border-radius-round);
-
-        &.hide-arrow .kel-popper__arrow {
-            display: none;
-        }
-
-        &.kel-picker__popper {
-            border-radius: var(--kel-popper-border-radius);
-        }
-
-        &.is-light {
-            border: 1px solid var(--ks-border-primary);
-            background: var(--ks-dropdown-background);
-            box-shadow: rgba(0, 0, 0, 0.09) 0 3px 12px;
-
-            .kel-popper__arrow::before {
-                border: 1px solid var(--ks-border-primary);
-                background-color: var(--ks-dropdown-background);
-            }
-        }
-
-        &.is-dark {
-            color: var(--ks-gray-100);
-
-            background: var(--ks-gray-900);
-            border: 1px solid var(--ks-border-primary);
-
-            .kel-popper__arrow::before {
-                border: 1px solid var(--ks-border-primary);
-                background-color: var(--ks-gray-900);
-            }
-
-            html.dark & {
-                color: var(--ks-gray-900);
-                background: var(--ks-gray-100);
-
-                .kel-popper__arrow::before {
-                    background-color: var(--ks-gray-100);
-                }
-            }
-        }
-
-        .kel-popover__title {
-            color: var(--ks-content-primary);
-        }
-    }
-</style>

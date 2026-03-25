@@ -75,7 +75,7 @@ export const Theme: Story = {
         components: {KsTooltip, KsButton},
         template: `
             <div style="padding:48px;display:flex;gap:16px">
-                <ks-tooltip content="Dark theme (default)" effect="dark" placement="top">
+                <ks-tooltip content="Dark theme" effect="dark" placement="top">
                     <ks-button>Dark</ks-button>
                 </ks-tooltip>
                 <ks-tooltip content="Light theme" effect="light" placement="top">

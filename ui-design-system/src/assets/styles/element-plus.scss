@@ -166,6 +166,16 @@ html.dark {
     #{--kel-button-active-text-color}: var(--ks-content-primary);
 }
 
+// popper
+.kel-popper {
+    box-shadow: var(--kel-box-shadow);
+    border: 1px solid var(--ks-border-primary) !important;
+
+    & > .kel-popper__arrow::before {
+        border: 1px solid var(--ks-border-primary) !important;
+    }
+}
+
 // loading
 .kel-loading-mask {
     -webkit-backdrop-filter: blur(3px) opacity(0.85);

@@ -108,14 +108,18 @@
         watch
     } from "vue";
 
+    // @ts-expect-error monaco types
     import "monaco-editor/esm/vs/editor/editor.all";
+    // @ts-expect-error monaco types
     import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens";
+    // @ts-expect-error monaco types
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard";
+    // @ts-expect-error monaco types
     import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess";
+    // @ts-expect-error monaco types
     import "monaco-editor/esm/vs/language/json/monaco.contribution";
-    import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
 
-    import {editor} from "monaco-editor/esm/vs/editor/editor.api";
+    import {editor} from "monaco-editor";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";

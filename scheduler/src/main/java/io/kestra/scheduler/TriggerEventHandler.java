@@ -241,14 +241,14 @@ public class TriggerEventHandler {
 
             TriggerState newState = state;
             if (data.getRight() != null) {
-                newState = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                newState = newState.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
             }
 
             if (event.execution() != null) {
-                newState.updateForExecution(clock, event.execution());
+                newState = newState.updateForExecution(clock, event.execution());
             }
 
-            newState = state.lastEventId(clock, event.eventId());
+            newState = newState.lastEventId(clock, event.eventId());
             triggerStateStore.save(newState);
 
             if (event.execution() != null) {

@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import org.jooq.Name;
 import org.jooq.impl.DSL;
@@ -10,10 +11,9 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
-    // TODO add dedicated tests for those fields with specific conditions
-    // Those fields have specific conditions (not simple JOOQ operations) and are tested in dedicated tests, so we exclude them from the default conditions test
+class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
     private static final List<QueryFilter.Field> fieldsWithSpecificConditions = List.of(
         QueryFilter.Field.QUERY,
         QueryFilter.Field.STATE,
@@ -34,7 +34,7 @@ public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
     );
 
     @Test
-    public void defaultConditions() {
+    void defaultConditions() {
         Arrays.stream(QueryFilter.Field.values()).filter(Predicate.not(fieldsWithSpecificConditions::contains)).forEach(field -> {
             String assertValue = "anyValue";
             Name columnName = DSL.quotedName(field.name().toLowerCase());
@@ -73,5 +73,19 @@ public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                     .or(DSL.field(columnName).eq(assertValue))
             );
         });
+    }
+
+    @Test
+    void shouldThrowWhenListValueIsUsedWithStartsWith() {
+        List<String> invalidValue = List.of("val1", "val2");
+
+        assertThatThrownBy(() -> this.getConditionOnField(
+            QueryFilter.Field.NAMESPACE,
+            invalidValue,
+            QueryFilter.Op.STARTS_WITH,
+            null
+        ))
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("STARTS_WITH operation requires a string value, got a List");
     }
 }

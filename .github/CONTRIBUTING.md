@@ -58,7 +58,7 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
 
 - You may need to enable java annotation processors since we are using them.
 - On IntelliJ IDEA, click on **Run -> Edit Configurations -> + Add new Configuration** to create a run configuration to start Kestra.
-  - The main class is `io.kestra.cli.App` from module `kestra.cli.main`.
+  - The main class is `io.kestra.cli.Kestra` from module `kestra.cli.main`.
   - Pass as program arguments the server you want to work with, for example `server local` will start the [standalone local](https://kestra.io/docs/installation/standalone-server). You can also use `server standalone` and use the provided `docker-compose-ci.yml` Docker compose file to start a standalone server with a real database as a backend that would need to be configured properly.
   - Configure the following environment variables:
     - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.

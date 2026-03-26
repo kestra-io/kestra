@@ -4,8 +4,8 @@
             {{ routeInfo?.title }}
             <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
         </template>
-        <template #additional-right>
-            <slot name="additional-right" />
+        <template #actions>
+            <slot name="actions" />
             <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
                     <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
@@ -18,7 +18,7 @@
                         </ks-button>
                     </li>
                 </ul>
-    
+
                 <ks-dropdown class="d-flex d-xl-none align-items-center">
                     <ks-button>
                         <ks-icon><DotsVerticalIcon /></ks-icon>
@@ -33,7 +33,7 @@
                         </ks-dropdown-menu>
                     </template>
                 </ks-dropdown>
-    
+
                 <div v-if="primaryAction || fallbackToExecute">
                     <div class="d-flex align-items-center gap-2">
                         <component

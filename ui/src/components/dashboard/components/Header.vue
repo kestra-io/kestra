@@ -4,7 +4,7 @@
         :breadcrumb="[{label: $t('dashboards.labels.singular'), link: undefined}]"
         :description="props.dashboard?.description"
     >
-        <template v-if="isAllowedDashboard || isAllowedFlow" #additional-right>
+        <template v-if="isAllowedDashboard || isAllowedFlow" #actions>
             <ul>
                 <li
                     v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard"

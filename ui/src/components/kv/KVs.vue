@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <ul>
                 <li>
                     <ks-button :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">

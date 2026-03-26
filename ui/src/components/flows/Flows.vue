@@ -1,6 +1,6 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <ul class="header-actions-list">
                 <li>
                     <ks-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">

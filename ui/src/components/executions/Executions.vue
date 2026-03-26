@@ -1,6 +1,6 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title">
-        <template #additional-right v-if="displayButtons">
+        <template #actions v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>

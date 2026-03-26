@@ -10,7 +10,7 @@
                 <Badge v-if="routeInfo.beta" label="Beta" />
             </span>
         </template>
-        <template #additional-right>
+        <template #actions>
             <Actions />
         </template>
     </NavBar>

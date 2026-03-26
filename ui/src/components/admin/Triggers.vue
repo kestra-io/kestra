@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <ks-button :icon="Download" @click="exportTriggersAsStream()">
                 {{ $t('export_csv') }}
             </ks-button>

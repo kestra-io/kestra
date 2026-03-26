@@ -1,34 +1,31 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.utils.DateUtils;
-import io.kestra.core.utils.Either;
-import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
-import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
-import io.kestra.jdbc.services.JdbcFilterService;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
 import java.sql.Timestamp;
 import java.util.*;
 
-import static io.kestra.core.models.QueryFilter.Op.EQUALS;
+import org.jooq.Condition;
+import org.jooq.Field;
 
-@Singleton
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.repositories.RepositoryBean;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
+import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
+import io.kestra.jdbc.services.JdbcFilterService;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+
+@RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public MysqlExecutionRepository(@Named("executions") MysqlRepository<Execution> repository,
-                                    ApplicationContext applicationContext,
-                                    AbstractJdbcExecutorStateStorage executorStateStorage,
-                                    JdbcFilterService filterService) {
-        super(repository, applicationContext, executorStateStorage, filterService);
+        ApplicationContext applicationContext,
+        JdbcFilterService filterService) {
+        super(repository, applicationContext, filterService);
     }
 
     @Override

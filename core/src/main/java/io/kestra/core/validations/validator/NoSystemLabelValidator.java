@@ -2,8 +2,8 @@ package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.validations.NoSystemLabelValidation;
+
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -11,7 +11,6 @@ import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Introspected
 public class NoSystemLabelValidator implements ConstraintValidator<NoSystemLabelValidation, Label> {
     @Override
     public boolean isValid(@Nullable Label value, @NonNull AnnotationValue<NoSystemLabelValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {

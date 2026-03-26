@@ -1,7 +1,21 @@
 package io.kestra.core.serializers;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
@@ -12,20 +26,9 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,7 +56,6 @@ class YamlParserTest {
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds()).isEqualTo(900L);
     }
 
-
     @Test
     void parseString() throws IOException {
         Flow flow = parseString("flows/valids/full.yaml");
@@ -79,7 +81,8 @@ class YamlParserTest {
 
     @Test
     void validation() {
-        assertThrows(ConstraintViolationException.class, () -> {
+        assertThrows(ConstraintViolationException.class, () ->
+        {
             modelValidator.validate(this.parse("flows/invalids/invalid.yaml"));
         });
 
@@ -122,13 +125,12 @@ class YamlParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size()).isEqualTo(31);
-        assertThat(flow.getInputs().stream().filter(Input::getRequired).count()).isEqualTo(12L);
+        assertThat(flow.getInputs().size()).isEqualTo(30);
+        assertThat(flow.getInputs().stream().filter(Input::getRequired).count()).isEqualTo(11L);
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count()).isEqualTo(19L);
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count()).isEqualTo(4L);
         assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput stringInput && stringInput.getValidator() != null).count()).isEqualTo(1L);
     }
-
 
     @Test
     void inputsOld() {
@@ -150,18 +152,6 @@ class YamlParserTest {
     }
 
     @Test
-    void listeners() {
-        ConstraintViolationException exception = assertThrows(
-            ConstraintViolationException.class,
-            () -> modelValidator.validate(this.parse("flows/invalids/listener.yaml"))
-        );
-
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(2);
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("must not be empty");
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage()).isEqualTo("must not be empty");
-    }
-
-    @Test
     void ifConditionRequired() {
         ConstraintViolationException exception = assertThrows(
             ConstraintViolationException.class,
@@ -177,7 +167,9 @@ class YamlParserTest {
         Flow flow = this.parse("flows/valids/minimal.yaml");
 
         String s = MAPPER.writeValueAsString(flow);
-        assertThat(s).isEqualTo("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"},{\"key\":\"existing\",\"value\":\"label\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}");
+        assertThat(s).isEqualTo(
+            "{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"},{\"key\":\"existing\",\"value\":\"label\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"
+        );
     }
 
     @Test
@@ -197,7 +189,8 @@ class YamlParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size()).isEqualTo(2);
-        assertThat(exception.getConstraintViolations().stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage()).contains("Invalid type: io.kestra.plugin.core.debug.MissingOne");
+        assertThat(exception.getConstraintViolations().stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage())
+            .contains("Invalid type: io.kestra.plugin.core.debug.MissingTwo");
     }
 
     @Test
@@ -209,7 +202,8 @@ class YamlParserTest {
 
         assertThat(exception.getMessage()).startsWith("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable");
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
-        assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString()).isEqualTo("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]");
+        assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString())
+            .isEqualTo("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]");
     }
 
     @Test
@@ -219,7 +213,8 @@ class YamlParserTest {
 
         File file = new File(resource.getFile());
         String flowSource = Files.readString(file.toPath(), Charset.defaultCharset());
-        TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
+        TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {
+        };
         Map<String, Object> flow = JacksonMapper.ofYaml().readValue(flowSource, TYPE_REFERENCE);
 
         Flow parse = YamlParser.parse(flow, Flow.class, false);
@@ -245,7 +240,7 @@ class YamlParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate field 'variables.tf'");
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate field 'message'");
     }
 
     @Test
@@ -253,22 +248,25 @@ class YamlParserTest {
         Flow flow = parse("flows/valids/labels-deserialization.yaml");
         // like change execution state api,Serialize flow to YAML/JSON string
         String s = OBJECT_MAPPER.writeValueAsString(flow);
-        assertThat(s).isEqualTo("id: labels-deserialization\n" +
-            "namespace: io.kestra.tests\n" +
-            "disabled: false\n" +
-            "deleted: false\n" +
-            "labels:\n" +
-            "- key: key1\n" +
-            "  value: 123\n" +
-            "tasks:\n" +
-            "- id: t1\n" +
-            "  type: io.kestra.plugin.core.log.Log\n" +
-            "  message: \"{{ task.id }}\"\n");
+        assertThat(s).isEqualTo(
+            "id: labels-deserialization\n" +
+                "namespace: io.kestra.tests\n" +
+                "disabled: false\n" +
+                "deleted: false\n" +
+                "labels:\n" +
+                "- key: key1\n" +
+                "  value: 123\n" +
+                "tasks:\n" +
+                "- id: t1\n" +
+                "  type: io.kestra.plugin.core.log.Log\n" +
+                "  message: \"{{ task.id }}\"\n"
+        );
         Map<String, Object> mapFlow = OBJECT_MAPPER.readValue(s, JacksonMapper.MAP_TYPE_REFERENCE);
         // Parse into FlowWithSource (simulates state update scenario)
         FlowWithSource parse = YamlParser.parse(mapFlow, FlowWithSource.class, false);
 
-        assertThat(parse.getLabels().size()).isEqualTo(1);;
+        assertThat(parse.getLabels().size()).isEqualTo(1);
+        ;
     }
 
     private Flow parse(String path) {

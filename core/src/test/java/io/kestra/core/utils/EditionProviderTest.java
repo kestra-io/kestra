@@ -1,13 +1,15 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.Setting;
-import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
+import io.kestra.core.models.Setting;
+import io.kestra.core.repositories.SettingRepositoryInterface;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

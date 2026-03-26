@@ -1,17 +1,19 @@
 package io.kestra.plugin.core.storage;
 
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.property.Property;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.StorageInterface;
-
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.StorageInterface;
+
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -38,7 +40,6 @@ class DeleteTest {
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
 
-
         Delete bash = Delete.builder()
             .uri(Property.ofValue(put.toString()))
             .build();
@@ -49,7 +50,8 @@ class DeleteTest {
         run = bash.run(runContext);
         assertThat(run.getDeleted()).isFalse();
 
-        assertThrows(NoSuchElementException.class, () -> {
+        assertThrows(NoSuchElementException.class, () ->
+        {
             Delete error = Delete.builder()
                 .uri(Property.ofValue(put.toString()))
                 .errorOnMissing(Property.ofValue(true))

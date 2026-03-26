@@ -1,8 +1,13 @@
 package io.kestra.plugin.core.trigger;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -14,16 +19,13 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.WebhookValidation;
+
 import io.micronaut.http.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -126,9 +128,9 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     @Schema(
         title = "Wait for the flow to finish.",
         description = """
-            If set to `true` the webhook call will wait for the flow to finish and return the flow outputs as response.
-            If set to `false` the webhook call will return immediately after the execution is created.
-           """
+             If set to `true` the webhook call will wait for the flow to finish and return the flow outputs as response.
+             If set to `false` the webhook call will return immediately after the execution is created.
+            """
     )
     private Boolean wait = false;
 
@@ -148,7 +150,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             Requires `wait` and `returnOutputs` to be `true`.
             This is useful for webhook validation handshakes that require specific content types (e.g., Microsoft Graph Change Notifications require `text/plain` responses).
             """,
-        allowableValues = {"application/json", "text/plain"}
+        allowableValues = { "application/json", "text/plain" }
     )
     private String responseContentType;
 
@@ -176,9 +178,10 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             context.flow(),
             this,
             Webhook.Output.builder()
-                .body(tryMap(body)
-                    .or(() -> tryArray(body))
-                    .orElse(body)
+                .body(
+                    tryMap(body)
+                        .or(() -> tryArray(body))
+                        .orElse(body)
                 )
                 .headers(context.request().getHeaders() != null ? context.request().getHeaders().map() : null)
                 .parameters(context.webhookService().parseParameters(context))
@@ -205,7 +208,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             .webhookService()
             .followExecution(execution, context.flow())
             .last()
-            .map(throwFunction(event -> {
+            .map(throwFunction(event ->
+            {
                 RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
                 int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
 
@@ -237,9 +241,10 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         return HttpResponse.of(responseCode, body, responseContentType);
     }
 
-    private static Optional<Object>  tryMap(String body) {
+    private static Optional<Object> tryMap(String body) {
         try {
-            return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {
+            }));
         } catch (Exception ignored) {
             return Optional.empty();
         }
@@ -247,7 +252,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
     private static Optional<Object> tryArray(String body) {
         try {
-            return Optional.of(MAPPER.readValue(body, new TypeReference<List<Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<List<Object>>() {
+            }));
         } catch (Exception ignored) {
             return Optional.empty();
         }

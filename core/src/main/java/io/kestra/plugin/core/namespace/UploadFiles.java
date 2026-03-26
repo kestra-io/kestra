@@ -1,5 +1,15 @@
 package io.kestra.plugin.core.namespace;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -10,22 +20,13 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Namespace;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
 
 import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 
@@ -134,7 +135,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             "output a map of files so that you can directly pass the output property to this task e.g. " +
             "[outputFiles in the S3 Downloads task](https://kestra.io/plugins/plugin-aws/tasks/s3/io.kestra.plugin.aws.s3.downloads#outputfiles) " +
             "or the [files in the Archive Decompress task](https://kestra.io/plugins/plugin-compress/tasks/io.kestra.plugin.compress.archivedecompress#files).",
-        anyOf = {Map.class, String.class}
+        anyOf = { Map.class, String.class }
     )
     @PluginProperty(dynamic = true)
     private Object filesMap;
@@ -155,7 +156,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     private Property<Namespace.Conflicts> conflict = Property.ofValue(Namespace.Conflicts.OVERWRITE);
 
     @Override
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({ "unchecked" })
     public UploadFiles.Output run(RunContext runContext) throws Exception {
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
         String renderedNamespace = namespace != null ? runContext.render(namespace).as(String.class).orElseThrow() : flowInfo.namespace();
@@ -186,7 +187,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         return Output.builder().build();
     }
 
-    private void uploadFiles(RunContext runContext, List<String> files, Namespace storageNamespace, String destination) throws IllegalVariableEvaluationException, IOException, URISyntaxException {
+    private void uploadFiles(RunContext runContext, List<String> files, Namespace storageNamespace, String destination)
+        throws IllegalVariableEvaluationException, IOException, URISyntaxException {
         files = runContext.render(files);
 
         for (Path path : runContext.workingDir().findAllFilesMatching(files)) {
@@ -198,7 +200,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         }
     }
 
-    private void uploadFilesMap(RunContext runContext, Map<String, Object> filesMap, Namespace storageNamespace, String destination) throws IOException, URISyntaxException, IllegalVariableEvaluationException {
+    private void uploadFilesMap(RunContext runContext, Map<String, Object> filesMap, Namespace storageNamespace, String destination)
+        throws IOException, URISyntaxException, IllegalVariableEvaluationException {
         Map<String, Object> renderedMap = runContext.render(filesMap);
         for (Map.Entry<String, Object> entry : renderedMap.entrySet()) {
             String key = entry.getKey();

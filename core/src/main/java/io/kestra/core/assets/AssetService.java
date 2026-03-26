@@ -1,14 +1,15 @@
 package io.kestra.core.assets;
 
+import java.util.List;
+
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetUser;
 import io.kestra.core.queues.QueueException;
+
 import io.micronaut.context.annotation.Secondary;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
-
-import java.util.List;
 
 public interface AssetService {
 

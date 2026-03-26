@@ -2,6 +2,7 @@ package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.tasks.retrys.Random;
 import io.kestra.core.validations.RandomRetryValidation;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -19,21 +20,21 @@ public class RandomRetryValidator implements ConstraintValidator<RandomRetryVali
 
         if (value.getMaxDuration() != null && value.getMaxInterval() != null && value.getMaxDuration().compareTo(value.getMinInterval()) <= 0) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate( "'minInterval' must be less than 'maxDuration' but is " + value.getMinInterval())
+            context.buildConstraintViolationWithTemplate("'minInterval' must be less than 'maxDuration' but is " + value.getMinInterval())
                 .addConstraintViolation();
             return false;
         }
 
         if (value.getMaxDuration() != null && value.getMaxInterval() != null && value.getMaxDuration().compareTo(value.getMaxInterval()) <= 0) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate( "'maxInterval' must be less than 'maxDuration' but is " + value.getMaxInterval())
+            context.buildConstraintViolationWithTemplate("'maxInterval' must be less than 'maxDuration' but is " + value.getMaxInterval())
                 .addConstraintViolation();
             return false;
         }
 
         if (value.getMaxInterval() != null && value.getMinInterval() != null && value.getMaxInterval().compareTo(value.getMinInterval()) <= 0) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate( "'minInterval' must be less than 'maxInterval' but is " + value.getMinInterval())
+            context.buildConstraintViolationWithTemplate("'minInterval' must be less than 'maxInterval' but is " + value.getMinInterval())
                 .addConstraintViolation();
             return false;
         }

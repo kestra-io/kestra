@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.migrations.metadata;
 
 import io.kestra.cli.AbstractCommand;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,7 @@ public class NsFilesMetadataMigrationCommand extends AbstractCommand {
     @Inject
     private Provider<MetadataMigrationService> metadataMigrationServiceProvider;
 
-    @CommandLine.Option(names = {"-lm", "--log-migrations"}, description = "Log all files that are migrated", defaultValue = "false")
+    @CommandLine.Option(names = { "-lm", "--log-migrations" }, description = "Log all files that are migrated", defaultValue = "false")
     public boolean logMigrations = false;
 
     @Override

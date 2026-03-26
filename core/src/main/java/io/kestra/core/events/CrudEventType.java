@@ -11,4 +11,3 @@ public enum CrudEventType {
     LOGIN_FAILURE,
     ACCOUNT_LOCKED
 }
-

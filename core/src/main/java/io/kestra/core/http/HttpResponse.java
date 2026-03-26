@@ -1,21 +1,22 @@
 package io.kestra.core.http;
 
-import jakarta.annotation.Nullable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Value;
-import org.apache.commons.io.IOUtils;
-import org.apache.hc.client5.http.protocol.HttpClientContext;
-import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.EndpointDetails;
-import org.apache.hc.core5.http.protocol.HttpContext;
-
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.http.HttpHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.EndpointDetails;
+import org.apache.hc.core5.http.protocol.HttpContext;
+
+import jakarta.annotation.Nullable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Value;
 
 @Builder(toBuilder = true)
 @Value
@@ -46,39 +47,37 @@ public class HttpResponse<T> {
     /**
      * The {@link HttpRequest} corresponding to this response.
      *
-     * <p> The initiating {@code HttpRequest}. For example, if the initiating request was redirected, then the
+     * <p>
+     * The initiating {@code HttpRequest}. For example, if the initiating request was redirected, then the
      * request returned by this method will not have the redirected URI
      */
     HttpRequest request;
 
     public static HttpResponse<byte[]> from(org.apache.hc.core5.http.HttpResponse response, HttpContext context) throws IOException {
-        return HttpResponse.<byte[]>builder()
+        return HttpResponse.<byte[]> builder()
             .status(Status.builder().code(response.getCode()).reason(response.getReasonPhrase()).build())
-            .request(context instanceof HttpClientContext httpClientContext ?
-                HttpRequest.from(httpClientContext.getRequest()) :
-                null
+            .request(
+                context instanceof HttpClientContext httpClientContext ? HttpRequest.from(httpClientContext.getRequest()) : null
             )
             .headers(HttpService.toHttpHeaders(response.getHeaders()))
-            .body(response instanceof ClassicHttpResponse classicHttpResponse && classicHttpResponse.getEntity() != null ?
-                IOUtils.toByteArray(classicHttpResponse.getEntity().getContent()) :
-                null
+            .body(
+                response instanceof ClassicHttpResponse classicHttpResponse && classicHttpResponse.getEntity() != null ? IOUtils.toByteArray(classicHttpResponse.getEntity().getContent())
+                    : null
             )
-            .endpointDetail(context instanceof HttpClientContext httpClientContext ?
-                HttpResponse.EndpointDetail.from(httpClientContext.getEndpointDetails()) :
-                null
+            .endpointDetail(
+                context instanceof HttpClientContext httpClientContext ? HttpResponse.EndpointDetail.from(httpClientContext.getEndpointDetails()) : null
             )
             .build();
     }
 
     public static <T> HttpResponse<T> from(ClassicHttpResponse httpResponse, T body, HttpRequest request, HttpContext context) {
-        return HttpResponse.<T>builder()
+        return HttpResponse.<T> builder()
             .status(Status.builder().code(httpResponse.getCode()).reason(httpResponse.getReasonPhrase()).build())
             .request(request)
             .headers(HttpService.toHttpHeaders(httpResponse.getHeaders()))
             .body(body)
-            .endpointDetail(context instanceof HttpClientContext httpClientContext ?
-                HttpResponse.EndpointDetail.from(httpClientContext.getEndpointDetails()) :
-                null
+            .endpointDetail(
+                context instanceof HttpClientContext httpClientContext ? HttpResponse.EndpointDetail.from(httpClientContext.getEndpointDetails()) : null
             )
             .build();
     }
@@ -96,7 +95,7 @@ public class HttpResponse<T> {
     }
 
     public static <T> HttpResponse<T> of(@Nullable Status status, @Nullable T body, @Nullable String contentType) {
-        HttpResponseBuilder<T> builder = HttpResponse.<T>builder()
+        HttpResponseBuilder<T> builder = HttpResponse.<T> builder()
             .status(status != null ? status : Status.OK);
 
         if (body != null) {

@@ -1,6 +1,6 @@
 kestra:
   server:
-    terminationGracePeriod: 0s
+    terminationGracePeriod: 1s
     liveness:
       enabled: true
       interval: 1s

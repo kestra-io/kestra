@@ -1,12 +1,13 @@
 package io.kestra.webserver.utils;
 
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;

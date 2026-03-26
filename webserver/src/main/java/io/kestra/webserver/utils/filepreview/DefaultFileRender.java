@@ -1,12 +1,12 @@
 package io.kestra.webserver.utils.filepreview;
 
-import lombok.Getter;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+
+import lombok.Getter;
 
 @Getter
 public class DefaultFileRender extends FileRender {
@@ -37,7 +37,7 @@ public class DefaultFileRender extends FileRender {
             if ((line = reader.readLine()) != null) {
                 contentBuilder.append("\n");
 
-                if(lineCount == this.maxLine) {
+                if (lineCount == this.maxLine) {
                     truncated = true;
                 }
             }

@@ -1,4 +1,5 @@
 import {HighlighterCoreOptions, LanguageRegistration, RegexEngine, ThemeRegistrationRaw, HighlighterGeneric} from "shiki/core";
+import xss, {escapeAttrValue} from "xss";
 
 let highlighter: Promise<HighlighterGeneric<"yaml"| "python" | "javascript", "github-dark" | "github-light">> | null = null;
 
@@ -90,7 +91,56 @@ export async function render(markdown: string, options: RenderOptions = {}) {
     } else {
         md.renderer.rules.table_open = () => "<table class=\"table\">\n";
     }
-    return md.render(markdownWithAlerts);
+    const rendered = md.render(markdownWithAlerts);
+
+    if (options.html) {
+        return xss(rendered, {
+            whiteList: {
+                a: ["href", "title", "target", "rel", "id", "class"],
+                abbr: ["title"],
+                article: ["class", "role"],
+                b: [], i: [], em: [], strong: [], del: [], s: [],
+                blockquote: ["class"],
+                br: [],
+                code: ["class"],
+                dd: [], dl: [], dt: [],
+                details: ["open", "class"],
+                div: ["class", "id", "role", "style"],
+                h1: ["id", "class"], h2: ["id", "class"], h3: ["id", "class"],
+                h4: ["id", "class"], h5: ["id", "class"], h6: ["id", "class"],
+                hr: [],
+                img: ["src", "alt", "title", "width", "height", "class"],
+                kbd: [],
+                li: ["class"], ol: ["start", "class"], ul: ["class"],
+                mark: [],
+                p: ["class"],
+                pre: ["class", "id"],
+                section: ["class"],
+                small: [],
+                span: ["class", "style"],
+                sub: [], sup: [],
+                summary: ["class"],
+                table: ["class"], thead: [], tbody: [], tr: [], th: ["class", "align"], td: ["class", "align"],
+                var: [],
+                "router-md": ["execution", "namespace", "flowId"],
+                video: ["src", "controls", "width", "height", "class"],
+                source: ["src", "type"],
+                button: ["type", "class", "aria-label"],
+            },
+            stripIgnoreTag: true,
+            onIgnoreTagAttr: function (_tag, name, value) {
+                if (name.startsWith("data-")) {
+                    return name + "=\"" + escapeAttrValue(value) + "\"";
+                }
+                if (name.startsWith("aria-")) {
+                    return name + "=\"" + escapeAttrValue(value) + "\"";
+                }
+                return undefined;
+            },
+        });
+    }
+
+    return rendered;
 }
 
 function applyEnhancedRenderers(md: any, showCopyButtons: boolean) {

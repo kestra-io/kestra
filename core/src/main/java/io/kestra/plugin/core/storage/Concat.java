@@ -1,19 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.serializers.JacksonMapper;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,7 +7,23 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -39,86 +41,86 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 )
 @Plugin(
     examples = {
-         @Example(
+        @Example(
             title = "Concat a 2 files.",
             full = true,
             code = """
-                id: concat_example
-                namespace: company.team
+                    id: concat_example
+                    namespace: company.team
 
-                tasks:
-                  - id: first_file
-                    type: io.kestra.plugin.scripts.shell.Commands
-                    commands:
-                      - echo "Hello John" > name.txt
-                    outputFiles:
-                      - "name.txt"
-  
-                  - id: second_file
-                    type: io.kestra.plugin.scripts.shell.Commands
-                    commands:
-                    - echo "Hello Jane" > name.txt
-                    outputFiles:
-                      - "name.txt"
+                    tasks:
+                      - id: first_file
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                          - echo "Hello John" > name.txt
+                        outputFiles:
+                          - "name.txt"
 
-                  - id: concat
-                    type: io.kestra.plugin.core.storage.Concat
-                    files:
-                      - "{{ outputs.first_file.outputFiles['name.txt'] }}"
-                      - "{{ outputs.second_file.outputFiles['name.txt'] }}"
-            """
-         ),
+                      - id: second_file
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                        - echo "Hello Jane" > name.txt
+                        outputFiles:
+                          - "name.txt"
+
+                      - id: concat
+                        type: io.kestra.plugin.core.storage.Concat
+                        files:
+                          - "{{ outputs.first_file.outputFiles['name.txt'] }}"
+                          - "{{ outputs.second_file.outputFiles['name.txt'] }}"
+                """
+        ),
         @Example(
             title = "Concat 2 files with a custom separator that adds a new line between each file.",
             full = true,
             code = """
-                id: concat_example
-                namespace: company.team
+                    id: concat_example
+                    namespace: company.team
 
-                tasks:
-                  - id: first_file
-                    type: io.kestra.plugin.scripts.shell.Commands
-                    commands:
-                      - echo "Hello John\nGoodbye John" > name.txt
-                    outputFiles:
-                      - "name.txt"
+                    tasks:
+                      - id: first_file
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                          - echo "Hello John\nGoodbye John" > name.txt
+                        outputFiles:
+                          - "name.txt"
 
-                  - id: second_file
-                    type: io.kestra.plugin.scripts.shell.Commands
-                    commands:
-                      - echo "Hello Jane\nGoodbyeJane" > name.txt
-                    outputFiles:
-                      - "name.txt"
+                      - id: second_file
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                          - echo "Hello Jane\nGoodbyeJane" > name.txt
+                        outputFiles:
+                          - "name.txt"
 
-                  - id: concat
-                    type: io.kestra.plugin.core.storage.Concat
-                    separator: "\n"
-                    files:
-                      - "{{ outputs.first_file.outputFiles['name.txt'] }}"
-                      - "{{ outputs.second_file.outputFiles['name.txt'] }}"
-            """
+                      - id: concat
+                        type: io.kestra.plugin.core.storage.Concat
+                        separator: "\n"
+                        files:
+                          - "{{ outputs.first_file.outputFiles['name.txt'] }}"
+                          - "{{ outputs.second_file.outputFiles['name.txt'] }}"
+                """
         ),
         @Example(
             title = "Concat a dynamic number of files.",
             full = true,
             code = """
-                id: concat_example
-                namespace: company.team
+                    id: concat_example
+                    namespace: company.team
 
-                tasks:
-                  - id: generate_files
-                    type: io.kestra.plugin.scripts.shell.Commands
-                    commands:
-                      - echo "Hello John" > 1.txt
-                      - echo "Hello Jane" > 2.txt
-                      - echo "Hello Doe" > 3.txt
-                    outputFiles:
-                      - "*.txt"
+                    tasks:
+                      - id: generate_files
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                          - echo "Hello John" > 1.txt
+                          - echo "Hello Jane" > 2.txt
+                          - echo "Hello Doe" > 3.txt
+                        outputFiles:
+                          - "*.txt"
 
-                  - id: concat
-                    type: io.kestra.plugin.core.storage.Concat
-                    files: "{{ outputs.generate_files.outputFiles | jq('.[]') }}"
-            """
+                      - id: concat
+                        type: io.kestra.plugin.core.storage.Concat
+                        files: "{{ outputs.generate_files.outputFiles | jq('.[]') }}"
+                """
         ),
         @Example(
             title = "Concat files generated by a ForEach task.",
@@ -126,7 +128,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
             code = """
                 id: concat_example
                 namespace: company.team
-     
+
                 tasks:
                   - id: foreach
                     type: io.kestra.plugin.core.flow.ForEach
@@ -176,7 +178,8 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
             if (this.files instanceof List<?> listValue) {
                 finalFiles = (List<String>) listValue;
             } else if (this.files instanceof String stringValue) {
-                final TypeReference<List<String>> reference = new TypeReference<>() {};
+                final TypeReference<List<String>> reference = new TypeReference<>() {
+                };
 
                 finalFiles = JacksonMapper.ofJson(false).readValue(
                     runContext.render(stringValue),
@@ -186,7 +189,8 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
                 throw new Exception("Invalid `files` properties with type '" + this.files.getClass() + "'");
             }
 
-            finalFiles.forEach(throwConsumer(s -> {
+            finalFiles.forEach(throwConsumer(s ->
+            {
                 URI from = new URI(runContext.render(s));
                 try (InputStream inputStream = runContext.storage().getFile(from)) {
                     IOUtils.copyLarge(inputStream, fileOutputStream);

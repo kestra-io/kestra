@@ -1,29 +1,41 @@
 package io.kestra.webserver.services.ai;
 
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.listener.ChatModelListener;
-import dev.langchain4j.service.AiServices;
-import io.kestra.core.docs.JsonSchemaGenerator;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.services.InstanceService;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.VersionProvider;
-import io.kestra.webserver.models.ai.DashboardGenerationPrompt;
-import io.kestra.webserver.models.ai.FlowGenerationPrompt;
-import io.kestra.webserver.services.posthog.PosthogService;
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.Version;
+import io.kestra.core.utils.VersionProvider;
+import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
+import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
+import io.kestra.libs.copilot.models.in.PluginMetadata;
+import io.kestra.libs.copilot.services.ai.*;
+import io.kestra.webserver.services.posthog.PosthogService;
+
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.listener.ChatModelListener;
+import dev.langchain4j.service.AiServices;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
 
 public abstract class AiService<T extends AiConfiguration> implements AiServiceInterface {
     private final PosthogService postHogService;
     @Getter
     private final T aiConfiguration;
-    private final FlowAiCopilot flowAiCopilot;
-    private final DashboardAiCopilot dashboardAiCopilot;
+    private final PluginRegistry pluginRegistry;
+    private final JsonSchemaGenerator jsonSchemaGenerator;
+    private final VersionProvider versionProvider;
+    private final FlowAiCopilot<Flow> flowAiCopilot;
+    private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
     private final NamespaceContextTool namespaceContextTool;
     private final String instanceUid;
     private final String aiProvider;
@@ -42,26 +54,32 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     protected PluginFinder pluginFinder(String conversationId) {
         return AiServices.builder(PluginFinder.class)
-            .chatModel(this.chatModel(
-                this.listeners("PluginFinder", conversationId)
-            ))
+            .chatModel(
+                this.chatModel(
+                    this.listeners("PluginFinder", conversationId)
+                )
+            )
             .build();
     }
 
     protected FlowYamlBuilder flowYamlBuilder(String conversationId) {
         return AiServices.builder(FlowYamlBuilder.class)
-            .chatModel(this.chatModel(
-                this.listeners("FlowYamlBuilder", conversationId)
-            ))
+            .chatModel(
+                this.chatModel(
+                    this.listeners("FlowYamlBuilder", conversationId)
+                )
+            )
             .tools(namespaceContextTool)
             .build();
     }
 
     protected DashboardYamlBuilder dashboardYamlBuilder(String conversationId) {
         return AiServices.builder(DashboardYamlBuilder.class)
-            .chatModel(this.chatModel(
-                this.listeners("DashboardYamlBuilder", conversationId)
-            ))
+            .chatModel(
+                this.chatModel(
+                    this.listeners("DashboardYamlBuilder", conversationId)
+                )
+            )
             .build();
     }
 
@@ -75,8 +93,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final String aiProvider,
         final String displayName,
         final List<ChatModelListener> listeners,
-        final T aiConfiguration
-    ) {
+        final T aiConfiguration) {
+        this.pluginRegistry = pluginRegistry;
+        this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.instanceUid = instanceService.fetch();
         this.postHogService = postHogService;
         this.aiProvider = aiProvider;
@@ -85,41 +104,50 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.aiConfiguration = aiConfiguration;
         this.namespaceContextTool = namespaceContextTool;
 
-        this.flowAiCopilot = new FlowAiCopilot(jsonSchemaGenerator, pluginRegistry, versionProvider.getVersion());
-        this.dashboardAiCopilot = new DashboardAiCopilot(jsonSchemaGenerator, pluginRegistry, versionProvider.getVersion());
+        this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
+        this.dashboardAiCopilot = new DashboardAiCopilot<>(Dashboard.class);
+        this.versionProvider = versionProvider;
     }
 
     @Override
-    public String generateFlow(String ip, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
-        AiService.GenerationContext ctx = this.beforeGeneration(ip, flowGenerationPrompt.conversationId(), "FlowGeneration", Map.of(
-            "flowYaml", flowGenerationPrompt.yaml(),
-            "userPrompt", flowGenerationPrompt.userPrompt()
-        ));
+    public GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
+        AiService.GenerationContext ctx = this.beforeGeneration(
+            userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration", Map.of(
+                "flowYaml", Optional.ofNullable(flowGenerationPrompt.getYaml()).orElse(""),
+                "userPrompt", flowGenerationPrompt.getUserPrompt()
+            )
+        );
 
         String generatedFlow = flowAiCopilot.generateFlow(
-            this.pluginFinder(flowGenerationPrompt.conversationId()),
-            this.flowYamlBuilder(flowGenerationPrompt.conversationId()),
+            this.pluginFinder(flowGenerationPrompt.getConversationId()),
+            this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
+            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
+            allPluginsMetadata(),
             flowGenerationPrompt,
             tenantId
         );
 
-        return this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow");
+        return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
     }
 
     @Override
-    public String generateDashboard(String ip, DashboardGenerationPrompt dashboardGenerationPrompt) {
-        AiService.GenerationContext ctx = this.beforeGeneration(ip, dashboardGenerationPrompt.conversationId(), "DashboardGeneration", Map.of(
-            "dashboardYaml", dashboardGenerationPrompt.yaml(),
-            "userPrompt", dashboardGenerationPrompt.userPrompt()
-        ));
+    public GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
+        AiService.GenerationContext ctx = this.beforeGeneration(
+            userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration", Map.of(
+                "dashboardYaml", Optional.ofNullable(dashboardGenerationPrompt.getYaml()).orElse(""),
+                "userPrompt", dashboardGenerationPrompt.getUserPrompt()
+            )
+        );
 
         String generatedDashboard = dashboardAiCopilot.generateDashboard(
-            this.pluginFinder(dashboardGenerationPrompt.conversationId()),
-            this.dashboardYamlBuilder(dashboardGenerationPrompt.conversationId()),
+            this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
+            this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
+            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
+            allPluginsMetadata(),
             dashboardGenerationPrompt
         );
 
-        return this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard");
+        return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
     }
 
     public String displayName() {
@@ -143,26 +171,30 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     @Override
-    public GenerationContext beforeGeneration(String ip, String conversationId, String spanName, Map<String, String> inputState) {
+    public GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName, Map<String, String> inputState) {
         if (conversationId == null) {
 
             return null;
         }
         String parentSpanId = IdUtils.create();
-        this.postHogService.capture(conversationId, "$ai_trace", Map.of(
-            "$ai_trace_id", conversationId,
-            "$ai_span_name", spanName + "Session",
-            "$ai_input_state", inputState
-        ));
-        this.postHogService.capture(conversationId, "$ai_span", Map.of(
-            "$ai_trace_id", conversationId,
-            "$ai_span_id", parentSpanId,
-            "$ai_span_name", spanName + "Attempt",
-            "$ai_input_state", inputState
-        ));
-        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, ip, parentSpanId));
+        this.postHogService.capture(
+            conversationId, "$ai_trace", Map.of(
+                "$ai_trace_id", conversationId,
+                "$ai_span_name", spanName + "Session",
+                "$ai_input_state", inputState
+            )
+        );
+        this.postHogService.capture(
+            conversationId, "$ai_span", Map.of(
+                "$ai_trace_id", conversationId,
+                "$ai_span_id", parentSpanId,
+                "$ai_span_name", spanName + "Attempt",
+                "$ai_input_state", inputState
+            )
+        );
+        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId));
 
-        return new GenerationContext(conversationId, ip, parentSpanId);
+        return new GenerationContext(conversationId, userInfo.ip(), parentSpanId);
     }
 
     @Override
@@ -173,15 +205,50 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         }
         metadataByConversationId.remove(context.conversationId());
         Map<String, Object> aiOutput = (outputState == null || outputState.isEmpty()) ? Map.of(outputKey, result) : outputState;
-        this.postHogService.capture(context.conversationId(), "$ai_span", Map.of(
-            "$ai_trace_id", context.conversationId(),
-            "$ai_span_id", IdUtils.create(),
-            "$ai_span_name", spanName,
-            "$ai_input_state", Map.of(),
-            "$ai_output_state", aiOutput
-        ));
+        this.postHogService.capture(
+            context.conversationId(), "$ai_span", Map.of(
+                "$ai_trace_id", context.conversationId(),
+                "$ai_span_id", IdUtils.create(),
+                "$ai_span_name", spanName,
+                "$ai_input_state", Map.of(),
+                "$ai_output_state", aiOutput
+            )
+        );
 
         return result;
     }
 
+    public List<PluginMetadata<ReverseOrderVersion>> allPluginsMetadata() {
+        return pluginRegistry.plugins().stream().flatMap(
+            parentPlugin ->
+            {
+                ReverseOrderVersion version = new ReverseOrderVersion(Optional.ofNullable(parentPlugin.version()).orElse(versionProvider.getVersion()));
+                return parentPlugin.allClassGrouped().entrySet().stream().flatMap(e -> e.getValue().stream().map(pluginClass ->
+                {
+                    Schema schemaAnnotation = ((Class<?>) pluginClass).getDeclaredAnnotation(Schema.class);
+                    return new PluginMetadata<>(
+                        pluginClass.getName(),
+                        Optional.ofNullable(schemaAnnotation).map(Schema::title).orElse(null),
+                        e.getKey(),
+                        Optional.ofNullable(schemaAnnotation).map(Schema::deprecated).orElse(false),
+                        version
+                    );
+                })
+                );
+            }
+        ).toList();
+    }
+
+    public static class ReverseOrderVersion implements Comparable<ReverseOrderVersion> {
+        private final Version version;
+
+        public ReverseOrderVersion(String version) {
+            this.version = Version.of(version);
+        }
+
+        @Override
+        public int compareTo(ReverseOrderVersion that) {
+            return -version.compareTo(that.version);
+        }
+    }
 }

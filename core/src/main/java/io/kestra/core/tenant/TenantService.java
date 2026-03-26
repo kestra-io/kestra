@@ -1,5 +1,7 @@
 package io.kestra.core.tenant;
 
+import java.util.List;
+
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -15,5 +17,14 @@ public class TenantService {
      */
     public String resolveTenant() {
         return MAIN_TENANT;
+    }
+
+    /**
+     * List all tenants.
+     * 
+     * @return main on OSS as Tenant is an EE feature.
+     */
+    public List<String> listTenants() {
+        return List.of(MAIN_TENANT);
     }
 }

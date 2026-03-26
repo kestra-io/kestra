@@ -1,16 +1,19 @@
 package io.kestra.plugin.core.condition;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

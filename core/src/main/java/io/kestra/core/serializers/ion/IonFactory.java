@@ -1,16 +1,16 @@
 package io.kestra.core.serializers.ion;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Serial;
+
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonSystemBuilder;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.io.IOContext;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serial;
 
 public class IonFactory extends com.fasterxml.jackson.dataformat.ion.IonFactory {
     @Serial

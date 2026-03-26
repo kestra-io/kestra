@@ -18,5 +18,7 @@ public final class Network {
     public static String localHostname() {
         return HOSTNAME;
     }
-    private Network() {}
+
+    private Network() {
+    }
 }

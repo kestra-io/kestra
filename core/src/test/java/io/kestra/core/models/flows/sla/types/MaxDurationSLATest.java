@@ -1,18 +1,17 @@
 package io.kestra.core.models.flows.sla.types;
 
+import java.time.Duration;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.*;
-
 
 class MaxDurationSLATest {
 

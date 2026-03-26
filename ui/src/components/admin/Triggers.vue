@@ -192,6 +192,7 @@
                         <el-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar
+                                    v-if="!scope.row.missingSource"
                                     :flow="{id: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
                                     :triggerId="scope.row.id"
                                 />
@@ -547,22 +548,21 @@
         });
     };
 
+    const cleanBackfill = computed(() => {
+        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value);
+        return {...backfill.value, labels: labels?.length ? labels : null};
+    });
+
     const postBackfill = () => {
         const trigger = selectedTrigger.value as any;
         triggerStore.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: backfill.value
+            backfill: cleanBackfill.value
         })
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
-                triggers.value = triggers.value?.map((t: any) => {
-                    if (t.id === newTrigger.triggerId) {
-                        return newTrigger;
-                    }
-                    return t;
-                });
+            .then(() => {
+                toast.saved(selectedTrigger.value?.triggerId);
                 setBackfillModal(null, false);
                 backfill.value = {
                     start: null,
@@ -570,6 +570,7 @@
                     inputs: null,
                     labels: []
                 };
+                triggerLoadDataAfterBulkEditAction();
             });
     };
 
@@ -824,10 +825,10 @@
     const triggersMerged = computed(() => {
         const all = triggers.value?.map((t: any) => {
             return {
-                ...t?.abstractTrigger,
-                ...t?.triggerContext,
-                codeDisabled: t?.abstractTrigger?.disabled,
-                missingSource: !t?.abstractTrigger
+                ...t?.trigger,
+                ...t?.state,
+                codeDisabled: t?.trigger?.disabled,
+                missingSource: !t?.trigger
             };
         }) ?? [];
 

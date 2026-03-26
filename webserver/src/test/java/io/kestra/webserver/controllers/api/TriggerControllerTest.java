@@ -23,6 +23,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -90,19 +92,19 @@ class TriggerControllerTest {
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
                 TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"
-            ), Argument.of(PagedResults.class, TriggerController.Triggers.class)
+            ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::getState).toList())
             .extracting(
-                TriggerState::getTriggerId,
-                TriggerState::getNamespace,
-                TriggerState::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
                 tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
@@ -119,19 +121,19 @@ class TriggerControllerTest {
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
                 TRIGGER_PATH + "/search?filters[q][EQUALS]=%s".formatted(flow.getNamespace())
-            ), Argument.of(PagedResults.class, TriggerController.Triggers.class)
+            ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::getState).toList())
             .extracting(
-                TriggerState::getTriggerId,
-                TriggerState::getNamespace,
-                TriggerState::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
                 tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
@@ -149,21 +151,21 @@ class TriggerControllerTest {
         states.forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
                 TRIGGER_PATH
                     + "/search?filters[namespace][STARTS_WITH]=%s&sort=triggerId:asc".formatted(flow.getNamespace())
             ),
-            Argument.of(PagedResults.class, TriggerController.Triggers.class)
+            Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
         //THEN
         assertThat(triggers.getTotal()).isGreaterThanOrEqualTo(2L);
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::getState).toList())
             .extracting(
-                TriggerState::getTriggerId,
-                TriggerState::getNamespace,
-                TriggerState::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
                 tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),

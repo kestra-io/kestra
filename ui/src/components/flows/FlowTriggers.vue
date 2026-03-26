@@ -404,7 +404,8 @@
     });
 
     const cleanBackfill = computed(() => {
-        return {...backfill.value, labels: backfill.value.labels?.filter((label: any) => label.key && label.value)}
+        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value);
+        return {...backfill.value, labels: labels?.length ? labels : null};
     });
 
     const checkBackfill = computed(() => {
@@ -460,19 +461,18 @@
         selectedTrigger.value = trigger
     };
 
+    const loadDataAfterAction = () => loadData();
+
     const postBackfill = () => {
+        const trigger = selectedTrigger.value as any;
         triggerStore.createBackfill({
-            ...selectedTrigger.value,
+            namespace: trigger.namespace,
+            flowId: trigger.flowId,
+            triggerId: trigger.triggerId,
             backfill: cleanBackfill.value
         })
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(selectedTrigger.value?.triggerId);
                 setBackfillModal(null, false);
                 backfill.value = {
                     start: null,
@@ -480,59 +480,39 @@
                     inputs: null,
                     labels: []
                 }
+                loadDataAfterAction();
             })
-
     };
 
     const pauseBackfill = (trigger: any) => {
         triggerStore.pauseBackfill(trigger)
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
     const unpauseBackfill = (trigger: any) => {
         triggerStore.unpauseBackfill(trigger)
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
     const deleteBackfill = (trigger: any) => {
         triggerStore.deleteBackfill(trigger)
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
     const setDisabled = (trigger: any, value: boolean) => {
         triggerStore.setDisabled({...trigger, disabled: !value})
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
@@ -541,14 +521,9 @@
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
-        }).then((newTrigger: any) => {
-            toast.saved(newTrigger.triggerId);
-            triggers.value = triggers.value.map((t: any) => {
-                if (t.id === newTrigger.id) {
-                    return newTrigger
-                }
-                return t
-            })
+        }).then(() => {
+            toast.saved(trigger.triggerId);
+            loadDataAfterAction();
         })
     };
 
@@ -557,14 +532,9 @@
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
-        }).then((newTrigger: any) => {
-            toast.saved(newTrigger.triggerId);
-            triggers.value = triggers.value.map((t: any) => {
-                if (t.id === newTrigger.id) {
-                    return newTrigger
-                }
-                return t
-            })
+        }).then(() => {
+            toast.saved(trigger.triggerId);
+            loadDataAfterAction();
         })
     };
 

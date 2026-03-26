@@ -2,8 +2,8 @@ id: "second_flow"
 namespace: "validation"
 tasks:
   - id: task-two
-    type: io.kestra.plugin.core.debug.Echo
-    format: strangestring---
+    type: io.kestra.core.plugins.test.DeprecatedTask
+    additionalProperty: "value"
   - id: task-three
-    type: io.kestra.plugin.core.debug.Echo
-    format: ---strangestring
+    type: io.kestra.core.plugins.test.DeprecatedTask
+    additionalProperty: "value"

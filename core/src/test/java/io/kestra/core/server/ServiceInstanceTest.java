@@ -1,14 +1,15 @@
 package io.kestra.core.server;
 
-import io.kestra.core.utils.IdUtils;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.utils.IdUtils;
 
 class ServiceInstanceTest {
 
@@ -88,8 +89,11 @@ class ServiceInstanceTest {
 
         // Then
         Assertions.assertNotEquals(instance, result);
-        Assertions.assertEquals(List.of(
-            new ServiceInstance.TimestampedEvent(now, "Disconnected", "service.state.updated", Service.ServiceState.DISCONNECTED)), result.events());
+        Assertions.assertEquals(
+            List.of(
+                new ServiceInstance.TimestampedEvent(now, "Disconnected", "service.state.updated", Service.ServiceState.DISCONNECTED)
+            ), result.events()
+        );
     }
 
     @Test

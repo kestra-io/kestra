@@ -1,0 +1,137 @@
+syntax = "proto3";
+import "request.proto";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+// Service for worker meta store operations - provides flow metadata
+service WorkerFlowMetaStoreService {
+  // Check if a namespace exists (has flows)
+  rpc IsNamespaceExists(NamespaceRequest) returns (BooleanResponse);
+}
+
+// Service for KV metadata operations - provides KV metadata read/write to workers.
+// Only exposes worker-safe operations. Server-only operations (paginated listing,
+// version-aware queries, purge) require direct repository access.
+service KVMetadataService {
+  // Find a KV metadata entry by tenant, namespace, and name
+  rpc findByName(KVMetadataRequest) returns (OpaqueData);
+
+  // Find all non-deleted, non-expired KV metadata entries for a tenant and namespace
+  rpc find(NamespaceRequest) returns (OpaqueData);
+
+  // Check whether any non-deleted, non-expired KV entries exist in a namespace
+  rpc existsByNamespace(NamespaceRequest) returns (BooleanResponse);
+
+  // Save a KV metadata entry
+  rpc save(OpaqueData) returns (OpaqueData);
+
+  // Soft-delete a KV metadata entry
+  rpc deleteByName(KVMetadataRequest) returns (OpaqueData);
+}
+
+// Service for namespace file metadata operations - provides file metadata read/write to workers.
+// Only exposes worker-safe operations. Server-only operations (paginated listing with
+// advanced filters, version-aware queries, purge) require direct repository access via
+// NamespaceFileService.
+service NamespaceFileMetadataService {
+  // Find a namespace file metadata entry by tenant, namespace, and path.
+  // Optionally filter by a specific version and/or include deleted entries.
+  rpc findByPath(NamespaceFileMetadataPathRequest) returns (OpaqueData);
+
+  // Find children of a given parent path
+  rpc findChildren(NamespaceFileMetadataChildrenRequest) returns (OpaqueData);
+
+  // Find all non-deleted entries for a given tenant and namespace, with optional containing filter
+  rpc findAll(NamespaceFileMetadataFindAllRequest) returns (OpaqueData);
+
+  // Find namespace file metadata entries by a list of paths
+  rpc findByPaths(NamespaceFileMetadataPathsRequest) returns (OpaqueData);
+
+  // Find all versions of namespace file metadata entries by a list of paths
+  rpc findAllVersionsByPaths(NamespaceFileMetadataPathsRequest) returns (OpaqueData);
+
+  // Check whether any non-deleted namespace file entries exist in a namespace
+  rpc existsByNamespace(NamespaceRequest) returns (BooleanResponse);
+
+  // Save a namespace file metadata entry
+  rpc save(OpaqueData) returns (OpaqueData);
+}
+
+// Service for execution logs operations - provides execution log read to workers.
+service ExecutionLogsService {
+  // Find execution logs by execution ID
+  rpc errorLogs(ErrorLogsRequest) returns (OpaqueData);
+}
+
+// Request to check if a namespace exists
+message NamespaceRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The namespace name
+  optional string namespace = 3;
+}
+
+// Request to check if a namespace exists
+message TenantRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+}
+
+// Request to find a KV metadata entry by name
+message KVMetadataRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The namespace name
+  string namespace = 3;
+  // The KV metadata entry name
+  string name = 4;
+}
+
+// Request to find a namespace file metadata entry by path, with optional version filter
+message NamespaceFileMetadataPathRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  string namespace = 3;
+  string path = 4;
+  // Optional: when set, look up a specific version
+  optional int32 version = 5;
+  // Whether to include deleted entries (only used when version is set)
+  bool allow_deleted = 6;
+}
+
+// Request to find children of a parent path
+message NamespaceFileMetadataChildrenRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  string namespace = 3;
+  string parent_path = 4;
+  bool recursive = 5;
+}
+
+// Request to find all entries with optional containing filter
+message NamespaceFileMetadataFindAllRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  string namespace = 3;
+  optional string containing = 4;
+}
+
+// Request to find entries by a list of paths
+message NamespaceFileMetadataPathsRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  string namespace = 3;
+  repeated string paths = 4;
+  bool allow_deleted = 5;
+}
+
+// Request to fetch error logs
+message ErrorLogsRequest {
+    RequestOrResponseHeader header = 1;
+    string tenant_id = 2;
+    string execution_id = 3;
+}

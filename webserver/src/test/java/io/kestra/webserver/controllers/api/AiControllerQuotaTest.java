@@ -1,23 +1,26 @@
 package io.kestra.webserver.controllers.api;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.utils.PosthogUtil;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest(environments = {"api-ai"})
+@KestraTest(environments = { "api-ai" })
 @WireMockTest(httpPort = 28181)
 class AiControllerQuotaTest {
     @Inject
@@ -30,13 +33,17 @@ class AiControllerQuotaTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"flow", "dashboard"})
+    @ValueSource(strings = { "flow", "dashboard" })
     void shouldForwardQuotaHeader(String entityType) {
-        stubFor(post(urlPathEqualTo("/v1/ai/generate/" + entityType))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("X-Kestra-AI-Quota", "42")
-                .withBody("generated: " + entityType)));
+        stubFor(
+            post(urlPathEqualTo("/v1/ai/generate/" + entityType))
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                        .withHeader("X-Kestra-AI-Quota", "42")
+                        .withBody("generated: " + entityType)
+                )
+        );
 
         HttpResponse<String> response = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/main/ai/generate/" + entityType, requestBody(entityType)).header("X-Kestra-User-Id", "user-100"),
@@ -49,12 +56,16 @@ class AiControllerQuotaTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"flow", "dashboard"})
+    @ValueSource(strings = { "flow", "dashboard" })
     void shouldNotIncludeQuotaHeaderWhenAbsent(String entityType) {
-        stubFor(post(urlPathEqualTo("/v1/ai/generate/" + entityType))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withBody("generated: " + entityType)));
+        stubFor(
+            post(urlPathEqualTo("/v1/ai/generate/" + entityType))
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                        .withBody("generated: " + entityType)
+                )
+        );
 
         HttpResponse<String> response = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/main/ai/generate/" + entityType, requestBody(entityType)).header("X-Kestra-User-Id", "user-100"),

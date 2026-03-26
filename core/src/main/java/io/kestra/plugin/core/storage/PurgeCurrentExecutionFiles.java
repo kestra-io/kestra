@@ -1,16 +1,17 @@
 package io.kestra.plugin.core.storage;
 
+import java.net.URI;
+import java.util.List;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @SuperBuilder
 @ToString
@@ -28,20 +29,20 @@ import java.util.List;
             title = "Purge all files created by this execution.",
             full = true,
             code = """
-                id: purge_execution_files
-                namespace: company.team
+                    id: purge_execution_files
+                    namespace: company.team
 
-                tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
-                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/json/user_events.json
+                    tasks:
+                      - id: download
+                        type: io.kestra.plugin.core.http.Download
+                        uri: https://huggingface.co/datasets/kestra/datasets/raw/main/json/user_events.json
 
-                  - id: purge
-                    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
-            """
+                      - id: purge
+                        type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+                """
         )
     },
-    aliases = {"io.kestra.core.tasks.storages.PurgeExecution", "io.kestra.plugin.core.storage.PurgeExecution"}
+    aliases = { "io.kestra.core.tasks.storages.PurgeExecution", "io.kestra.plugin.core.storage.PurgeExecution" }
 )
 public class PurgeCurrentExecutionFiles extends Task implements RunnableTask<PurgeCurrentExecutionFiles.Output> {
     @Override

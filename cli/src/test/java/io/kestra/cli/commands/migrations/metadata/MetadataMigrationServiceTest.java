@@ -1,17 +1,18 @@
 package io.kestra.cli.commands.migrations.metadata;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,7 +29,8 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
         ).namespacesPerTenant();
 
         assertThat(result).hasSize(expected.size());
-        expected.forEach((tenantId, namespaces) -> {
+        expected.forEach((tenantId, namespaces) ->
+        {
             assertThat(result.get(tenantId)).containsExactlyInAnyOrderElementsOf(
                 Stream.concat(
                     Stream.of(SYSTEM_NAMESPACE),
@@ -53,6 +55,6 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
             public String resolveTenant() {
                 return TENANT_ID;
             }
-        }, null, null, null, kestraConfig));
+        }, null, null, null, null, kestraConfig));
     }
 }

@@ -1,0 +1,51 @@
+#!/bin/sh
+
+if [ -z "$JAVA_HOME" ] && ! command -v java >/dev/null 2>&1; then
+    for path in "$HOME/.sdkman/candidates/java/current/bin" "/usr/lib/jvm/default-java/bin" "/usr/local/bin" "/usr/bin"; do
+        if [ -x "$path/java" ]; then
+            export PATH="$path:$PATH"
+            break
+        fi
+    done
+fi
+
+if ! command -v java >/dev/null 2>&1; then
+    echo "Error: java is not found in PATH and JAVA_HOME is not set."
+    echo "Please ensure java is installed and accessible."
+    exit 1
+fi
+
+
+java_staged_files=$(git --no-pager diff --cached --name-only | grep '\.java')
+if [ -n "$java_staged_files" ]; then
+  echo "Staged Java files: $java_staged_files"
+  echo "Running spotlessApply on Java files..."
+
+  for file in $java_staged_files; do
+    ./gradlew --no-build-cache spotlessApply -PtargetFile="$file" --continue
+
+  done
+
+  git add $java_staged_files
+
+  echo "spotlessApply completed."
+else
+  echo "No Java files modified. Skipping spotlessApply."
+fi
+
+
+
+ui_staged_files=$(git --no-pager diff --cached --name-only | grep -E '(^|/)(ui|ui-ee)(/|$)')
+
+if [ -n "$ui_staged_files" ]; then
+  echo "Staged UI files: $ui_staged_files"
+  if [ -d "ui" ]; then
+      echo "Running lint-staged in ui directory..."
+      cd ui && npx lint-staged
+  fi
+
+  if [ -d "ui-ee" ]; then
+      echo "Running lint-staged in ui directory..."
+      cd ui-ee && npx lint-staged
+  fi
+fi

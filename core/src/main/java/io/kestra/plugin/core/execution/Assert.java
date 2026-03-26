@@ -1,8 +1,8 @@
 package io.kestra.plugin.core.execution;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Metric;
@@ -14,8 +14,8 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TruthUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -23,9 +23,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @SuperBuilder
 @ToString
@@ -45,22 +42,22 @@ import java.util.concurrent.atomic.AtomicInteger;
             title = "Assert based on inputs data",
             full = true,
             code = """
-                id: assert
-                namespace: company.team
+                    id: assert
+                    namespace: company.team
 
 
-                inputs:
-                  - id: param
-                    type: STRING
-                    required: true
-                    
-                tasks:
-                  - id: fail
-                    type: io.kestra.plugin.core.execution.Assert
-                    conditions:
-                      - "{{ inputs.param == 'ok' }}"
-                      - "{{ 1 + 1 == 3 }}"
-            """
+                    inputs:
+                      - id: param
+                        type: STRING
+                        required: true
+
+                    tasks:
+                      - id: fail
+                        type: io.kestra.plugin.core.execution.Assert
+                        conditions:
+                          - "{{ inputs.param == 'ok' }}"
+                          - "{{ 1 + 1 == 3 }}"
+                """
         )
     },
     metrics = {
@@ -86,7 +83,8 @@ public class Assert extends Task implements RunnableTask<VoidOutput> {
         AtomicInteger success = new AtomicInteger(0);
 
         conditions
-            .forEach(s -> {
+            .forEach(s ->
+            {
                 try {
                     String renderer = runContext.render(s);
 
@@ -109,10 +107,10 @@ public class Assert extends Task implements RunnableTask<VoidOutput> {
         if (failed.get() > 0) {
             throw new Exception(
                 failed + " assertion" + (failed.get() > 1 ? "s" : "") + " failed!" +
-                runContext.render(errorMessage).as(String.class).map(r -> "\n" + r).orElse("")
+                    runContext.render(errorMessage).as(String.class).map(r -> "\n" + r).orElse("")
             );
         }
 
         return null;
-   }
+    }
 }

@@ -1,6 +1,9 @@
 package io.kestra.core.models.flows.sla.types;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.sla.ExecutionChangedSLA;
@@ -8,13 +11,12 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TruthUtils;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Optional;
 
 @SuperBuilder
 @Getter

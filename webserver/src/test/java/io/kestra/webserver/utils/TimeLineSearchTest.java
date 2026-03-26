@@ -1,14 +1,14 @@
 package io.kestra.webserver.utils;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -72,12 +72,14 @@ class TimeLineSearchTest {
         // THEN
         assertThat(updatedFilters).hasSize(2)
             .satisfiesExactly(
-                filter -> {
+                filter ->
+                {
                     assertThat(filter.field()).isEqualTo(Field.START_DATE);
                     assertThat(filter.operation()).isEqualTo(Op.EQUALS);
                     assertThat(filter.value()).isEqualTo(newStartDate.toString());
                 },
-                filter -> {
+                filter ->
+                {
                     assertThat(filter.field()).isEqualTo(Field.START_DATE);
                     assertThat(filter.operation()).isEqualTo(Op.GREATER_THAN_OR_EQUAL_TO);
                     assertThat(filter.value()).isEqualTo(newStartDate.toString());
@@ -102,17 +104,20 @@ class TimeLineSearchTest {
         // THEN
         assertThat(updatedFilters).hasSize(3)
             .satisfiesExactly(
-                filter -> {
+                filter ->
+                {
                     assertThat(filter.field()).isEqualTo(Field.START_DATE);
                     assertThat(filter.operation()).isEqualTo(Op.EQUALS);
                     assertThat(filter.value()).isEqualTo(newStartDate.toString());
                 },
-                filter -> {
+                filter ->
+                {
                     assertThat(filter.field()).isEqualTo(Field.END_DATE);
                     assertThat(filter.operation()).isEqualTo(Op.EQUALS);
                     assertThat(filter.value()).isEqualTo(endDate.toString());
                 },
-                filter -> {
+                filter ->
+                {
                     assertThat(filter.field()).isEqualTo(Field.START_DATE);
                     assertThat(filter.operation()).isEqualTo(Op.GREATER_THAN_OR_EQUAL_TO);
                     assertThat(filter.value()).isEqualTo(newStartDate.toString());

@@ -1,23 +1,27 @@
 package io.kestra.core.services;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.FluxSink;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This service offers a fanout mechanism so a single consumer of the execution queue can dispatch execution
@@ -33,45 +37,58 @@ public class ExecutionStreamingService {
     private final Map<String, Map<String, Pair<FluxSink<Event<Execution>>, Flow>>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
-    private final QueueInterface<Execution> executionQueue;
+    private final BroadcastQueueInterface<FollowExecutionEvent> executionQueue;
     private final ExecutionService executionService;
+    private final ExecutionRepositoryInterface executionRepository;
 
-    private Runnable queueConsumer;
+    private QueueSubscriber<FollowExecutionEvent> queueSubscriber;
 
     @Inject
     public ExecutionStreamingService(
-        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        ExecutionService executionService
-    ) {
+        BroadcastQueueInterface<FollowExecutionEvent> executionQueue,
+        ExecutionService executionService,
+        ExecutionRepositoryInterface executionRepository) {
         this.executionQueue = executionQueue;
         this.executionService = executionService;
+        this.executionRepository = executionRepository;
     }
 
     @PostConstruct
     void startQueueConsumer() {
         // Single queue consumer
-        this.queueConsumer = executionQueue.receive(either -> {
+        this.queueSubscriber = executionQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
                 return;
             }
 
-            Execution execution = either.getLeft();
-            String executionId = execution.getId();
+            if (subscribers.isEmpty()) {
+                return;
+            }
+
+            FollowExecutionEvent event = either.getLeft();
 
             // Get all subscribers for this execution
-            Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(executionId);
+            Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(event.executionId());
 
             if (!MapUtils.isEmpty(executionSubscribers)) {
-                executionSubscribers.values().forEach(pair -> {
+                Optional<Execution> execution = executionRepository.findById(event.tenantId(), event.executionId());
+                if (execution.isEmpty()) {
+                    log.error("Unable to find the execution id {}", event.executionId());
+                    return;
+                }
+
+                executionSubscribers.values().forEach(pair ->
+                {
                     var sink = pair.getLeft();
                     var flow = pair.getRight();
                     try {
-                        if (isStopFollow(flow, execution)) {
-                            sink.next(Event.of(execution).id("end"));
+                        if (isStopFollow(flow, execution.get())) {
+                            sink.next(Event.of(execution.get()).id("end"));
                             sink.complete();
                         } else {
-                            sink.next(Event.of(execution).id("progress"));
+                            sink.next(Event.of(execution.get()).id("progress"));
                         }
                     } catch (Exception e) {
                         log.error("Error sending execution update", e);
@@ -121,8 +138,8 @@ public class ExecutionStreamingService {
 
     @PreDestroy
     void shutdown() {
-        if (queueConsumer != null) {
-            queueConsumer.run();
+        if (queueSubscriber != null) {
+            queueSubscriber.close();
         }
     }
 }

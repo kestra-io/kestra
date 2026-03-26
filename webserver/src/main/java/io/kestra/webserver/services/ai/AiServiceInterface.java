@@ -1,10 +1,10 @@
 package io.kestra.webserver.services.ai;
 
+import java.util.Map;
+
 import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
 import io.kestra.webserver.annotation.WebServerEnabled;
-
-import java.util.Map;
 
 /**
  * Service for chatting with an AI model.

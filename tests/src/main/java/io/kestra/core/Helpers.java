@@ -1,10 +1,5 @@
 package io.kestra.core;
 
-import io.kestra.core.plugins.DefaultPluginRegistry;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,9 +11,15 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import io.kestra.core.plugins.DefaultPluginRegistry;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.runtime.server.EmbeddedServer;
+
 public final class Helpers {
 
-    public static final long FLOWS_COUNT =  countFlows();
+    public static final long FLOWS_COUNT = countFlows();
 
     private static final Path plugins;
 
@@ -36,8 +37,10 @@ public final class Helpers {
 
     private static int countFlows() {
         int count = 0;
-        try (var in = Thread.currentThread().getContextClassLoader().getResourceAsStream("flows/valids/");
-             var br = new BufferedReader(new InputStreamReader(in))) {
+        try (
+            var in = Thread.currentThread().getContextClassLoader().getResourceAsStream("flows/valids/");
+            var br = new BufferedReader(new InputStreamReader(in))
+        ) {
             while (br.readLine() != null) {
                 count++;
             }
@@ -50,14 +53,14 @@ public final class Helpers {
     public static ApplicationContext applicationContext() throws URISyntaxException {
         return applicationContext(
             null,
-            new String[]{Environment.TEST}
+            new String[] { Environment.TEST }
         );
     }
 
     public static ApplicationContext applicationContext(Map<String, Object> properties) throws URISyntaxException {
         return applicationContext(
             properties,
-            new String[]{Environment.TEST}
+            new String[] { Environment.TEST }
         );
     }
 
@@ -85,10 +88,12 @@ public final class Helpers {
     }
 
     public static void runApplicationContext(String[] env, Map<String, Object> properties, BiConsumer<ApplicationContext, EmbeddedServer> consumer) throws URISyntaxException {
-        try (ApplicationContext applicationContext = applicationContext(
-            properties,
-            env
-        ).start()) {
+        try (
+            ApplicationContext applicationContext = applicationContext(
+                properties,
+                env
+            ).start()
+        ) {
             EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
             embeddedServer.start();
 

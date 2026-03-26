@@ -1,15 +1,17 @@
 package io.kestra.webserver.services.ai;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
-import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -46,4 +48,3 @@ public class NamespaceContextToolTest {
         assertThat(first.path("updateDate").asText()).isNotEmpty();
     }
 }
-

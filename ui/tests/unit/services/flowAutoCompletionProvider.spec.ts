@@ -6,7 +6,7 @@ const defaultFlow = `inputs:
   - id: input1
     type: STRING
   - id: input2
-    type: BOOLEAN
+    type: BOOL
 labels:
   myLabel1: "myLabelValue1"
   myLabel2: "myLabelValue2"
@@ -155,6 +155,7 @@ describe("FlowAutoCompletionProvider", () => {
             "labels",
             "envs",
             "globals",
+            "parent",
             "parents",
             "error",
             "kestra",
@@ -183,6 +184,8 @@ describe("FlowAutoCompletionProvider", () => {
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
             "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
+            "ksuid()",
+            "parentOutput()"
         ]);
     })
 

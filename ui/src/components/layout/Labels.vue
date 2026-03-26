@@ -1,12 +1,12 @@
 <template>
-    <span v-if="props.labels.length">
+    <span v-if="props.labels.length" class="d-flex flex-wrap gap-1">
         <el-check-tag
             v-for="(label, index) in props.labels"
             :key="index"
             :disabled="readOnly"
             :checked="isChecked(label)"
             @change="updateLabel(label)"
-            class="me-1 el-tag label"
+            class="me-0 el-tag label"
         >
             <template v-if="!label.key">{{ label.value }}</template>
             <template v-else>{{ label.key }}:{{ label.value }}</template>
@@ -61,7 +61,7 @@
     };
 
     const updateLabel = (label: Label) => {
-        const getKey = (key?: string) => (props.filterType === "type" 
+        const getKey = (key?: string) => (props.filterType === "type"
             ? `filters[${props.filterType}][EQUALS]`
             : `filters[${props.filterType}][EQUALS][${key}]`);
 
@@ -84,21 +84,24 @@
 
 <style scoped lang="scss">
 .label {
-    --ks-tag-background: #E0E3F0;
-    --ks-tag-background-active: #B8BDD4;
+    --ks-tag-background: #ECEBEF;
+    --ks-tag-content: var(--ks-content-primary);
+    --ks-tag-background-active: #414557;
+    --ks-tag-content-active: var(--bs-white);
 
     html.dark & {
-        --ks-tag-background: #404559;
-        --ks-tag-background-active: #59607B;
+        --ks-tag-background: #5A6079;
+        --ks-tag-background-active: #F2F2F2;
+        --ks-tag-content-active: var(--bs-black);
     }
 
     background-color: var(--ks-tag-background);
     font-weight: normal;
-    color: var(--ks-content-primary);
+    color: var(--ks-tag-content);
 }
 
 .label.el-check-tag.is-checked {
     background-color: var(--ks-tag-background-active);
-    color: var(--ks-content-primary);
+    color: var(--ks-tag-content-active);
 }
 </style>

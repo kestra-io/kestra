@@ -1,13 +1,15 @@
 package io.kestra.core.runners.pebble.filters;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.utils.Rethrow;
-import io.kestra.core.junit.annotations.KestraTest;
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.utils.Rethrow;
+
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,13 +33,16 @@ class ChunkFilterTest {
 
     @Test
     void exception() {
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
-            Rethrow.throwSupplier(() -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
+            Rethrow.throwSupplier(() ->
+            {
                 variableRenderer.render("{{ test | chunk(2) }}", Map.of("test", 1));
                 return null;
             }).get();
         });
     }
+
     @Test
     void chunkWithIntegerVariable() throws IllegalVariableEvaluationException {
         // Reproducer for issue: Integer variable causing ClassCastException

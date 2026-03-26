@@ -1,16 +1,20 @@
 package io.kestra.core.validations.validator;
 
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
+
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -18,16 +22,10 @@ import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import static io.kestra.core.models.Label.READ_ONLY;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
-@Introspected
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
     public static List<String> RESERVED_FLOW_IDS = List.of(
         "pause",
@@ -41,9 +39,6 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         "disable",
         "enable"
     );
-
-    @Inject
-    private FlowService flowService;
 
     @Inject
     private NamespaceService namespaceService;
@@ -87,9 +82,11 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         allTasks.stream()
-            .filter(task -> task instanceof ExecutableTask<?> executableTask
-                && value.getId().equals(executableTask.subflowId().flowId())
-                && value.getNamespace().equals(executableTask.subflowId().namespace()))
+            .filter(
+                task -> task instanceof ExecutableTask<?> executableTask
+                    && value.getId().equals(executableTask.subflowId().flowId())
+                    && value.getNamespace().equals(executableTask.subflowId().namespace())
+            )
             .forEach(task -> violations.add("Recursive call to flow [" + value.getNamespace() + "." + value.getId() + "]"));
 
         // input unique name
@@ -106,12 +103,14 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         // preconditions unique id
-        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getTriggers()).stream()
-            .filter(it -> it instanceof io.kestra.plugin.core.trigger.Flow)
-            .map(it -> (io.kestra.plugin.core.trigger.Flow) it)
-            .filter(it -> it.getPreconditions() != null && it.getPreconditions().getId() != null)
-            .map(it -> it.getPreconditions().getId())
-            .toList());
+        duplicateIds = getDuplicates(
+            ListUtils.emptyOnNull(value.getTriggers()).stream()
+                .filter(it -> it instanceof io.kestra.plugin.core.trigger.Flow)
+                .map(it -> (io.kestra.plugin.core.trigger.Flow) it)
+                .filter(it -> it.getPreconditions() != null && it.getPreconditions().getId() != null)
+                .map(it -> it.getPreconditions().getId())
+                .toList()
+        );
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate preconditions with id [" + String.join(", ", duplicateIds) + "]");
         }
@@ -133,8 +132,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .collect(Collectors.toList());
 
         if (!invalidTasks.isEmpty()) {
-            violations.add("Invalid input reference: use inputs[key-name] instead of inputs.key-name — keys with dashes require bracket notation, offending tasks:" +
-                " [" + String.join(", ", invalidTasks) + "]");
+            violations.add(
+                "Invalid input reference: use inputs[key-name] instead of inputs.key-name — keys with dashes require bracket notation, offending tasks:" +
+                    " [" + String.join(", ", invalidTasks) + "]"
+            );
         }
 
         List<Pattern> outputsWithMinusPattern = allTasks.stream()
@@ -150,8 +151,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         violations.addAll(assetsViolations(allTasks));
 
         if (!invalidTasks.isEmpty()) {
-            violations.add("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending tasks:" +
-                " [" + String.join(", ", invalidTasks) + "]");
+            violations.add(
+                "Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending tasks:" +
+                    " [" + String.join(", ", invalidTasks) + "]"
+            );
         }
 
         List<String> invalidOutputs = ListUtils.emptyOnNull(value.getOutputs())
@@ -161,8 +164,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .collect(Collectors.toList());
 
         if (!invalidOutputs.isEmpty()) {
-            violations.add("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending outputs:" +
-                " [" + String.join(", ", invalidOutputs) + "]");
+            violations.add(
+                "Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending outputs:" +
+                    " [" + String.join(", ", invalidOutputs) + "]"
+            );
         }
 
         if (!violations.isEmpty()) {
@@ -189,22 +194,26 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         List<Field> fields = Arrays.asList(object.getClass().getDeclaredFields());
 
         return fields.stream()
-            .anyMatch(field -> patterns.stream()
-                .anyMatch(inputPattern -> {
-                    field.setAccessible(true);
-                    try {
-                        Optional<?> value=Optional.ofNullable(field.get(object));
+            .anyMatch(
+                field -> patterns.stream()
+                    .anyMatch(inputPattern ->
+                    {
+                        field.setAccessible(true);
+                        try {
+                            Optional<?> value = Optional.ofNullable(field.get(object));
 
-                        return value.filter(o -> inputPattern.matcher(o.toString()).find()).isPresent();
+                            return value.filter(o -> inputPattern.matcher(o.toString()).find()).isPresent();
 
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    }
-                }));
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+            );
     }
 
     private static void checkFlowInputsDependencyGraph(final Flow flow, final List<String> violations) {
-        if (ListUtils.isEmpty(flow.getInputs())) return;
+        if (ListUtils.isEmpty(flow.getInputs()))
+            return;
 
         Map<String, List<String>> graph = new HashMap<>();
         for (Input<?> input : flow.getInputs()) {
@@ -214,15 +223,18 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             }
         }
 
-        graph.forEach((key, dependencies) -> {
+        graph.forEach((key, dependencies) ->
+        {
             if (!dependencies.isEmpty()) {
-                dependencies.forEach(id -> {
+                dependencies.forEach(id ->
+                {
                     if (graph.get(id) == null) {
                         violations.add(String.format("Input with id '%s' depends on a non-existent input '%s'.", key, id));
                     }
                 });
             }
-            CycleDependency.findCycle(key, graph).ifPresent(list -> {
+            CycleDependency.findCycle(key, graph).ifPresent(list ->
+            {
                 violations.add(String.format("Cycle dependency detected for input with id '%s': %s", key, list));
             });
         });
@@ -244,7 +256,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         /**
          * Static method for finding cycles in dependencies.
          *
-         * @param id    The input ID to check.
+         * @param id The input ID to check.
          * @param graph The input's dependencies.
          * @return The optional path where a cycle was found.
          */
@@ -253,10 +265,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         public static Optional<List<String>> findCycle(String id,
-                                                       Map<String, List<String>> graph,
-                                                       Set<String> visiting,
-                                                       Set<String> visited,
-                                                       List<String> path) {
+            Map<String, List<String>> graph,
+            Set<String> visiting,
+            Set<String> visited,
+            List<String> path) {
             if (visiting.contains(id)) {
                 // Cycle detected, return the current path that forms the cycle
                 int cycleStartIndex = path.indexOf(id);
@@ -268,7 +280,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             }
 
             visiting.add(id);
-            path.add(id);  // Add to current path
+            path.add(id); // Add to current path
 
             // Visit all the dependencies (dependsOn)
             List<String> dependencies = graph.get(id);

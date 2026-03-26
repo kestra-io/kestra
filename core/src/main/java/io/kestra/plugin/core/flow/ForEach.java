@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -16,15 +19,12 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -188,7 +188,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The list of values for which Kestra will execute a group of tasks",
         description = "The values can be passed as a string, a list of strings, or a list of objects.",
-        oneOf = {String.class, Object[].class}
+        oneOf = { String.class, Object[].class }
     )
     private Object values;
 
@@ -196,14 +196,14 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-      title = "The number of concurrent task groups for each value in the `values` array",
-      description = """
-        A `concurrencyLimit` of 0 means no limit — all task groups run in parallel.
+        title = "The number of concurrent task groups for each value in the `values` array",
+        description = """
+            A `concurrencyLimit` of 0 means no limit — all task groups run in parallel.
 
-        A `concurrencyLimit` of 1 means full serialization — only one task group runs at a time, in order.
+            A `concurrencyLimit` of 1 means full serialization — only one task group runs at a time, in order.
 
-        A `concurrencyLimit` greater than 1 allows up to the specified number of task groups to run in parallel.
-        """
+            A `concurrencyLimit` greater than 1 allows up to the specified number of task groups to run in parallel.
+            """
     )
     @PluginProperty
     private final Integer concurrencyLimit = 1;

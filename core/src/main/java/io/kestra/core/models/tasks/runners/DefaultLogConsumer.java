@@ -1,8 +1,8 @@
 package io.kestra.core.models.tasks.runners;
 
-import io.kestra.core.runners.RunContext;
-
 import java.time.Instant;
+
+import io.kestra.core.runners.RunContext;
 
 /**
  * Default implementation of an @{link {@link AbstractLogConsumer}}

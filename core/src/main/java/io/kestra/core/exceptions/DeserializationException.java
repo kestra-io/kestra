@@ -1,8 +1,8 @@
 package io.kestra.core.exceptions;
 
-import lombok.Getter;
-
 import java.io.Serial;
+
+import lombok.Getter;
 
 @Getter
 public class DeserializationException extends RuntimeException {

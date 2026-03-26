@@ -1,6 +1,7 @@
 package io.kestra.core.plugins;
 
 import io.kestra.core.models.Plugin;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

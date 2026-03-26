@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -11,7 +10,6 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-@Introspected
 public class Concurrency {
     @Min(1)
     @NotNull
@@ -22,7 +20,9 @@ public class Concurrency {
     private Behavior behavior = Behavior.QUEUE;
 
     public enum Behavior {
-        QUEUE, CANCEL, FAIL;
+        QUEUE,
+        CANCEL,
+        FAIL;
     }
 
     public static boolean possibleTransitions(State.Type type) {

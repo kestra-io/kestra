@@ -1,8 +1,10 @@
 package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.runners.WorkerTask;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;

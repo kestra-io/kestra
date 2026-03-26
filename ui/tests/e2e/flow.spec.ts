@@ -90,7 +90,7 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("button", {name: "Execute"}).first().click();
 
-            await expect(page.getByRole("dialog").getByText("INPUT_A")).toBeVisible();
+            await expect(page.getByRole("dialog").getByText("INPUT_A", {exact: true})).toBeVisible();
             await page.getByRole("dialog").getByTestId("monaco-editor").getByRole("textbox").fill(inputValue);
             await page.waitForTimeout(2100);
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();

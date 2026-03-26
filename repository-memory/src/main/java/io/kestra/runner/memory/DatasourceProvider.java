@@ -1,5 +1,7 @@
 package io.kestra.runner.memory;
 
+import java.util.Optional;
+
 import io.micronaut.configuration.jdbc.hikari.DatasourceConfiguration;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
@@ -8,8 +10,6 @@ import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.flyway.FlywayConfigurationProperties;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-
-import java.util.Optional;
 
 @SuppressWarnings("rawtypes")
 @Factory
@@ -32,7 +32,7 @@ public class DatasourceProvider {
         CustomFlywayConfiguration flyway = new CustomFlywayConfiguration("h2");
         flyway.setEnabled(true);
         flyway.setLocations("classpath:migrations/h2");
-        flyway.setIgnoreMigrationPatterns("*:missing","*:future");
+        flyway.setIgnoreMigrationPatterns("*:missing", "*:future");
         flyway.getProperties().put("outOfOrder", "true");
         return flyway;
     }

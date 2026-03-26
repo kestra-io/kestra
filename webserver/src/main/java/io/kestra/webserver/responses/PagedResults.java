@@ -1,13 +1,14 @@
 package io.kestra.webserver.responses;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.repositories.ArrayListTotal;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.NotNull;
-
-import java.util.List;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor

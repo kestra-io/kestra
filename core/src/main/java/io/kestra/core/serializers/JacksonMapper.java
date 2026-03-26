@@ -1,6 +1,16 @@
 
 package io.kestra.core.serializers;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.yaml.snakeyaml.LoaderOptions;
+
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.system.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,28 +33,23 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.diff.JsonDiff;
+
 import io.kestra.core.plugins.PluginModule;
-import io.kestra.core.runners.RunContextModule;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
-import org.apache.commons.lang3.tuple.Pair;
-import org.yaml.snakeyaml.LoaderOptions;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
 
 import static com.fasterxml.jackson.core.StreamReadConstraints.DEFAULT_MAX_STRING_LEN;
 
 public final class JacksonMapper {
-    public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
-    public static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
-    public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {};
+    public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {
+    };
+    public static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {
+    };
+    public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
-    private JacksonMapper() {}
+    private JacksonMapper() {
+    }
 
     static {
         StreamReadConstraints.overrideDefaultStreamReadConstraints(
@@ -61,7 +66,7 @@ public final class JacksonMapper {
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public static ObjectMapper ofJson() {
-        return JacksonMapper.ofJson(true);
+        return JacksonMapper.ofJson(false);
     }
 
     public static ObjectMapper ofJson(boolean strict) {
@@ -78,7 +83,7 @@ public final class JacksonMapper {
                 .configure(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID, false)
                 .configure(YAMLGenerator.Feature.SPLIT_LINES, false)
                 .build()
-        )
+        ).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     );
 
     public static ObjectMapper ofYaml() {
@@ -109,7 +114,8 @@ public final class JacksonMapper {
     }
 
     public static List<String> toList(Object object) {
-        return MAPPER.convertValue(object, new TypeReference<>() {});
+        return MAPPER.convertValue(object, new TypeReference<>() {
+        });
     }
 
     public static Object toObject(String json) throws JsonProcessingException {
@@ -146,7 +152,6 @@ public final class JacksonMapper {
             .registerModule(new ParameterNamesModule())
             .registerModules(new GuavaModule())
             .registerModule(new PluginModule())
-            .registerModule(new RunContextModule())
             .registerModule(durationDeserialization)
             .setTimeZone(TimeZone.getDefault());
     }
@@ -154,16 +159,17 @@ public final class JacksonMapper {
     private static ObjectMapper createIonObjectMapper() {
         return configure(new IonObjectMapper(new IonFactory(createIonSystem())))
             .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .registerModule(new IonModule());
     }
 
     private static IonSystem createIonSystem() {
-         return IonSystemBuilder.standard()
+        return IonSystemBuilder.standard()
             .withIonTextWriterBuilder(IonTextWriterBuilder.standard().withWriteTopLevelValuesOnNewLines(true))
             .build();
     }
 
-    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object before, Object after)  {
+    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object before, Object after) {
         JsonNode beforeNode = MAPPER.valueToTree(before);
         JsonNode afterNode = MAPPER.valueToTree(after);
 

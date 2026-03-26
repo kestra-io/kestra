@@ -1,6 +1,10 @@
 package io.kestra.core.models.collectors;
 
-import io.micronaut.core.annotation.Introspected;
+import java.lang.management.ManagementFactory;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
@@ -11,15 +15,9 @@ import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.NetworkIF;
 import oshi.software.os.OperatingSystem;
 
-import java.lang.management.ManagementFactory;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 @SuperBuilder
 @Getter
 @Jacksonized
-@Introspected
 public class HostUsage {
     private final String uuid;
     private final Hardware hardware;
@@ -29,7 +27,6 @@ public class HostUsage {
     @SuperBuilder
     @Getter
     @Jacksonized
-    @Introspected
     public static class Hardware {
         private final int logicalProcessorCount;
         private final long physicalProcessorCount;
@@ -42,7 +39,6 @@ public class HostUsage {
     @SuperBuilder
     @Getter
     @Jacksonized
-    @Introspected
     public static class Os {
         private final String family;
         private final String version;
@@ -53,7 +49,6 @@ public class HostUsage {
     @SuperBuilder
     @Getter
     @Jacksonized
-    @Introspected
     public static class Jvm {
         private final String name;
         private final String vendor;
@@ -91,32 +86,32 @@ public class HostUsage {
 
         return HostUsage.builder()
             .uuid(hostUuid)
-            .hardware(HostUsage.Hardware.builder()
-                .logicalProcessorCount(processor.getLogicalProcessorCount())
-                .physicalProcessorCount(processor.getPhysicalProcessorCount())
-                .maxFreq(processor.getMaxFreq())
-                .memory(hardware.getMemory().getTotal())
-                .knownVmMacAddr(hardware.getNetworkIFs().stream().anyMatch(NetworkIF::isKnownVmMacAddr))
-                .knownDockerMacAddr(hardware.getNetworkIFs().stream().anyMatch(networkIF -> networkIF.getMacaddr().startsWith("02:42:ac")))
-                .build()
+            .hardware(
+                HostUsage.Hardware.builder()
+                    .logicalProcessorCount(processor.getLogicalProcessorCount())
+                    .physicalProcessorCount(processor.getPhysicalProcessorCount())
+                    .maxFreq(processor.getMaxFreq())
+                    .memory(hardware.getMemory().getTotal())
+                    .knownVmMacAddr(hardware.getNetworkIFs().stream().anyMatch(NetworkIF::isKnownVmMacAddr))
+                    .knownDockerMacAddr(hardware.getNetworkIFs().stream().anyMatch(networkIF -> networkIF.getMacaddr().startsWith("02:42:ac")))
+                    .build()
             )
-            .os(HostUsage.Os.builder()
-                .family(operatingSystem.getFamily())
-                .version(operatingSystem.getVersionInfo().getVersion())
-                .codeName(operatingSystem.getVersionInfo().getCodeName())
-                .buildNumber(operatingSystem.getVersionInfo().getBuildNumber())
-                .build()
+            .os(
+                HostUsage.Os.builder()
+                    .family(operatingSystem.getFamily())
+                    .version(operatingSystem.getVersionInfo().getVersion())
+                    .codeName(operatingSystem.getVersionInfo().getCodeName())
+                    .buildNumber(operatingSystem.getVersionInfo().getBuildNumber())
+                    .build()
             )
-            .jvm(HostUsage.Jvm.builder()
-                .name(ManagementFactory.getRuntimeMXBean().getVmName())
-                .vendor(ManagementFactory.getRuntimeMXBean().getVmVendor())
-                .version(ManagementFactory.getRuntimeMXBean().getVmVersion())
-                .build()
+            .jvm(
+                HostUsage.Jvm.builder()
+                    .name(ManagementFactory.getRuntimeMXBean().getVmName())
+                    .vendor(ManagementFactory.getRuntimeMXBean().getVmVendor())
+                    .version(ManagementFactory.getRuntimeMXBean().getVmVersion())
+                    .build()
             )
             .build();
     }
 
 }
-
-
-

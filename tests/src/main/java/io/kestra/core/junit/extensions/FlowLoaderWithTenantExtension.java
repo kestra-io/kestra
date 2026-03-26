@@ -1,19 +1,26 @@
 package io.kestra.core.junit.extensions;
 
-import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
-import io.kestra.core.utils.TestsUtils;
 import java.net.URISyntaxException;
-import lombok.SneakyThrows;
+
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
-public class FlowLoaderWithTenantExtension extends AbstractFlowLoaderExtension implements
+import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.utils.TestsUtils;
+
+import lombok.SneakyThrows;
+
+public class FlowLoaderWithTenantExtension extends AbstractLoaderExtension implements
     ParameterResolver, AfterEachCallback {
 
-    private String tenantId = TestsUtils.randomTenant();
+    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(WithFlowExtension.class);
+
+    private static final String KEY_TENANT_ID = "tenantId";
+
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
@@ -24,6 +31,9 @@ public class FlowLoaderWithTenantExtension extends AbstractFlowLoaderExtension i
     @Override
     public Object resolveParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
+        String tenantId = TestsUtils.randomTenant("test");
+        ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
+        store.put(KEY_TENANT_ID, tenantId);
         LoadFlowsWithTenant loadFlows = getLoadFlows(extensionContext);
         loadFlows(extensionContext, tenantId, loadFlows.value());
         return tenantId;
@@ -31,8 +41,13 @@ public class FlowLoaderWithTenantExtension extends AbstractFlowLoaderExtension i
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
-        LoadFlowsWithTenant loadFlows = getLoadFlows(extensionContext);
-        deleteFlows(tenantId, loadFlows.value());
+        ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
+        String tenantId = store.get(KEY_TENANT_ID, String.class);
+
+        if (StringUtils.isNotBlank(tenantId)) {
+            LoadFlowsWithTenant loadFlows = getLoadFlows(extensionContext);
+            deleteFlows(tenantId, loadFlows.value());
+        }
     }
 
     private static LoadFlowsWithTenant getLoadFlows(ExtensionContext extensionContext) {

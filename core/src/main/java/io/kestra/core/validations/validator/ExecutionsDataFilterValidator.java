@@ -1,20 +1,19 @@
 package io.kestra.core.validations.validator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.kestra.core.validations.ExecutionsDataFilterValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
+
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Singleton
-@Introspected
 public class ExecutionsDataFilterValidator implements ConstraintValidator<ExecutionsDataFilterValidation, Executions<?>> {
     @Override
     public boolean isValid(
@@ -27,14 +26,16 @@ public class ExecutionsDataFilterValidator implements ConstraintValidator<Execut
 
         List<String> violations = new ArrayList<>();
 
-        executionsDataFilter.getColumns().forEach((key, value) -> {
+        executionsDataFilter.getColumns().forEach((key, value) ->
+        {
             if (value.getField() == Executions.Fields.LABELS && value.getLabelKey() == null) {
                 violations.add("Column `" + key + "` must have a `labelKey`.");
             }
         });
 
         if (executionsDataFilter.getWhere() != null) {
-            executionsDataFilter.getWhere().forEach(filter -> {
+            executionsDataFilter.getWhere().forEach(filter ->
+            {
                 if (filter.getField() == Executions.Fields.LABELS && filter.getLabelKey() == null) {
                     violations.add("Label filters must have a `labelKey`.");
                 }

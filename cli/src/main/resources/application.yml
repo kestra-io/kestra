@@ -56,7 +56,6 @@ micronaut:
   caches:
     default:
       maximum-weight: 10485760
-
   http:
     client:
       read-idle-timeout: 60s
@@ -112,6 +111,12 @@ jackson:
   mapper:
     ACCEPT_CASE_INSENSITIVE_ENUMS: true
 
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false
 endpoints:
   all:
     port: 8081
@@ -201,6 +206,19 @@ kestra:
         initial-delay: 1h
         fixed-delay: 1d
         retention: 30d
+  controller:
+    port: 50051
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
+  queue:
+    message-protection:
+      enabled: true
+      limit: 1048576
 
   jdbc:
     queues:

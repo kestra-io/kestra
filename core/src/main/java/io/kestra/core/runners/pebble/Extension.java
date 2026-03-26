@@ -1,11 +1,17 @@
 package io.kestra.core.runners.pebble;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import io.kestra.core.runners.pebble.expression.InExpression;
 import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
 import io.kestra.core.runners.pebble.expression.UndefinedCoalescingExpression;
-import io.kestra.core.runners.pebble.expression.InExpression;
 import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.runners.pebble.functions.*;
 import io.kestra.core.runners.pebble.tests.JsonTest;
+
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
@@ -15,11 +21,6 @@ import io.pebbletemplates.pebble.operator.UnaryOperator;
 import io.pebbletemplates.pebble.tokenParser.TokenParser;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static io.pebbletemplates.pebble.operator.BinaryOperatorType.NORMAL;
 
@@ -97,7 +98,6 @@ public class Extension extends AbstractExtension {
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
         filters.put("escapeChar", new EscapeCharFilter());
-        filters.put("json", new JsonFilter());
         filters.put("toJson", new ToJsonFilter());
         filters.put("distinct", new DistinctFilter());
         filters.put("keys", new KeysFilter());
@@ -138,7 +138,6 @@ public class Extension extends AbstractExtension {
         Map<String, Function> functions = new HashMap<>();
 
         functions.put("now", new NowFunction());
-        functions.put("json", new JsonFunction());
         functions.put("fromJson", new FromJsonFunction());
         functions.put("currentEachOutput", new CurrentEachOutputFunction());
         functions.put(SecretFunction.NAME, secretFunction);
@@ -170,8 +169,9 @@ public class Extension extends AbstractExtension {
         functions.put("isFileEmpty", isFileEmptyFunction);
         functions.put("nanoId", new NanoIDFunction());
         functions.put("tasksWithState", new TasksWithStateFunction());
-        functions.put(IterationOutputFunction.NAME,new IterationOutputFunction());
+        functions.put(IterationOutputFunction.NAME, new IterationOutputFunction());
         functions.put(HttpFunction.NAME, httpFunction);
+        functions.put("parentOutput", new ParentOutputFunction());
         return functions;
     }
 
@@ -185,5 +185,3 @@ public class Extension extends AbstractExtension {
         return null;
     }
 }
-
-

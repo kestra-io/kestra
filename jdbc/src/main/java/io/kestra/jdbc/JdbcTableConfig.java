@@ -14,8 +14,7 @@ public class JdbcTableConfig {
     public JdbcTableConfig(
         @Parameter String name,
         @Nullable Class<?> cls,
-        @NotNull String table
-    ) {
+        @NotNull String table) {
         this.name = name;
         this.cls = cls;
         this.table = table;

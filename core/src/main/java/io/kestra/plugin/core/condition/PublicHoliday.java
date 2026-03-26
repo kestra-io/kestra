@@ -1,7 +1,8 @@
 package io.kestra.plugin.core.condition;
 
-import de.focus_shift.jollyday.core.HolidayManager;
-import de.focus_shift.jollyday.core.ManagerParameters;
+import java.time.LocalDate;
+import java.util.Map;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -10,13 +11,13 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
+
+import de.focus_shift.jollyday.core.HolidayManager;
+import de.focus_shift.jollyday.core.ManagerParameters;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDate;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -78,7 +79,7 @@ import java.util.Map;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.PublicHolidayCondition", "io.kestra.plugin.core.condition.PublicHolidayCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.PublicHolidayCondition", "io.kestra.plugin.core.condition.PublicHolidayCondition" }
 )
 public class PublicHoliday extends Condition implements ScheduleCondition {
     @Schema(
@@ -103,12 +104,12 @@ public class PublicHoliday extends Condition implements ScheduleCondition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        Map<String, Object> variables=conditionContext.getVariables();
+        Map<String, Object> variables = conditionContext.getVariables();
         var renderedCountry = conditionContext.getRunContext().render(this.country).as(String.class).orElse(null);
         var renderedSubDivision = conditionContext.getRunContext().render(this.subDivision).as(String.class).orElse(null);
 
         HolidayManager holidayManager = renderedCountry != null ? HolidayManager.getInstance(ManagerParameters.create(renderedCountry)) : HolidayManager.getInstance();
-        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).as(String.class,variables).orElseThrow());
+        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).as(String.class, variables).orElseThrow());
         return renderedSubDivision == null ? holidayManager.isHoliday(currentDate) : holidayManager.isHoliday(currentDate, renderedSubDivision);
     }
 }

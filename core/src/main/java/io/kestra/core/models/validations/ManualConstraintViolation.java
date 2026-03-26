@@ -1,14 +1,12 @@
 package io.kestra.core.models.validations;
 
-import io.kestra.core.models.flows.input.FloatInput;
-import jakarta.validation.ConstraintViolationException;
-import lombok.Getter;
+import java.util.Set;
 
 import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 import jakarta.validation.metadata.ConstraintDescriptor;
-
-import java.util.Set;
+import lombok.Getter;
 
 @Getter
 public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
@@ -25,8 +23,7 @@ public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
         Class<T> rootBeanClass,
         Object leafBean,
         Path propertyPath,
-        Object invalidValue
-    ) {
+        Object invalidValue) {
         this.message = message;
         this.rootBean = rootBean;
         this.rootBeanClass = rootBeanClass;
@@ -40,8 +37,7 @@ public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
         T object,
         Class<T> cls,
         String propertyPath,
-        Object invalidValue
-    ) {
+        Object invalidValue) {
         return new ManualConstraintViolation<T>(
             message,
             object,
@@ -57,19 +53,22 @@ public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
         T object,
         Class<T> cls,
         String propertyPath,
-        Object invalidValue
-    ) {
-        return new ConstraintViolationException(Set.of(of(
-            message,
-            object,
-            cls,
-            propertyPath,
-            invalidValue
-        )));
+        Object invalidValue) {
+        return new ConstraintViolationException(
+            Set.of(
+                of(
+                    message,
+                    object,
+                    cls,
+                    propertyPath,
+                    invalidValue
+                )
+            )
+        );
     }
+
     public static <T> ConstraintViolationException toConstraintViolationException(
-        Set<? extends ConstraintViolation<?>> constraintViolations
-    ) {
+        Set<? extends ConstraintViolation<?>> constraintViolations) {
         return new ConstraintViolationException(constraintViolations);
     }
 

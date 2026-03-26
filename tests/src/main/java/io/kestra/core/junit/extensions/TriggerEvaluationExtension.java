@@ -1,5 +1,12 @@
 package io.kestra.core.junit.extensions;
 
+import java.net.URL;
+import java.nio.file.Paths;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.junit.jupiter.api.extension.*;
+
 import io.kestra.core.junit.annotations.EvaluateTrigger;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -8,18 +15,12 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.serializers.YamlParser;
+
 import io.micronaut.context.ApplicationContext;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.extension.*;
-
-import java.net.URL;
-import java.nio.file.Paths;
-import java.time.ZonedDateTime;
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * JUnit 5 extension to evaluate triggers and inject its Optional<Execution>.
@@ -27,9 +28,7 @@ import java.util.Optional;
 public class TriggerEvaluationExtension implements ParameterResolver {
     ApplicationContext context;
 
-
     RunContextFactory runContextFactory;
-
 
     RunContextInitializer runContextInitializer;
 
@@ -54,14 +53,12 @@ public class TriggerEvaluationExtension implements ParameterResolver {
 
         Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
 
-
-        AbstractTrigger trigger =  flow.getTriggers().stream()
+        AbstractTrigger trigger = flow.getTriggers().stream()
             .filter(t -> t.getId().equals(evaluateTrigger.triggerId()))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Trigger not found: " + evaluateTrigger.triggerId()));
 
-
-    return evaluateTrigger(trigger,flow);
+        return evaluateTrigger(trigger, flow);
     }
 
     private void ensureContext(ExtensionContext extensionContext) {
@@ -77,31 +74,34 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             runContextInitializer = context.getBean(RunContextInitializer.class);
         }
     }
-    private Optional<Execution> evaluateTrigger(AbstractTrigger trigger,Flow flow) throws Exception {
 
-        if(trigger instanceof PollingTriggerInterface pollingTrigger){
+    private Optional<Execution> evaluateTrigger(AbstractTrigger trigger, Flow flow) throws Exception {
+
+        if (trigger instanceof PollingTriggerInterface pollingTrigger) {
             TriggerContext triggerContext = triggerContext(trigger, flow);
             ConditionContext conditionContext = conditionContext(trigger, flow);
 
             return pollingTrigger.evaluate(conditionContext, triggerContext);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Unsupported trigger type: " + trigger.getClass());
         }
     }
+
     private ConditionContext conditionContext(AbstractTrigger trigger, Flow flow) {
 
-        TriggerContext triggerContext=triggerContext(trigger,flow);
+        TriggerContext triggerContext = triggerContext(trigger, flow);
 
         return ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler(
-                (DefaultRunContext) runContextFactory.of(), triggerContext, trigger
-            ))
+            .runContext(
+                runContextInitializer.forScheduler(
+                    (DefaultRunContext) runContextFactory.of(), triggerContext, trigger
+                )
+            )
             .flow(flow)
             .build();
     }
-    private TriggerContext triggerContext(AbstractTrigger trigger,Flow flow)
-    {
+
+    private TriggerContext triggerContext(AbstractTrigger trigger, Flow flow) {
         return TriggerContext.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
@@ -109,6 +109,5 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             .date(ZonedDateTime.now())
             .build();
     }
-
 
 }

@@ -1,12 +1,12 @@
 package io.kestra.core.models.tasks.runners;
 
 import io.kestra.core.models.tasks.Output;
+
+import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.annotation.Nullable;
 
 @AllArgsConstructor
 @Getter

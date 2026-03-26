@@ -202,8 +202,6 @@ export const useTriggerStore = defineStore("trigger", () => {
         pauseBackfillByTriggers,
         deleteBackfillByQuery,
         deleteBackfillByTriggers,
-        createBackfill,
-        setDisabled,
         setDisabledByQuery,
         setDisabledByTriggers,
         delete: deleteTrigger,

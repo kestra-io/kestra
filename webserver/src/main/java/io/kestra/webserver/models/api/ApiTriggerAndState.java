@@ -9,8 +9,8 @@ import lombok.Getter;
  * API DTO combining a trigger definition with its runtime state.
  */
 @Builder
-@Getter
-public class ApiTriggerAndState {
-    AbstractTrigger trigger;
-    ApiTriggerState state;
+public record ApiTriggerAndState(
+    AbstractTrigger trigger,
+    ApiTriggerState state
+) {
 }

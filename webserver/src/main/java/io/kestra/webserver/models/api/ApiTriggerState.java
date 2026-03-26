@@ -1,6 +1,7 @@
 package io.kestra.webserver.models.api;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import io.kestra.core.models.flows.State;
@@ -23,21 +24,27 @@ public record ApiTriggerState(
     List<State.Type> stopAfter,
     boolean disabled,
     boolean locked,
-    String workerId
+    String workerId,
+    Instant lastTriggeredDate
 ) {
     public static ApiTriggerState from(TriggerState state) {
         return new ApiTriggerState(
             state.getNamespace(),
             state.getFlowId(),
             state.getTriggerId(),
-            state.getUpdatedAt(),
-            state.getEvaluatedAt(),
-            state.getNextEvaluationDate(),
+            truncate(state.getUpdatedAt()),
+            truncate(state.getEvaluatedAt()),
+            truncate(state.getNextEvaluationDate()),
             state.getBackfill(),
             state.getStopAfter(),
             state.isDisabled(),
             state.isLocked(),
-            state.getWorkerId()
+            state.getWorkerId(),
+            truncate(state.getLastTriggeredDate())
         );
+    }
+
+    private static Instant truncate(Instant instant) {
+        return instant != null ? instant.truncatedTo(ChronoUnit.SECONDS) : null;
     }
 }

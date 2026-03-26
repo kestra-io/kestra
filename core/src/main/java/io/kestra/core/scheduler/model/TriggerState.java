@@ -45,8 +45,9 @@ public final class TriggerState implements TriggerId {
     private final boolean locked;
     private final String workerId;
     private final TriggerType type;
-    // the last-event id that mutate this state. 
+    // the last-event id that mutate this state.
     private final EventId lastEventId;
+    private final Instant lastTriggeredDate;
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -99,6 +100,7 @@ public final class TriggerState implements TriggerId {
             false,
             null,
             type,
+            null,
             null
         );
     }
@@ -229,7 +231,11 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public TriggerState updateForExecution(final Clock clock, final Execution execution) {
-        return updateForExecutionState(clock, execution.getState().getCurrent());
+        boolean disabled = getStopAfter() != null ? getStopAfter().contains(execution.getState().getCurrent()) : isDisabled();
+        return update(clock)
+            .disabled(disabled)
+            .lastTriggeredDate(clock.instant())
+            .build();
     }
 
     /**
@@ -272,7 +278,17 @@ public final class TriggerState implements TriggerId {
     }
 
     /**
-     * Sets the tenant of this trigger state.
+     * Updates this trigger state with the given last triggered date.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState lastTriggeredDate(final Clock clock) {
+        return update(clock).lastTriggeredDate(clock.instant()).build();
+    }
+
+    /**
+     * Sets the last event id of this trigger state.
      *
      * @return a new {@link TriggerState}
      */
@@ -314,7 +330,8 @@ public final class TriggerState implements TriggerId {
             .vnode(vnode)
             .disabled(disabled)
             .type(type)
-            .lastEventId(lastEventId);
+            .lastEventId(lastEventId)
+            .lastTriggeredDate(lastTriggeredDate);
     }
 
     // Lombok hack to properly generate Javadoc

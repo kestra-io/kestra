@@ -56,8 +56,8 @@
                         :shrink="true"
                     />
                 </template>
-                <template v-else-if="column.prop === 'nextExecutionDate'">
-                    <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
+                <template v-else-if="column.prop === 'nextEvaluationDate'">
+                    <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
                 </template>
                 <template v-else>
                     {{ scope.row[column.prop] }}
@@ -135,7 +135,7 @@
         <el-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <IconButton
-                    v-if="scope.row.evaluateRunningDate"
+                    v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('restart trigger.button')"
                     placement="left"
@@ -149,7 +149,7 @@
         <el-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <IconButton
-                    v-if="scope.row.executionId"
+                    v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('unlock trigger.button')"
                     placement="left"
@@ -341,8 +341,8 @@
             description: t("filter.table_column.flow_triggers.workerId")
         },
         {
-            label: t("next execution date"), 
-            prop: "nextExecutionDate", 
+            label: t("next evaluation date"),
+            prop: "nextEvaluationDate",
             default: true, 
             description: t("filter.table_column.flow_triggers.next execution date")
         }

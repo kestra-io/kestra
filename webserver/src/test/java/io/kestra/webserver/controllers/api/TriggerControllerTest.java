@@ -100,7 +100,7 @@ class TriggerControllerTest {
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
-        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::getState).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
                 ApiTriggerState::triggerId,
                 ApiTriggerState::namespace,
@@ -129,7 +129,7 @@ class TriggerControllerTest {
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
-        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::getState).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
                 ApiTriggerState::triggerId,
                 ApiTriggerState::namespace,
@@ -161,7 +161,7 @@ class TriggerControllerTest {
 
         //THEN
         assertThat(triggers.getTotal()).isGreaterThanOrEqualTo(2L);
-        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::getState).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
                 ApiTriggerState::triggerId,
                 ApiTriggerState::namespace,

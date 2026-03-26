@@ -548,11 +548,14 @@
     };
 
     const postBackfill = () => {
+        const trigger = selectedTrigger.value as any;
         triggerStore.createBackfill({
-            ...(selectedTrigger.value as unknown as object),
+            namespace: trigger.namespace,
+            flowId: trigger.flowId,
+            triggerId: trigger.triggerId,
             backfill: backfill.value
         })
-            .then(newTrigger => {
+            .then((newTrigger: any) => {
                 toast.saved(newTrigger.id);
                 triggers.value = triggers.value?.map((t: any) => {
                     if (t.id === newTrigger.triggerId) {
@@ -627,7 +630,7 @@
             return;
         }
         triggerStore.setDisabled({...trigger, disabled: !value})
-            .then(updatedTrigger => {
+            .then((updatedTrigger: any) => {
                 toast.saved(updatedTrigger.triggerId);
                 triggers.value = triggers.value?.map((t: any) => {
                     const triggerContextMatches = t.triggerContext &&

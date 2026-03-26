@@ -62,9 +62,9 @@
     import {useAxios} from "../../../../../../utils/axios";
 
     const props = defineProps<{
-        property: "outputs" | "trigger";
+        property?: "outputs" | "trigger";
         execution: Execution;
-        path: string;
+        path?: string;
     }>();
 
     const result = ref<{ value: string; type: string } | undefined>(undefined);
@@ -79,10 +79,12 @@
 
     const expression = ref<string>("");
     watch(
-        () => props.path,
-        (path?: string) => {
-            clearAll();
-            expression.value = `{{ ${props.property}${path ? `.${path}` : ""} }}`;
+        () => [props.property, props.path],
+        ([property, path]) => {
+            if (property) {
+                clearAll();
+                expression.value = `{{ ${property}${path ? `.${path}` : ""} }}`;
+            }
         },
         {immediate: true},
     );

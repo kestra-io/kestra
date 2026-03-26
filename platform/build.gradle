@@ -132,7 +132,7 @@ dependencies {
         // Json Diff
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
         api 'com.rabbitmq:amqp-client:5.26.0'
-        api 'org.apache.commons:commons-pool2:2.12.1'
+        api 'org.apache.commons:commons-pool2:2.13.1'
         api 'io.lettuce:lettuce-core:6.8.1.RELEASE'
 
         // force transitive version to fix CVE

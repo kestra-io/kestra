@@ -1403,14 +1403,14 @@ public abstract class AbstractExecutionRepositoryTest {
 
     @ParameterizedTest
     @FieldSource("dashboardScopeFilterTestCases")
-    protected void dashboard_fetchData_withScopeFilter(DashboardScopeFilterTestCase testCase) throws IOException {
-        // Given: one execution in the user namespace, one in the system namespace
+    protected void dashboardFetchDataWithScopeFilter(DashboardScopeFilterTestCase testCase) throws IOException {
+        // Given
         var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         executionRepository.save(scopeUserExecution.toBuilder().tenantId(tenantId).build());
         executionRepository.save(scopeSystemExecution.toBuilder().tenantId(tenantId).build());
 
-        // When: apply the scope filter via updateWhereWithGlobalFilters
+        // When
         var now = ZonedDateTime.now();
         var dataFilter = Executions.builder()
             .type(Executions.class.getName())
@@ -1422,21 +1422,21 @@ public abstract class AbstractExecutionRepositoryTest {
 
         ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, dataFilter, now.minusHours(1), now, null);
 
-        // Then: verify the expected execution IDs are returned
+        // Then
         List<String> returnedIds = data.stream().map(row -> (String) row.get("id")).toList();
         assertThat(returnedIds).containsExactlyInAnyOrderElementsOf(testCase.expectedIds());
     }
 
     @ParameterizedTest
     @FieldSource("dashboardScopeFilterTestCases")
-    protected void dashboard_fetchValue_withScopeFilter(DashboardScopeFilterTestCase testCase) throws IOException {
-        // Given: one execution in the user namespace, one in the system namespace
+    protected void dashboardFetchValueWithScopeFilter(DashboardScopeFilterTestCase testCase) throws IOException {
+        // Given
         var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         executionRepository.save(scopeUserExecution.toBuilder().tenantId(tenantId).build());
         executionRepository.save(scopeSystemExecution.toBuilder().tenantId(tenantId).build());
 
-        // When: apply the scope filter via updateWhereWithGlobalFilters
+        // When
         var now = ZonedDateTime.now();
         var dataFilter = ExecutionsKPI.builder()
             .type(ExecutionsKPI.class.getName())
@@ -1446,7 +1446,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
         Double value = executionRepository.fetchValue(tenantId, dataFilter, now.minusHours(1), now, false);
 
-        // Then: the count should match the number of expected IDs
+        // Then
         assertThat(value).isEqualTo((double) testCase.expectedIds().size());
     }
 }

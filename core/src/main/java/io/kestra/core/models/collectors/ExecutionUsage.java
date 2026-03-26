@@ -9,11 +9,9 @@ import io.kestra.core.utils.DateUtils;
 
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
 @Getter
-@Jacksonized
 public class ExecutionUsage {
     private final List<DailyExecutionStatistics> dailyExecutionsCount;
 

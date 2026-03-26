@@ -31,7 +31,6 @@ import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @Controller("/api/v1/{tenant}/blueprints/community")
 public class BlueprintController {
@@ -133,7 +132,7 @@ public class BlueprintController {
 
     @Value
     @SuperBuilder(toBuilder = true)
-    @Jacksonized
+    @AllArgsConstructor
     public static class ApiBlueprintItemWithSource extends ApiBlueprintItem {
         String source;
         Kind kind;
@@ -142,10 +141,10 @@ public class BlueprintController {
     @ToString
     @EqualsAndHashCode
     @AllArgsConstructor
+    @NoArgsConstructor(force = true)
     @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
     @Getter
     @SuperBuilder(toBuilder = true)
-    @Jacksonized
     public static class ApiBlueprintItem {
         String id;
         String title;
@@ -159,7 +158,6 @@ public class BlueprintController {
 
     @Value
     @Builder
-    @Jacksonized
     public static class ApiBlueprintTagItem {
         String id;
         String name;

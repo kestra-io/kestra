@@ -15,11 +15,9 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
 @Getter
-@Jacksonized
 public class FlowUsage {
 
     // Namespace used for 'Getting Started' flows.

@@ -7,7 +7,6 @@ import java.util.stream.Stream;
 
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.ComputerSystem;
@@ -17,7 +16,6 @@ import oshi.software.os.OperatingSystem;
 
 @SuperBuilder
 @Getter
-@Jacksonized
 public class HostUsage {
     private final String uuid;
     private final Hardware hardware;
@@ -26,7 +24,6 @@ public class HostUsage {
 
     @SuperBuilder
     @Getter
-    @Jacksonized
     public static class Hardware {
         private final int logicalProcessorCount;
         private final long physicalProcessorCount;
@@ -38,7 +35,6 @@ public class HostUsage {
 
     @SuperBuilder
     @Getter
-    @Jacksonized
     public static class Os {
         private final String family;
         private final String version;
@@ -48,7 +44,6 @@ public class HostUsage {
 
     @SuperBuilder
     @Getter
-    @Jacksonized
     public static class Jvm {
         private final String name;
         private final String vendor;

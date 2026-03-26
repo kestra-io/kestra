@@ -3,11 +3,9 @@ package io.kestra.core.models.collectors;
 import io.micronaut.context.ApplicationContext;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
 @Getter
-@Jacksonized
 public class ConfigurationUsage {
     private final String repositoryType;
     private final String queueType;

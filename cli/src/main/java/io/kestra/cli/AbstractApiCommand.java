@@ -22,7 +22,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Builder;
 import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
 import picocli.CommandLine;
 
 public abstract class AbstractApiCommand extends AbstractCommand {
@@ -95,7 +94,6 @@ public abstract class AbstractApiCommand extends AbstractCommand {
 
     @Builder
     @Value
-    @Jacksonized
     public static class UpdateResult {
         String id;
         String namespace;

@@ -9,11 +9,9 @@ import io.kestra.core.plugins.PluginRegistry;
 
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
 @Getter
-@Jacksonized
 public class PluginUsage {
     private final Map<String, String> manifest;
 

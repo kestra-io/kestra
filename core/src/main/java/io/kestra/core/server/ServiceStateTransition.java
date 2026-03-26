@@ -1,13 +1,13 @@
 package io.kestra.core.server;
 
+import java.time.Instant;
+import java.util.Optional;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.slf4j.Logger;
-
-import java.time.Instant;
-import java.util.Optional;
 
 @Slf4j
 public final class ServiceStateTransition {
@@ -15,16 +15,16 @@ public final class ServiceStateTransition {
     /**
      * Static helper method for validating a state transition for an existing service instance.
      *
-     * @param from     The current state of the service instance.
-     * @param to       The new state of the service instance.
+     * @param from The current state of the service instance.
+     * @param to The new state of the service instance.
      * @param newState The expected new state
-     * @param reason   The reason of the state transition.
+     * @param reason The reason of the state transition.
      * @return a new {@link Response}.
      */
     public static Response maybeTransitionServiceState(@Nullable final ServiceInstance from,
-                                                       final ServiceInstance to,
-                                                       final Service.ServiceState newState,
-                                                       final String reason) {
+        final ServiceInstance to,
+        final Service.ServiceState newState,
+        final String reason) {
         // State transition should be aborted - no existing service state.
         if (from == null) {
             return logTransitionAndGetResponse(to, newState, null);
@@ -46,18 +46,19 @@ public final class ServiceStateTransition {
     /**
      * Helpers method to get a convenient response from a service state transition.
      *
-     * @param initial  the initial or local {@link ServiceInstance}.
+     * @param initial the initial or local {@link ServiceInstance}.
      * @param newState The new service state.
-     * @param result   The service transition result. An {@link Optional} of {@link ImmutablePair} holding the old (left),
-     *                 and new {@link ServiceInstance} or {@code null} if transition failed (right).
-     *                 Otherwise, an {@link Optional#empty()} if the no service can be found.
+     * @param result The service transition result. An {@link Optional} of {@link ImmutablePair} holding the old (left),
+     *        and new {@link ServiceInstance} or {@code null} if transition failed (right).
+     *        Otherwise, an {@link Optional#empty()} if the no service can be found.
      * @return an optional {@link Response}.
      */
     public static Response logTransitionAndGetResponse(@NotNull final ServiceInstance initial,
-                                                       @NotNull final Service.ServiceState newState,
-                                                       @Nullable final ImmutablePair<ServiceInstance, ServiceInstance> result) {
+        @NotNull final Service.ServiceState newState,
+        @Nullable final ImmutablePair<ServiceInstance, ServiceInstance> result) {
         if (result == null) {
-            log.debug("Failed to transition service [id={}, type={}, hostname={}] to {}. Cause: {}",
+            log.debug(
+                "Failed to transition service [id={}, type={}, hostname={}] to {}. Cause: {}",
                 initial.uid(),
                 initial.type(),
                 initial.server().hostname(),
@@ -71,7 +72,8 @@ public final class ServiceStateTransition {
         final ServiceInstance newInstance = result.getRight();
 
         if (newInstance == null) {
-            log.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
+            log.warn(
+                "Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
                 initial.uid(),
                 initial.type(),
                 initial.server().hostname(),
@@ -85,7 +87,8 @@ public final class ServiceStateTransition {
         // Logs if the state was changed, otherwise this method called for heartbeat purpose.
         if (!oldInstance.state().equals(newInstance.state())) {
             if (log.isDebugEnabled()) {
-                log.debug("Service [id={}, type={}, hostname={}] transition from {} to {}.",
+                log.debug(
+                    "Service [id={}, type={}, hostname={}] transition from {} to {}.",
                     initial.uid(),
                     initial.type(),
                     initial.server().hostname(),
@@ -101,7 +104,7 @@ public final class ServiceStateTransition {
      * Wraps a service instance and a transition result.
      *
      * @param instance The service.
-     * @param result   The transition result.
+     * @param result The transition result.
      */
     public record Response(Result result, @Nullable ServiceInstance instance) {
 

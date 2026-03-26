@@ -1,13 +1,13 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class IterationOutputFunction implements Function {
     public static final String NAME = "iterationOutput";
@@ -23,15 +23,15 @@ public class IterationOutputFunction implements Function {
 
     @Override
     public Object execute(Map<String, Object> args,
-                          PebbleTemplate self,
-                          EvaluationContext context,
-                          int lineNumber) {
+        PebbleTemplate self,
+        EvaluationContext context,
+        int lineNumber) {
 
         Object taskIdObj = args.get("taskId");
         Object iterationObj = args.get("iteration");
 
         Map<?, ?> currentTaskRun = (Map<?, ?>) context.getVariable("taskrun");
-        if(!currentTaskRun.containsKey("iteration")){
+        if (!currentTaskRun.containsKey("iteration")) {
             throw new PebbleException(null, " 'iterationOutputs()' function should be used inside iterative tasks only", lineNumber, self.getName());
         }
 
@@ -40,8 +40,7 @@ public class IterationOutputFunction implements Function {
             // when no taskId is provided, the default taskId is the current task
             Map<?, ?> taskMetaData = (Map<?, ?>) context.getVariable("task");
             taskId = (String) taskMetaData.get("id");
-        }
-        else {
+        } else {
             taskId = (String) taskIdObj;
         }
 
@@ -49,8 +48,7 @@ public class IterationOutputFunction implements Function {
         if (iterationObj == null) {
             // when no iteration is provided, the default iteration is the previous iteration
             iteration = (Integer) currentTaskRun.get("iteration") - 1;
-        }
-        else {
+        } else {
             try {
                 iteration = Integer.parseInt(iterationObj.toString());
             } catch (NumberFormatException e) {
@@ -64,17 +62,17 @@ public class IterationOutputFunction implements Function {
 
         Map<?, ?> outputs = (Map<?, ?>) context.getVariable("outputs");
 
-        if(outputs.get(taskId) == null){
+        if (outputs.get(taskId) == null) {
             return null;
         }
-        Map<?,?> targetOutputs = (Map<?, ?>) outputs.get(taskId);
+        Map<?, ?> targetOutputs = (Map<?, ?>) outputs.get(taskId);
 
         List<Map<?, ?>> parents = ((List<Map<?, ?>>) context.getVariable("parents")).reversed();
         if (parents != null && !parents.isEmpty()) {
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {
-                    if(targetOutputs.get(taskrun.get("value")) == null) {
+                    if (targetOutputs.get(taskrun.get("value")) == null) {
                         return null;
                     }
                     targetOutputs = (Map<?, ?>) targetOutputs.get(taskrun.get("value"));
@@ -82,11 +80,13 @@ public class IterationOutputFunction implements Function {
             }
         }
         if (iteration >= targetOutputs.size()) {
-            throw new PebbleException(null,
-                    "The provided index (" + iteration + ") is out of range. "
-                            + "It refers to an iteration whose outputs do not exist yet. "
-                            + "Maximum valid index is " + (targetOutputs.size() - 1) + ".",
-                    lineNumber, self.getName());
+            throw new PebbleException(
+                null,
+                "The provided index (" + iteration + ") is out of range. "
+                    + "It refers to an iteration whose outputs do not exist yet. "
+                    + "Maximum valid index is " + (targetOutputs.size() - 1) + ".",
+                lineNumber, self.getName()
+            );
         }
         List<?> taskValues = new ArrayList<>(targetOutputs.keySet());
 

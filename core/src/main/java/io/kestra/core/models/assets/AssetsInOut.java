@@ -1,11 +1,12 @@
 package io.kestra.core.models.assets;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import lombok.Getter;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import lombok.Getter;
 
 @Getter
 public class AssetsInOut {

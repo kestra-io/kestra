@@ -1,13 +1,15 @@
 package io.kestra.jdbc.repository;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.AbstractFlowTopologyRepositoryTest;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

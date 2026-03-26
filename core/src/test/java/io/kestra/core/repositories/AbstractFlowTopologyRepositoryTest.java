@@ -1,14 +1,16 @@
 package io.kestra.core.repositories;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,19 +22,21 @@ public abstract class AbstractFlowTopologyRepositoryTest {
     protected FlowTopology createSimpleFlowTopology(String tenantId, String flowA, String flowB, String namespace) {
         return FlowTopology.builder()
             .relation(FlowRelation.FLOW_TASK)
-            .source(FlowNode.builder()
-                .id(flowA)
-                .namespace(namespace)
-                .tenantId(tenantId)
-                .uid(tenantId + flowA)
-                .build()
+            .source(
+                FlowNode.builder()
+                    .id(flowA)
+                    .namespace(namespace)
+                    .tenantId(tenantId)
+                    .uid(tenantId + flowA)
+                    .build()
             )
-            .destination(FlowNode.builder()
-                .id(flowB)
-                .namespace(namespace)
-                .tenantId(tenantId)
-                .uid(tenantId + flowB)
-                .build()
+            .destination(
+                FlowNode.builder()
+                    .id(flowB)
+                    .namespace(namespace)
+                    .tenantId(tenantId)
+                    .uid(tenantId + flowB)
+                    .build()
             )
             .build();
     }

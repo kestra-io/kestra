@@ -1,13 +1,13 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.security.SecureRandom;
+import java.util.List;
+import java.util.Map;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.security.SecureRandom;
-import java.util.List;
-import java.util.Map;
 
 public class NanoIDFunction implements Function {
 
@@ -36,31 +36,31 @@ public class NanoIDFunction implements Function {
 
     private static int parseLength(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
         var value = (Long) args.get(LENGTH);
-        if(value > MAX_LENGTH) {
+        if (value > MAX_LENGTH) {
             throw new PebbleException(
                 null,
                 "The 'nanoId()' function field 'length' must be lower than: " + MAX_LENGTH,
                 lineNumber,
-                self.getName());
+                self.getName()
+            );
         }
         return Math.toIntExact(value);
     }
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of(LENGTH,ALPHABET);
+        return List.of(LENGTH, ALPHABET);
     }
 
-    String createNanoID(int length, char[] alphabet){
+    String createNanoID(int length, char[] alphabet) {
         final char[] data = new char[length];
         final byte[] bytes = new byte[length];
-        final int mask = alphabet.length-1;
+        final int mask = alphabet.length - 1;
         secureRandom.nextBytes(bytes);
         for (int i = 0; i < length; ++i) {
             data[i] = alphabet[bytes[i] & mask];
         }
         return String.valueOf(data);
     }
-
 
 }

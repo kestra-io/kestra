@@ -1,23 +1,26 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Objects;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import com.github.tomakehurst.wiremock.admin.model.GetServeEventsResult;
 import com.github.tomakehurst.wiremock.http.Body;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.utils.PosthogUtil;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.util.Objects;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -32,17 +35,19 @@ class AiControllerTest {
 
     @RegisterExtension
     static WireMockExtension extension = WireMockExtension.newInstance()
-        .options(wireMockConfig()
-            .dynamicPort()
-            .httpsPort(28183)
-            .keystorePath(Objects.requireNonNull(AiControllerTest.class.getClassLoader().getResource("mtls/server-keystore.p12")).getPath())
-            .keystorePassword("keystorePassword")
-            .keyManagerPassword("keystorePassword")
-            .keystoreType("PKCS12")
-            .needClientAuth(true) // This enables mTLS
-            .trustStorePath(Objects.requireNonNull(AiControllerTest.class.getClassLoader().getResource("mtls/client-truststore.p12")).getPath()) // Contains trusted client CAs
-            .trustStorePassword("changeit")
-            .trustStoreType("PKCS12"))
+        .options(
+            wireMockConfig()
+                .dynamicPort()
+                .httpsPort(28183)
+                .keystorePath(Objects.requireNonNull(AiControllerTest.class.getClassLoader().getResource("mtls/server-keystore.p12")).getPath())
+                .keystorePassword("keystorePassword")
+                .keyManagerPassword("keystorePassword")
+                .keystoreType("PKCS12")
+                .needClientAuth(true) // This enables mTLS
+                .trustStorePath(Objects.requireNonNull(AiControllerTest.class.getClassLoader().getResource("mtls/client-truststore.p12")).getPath()) // Contains trusted client CAs
+                .trustStorePassword("changeit")
+                .trustStoreType("PKCS12")
+        )
         .build();
 
     @BeforeEach
@@ -52,61 +57,71 @@ class AiControllerTest {
 
     @Test
     void mTLS() {
-        extension.stubFor(post(anyUrl())
-            .inScenario("Regular flow generation")
-            .whenScenarioStateIs("Started")
-            .willReturn(
-                aResponse().withResponseBody(
-                    Body.fromJsonBytes("""
-                        {
-                           "responseId" : "3NvjaPPRAo_WvdIP46DvmQE",
-                           "modelVersion" : "gemini-2.5-flash",
-                           "candidates" : [ {
-                             "content" : {
-                               "parts" : [ {
-                                 "text" : "io.kestra.plugin.core.log.Log"
-                               } ],
-                               "role" : "model"
-                             },
-                             "finishReason" : "STOP",
-                             "index" : 0
-                           } ],
-                           "usageMetadata" : {
-                             "promptTokenCount" : 3658,
-                             "candidatesTokenCount" : 25,
-                             "totalTokenCount" : 3939
-                           }
-                         }""".getBytes()
-            )))
-            .willSetStateTo("Tasks fetched"));
+        extension.stubFor(
+            post(anyUrl())
+                .inScenario("Regular flow generation")
+                .whenScenarioStateIs("Started")
+                .willReturn(
+                    aResponse().withResponseBody(
+                        Body.fromJsonBytes(
+                            """
+                                {
+                                   "responseId" : "3NvjaPPRAo_WvdIP46DvmQE",
+                                   "modelVersion" : "gemini-2.5-flash",
+                                   "candidates" : [ {
+                                     "content" : {
+                                       "parts" : [ {
+                                         "text" : "io.kestra.plugin.core.log.Log"
+                                       } ],
+                                       "role" : "model"
+                                     },
+                                     "finishReason" : "STOP",
+                                     "index" : 0
+                                   } ],
+                                   "usageMetadata" : {
+                                     "promptTokenCount" : 3658,
+                                     "candidatesTokenCount" : 25,
+                                     "totalTokenCount" : 3939
+                                   }
+                                 }""".getBytes()
+                        )
+                    )
+                )
+                .willSetStateTo("Tasks fetched")
+        );
 
         String expectedFlowResponse = "id: my-flow\\nnamespace: io.kestra.tests\\ntasks:\\n  - id: log\\n    type: io.kestra.plugin.core.log.Log\\n    format: \\\"hi\\\"";
-        extension.stubFor(post(anyUrl())
-            .inScenario("Regular flow generation")
-            .whenScenarioStateIs("Tasks fetched")
-            .willReturn(
-                aResponse().withResponseBody(
-                    Body.fromJsonBytes("""
-                        {
-                           "responseId" : "3NvjaPPRAo_WvdIP46DvmQF",
-                           "modelVersion" : "gemini-2.5-flash",
-                           "candidates" : [ {
-                             "content" : {
-                               "parts" : [ {
-                                 "text" : "%s"
-                               } ],
-                               "role" : "model"
-                             },
-                             "finishReason" : "STOP",
-                             "index" : 0
-                           } ],
-                           "usageMetadata" : {
-                             "promptTokenCount" : 3658,
-                             "candidatesTokenCount" : 25,
-                             "totalTokenCount" : 3939
-                           }
-                         }""".formatted(expectedFlowResponse).getBytes()
-            ))));
+        extension.stubFor(
+            post(anyUrl())
+                .inScenario("Regular flow generation")
+                .whenScenarioStateIs("Tasks fetched")
+                .willReturn(
+                    aResponse().withResponseBody(
+                        Body.fromJsonBytes(
+                            """
+                                {
+                                   "responseId" : "3NvjaPPRAo_WvdIP46DvmQF",
+                                   "modelVersion" : "gemini-2.5-flash",
+                                   "candidates" : [ {
+                                     "content" : {
+                                       "parts" : [ {
+                                         "text" : "%s"
+                                       } ],
+                                       "role" : "model"
+                                     },
+                                     "finishReason" : "STOP",
+                                     "index" : 0
+                                   } ],
+                                   "usageMetadata" : {
+                                     "promptTokenCount" : 3658,
+                                     "candidatesTokenCount" : 25,
+                                     "totalTokenCount" : 3939
+                                   }
+                                 }""".formatted(expectedFlowResponse).getBytes()
+                        )
+                    )
+                )
+        );
 
         HttpResponse<String> response = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/main/ai/generate/flow", new AiController.FlowGenerationPrompt(IdUtils.create(), "Say 'hi'", "yaml", "io.kestra.tests", null)),
@@ -115,7 +130,8 @@ class AiControllerTest {
 
         GetServeEventsResult serveEvents = extension.getServeEvents();
 
-        serveEvents.getServeEvents().forEach(serveEvent -> {
+        serveEvents.getServeEvents().forEach(serveEvent ->
+        {
             assertThat(serveEvent.getResponse().getStatus()).isEqualTo(200);
         });
 
@@ -127,61 +143,71 @@ class AiControllerTest {
     void shouldGenerateFlowWhenYamlIsNull() {
         // Regression test: null yaml caused Map.of() to throw NullPointerException
         // before the fix that wraps it with Optional.ofNullable(...).orElse("")
-        extension.stubFor(post(anyUrl())
-            .inScenario("Null yaml flow generation")
-            .whenScenarioStateIs("Started")
-            .willReturn(
-                aResponse().withResponseBody(
-                    Body.fromJsonBytes("""
-                        {
-                           "responseId" : "abc123",
-                           "modelVersion" : "gemini-2.5-flash",
-                           "candidates" : [ {
-                             "content" : {
-                               "parts" : [ {
-                                 "text" : "io.kestra.plugin.core.log.Log"
-                               } ],
-                               "role" : "model"
-                             },
-                             "finishReason" : "STOP",
-                             "index" : 0
-                           } ],
-                           "usageMetadata" : {
-                             "promptTokenCount" : 100,
-                             "candidatesTokenCount" : 10,
-                             "totalTokenCount" : 110
-                           }
-                         }""".getBytes()
-                )))
-            .willSetStateTo("Tasks fetched"));
+        extension.stubFor(
+            post(anyUrl())
+                .inScenario("Null yaml flow generation")
+                .whenScenarioStateIs("Started")
+                .willReturn(
+                    aResponse().withResponseBody(
+                        Body.fromJsonBytes(
+                            """
+                                {
+                                   "responseId" : "abc123",
+                                   "modelVersion" : "gemini-2.5-flash",
+                                   "candidates" : [ {
+                                     "content" : {
+                                       "parts" : [ {
+                                         "text" : "io.kestra.plugin.core.log.Log"
+                                       } ],
+                                       "role" : "model"
+                                     },
+                                     "finishReason" : "STOP",
+                                     "index" : 0
+                                   } ],
+                                   "usageMetadata" : {
+                                     "promptTokenCount" : 100,
+                                     "candidatesTokenCount" : 10,
+                                     "totalTokenCount" : 110
+                                   }
+                                 }""".getBytes()
+                        )
+                    )
+                )
+                .willSetStateTo("Tasks fetched")
+        );
 
         String expectedFlowResponse = "id: new-flow\\nnamespace: io.kestra.tests\\ntasks:\\n  - id: log\\n    type: io.kestra.plugin.core.log.Log";
-        extension.stubFor(post(anyUrl())
-            .inScenario("Null yaml flow generation")
-            .whenScenarioStateIs("Tasks fetched")
-            .willReturn(
-                aResponse().withResponseBody(
-                    Body.fromJsonBytes("""
-                        {
-                           "responseId" : "abc124",
-                           "modelVersion" : "gemini-2.5-flash",
-                           "candidates" : [ {
-                             "content" : {
-                               "parts" : [ {
-                                 "text" : "%s"
-                               } ],
-                               "role" : "model"
-                             },
-                             "finishReason" : "STOP",
-                             "index" : 0
-                           } ],
-                           "usageMetadata" : {
-                             "promptTokenCount" : 100,
-                             "candidatesTokenCount" : 10,
-                             "totalTokenCount" : 110
-                           }
-                         }""".formatted(expectedFlowResponse).getBytes()
-                ))));
+        extension.stubFor(
+            post(anyUrl())
+                .inScenario("Null yaml flow generation")
+                .whenScenarioStateIs("Tasks fetched")
+                .willReturn(
+                    aResponse().withResponseBody(
+                        Body.fromJsonBytes(
+                            """
+                                {
+                                   "responseId" : "abc124",
+                                   "modelVersion" : "gemini-2.5-flash",
+                                   "candidates" : [ {
+                                     "content" : {
+                                       "parts" : [ {
+                                         "text" : "%s"
+                                       } ],
+                                       "role" : "model"
+                                     },
+                                     "finishReason" : "STOP",
+                                     "index" : 0
+                                   } ],
+                                   "usageMetadata" : {
+                                     "promptTokenCount" : 100,
+                                     "candidatesTokenCount" : 10,
+                                     "totalTokenCount" : 110
+                                   }
+                                 }""".formatted(expectedFlowResponse).getBytes()
+                        )
+                    )
+                )
+        );
 
         HttpResponse<String> response = client.toBlocking().exchange(
             // yaml=null simulates creating a new flow from scratch
@@ -196,61 +222,71 @@ class AiControllerTest {
     @Test
     void shouldGenerateDashboardWhenYamlIsNull() {
         // Regression test: null yaml caused Map.of() to throw NullPointerException
-        extension.stubFor(post(anyUrl())
-            .inScenario("Null yaml dashboard generation")
-            .whenScenarioStateIs("Started")
-            .willReturn(
-                aResponse().withResponseBody(
-                    Body.fromJsonBytes("""
-                        {
-                           "responseId" : "def123",
-                           "modelVersion" : "gemini-2.5-flash",
-                           "candidates" : [ {
-                             "content" : {
-                               "parts" : [ {
-                                 "text" : "io.kestra.plugin.core.log.Log"
-                               } ],
-                               "role" : "model"
-                             },
-                             "finishReason" : "STOP",
-                             "index" : 0
-                           } ],
-                           "usageMetadata" : {
-                             "promptTokenCount" : 100,
-                             "candidatesTokenCount" : 10,
-                             "totalTokenCount" : 110
-                           }
-                         }""".getBytes()
-                )))
-            .willSetStateTo("Tasks fetched"));
+        extension.stubFor(
+            post(anyUrl())
+                .inScenario("Null yaml dashboard generation")
+                .whenScenarioStateIs("Started")
+                .willReturn(
+                    aResponse().withResponseBody(
+                        Body.fromJsonBytes(
+                            """
+                                {
+                                   "responseId" : "def123",
+                                   "modelVersion" : "gemini-2.5-flash",
+                                   "candidates" : [ {
+                                     "content" : {
+                                       "parts" : [ {
+                                         "text" : "io.kestra.plugin.core.log.Log"
+                                       } ],
+                                       "role" : "model"
+                                     },
+                                     "finishReason" : "STOP",
+                                     "index" : 0
+                                   } ],
+                                   "usageMetadata" : {
+                                     "promptTokenCount" : 100,
+                                     "candidatesTokenCount" : 10,
+                                     "totalTokenCount" : 110
+                                   }
+                                 }""".getBytes()
+                        )
+                    )
+                )
+                .willSetStateTo("Tasks fetched")
+        );
 
         String expectedDashboardResponse = "id: new-dashboard\\ntitle: My Dashboard";
-        extension.stubFor(post(anyUrl())
-            .inScenario("Null yaml dashboard generation")
-            .whenScenarioStateIs("Tasks fetched")
-            .willReturn(
-                aResponse().withResponseBody(
-                    Body.fromJsonBytes("""
-                        {
-                           "responseId" : "def124",
-                           "modelVersion" : "gemini-2.5-flash",
-                           "candidates" : [ {
-                             "content" : {
-                               "parts" : [ {
-                                 "text" : "%s"
-                               } ],
-                               "role" : "model"
-                             },
-                             "finishReason" : "STOP",
-                             "index" : 0
-                           } ],
-                           "usageMetadata" : {
-                             "promptTokenCount" : 100,
-                             "candidatesTokenCount" : 10,
-                             "totalTokenCount" : 110
-                           }
-                         }""".formatted(expectedDashboardResponse).getBytes()
-                ))));
+        extension.stubFor(
+            post(anyUrl())
+                .inScenario("Null yaml dashboard generation")
+                .whenScenarioStateIs("Tasks fetched")
+                .willReturn(
+                    aResponse().withResponseBody(
+                        Body.fromJsonBytes(
+                            """
+                                {
+                                   "responseId" : "def124",
+                                   "modelVersion" : "gemini-2.5-flash",
+                                   "candidates" : [ {
+                                     "content" : {
+                                       "parts" : [ {
+                                         "text" : "%s"
+                                       } ],
+                                       "role" : "model"
+                                     },
+                                     "finishReason" : "STOP",
+                                     "index" : 0
+                                   } ],
+                                   "usageMetadata" : {
+                                     "promptTokenCount" : 100,
+                                     "candidatesTokenCount" : 10,
+                                     "totalTokenCount" : 110
+                                   }
+                                 }""".formatted(expectedDashboardResponse).getBytes()
+                        )
+                    )
+                )
+        );
 
         HttpResponse<String> response = client.toBlocking().exchange(
             // yaml=null simulates creating a new dashboard from scratch

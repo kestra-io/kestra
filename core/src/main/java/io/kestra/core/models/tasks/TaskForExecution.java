@@ -1,12 +1,13 @@
 package io.kestra.core.models.tasks;
 
+import java.util.List;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.plugin.core.flow.Pause;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @Getter

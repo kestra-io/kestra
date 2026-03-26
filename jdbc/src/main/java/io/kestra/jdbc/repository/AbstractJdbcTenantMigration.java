@@ -1,10 +1,8 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.repositories.TenantMigrationInterface;
-import io.kestra.jdbc.JooqDSLContextWrapper;
 import java.util.List;
 import java.util.Locale;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -12,11 +10,18 @@ import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.repositories.TenantMigrationInterface;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 public abstract class AbstractJdbcTenantMigration implements TenantMigrationInterface {
 
-    private static final List<String> KEY_TABLES = List.of("dashboards", "flows", "multipleconditions",
-        "namespaces", "testsuites", "triggers", "templates");
+    private static final List<String> KEY_TABLES = List.of(
+        "dashboards", "flows", "multipleconditions",
+        "namespaces", "testsuites", "triggers", "templates"
+    );
 
     protected final JooqDSLContextWrapper dslContextWrapper;
 
@@ -29,7 +34,8 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
     }
 
     public void migrate(boolean dryRun) {
-        List<Table<?>> tables = dslContextWrapper.transactionResult(configuration -> {
+        List<Table<?>> tables = dslContextWrapper.transactionResult(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
             return context.meta()
                 .getSchemas(context.fetchValue(DSL.currentSchema()))
@@ -51,9 +57,10 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
             }
 
             if (!dryRun) {
-                if ("flows".equalsIgnoreCase(table.getName()) || "triggers".equalsIgnoreCase(table.getName())){
+                if ("flows".equalsIgnoreCase(table.getName()) || "triggers".equalsIgnoreCase(table.getName())) {
                     log.info("🔸 Delete tutorial flows to prevent duplication");
-                    int deleted = dslContextWrapper.transactionResult(configuration -> {
+                    int deleted = dslContextWrapper.transactionResult(configuration ->
+                    {
                         DSLContext context = DSL.using(configuration);
                         return deleteTutorialFlows(table, context);
                     });
@@ -61,13 +68,15 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
                 }
 
                 int updated;
-                if (tableWithKey(table.getName())){
-                    updated = dslContextWrapper.transactionResult(configuration -> {
+                if (tableWithKey(table.getName())) {
+                    updated = dslContextWrapper.transactionResult(configuration ->
+                    {
                         DSLContext context = DSL.using(configuration);
                         return updateTenantIdFieldAndKey(table, context);
                     });
                 } else {
-                    updated = dslContextWrapper.transactionResult(configuration -> {
+                    updated = dslContextWrapper.transactionResult(configuration ->
+                    {
                         DSLContext context = DSL.using(configuration);
                         return updateTenantIdField(table, context);
                     });
@@ -76,7 +85,8 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
                 log.info("✅ Updated {} row(s) in {}", updated, table.getName());
             } else {
                 Condition condition = tenantField.isNull();
-                int count = dslContextWrapper.transactionResult(configuration -> {
+                int count = dslContextWrapper.transactionResult(configuration ->
+                {
                     DSLContext context = DSL.using(configuration);
                     return context.selectCount()
                         .from(table)
@@ -99,8 +109,7 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
         }
     }
 
-
-    private static boolean tableWithKey(String tableName){
+    private static boolean tableWithKey(String tableName) {
         return KEY_TABLES.stream().anyMatch(name -> tableName.toLowerCase(Locale.ROOT).contains(name));
     }
 
@@ -108,7 +117,7 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
 
     protected abstract int updateTenantIdFieldAndKey(Table<?> table, DSLContext context);
 
-    protected int deleteTutorialFlows(Table<?> table, DSLContext context){
+    protected int deleteTutorialFlows(Table<?> table, DSLContext context) {
         String query = "DELETE FROM %s WHERE namespace = ?".formatted(table.getName());
         return context.execute(query, "tutorial");
     }

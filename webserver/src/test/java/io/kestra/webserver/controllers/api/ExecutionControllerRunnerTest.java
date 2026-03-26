@@ -1,68 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.FlakyTest;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.State.Type;
-import io.kestra.core.models.storage.FileMetas;
-import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.InputsTest;
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.runners.TestRunnerUtils;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.plugin.core.trigger.Webhook;
-import io.kestra.plugin.core.trigger.WebhookResponse;
-import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
-import io.kestra.webserver.responses.BulkErrorResponse;
-import io.kestra.webserver.responses.BulkResponse;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.tenants.TenantValidationFilter;
-import io.micronaut.context.annotation.Property;
-import io.micronaut.core.type.Argument;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.http.*;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.client.multipart.MultipartBody;
-import io.micronaut.http.sse.Event;
-import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.micronaut.reactor.http.client.ReactorSseClient;
-import io.micronaut.test.annotation.MockBean;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Awaitility;
-import org.hamcrest.Matcher;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -83,16 +20,77 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.hamcrest.Matcher;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.Type;
+import io.kestra.core.models.storage.FileMetas;
+import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.queues.*;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.*;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.plugin.core.trigger.WebhookResponse;
+import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
+import io.kestra.webserver.models.api.ApiAsyncEvent;
+import io.kestra.webserver.responses.BulkErrorResponse;
+import io.kestra.webserver.responses.BulkResponse;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.tenants.TenantValidationFilter;
+
+import io.micronaut.context.annotation.Property;
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.http.*;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
+import io.micronaut.http.sse.Event;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.reactor.http.client.ReactorSseClient;
+import io.micronaut.test.annotation.MockBean;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -104,12 +102,10 @@ class ExecutionControllerRunnerTest {
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    protected BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    protected QueueInterface<ExecutionKilled> killQueue;
+    protected BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
@@ -129,9 +125,6 @@ class ExecutionControllerRunnerTest {
     private FlowInputOutput flowIO;
 
     @Inject
-    private JdbcTestUtils jdbcTestUtils;
-
-    @Inject
     protected TestRunnerUtils runnerUtils;
 
     @Inject
@@ -141,24 +134,27 @@ class ExecutionControllerRunnerTest {
     private NamespaceFactory namespaceFactory;
 
     @MockBean(TenantService.class)
-    public TenantService getTenantService(){
+    public TenantService getTenantService() {
         return mock(TenantService.class);
     }
+
     @Inject
     private TenantService tenantService;
 
     @MockBean(TenantValidationFilter.class)
-    public TenantValidationFilter getTenantValidationFilter(){
+    public TenantValidationFilter getTenantValidationFilter() {
         return mock(TenantValidationFilter.class);
     }
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
 
-    public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
+    public static Map<String, Object> inputs = ImmutableMap.<String, Object> builder()
         .put("failed", "NO")
         .put("string", "myString")
-        .put("enum", "ENUM_VALUE")
         .put("int", "42")
         .put("float", "42.42")
         .put("instant", "2019-10-06T18:27:49Z")
@@ -174,12 +170,12 @@ class ExecutionControllerRunnerTest {
         .build();
 
     @BeforeEach
-    public void initMock(){
+    public void initMock() {
         when(tenantService.resolveTenant()).thenReturn(MAIN_TENANT);
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "triggerexecution")
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "triggerexecution")
     void triggerExecution() {
         String tenantId = "triggerexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -202,17 +198,19 @@ class ExecutionControllerRunnerTest {
             new Label(Label.FROM, "api")
         );
 
-        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
-            HttpRequest
-                .POST("/api/v1/%s/executions/foo/bar".formatted(tenantId), createExecutionInputsFlowBody())
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-            HttpResponse.class
-        ));
+        var notFound = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest
+                    .POST("/api/v1/%s/executions/foo/bar".formatted(tenantId), createExecutionInputsFlowBody())
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                HttpResponse.class
+            )
+        );
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void flowLabelsGetsOverriddenByExecutionLabelsOnSameKey(String tenantId) {
         final String executionLabel = "existing:fromExecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -225,7 +223,8 @@ class ExecutionControllerRunnerTest {
 
         Execution execution = client.toBlocking().retrieve(
             GET("/api/v1/%s/executions/".formatted(tenantId) + result.getId()),
-            Execution.class);
+            Execution.class
+        );
 
         assertThat(execution.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution.getId()),
@@ -235,13 +234,15 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs-small-files.yaml"}, tenantId = "triggerexecutioninputsmall")
+    @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputsmall")
     void triggerExecutionInputSmall() {
         String tenantId = "triggerexecutioninputsmall";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
-        File applicationFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
-        ).getPath());
+        File applicationFile = new File(
+            Objects.requireNonNull(
+                ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
+            ).getPath()
+        );
 
         MultipartBody requestBody = MultipartBody.builder()
             .addPart("files", "f", MediaType.TEXT_PLAIN_TYPE, applicationFile)
@@ -254,7 +255,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "invalidinputs")
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "invalidinputs")
     void invalidInputs() {
         String tenantId = "invalidinputs";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -274,7 +275,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "triggerexecutionandwait")
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "triggerexecutionandwait")
     void triggerExecutionAndWait() {
         String tenantId = "triggerexecutionandwait";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -285,11 +286,12 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "getexecution")
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "getexecution")
     void getExecution() {
         String tenantId = "getexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result = triggerExecutionInputsFlowExecution(tenantId, false);
+        awaitExecution(result.getId());
 
         // Get the triggered execution by execution id
         Execution foundExecution = client.retrieve(
@@ -304,7 +306,7 @@ class ExecutionControllerRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows(value = {"flows/valids/minimal-bis.yaml"}, tenantId = "searchexecutionsbyflowid")
+    @LoadFlows(value = { "flows/valids/minimal-bis.yaml" }, tenantId = "searchexecutionsbyflowid")
     void searchExecutionsByFlowId() throws TimeoutException {
         String tenantId = "searchexecutionsbyflowid";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -331,7 +333,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "triggerexecutionandfollowexecution")
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "triggerexecutionandfollowexecution")
     void triggerExecutionAndFollowExecution() {
         String tenantId = "triggerexecutionandfollowexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -362,9 +364,9 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-sequential-nested.yaml"})
+    @LoadFlows({ "flows/valids/foreach-nested.yaml" })
     void evalTaskRunExpression() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "each-sequential-nested");
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "foreach-nested");
 
         ExecutionController.EvalResult result = this.evalTaskRunExpression(execution, "my simple string", 0);
         assertThat(result.getResult()).isEqualTo("my simple string");
@@ -372,18 +374,21 @@ class ExecutionControllerRunnerTest {
         result = this.evalTaskRunExpression(execution, "{{ taskrun.id }}", 0);
         assertThat(result.getResult()).isEqualTo(execution.getTaskRunList().getFirst().getId());
 
-        result = this.evalTaskRunExpression(execution, "{{ outputs['1-1_return'][taskrun.value].value }}", 21);
-        assertThat(result.getResult()).contains("1-1_return");
+        result = this.evalTaskRunExpression(execution, "{{ outputs['p1'][taskrun.value].d1.value }}", 1);
+        assertThat(result.getResult()).contains("l1-d1");
 
-        result = this.evalTaskRunExpression(execution, "{{ missing }}", 21);
+        result = this.evalTaskRunExpression(execution, "{{ missing }}", 1);
         assertThat(result.getResult()).isNull();
         assertThat(result.getError()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
         assertThat(result.getStackTrace()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml",
-        "flows/valids/encrypted-string.yaml"}, tenantId = "evaltaskrunexpressionkeepencryptedvalues")
+    @LoadFlows(
+        value = { "flows/valids/inputs.yaml",
+            "flows/valids/encrypted-string.yaml" },
+        tenantId = "evaltaskrunexpressionkeepencryptedvalues"
+    )
     void evalTaskRunExpressionKeepEncryptedValues() throws TimeoutException, QueueException {
         String tenantId = "evaltaskrunexpressionkeepencryptedvalues";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -411,16 +416,18 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/webhook-plugin.yaml"}, tenantId = "triggerencrypted")
-    void triggerEncrypted() throws InterruptedException {
+    @LoadFlows(value = { "flows/valids/webhook-plugin.yaml" }, tenantId = "triggerencrypted")
+    void triggerEncrypted() throws InterruptedException, InternalException {
         String tenantId = "triggerencrypted";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
 
         CountDownLatch queueCount = new CountDownLatch(1);
-
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
-            if (execution.getLeft().getFlowId().equals("webhook-plugin") && execution.getLeft().getState().isTerminated()) {
+        AtomicReference<String> executionId = new AtomicReference<>();
+        executionEventQueue.addListener(execution ->
+        {
+            if (execution.flowId().equals("webhook-plugin") && execution.eventType() == ExecutionEventType.TERMINATED) {
                 queueCount.countDown();
+                executionId.set(execution.executionId());
             }
         });
 
@@ -432,22 +439,24 @@ class ExecutionControllerRunnerTest {
             String.class
         );
 
-        assertThat((Object)response.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
 
-        queueCount.await(180, TimeUnit.SECONDS);
-        var execution = Objects.requireNonNull(receive.blockLast());
+        assertTrue(queueCount.await(10, TimeUnit.SECONDS));
+        var execution = awaitExecution(executionId.get());
 
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
-        TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
-        assertThat(Objects.requireNonNull(returnTask.getOutputs()).get("value")).isEqualTo("Hello World");
+        TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst().toBuilder().tenantId(tenantId).build(); // API didn't include the tenantId in the response
+        Map<String, Object> outputs = taskOutputService.getOutputs(returnTask);
+        assertThat(Objects.requireNonNull(outputs).get("value")).isEqualTo("Hello World");
 
         // the output of a trigger is also decrypted automatically
-        TaskRun outTask = execution.findTaskRunsByTaskId("out").getFirst();
-        assertThat(((Map<String, String>)Objects.requireNonNull(outTask.getOutputs()).get("values")).get("encrypted")).isEqualTo("super-secret");
+        TaskRun outTask = execution.findTaskRunsByTaskId("out").getFirst().toBuilder().tenantId(tenantId).build(); // API didn't include the tenantId in the response
+        outputs = taskOutputService.getOutputs(outTask);
+        assertThat(((Map<String, String>) Objects.requireNonNull(outputs).get("values")).get("encrypted")).isEqualTo("super-secret");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/restart_with_inputs.yaml"}, tenantId = "restartexecutionfromunknowntaskid")
+    @LoadFlows(value = { "flows/valids/restart_with_inputs.yaml" }, tenantId = "restartexecutionfromunknowntaskid")
     void restartExecutionFromUnknownTaskId() throws TimeoutException, QueueException {
         String tenantId = "restartexecutionfromunknowntaskid";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -457,20 +466,22 @@ class ExecutionControllerRunnerTest {
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/replay?taskRunId=" + referenceTaskId, ImmutableMap.of()),
-            Execution.class
-        ));
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST("/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/replay?taskRunId=" + referenceTaskId, ImmutableMap.of()),
+                Execution.class
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("No task found");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Task run id 'unknownTaskId' not found in execution");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/restart_with_inputs.yaml"}, tenantId = "restartexecutionwithnofailure")
-    void restartExecutionWithNoFailure() throws TimeoutException, QueueException{
+    @LoadFlows(value = { "flows/valids/restart_with_inputs.yaml" }, tenantId = "restartexecutionwithnofailure")
+    void restartExecutionWithNoFailure() throws TimeoutException, QueueException {
         String tenantId = "restartexecutionwithnofailure";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         final String flowId = "restart_with_inputs";
@@ -478,19 +489,21 @@ class ExecutionControllerRunnerTest {
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/restart", ImmutableMap.of()),
-            Execution.class
-        ));
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST("/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/restart", ImmutableMap.of()),
+                Execution.class
+            )
+        );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("No task found to restart");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Execution must be failed to be restarted, current state is 'SUCCESS'");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/restart_with_inputs.yaml"}, tenantId = "restartexecutionfromtaskid")
+    @LoadFlows(value = { "flows/valids/restart_with_inputs.yaml" }, tenantId = "restartexecutionfromtaskid")
     void restartExecutionFromTaskId() throws Exception {
         String tenantId = "restartexecutionfromtaskid";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -507,33 +520,31 @@ class ExecutionControllerRunnerTest {
         // Run child execution starting from a specific task and wait until it finishes
         Thread.sleep(100);
 
-                Execution createdChidExec = client.toBlocking().retrieve(
-                    HttpRequest
-                        .POST("/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), ImmutableMap.of()),
-                    Execution.class
-                );
+        Execution createdChildExec = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/" + tenantId + "/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(),
+                    ImmutableMap.of()
+                ),
+            Execution.class
+        );
+        assertThat(createdChildExec).isNotNull();
 
-        assertThat(createdChidExec).isNotNull();
-        assertThat(createdChidExec.getParentId()).isEqualTo(parentExecution.getId());
-        assertThat(createdChidExec.getTaskRunList().size()).isEqualTo(4);
-        assertThat(createdChidExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-
-        IntStream
-            .range(0, 3)
-            .mapToObj(value -> createdChidExec.getTaskRunList().get(value))
-            .forEach(taskRun -> assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS));
-
-        assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
             parentExecution,
-            createdChidExec.withTenantId(tenantId), // the endpoint didn't return the tenantId
-            Duration.ofSeconds(15));
+            Duration.ofSeconds(15)
+        );
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
         assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(finishedChildExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+
+        IntStream
+            .range(0, 3)
+            .mapToObj(value -> finishedChildExecution.getTaskRunList().get(value))
+            .forEach(taskRun -> assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS));
 
         finishedChildExecution
             .getTaskRunList()
@@ -543,13 +554,15 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/condition_with_input.yaml"})
-    void restartExecutionWithNewInputs() throws Exception {
+    @LoadFlows({ "flows/valids/condition_with_input.yaml" })
+    void replayExecutionWithNewInputs() throws Exception {
         final String flowId = "condition_with_input";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail")));
+        Execution parentExecution = runnerUtils.runOne(
+            TENANT_ID, TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail"))
+        );
 
         assertThat(parentExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
 
@@ -564,21 +577,20 @@ class ExecutionControllerRunnerTest {
             .addPart("condition", "success")
             .build();
 
-        Execution replay = client.toBlocking().retrieve(
+        ApiAsyncEvent replay = client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs", multipartBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-            Execution.class
+            ApiAsyncEvent.class
         );
 
         assertThat(replay).isNotNull();
-        assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
-        assertThat(replay.getState().getCurrent()).isEqualTo(Type.CREATED);
+
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
             parentExecution,
-            replay.withTenantId(TENANT_ID), // the endpoint didn't return the tenantId
-            Duration.ofSeconds(15));
+            Duration.ofSeconds(15)
+        );
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
@@ -592,14 +604,16 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/condition_with_input.yaml"})
-    void restartExecutionFromTaskIdWithInputs() throws Exception {
+    @LoadFlows({ "flows/valids/condition_with_input.yaml" })
+    void replayExecutionFromTaskIdWithInputs() throws Exception {
         final String flowId = "condition_with_input";
         final String referenceTaskId = "fail";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail")));
+        Execution parentExecution = runnerUtils.runOne(
+            TENANT_ID, TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail"))
+        );
 
         assertThat(parentExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
 
@@ -614,26 +628,28 @@ class ExecutionControllerRunnerTest {
             .addPart("condition", "success")
             .build();
 
-        Execution replay = client.toBlocking().retrieve(
+        ApiAsyncEvent replay = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), multipartBody)
+                .POST(
+                    "/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(),
+                    multipartBody
+                )
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-            Execution.class
+            ApiAsyncEvent.class
         );
 
         assertThat(replay).isNotNull();
-        assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
-        assertThat(replay.getTaskRunList().size()).isEqualTo(2);
-        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
             parentExecution,
-            replay.withTenantId(TENANT_ID), // the endpoint didn't return the tenantId
-            Duration.ofSeconds(15));
+            Duration.ofSeconds(15)
+        );
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
         assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(finishedChildExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
 
         finishedChildExecution
             .getTaskRunList()
@@ -643,14 +659,16 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart-each.yaml"})
+    @LoadFlows({ "flows/valids/restart-each.yaml" })
     void restartExecutionFromTaskIdWithSequential() throws Exception {
         final String flowId = "restart-each";
         final String referenceTaskId = "2_end";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(
+            TENANT_ID, TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
+        );
 
         Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
         assertThat(flow.isPresent()).isTrue();
@@ -658,27 +676,33 @@ class ExecutionControllerRunnerTest {
         // Run child execution starting from a specific task and wait until it finishes
         Thread.sleep(100);
 
-        Execution createdChidExec = client.toBlocking().retrieve(
+        ApiAsyncEvent createdChildExec = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), ImmutableMap.of()),
-            Execution.class
+                .POST(
+                    "/api/v1/main/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(),
+                    ImmutableMap.of()
+                ),
+            ApiAsyncEvent.class
         );
 
-        assertThat(createdChidExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(createdChidExec.getState().getHistories()).hasSize(4);
-        assertThat(createdChidExec.getTaskRunList()).hasSize(20);
+        assertThat(createdChildExec).isNotNull();
 
-        assertThat(createdChidExec.getId()).isNotEqualTo(parentExecution.getId());
-        runnerUtils.awaitChildExecution(
+        Execution restarted = runnerUtils.awaitChildExecution(
             flow.get(),
             parentExecution,
-            createdChidExec.withTenantId(TENANT_ID),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
+
+        assertThat(restarted.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(restarted.getState().getHistories()).hasSize(6);
+        assertThat(restarted.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+        assertThat(restarted.getTaskRunList()).hasSize(20);
+        assertThat(restarted.getId()).isNotEqualTo(parentExecution.getId());
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart_last_failed.yaml"})
-    void restartExecutionFromLastFailed() throws TimeoutException, QueueException{
+    @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
+    void restartExecutionFromLastFailed() throws TimeoutException, QueueException {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
@@ -692,31 +716,17 @@ class ExecutionControllerRunnerTest {
         assertThat(flow.isPresent()).isTrue();
 
         // Restart execution and wait until it finishes
-        Execution restartedExec = client.toBlocking().retrieve(
+        ApiAsyncEvent restartedExec = client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/main/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
-            Execution.class
+            ApiAsyncEvent.class
         );
 
         assertThat(restartedExec).isNotNull();
-        assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
-        assertThat(restartedExec.getParentId()).isNull();
-        assertThat(restartedExec.getTaskRunList().size()).isEqualTo(3);
-        assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-
-        IntStream
-            .range(0, 2)
-            .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
-                assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-                assertThat(taskRun.getAttempts().size()).isEqualTo(1);
-
-                assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-                assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size()).isEqualTo(1);
-            });
 
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> execution.getTaskRunList().size() == 4 && execution.getState().isTerminated(),
-            restartedExec.withTenantId(TENANT_ID), // the endpoint didn't return the tenantId
+            firstExecution.withTenantId(TENANT_ID), // the endpoint didn't return the tenantId
             Duration.ofSeconds(15)
         );
 
@@ -724,6 +734,16 @@ class ExecutionControllerRunnerTest {
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
         assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(4);
+        assertThat(finishedRestartedExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+
+        IntStream
+            .range(0, 2)
+            .mapToObj(value -> finishedRestartedExecution.getTaskRunList().get(value)).forEach(taskRun ->
+            {
+                assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+                assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+            });
 
         assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
@@ -738,73 +758,8 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart_pause_last_failed.yaml"})
-    void restartExecutionFromLastFailedWithPauseExecution() throws TimeoutException, QueueException{
-        final String flowId = "restart_pause_last_failed";
-
-        // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null, (BiFunction<FlowInterface, Execution, Map<String, Object>>) null);
-
-        assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        // Update task's command to make second execution successful
-        Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isTrue();
-
-        // Restart execution and wait until it finishes
-        Execution restartedExec = client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/main/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
-            Execution.class
-        );
-
-        assertThat(restartedExec).isNotNull();
-        assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
-        assertThat(restartedExec.getParentId()).isNull();
-        assertThat(restartedExec.getTaskRunList().size()).isEqualTo(4);
-        assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-
-        IntStream
-            .range(0, 2)
-            .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
-                assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-                assertThat(taskRun.getAttempts().size()).isEqualTo(1);
-
-                assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-                assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-                assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).isNotNull();
-                assertThat(restartedExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
-            });
-
-        Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> execution.getTaskRunList().size() == 5 && execution.getState().isTerminated(),
-            firstExecution,
-            Duration.ofSeconds(15)
-        );
-
-        assertThat(finishedRestartedExecution).isNotNull();
-        assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
-        assertThat(finishedRestartedExecution.getParentId()).isNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(5);
-
-        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNotNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().filter(state -> state.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size()).isEqualTo(2);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(4).getAttempts().size()).isEqualTo(1);
-
-        finishedRestartedExecution
-            .getTaskRunList()
-            .stream()
-            .map(TaskRun::getState)
-            .forEach(state -> assertThat(state.getCurrent()).isEqualTo(State.Type.SUCCESS));
-    }
-
-    @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "downloadinternalstoragefilefromexecution")
-    void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException{
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "downloadinternalstoragefilefromexecution")
+    void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException {
         String tenantId = "downloadinternalstoragefilefromexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
@@ -824,18 +779,22 @@ class ExecutionControllerRunnerTest {
             FileMetas.class
         ).block();
 
-
         assertThat(metas).isNotNull();
         assertThat(metas.getSize()).isEqualTo(5L);
 
         String newExecutionId = IdUtils.create();
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            GET("/api/v1/" + tenantId + "/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
-                newExecutionId
-            )),
-            String.class
-        ));
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET(
+                    "/api/v1/" + tenantId + "/executions/" + execution.getId() + "/file?path=" + path.replace(
+                        execution.getId(),
+                        newExecutionId
+                    )
+                ),
+                String.class
+            )
+        );
 
         // we redirect to good execution (that doesn't exist, so 404)
         assertThat(e.getStatus().getCode()).isEqualTo(404);
@@ -843,8 +802,8 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "previewinternalstoragefilefromexecution")
-    void previewInternalStorageFileFromExecution() throws TimeoutException, QueueException{
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "previewinternalstoragefilefromexecution")
+    void previewInternalStorageFileFromExecution() throws TimeoutException, QueueException {
         String tenantId = "previewinternalstoragefilefromexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution defaultExecution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
@@ -859,10 +818,9 @@ class ExecutionControllerRunnerTest {
 
         assertThat(defaultFile).contains("hello");
 
-        Map<String, Object> latin1FileInputs = ImmutableMap.<String, Object>builder()
+        Map<String, Object> latin1FileInputs = ImmutableMap.<String, Object> builder()
             .put("failed", "NO")
             .put("string", "myString")
-            .put("enum", "ENUM_VALUE")
             .put("int", "42")
             .put("float", "42.42")
             .put("instant", "2019-10-06T18:27:49Z")
@@ -885,17 +843,19 @@ class ExecutionControllerRunnerTest {
 
         assertThat(latin1File).contains("Düsseldorf");
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            GET("/api/v1/" + tenantId + "/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=foo"),
-            String.class
-        ));
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/api/v1/" + tenantId + "/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=foo"),
+                String.class
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getMessage()).contains("using encoding 'foo'");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "previewlocalfilefromexecution")
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "previewlocalfilefromexecution")
     void previewLocalFileFromExecution() throws TimeoutException, QueueException, IOException {
         String tenantId = "previewlocalfilefromexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -938,7 +898,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"})
+    @LoadFlows(value = { "flows/valids/inputs.yaml" })
     void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException, URISyntaxException {
         String tenantId = MAIN_TENANT;
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -982,7 +942,7 @@ class ExecutionControllerRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/webhook.yaml"})
+    @LoadFlows({ "flows/valids/webhook.yaml" })
     void webhook() {
         Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
         String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
@@ -1049,7 +1009,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/webhook-wait.yaml"})
+    @LoadFlows({ "flows/valids/webhook-wait.yaml" })
     void shouldWaitForWebhookAndReturnOutput() {
         Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook-wait").orElseThrow();
         String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
@@ -1069,7 +1029,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/webhook-failed.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook-failed.yaml" })
     void webhookFailed() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
@@ -1081,57 +1041,64 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
     @SuppressWarnings("unchecked")
-    void resumeExecutionPaused() throws TimeoutException, QueueException {
+    void resumeExecutionPaused() throws QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         // resume the execution
         HttpResponse<?> resumeResponse = client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null));
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null)
+        );
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
-        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst().toBuilder().tenantId(TENANT_ID).build()); // API didn't send back the tenant id
+        assertThat((Map<String, Object>) outputs.get("resumed")).containsKey("on");
     }
 
     @Test
-    @LoadFlows({"flows/valids/resume-validate.yaml"})
+    @LoadFlows({ "flows/valids/resume-validate.yaml" })
     @SuppressWarnings("unchecked")
-    void resumeValidateExecutionPaused() throws TimeoutException, QueueException {
+    void resumeValidateExecutionPaused() throws QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "resume-validate");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         // validate inputs to resume a paused execution
         HttpResponse<?> resumeValidateResponse = client.toBlocking().exchange(
-          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume/validate", null));
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume/validate", null)
+        );
         assertThat(resumeValidateResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         // resume the execution
         HttpResponse<?> resumeResponse = client.toBlocking().exchange(
-          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null));
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null)
+        );
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
-        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst().toBuilder().tenantId(TENANT_ID).build()); // API didn't send back the tenant id
+        assertThat((Map<String, Object>) outputs.get("resumed")).containsKey("on");
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
-    void resumeExecutionPausedWithInputs() throws TimeoutException, QueueException {
+    @LoadFlows({ "flows/valids/pause_on_resume.yaml" })
+    void resumeExecutionPausedWithInputs() throws TimeoutException, QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
-        File applicationFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
-        ).getPath());
+        File applicationFile = new File(
+            Objects.requireNonNull(
+                ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
+            ).getPath()
+        );
 
         MultipartBody multipartBody = MultipartBody.builder()
             .addPart("asked", "myString")
@@ -1149,7 +1116,8 @@ class ExecutionControllerRunnerTest {
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
-        Map<String, Object> inputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst().toBuilder().tenantId(TENANT_ID).build()); // API didn't send back the tenant id'
+        Map<String, Object> inputs = (Map<String, Object>) outputs.get("onResume");
         Map<String, String> secretInputs = (Map<String, String>) inputs.get("secret_pause");
         assertThat(inputs.get("asked")).isEqualTo("myString");
         assertThat(secretInputs.get("type")).isEqualTo(EncryptedString.TYPE);
@@ -1159,7 +1127,7 @@ class ExecutionControllerRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
+    @LoadFlows({ "flows/valids/pause_on_resume.yaml" })
     void resumeExecutionPausedWithWrongInputs() throws TimeoutException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
@@ -1170,17 +1138,18 @@ class ExecutionControllerRunnerTest {
             .build();
 
         // resume the execution
-        HttpClientResponseException exception =  assertThrows (HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", multipartBody)
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
-        ));
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", multipartBody)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Invalid entity: Missing required input:asked");
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
     void resumeExecutionByIds() throws QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         Execution pausedExecution2 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
@@ -1205,16 +1174,18 @@ class ExecutionControllerRunnerTest {
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.POST(
-                "/api/v1/main/executions/resume/by-ids",
-                List.of(pausedExecution1.getId(), pausedExecution2.getId())
-            ))
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/resume/by-ids",
+                    List.of(pausedExecution1.getId(), pausedExecution2.getId())
+                )
+            )
         );
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/pause-test.yaml"}, tenantId = "resumeexecutionbyquery")
+    @LoadFlows(value = { "flows/valids/pause-test.yaml" }, tenantId = "resumeexecutionbyquery")
     void resumeExecutionByQuery() throws QueueException {
         String tenantId = "resumeexecutionbyquery";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -1238,34 +1209,43 @@ class ExecutionControllerRunnerTest {
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.POST(
-                "/api/v1/" + tenantId + "/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null
-            ))
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/" + tenantId + "/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null
+                )
+            )
         );
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void updateExecutionStatus(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // replay executions
-        Execution changedStatus = client.toBlocking().retrieve(
+        ApiAsyncEvent eventId = client.toBlocking().retrieve(
             HttpRequest.POST(
                 "/api/v1/%s/executions/".formatted(tenantId) + execution.getId() + "/change-status?status=WARNING",
                 null
             ),
-            Execution.class
+            ApiAsyncEvent.class
+        );
+        assertThat(eventId).isNotNull();
+
+        Execution changedStatus = runnerUtils.awaitExecution(
+            e -> e.getId().equals(execution.getId()) && e.getState().getCurrent() == Type.WARNING,
+            execution,
+            Duration.ofSeconds(10)
         );
         assertThat(changedStatus.getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void updateExecutionStatusByIds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1289,8 +1269,9 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(changeStatus.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)),
+            it -> it.getResults().stream().allMatch(e -> ((Execution) e).getState().getCurrent().equals(State.Type.WARNING))
         );
         assertThat(executions.getResults().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(executions.getResults().get(1).getState().getCurrent()).isEqualTo(State.Type.WARNING);
@@ -1298,7 +1279,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void updateExecutionStatusByQuery(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1312,40 +1293,45 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(executions.getTotal()).isEqualTo(2L);
 
-        // change status of  executions
+        // change status of executions
         BulkResponse changeStatus = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/%s/executions/change-status/by-query?namespace=io.kestra.tests&newStatus=WARNING".formatted(tenantId), null),
             BulkResponse.class
         );
         assertThat(changeStatus.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)),
+            it -> it.getResults().stream().allMatch(e -> ((Execution) e).getState().getCurrent().equals(State.Type.WARNING))
         );
         assertThat(executions.getResults().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
-        assertThat(executions.getResults().get(1).getState().getCurrent()).isEqualTo(State.Type.WARNING);;
+        assertThat(executions.getResults().get(1).getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        ;
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/pause-test.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
     void updateExecutionStatusShouldFailForKilled(String tenantId) throws QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         HttpResponse<?> killResponse = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/%s/executions/%s/kill".formatted(tenantId, pausedExecution.getId())));
+            HttpRequest.DELETE("/api/v1/%s/executions/%s/kill".formatted(tenantId, pausedExecution.getId()))
+        );
         assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
         Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/%s/executions/%s/change-status?status=WARNING".formatted(tenantId, killedExecution.getId()),
+                POST(
+                    "/api/v1/%s/executions/%s/change-status?status=WARNING".formatted(tenantId, killedExecution.getId()),
                     List.of(killedExecution.getId())
                 ),
                 Execution.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getMessage()).contains("Illegal argument: You can only change the state of a terminated non killed execution.");
@@ -1353,11 +1339,13 @@ class ExecutionControllerRunnerTest {
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/%s/executions/change-status/by-ids?newStatus=WARNING".formatted(tenantId),
+                POST(
+                    "/api/v1/%s/executions/change-status/by-ids?newStatus=WARNING".formatted(tenantId),
                     List.of(killedExecution.getId())
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
@@ -1367,11 +1355,13 @@ class ExecutionControllerRunnerTest {
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/%s/executions/change-status/by-query?newStatus=WARNING&filters[q][EQUALS]=%s".formatted(tenantId, killedExecution.getId()),
+                POST(
+                    "/api/v1/%s/executions/change-status/by-query?newStatus=WARNING&filters[q][EQUALS]=%s".formatted(tenantId, killedExecution.getId()),
                     List.of(killedExecution.getId())
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
@@ -1381,11 +1371,13 @@ class ExecutionControllerRunnerTest {
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/%s/executions/%s/state".formatted(tenantId, killedExecution.getId()),
+                POST(
+                    "/api/v1/%s/executions/%s/state".formatted(tenantId, killedExecution.getId()),
                     new StateRequest(killedExecution.getTaskRunList().getFirst().getId(), Type.WARNING)
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
@@ -1394,22 +1386,26 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void replayExecution(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Flow flow = flowRepositoryInterface.findById(tenantId, TESTS_FLOW_NS, "minimal").orElseThrow();
         Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
         assertThat(execution.getState().isTerminated()).isTrue();
 
         // replay execution
-        Execution replay = client.toBlocking().retrieve(
+        ApiAsyncEvent eventId = client.toBlocking().retrieve(
             HttpRequest.POST(
                 "/api/v1/%s/executions/".formatted(tenantId) + execution.getId() + "/replay",
                 null
             ),
-            Execution.class
+            ApiAsyncEvent.class
         );
-        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(eventId).isNotNull();
+
+        Execution replay = runnerUtils.awaitChildExecution(flow, execution, Duration.ofSeconds(10));
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
         assertThat(replay.getOriginalId()).isEqualTo(execution.getId());
         assertThat(replay.getLabels()).contains(new Label(Label.REPLAY, "true"));
 
@@ -1422,7 +1418,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void replayExecutionByIds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1446,14 +1442,15 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(replayResponse.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), PagedResults.class
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), PagedResults.class),
+            it -> it.getTotal() == 4L
         );
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void replayExecutionByQuery(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1462,7 +1459,7 @@ class ExecutionControllerRunnerTest {
         assertThat(execution1.getState().isTerminated()).isTrue();
         assertThat(execution2.getState().isTerminated()).isTrue();
 
-        PagedResults<?> executions = client.toBlocking().retrieve(
+        PagedResults<Execution> executions = client.toBlocking().retrieve(
             GET("/api/v1/%s/executions/search".formatted(tenantId)), PagedResults.class
         );
         assertThat(executions.getTotal()).isEqualTo(2L);
@@ -1474,14 +1471,17 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(resumeResponse.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/search".formatted(tenantId)), PagedResults.class
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)),
+            it -> it.getTotal() == 4L
         );
         assertThat(executions.getTotal()).isEqualTo(4L);
+        assertThat(executions.getResults().stream().filter(e -> e.getLabels().contains(new Label(Label.REPLAY, "true"))).count()).isEqualTo(2);
+        assertThat(executions.getResults().stream().filter(e -> e.getLabels().contains(new Label(Label.REPLAYED, "true"))).count()).isEqualTo(2);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
     void killExecutionPaused() throws QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
@@ -1489,7 +1489,8 @@ class ExecutionControllerRunnerTest {
 
         // kill the execution
         HttpResponse<?> killResponse = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/main/executions/" + pausedExecution.getId() + "/kill"));
+            HttpRequest.DELETE("/api/v1/main/executions/" + pausedExecution.getId() + "/kill")
+        );
         assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
         // check that the execution is killed
@@ -1498,14 +1499,15 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep-long.yml"})
+    @LoadFlows({ "flows/valids/sleep-long.yml" })
     void killExecution() throws InterruptedException, QueueException {
         // listen to the execution queue
         AtomicReference<Execution> killedExecution = new AtomicReference<>();
         CountDownLatch killedLatch = new CountDownLatch(1);
-        Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, e -> {
-            if (e.getLeft().getState().getCurrent() == State.Type.KILLED) {
-                killedExecution.set(e.getLeft());
+        Flux<FollowExecutionEvent> receiveExecutions = TestsUtils.receive(executionEventQueue, e ->
+        {
+            if (e.getLeft().eventType() == ExecutionEventType.TERMINATED) {
+                killedExecution.set(executionRepositoryInterface.findById(e.getLeft().tenantId(), e.getLeft().executionId()).orElseThrow());
                 killedLatch.countDown();
             }
         });
@@ -1513,8 +1515,9 @@ class ExecutionControllerRunnerTest {
         // listen to the executionkilled queue
         AtomicReference<String> executionKilledId = new AtomicReference<>();
         CountDownLatch executionKilledLatch = new CountDownLatch(1);
-        Flux<ExecutionKilled> receiveKilled = TestsUtils.receive(killQueue, e -> {
-            executionKilledId.set(((ExecutionKilledExecution) e.getLeft()).getExecutionId());
+        killQueue.addListener(e ->
+        {
+            executionKilledId.set(((ExecutionKilledExecution) e).getExecutionId());
             executionKilledLatch.countDown();
         });
 
@@ -1524,7 +1527,8 @@ class ExecutionControllerRunnerTest {
 
         // kill the execution
         HttpResponse<?> killResponse = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/main/executions/" + runningExecution.getId() + "/kill"));
+            HttpRequest.DELETE("/api/v1/main/executions/" + runningExecution.getId() + "/kill")
+        );
         assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
         // check that the execution has been set to killing then killed
@@ -1534,14 +1538,14 @@ class ExecutionControllerRunnerTest {
 
         //check that an executionkilled message has been sent
         assertTrue(executionKilledLatch.await(10, TimeUnit.SECONDS));
-        receiveKilled.blockLast();
         assertThat(executionKilledId.get()).isEqualTo(runningExecution.getId());
 
         // retrieve the execution from the API and check that the task has been set to killed
         Thread.sleep(250);
         Execution execution = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/" + runningExecution.getId()),
-            Execution.class);
+            Execution.class
+        );
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
@@ -1551,7 +1555,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "searchexecutions")
+    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "searchexecutions")
     void searchExecutions() {
         String tenantId = "searchexecutions";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -1561,17 +1565,18 @@ class ExecutionControllerRunnerTest {
 
         assertThat(executions.getTotal()).isEqualTo(0L);
 
-        triggerExecutionInputsFlowExecution(tenantId, false);
+        Execution execution = triggerExecutionInputsFlowExecution(tenantId, false);
+        awaitExecution(execution.getId(), exec -> exec.getState().getCurrent().isSuccess());
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
         executions = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenantId + "/executions/search?page=1&size=25&filters[labels][EQUALS][url]="+ENCODED_URL_LABEL_VALUE), PagedResults.class
+            GET("/api/v1/" + tenantId + "/executions/search?page=1&size=25&filters[labels][EQUALS][url]=" + ENCODED_URL_LABEL_VALUE), PagedResults.class
         );
 
         assertThat(executions.getTotal()).isEqualTo(1L);
 
         executions = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenantId + "/executions/search?page=1&size=25&labels=url:"+ENCODED_URL_LABEL_VALUE), PagedResults.class
+            GET("/api/v1/" + tenantId + "/executions/search?page=1&size=25&labels=url:" + ENCODED_URL_LABEL_VALUE), PagedResults.class
         );
 
         assertThat(executions.getTotal()).isEqualTo(1L);
@@ -1619,7 +1624,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void deleteExecution(String tenantId) throws QueueException, TimeoutException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1632,7 +1637,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void deleteExecutionByIds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1647,7 +1652,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void deleteExecutionByQuery(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1662,7 +1667,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void setLabelsOnTerminatedExecution(String tenantId) throws QueueException, TimeoutException {
         // update labels on a terminated execution
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -1672,10 +1677,11 @@ class ExecutionControllerRunnerTest {
             HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels", List.of(new Label("existing", "updated"), new Label("newKey", "value"))),
             Execution.class
         );
-        assertThat(response.getLabels()).containsExactlyInAnyOrder(
-            new Label(Label.CORRELATION_ID, response.getId()),
-            new Label("existing", "updated"),
-            new Label("newKey", "value")
+        assertThat(response).isNotNull();
+
+        awaitExecution(
+            result.getId(),
+            exec -> exec.getLabels().contains(new Label("existing", "updated")) && exec.getLabels().contains(new Label("newKey", "value"))
         );
 
         // update label on a not found execution
@@ -1693,7 +1699,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void setLabelsOnTerminatedExecutionsByIds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result1 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
@@ -1701,7 +1707,8 @@ class ExecutionControllerRunnerTest {
         Execution result3 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/%s/executions/labels/by-ids".formatted(tenantId),
+            HttpRequest.POST(
+                "/api/v1/%s/executions/labels/by-ids".formatted(tenantId),
                 new ExecutionController.SetLabelsByIdsRequest(List.of(result1.getId(), result2.getId(), result3.getId()), List.of(new Label("key", "value")))
             ),
             BulkResponse.class
@@ -1710,15 +1717,16 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getCount()).isEqualTo(3);
 
         // load one of the executions to check that labels have been correctly updated
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + result1.getId()),
-            Execution.class);
+        Execution execution = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + result1.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label("key", "value"))
+        );
         assertThat(execution.getLabels()).hasSize(3);
         assertThat(execution.getLabels()).contains(new Label("key", "value"));
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"}, tenantId = "setlabelsonterminatedexecutionsbyquery")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "setlabelsonterminatedexecutionsbyquery")
     void setLabelsOnTerminatedExecutionsByQuery() throws TimeoutException, QueueException {
         String tenantId = "setlabelsonterminatedexecutionsbyquery";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -1727,7 +1735,8 @@ class ExecutionControllerRunnerTest {
         Execution result3 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/" + tenantId + "/executions/labels/by-query?namespace=" + result1.getNamespace(),
+            HttpRequest.POST(
+                "/api/v1/" + tenantId + "/executions/labels/by-query?namespace=" + result1.getNamespace(),
                 List.of(new Label("key", "value"))
             ),
             BulkResponse.class
@@ -1737,16 +1746,18 @@ class ExecutionControllerRunnerTest {
 
         var exception = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(HttpRequest.POST(
-                "/api/v1/" + tenantId + "/executions/labels/by-query?namespace=" + result1.getNamespace(),
-                List.of(new Label(null, null)))
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/" + tenantId + "/executions/labels/by-query?namespace=" + result1.getNamespace(),
+                    List.of(new Label(null, null))
+                )
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void updateExistingLabelsBySetLabelsOnTerminatedExecutionsByIds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         final String statusLabelKey = "status";
@@ -1755,7 +1766,8 @@ class ExecutionControllerRunnerTest {
         Execution resultWithNoLabel = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/%s/executions/labels/by-ids".formatted(tenantId),
+            HttpRequest.POST(
+                "/api/v1/%s/executions/labels/by-ids".formatted(tenantId),
                 new ExecutionController.SetLabelsByIdsRequest(
                     List.of(resultWithLabel.getId(), resultWithNoLabel.getId(), resultWithDifferentLabel.getId()),
                     List.of(new Label(statusLabelKey, "done"))
@@ -1767,9 +1779,10 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getCount()).isEqualTo(3);
 
         // check that the existing have been correctly updated
-        Execution execution1 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()),
-            Execution.class);
+        Execution execution1 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution1.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution1.getId()),
             new Label("existing", "label"),
@@ -1777,9 +1790,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added
-        Execution execution2 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()),
-            Execution.class);
+        Execution execution2 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution2.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution2.getId()),
             new Label("existing", "label"),
@@ -1787,9 +1801,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added and the existing label kept as it was
-        Execution execution3 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()),
-            Execution.class);
+        Execution execution3 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution3.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution3.getId()),
             new Label("existing", "label"),
@@ -1799,7 +1814,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void updateExistingLabelsBySetLabelsOnTerminatedExecutionsByQuery(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         final String statusLabelKey = "status";
@@ -1808,7 +1823,8 @@ class ExecutionControllerRunnerTest {
         Execution resultWithNoLabel = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/%s/executions/labels/by-query?namespace=".formatted(tenantId) + resultWithLabel.getNamespace(),
+            HttpRequest.POST(
+                "/api/v1/%s/executions/labels/by-query?namespace=".formatted(tenantId) + resultWithLabel.getNamespace(),
                 List.of(new Label(statusLabelKey, "done"))
             ),
             BulkResponse.class
@@ -1818,17 +1834,20 @@ class ExecutionControllerRunnerTest {
 
         var exception = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(HttpRequest.POST(
-                "/api/v1/%s/executions/labels/by-query?namespace=".formatted(tenantId) + resultWithLabel.getNamespace(),
-                List.of(new Label(null, null)))
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/%s/executions/labels/by-query?namespace=".formatted(tenantId) + resultWithLabel.getNamespace(),
+                    List.of(new Label(null, null))
+                )
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
 
         // check that the existing have been correctly updated
-        Execution execution1 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()),
-            Execution.class);
+        Execution execution1 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution1.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution1.getId()),
             new Label("existing", "label"),
@@ -1836,9 +1855,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added
-        Execution execution2 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()),
-            Execution.class);
+        Execution execution2 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithNoLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution2.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution2.getId()),
             new Label("existing", "label"),
@@ -1846,9 +1866,10 @@ class ExecutionControllerRunnerTest {
         );
 
         // check that the existing have been correctly added and the existing label kept as it was
-        Execution execution3 = client.toBlocking().retrieve(
-            GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()),
-            Execution.class);
+        Execution execution3 = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/".formatted(tenantId) + resultWithDifferentLabel.getId()), Execution.class),
+            it -> it.getLabels().contains(new Label(statusLabelKey, "done"))
+        );
         assertThat(execution3.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution3.getId()),
             new Label("existing", "label"),
@@ -1858,16 +1879,25 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml",
-        "flows/valids/minimal.yaml"})
+    @LoadFlows(
+        { "flows/valids/sleep.yml",
+            "flows/valids/minimal.yaml" }
+    )
     void shouldPauseExecutionARunningFlow() throws QueueException, TimeoutException {
         Execution result = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
 
-        var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/pause", null));
+        var response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/pause", null),
+            ApiAsyncEvent.class
+        );
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(result.getId(), exec -> exec.getState().getCurrent() == State.Type.PAUSED);
 
         // resume it, it should then go to completion
-        response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/resume", null));
+        response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/resume", null),
+            ApiAsyncEvent.class
+        );
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/notfound/pause", null)));
@@ -1881,7 +1911,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({ "flows/valids/sleep.yml" })
     void shouldPauseExecutionByIdsRunningFlows() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
         Execution result2 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
@@ -1895,7 +1925,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep-short.yml"})
+    @LoadFlows({ "flows/valids/sleep-short.yml" })
     // use a dedicated Flow to avoid clash with other tests
     void shouldPauseExecutionByQueryRunningFlows() throws TimeoutException, QueueException {
         var flowId = "sleep-short";
@@ -1907,13 +1937,15 @@ class ExecutionControllerRunnerTest {
         BulkResponse response = null;
         try {
             response = client.toBlocking().retrieve(
-                HttpRequest.POST("/api/v1/main/executions/pause/by-query?flowId="+flowId+"&namespace=" + result1.getNamespace(), null),
+                HttpRequest.POST("/api/v1/main/executions/pause/by-query?flowId=" + flowId + "&namespace=" + result1.getNamespace(), null),
                 BulkResponse.class
             );
-        } catch (HttpClientResponseException e){
+        } catch (HttpClientResponseException e) {
             long afterException = System.currentTimeMillis();
             String errorMessage = "Duration before executions -> %d <-> duration after the exception -> %d <-> Error while pausing execution, err: %s, response: %s";
-            String formatedError = String.format(errorMessage, afterExec - start, afterException - start, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse("errors"));
+            String formatedError = String.format(
+                errorMessage, afterExec - start, afterException - start, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse("errors")
+            );
             log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
             fail(formatedError);
         }
@@ -1922,14 +1954,15 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldRefuseSystemLabelsWhenUpdatingLabels(String tenantId) throws QueueException, TimeoutException {
         // update label on a terminated execution
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+        var error = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels", List.of(new Label("system.label", "value"))),
                 Execution.class
             )
@@ -1939,8 +1972,11 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml",
-        "flows/valids/minimal.yaml"}, tenantId = "shouldunqueueexecutionaqueuedflow")
+    @LoadFlows(
+        value = { "flows/valids/flow-concurrency-queue.yml",
+            "flows/valids/minimal.yaml" },
+        tenantId = "shouldunqueueexecutionaqueuedflow"
+    )
     void shouldUnqueueExecutionAQueuedFlow() throws QueueException, TimeoutException {
         String tenantId = "shouldunqueueexecutionaqueuedflow";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -1958,20 +1994,24 @@ class ExecutionControllerRunnerTest {
             Duration.ofSeconds(10)
         );
 
-
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/notfound/unqueue", null)));
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
 
         // pausing an already completed flow will result in errors
         Execution completed = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
-        var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + completed.getId() + "/unqueue", null)));
+        var notRunning = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + completed.getId() + "/unqueue", null))
+        );
         assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml",
-        "flows/valids/minimal.yaml"}, tenantId = "shouldunqueueaqueuedflowtocancelledstate")
+    @LoadFlows(
+        value = { "flows/valids/flow-concurrency-queue.yml",
+            "flows/valids/minimal.yaml" },
+        tenantId = "shouldunqueueaqueuedflowtocancelledstate"
+    )
     void shouldUnqueueAQueuedFlowToCancelledState() throws QueueException, TimeoutException {
         String tenantId = "shouldunqueueaqueuedflowtocancelledstate";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -1983,6 +2023,7 @@ class ExecutionControllerRunnerTest {
             HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + result1.getId() + "/unqueue?state=CANCELLED", null)
         );
         assertThat(cancelResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(result1.getId(), exec -> exec.getState().getCurrent() == State.Type.CANCELLED);
 
         Optional<Execution> cancelledExecution = executionRepositoryInterface.findById(tenantId, result1.getId());
         assertThat(cancelledExecution.isPresent()).isTrue();
@@ -1990,7 +2031,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "shouldunqueueexecutionbyidsqueuedflows")
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue.yml" }, tenantId = "shouldunqueueexecutionbyidsqueuedflows")
     void shouldUnqueueExecutionByIdsQueuedFlows() throws TimeoutException, QueueException {
         String tenantId = "shouldunqueueexecutionbyidsqueuedflows";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2008,7 +2049,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "shouldforcerunexecutionaqueuedflow")
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue.yml" }, tenantId = "shouldforcerunexecutionaqueuedflow")
     void shouldForceRunExecutionAQueuedFlow() throws QueueException, TimeoutException {
         String tenantId = "shouldforcerunexecutionaqueuedflow";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2018,6 +2059,8 @@ class ExecutionControllerRunnerTest {
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(result.getId(), exec -> exec.getState().getCurrent() != State.Type.QUEUED);
+
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(tenantId, result.getId());
         assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
@@ -2031,28 +2074,34 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldFailToForceRunExecutionNotFoundOrTerminatedExecutions(String tenantId) throws QueueException, TimeoutException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
-        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/notfound/force-run".formatted(tenantId), null)));
+        var notFound = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/notfound/force-run".formatted(tenantId), null))
+        );
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
 
         // force run an already completed flow will result in errors
         Execution completed = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
-        var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + completed.getId() + "/force-run", null)));
+        var notRunning = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + completed.getId() + "/force-run", null))
+        );
         assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"}, tenantId = "shouldforcerunexecutionacreatedflow")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldforcerunexecutionacreatedflow")
     void shouldForceRunExecutionACreatedFlow() throws QueueException {
         String tenantId = "shouldforcerunexecutionacreatedflow";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result = this.createExecution(tenantId, TESTS_FLOW_NS, "minimal");
-        this.executionQueue.emit(result);
+        this.executionRepositoryInterface.save(result);
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + result.getId() + "/force-run", null));
+        awaitExecution(result.getId(), exec -> exec.getState().getCurrent() != Type.CREATED);
+
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(tenantId, result.getId());
         assertThat(forcedRun.isPresent()).isTrue();
@@ -2060,21 +2109,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
     void shouldForceRunExecutionAPausedFlow() throws QueueException, TimeoutException {
         // Run execution until it is paused
         Execution result = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-        Optional<Execution> forcedRun = executionRepositoryInterface.findById(TENANT_ID, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
-        assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.PAUSED);
+        Execution forcedRun = runnerUtils.awaitExecution(
+            e -> e.getId().equals(result.getId()) && e.getState().getCurrent() != Type.PAUSED,
+            result,
+            Duration.ofSeconds(10)
+        );
+        assertThat(forcedRun.getState().getCurrent()).isNotEqualTo(State.Type.PAUSED);
     }
 
-
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({ "flows/valids/sleep.yml" })
     void shouldForceRunExecutionARunningFlow() throws QueueException, TimeoutException {
         // Run execution until it is paused
         Execution result = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
@@ -2087,11 +2138,11 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({ "flows/valids/sleep.yml" })
     void shouldForRunByIdsFlows() throws TimeoutException, QueueException {
-        Execution result1 =  runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
-        Execution result2 =  runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
-        Execution result3 =  runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
+        Execution result1 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
+        Execution result2 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
+        Execution result3 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/main/executions/force-run/by-ids", List.of(result1.getId(), result2.getId(), result3.getId())),
@@ -2101,7 +2152,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/runners/sleep_medium.yml"})
+    @LoadFlows({ "flows/runners/sleep_medium.yml" })
     void shouldForRunByQueryFlows() throws TimeoutException, QueueException {
         String namespace = "io.kestra.forcerun.tests";
         runnerUtils.runOneUntilRunning(TENANT_ID, namespace, "sleep_medium");
@@ -2147,7 +2198,9 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
-        assertThat(evalResult.getStackTrace()).startsWith("io.kestra.core.exceptions.IllegalVariableEvaluationException: io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
+        assertThat(evalResult.getStackTrace()).startsWith(
+            "io.kestra.core.exceptions.IllegalVariableEvaluationException: io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)"
+        );
         assertThat(evalResult.getResult()).isNull();
 
         evalResult = client.toBlocking().retrieve(
@@ -2183,7 +2236,6 @@ class ExecutionControllerRunnerTest {
         );
     }
 
-
     private Execution triggerExecutionExecution(String tenantId, String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return triggerExecutionExecution(tenantId, namespace, flowId, requestBody, wait, null);
     }
@@ -2191,7 +2243,11 @@ class ExecutionControllerRunnerTest {
     private Execution triggerExecutionExecution(String tenantId, String namespace, String flowId, MultipartBody requestBody, Boolean wait, String breakpoint) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/" + tenantId + "/executions/" + namespace + "/" + flowId + "?labels=a:label-1&labels=b:label-2&labels=url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : "") + (breakpoint != null ? "&breakpoints=" + breakpoint : ""), requestBody)
+                .POST(
+                    "/api/v1/" + tenantId + "/executions/" + namespace + "/" + flowId + "?labels=a:label-1&labels=b:label-2&labels=url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : "")
+                        + (breakpoint != null ? "&breakpoints=" + breakpoint : ""),
+                    requestBody
+                )
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         ).withTenantId(tenantId); // the endpoint didn't return the tenantId
@@ -2205,17 +2261,20 @@ class ExecutionControllerRunnerTest {
 
     private MultipartBody createExecutionInputsFlowBody() {
         // Trigger execution
-        File applicationFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
-        ).getPath());
+        File applicationFile = new File(
+            Objects.requireNonNull(
+                ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
+            ).getPath()
+        );
 
-        File logbackFile = new File(Objects.requireNonNull(
-            ExecutionControllerTest.class.getClassLoader().getResource("logback.xml")
-        ).getPath());
+        File logbackFile = new File(
+            Objects.requireNonNull(
+                ExecutionControllerTest.class.getClassLoader().getResource("logback.xml")
+            ).getPath()
+        );
 
         return MultipartBody.builder()
             .addPart("string", "myString")
-            .addPart("enum", "ENUM_VALUE")
             .addPart("int", "42")
             .addPart("float", "42.42")
             .addPart("instant", "2019-10-06T18:27:49Z")
@@ -2234,45 +2293,62 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/minimal.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldRemoveLabelsFromExecutionPreservingSystemLabels(String tenantId) throws QueueException, TimeoutException {
         // Run initial execution
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution executionWithLabels = client.toBlocking().retrieve(
-                HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels", List.of(
-                                new Label("flow-label-1", "flow-label-1"),
-                                new Label("flow-label-2", "flow-label-2"))),
-                Execution.class
+        ApiAsyncEvent executionWithLabels = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels", List.of(
+                    new Label("flow-label-1", "flow-label-1"),
+                    new Label("flow-label-2", "flow-label-2")
+                )
+            ),
+            ApiAsyncEvent.class
         );
+        assertThat(executionWithLabels).isNotNull();
 
-        List<Label> allLabelsFromExecution = executionWithLabels.getLabels();
-        assertLabelCounts(allLabelsFromExecution, 2, greaterThan(0));
+        Execution updated = awaitExecution(
+            result.getId(),
+            exec -> !exec.getLabels().contains(new Label("existing", "label"))
+        );
+        assertThat(updated.getLabels()).contains(new Label("flow-label-1", "flow-label-1"), new Label("flow-label-2", "flow-label-2"));
 
         // Update with only one custom label
-        Execution executionWithOneLabel = client.toBlocking().retrieve(
-                HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels",
-                        List.of(new Label("flow-label-1", "flow-label-1"))),
-                Execution.class
+        ApiAsyncEvent executionWithOneLabel = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels",
+                List.of(new Label("flow-label-1", "flow-label-1"))
+            ),
+            ApiAsyncEvent.class
         );
+        assertThat(executionWithOneLabel).isNotNull();
 
-        allLabelsFromExecution = executionWithOneLabel.getLabels();
-        assertLabelCounts(allLabelsFromExecution, 1, greaterThan(0));
+        updated = awaitExecution(
+            result.getId(),
+            exec -> !exec.getLabels().contains(new Label("flow-label-2", "flow-label-2"))
+        );
+        assertThat(updated.getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
 
         // Remove all custom labels
         Execution executionWithNoLabels = client.toBlocking().retrieve(
-                HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels", Collections.emptyList()),
-                Execution.class
+            HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + result.getId() + "/labels", Collections.emptyList()),
+            Execution.class
         );
+        assertThat(executionWithNoLabels).isNotNull();
 
-        allLabelsFromExecution = executionWithNoLabels.getLabels();
-        assertLabelCounts(allLabelsFromExecution, 0, greaterThan(0));
+        updated = awaitExecution(
+            result.getId(),
+            exec -> !exec.getLabels().contains(new Label("flow-label-1", "flow-label-1"))
+        );
+        assertThat(updated.getLabels().stream().allMatch(l -> l.key().startsWith(Label.SYSTEM_PREFIX))).isTrue();
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"}, tenantId = "shouldnotallowaddingsystemlabels")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldnotallowaddingsystemlabels")
     void shouldNotAllowAddingSystemLabels() throws QueueException, TimeoutException {
         String tenantId = "shouldnotallowaddingsystemlabels";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2280,17 +2356,19 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         List<Label> systemLabels = List.of(new Label("system.key", "system-value"));
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + result.getId() + "/labels", systemLabels),
                 Execution.class
-        ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getMessage()).contains("System labels can only be set by Kestra itself");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/minimal.yaml"}, tenantId = "shouldsuspendatbreakpointthenresume")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendatbreakpointthenresume")
     void shouldSuspendAtBreakpointThenResume() {
         String tenantId = "shouldsuspendatbreakpointthenresume";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2304,17 +2382,19 @@ class ExecutionControllerRunnerTest {
         assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
         // resume the suspended execution
-        HttpResponse<Void> resume = client.toBlocking().exchange(
+        HttpResponse<ApiAsyncEvent> resume = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + suspended.getId() + "/resume-from-breakpoint", null),
-            Void.class
+            ApiAsyncEvent.class
         );
         assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(resume.body()).isNotNull();
 
         // wait for the exec to be terminated
         Execution terminated = runnerUtils.awaitExecution(
             it -> execution.getId().equals(it.getId()) && it.getState().isTerminated(),
             execution,
-            Duration.ofSeconds(10));
+            Duration.ofSeconds(10)
+        );
         assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(terminated.getTaskRunList()).hasSize(1);
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -2322,10 +2402,12 @@ class ExecutionControllerRunnerTest {
 
     @FlakyTest
     @Test
-    @LoadFlows(value = {"flows/valids/subflow-parent.yaml",
-        "flows/valids/subflow-child.yaml",
-        "flows/valids/subflow-grand-child.yaml"},
-    tenantId = "triggerexecutionandfollowdependencies")
+    @LoadFlows(
+        value = { "flows/valids/subflow-parent.yaml",
+            "flows/valids/subflow-child.yaml",
+            "flows/valids/subflow-grand-child.yaml" },
+        tenantId = "triggerexecutionandfollowdependencies"
+    )
     void triggerExecutionAndFollowDependencies() throws InterruptedException {
         String tenantId = "triggerexecutionandfollowdependencies";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2378,7 +2460,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/logs.yaml"})
+    @LoadFlows({ "flows/valids/logs.yaml" })
     void restartExecutionByIdShouldFailed() {
         Execution execution = client.toBlocking().retrieve(
             POST(
@@ -2392,11 +2474,13 @@ class ExecutionControllerRunnerTest {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/main/executions/restart/by-ids",
+                POST(
+                    "/api/v1/main/executions/restart/by-ids",
                     List.of(execution.getId())
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(e.getMessage()).contains("invalid bulk restart");
@@ -2405,18 +2489,20 @@ class ExecutionControllerRunnerTest {
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/main/executions/restart/by-ids",
+                POST(
+                    "/api/v1/main/executions/restart/by-ids",
                     List.of("NotExists")
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(e.getMessage()).contains("invalid bulk restart");
     }
 
     @Test
-    @LoadFlows({"flows/valids/failed-first.yaml"})
+    @LoadFlows({ "flows/valids/failed-first.yaml" })
     void restartExecutionByIdShouldSucceed() throws InterruptedException {
         Execution execution = client.toBlocking().retrieve(
             POST(
@@ -2429,7 +2515,8 @@ class ExecutionControllerRunnerTest {
         Thread.sleep(250);
 
         BulkResponse result = client.toBlocking().retrieve(
-            POST("/api/v1/main/executions/restart/by-ids",
+            POST(
+                "/api/v1/main/executions/restart/by-ids",
                 List.of(execution.getId())
             ),
             BulkResponse.class
@@ -2440,37 +2527,42 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/pause-test.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
     void restartExecutionShouldFailForKilled(String tenantId) throws QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         HttpResponse<?> killResponse = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/%s/executions/%s/kill".formatted(tenantId, pausedExecution.getId())));
+            HttpRequest.DELETE("/api/v1/%s/executions/%s/kill".formatted(tenantId, pausedExecution.getId()))
+        );
         assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
         Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/%s/executions/%s/restart".formatted(tenantId, killedExecution.getId()),
+                POST(
+                    "/api/v1/%s/executions/%s/restart".formatted(tenantId, killedExecution.getId()),
                     List.of(killedExecution.getId())
                 ),
                 Execution.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Illegal state: Execution must be terminated or paused and not killed to be restarted, current state is 'KILLED' !");
+        assertThat(e.getMessage()).contains("Illegal state: Execution must be failed to be restarted, current state is 'KILLED' !");
 
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/%s/executions/restart/by-ids".formatted(tenantId),
+                POST(
+                    "/api/v1/%s/executions/restart/by-ids".formatted(tenantId),
                     List.of(killedExecution.getId())
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
@@ -2480,11 +2572,13 @@ class ExecutionControllerRunnerTest {
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                POST("/api/v1/%s/executions/restart/by-query?filters[q][EQUALS]=%s".formatted(tenantId, killedExecution.getId()),
+                POST(
+                    "/api/v1/%s/executions/restart/by-query?filters[q][EQUALS]=%s".formatted(tenantId, killedExecution.getId()),
                     List.of(killedExecution.getId())
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
@@ -2493,7 +2587,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/logs.yaml"})
+    @LoadFlows({ "flows/valids/logs.yaml" })
     void killByIdShouldFailed() {
         Execution execution = client.toBlocking().retrieve(
             POST(
@@ -2509,11 +2603,13 @@ class ExecutionControllerRunnerTest {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                DELETE("/api/v1/main/executions/kill/by-ids",
+                DELETE(
+                    "/api/v1/main/executions/kill/by-ids",
                     List.of(execution.getId())
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(e.getMessage()).contains("invalid bulk kill");
@@ -2522,18 +2618,20 @@ class ExecutionControllerRunnerTest {
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                DELETE("/api/v1/main/executions/kill/by-ids",
+                DELETE(
+                    "/api/v1/main/executions/kill/by-ids",
                     List.of("NotExists")
                 ),
                 MutableHttpResponse.class
-            ));
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(e.getMessage()).contains("invalid bulk kill");
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep-long.yml"})
+    @LoadFlows({ "flows/valids/sleep-long.yml" })
     void killExecutionByIdShouldSucceed() throws InterruptedException {
         Execution execution = client.toBlocking().retrieve(
             POST(
@@ -2546,7 +2644,8 @@ class ExecutionControllerRunnerTest {
         Thread.sleep(250);
 
         BulkResponse result = client.toBlocking().retrieve(
-            DELETE("/api/v1/main/executions/kill/by-ids",
+            DELETE(
+                "/api/v1/main/executions/kill/by-ids",
                 List.of(execution.getId())
             ),
             BulkResponse.class
@@ -2598,17 +2697,108 @@ class ExecutionControllerRunnerTest {
         assertThat(response.body()).isEqualTo("{\"response\":\"abc123\"}");
     }
 
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void exportExecutions(Execution execution) {
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET("/api/v1/main/executions/export/by-query/csv"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=executions.csv");
+        String csv = new String(response.body());
+        assertThat(csv).contains(execution.getId());
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/inputs.yaml" })
+    void commaInSingleLabelsValue() {
+        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
+
+        MutableHttpRequest<Object> deleteRequest = HttpRequest
+            .DELETE("/api/v1/main/executions/by-query?labels=" + encodedCommaWithinLabel);
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(deleteRequest, PagedResults.class));
+
+        MutableHttpRequest<List<Object>> restartRequest = HttpRequest
+            .POST("/api/v1/main/executions/restart/by-query?labels=" + encodedCommaWithinLabel, List.of());
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(restartRequest, BulkResponse.class));
+
+        MutableHttpRequest<List<Object>> resumeRequest = HttpRequest
+            .POST("/api/v1/main/executions/resume/by-query?labels=" + encodedCommaWithinLabel, List.of());
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(resumeRequest, BulkResponse.class));
+
+        MutableHttpRequest<List<Object>> replayRequest = HttpRequest
+            .POST("/api/v1/main/executions/replay/by-query?labels=" + encodedCommaWithinLabel, List.of());
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(replayRequest, BulkResponse.class));
+
+        MutableHttpRequest<List<Object>> labelsRequest = HttpRequest
+            .POST("/api/v1/main/executions/labels/by-query?labels=" + encodedCommaWithinLabel, List.of());
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(labelsRequest, BulkResponse.class));
+
+        MutableHttpRequest<List<Object>> killRequest = HttpRequest
+            .DELETE("/api/v1/main/executions/kill/by-query?labels=" + encodedCommaWithinLabel, List.of());
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(killRequest, BulkResponse.class));
+
+        MutableHttpRequest<MultipartBody> triggerRequest = HttpRequest
+            .POST("/api/v1/main/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        assertThat(client.toBlocking().retrieve(triggerRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
+
+        MutableHttpRequest<MultipartBody> createRequest = HttpRequest
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
+
+        MutableHttpRequest<Object> searchRequest = HttpRequest
+            .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar");
+        await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(),
+            it -> it == 2L
+        );
+
+        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
+            .GET("/api/v1/main/executions/search?labels=project:foo,bar");
+        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(2L);
+
+        MutableHttpRequest<Object> searchRequest_triggerExecution = HttpRequest
+            .GET("/api/v1/executions/search?triggerExecutionId=test");
+        assertThat(client.toBlocking().retrieve(searchRequest_triggerExecution, PagedResults.class).getTotal()).isEqualTo(0L);
+    }
+
+    @Test
+    void commaInOneOfMultiLabels() {
+        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
+        String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
+
+        MutableHttpRequest<MultipartBody> createRequest = HttpRequest
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createExecutionInputsFlowBody())
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"), new Label("status", "test"));
+
+        MutableHttpRequest<Object> searchRequest = HttpRequest
+            .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test");
+        await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(),
+            it -> it == 1L
+        );
+
+        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
+            .GET("/api/v1/main/executions/search?labels=project:foo,bar" + "&labels=status:test");
+        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(1L);
+    }
+
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {
-        return labels == null ? List.of() :
-            labels.stream()
+        return labels == null ? List.of()
+            : labels.stream()
                 .filter(l -> !l.key().startsWith(Label.SYSTEM_PREFIX))
                 .collect(Collectors.toList());
     }
 
     private List<Label> getExecutionSystemLabels(List<Label> allLabelsFromExecution) {
         return allLabelsFromExecution.stream()
-                .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
-                .collect(Collectors.toList());
+            .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
+            .collect(Collectors.toList());
     }
 
     private void assertLabelCounts(List<Label> allLabels, int expectedCustomCount, Matcher<Integer> expectedSystemMatcher) {
@@ -2633,7 +2823,7 @@ class ExecutionControllerRunnerTest {
     }
 
     private Execution awaitExecution(String executionId) {
-        return Awaitility.await()
+        return await()
             .atMost(Duration.ofSeconds(10))
             .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
             .until(
@@ -2643,7 +2833,7 @@ class ExecutionControllerRunnerTest {
     }
 
     private Execution awaitExecution(String executionId, State.Type state) {
-        return Awaitility.await()
+        return await()
             .atMost(Duration.ofSeconds(10))
             .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
             .until(
@@ -2653,7 +2843,7 @@ class ExecutionControllerRunnerTest {
     }
 
     private Execution awaitExecution(String executionId, Predicate<Execution> predicate) {
-        return Awaitility.await()
+        return await()
             .atMost(Duration.ofSeconds(10))
             .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
             .until(

@@ -1,5 +1,17 @@
 package io.kestra.jdbc.repository;
 
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Stream;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+import org.slf4j.event.Level;
+
 import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
@@ -19,21 +31,11 @@ import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import lombok.Getter;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
-import org.slf4j.event.Level;
-
-import java.sql.Timestamp;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Stream;
 
 public abstract class AbstractJdbcRepository {
     public static final Field<Boolean> DELETED_FIELD = field("deleted", Boolean.class);
@@ -52,9 +54,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition defaultFilter(Boolean allowDeleted) {
-        return allowDeleted ?
-            DELETED_FIELD.in(true, false) :
-            DELETED_FIELD.eq(false);
+        return allowDeleted ? DELETED_FIELD.in(true, false) : DELETED_FIELD.eq(false);
     }
 
     protected Condition defaultFilter(String tenantId) {
@@ -65,9 +65,7 @@ public abstract class AbstractJdbcRepository {
         var tenant = buildTenantCondition(tenantId);
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
-        return allowDeleted ?
-            tenant.and(DELETED_FIELD.in(true, false)) :
-            tenant.and(DELETED_FIELD.eq(false));
+        return allowDeleted ? tenant.and(DELETED_FIELD.in(true, false)) : tenant.and(DELETED_FIELD.eq(false));
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
@@ -78,9 +76,7 @@ public abstract class AbstractJdbcRepository {
         var tenant = buildTenantCondition(tenantId);
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
-        return deleted ?
-            tenant.and(DELETED_FIELD.in(true, false)) :
-            tenant.and(DELETED_FIELD.eq(false));
+        return deleted ? tenant.and(DELETED_FIELD.in(true, false)) : tenant.and(DELETED_FIELD.eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {
@@ -146,7 +142,8 @@ public abstract class AbstractJdbcRepository {
             .select(
                 Stream.concat(
                     descriptors.entrySet().stream()
-                        .map(entry -> {
+                        .map(entry ->
+                        {
                             ColumnDescriptor<F> col = entry.getValue();
                             String key = entry.getKey();
                             Field<?> field = columnToField(col, fieldsMapping);
@@ -167,13 +164,14 @@ public abstract class AbstractJdbcRepository {
      * Used in the fetchData() method
      *
      * @param selectConditionStep the select condition step to which the filters will be applied
-     * @param jdbcFilterService   the service used to apply the filters
-     * @param filters             the data filter containing the filter conditions
-     * @param fieldsMapping       a map of field enums to their corresponding database column names
-     * @param <F>                 the type of the fields enum
+     * @param jdbcFilterService the service used to apply the filters
+     * @param filters the data filter containing the filter conditions
+     * @param fieldsMapping a map of field enums to their corresponding database column names
+     * @param <F> the type of the fields enum
      * @return the select condition step with the applied filters
      */
-    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {
+    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
+        Map<F, String> fieldsMapping) {
         return jdbcFilterService.addFilters(selectConditionStep, fieldsMapping, filters);
     }
 
@@ -182,18 +180,17 @@ public abstract class AbstractJdbcRepository {
      * Used in the fetchData() method
      *
      * @param selectConditionStep the select condition step to which the grouping will be applied
-     * @param columnsNoDate       the data filter containing the column descriptors for grouping
-     * @param dateFields          the data filter containing the column descriptors for grouping
-     * @param fieldsMapping       a map of field enums to their corresponding database column names
-     * @param <F>                 the type of the fields enum
+     * @param columnsNoDate the data filter containing the column descriptors for grouping
+     * @param dateFields the data filter containing the column descriptors for grouping
+     * @param fieldsMapping a map of field enums to their corresponding database column names
+     * @param <F> the type of the fields enum
      * @return the select having step with the applied grouping
      */
     protected <F extends Enum<F>> SelectHavingStep<Record> groupBy(
         SelectConditionStep<Record> selectConditionStep,
         List<? extends ColumnDescriptor<F>> columnsNoDate,
         List<Field<Date>> dateFields,
-        Map<F, String> fieldsMapping
-    ) {
+        Map<F, String> fieldsMapping) {
         return selectConditionStep.groupBy(
             Stream.concat(
                 columnsNoDate.stream()
@@ -204,19 +201,19 @@ public abstract class AbstractJdbcRepository {
         );
     }
 
-
     /**
      * Applies ordering to the given select step based on the provided descriptors.
      * Used in the fetchData() method
      *
      * @param selectHavingStep the select step to which the ordering will be applied
-     * @param descriptors      the data filter containing the order by information
-     * @param <F>              the type of the fields enum
+     * @param descriptors the data filter containing the order by information
+     * @param <F> the type of the fields enum
      * @return the select step with the applied ordering
      */
     protected <F extends Enum<F>> SelectSeekStepN<Record> orderBy(SelectHavingStep<Record> selectHavingStep, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors) {
         List<SortField<?>> orderFields = ListUtils.emptyOnNull(descriptors.getOrderBy()).stream()
-            .map(orderBy -> {
+            .map(orderBy ->
+            {
                 Field<?> field = field(orderBy.getColumn());
                 return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
             })
@@ -230,17 +227,14 @@ public abstract class AbstractJdbcRepository {
      * Used in the fetchData() method
      *
      * @param selectSeekStep the select step to fetch the results from
-     * @param pageable       the pageable object containing the pagination information
+     * @param pageable the pageable object containing the pagination information
      * @return the list of fetched results
      */
     protected ArrayListTotal<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
 
         int totalCount = DSL.using(selectSeekStep.configuration())
             .fetchCount(selectSeekStep);
-        var results = (pageable != null && pageable.getSize() != -1 ?
-            selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize()) :
-            selectSeekStep
-        ).fetch()
+        var results = (pageable != null && pageable.getSize() != -1 ? selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize()) : selectSeekStep).fetch()
             .intoMaps();
 
         return new ArrayListTotal<>(results, totalCount);
@@ -253,8 +247,7 @@ public abstract class AbstractJdbcRepository {
     protected Condition filter(
         List<QueryFilter> filters,
         String dateColumn,
-        Resource resource
-    ) {
+        Resource resource) {
         List<Condition> conditions = new ArrayList<>();
         if (filters != null) {
             QueryFilter.validateQueryFilters(filters, resource);
@@ -277,8 +270,7 @@ public abstract class AbstractJdbcRepository {
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
-        @Nullable String dateColumn
-    ) {
+        @Nullable String dateColumn) {
         if (field.equals(QueryFilter.Field.QUERY)) {
             return handleQuery(value, operation);
         }
@@ -298,7 +290,7 @@ public abstract class AbstractJdbcRepository {
 
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED || field == QueryFilter.Field.CREATED) {
-            if(dateColumn == null){
+            if (dateColumn == null) {
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
             return getDateCondition(value, operation, dateColumn);
@@ -328,16 +320,16 @@ public abstract class AbstractJdbcRepository {
         }
 
         if (field.equals(QueryFilter.Field.LABELS)) {
-            if (value instanceof Map<?, ?> map ){
+            if (value instanceof Map<?, ?> map) {
                 return findLabelCondition(Either.left(map), operation);
-            } else if(value instanceof String string ) {
+            } else if (value instanceof String string) {
                 return findLabelCondition(Either.right(string), operation);
             } else {
                 throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");
             }
         }
 
-        if(field == QueryFilter.Field.TRIGGER_STATE){
+        if (field == QueryFilter.Field.TRIGGER_STATE) {
             return applyTriggerStateCondition(value, operation);
         }
 
@@ -345,15 +337,13 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
-
         return defaultHandlers(field, value, operation);
     }
 
     protected Condition defaultHandlers(
         QueryFilter.Field field,
         Object value,
-        QueryFilter.Op operation
-    ) {
+        QueryFilter.Op operation) {
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -383,19 +373,22 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected static Object primitiveOrToString(Object o) {
-        if (o == null) return null;
+        if (o == null)
+            return null;
 
-        if (o instanceof Boolean
-            || o instanceof Number
-            || o instanceof Character
-            || o instanceof String) {
+        if (
+            o instanceof Boolean
+                || o instanceof Number
+                || o instanceof Character
+                || o instanceof String
+        ) {
             return o;
         }
 
         return o.toString();
     }
 
-    protected Name getColumnName(QueryFilter.Field field){
+    protected Name getColumnName(QueryFilter.Field field) {
         return DSL.quotedName(field.name().toLowerCase());
     }
 
@@ -437,6 +430,7 @@ public abstract class AbstractJdbcRepository {
     protected Condition statusCondition(Object value, QueryFilter.Op operation) {
         return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
     }
+
     protected Condition groupCondition(Object value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
@@ -506,13 +500,13 @@ public abstract class AbstractJdbcRepository {
 
     private Condition applyScopeCondition(Object value, QueryFilter.Op operation) {
         List<FlowScope> flowScopes = Enums.fromList(value, FlowScope.class);
-        if (flowScopes.size() > 1){
+        if (flowScopes.size() > 1) {
             throw new InvalidQueryFiltersException("Only one scope can be use in the same time");
         }
         FlowScope scope = flowScopes.getFirst();
 
         String systemNamespace = this.kestraConfig.getSystemFlowNamespace();
-        return switch (operation){
+        return switch (operation) {
             case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
             case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
@@ -520,7 +514,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     private Condition applyTriggerStateCondition(Object value, QueryFilter.Op operation) {
-        String triggerState =  value.toString();
+        String triggerState = value.toString();
         Boolean isDisabled = switch (triggerState) {
             case "disabled" -> true;
             case "enabled" -> false;
@@ -546,11 +540,11 @@ public abstract class AbstractJdbcRepository {
         ZonedDateTime startDate,
         ZonedDateTime endDate,
         Set<F> dateFields,
-        @Nullable DateUtils.GroupType groupType
-    ) {
+        @Nullable DateUtils.GroupType groupType) {
         return descriptors.getColumns().entrySet().stream()
             .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
-            .map(entry -> {
+            .map(entry ->
+            {
                 Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
                 DateUtils.GroupType effectiveGroupType = groupType != null ? groupType : DateUtils.groupByType(duration);
                 return formatDateField(fieldsMapping.get(entry.getValue().getField()), effectiveGroupType).as(entry.getKey());

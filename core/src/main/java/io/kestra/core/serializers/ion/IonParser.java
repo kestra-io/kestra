@@ -1,15 +1,15 @@
 package io.kestra.core.serializers.ion;
 
+import java.io.IOException;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.Timestamp;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.io.IOContext;
-
-import java.io.IOException;
-import java.time.*;
-import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
 
 public class IonParser extends com.fasterxml.jackson.dataformat.ion.IonParser {
     @SuppressWarnings("deprecation")

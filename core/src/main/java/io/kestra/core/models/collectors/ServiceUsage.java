@@ -1,11 +1,5 @@
 package io.kestra.core.models.collectors;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceType;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -21,44 +15,49 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceType;
+
 /**
  * Statistics about the number of running services over a given period.
  */
 public record ServiceUsage(
-    List<DailyServiceStatistics> dailyStatistics
-) {
+    List<DailyServiceStatistics> dailyStatistics) {
 
     /**
      * Daily statistics for a specific service type.
      *
-     * @param type   The service type.
+     * @param type The service type.
      * @param values The statistic values.
      */
     public record DailyServiceStatistics(
         String type,
-        List<DailyStatistics> values
-    ) {
+        List<DailyStatistics> values) {
     }
 
     /**
      * Statistics about the number of services running at any given time interval (e.g., 15 minutes) over a day.
      *
      * @param date The {@link LocalDate}.
-     * @param min  The minimum number of services.
-     * @param max  The maximum number of services.
-     * @param avg  The average number of services.
+     * @param min The minimum number of services.
+     * @param max The maximum number of services.
+     * @param avg The average number of services.
      */
     public record DailyStatistics(
         LocalDate date,
         long min,
         long max,
-        long avg
-    ) {
+        long avg) {
     }
+
     public static ServiceUsage of(final Instant from,
-                                  final Instant to,
-                                  final ServiceInstanceRepositoryInterface repository,
-                                  final Duration interval) {
+        final Instant to,
+        final ServiceInstanceRepositoryInterface repository,
+        final Duration interval) {
 
         List<DailyServiceStatistics> statistics = Arrays
             .stream(ServiceType.values())
@@ -69,23 +68,24 @@ public record ServiceUsage(
     }
 
     private static DailyServiceStatistics of(final Instant from,
-                                             final Instant to,
-                                             final ServiceInstanceRepositoryInterface repository,
-                                             final ServiceType serviceType,
-                                             final Duration interval) {
+        final Instant to,
+        final ServiceInstanceRepositoryInterface repository,
+        final ServiceType serviceType,
+        final Duration interval) {
         return of(serviceType, interval, repository.findAllInstancesBetween(serviceType, from, to));
     }
 
     @VisibleForTesting
     static DailyServiceStatistics of(final ServiceType serviceType,
-                                     final Duration interval,
-                                     final List<ServiceInstance> instances) {
+        final Duration interval,
+        final List<ServiceInstance> instances) {
         // Compute the number of running service per time-interval.
         final long timeIntervalInMillis = interval.toMillis();
 
         final Map<Long, Long> aggregatePerTimeIntervals = instances
             .stream()
-            .flatMap(instance -> {
+            .flatMap(instance ->
+            {
                 List<ServiceInstance.TimestampedEvent> events = instance.events();
                 long start = 0;
                 long end = 0;
@@ -93,14 +93,11 @@ public record ServiceUsage(
                     long epochMilli = event.ts().toEpochMilli();
                     if (event.state().equals(Service.ServiceState.RUNNING)) {
                         start = epochMilli;
-                    }
-                    else if (event.state().equals(Service.ServiceState.NOT_RUNNING) && end == 0) {
+                    } else if (event.state().equals(Service.ServiceState.NOT_RUNNING) && end == 0) {
                         end = epochMilli;
-                    }
-                    else if (event.state().equals(Service.ServiceState.TERMINATED_GRACEFULLY)) {
+                    } else if (event.state().equals(Service.ServiceState.TERMINATED_GRACEFULLY)) {
                         end = epochMilli; // more precise than NOT_RUNNING
-                    }
-                    else if (event.state().equals(Service.ServiceState.TERMINATED_FORCED)) {
+                    } else if (event.state().equals(Service.ServiceState.TERMINATED_FORCED)) {
                         end = epochMilli; // more precise than NOT_RUNNING
                     }
                 }
@@ -131,13 +128,15 @@ public record ServiceUsage(
         // Aggregate per day
         List<DailyStatistics> dailyStatistics = aggregatePerTimeIntervals.entrySet()
             .stream()
-            .collect(Collectors.groupingBy(entry -> {
+            .collect(Collectors.groupingBy(entry ->
+            {
                 Long epochTimeMilli = entry.getKey();
                 return Instant.ofEpochMilli(epochTimeMilli).atZone(ZoneId.systemDefault()).toLocalDate();
             }, Collectors.toList()))
             .entrySet()
             .stream()
-            .map(entry -> {
+            .map(entry ->
+            {
                 LongSummaryStatistics statistics = entry.getValue().stream().collect(Collectors.summarizingLong(Map.Entry::getValue));
                 return new DailyStatistics(
                     entry.getKey(),

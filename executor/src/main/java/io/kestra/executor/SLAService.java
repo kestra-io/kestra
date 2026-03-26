@@ -1,5 +1,8 @@
 package io.kestra.executor;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.ExecutionChangedSLA;
@@ -7,10 +10,8 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
-import jakarta.inject.Singleton;
 
-import java.util.List;
-import java.util.Optional;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class SLAService {
@@ -23,12 +24,13 @@ public class SLAService {
         return ListUtils.emptyOnNull(flow.getSla()).stream()
             .filter(ExecutionChangedSLA.class::isInstance)
             .map(
-                sla -> {
+                sla ->
+                {
                     try {
                         return sla.evaluate(runContext, execution);
                     } catch (Exception e) {
                         runContext.logger().error("Ignoring SLA '{}' because of the error: {}", sla.getId(), e.getMessage(), e);
-                        return Optional.<Violation>empty();
+                        return Optional.<Violation> empty();
                     }
                 }
             )

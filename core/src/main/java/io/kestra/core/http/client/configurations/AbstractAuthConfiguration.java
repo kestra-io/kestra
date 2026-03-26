@@ -1,19 +1,24 @@
 package io.kestra.core.http.client.configurations;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.RunContext;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.RunContext;
+
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = BasicAuthConfiguration.class, name = "BASIC"),
-    @JsonSubTypes.Type(value = BearerAuthConfiguration.class, name = "BEARER"),
-    @JsonSubTypes.Type(value = DigestAuthConfiguration.class, name = "DIGEST")
-})
+@JsonSubTypes(
+    {
+        @JsonSubTypes.Type(value = BasicAuthConfiguration.class, name = "BASIC"),
+        @JsonSubTypes.Type(value = BearerAuthConfiguration.class, name = "BEARER"),
+        @JsonSubTypes.Type(value = DigestAuthConfiguration.class, name = "DIGEST")
+    }
+)
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 public abstract class AbstractAuthConfiguration {

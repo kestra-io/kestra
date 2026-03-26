@@ -1,20 +1,20 @@
 package io.kestra.core.models.hierarchies;
 
 import io.kestra.core.models.triggers.*;
-import io.micronaut.core.annotation.Introspected;
+import io.kestra.core.scheduler.model.TriggerState;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 @Getter
-@Introspected
 public abstract class AbstractGraphTrigger extends AbstractGraph {
     @Setter
     private TriggerInterface triggerDeclaration;
-    private final Trigger trigger;
+    private final TriggerState trigger;
 
-    public AbstractGraphTrigger(AbstractTrigger triggerDeclaration, Trigger trigger) {
+    public AbstractGraphTrigger(AbstractTrigger triggerDeclaration, TriggerState trigger) {
         super();
 
         this.triggerDeclaration = triggerDeclaration;

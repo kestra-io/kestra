@@ -1,14 +1,15 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.junit.annotations.KestraTest;
+import java.time.Duration;
+
 import org.junit.jupiter.api.Test;
-import io.kestra.plugin.core.trigger.Schedule;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.trigger.Schedule;
 
 import jakarta.inject.Inject;
-
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,7 +70,7 @@ class ScheduleValidationTest {
     }
 
     @Test
-    void lateMaximumDelayValidation()  {
+    void lateMaximumDelayValidation() {
         Schedule build = Schedule.builder()
             .id(IdUtils.create())
             .type(Schedule.class.getName())
@@ -88,7 +89,6 @@ class ScheduleValidationTest {
             .cron("* * * * *")
             .interval(Duration.ofSeconds(5))
             .build();
-
 
         assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("interval: must be null");

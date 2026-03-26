@@ -1,19 +1,23 @@
 package io.kestra.core.models;
 
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import io.kestra.core.utils.MapUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 @Schema(description = "A key/value pair that can be attached to a Flow or Execution. Labels are often used to organize and categorize objects.")
 public record Label(
-        @NotEmpty @Pattern(regexp = "^[\\p{Ll}][\\p{L}0-9._-]*$", message = "Invalid label key. A valid key contains only lowercase letters numbers hyphens (-) underscores (_) or periods (.) and must begin with a lowercase letter.") String key,
-        @NotEmpty String value) {
+    @NotEmpty @Pattern(
+        regexp = "^[\\p{Ll}][\\p{L}0-9._-]*$",
+        message = "Invalid label key. A valid key contains only lowercase letters numbers hyphens (-) underscores (_) or periods (.) and must begin with a lowercase letter."
+    ) String key,
+    @NotEmpty String value) {
     public static final String SYSTEM_PREFIX = "system.";
 
     // system labels
@@ -47,7 +51,8 @@ public record Label(
      * @return the flat {@link Map}.
      */
     public static Map<String, String> toMap(@Nullable List<Label> labels) {
-        if (labels == null || labels.isEmpty()) return Collections.emptyMap();
+        if (labels == null || labels.isEmpty())
+            return Collections.emptyMap();
         return labels.stream()
             .filter(label -> label.value() != null && !label.value().isEmpty() && label.key() != null && !label.key().isEmpty())
             // using an accumulator in case labels with the same key exists: the second is kept
@@ -62,7 +67,8 @@ public record Label(
      * @return the deduplicated {@link List}.
      */
     public static List<Label> deduplicate(@Nullable List<Label> labels) {
-        if (labels == null || labels.isEmpty()) return Collections.emptyList();
+        if (labels == null || labels.isEmpty())
+            return Collections.emptyList();
         return toMap(labels).entrySet().stream()
             .filter(getEntryNotEmptyPredicate())
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
@@ -76,7 +82,8 @@ public record Label(
      * @return The list of {@link Label labels}.
      */
     public static List<Label> from(final Map<String, String> map) {
-        if (map == null || map.isEmpty()) return List.of();
+        if (map == null || map.isEmpty())
+            return List.of();
         return map.entrySet()
             .stream()
             .filter(getEntryNotEmptyPredicate())

@@ -3,7 +3,7 @@ plugins {
 }
 
 ext {
-    grpcVersion = '1.71.0'
+    grpcVersion = '1.80.0'
     protobufVersion = '3.25.9'
 }
 

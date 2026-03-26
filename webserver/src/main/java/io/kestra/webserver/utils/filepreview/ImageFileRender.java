@@ -1,10 +1,10 @@
 package io.kestra.webserver.utils.filepreview;
 
-import lombok.Getter;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+
+import lombok.Getter;
 
 @Getter
 public class ImageFileRender extends Base64Render {

@@ -1,15 +1,15 @@
 package io.kestra.core.models.annotations;
 
-import io.kestra.core.models.enums.MonacoLanguages;
-
 import java.lang.annotation.*;
+
+import io.kestra.core.models.enums.MonacoLanguages;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
 @Inherited
 @Retention(RUNTIME)
-@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Target({ ElementType.TYPE, ElementType.ANNOTATION_TYPE })
 public @interface Plugin {
     Example[] examples() default {};
 
@@ -54,11 +54,12 @@ public @interface Plugin {
     @Documented
     @Inherited
     @Retention(RUNTIME)
-    @Target({ElementType.TYPE})
+    @Target({ ElementType.TYPE })
     @interface Id {
         /**
          * Specifies the unique ID for identifying a plugin. ID is case-insensitive.
-         * @return  The string identifier.
+         * 
+         * @return The string identifier.
          */
         String value();
     }

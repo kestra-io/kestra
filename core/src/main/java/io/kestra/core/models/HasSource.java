@@ -1,7 +1,5 @@
 package io.kestra.core.models;
 
-import io.micronaut.http.multipart.CompletedFileUpload;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +9,8 @@ import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import io.micronaut.http.multipart.CompletedFileUpload;
 
 /**
  * Interface that can be implemented by Kestra's resource attached to an original source code.
@@ -22,23 +22,25 @@ public interface HasSource {
      * <p>
      * This method should return a valid and parseable in YAML object.
      *
-     * @return  the string source.
+     * @return the string source.
      */
     String source();
 
     /**
      * Static helper method for constructing a ZIP file containing the given sources.
      *
-     * @param sources      the sources to zip.
+     * @param sources the sources to zip.
      * @param zipEntryName the function used for constructing the ZIP entry name.
-     * @param <T>          type of the source.
+     * @param <T> type of the source.
      * @return a byte array representation of the ZIP file.
      * @throws IOException if an error happen while zipping sources.
      */
     static <T extends HasSource> byte[] asZipFile(final List<? extends T> sources,
-                                                  final Function<T, String> zipEntryName) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ZipOutputStream archive = new ZipOutputStream(bos)) {
+        final Function<T, String> zipEntryName) throws IOException {
+        try (
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ZipOutputStream archive = new ZipOutputStream(bos)
+        ) {
 
             for (var source : sources) {
                 var zipEntry = new ZipEntry(zipEntryName.apply(source));
@@ -54,9 +56,9 @@ public interface HasSource {
     /**
      * Static helper method for reading an uploaded source or archive file.
      *
-     * @param fileUpload    the upload file.
-     * @param reader        the source reader.
-     * @throws IOException  if the file cannot be read.
+     * @param fileUpload the upload file.
+     * @param reader the source reader.
+     * @throws IOException if the file cannot be read.
      */
     static void readSourceFile(final CompletedFileUpload fileUpload, final BiConsumer<String, String> reader) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();

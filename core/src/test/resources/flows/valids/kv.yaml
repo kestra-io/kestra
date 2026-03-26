@@ -1,10 +1,10 @@
 id: kv
 namespace: io.kestra.tests
 inputs:
-  - name: namespace
+  - id: namespace
     type: STRING
     defaults: "io.kestra.tests"
-  - name: errorOnMissing
+  - id: errorOnMissing
     type: BOOL
     defaults: false
 tasks:

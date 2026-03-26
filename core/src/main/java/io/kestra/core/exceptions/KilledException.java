@@ -1,7 +1,5 @@
 package io.kestra.core.exceptions;
 
-import java.io.Serial;
-
 /**
  * Exception thrown when a task runner is killed during execution.
  */

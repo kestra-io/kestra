@@ -1,12 +1,12 @@
 package io.kestra.webserver.services;
 
+import java.io.InputStream;
+import java.net.http.HttpHeaders;
 
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 
-import java.io.InputStream;
-import java.net.http.HttpHeaders;
+import io.micronaut.http.HttpStatus;
 
 public abstract class MicronautHttpService {
 
@@ -43,13 +43,14 @@ public abstract class MicronautHttpService {
             .build();
     }
 
-
     public static <T> io.micronaut.http.HttpResponse<?> to(HttpResponse<T> response) {
         var result = io.micronaut.http.HttpResponse
             .status(HttpStatus.valueOf(response.getStatus().getCode()))
-            .headers(headers -> {
+            .headers(headers ->
+            {
                 if (response.getHeaders() != null) {
-                    response.getHeaders().map().forEach((key, values) -> {
+                    response.getHeaders().map().forEach((key, values) ->
+                    {
                         for (String value : values) {
                             headers.add(key, value);
                         }

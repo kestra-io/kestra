@@ -1,12 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.StorageContext;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import jakarta.inject.Singleton;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -14,6 +7,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.storages.StorageContext;
+
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class FileURIFunction extends AbstractFileFunction {
@@ -45,7 +46,7 @@ public class FileURIFunction extends AbstractFileFunction {
             throw new IllegalArgumentException("Path must not contain '../'");
         }
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
-       Path filePath = NamespaceFile.normalize(Path.of(pathStr));
+        Path filePath = NamespaceFile.normalize(Path.of(pathStr));
 
         if (args.containsKey(VERSION)) {
             Integer version;

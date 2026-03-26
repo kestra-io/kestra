@@ -1,6 +1,9 @@
 package io.kestra.core.plugins;
 
+import java.io.Serial;
+
 import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
@@ -17,8 +20,6 @@ import io.kestra.core.plugins.serdes.AssetDeserializer;
 import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
-
-import java.io.Serial;
 
 /**
  * Jackson module for registering the {@link PluginDeserializer} for

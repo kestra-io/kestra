@@ -13,7 +13,10 @@ import {applyDefaultFilters} from "../components/filter/composables/useDefaultFi
 export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
+
+    // New onboarding pages, initial one and the success one after the user has completed the onboarding flow.
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
+    {name: "welcome/success", path: "/:tenant?/welcome/success", component: () => import("../components/onboarding/Success.vue")},
 
     //Dashboards
     {
@@ -74,11 +77,6 @@ export default [
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
     {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?",   component: () => import("../components/plugins/Plugin.vue")},
-
-    //Templates
-    {name: "templates/list", path: "/:tenant?/templates", component: () => import("../components/templates/Templates.vue")},
-    {name: "templates/create", path: "/:tenant?/templates/new", component: () => import("../components/templates/TemplateEdit.vue")},
-    {name: "templates/update", path: "/:tenant?/templates/edit/:namespace/:id", component: () => import("../components/templates/TemplateEdit.vue")},
 
     //Logs
     {

@@ -1,7 +1,14 @@
 package io.kestra.core.runners.pebble;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.functions.RenderingFunctionInterface;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -11,12 +18,6 @@ import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.lexer.Syntax;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Proxy;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Singleton
 public class PebbleEngineFactory {
@@ -50,9 +51,11 @@ public class PebbleEngineFactory {
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
 
         this.applicationContext.getBeansOfType(Extension.class).stream()
-            .map(e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
-                ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
-                : e)
+            .map(
+                e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
+                    ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
+                    : e
+            )
             .forEach(builder::extension);
 
         return builder.build();
@@ -77,11 +80,13 @@ public class PebbleEngineFactory {
     private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initialExtension, List<String> maskedFunctions) {
         return (Extension) Proxy.newProxyInstance(
             initialExtension.getClass().getClassLoader(),
-            new Class[]{Extension.class},
-            (proxy, method, methodArgs) -> {
+            new Class[] { Extension.class },
+            (proxy, method, methodArgs) ->
+            {
                 if (method.getName().equals("getFunctions")) {
                     return initialExtension.getFunctions().entrySet().stream()
-                        .map(entry -> {
+                        .map(entry ->
+                        {
                             if (maskedFunctions.contains(entry.getKey())) {
                                 return Map.entry(entry.getKey(), this.maskedFunctionProxy(entry.getValue()));
                             } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
@@ -100,8 +105,9 @@ public class PebbleEngineFactory {
     private Function variableRendererProxy(VariableRenderer renderer, Function initialFunction) {
         return (Function) Proxy.newProxyInstance(
             initialFunction.getClass().getClassLoader(),
-            new Class[]{Function.class, RenderingFunctionInterface.class},
-            (functionProxy, functionMethod, functionArgs) -> {
+            new Class[] { Function.class, RenderingFunctionInterface.class },
+            (functionProxy, functionMethod, functionArgs) ->
+            {
                 if (functionMethod.getName().equals("variableRenderer")) {
                     return renderer;
                 }
@@ -113,8 +119,9 @@ public class PebbleEngineFactory {
     private Function maskedFunctionProxy(Function initialFunction) {
         return (Function) Proxy.newProxyInstance(
             initialFunction.getClass().getClassLoader(),
-            new Class[]{Function.class},
-            (functionProxy, functionMethod, functionArgs) -> {
+            new Class[] { Function.class },
+            (functionProxy, functionMethod, functionArgs) ->
+            {
                 Object result;
                 try {
                     result = functionMethod.invoke(initialFunction, functionArgs);

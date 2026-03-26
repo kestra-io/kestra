@@ -1,14 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Singleton;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Singleton
 public class FetchContextFunction implements Function {

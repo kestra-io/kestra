@@ -38,6 +38,9 @@ plugins {
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.0" apply false
+
+    // Formatting
+    id "io.kestra.gradle.spotless-conventions" version "1.0.3"
 }
 
 idea {
@@ -60,10 +63,6 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
-}
-compileJava {
-    // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-    options.release = 21
 }
 
 
@@ -95,18 +94,18 @@ allprojects {
     if (it.name != 'platform') {
         group = "io.kestra"
 
+        // Formatting
+        apply plugin: "io.kestra.gradle.spotless-conventions"
+
         java {
             toolchain {
                 languageVersion = JavaLanguageVersion.of(25)
             }
         }
-        compileJava {
-            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-            options.release = 21
-        }
 
         repositories {
             mavenCentral()
+            mavenLocal()
         }
 
         // micronaut
@@ -201,10 +200,6 @@ subprojects {subProj ->
                 languageVersion = JavaLanguageVersion.of(25)
             }
         }
-        compileJava {
-            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-            options.release = 21
-        }
 
         configurations {
             agent {
@@ -246,6 +241,8 @@ subprojects {subProj ->
 
             // ArchUnit for architecture testing
             testImplementation "com.tngtech.archunit:archunit-junit5"
+            // awaitility
+            testImplementation 'org.awaitility:awaitility'
 
             agent "org.aspectj:aspectjweaver:1.9.25.1"
 
@@ -258,6 +255,7 @@ subprojects {subProj ->
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")
+                project.develocity.buildScan.value("${t.path}#maxHeapSize", t.maxHeapSize)
             }
             t.doLast {
                 logger.lifecycle("[TASK END]   ${t.path}")

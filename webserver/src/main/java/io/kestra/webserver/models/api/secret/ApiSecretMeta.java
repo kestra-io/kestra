@@ -15,9 +15,8 @@ public class ApiSecretMeta {
         @Parameter(
             name = "key",
             description = "The key of secret.",
-            required = true)
-        String key
-    ) {
+            required = true
+        ) String key) {
         this.key = key;
     }
 }

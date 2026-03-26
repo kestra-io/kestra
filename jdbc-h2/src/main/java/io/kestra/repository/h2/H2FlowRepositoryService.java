@@ -1,16 +1,16 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.jdbc.AbstractJdbcRepository;
 
 public abstract class H2FlowRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query, Map<String, String> labels) {
@@ -21,7 +21,8 @@ public abstract class H2FlowRepositoryService {
         }
 
         if (labels != null) {
-            labels.forEach((key, value) -> {
+            labels.forEach((key, value) ->
+            {
                 Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | select(.key == \"" + key + "\") | .value')", String.class);
                 if (value == null) {
                     conditions.add(valueField.isNull());
@@ -42,7 +43,8 @@ public abstract class H2FlowRepositoryService {
         List<Condition> conditions = new ArrayList<>();
 
         if (labels instanceof Map<?, ?> labelValues) {
-            labelValues.forEach((key, value) -> {
+            labelValues.forEach((key, value) ->
+            {
                 Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | select(.key == \"" + key + "\") | .value')", String.class);
                 Condition condition = switch (operation) {
                     case EQUALS -> value == null ? valueField.isNull() : valueField.eq((String) value);

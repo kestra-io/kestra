@@ -1,15 +1,5 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.contexts.MavenPluginRepositoryConfig;
-import io.kestra.core.exceptions.KestraRuntimeException;
-import io.micronaut.context.annotation.Value;
-import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -22,6 +12,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.KestraRuntimeException;
+
+import io.micronaut.context.annotation.Value;
+import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.plugins.PluginManager.createLocalRepositoryIfNotExist;
 
@@ -51,13 +51,13 @@ public class LocalPluginManager implements PluginManager {
      * Creates a new {@link LocalPluginManager} instance.
      *
      * @param pluginRegistryProvider The {@link PluginRegistry}.
-     * @param mavenPluginDownloader       The {@link MavenPluginDownloader}.
-     * @param localRepositoryPath    The local repository path used to stored plugins.
+     * @param mavenPluginDownloader The {@link MavenPluginDownloader}.
+     * @param localRepositoryPath The local repository path used to stored plugins.
      */
     @Inject
     public LocalPluginManager(final Provider<PluginRegistry> pluginRegistryProvider,
-                              final MavenPluginDownloader mavenPluginDownloader,
-                              @Nullable @Value("${kestra.plugins.management.localRepositoryPath}") final String localRepositoryPath) {
+        final MavenPluginDownloader mavenPluginDownloader,
+        @Nullable @Value("${kestra.plugins.management.localRepositoryPath}") final String localRepositoryPath) {
         this.pluginRegistryProvider = pluginRegistryProvider;
         this.mavenPluginDownloader = mavenPluginDownloader;
         this.localRepositoryPath = PluginManager.getLocalManagedRepositoryPathOrDefault(localRepositoryPath);
@@ -87,7 +87,8 @@ public class LocalPluginManager implements PluginManager {
         try (Stream<Path> files = Files.list(localRepositoryPath)) {
             return files
                 .filter(file -> Files.isRegularFile(file) && Files.isReadable(file) && file.toString().endsWith(".jar"))
-                .map(file -> {
+                .map(file ->
+                {
                     try {
                         BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
                         return new PluginArtifactMetadata(
@@ -114,9 +115,9 @@ public class LocalPluginManager implements PluginManager {
      **/
     @Override
     public PluginArtifact install(PluginArtifact artifact,
-                                  List<MavenPluginRepositoryConfig> repositoryConfigs,
-                                  boolean installForRegistration,
-                                  @Nullable Path localRepositoryPath) {
+        List<MavenPluginRepositoryConfig> repositoryConfigs,
+        boolean installForRegistration,
+        @Nullable Path localRepositoryPath) {
         Objects.requireNonNull(artifact, "cannot install null artifact");
 
         log.info("Installing managed plugin artifact '{}'", artifact);
@@ -126,8 +127,8 @@ public class LocalPluginManager implements PluginManager {
     }
 
     private PluginArtifact install(final PluginArtifact artifact,
-                                   final boolean installForRegistration,
-                                   Path localRepositoryPath) {
+        final boolean installForRegistration,
+        Path localRepositoryPath) {
 
         localRepositoryPath = createLocalRepositoryIfNotExist(Optional.ofNullable(localRepositoryPath).orElse(this.localRepositoryPath));
         Path localPluginPath = getLocalPluginPath(localRepositoryPath, artifact);
@@ -165,9 +166,9 @@ public class LocalPluginManager implements PluginManager {
      **/
     @Override
     public List<PluginArtifact> install(List<PluginArtifact> artifacts,
-                                        List<MavenPluginRepositoryConfig> repositoryConfigs,
-                                        boolean refreshPluginRegistry,
-                                        @Nullable Path localRepositoryPath) {
+        List<MavenPluginRepositoryConfig> repositoryConfigs,
+        boolean refreshPluginRegistry,
+        @Nullable Path localRepositoryPath) {
         return artifacts.stream()
             .map(artifact -> install(artifact, repositoryConfigs, refreshPluginRegistry, localRepositoryPath))
             .toList();
@@ -213,7 +214,8 @@ public class LocalPluginManager implements PluginManager {
             if (pluginRegistryProvider != null) {
                 final PluginRegistry registry = pluginRegistryProvider.get();
                 // Unregister all plugins from registry
-                registry.unregister(new ArrayList<>(registry.plugins((plugin) -> {
+                registry.unregister(new ArrayList<>(registry.plugins((plugin) ->
+                {
                     if (plugin.getClassLoader() instanceof PluginClassLoader pluginClassLoader) {
                         URI location = URI.create(pluginClassLoader.location());
                         return localPluginPath.equals(Path.of(location));

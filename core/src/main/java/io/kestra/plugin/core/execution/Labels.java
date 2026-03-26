@@ -1,8 +1,14 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -14,6 +20,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -21,11 +28,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -48,37 +50,38 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             title = "Add labels based on a webhook payload",
             full = true,
             code = """
-                id: webhook_based_labels
-                namespace: company.team
+                    id: webhook_based_labels
+                    namespace: company.team
 
-                tasks:
-                  - id: update_labels_with_map
-                    type: io.kestra.plugin.core.execution.Labels
-                    labels:
-                      customerId: "{{ trigger.body.customerId }}"
-                      
-                  - id: by_list
-                    type: io.kestra.plugin.core.execution.Labels
-                    labels:
-                      - key: order_id
-                        value: "{{ trigger.body.orderId }}"
-                      - key: order_type
-                        value: "{{ trigger.body.orderType }}"
-                        
-                triggers:
-                  - id: webhook
-                    key: order_webhook
-                    type: io.kestra.plugin.core.trigger.Webhook
-                    conditions:
-                      - type: io.kestra.plugin.core.condition.Expression
-                        expression: "{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}"
-            """
+                    tasks:
+                      - id: update_labels_with_map
+                        type: io.kestra.plugin.core.execution.Labels
+                        labels:
+                          customerId: "{{ trigger.body.customerId }}"
+
+                      - id: by_list
+                        type: io.kestra.plugin.core.execution.Labels
+                        labels:
+                          - key: order_id
+                            value: "{{ trigger.body.orderId }}"
+                          - key: order_type
+                            value: "{{ trigger.body.orderType }}"
+
+                    triggers:
+                      - id: webhook
+                        key: order_webhook
+                        type: io.kestra.plugin.core.trigger.Webhook
+                        conditions:
+                          - type: io.kestra.plugin.core.condition.Expression
+                            expression: "{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}"
+                """
         )
     },
     aliases = "io.kestra.core.tasks.executions.Labels"
 )
 public class Labels extends Task implements ExecutionUpdatableTask {
-    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
+    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {
+    };
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Schema(
@@ -105,29 +108,34 @@ public class Labels extends Task implements ExecutionUpdatableTask {
             }
         } else if (labels instanceof List<?> labelsList) {
             labelsAsMap = labelsList.stream()
-                .map(throwFunction(label -> {
-                        if (label instanceof Map<?, ?> labelMap) {
-                            return Map.entry(
-                                runContext.render((String) labelMap.get("key")),
-                                runContext.render((String) labelMap.get("value"))
-                            );
-                        } else {
-                            throw new IllegalVariableEvaluationException("Unknown value type: " + label.getClass());
-                        }
-                    })
-                ).collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (first, second) -> second)
+                .map(throwFunction(label ->
+                {
+                    if (label instanceof Map<?, ?> labelMap) {
+                        return Map.entry(
+                            runContext.render((String) labelMap.get("key")),
+                            runContext.render((String) labelMap.get("value"))
+                        );
+                    } else {
+                        throw new IllegalVariableEvaluationException("Unknown value type: " + label.getClass());
+                    }
+                })
+                ).collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (first, second) -> second
+                    )
                 );
         } else if (labels instanceof Map<?, ?> map) {
             labelsAsMap = map.entrySet()
                 .stream()
                 .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), runContext.render((String) entry.getValue()))))
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue
-                ));
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                    )
+                );
         } else {
             throw new IllegalVariableEvaluationException("Unknown value type: " + labels.getClass());
         }
@@ -139,7 +147,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         if (systemLabel.isPresent()) {
             throw new IllegalArgumentException(
                 "System labels can only be set by Kestra itself, offending label: " +
-                systemLabel.get().getKey() + "=" + systemLabel.get().getValue()
+                    systemLabel.get().getKey() + "=" + systemLabel.get().getValue()
             );
         }
 
@@ -154,18 +162,24 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         }
 
         Map<String, String> newLabels = ListUtils.emptyOnNull(execution.getLabels()).stream()
-            .collect(Collectors.toMap(
-                Label::key,
-                Label::value
-            ));
+            .collect(
+                Collectors.toMap(
+                    Label::key,
+                    Label::value
+                )
+            );
         newLabels.putAll(labelsAsMap);
 
-        return execution.withLabels(newLabels.entrySet().stream()
-            .filter(Label.getEntryNotEmptyPredicate())
-            .map(entry -> new Label(
-                entry.getKey(),
-                entry.getValue()
-            ))
-            .toList());
+        return execution.withLabels(
+            newLabels.entrySet().stream()
+                .filter(Label.getEntryNotEmptyPredicate())
+                .map(
+                    entry -> new Label(
+                        entry.getKey(),
+                        entry.getValue()
+                    )
+                )
+                .toList()
+        );
     }
 }

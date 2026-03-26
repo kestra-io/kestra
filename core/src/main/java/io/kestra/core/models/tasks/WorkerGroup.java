@@ -1,6 +1,5 @@
 package io.kestra.core.models.tasks;
 
-import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Introspected
 public class WorkerGroup {
 
     private String key;
@@ -19,5 +17,15 @@ public class WorkerGroup {
         FAIL,
         WAIT,
         CANCEL,
+    }
+
+    /**
+     * Format worker group for log display
+     *
+     * @param workerGroup the worker group
+     * @return formatted worker group
+     */
+    public static String forLog(String workerGroup) {
+        return workerGroup == null || workerGroup.isEmpty() ? "(default)" : workerGroup;
     }
 }

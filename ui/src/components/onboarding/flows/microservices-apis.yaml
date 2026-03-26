@@ -1,0 +1,40 @@
+id: website-health-check
+namespace: company.team
+description: Checks if a website is up by making an HTTP request. Sends a Slack alert if the response is not 200, otherwise logs a success message.
+
+inputs:
+  - id: websiteUrl
+    type: STRING
+    description: The URL of the website to check.
+    defaults: https://kestra.io
+  - id: slackWebhookUrl
+    type: STRING
+    description: The Slack incoming webhook URL for alerts.
+    defaults: https://kestra.io/api/mock
+
+tasks:
+  - id: check_website
+    type: io.kestra.plugin.core.http.Request
+    uri: "{{ inputs.websiteUrl }}"
+    method: GET
+    options:
+      allowFailed: true
+
+  - id: check_response_code
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.check_website.code != 200 }}"
+    then:
+      - id: send_slack_alert
+        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+        url: "{{ inputs.slackWebhookUrl }}"
+        messageText: "Website {{ inputs.websiteUrl }} is down! Status code: {{ outputs.check_website.code }}"
+    else:
+      - id: log_success
+        type: io.kestra.plugin.core.log.Log
+        message: "Website {{ inputs.websiteUrl }} is up! Status code: {{ outputs.check_website.code }}"
+
+triggers:
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 0 * * *"
+    disabled: true

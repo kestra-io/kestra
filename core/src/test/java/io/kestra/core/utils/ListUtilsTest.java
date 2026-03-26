@@ -1,9 +1,9 @@
 package io.kestra.core.utils;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,13 +39,13 @@ class ListUtilsTest {
     }
 
     @Test
-    void convertToList(){
+    void convertToList() {
         assertThat(ListUtils.convertToList(List.of(1, 2, 3))).isEqualTo(List.of(1, 2, 3));
         assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToList("not a list"));
     }
 
     @Test
-    void convertToListString(){
+    void convertToListString() {
         assertThat(ListUtils.convertToListString(List.of("string1", "string2"))).isEqualTo(List.of("string1", "string2"));
         assertThat(ListUtils.convertToListString(List.of())).isEqualTo(List.of());
         assertThat(ListUtils.convertToListString(List.of(1, 2, 3))).isEqualTo(List.of("1", "2", "3"));

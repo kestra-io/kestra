@@ -1,6 +1,14 @@
 package io.kestra.webserver.services.ai;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.common.collect.Maps;
+
+import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.services.posthog.PosthogService;
+
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -9,16 +17,10 @@ import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.services.posthog.PosthogService;
 import io.micrometer.core.instrument.Clock;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Singleton
 @Slf4j
@@ -38,13 +40,15 @@ public class PosthogChatModelListener implements ChatModelListener {
         properties.put("$ai_response_id", response.metadata().id());
 
         properties.put("$ai_input", inputs(request));
-        properties.put("$ai_output_choices", Map.of(
-            "content", Map.of(
-                "text", response.aiMessage().text(),
-                "type", "text"
-            ),
-            "role", "assistant"
-        ));
+        properties.put(
+            "$ai_output_choices", Map.of(
+                "content", Map.of(
+                    "text", response.aiMessage().text(),
+                    "type", "text"
+                ),
+                "role", "assistant"
+            )
+        );
 
         if (response.tokenUsage() != null) {
             properties.put("$ai_input_tokens", response.tokenUsage().inputTokenCount());
@@ -136,7 +140,8 @@ public class PosthogChatModelListener implements ChatModelListener {
     private static List<? extends Map<String, String>> inputs(ChatRequest request) {
         return request.messages()
             .stream()
-            .map(chatMessage -> {
+            .map(chatMessage ->
+            {
                 if (chatMessage instanceof AiMessage aiMessage) {
                     return Map.of(
                         "role", "assistant",

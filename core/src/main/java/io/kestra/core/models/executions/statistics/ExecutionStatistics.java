@@ -1,10 +1,10 @@
 package io.kestra.core.models.executions.statistics;
 
-import lombok.Builder;
-import lombok.Data;
+import java.time.Instant;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.Instant;
+import lombok.Builder;
+import lombok.Data;
 
 @Builder
 @Data

@@ -2,6 +2,7 @@ package io.kestra.cli.commands.namespaces.kv;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -21,6 +22,6 @@ public class KvCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.runCli(new String[]{"namespace", "kv",  "--help"});
+        return App.runCli(new String[] { "namespace", "kv", "--help" });
     }
 }

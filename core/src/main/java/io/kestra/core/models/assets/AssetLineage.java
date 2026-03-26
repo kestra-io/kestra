@@ -1,9 +1,9 @@
 package io.kestra.core.models.assets;
 
-import io.kestra.core.models.flows.State;
-
 import java.time.Instant;
 import java.util.List;
+
+import io.kestra.core.models.flows.State;
 
 public record AssetLineage(
     String tenantId,
@@ -18,4 +18,5 @@ public record AssetLineage(
     Instant endDate,
     List<Asset> inputs,
     List<Asset> outputs,
-    Instant timestamp) { }
+    Instant timestamp) {
+}

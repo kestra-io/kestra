@@ -1,5 +1,8 @@
 package io.kestra.core.models.tasks;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
@@ -9,15 +12,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.List;
-import java.util.Optional;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Interface for tasks that orchestrate other tasks. Those tasks are handled by the Executor.
  */
-public interface FlowableTask <T extends Output> {
+public interface FlowableTask<T extends Output> {
     @Schema(
         title = "List of tasks to run if any tasks failed on this FlowableTask."
     )

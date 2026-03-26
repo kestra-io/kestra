@@ -1,6 +1,14 @@
 package io.kestra.plugin.core.condition;
 
+import java.util.Collections;
+import java.util.Map;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -8,13 +16,8 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -73,14 +76,15 @@ class PublicHolidayTest {
         PublicHoliday publicHoliday = PublicHoliday.builder()
             .country(Property.ofValue("FR"))
             .build();
-       ConditionContext conditionContext= ConditionContext.builder()
+        ConditionContext conditionContext = ConditionContext.builder()
             .flow(flow)
             .execution(execution)
-            .runContext(runContextFactory.of(flow,execution))
+            .runContext(runContextFactory.of(flow, execution))
             .variables(variables)
             .build();
         assertThat(conditionService.valid(flow, Collections.singletonList(publicHoliday), conditionContext)).isTrue();
     }
+
     @Test
     void invalidWithDynamicRender() {
         Flow flow = TestsUtils.mockFlow();
@@ -92,14 +96,15 @@ class PublicHolidayTest {
         PublicHoliday publicHoliday = PublicHoliday.builder()
             .country(Property.ofValue("FR"))
             .build();
-        ConditionContext conditionContext= ConditionContext.builder()
+        ConditionContext conditionContext = ConditionContext.builder()
             .flow(flow)
             .execution(execution)
-            .runContext(runContextFactory.of(flow,execution))
+            .runContext(runContextFactory.of(flow, execution))
             .variables(variables)
             .build();
         assertThat(conditionService.valid(flow, Collections.singletonList(publicHoliday), conditionContext)).isFalse();
     }
+
     @Test
     @Disabled("Locale is not deterministic on CI")
     void disabled() {

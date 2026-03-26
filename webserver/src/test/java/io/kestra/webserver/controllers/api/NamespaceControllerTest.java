@@ -1,6 +1,14 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.devskiller.friendly_id.FriendlyId;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
@@ -15,17 +23,12 @@ import io.kestra.plugin.core.log.Log;
 import io.kestra.webserver.models.api.secret.ApiSecretListResponse;
 import io.kestra.webserver.models.api.secret.ApiSecretMeta;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -73,7 +76,6 @@ public class NamespaceControllerTest {
         assertThat(list.getTotal()).isEqualTo(6L);
         assertThat(list.getResults().size()).isEqualTo(6);
         assertThat(list.getResults().stream().map(Namespace::getId).toList()).containsExactlyInAnyOrder("my", "my.ns", "my.ns.flow", "another", "another.ns", "system");
-
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/search?size=2&sort=id:desc"),
@@ -130,19 +132,23 @@ public class NamespaceControllerTest {
         );
         assertThat(secrets.readOnly()).isTrue();
         assertThat(secrets.total()).isEqualTo(4L);
-        assertThat(secrets.results()).isEqualTo(List.of(
-            new ApiSecretMeta("WEBHOOK_KEY"),
-            new ApiSecretMeta("PASSWORD")
-        ));
+        assertThat(secrets.results()).isEqualTo(
+            List.of(
+                new ApiSecretMeta("WEBHOOK_KEY"),
+                new ApiSecretMeta("PASSWORD")
+            )
+        );
 
         secrets = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/any.ns/secrets?page=2&size=2"),
             ApiSecretListResponse.class
         );
-        assertThat(secrets.results()).isEqualTo(List.of(
-            new ApiSecretMeta("NEW_LINE"),
-            new ApiSecretMeta("MY_SECRET")
-        ));
+        assertThat(secrets.results()).isEqualTo(
+            List.of(
+                new ApiSecretMeta("NEW_LINE"),
+                new ApiSecretMeta("MY_SECRET")
+            )
+        );
     }
 
     @Test
@@ -160,13 +166,15 @@ public class NamespaceControllerTest {
             .id("flow-" + FriendlyId.createFriendlyId())
             .namespace(namespace)
             .tenantId("main")
-            .tasks(List.of(
-                Log.builder()
-                    .id("log")
-                    .type(Log.class.getName())
-                    .message("Hello")
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    Log.builder()
+                        .id("log")
+                        .type(Log.class.getName())
+                        .message("Hello")
+                        .build()
+                )
+            )
             .build();
         return flowRepository.create(GenericFlow.of(flow));
     }
@@ -174,19 +182,21 @@ public class NamespaceControllerTest {
     protected FlowTopology createSimpleFlowTopology(String flowA, String flowB) {
         return FlowTopology.builder()
             .relation(FlowRelation.FLOW_TASK)
-            .source(FlowNode.builder()
-                .id(flowA)
-                .namespace("topology.namespace")
-                .tenantId("main")
-                .uid(flowA)
-                .build()
+            .source(
+                FlowNode.builder()
+                    .id(flowA)
+                    .namespace("topology.namespace")
+                    .tenantId("main")
+                    .uid(flowA)
+                    .build()
             )
-            .destination(FlowNode.builder()
-                .id(flowB)
-                .namespace("topology.namespace")
-                .tenantId("main")
-                .uid(flowB)
-                .build()
+            .destination(
+                FlowNode.builder()
+                    .id(flowB)
+                    .namespace("topology.namespace")
+                    .tenantId("main")
+                    .uid(flowB)
+                    .build()
             )
             .build();
     }

@@ -512,7 +512,7 @@ export function useDependencies(
                 const isUnfiltered = shownNodeIDs.size >= allNodes.length;
 
                 // Reset interactive classes first so filtering owns the visual state.
-                clearClasses(cy, subtype, [SELECTED, DIMMED, HOVERED, EXECUTIONS]);
+                clearClasses(cy, subtype, [DIMMED, HOVERED, EXECUTIONS]);
 
                 // Do not dim when there are no effective filtering results.
                 if (isUnfiltered) return;

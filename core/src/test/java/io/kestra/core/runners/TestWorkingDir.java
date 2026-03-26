@@ -1,8 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.tasks.FileExistComportment;
-import io.kestra.core.utils.IdUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -10,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+
+import io.kestra.core.models.tasks.FileExistComportment;
+import io.kestra.core.utils.IdUtils;
 
 /**
  * A delegating {@link WorkingDir} implementation that can be used for testing purpose.
@@ -96,7 +96,6 @@ public final class TestWorkingDir implements WorkingDir {
         return putFile(path, content, FileExistComportment.OVERWRITE);
     }
 
-
     @Override
     public Path putFile(Path path, InputStream content, FileExistComportment comportment) throws IOException {
         return captureCreateFileAndGet(delegate.putFile(path, content, comportment));
@@ -118,7 +117,7 @@ public final class TestWorkingDir implements WorkingDir {
      *
      * @return {@code true} if cleaned, otherwise {@code false}.
      */
-    public  boolean isCleaned() {
+    public boolean isCleaned() {
         return isCleaned;
     }
 
@@ -130,6 +129,7 @@ public final class TestWorkingDir implements WorkingDir {
     public List<Path> getAllCreatedFilesAndTempFiles() {
         return Stream.concat(allCreatedTempFiles.stream(), allCreatedFiles.stream()).toList();
     }
+
     /**
      * Gets the list of all standard files created in this working directory.
      *
@@ -138,6 +138,7 @@ public final class TestWorkingDir implements WorkingDir {
     public List<Path> getAllCreatedFiles() {
         return Collections.unmodifiableList(allCreatedFiles);
     }
+
     /**
      * Gets the list of all temporary files created in this working directory.
      *

@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import io.kestra.core.utils.Disposable;
+
 import jakarta.inject.Singleton;
 import lombok.Builder;
 import lombok.Value;
@@ -40,19 +41,19 @@ public interface MaintenanceService {
      */
     interface MaintenanceListener {
         /**
-         * Invoked when cluster is entering maintenance mode.
+         * Invoked when the cluster is entering maintenance mode.
          */
         void onMaintenanceModeEnter();
 
         /**
-         * Invoked when cluster is exiting maintenance mode.
+         * Invoked when the cluster is exiting maintenance mode.
          */
         void onMaintenanceModeExit();
     }
 
     /**
      * Noop {@link MaintenanceService} implementation.
-     *<p>
+     * <p>
      * Maintenance mode is EE feature.
      */
     @Singleton
@@ -65,7 +66,9 @@ public interface MaintenanceService {
 
         @Override
         public Disposable listen(MaintenanceListener listener) {
-            return Disposable.of(() -> {}); // NOOP
+            return Disposable.of(() ->
+            {
+            }); // NOOP
         }
     }
 

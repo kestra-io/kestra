@@ -1,19 +1,21 @@
 package io.kestra.plugin.core.dashboard.data;
 
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Set;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -30,30 +32,30 @@ import java.util.Set;
             title = "Display a chart with a count of Logs per date grouped by level.",
             full = true,
             code = { """
-            charts:
-              - id: logs_timeseries
-                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
-                chartOptions:
-                  displayName: Logs
-                  description: Logs count per date grouped by level
-                  legend:
-                    enabled: true
-                  column: date
-                  colorByColumn: level
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Logs
-                  columns:
-                    date:
-                      field: DATE
-                      displayName: Execution Date
-                    level:
-                      field: LEVEL
-                    total:
-                      displayName: Total Executions
-                      agg: COUNT
-                      graphStyle: BARS
-            """
-          }
+                charts:
+                  - id: logs_timeseries
+                    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                    chartOptions:
+                      displayName: Logs
+                      description: Logs count per date grouped by level
+                      legend:
+                        enabled: true
+                      column: date
+                      colorByColumn: level
+                    data:
+                      type: io.kestra.plugin.core.dashboard.data.Logs
+                      columns:
+                        date:
+                          field: DATE
+                          displayName: Execution Date
+                        level:
+                          field: LEVEL
+                        total:
+                          displayName: Total Executions
+                          agg: COUNT
+                          graphStyle: BARS
+                """
+            }
         )
     }
 )

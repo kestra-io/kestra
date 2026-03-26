@@ -1,6 +1,13 @@
 package io.kestra.plugin.core.condition;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -9,11 +16,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.List;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,17 +31,23 @@ class HasRetryAttemptTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        execution = execution.withTaskRunList(List.of(TaskRun.builder()
-            .attempts(List.of(
-                TaskRunAttempt.builder()
-                    .state(new State().withState(State.Type.KILLED))
-                    .build(),
-                TaskRunAttempt.builder()
-                    .state(new State().withState(State.Type.SUCCESS))
+        execution = execution.withTaskRunList(
+            List.of(
+                TaskRun.builder()
+                    .taskId("task")
+                    .attempts(
+                        List.of(
+                            TaskRunAttempt.builder()
+                                .state(new State().withState(State.Type.KILLED))
+                                .build(),
+                            TaskRunAttempt.builder()
+                                .state(new State().withState(State.Type.SUCCESS))
+                                .build()
+                        )
+                    )
                     .build()
-                ))
-            .build()
-        ));
+            )
+        );
 
         HasRetryAttempt build = HasRetryAttempt.builder()
             .in(Property.ofValue(Collections.singletonList(State.Type.KILLED)))
@@ -62,14 +71,20 @@ class HasRetryAttemptTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        execution = execution.withTaskRunList(List.of(TaskRun.builder()
-            .attempts(List.of(
-                TaskRunAttempt.builder()
-                    .state(new State().withState(State.Type.KILLED))
+        execution = execution.withTaskRunList(
+            List.of(
+                TaskRun.builder()
+                    .taskId("task")
+                    .attempts(
+                        List.of(
+                            TaskRunAttempt.builder()
+                                .state(new State().withState(State.Type.KILLED))
+                                .build()
+                        )
+                    )
                     .build()
-            ))
-            .build()
-        ));
+            )
+        );
 
         HasRetryAttempt build = HasRetryAttempt.builder()
             .build();

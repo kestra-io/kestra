@@ -1,13 +1,14 @@
 package io.micronaut.configuration.hibernate.validator;
 
-import io.micronaut.context.annotation.Replaces;
-import jakarta.inject.Singleton;
-import jakarta.validation.ParameterNameProvider;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.micronaut.context.annotation.Replaces;
+import jakarta.inject.Singleton;
+import jakarta.validation.ParameterNameProvider;
 
 @Singleton
 @Replaces(DefaultParameterNameProvider.class)

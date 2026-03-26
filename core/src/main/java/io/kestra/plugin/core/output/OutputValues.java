@@ -1,16 +1,17 @@
 package io.kestra.plugin.core.output;
 
+import java.util.Map;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -63,7 +64,6 @@ public class OutputValues extends Task implements RunnableTask<OutputValues.Outp
         description = "These values can be strings, numbers, arrays, or objects. Templated strings (enclosed in {{ }}) will be rendered using the current context."
     )
     private Property<Map<String, Object>> values;
-
 
     @Override
     public OutputValues.Output run(RunContext runContext) throws Exception {

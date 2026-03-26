@@ -1,0 +1,23 @@
+id: woodcock_624751
+namespace: company.team
+
+tasks:
+  - id: git
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: clone_repository
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/kestra-io/dbt-example
+        branch: main
+      - id: dbt_build
+        type: io.kestra.plugin.dbt.cli.DbtCLI
+        containerImage: ghcr.io/kestra-io/dbt-duckdb:latest
+        commands:
+          - dbt build
+        profiles: |
+          my_dbt_project:
+            outputs:
+              dev:
+                type: duckdb
+                path: ":memory:"
+            target: dev

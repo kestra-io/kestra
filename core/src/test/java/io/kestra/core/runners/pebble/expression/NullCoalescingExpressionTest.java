@@ -1,14 +1,17 @@
 package io.kestra.core.runners.pebble.expression;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,7 +36,8 @@ class NullCoalescingExpressionTest {
 
         assertThat(render).isEqualTo("awesome");
 
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ missing ?? missing2 }}", vars);
         });
     }
@@ -60,11 +64,11 @@ class NullCoalescingExpressionTest {
         render = variableRenderer.render("{{ missing ?? block.test.child }}", vars);
         assertThat(render).isEqualTo("awesome");
 
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ missing ?? missing2 }}", vars);
         });
     }
-
 
     @Test
     void emptyObject() throws IllegalVariableEvaluationException {

@@ -1,13 +1,14 @@
 package io.kestra.core.services;
 
+import java.util.Optional;
+
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.VersionProvider;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 /**
  * Service responsible for managing the version information of the Kestra instance.
@@ -28,7 +29,7 @@ public class VersionService {
      */
     @Inject
     public VersionService(final SettingRepositoryInterface settingRepository,
-                          final VersionProvider versionProvider) {
+        final VersionProvider versionProvider) {
         this.settingRepository = settingRepository;
         this.versionProvider = versionProvider;
     }
@@ -51,10 +52,11 @@ public class VersionService {
         final String softwareVersion = versionProvider.getVersion();
         if (settingVersion.isEmpty() || !settingVersion.get().equals(softwareVersion)) {
             log.info("Updating instance version from {} to {}", settingVersion.orElse("none"), softwareVersion);
-            settingRepository.save(Setting.builder()
-                .key(Setting.INSTANCE_VERSION)
-                .value(softwareVersion)
-                .build()
+            settingRepository.save(
+                Setting.builder()
+                    .key(Setting.INSTANCE_VERSION)
+                    .value(softwareVersion)
+                    .build()
             );
         }
     }

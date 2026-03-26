@@ -1,23 +1,25 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.models.FetchVersion;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-import io.kestra.core.utils.TestsUtils;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.utils.TestsUtils;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -272,7 +274,7 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
                 Collections.emptyList(),
                 FetchVersion.ALL
             )
-            // endregion
+        // endregion
         );
     }
 
@@ -331,12 +333,14 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
         metadata = namespaceFileMetadataRepositoryInterface.save(metadata);
         assertThat(metadata.getVersion()).isEqualTo(2);
 
-        Integer purgedAmount = namespaceFileMetadataRepositoryInterface.purge(List.of(
-            NamespaceFileMetadata.builder()
-                .tenantId(tenantId)
-                .namespace(namespace)
-                .path(path).build()
-        ));
+        Integer purgedAmount = namespaceFileMetadataRepositoryInterface.purge(
+            List.of(
+                NamespaceFileMetadata.builder()
+                    .tenantId(tenantId)
+                    .namespace(namespace)
+                    .path(path).build()
+            )
+        );
 
         assertThat(purgedAmount).isEqualTo(2);
 

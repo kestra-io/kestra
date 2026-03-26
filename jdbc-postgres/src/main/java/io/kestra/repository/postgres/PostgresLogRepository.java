@@ -1,32 +1,33 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
-import io.kestra.jdbc.services.JdbcFilterService;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.SelectConditionStep;
 import org.slf4j.event.Level;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.repositories.RepositoryBean;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
+import io.kestra.jdbc.services.JdbcFilterService;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresLogRepository extends AbstractJdbcLogRepository {
 
     @Inject
     public PostgresLogRepository(@Named("logs") PostgresRepository<LogEntry> repository,
-                                 JdbcFilterService filterService) {
+        JdbcFilterService filterService) {
         super(repository, filterService);
     }
 
@@ -46,9 +47,9 @@ public class PostgresLogRepository extends AbstractJdbcLogRepository {
     }
 
     @Override
-    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {
+    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
+        Map<F, String> fieldsMapping) {
         return PostgresLogRepositoryService.where(selectConditionStep, jdbcFilterService, filters, fieldsMapping);
     }
-
 
 }

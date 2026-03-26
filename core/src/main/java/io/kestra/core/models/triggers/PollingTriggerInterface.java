@@ -1,15 +1,17 @@
 package io.kestra.core.models.triggers;
 
-import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.scheduler.SchedulerClock;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface PollingTriggerInterface extends WorkerTriggerInterface {
     @Schema(
@@ -51,9 +53,9 @@ public interface PollingTriggerInterface extends WorkerTriggerInterface {
         Duration interval = this.getInterval();
 
         try {
-            return ZonedDateTime.now().plus(interval);
+            return SchedulerClock.now().plus(interval);
         } catch (DateTimeException | ArithmeticException e) {
-            throw new InvalidTriggerConfigurationException("Trigger interval too large", e);
+            throw new InvalidTriggerConfigurationException("Trigger interval duration too large '" + interval + "'", e);
         }
     }
 }

@@ -1,15 +1,16 @@
 package io.kestra.core.runners.pebble;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.pebbletemplates.pebble.extension.writer.SpecializedWriter;
-import io.kestra.core.serializers.JacksonMapper;
-import lombok.SneakyThrows;
-
 import java.io.IOException;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Collection;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.pebbletemplates.pebble.extension.writer.SpecializedWriter;
+import lombok.SneakyThrows;
 
 public class JsonWriter extends OutputWriter implements SpecializedWriter {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();

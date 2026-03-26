@@ -1,16 +1,17 @@
 package io.kestra.core.tasks.test;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString

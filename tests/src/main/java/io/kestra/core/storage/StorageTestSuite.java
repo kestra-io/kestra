@@ -1,15 +1,5 @@
 package io.kestra.core.storage;
 
-import com.google.common.io.CharStreams;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.storages.FileAttributes;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.StorageObject;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Test;
-
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,6 +8,19 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.Test;
+
+import com.google.common.io.CharStreams;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.StorageObject;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -35,7 +38,7 @@ public abstract class StorageTestSuite {
     protected StorageInterface storageInterface;
 
     @Test
-    void getPath(){
+    void getPath() {
         String path = storageInterface.getPath(null);
         AssertionsForClassTypes.assertThat(path).isEqualTo("");
 
@@ -107,11 +110,11 @@ public abstract class StorageTestSuite {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
 
-
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
         putFile(tenantId, "/" + prefix + "/storage/level2/2.yml");
         // Assert that '..' in path cannot be used as gcs do not use directory listing and traversal.
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.get(tenantId, prefix, new URI("kestra:///" + prefix + "/storage/level2/../get.yml"));
         });
     }
@@ -121,7 +124,8 @@ public abstract class StorageTestSuite {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
 
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/missing.yml"));
         });
     }
@@ -140,10 +144,9 @@ public abstract class StorageTestSuite {
         assertTrue(storageInterface.existsInstanceResource(prefix, item));
     }
 
-
     @Test
     void filesByPrefix() throws IOException {
-        var namespaceName ="filesByPrefix_test_namespace";
+        var namespaceName = "filesByPrefix_test_namespace";
         storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put("tenant", namespaceName, URI.create("/filesByPrefix_test_namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/another_file.json"), new ByteArrayInputStream(new byte[0]));
@@ -152,13 +155,20 @@ public abstract class StorageTestSuite {
         storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder/sub/script.py"), new ByteArrayInputStream(new byte[0]));
 
         List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("kestra:///filesByPrefix_test_namespace/"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/another_file.json"), URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"), URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py"));
+        assertThat(res).containsExactlyInAnyOrder(
+            URI.create("kestra:///filesByPrefix_test_namespace/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/another_file.json"),
+            URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"),
+            URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py")
+        );
 
         res = storageInterface.allByPrefix("tenant", namespaceName, URI.create("/filesByPrefix_test_namespace"), false);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/tenant_file.txt"));
 
         res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"), URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py"));
+        assertThat(res).containsExactlyInAnyOrder(
+            URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"),
+            URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py")
+        );
 
         res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder/sub"), false);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py"));
@@ -173,9 +183,9 @@ public abstract class StorageTestSuite {
         storageInterface.put("tenant", "some_namespace", URI.create("/some_namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.createDirectory(MAIN_TENANT, "some_namespace", URI.create("/some_namespace/folder/sub"));
 
-
         List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, "some_namespace", URI.create("kestra:///some_namespace/"), true);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/file.txt"), URI.create("kestra:///some_namespace/folder/"), URI.create("kestra:///some_namespace/folder/sub/"));
+        assertThat(res)
+            .containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/file.txt"), URI.create("kestra:///some_namespace/folder/"), URI.create("kestra:///some_namespace/folder/sub/"));
 
         res = storageInterface.allByPrefix("tenant", "some_namespace", URI.create("/some_namespace"), true);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/tenant_file.txt"));
@@ -206,17 +216,18 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage/level2/.."));
         });
     }
-
 
     @Test
     void listNotFound() {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage/"));
         });
     }
@@ -242,13 +253,15 @@ public abstract class StorageTestSuite {
 
         List<FileAttributes> with = storageInterface.list(tenantId1, prefix, new URI("/" + prefix + "/with"));
         assertThat(with.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("1.yml", "2.yml", "3.yml");
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.list(tenantId1, prefix, new URI("/" + prefix + "/notenant/"));
         });
 
         List<FileAttributes> notenant = storageInterface.list(tenantId2, prefix, new URI("/" + prefix + "/notenant"));
         assertThat(notenant.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("1.yml", "2.yml", "3.yml");
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.list(tenantId2, prefix, new URI("/" + prefix + "/with/"));
         });
     }
@@ -308,7 +321,6 @@ public abstract class StorageTestSuite {
         assertThat(list.stream().filter(f -> f.getFileName().equals("root.yml")).findFirst().get().getMetadata()).containsEntry("someMetadata", "someValue");
     }
 
-
     //region test EXISTS
     @Test
     void exists() throws Exception {
@@ -337,7 +349,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level2/.."));
         });
     }
@@ -408,7 +421,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/level2/../1.yml")).getSize();
         });
     }
@@ -417,7 +431,8 @@ public abstract class StorageTestSuite {
     void sizeNotFound() {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/")).getSize();
         });
     }
@@ -435,13 +450,15 @@ public abstract class StorageTestSuite {
 
         URI with = new URI(firstTenant);
         assertThat(storageInterface.getAttributes(tenantId1, prefix, with).getSize()).isEqualTo((long) CONTENT_STRING.length());
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId2, prefix, with).getSize();
         });
 
         URI without = new URI(secondTenant);
         assertThat(storageInterface.getAttributes(tenantId2, prefix, without).getSize()).isEqualTo((long) CONTENT_STRING.length());
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId1, prefix, without).getSize();
         });
 
@@ -483,7 +500,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/level2/../1.yml")).getLastModifiedTime();
         });
     }
@@ -492,7 +510,8 @@ public abstract class StorageTestSuite {
     void lastModifiedTimeNotFound() {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/")).getLastModifiedTime();
         });
     }
@@ -510,13 +529,15 @@ public abstract class StorageTestSuite {
 
         URI with = new URI(firstTenant);
         assertThat(storageInterface.getAttributes(tenantId1, prefix, with).getLastModifiedTime()).isNotNull();
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId2, prefix, with).getLastModifiedTime();
         });
 
         URI without = new URI(secondTenant);
         assertThat(storageInterface.getAttributes(tenantId2, prefix, without).getLastModifiedTime()).isNotNull();
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId1, prefix, without).getLastModifiedTime();
         });
 
@@ -567,7 +588,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/level2/../1.yml"));
         });
     }
@@ -576,7 +598,8 @@ public abstract class StorageTestSuite {
     void getAttributesNotFound() {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/"));
         });
     }
@@ -595,14 +618,16 @@ public abstract class StorageTestSuite {
         URI with = new URI(firstTenant);
         FileAttributes attr = storageInterface.getAttributes(tenantId1, prefix, with);
         assertThat(attr.getFileName()).isEqualTo("firstTenant.yml");
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId2, prefix, with);
         });
 
         URI without = new URI(secondTenant);
         attr = storageInterface.getAttributes(tenantId2, prefix, without);
         assertThat(attr.getFileName()).isEqualTo("secondTenant.yml");
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.getAttributes(tenantId1, prefix, without);
         });
     }
@@ -713,7 +738,8 @@ public abstract class StorageTestSuite {
 
         storageInterface.createDirectory(tenantId, prefix, new URI("/" + prefix + "/storage/level1"));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.put(
                 tenantId,
                 prefix,
@@ -765,7 +791,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> this.putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.delete(tenantId, prefix, new URI("/" + prefix + "/storage/level2/../1.yml"));
         });
     }
@@ -862,7 +889,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> this.putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.createDirectory(tenantId, prefix, new URI("/" + prefix + "/storage/level2/../newdir"));
         });
     }
@@ -893,9 +921,11 @@ public abstract class StorageTestSuite {
         storageInterface.createDirectory(MAIN_TENANT, prefix, URI.create("/" + prefix + "/first/second/third"));
 
         List<FileAttributes> list = storageInterface.list(MAIN_TENANT, prefix, URI.create("/" + prefix));
-        assertThat(list, contains(
-            hasProperty("fileName", is("first"))
-        ));
+        assertThat(
+            list, contains(
+                hasProperty("fileName", is("first"))
+            )
+        );
     }
 
     @Test
@@ -923,7 +953,8 @@ public abstract class StorageTestSuite {
     void moveNotFound() {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.move(tenantId, prefix, new URI("/" + prefix + "/storage/"), new URI("/" + prefix + "/test/"));
         });
     }
@@ -940,7 +971,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> this.putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.move(tenantId, prefix, new URI("/" + prefix + "/storage/level2/../1.yml"), new URI("/" + prefix + "/storage/level2/1.yml"));
         });
     }
@@ -1017,7 +1049,8 @@ public abstract class StorageTestSuite {
         );
         path.forEach(throwConsumer(s -> this.putFile(tenantId, s)));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             storageInterface.move(tenantId, prefix, new URI("/" + prefix + "/storage/level2/../1.yml"), new URI("/" + prefix + "/storage/level2/1.yml"));
         });
     }
@@ -1044,11 +1077,13 @@ public abstract class StorageTestSuite {
 
         assertThat(deleted).containsExactlyInAnyOrder(res.stream().map(s -> URI.create("kestra://" + s)).toArray(URI[]::new));
 
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/"));
         });
 
-        path.forEach(throwConsumer(s -> {
+        path.forEach(throwConsumer(s ->
+        {
             assertThat(storageInterface.exists(tenantId, prefix, new URI(s))).isFalse();
         }));
     }
@@ -1079,11 +1114,13 @@ public abstract class StorageTestSuite {
 
         assertThat(deleted).containsExactlyInAnyOrder(res.stream().map(s -> URI.create("kestra://" + s)).toArray(URI[]::new));
 
-        assertThrows(FileNotFoundException.class, () -> {
+        assertThrows(FileNotFoundException.class, () ->
+        {
             storageInterface.get(tenantId, prefix, new URI("kestra:///" + prefix + "/storage/"));
         });
 
-        path.forEach(throwConsumer(s -> {
+        path.forEach(throwConsumer(s ->
+        {
             assertThat(storageInterface.exists(tenantId, prefix, new URI(s))).isFalse();
         }));
     }
@@ -1106,7 +1143,9 @@ public abstract class StorageTestSuite {
 
     @Test
     void limitShouldPreserveSpecialCharts() throws IOException {
-        var uri = URI.create("/%89%B4%89%B4%EC%9D%B4%EC%96%B4+%EB%A7%90+%EC%95%84%ED%8A%B8%EC%9B%8D+NP+%EC%8A%A4%ED%8C%90+%EC%9D%B8%ED%8C%85+JQ+%EB%82%A8%EC%84%B1+%EC%9D%B8%EB%B0%B4%EB%93%9C+%EB%93%9C%EB%A1%9C%EC%A6%88%2C+101470%2C+FI261DR15M001-21-1st+Fit+%28QC%29+Sample+Data+Package-en.txt");
+        var uri = URI.create(
+            "/%89%B4%89%B4%EC%9D%B4%EC%96%B4+%EB%A7%90+%EC%95%84%ED%8A%B8%EC%9B%8D+NP+%EC%8A%A4%ED%8C%90+%EC%9D%B8%ED%8C%85+JQ+%EB%82%A8%EC%84%B1+%EC%9D%B8%EB%B0%B4%EB%93%9C+%EB%93%9C%EB%A1%9C%EC%A6%88%2C+101470%2C+FI261DR15M001-21-1st+Fit+%28QC%29+Sample+Data+Package-en.txt"
+        );
 
         var limited = storageInterface.limit(uri, 100);
         assertThat(uri.getPath()).endsWith(limited.getPath().substring(7));

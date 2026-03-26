@@ -1,17 +1,19 @@
 package io.kestra.core.models.tasks.retrys;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
-import dev.failsafe.RetryPolicyBuilder;
+
 import io.kestra.core.validations.ExponentialRetryValidation;
+
+import dev.failsafe.RetryPolicyBuilder;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 @SuperBuilder
 @Getter
@@ -49,7 +51,7 @@ public class Exponential extends AbstractRetry {
         Duration computedInterval = interval.multipliedBy(
             (long) (this.delayFactor == null ? 2 : this.delayFactor.intValue()) * (attemptCount - 1)
         );
-        Instant next =  lastAttempt.plus(computedInterval);
+        Instant next = lastAttempt.plus(computedInterval);
         if (next.isAfter(lastAttempt.plus(maxInterval))) {
 
             return lastAttempt.plus(maxInterval);

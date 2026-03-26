@@ -18,7 +18,6 @@ import AiMenuIcon from "../../components/ai/AiMenuIcon.vue";
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
-import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
 import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
@@ -209,17 +208,6 @@ export function useLeftMenu() {
                 icon: {
                     element: FolderOpenOutline,
                 },
-            },
-            {
-                title: t("templates"),
-                routes: routeStartWith("templates"),
-                href: {
-                    name: "templates/list",
-                },
-                icon: {
-                    element: ContentCopy,
-                },
-                hidden: !configs?.isTemplateEnabled,
             },
             {
                 title: t("plugins.names"),

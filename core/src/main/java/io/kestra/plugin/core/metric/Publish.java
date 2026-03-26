@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.metric;
 
+import java.util.List;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -9,14 +11,13 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.tasks.metrics.AbstractMetric;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @SuperBuilder
 @ToString
@@ -70,7 +71,8 @@ public class Publish extends Task implements RunnableTask<VoidOutput> {
 
         runContext.render(metrics).asList(AbstractMetric.class)
             .stream()
-            .map(abstractMetric -> {
+            .map(abstractMetric ->
+            {
                 try {
                     return abstractMetric.toMetric(runContext);
                 } catch (IllegalVariableEvaluationException e) {
@@ -81,5 +83,3 @@ public class Publish extends Task implements RunnableTask<VoidOutput> {
         return null;
     }
 }
-
-

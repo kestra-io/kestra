@@ -1,5 +1,14 @@
 package io.kestra.jdbc.repository;
 
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -15,18 +24,11 @@ import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Logs;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
-import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
-
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudRepository<LogEntry> implements LogRepositoryInterface {
 
@@ -34,7 +36,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     private static final String DATE_COLUMN = "timestamp";
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
-                                     JdbcFilterService filterService) {
+        JdbcFilterService filterService) {
         super(jdbcRepository);
 
         this.filterService = filterService;
@@ -50,18 +52,18 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     protected final JdbcFilterService filterService;
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
-      return Map.of(
-          Logs.Fields.DATE, DATE_COLUMN,
-          Logs.Fields.NAMESPACE, "namespace",
-          Logs.Fields.FLOW_ID, "flow_id",
-          Logs.Fields.TASK_ID, "task_id",
-          Logs.Fields.EXECUTION_ID, "execution_id",
-          Logs.Fields.TASK_RUN_ID, "taskrun_id",
-          Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
-          Logs.Fields.TRIGGER_ID, "trigger_id",
-          Logs.Fields.LEVEL, "level",
-          Logs.Fields.MESSAGE, "message"
-      );
+        return Map.of(
+            Logs.Fields.DATE, DATE_COLUMN,
+            Logs.Fields.NAMESPACE, "namespace",
+            Logs.Fields.FLOW_ID, "flow_id",
+            Logs.Fields.TASK_ID, "task_id",
+            Logs.Fields.EXECUTION_ID, "execution_id",
+            Logs.Fields.TASK_RUN_ID, "taskrun_id",
+            Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
+            Logs.Fields.TRIGGER_ID, "trigger_id",
+            Logs.Fields.LEVEL, "level",
+            Logs.Fields.MESSAGE, "message"
+        );
     }
 
     protected Map<Logs.Fields, String> getWhereMapping() {
@@ -82,8 +84,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String tenantId,
-        @Nullable List<QueryFilter> filters
-    ) {
+        @Nullable List<QueryFilter> filters) {
         var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
         return findPage(pageable, tenantId, condition);
     }
@@ -91,20 +92,19 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     @Override
     public Flux<LogEntry> findAsync(
         @Nullable String tenantId,
-        List<QueryFilter> filters
-    ){
+        List<QueryFilter> filters) {
         var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
     }
 
     @Override
     public List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel) {
-        return findByExecutionId(tenantId,  executionId, minLevel, true);
+        return findByExecutionId(tenantId, executionId, minLevel, true);
     }
 
     @Override
     public List<LogEntry> findByExecutionIdWithoutAcl(String tenantId, String executionId, Level minLevel) {
-        return findByExecutionId(tenantId,  executionId, minLevel, false);
+        return findByExecutionId(tenantId, executionId, minLevel, false);
     }
 
     private List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, boolean withAccessControl) {
@@ -234,7 +234,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         );
     }
 
-
     @Override
     public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
         return this.query(
@@ -251,7 +250,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     public Integer purge(Execution execution) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
@@ -264,7 +264,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     public Integer purge(List<Execution> executions) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
@@ -277,7 +278,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     public void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 var delete = context
@@ -309,7 +311,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     public void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 var delete = context
@@ -327,10 +330,12 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
+    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 var delete = context
@@ -369,10 +374,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public void deleteByFilters(String tenantId, List<QueryFilter> filters){
+    public void deleteByFilters(String tenantId, List<QueryFilter> filters) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 var delete = context
@@ -403,8 +409,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
-    public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+    public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Logs.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
@@ -444,11 +452,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> descriptors,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Pageable pageable
-    ) {
+        Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()

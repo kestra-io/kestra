@@ -1,9 +1,9 @@
 package io.kestra.webserver.utils.filepreview;
 
-import lombok.Getter;
-
 import java.io.IOException;
 import java.io.InputStream;
+
+import lombok.Getter;
 
 @Getter
 public class PdfFileRender extends Base64Render {

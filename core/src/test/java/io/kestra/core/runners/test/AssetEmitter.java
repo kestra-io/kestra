@@ -5,6 +5,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.AssetEmit;
 import io.kestra.core.runners.RunContext;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -19,7 +20,6 @@ public class AssetEmitter extends Task implements RunnableTask<VoidOutput> {
     @NotNull
     @PluginProperty
     private AssetEmit assetsToEmit;
-
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {

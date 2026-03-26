@@ -1,11 +1,11 @@
 package io.kestra.core.models.executions;
 
+import java.time.Instant;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.With;
-
-import java.time.Instant;
 
 @Builder(toBuilder = true)
 @Setter

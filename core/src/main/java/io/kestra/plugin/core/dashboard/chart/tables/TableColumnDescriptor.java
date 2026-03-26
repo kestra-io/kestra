@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.dashboard.chart.tables;
 
 import io.kestra.core.models.dashboards.ColumnDescriptor;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

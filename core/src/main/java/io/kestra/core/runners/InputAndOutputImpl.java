@@ -1,14 +1,15 @@
 package io.kestra.core.runners;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Output;
-import io.micronaut.context.ApplicationContext;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import io.micronaut.context.ApplicationContext;
 
 class InputAndOutputImpl implements InputAndOutput {
     private final FlowInputOutput flowInputOutput;
@@ -31,7 +32,8 @@ class InputAndOutputImpl implements InputAndOutput {
 
     @Override
     public Map<String, Object> renderOutputs(List<Output> outputs) throws IllegalVariableEvaluationException {
-        if (outputs == null) return Map.of();
+        if (outputs == null)
+            return Map.of();
 
         // render required outputs
         Map<String, Object> outputsById = outputs

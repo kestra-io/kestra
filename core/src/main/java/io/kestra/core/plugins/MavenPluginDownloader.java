@@ -1,14 +1,13 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.contexts.MavenPluginRepositoryConfig;
-import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.utils.Version;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -27,18 +26,17 @@ import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
-import org.slf4j.Logger;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.utils.Version;
+
+import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for resolving plugins from a Maven repository.
@@ -61,7 +59,7 @@ public class MavenPluginDownloader implements Closeable {
 
     @Inject
     public MavenPluginDownloader(List<MavenPluginRepositoryConfig> repositoryConfigs,
-                                 @Nullable @Value("${kestra.plugins.local-repository-path}") String localRepositoryPath) {
+        @Nullable @Value("${kestra.plugins.local-repository-path}") String localRepositoryPath) {
         this.repositoryConfigs = repositoryConfigs;
         this.system = new RepositorySystemSupplier().get();
         this.session = repositorySystemSession(system, localRepositoryPath);
@@ -99,11 +97,10 @@ public class MavenPluginDownloader implements Closeable {
         }
     }
 
-
     /**
      * Resolves the given dependencies given the additional repositories.
      *
-     * @param dependency   The dependency to resolve.
+     * @param dependency The dependency to resolve.
      * @param repositories The Maven repositories.
      * @return the local {@link Path} of the resolved dependency.
      */
@@ -123,7 +120,8 @@ public class MavenPluginDownloader implements Closeable {
 
     public List<PluginResolutionResult> resolveVersions(final List<PluginArtifact> artifacts) {
         return artifacts.stream()
-            .map(artifact -> {
+            .map(artifact ->
+            {
                 List<String> versions = listAllVersions(artifact.toCoordinates());
 
                 final List<Version> parsedVersions = versions.stream().map(Version::of).sorted().toList();
@@ -137,9 +135,8 @@ public class MavenPluginDownloader implements Closeable {
                     return new PluginResolutionResult(artifact, Version.getLatest(parsedVersions).toString(), sortedVersions, true);
                 }
 
-                return versions.contains(artifact.version()) ?
-                    new PluginResolutionResult(artifact, artifact.version(), versions, true) :
-                    new PluginResolutionResult(artifact, null, sortedVersions, false);
+                return versions.contains(artifact.version()) ? new PluginResolutionResult(artifact, artifact.version(), versions, true)
+                    : new PluginResolutionResult(artifact, null, sortedVersions, false);
             })
             .toList();
     }
@@ -147,7 +144,8 @@ public class MavenPluginDownloader implements Closeable {
     private static List<RemoteRepository> buildRemoteRepositories(List<MavenPluginRepositoryConfig> repositoryConfigs) {
         return repositoryConfigs
             .stream()
-            .map(repositoryConfig -> {
+            .map(repositoryConfig ->
+            {
                 var build = new RemoteRepository.Builder(
                     repositoryConfig.id(),
                     DEFAULT_REPOSITORY_TYPE,
@@ -185,7 +183,8 @@ public class MavenPluginDownloader implements Closeable {
 
                 localRepositoryPath = tmpDir;
 
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                Runtime.getRuntime().addShutdownHook(new Thread(() ->
+                {
                     try {
                         FileUtils.deleteDirectory(new File(tmpDir));
                     } catch (IOException e) {

@@ -1,26 +1,22 @@
 package io.kestra.core.models;
 
-import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.models.QueryFilter.Field;
-import io.kestra.core.models.QueryFilter.Op;
-import io.kestra.core.models.QueryFilter.Resource;
-import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.Prefix;
-import io.kestra.core.models.dashboards.filters.EqualTo;
-import io.kestra.core.models.dashboards.filters.StartsWith;
-import io.kestra.core.models.dashboards.filters.Regex;
-import io.kestra.core.models.dashboards.filters.Contains;
-import io.kestra.core.models.dashboards.filters.In;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Stream;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
+import io.kestra.core.models.QueryFilter.Resource;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.models.dashboards.filters.EqualTo;
+import io.kestra.core.models.dashboards.filters.Prefix;
+import io.kestra.core.models.dashboards.filters.StartsWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -39,27 +35,31 @@ public class QueryFilterTest {
     void should_fail_to_validate_all_operations(QueryFilter filter, Resource resource) {
         InvalidQueryFiltersException e = assertThrows(
             InvalidQueryFiltersException.class,
-            () -> QueryFilter.validateQueryFilters(List.of(filter), resource));
+            () -> QueryFilter.validateQueryFilters(List.of(filter), resource)
+        );
         assertThat(e.getMessage()).contains("Operation");
     }
 
     static Stream<Arguments> validOperationFilters() {
         return Stream.of(
-            buildQueryFiltersForOperations(Field.QUERY, Resource.FLOW,
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.FLOW,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.SCOPE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.SCOPE, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.FLOW,
+            buildQueryFiltersForOperations(
+                Field.NAMESPACE, Resource.FLOW,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -73,7 +73,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.LABELS, Resource.FLOW,
+            buildQueryFiltersForOperations(
+                Field.LABELS, Resource.FLOW,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -83,7 +84,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.FLOW_ID, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.FLOW_ID, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -97,7 +99,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.START_DATE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.START_DATE, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -108,7 +111,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.END_DATE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.END_DATE, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -119,7 +123,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.STATE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.STATE, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -128,7 +133,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TRIGGER_EXECUTION_ID, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.TRIGGER_EXECUTION_ID, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -140,7 +146,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TRIGGER_ID, Resource.LOG,
+            buildQueryFiltersForOperations(
+                Field.TRIGGER_ID, Resource.LOG,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -152,7 +159,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EXECUTION_ID, Resource.LOG,
+            buildQueryFiltersForOperations(
+                Field.EXECUTION_ID, Resource.LOG,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -164,14 +172,16 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.CHILD_FILTER, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.CHILD_FILTER, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.WORKER_ID, Resource.TRIGGER,
+            buildQueryFiltersForOperations(
+                Field.WORKER_ID, Resource.TRIGGER,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -183,21 +193,24 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EXISTING_ONLY, Resource.NAMESPACE,
+            buildQueryFiltersForOperations(
+                Field.EXISTING_ONLY, Resource.NAMESPACE,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.MIN_LEVEL, Resource.LOG,
+            buildQueryFiltersForOperations(
+                Field.MIN_LEVEL, Resource.LOG,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.CREATED, Resource.ASSET_USAGE,
+            buildQueryFiltersForOperations(
+                Field.CREATED, Resource.ASSET_USAGE,
                 Set.of(
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.GREATER_THAN,
@@ -208,7 +221,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.UPDATED, Resource.KV_METADATA,
+            buildQueryFiltersForOperations(
+                Field.UPDATED, Resource.KV_METADATA,
                 Set.of(
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.GREATER_THAN,
@@ -219,7 +233,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EXPIRATION_DATE, Resource.KV_METADATA,
+            buildQueryFiltersForOperations(
+                Field.EXPIRATION_DATE, Resource.KV_METADATA,
                 Set.of(
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.GREATER_THAN,
@@ -230,7 +245,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ID, Resource.ASSET,
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.ASSET,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -243,7 +259,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ID, Resource.CREDENTIALS,
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.CREDENTIALS,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -256,7 +273,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ASSET_ID, Resource.ASSET_USAGE,
+            buildQueryFiltersForOperations(
+                Field.ASSET_ID, Resource.ASSET_USAGE,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -269,7 +287,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TYPE, Resource.ASSET,
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.ASSET,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -282,7 +301,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TYPE, Resource.CREDENTIALS,
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.CREDENTIALS,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -295,61 +315,71 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAME, Resource.USER,
+            buildQueryFiltersForOperations(
+                Field.NAME, Resource.USER,
                 Set.of(
                     Op.EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.USERNAME, Resource.USER,
+            buildQueryFiltersForOperations(
+                Field.USERNAME, Resource.USER,
                 Set.of(
                     Op.EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.GROUP, Resource.USER,
+            buildQueryFiltersForOperations(
+                Field.GROUP, Resource.USER,
                 Set.of(
                     Op.EQUALS,
                     Op.IN
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EMAIL, Resource.INVITATION,
+            buildQueryFiltersForOperations(
+                Field.EMAIL, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.STATUS, Resource.INVITATION,
+            buildQueryFiltersForOperations(
+                Field.STATUS, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EXPIRED_AT, Resource.INVITATION,
+            buildQueryFiltersForOperations(
+                Field.EXPIRED_AT, Resource.INVITATION,
                 Set.of()
             ),
 
-            buildQueryFiltersForOperations(Field.ENABLED, Resource.SECURITY_INTEGRATION,
+            buildQueryFiltersForOperations(
+                Field.ENABLED, Resource.SECURITY_INTEGRATION,
                 Set.of(
                     Op.EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAME, Resource.ROLE,
+            buildQueryFiltersForOperations(
+                Field.NAME, Resource.ROLE,
                 Set.of(
                     Op.EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAME, Resource.GROUP,
+            buildQueryFiltersForOperations(
+                Field.NAME, Resource.GROUP,
                 Set.of(
                     Op.EQUALS
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.BINDING,
+            buildQueryFiltersForOperations(
+                Field.NAMESPACE, Resource.BINDING,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
@@ -357,7 +387,8 @@ public class QueryFilterTest {
 
             ),
 
-            buildQueryFiltersForOperations(Field.TYPE, Resource.BINDING,
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.BINDING,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -380,7 +411,9 @@ public class QueryFilterTest {
             .value("io.kestra.tests")
             .build();
 
-        enum TestField { NAMESPACE }
+        enum TestField {
+            NAMESPACE
+        }
         AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
 
         assertThat(result).isInstanceOf(Prefix.class);
@@ -397,7 +430,9 @@ public class QueryFilterTest {
             .value("io.kestra.tests")
             .build();
 
-        enum TestField { NAMESPACE }
+        enum TestField {
+            NAMESPACE
+        }
         AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
 
         assertThat(result).isInstanceOf(EqualTo.class);
@@ -411,7 +446,9 @@ public class QueryFilterTest {
             .value("io.kestra")
             .build();
 
-        enum TestField { NAMESPACE }
+        enum TestField {
+            NAMESPACE
+        }
         AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
 
         assertThat(result).isInstanceOf(StartsWith.class);
@@ -419,7 +456,8 @@ public class QueryFilterTest {
 
     static Stream<Arguments> invalidOperationFilters() {
         return Stream.of(
-            buildQueryFiltersForOperations(Field.QUERY, Resource.FLOW,
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.FLOW,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -435,7 +473,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.SCOPE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.SCOPE, Resource.EXECUTION,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -451,7 +490,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.FLOW,
+            buildQueryFiltersForOperations(
+                Field.NAMESPACE, Resource.FLOW,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -460,8 +500,8 @@ public class QueryFilterTest {
                 )
             ),
 
-
-            buildQueryFiltersForOperations(Field.LABELS, Resource.FLOW,
+            buildQueryFiltersForOperations(
+                Field.LABELS, Resource.FLOW,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -474,7 +514,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.FLOW_ID, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.FLOW_ID, Resource.EXECUTION,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -483,7 +524,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.START_DATE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.START_DATE, Resource.EXECUTION,
                 Set.of(
                     Op.IN,
                     Op.NOT_IN,
@@ -495,7 +537,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.END_DATE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.END_DATE, Resource.EXECUTION,
                 Set.of(
                     Op.IN,
                     Op.NOT_IN,
@@ -507,7 +550,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.STATE, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.STATE, Resource.EXECUTION,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -521,7 +565,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TRIGGER_EXECUTION_ID, Resource.EXECUTION,
+            buildQueryFiltersForOperations(
+                Field.TRIGGER_EXECUTION_ID, Resource.EXECUTION,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -532,7 +577,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TRIGGER_ID, Resource.LOG,
+            buildQueryFiltersForOperations(
+                Field.TRIGGER_ID, Resource.LOG,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -543,7 +589,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EXECUTION_ID, Resource.LOG,
+            buildQueryFiltersForOperations(
+                Field.EXECUTION_ID, Resource.LOG,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -554,34 +601,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.CHILD_FILTER, Resource.EXECUTION,
-                Set.of(
-                    Op.GREATER_THAN,
-                    Op.LESS_THAN,
-                    Op.GREATER_THAN_OR_EQUAL_TO,
-                    Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.IN,
-                    Op.NOT_IN,
-                    Op.STARTS_WITH,
-                    Op.ENDS_WITH,
-                    Op.CONTAINS,
-                    Op.REGEX,
-                    Op.PREFIX
-                )
-            ),
-
-            buildQueryFiltersForOperations(Field.WORKER_ID, Resource.TRIGGER,
-                Set.of(
-                    Op.GREATER_THAN,
-                    Op.LESS_THAN,
-                    Op.GREATER_THAN_OR_EQUAL_TO,
-                    Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.REGEX,
-                    Op.PREFIX
-                )
-            ),
-
-            buildQueryFiltersForOperations(Field.EXISTING_ONLY, Resource.NAMESPACE,
+            buildQueryFiltersForOperations(
+                Field.CHILD_FILTER, Resource.EXECUTION,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -597,7 +618,20 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.MIN_LEVEL, Resource.LOG,
+            buildQueryFiltersForOperations(
+                Field.WORKER_ID, Resource.TRIGGER,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.EXISTING_ONLY, Resource.NAMESPACE,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -613,7 +647,25 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.CREATED, Resource.ASSET_USAGE,
+            buildQueryFiltersForOperations(
+                Field.MIN_LEVEL, Resource.LOG,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.CREATED, Resource.ASSET_USAGE,
                 Set.of(
                     Op.IN,
                     Op.NOT_IN,
@@ -625,8 +677,8 @@ public class QueryFilterTest {
                 )
             ),
 
-
-            buildQueryFiltersForOperations(Field.UPDATED, Resource.KV_METADATA,
+            buildQueryFiltersForOperations(
+                Field.UPDATED, Resource.KV_METADATA,
                 Set.of(
                     Op.IN,
                     Op.NOT_IN,
@@ -638,7 +690,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EXPIRATION_DATE, Resource.KV_METADATA,
+            buildQueryFiltersForOperations(
+                Field.EXPIRATION_DATE, Resource.KV_METADATA,
                 Set.of(
                     Op.IN,
                     Op.NOT_IN,
@@ -650,7 +703,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ID, Resource.ASSET,
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.ASSET,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,
@@ -660,7 +714,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ID, Resource.CREDENTIALS,
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.CREDENTIALS,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,
@@ -670,7 +725,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ASSET_ID, Resource.ASSET_USAGE,
+            buildQueryFiltersForOperations(
+                Field.ASSET_ID, Resource.ASSET_USAGE,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,
@@ -680,7 +736,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TYPE, Resource.ASSET,
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.ASSET,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,
@@ -690,7 +747,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.TYPE, Resource.CREDENTIALS,
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.CREDENTIALS,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,
@@ -700,7 +758,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAME, Resource.USER,
+            buildQueryFiltersForOperations(
+                Field.NAME, Resource.USER,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -717,7 +776,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.USERNAME, Resource.USER,
+            buildQueryFiltersForOperations(
+                Field.USERNAME, Resource.USER,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -734,7 +794,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.GROUP, Resource.USER,
+            buildQueryFiltersForOperations(
+                Field.GROUP, Resource.USER,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -750,7 +811,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAME, Resource.ROLE,
+            buildQueryFiltersForOperations(
+                Field.NAME, Resource.ROLE,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -767,7 +829,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EMAIL, Resource.INVITATION,
+            buildQueryFiltersForOperations(
+                Field.EMAIL, Resource.INVITATION,
                 Set.of(
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
@@ -784,7 +847,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.STATUS, Resource.INVITATION,
+            buildQueryFiltersForOperations(
+                Field.STATUS, Resource.INVITATION,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -800,7 +864,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.EXPIRED_AT, Resource.INVITATION,
+            buildQueryFiltersForOperations(
+                Field.EXPIRED_AT, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -818,7 +883,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.ENABLED, Resource.SECURITY_INTEGRATION,
+            buildQueryFiltersForOperations(
+                Field.ENABLED, Resource.SECURITY_INTEGRATION,
                 Set.of(
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
@@ -835,7 +901,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAME, Resource.GROUP,
+            buildQueryFiltersForOperations(
+                Field.NAME, Resource.GROUP,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -852,7 +919,8 @@ public class QueryFilterTest {
                 )
             ),
 
-            buildQueryFiltersForOperations(Field.NAMESPACE, Resource.BINDING,
+            buildQueryFiltersForOperations(
+                Field.NAMESPACE, Resource.BINDING,
                 Set.of(
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
@@ -862,7 +930,8 @@ public class QueryFilterTest {
 
             ),
 
-            buildQueryFiltersForOperations(Field.TYPE, Resource.BINDING,
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.BINDING,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,

@@ -1,6 +1,12 @@
 package io.kestra.core.reporter;
 
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.UUID;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.models.collectors.Result;
@@ -8,6 +14,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.VersionProvider;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -20,11 +27,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.net.URI;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.UUID;
 
 @Singleton
 @Slf4j
@@ -49,7 +51,7 @@ public class ServerEventSender {
     @Value("${kestra.anonymous-usage-report.uri:'https://api.kestra.io/v1/reports/server-events'}")
     protected URI url;
 
-    public ServerEventSender( ) {
+    public ServerEventSender() {
         this.serverType = KestraContext.getContext().getServerType();
     }
 
@@ -80,7 +82,7 @@ public class ServerEventSender {
         }
     }
 
-    private void handleResponse (Result result){
+    private void handleResponse(Result result) {
 
     }
 

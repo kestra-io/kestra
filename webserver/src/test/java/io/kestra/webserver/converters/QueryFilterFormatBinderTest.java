@@ -1,13 +1,15 @@
 package io.kestra.webserver.converters;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.webserver.utils.RequestUtils;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.uri.UriBuilder;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.webserver.utils.RequestUtils;
+
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.uri.UriBuilder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,17 +30,23 @@ class QueryFilterFormatBinderTest {
         // THEN
         assertEquals(3, filters.size());
 
-        assertTrue(filters.stream().anyMatch(f ->
-            f.field() == QueryFilter.Field.NAMESPACE && f.operation() == QueryFilter.Op.EQUALS && f.value().equals("test-namespace")
-        ));
+        assertTrue(
+            filters.stream().anyMatch(
+                f -> f.field() == QueryFilter.Field.NAMESPACE && f.operation() == QueryFilter.Op.EQUALS && f.value().equals("test-namespace")
+            )
+        );
 
-        assertTrue(filters.stream().anyMatch(f ->
-            f.field() == QueryFilter.Field.START_DATE && f.operation() == QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO && f.value().equals("2024-01-01T00:00:00Z")
-        ));
+        assertTrue(
+            filters.stream().anyMatch(
+                f -> f.field() == QueryFilter.Field.START_DATE && f.operation() == QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO && f.value().equals("2024-01-01T00:00:00Z")
+            )
+        );
 
-        assertTrue(filters.stream().anyMatch(f ->
-            f.field() == QueryFilter.Field.STATE && f.operation() == QueryFilter.Op.IN && f.value().equals(List.of("RUNNING", "FAILED"))
-        ));
+        assertTrue(
+            filters.stream().anyMatch(
+                f -> f.field() == QueryFilter.Field.STATE && f.operation() == QueryFilter.Op.IN && f.value().equals(List.of("RUNNING", "FAILED"))
+            )
+        );
     }
 
     @Test
@@ -77,10 +85,12 @@ class QueryFilterFormatBinderTest {
     @Test
     void testBindHttpRequest() {
         // GIVEN
-        HttpRequest<?> request = HttpRequest.GET(UriBuilder.of("/")
-            .queryParam("filters[namespace][EQUALS]", "test-namespace")
-            .queryParam("filters[state][IN]", "[RUNNING,FAILED]")
-            .build());
+        HttpRequest<?> request = HttpRequest.GET(
+            UriBuilder.of("/")
+                .queryParam("filters[namespace][EQUALS]", "test-namespace")
+                .queryParam("filters[state][IN]", "[RUNNING,FAILED]")
+                .build()
+        );
 
         // WHEN
         QueryFilterFormatBinder binder = new QueryFilterFormatBinder();
@@ -89,13 +99,17 @@ class QueryFilterFormatBinderTest {
         // THEN
         assertEquals(2, filters.size());
 
-        assertTrue(filters.stream().anyMatch(f ->
-            f.field() == QueryFilter.Field.NAMESPACE && f.operation() == QueryFilter.Op.EQUALS && f.value().equals("test-namespace")
-        ));
+        assertTrue(
+            filters.stream().anyMatch(
+                f -> f.field() == QueryFilter.Field.NAMESPACE && f.operation() == QueryFilter.Op.EQUALS && f.value().equals("test-namespace")
+            )
+        );
 
-        assertTrue(filters.stream().anyMatch(f ->
-            f.field() == QueryFilter.Field.STATE && f.operation() == QueryFilter.Op.IN && f.value().equals(List.of("RUNNING", "FAILED"))
-        ));
+        assertTrue(
+            filters.stream().anyMatch(
+                f -> f.field() == QueryFilter.Field.STATE && f.operation() == QueryFilter.Op.IN && f.value().equals(List.of("RUNNING", "FAILED"))
+            )
+        );
     }
 
     @Test

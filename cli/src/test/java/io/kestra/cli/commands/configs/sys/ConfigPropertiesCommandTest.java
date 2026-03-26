@@ -1,14 +1,15 @@
 package io.kestra.cli.commands.configs.sys;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import org.junit.jupiter.api.Test;
-import org.yaml.snakeyaml.Yaml;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.Yaml;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
@@ -63,7 +64,8 @@ class ConfigPropertiesCommandTest {
 
             String output = out.toString();
             Yaml yaml = new Yaml();
-            Throwable thrown = catchThrowable(() -> {
+            Throwable thrown = catchThrowable(() ->
+            {
                 Map<?, ?> parsed = yaml.load(output);
                 assertThat(parsed).isInstanceOf(Map.class);
             });

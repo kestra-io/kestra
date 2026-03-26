@@ -1,18 +1,21 @@
 package io.kestra.core.runners.pebble;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.utils.Rethrow;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Test;
-
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.utils.Rethrow;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,16 +82,16 @@ class PebbleVariableRendererTest {
     void autoJson() throws IllegalVariableEvaluationException {
         Map<String, Object> vars = Map.of(
             "map", Map.of("a", "1", "b", "2"),
-            "collection", List.of("1","2", "3"),
-            "array",  new String[]{"1", "2", "3"},
-            "inta",  new Integer[]{1, 2, 3}
+            "collection", List.of("1", "2", "3"),
+            "array", new String[] { "1", "2", "3" },
+            "inta", new Integer[] { 1, 2, 3 }
         );
 
         Map<String, Object> in = Map.of(
             "map", "{{ map }}",
             "collection", "{{ collection }}",
-            "array",  "{{ array }}",
-            "inta",  "{{ inta }}"
+            "array", "{{ array }}",
+            "inta", "{{ inta }}"
         );
 
         Map<String, Object> render = variableRenderer.render(in, vars);
@@ -102,8 +105,10 @@ class PebbleVariableRendererTest {
 
     @Test
     void exception() {
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
-            Rethrow.throwSupplier(() -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
+            Rethrow.throwSupplier(() ->
+            {
                 variableRenderer.render("{{ missing is defined ? missing : missing2 }}", Map.of());
                 return null;
             }).get();
@@ -124,7 +129,7 @@ class PebbleVariableRendererTest {
     void numberFormat() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
             "{{ var | numberFormat(\"#.##\") }}",
-            Map.of("var",  1.232654F)
+            Map.of("var", 1.232654F)
         );
 
         assertThat(render).contains("1.23");
@@ -262,7 +267,8 @@ class PebbleVariableRendererTest {
 
         assertThat(render).isEqualTo("awesome");
 
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ missing is defined ? missing : missing2 }}", vars);
         });
     }
@@ -289,7 +295,8 @@ class PebbleVariableRendererTest {
         render = variableRenderer.render("{{ missing is defined ? null : block.test.child }}", vars);
         assertThat(render).isEqualTo("awesome");
 
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ missing is defined ? missing : missing2 }}", vars);
         });
     }
@@ -310,7 +317,8 @@ class PebbleVariableRendererTest {
         render = variableRenderer.render("{{ block[inner]['child'] }}", vars);
         assertThat(render).isEqualTo("awesome");
 
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ get missing }}", vars);
         });
     }

@@ -1,20 +1,22 @@
 package io.kestra.jdbc;
 
+import io.kestra.core.lock.Lock;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.topologies.FlowTopology;
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.*;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.server.ServiceInstance;
+
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
@@ -28,13 +30,13 @@ public class JdbcTableConfigsFactory {
     @Bean
     @Named("queues")
     public InstantiableJdbcTableConfig queues() {
-        return new InstantiableJdbcTableConfig("queues", null, "queues");
+        return new InstantiableJdbcTableConfig("queues", JdbcQueueItem.class, "queues");
     }
 
     @Bean
     @Named("flows")
     public InstantiableJdbcTableConfig flows() {
-        return new InstantiableJdbcTableConfig("flows", Flow.class, "flows");
+        return new InstantiableJdbcTableConfig("flows", FlowInterface.class, "flows");
     }
 
     @Bean
@@ -44,15 +46,9 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
-    @Named("templates")
-    public InstantiableJdbcTableConfig templates() {
-        return new InstantiableJdbcTableConfig("templates", Template.class, "templates");
-    }
-
-    @Bean
     @Named("triggers")
     public InstantiableJdbcTableConfig triggers() {
-        return new InstantiableJdbcTableConfig("triggers", Trigger.class, "triggers");
+        return new InstantiableJdbcTableConfig("triggers", TriggerState.class, "triggers");
     }
 
     @Bean
@@ -71,12 +67,6 @@ public class JdbcTableConfigsFactory {
     @Named("multipleconditions")
     public InstantiableJdbcTableConfig multipleConditions() {
         return new InstantiableJdbcTableConfig("multipleconditions", MultipleConditionWindow.class, "multipleconditions");
-    }
-
-    @Bean
-    @Named("executorstate")
-    public InstantiableJdbcTableConfig executorState() {
-        return new InstantiableJdbcTableConfig("executorstate", ExecutorState.class, "executorstate");
     }
 
     @Bean
@@ -143,6 +133,18 @@ public class JdbcTableConfigsFactory {
     @Named("namespacefilemetadata")
     public InstantiableJdbcTableConfig namespaceFileMetadata() {
         return new InstantiableJdbcTableConfig("namespacefilemetadata", NamespaceFileMetadata.class, "namespace_file_metadata");
+    }
+
+    @Bean
+    @Named("locks")
+    public InstantiableJdbcTableConfig locks() {
+        return new InstantiableJdbcTableConfig("locks", Lock.class, "locks");
+    }
+
+    @Bean
+    @Named("taskoutputs")
+    public InstantiableJdbcTableConfig outputs() {
+        return new InstantiableJdbcTableConfig("taskoutputs", TaskOutput.class, "task_outputs");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

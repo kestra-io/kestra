@@ -1,27 +1,32 @@
 package io.kestra.core.models.executions;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.TenantInterface;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.annotation.Nullable;
-import lombok.Builder;
-import lombok.Value;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.event.Level;
-
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.event.Level;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.utils.IdUtils;
+
+import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
+import lombok.Value;
+
 @Value
 @Builder(toBuilder = true)
-public class LogEntry implements TenantInterface {
+public class LogEntry implements TenantInterface, DispatchEvent {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -92,7 +97,7 @@ public class LogEntry implements TenantInterface {
             .build();
     }
 
-    public static LogEntry of(FlowInterface flow, AbstractTrigger abstractTrigger) {
+    public static LogEntry of(FlowId flow, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
@@ -102,11 +107,11 @@ public class LogEntry implements TenantInterface {
             .build();
     }
 
-    public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger) {
+    public static LogEntry of(TriggerId trigger, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
+            .tenantId(trigger.getTenantId())
+            .namespace(trigger.getNamespace())
+            .flowId(trigger.getFlowId())
             .triggerId(abstractTrigger.getId())
             .executionId(abstractTrigger.getId())
             .build();
@@ -136,7 +141,7 @@ public class LogEntry implements TenantInterface {
                 new AbstractMap.SimpleEntry<>("executionId", this.executionId),
                 new AbstractMap.SimpleEntry<>("taskRunId", this.taskRunId),
                 new AbstractMap.SimpleEntry<>("triggerId", this.triggerId),
-                new AbstractMap.SimpleEntry<>("executionKind", Optional.ofNullable(this.executionKind).map(executionKind -> executionKind.name()).orElse(null)  )
+                new AbstractMap.SimpleEntry<>("executionKind", Optional.ofNullable(this.executionKind).map(executionKind -> executionKind.name()).orElse(null))
             )
             .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -150,4 +155,9 @@ public class LogEntry implements TenantInterface {
         return map;
     }
 
+    @Override
+    public String key() {
+        // FIXME should we return null instead?
+        return IdUtils.create();
+    }
 }

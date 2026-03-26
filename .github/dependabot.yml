@@ -116,6 +116,10 @@ updates:
           ]
 
     ignore:
+      # Ignore TypeScript major updates (v6 currently conflicts with @typescript-eslint which requires <6.0.0)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
       # Ignore eslint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]

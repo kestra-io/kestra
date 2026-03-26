@@ -63,6 +63,7 @@ public final class TriggerState implements TriggerId {
             .triggerId(triggerId)
             .date(toZonedDateTime(evaluatedAt))
             .nextExecutionDate(toZonedDateTime(nextEvaluationDate))
+            .backfill(backfill)
             .stopAfter(stopAfter)
             .disabled(disabled)
             .build();

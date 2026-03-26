@@ -140,7 +140,7 @@ public class TriggerEventHandler {
 
             if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
                 ZonedDateTime nextEvaluationDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(state.context()));
-                state.updateForNextEvaluationDate(clock, nextEvaluationDate);
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate);
             }
 
             triggerStateStore.save(state);

@@ -259,18 +259,6 @@
                                         >
                                             <Play />
                                         </IconButton>
-                                        <IconButton
-                                            :tooltip="$t('details')"
-                                            :to="{
-                                                name: 'flows/update',
-                                                params: {
-                                                    namespace: scope.row.namespace,
-                                                    id: scope.row.id,
-                                                },
-                                            }"
-                                        >
-                                            <TextSearch />
-                                        </IconButton>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -312,7 +300,6 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
@@ -741,6 +728,14 @@
 
 .flow-id {
     min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    a {
+        flex: 1;
+        cursor: pointer;
+    }
 }
 
 .flows-table .el-table__cell {

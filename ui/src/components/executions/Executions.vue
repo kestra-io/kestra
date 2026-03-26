@@ -274,21 +274,6 @@
                                 </el-tooltip>
                             </template>
                         </el-table-column>
-
-                        <el-table-column
-                            columnKey="action"
-                            className="row-action"
-                            :label="$t('actions')"
-                        >
-                            <template #default="scope">
-                                <IconButton
-                                    :tooltip="$t('details')"
-                                    :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
-                                >
-                                    <TextSearch />
-                                </IconButton>
-                            </template>
-                        </el-table-column>
                     </template>
                 </SelectTable>
             </template>
@@ -415,7 +400,6 @@
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
@@ -425,7 +409,6 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import IconButton from "../IconButton.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -1110,6 +1093,11 @@
 
 .code-text {
     color: var(--ks-content-primary);
+}
+
+a.execution-id {
+    display: block;
+    cursor: pointer;
 }
 
 :deep(a.execution-id) code {

@@ -1,14 +1,16 @@
 package io.kestra.core.runners.pebble.tests;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.kestra.core.serializers.JacksonMapper;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Test;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import io.kestra.core.serializers.JacksonMapper;
-
-import java.util.List;
-import java.util.Map;
 
 public class JsonTest implements Test {
     @Override

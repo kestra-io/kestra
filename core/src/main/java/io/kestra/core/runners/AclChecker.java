@@ -1,7 +1,8 @@
 package io.kestra.core.runners;
 
-import javax.annotation.CheckReturnValue;
 import java.util.List;
+
+import javax.annotation.CheckReturnValue;
 
 /**
  * Check if the current taskrun has access to the requested resources.
@@ -13,7 +14,8 @@ import java.util.List;
  */
 public interface AclChecker {
 
-    /**Tasks that need to access resources outside their namespace should use this interface to check ACL (Allowed namespaces in EE).
+    /**
+     * Tasks that need to access resources outside their namespace should use this interface to check ACL (Allowed namespaces in EE).
      * Allow all namespaces.
      * <p>
      * IMPORTANT: remember to call the <code>check()</code> method to check the ACL.

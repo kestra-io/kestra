@@ -1,7 +1,7 @@
 package io.kestra.runner.h2;
 
-import io.kestra.jdbc.runner.JdbcRunnerRetryTest;
+import io.kestra.core.runners.AbstractRunnerRetryTest;
 
-public class H2RunnerRetryTest extends JdbcRunnerRetryTest {
+public class H2RunnerRetryTest extends AbstractRunnerRetryTest {
 
 }

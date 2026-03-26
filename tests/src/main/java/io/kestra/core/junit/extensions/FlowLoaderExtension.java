@@ -1,12 +1,12 @@
 package io.kestra.core.junit.extensions;
 
-import io.kestra.core.junit.annotations.LoadFlows;
-import java.net.URISyntaxException;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class FlowLoaderExtension extends AbstractFlowLoaderExtension implements BeforeEachCallback, AfterEachCallback {
+import io.kestra.core.junit.annotations.LoadFlows;
+
+public class FlowLoaderExtension extends AbstractLoaderExtension implements BeforeEachCallback, AfterEachCallback {
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
@@ -15,7 +15,7 @@ public class FlowLoaderExtension extends AbstractFlowLoaderExtension implements 
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
         LoadFlows loadFlows = getLoadFlows(extensionContext);
         deleteFlows(loadFlows.tenantId(), loadFlows.value());
     }

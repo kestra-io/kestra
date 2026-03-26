@@ -17,5 +17,9 @@ dependencies {
     compileOnly ("jakarta.xml.bind:jakarta.xml.bind-api:4.0.5")
 
     testImplementation project(':tests')
+    testImplementation project(':queue')
+    testImplementation project(':queue-jdbc')
     testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':executor').sourceSets.test.output
+    testImplementation project(":queue").sourceSets.test.output
 }

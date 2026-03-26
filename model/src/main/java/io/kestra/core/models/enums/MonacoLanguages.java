@@ -1,7 +1,7 @@
 package io.kestra.core.models.enums;
 
 public enum MonacoLanguages {
-    NONE("") ,
+    NONE(""),
     ABAP("abap"),
     APEX("apex"),
     AZCLI("azcli"),

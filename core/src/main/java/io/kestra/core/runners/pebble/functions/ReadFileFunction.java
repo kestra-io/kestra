@@ -1,12 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.StorageContext;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import jakarta.inject.Singleton;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -15,6 +8,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.storages.StorageContext;
+
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class ReadFileFunction extends AbstractFileFunction {
@@ -57,9 +58,9 @@ public class ReadFileFunction extends AbstractFileFunction {
 
         if (args.containsKey(VERSION)) {
             return namespaceStorage.getFileContent(
-                    NamespaceFile.normalize(Path.of(path.getPath())),
-                    Integer.parseInt(args.get(VERSION).toString())
-                );
+                NamespaceFile.normalize(Path.of(path.getPath())),
+                Integer.parseInt(args.get(VERSION).toString())
+            );
         }
 
         return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath())));

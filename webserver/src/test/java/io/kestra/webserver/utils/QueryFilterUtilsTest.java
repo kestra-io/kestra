@@ -1,11 +1,12 @@
 package io.kestra.webserver.utils;
 
-import io.kestra.core.models.QueryFilter;
-import org.junit.jupiter.api.Test;
-
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.QueryFilter;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 

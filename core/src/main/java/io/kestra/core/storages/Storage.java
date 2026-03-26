@@ -1,16 +1,14 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.annotations.Retryable;
-import jakarta.annotation.Nullable;
-
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Service interface for accessing the Kestra's storage.
@@ -44,14 +42,14 @@ public interface Storage {
      * @param uri the file URI.
      * @return the {@link InputStream}.
      * @throws IllegalArgumentException if the given {@link URI} is {@code null} or invalid.
-     * @throws IOException              if an error happens while accessing the file.
+     * @throws IOException if an error happens while accessing the file.
      */
     InputStream getFile(URI uri) throws IOException;
 
     /**
      * Retrieves the metadata attributes for the given URI.
      *
-     * @param uri       the URI of the object
+     * @param uri the URI of the object
      * @return the file attributes
      * @throws IOException if the attributes cannot be retrieved
      */
@@ -59,6 +57,7 @@ public interface Storage {
 
     /**
      * Deletes the file for the given URI.
+     * 
      * @param uri the file URI.
      * @return {@code true} if the file was deleted. Otherwise {@code false}.
      */
@@ -83,7 +82,7 @@ public interface Storage {
      * Stores a file with the given name for the given {@link InputStream} into Kestra's storage.
      *
      * @param inputStream the {@link InputStream} of the file content.
-     * @param name        the name of the file on the Kestra's storage.
+     * @param name the name of the file on the Kestra's storage.
      * @return the URI of the file/object in the internal storage.
      * @throws IOException if an error occurs while storing the file.
      */
@@ -93,7 +92,7 @@ public interface Storage {
      * Stores a file with the given name for the given {@link InputStream} into Kestra's storage.
      *
      * @param inputStream the {@link InputStream} of the file content.
-     * @param uri         the target URI of the file to be stored in the storage.
+     * @param uri the target URI of the file to be stored in the storage.
      * @return the URI of the file/object in the internal storage.
      * @throws IOException if an error occurs while storing the file.
      */
@@ -126,7 +125,7 @@ public interface Storage {
      * Gets the cache file from the Kestra's storage for the given cacheID and objectID.
      * If the cache file didn't exist, an empty Optional is returned.
      *
-     * @param cacheId  the ID of the cache.
+     * @param cacheId the ID of the cache.
      * @param objectId the ID object cached object (optional).
      * @return an Optional with the cache input stream or empty.
      * @throws IOException if an error occurs during the operation.
@@ -139,9 +138,9 @@ public interface Storage {
      * Gets the cache file from the Kestra's storage for the given cacheID and objectID.
      * If the cache file didn't exist or has expired based on the given TTL, an empty Optional is returned.
      *
-     * @param cacheId  the ID of the cache.
+     * @param cacheId the ID of the cache.
      * @param objectId the ID object cached object (optional).
-     * @param ttl      the time-to-live duration of the cache.
+     * @param ttl the time-to-live duration of the cache.
      * @return an Optional with the cache input stream or empty.
      * @throws IOException if an error occurs during the operation.
      */
@@ -150,8 +149,8 @@ public interface Storage {
     /**
      * Caches the given file into Kestra's storage with the given cache ID.
      *
-     * @param file     the cache as a ZIP archive
-     * @param cacheId  the ID of the cache.
+     * @param file the cache as a ZIP archive
+     * @param cacheId the ID of the cache.
      * @param objectId the ID object cached object (optional).
      * @return the URI of the file inside the internal storage.
      * @throws IOException if an error occurs during the operation.
@@ -161,7 +160,7 @@ public interface Storage {
     /**
      * Deletes the cache file.
      *
-     * @param cacheId  the ID of the cache.
+     * @param cacheId the ID of the cache.
      * @param objectId the ID object cached object (optional).
      * @return {@code true} if the cache file was removed/. Otherwise {@code false}.
      * @throws IOException if an error occurs during the operation.
@@ -170,6 +169,7 @@ public interface Storage {
 
     /**
      * Gets the storage context for current task
+     * 
      * @return the task storage context
      */
     Optional<StorageContext.Task> getTaskStorageContext();

@@ -1,8 +1,9 @@
 package io.kestra.cli.commands.configs.sys;
 
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
+
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -19,6 +20,6 @@ public class ConfigCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.runCli(new String[]{"configs",  "--help"});
+        return App.runCli(new String[] { "configs", "--help" });
     }
 }

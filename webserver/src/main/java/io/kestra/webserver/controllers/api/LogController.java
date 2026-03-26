@@ -1,16 +1,27 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.InputStream;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.core.services.LogStreamingService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
@@ -24,26 +35,15 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
-import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import java.io.InputStream;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-
-@Validated
 @Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogRepositoryInterface.class)
 public class LogController {
@@ -63,23 +63,28 @@ public class LogController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
-    @Operation(tags = {"Logs"}, summary = "Search for logs")
+    @Operation(tags = { "Logs" }, summary = "Search for logs")
     public PagedResults<LogEntry> searchLogs(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
-        @Parameter(description = "The sort of current page", examples = {
-            @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc")
-        }) @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(
+            description = "The sort of current page", examples = {
+                @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc")
+            }
+        ) @Nullable @QueryValue List<String> sort,
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
+            in = ParameterIn.QUERY
+        ) @Nullable @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix",deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
         @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "A trigger id filter",deprecated = true) @Nullable @QueryValue String triggerId,
+        @Deprecated @Parameter(description = "A trigger id filter", deprecated = true) @Nullable @QueryValue String triggerId,
         @Deprecated @Parameter(description = "The min log level filter", deprecated = true) @Nullable @QueryValue Level minLevel,
         @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
-    ) throws HttpStatusException {
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate)
+        throws HttpStatusException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
             query,
@@ -95,25 +100,27 @@ public class LogController {
             null,
             null,
             null,
-            null);
+            null
+        );
 
-        return PagedResults.of(logRepository.find(
-            PageableUtils.from(page, size, sort),
-            tenantService.resolveTenant(),
-            filters
-        ));
+        return PagedResults.of(
+            logRepository.find(
+                PageableUtils.from(page, size, sort),
+                tenantService.resolveTenant(),
+                filters
+            )
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}")
-    @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution, taskrun or task")
+    @Operation(tags = { "Logs" }, summary = "Get logs for a specific execution, taskrun or task")
     public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
-        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
-    ) {
+        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt) {
         return logService.getExecutionLogs(
             tenantService.resolveTenant(),
             executionId,
@@ -127,14 +134,13 @@ public class LogController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/download", produces = MediaType.TEXT_PLAIN)
-    @Operation(tags = {"Logs"}, summary = "Download logs for a specific execution, taskrun or task")
+    @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
     public HttpResponse<StreamedFile> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
-        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
-    ) {
+        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt) {
         InputStream inputStream = logService.getExecutionLogsAsStream(
             tenantService.resolveTenant(),
             executionId,
@@ -155,50 +161,48 @@ public class LogController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
-    @Operation(tags = {"Logs"}, summary = "Follow logs for a specific execution")
-    public Flux<Event<LogEntry>> followLogsFromExecution(
+    @Operation(tags = { "Logs" }, summary = "Follow logs for a specific execution")
+    public Flux<Event<FollowLogEvent>> followLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
-    ) {
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel) {
         String subscriberId = UUID.randomUUID().toString();
         final List<String> levels = LogEntry.findLevelsByMin(minLevel).stream().map(Enum::name).toList();
 
-        return Flux.<Event<LogEntry>>create(emitter -> {
-                // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
-                emitter.next(Event.of(LogEntry.builder().build()).id("start"));
+        return Flux.<Event<FollowLogEvent>> create(emitter ->
+        {
+            // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
+            emitter.next(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
 
-                // fetch repository first
-                logService.getExecutionLogs(tenantService.resolveTenant(), executionId, minLevel, List.of(), true)
-                    .forEach(logEntry -> emitter.next(Event.of(logEntry).id("progress")));
+            // fetch repository first
+            logService.getExecutionLogs(tenantService.resolveTenant(), executionId, minLevel, List.of(), true)
+                .forEach(logEntry -> emitter.next(Event.of(FollowLogEvent.from(logEntry)).id("progress")));
 
-                // consume in realtime
-                logStreamingService.registerSubscriber(executionId, subscriberId, emitter, levels);
-            }, FluxSink.OverflowStrategy.BUFFER)
+            // consume in realtime
+            logStreamingService.registerSubscriber(executionId, subscriberId, emitter, levels);
+        }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
             .doFinally(ignored -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}")
-    @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
+    @Operation(tags = { "Logs" }, summary = "Delete logs for a specific execution, taskrun or task")
     public void deleteLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
-        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
-    ) {
+        @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), executionId, taskId, taskRunId, minLevel, attempt);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{namespace}/{flowId}")
-    @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
+    @Operation(tags = { "Logs" }, summary = "Delete logs for a specific execution, taskrun or task")
     public void deleteLogsFromFlow(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow identifier") @PathVariable String flowId,
-        @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId
-    ) {
+        @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
     }
 }

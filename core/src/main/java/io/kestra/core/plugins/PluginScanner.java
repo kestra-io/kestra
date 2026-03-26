@@ -1,6 +1,24 @@
 package io.kestra.core.plugins;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.function.Function;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import io.kestra.core.app.AppBlockInterface;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
@@ -18,32 +36,17 @@ import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
-import io.swagger.v3.oas.annotations.Hidden;
-import java.io.InputStream;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.function.Function;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Hidden;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PluginScanner {
     ClassLoader parent;
 
     private static final String UI_MANIFEST_PATH = "plugin-ui/manifest.json";
-    private static final TypeReference<Map<String, List<PluginUiModule>>> PLUGIN_UI_MANIFEST_TYPE =
-         new TypeReference<>() {};
+    private static final TypeReference<Map<String, List<PluginUiModule>>> PLUGIN_UI_MANIFEST_TYPE = new TypeReference<>() {
+    };
 
     public PluginScanner(final ClassLoader parent) {
         this.parent = parent;
@@ -59,7 +62,8 @@ public class PluginScanner {
         List<RegisteredPlugin> scanResult = new PluginResolver(pluginPaths)
             .resolves()
             .parallelStream()
-            .map(plugin -> {
+            .map(plugin ->
+            {
                 log.debug("Loading plugins from path: {}", plugin.getLocation());
 
                 final PluginClassLoader classLoader = PluginClassLoader.of(
@@ -90,13 +94,16 @@ public class PluginScanner {
     public RegisteredPlugin scan() {
         try {
             long start = System.currentTimeMillis();
-            Manifest manifest = new Manifest(IOUtils.toInputStream("""
-                    Manifest-Version: 1.0
-                    X-Kestra-Title: core
-                    X-Kestra-Group: io.kestra.plugin.core
-                    """,
-                StandardCharsets.UTF_8
-            ));
+            Manifest manifest = new Manifest(
+                IOUtils.toInputStream(
+                    """
+                        Manifest-Version: 1.0
+                        X-Kestra-Title: core
+                        X-Kestra-Group: io.kestra.plugin.core
+                        """,
+                    StandardCharsets.UTF_8
+                )
+            );
 
             RegisteredPlugin corePlugin = scanClassLoader(PluginScanner.class.getClassLoader(), null, manifest);
             log.info("Registered {} core plugins (scan done in {}ms)", corePlugin.allClass().size(), System.currentTimeMillis() - start);
@@ -109,8 +116,8 @@ public class PluginScanner {
 
     @SuppressWarnings("unchecked")
     private RegisteredPlugin scanClassLoader(final ClassLoader classLoader,
-                                             final ExternalPlugin externalPlugin,
-                                             Manifest manifest) {
+        final ExternalPlugin externalPlugin,
+        Manifest manifest) {
         List<Class<? extends Task>> tasks = new ArrayList<>();
         List<Class<? extends AbstractTrigger>> triggers = new ArrayList<>();
         List<Class<? extends Condition>> conditions = new ArrayList<>();
@@ -192,16 +199,16 @@ public class PluginScanner {
                     case DataFilter<?, ?> dataFilter -> {
                         log.debug("Loading DataFilter plugin: '{}'", plugin.getClass());
                         //noinspection unchecked
-                        dataFilters.add((Class<? extends DataFilter<?, ?>>)  dataFilter.getClass());
+                        dataFilters.add((Class<? extends DataFilter<?, ?>>) dataFilter.getClass());
                     }
                     case DataFilterKPI<?, ?> dataFilterKPI -> {
                         log.debug("Loading DataFilterKPI plugin: '{}'", plugin.getClass());
                         //noinspection unchecked
-                        dataFiltersKPI.add((Class<? extends DataFilterKPI<?, ?>>)  dataFilterKPI.getClass());
+                        dataFiltersKPI.add((Class<? extends DataFilterKPI<?, ?>>) dataFilterKPI.getClass());
                     }
                     case LogExporter<?> shipper -> {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
-                        logExporter.add((Class<? extends LogExporter<?>>)  shipper.getClass());
+                        logExporter.add((Class<? extends LogExporter<?>>) shipper.getClass());
                     }
                     case AdditionalPlugin additionalPlugin -> {
                         log.debug("Loading additional plugin: '{}'", plugin.getClass());
@@ -215,7 +222,8 @@ public class PluginScanner {
             }
         } catch (ServiceConfigurationError | NoClassDefFoundError e) {
             Object location = getLocation(externalPlugin);
-            log.error("Unable to load all plugin classes from '{}'. Cause: [{}] {}",
+            log.error(
+                "Unable to load all plugin classes from '{}'. Cause: [{}] {}",
                 location,
                 e.getClass().getSimpleName(),
                 e.getMessage(),
@@ -263,10 +271,14 @@ public class PluginScanner {
             .guides(guides)
             .logExporters(logExporter)
             .additionalPlugins(additionalPlugins)
-            .aliases(aliases.entrySet().stream().collect(Collectors.toMap(
-                e -> e.getKey().toLowerCase(),
-                Function.identity()
-            )))
+            .aliases(
+                aliases.entrySet().stream().collect(
+                    Collectors.toMap(
+                        e -> e.getKey().toLowerCase(),
+                        Function.identity()
+                    )
+                )
+            )
             .pluginUiManifest(pluginUiManifest)
             .build();
     }
@@ -290,7 +302,8 @@ public class PluginScanner {
             stream
                 .filter(Files::isRegularFile)
                 .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
-                .forEach(guide -> {
+                .forEach(guide ->
+                {
                     var guideName = guide.getName(guide.getParent().getNameCount()).toString();
                     guides.add(guideName.substring(0, guideName.lastIndexOf('.')));
                 });

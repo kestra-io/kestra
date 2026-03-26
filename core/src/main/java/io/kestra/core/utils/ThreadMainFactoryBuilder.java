@@ -1,9 +1,8 @@
 package io.kestra.core.utils;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.util.concurrent.ThreadFactory;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public final class ThreadMainFactoryBuilder {
 

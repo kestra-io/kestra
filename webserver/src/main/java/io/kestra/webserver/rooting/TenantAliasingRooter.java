@@ -1,5 +1,10 @@
 package io.kestra.webserver.rooting;
 
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Pattern;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
@@ -8,11 +13,6 @@ import io.micronaut.web.router.RouteBuilder;
 import io.micronaut.web.router.UriRouteMatch;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.regex.Pattern;
-
 import lombok.SneakyThrows;
 
 @Singleton
@@ -35,12 +35,12 @@ public class TenantAliasingRooter extends DefaultRouter {
     public <T, R> UriRouteMatch<T, R> findClosest(HttpRequest<?> request) {
         String path = request.getUri().getPath();
         UriRouteMatch<T, R> closest = super.findClosest(request);
-        if (closest != null || bypassRooting()){
+        if (closest != null || bypassRooting()) {
             return closest;
         }
 
         boolean excluded = EXCLUDED_ROUTES.stream().anyMatch(route -> route.matcher(path).matches());
-        if (path.startsWith("/api/v1/") && !excluded){
+        if (path.startsWith("/api/v1/") && !excluded) {
             URI originalUri = request.getUri();
             URI updatedUri = new URI(
                 originalUri.getScheme(),
@@ -56,16 +56,17 @@ public class TenantAliasingRooter extends DefaultRouter {
         return null;
     }
 
-    protected String getTenantId(){
+    protected String getTenantId() {
         return "main";
     }
 
     /**
      * For override purpose. This method is here to allow EE version
      * to bypass rooting when some condition are met
+     * 
      * @return
      */
-    protected boolean bypassRooting(){
+    protected boolean bypassRooting() {
         return false;
     }
 }

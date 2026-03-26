@@ -1,14 +1,15 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.encryption.EncryptionService;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.Map;
 
 public class EncryptFunction implements Function {
     @Override
@@ -26,8 +27,7 @@ public class EncryptFunction implements Function {
         String plaintext = (String) args.get("plaintext");
         try {
             return EncryptionService.encrypt(key, plaintext);
-        }
-        catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
     }

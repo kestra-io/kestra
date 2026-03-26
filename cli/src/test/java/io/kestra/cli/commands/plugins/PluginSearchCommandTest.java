@@ -1,16 +1,18 @@
 package io.kestra.cli.commands.plugins;
 
-import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Map;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Map;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,30 +35,36 @@ class PluginSearchCommandTest {
 
     @Test
     void searchWithExactMatch() {
-        stubFor(get(urlEqualTo("/v1/plugins"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody("""
-                    [
-                        {
-                            "name": "plugin-notifications",
-                            "title": "Notifications",
-                            "group": "io.kestra.plugin",
-                            "version": "0.6.0"
-                        },
-                        {
-                            "name": "plugin-scripts",
-                            "title": "Scripts",
-                            "group": "io.kestra.plugin",
-                            "version": "0.5.0"
-                        }
-                    ]
-                """)));
+        stubFor(
+            get(urlEqualTo("/v1/plugins"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                [
+                                    {
+                                        "name": "plugin-notifications",
+                                        "title": "Notifications",
+                                        "group": "io.kestra.plugin",
+                                        "version": "0.6.0"
+                                    },
+                                    {
+                                        "name": "plugin-scripts",
+                                        "title": "Scripts",
+                                        "group": "io.kestra.plugin",
+                                        "version": "0.5.0"
+                                    }
+                                ]
+                            """)
+                )
+        );
 
-        try (ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
-            .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
-            .start()) {
-            String[] args = {"notifications"};
+        try (
+            ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
+                .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
+                .start()
+        ) {
+            String[] args = { "notifications" };
             PicocliRunner.call(PluginSearchCommand.class, ctx, args);
 
             String output = outputStreamCaptor.toString().trim();
@@ -68,31 +76,37 @@ class PluginSearchCommandTest {
 
     @Test
     void searchWithEmptyQuery() {
-        stubFor(get(urlEqualTo("/v1/plugins"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody("""
-                    [
-                        {
-                            "name": "plugin-notifications",
-                            "title": "Notifications",
-                            "group": "io.kestra.plugin",
-                            "version": "0.6.0"
-                        },
-                        {
-                            "name": "plugin-scripts",
-                            "title": "Scripts",
-                            "group": "io.kestra.plugin",
-                            "version": "0.5.0"
-                        }
-                    ]
-                """)));
+        stubFor(
+            get(urlEqualTo("/v1/plugins"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                [
+                                    {
+                                        "name": "plugin-notifications",
+                                        "title": "Notifications",
+                                        "group": "io.kestra.plugin",
+                                        "version": "0.6.0"
+                                    },
+                                    {
+                                        "name": "plugin-scripts",
+                                        "title": "Scripts",
+                                        "group": "io.kestra.plugin",
+                                        "version": "0.5.0"
+                                    }
+                                ]
+                            """)
+                )
+        );
 
-        try (ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
-            .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
-            .start()) {
+        try (
+            ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
+                .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
+                .start()
+        ) {
 
-            String[] args = {""};
+            String[] args = { "" };
             PicocliRunner.call(PluginSearchCommand.class, ctx, args);
 
             String output = outputStreamCaptor.toString().trim();

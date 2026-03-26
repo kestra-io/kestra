@@ -7,12 +7,17 @@ dependencies {
     implementation project(":jdbc")
     implementation project(":executor")
     implementation project(":scheduler")
+    implementation project(":queue")
+    implementation project(":queue-jdbc")
 
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("com.h2database:h2")
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':executor').sourceSets.test.output
     testImplementation project(':storage-local')
+    testImplementation project(':indexer')
     testImplementation project(':tests')
+    testImplementation project(':queue').sourceSets.test.output
 }

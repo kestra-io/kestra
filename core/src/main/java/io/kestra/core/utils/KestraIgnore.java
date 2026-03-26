@@ -1,10 +1,10 @@
 package io.kestra.core.utils;
 
-import nl.basjes.gitignore.GitIgnore;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+
+import nl.basjes.gitignore.GitIgnore;
 
 public class KestraIgnore {
     public static final String KESTRA_IGNORE_FILE_NAME = ".kestraignore";

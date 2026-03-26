@@ -1,10 +1,11 @@
 package io.kestra.core.contexts;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,5 +31,10 @@ class KestraContextTest {
 
         // Then
         assertThat(context.getWorkerGroupKey()).isEqualTo(Optional.of("my-key"));
+    }
+
+    @Test
+    void shouldGetAllocatedCpuCores() {
+        assertThat(context.getAllocatedCpuCores()).isEqualTo(Runtime.getRuntime().availableProcessors());
     }
 }

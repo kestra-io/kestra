@@ -1,10 +1,10 @@
 package io.kestra.core.storages;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.net.URI;
 import java.nio.file.Path;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,6 +17,7 @@ class NamespaceFileTest {
     void shouldReturnTrueForIsRootDirectoryGivenRootDirectory() {
         Assertions.assertTrue(NamespaceFile.of(NAMESPACE, URI.create("/")).isRootDirectory());
     }
+
     @Test
     void shouldReturnFalseForIsRootDirectoryGivenNonRootDirectory() {
         Assertions.assertFalse(NamespaceFile.of(NAMESPACE, URI.create("/my/sub/dir")).isRootDirectory());
@@ -34,7 +35,8 @@ class NamespaceFileTest {
         Assertions.assertEquals(expected, NamespaceFile.of(NAMESPACE, URI.create("/")));
 
         // Given Path
-        Assertions.assertEquals(expected, NamespaceFile.of(NAMESPACE, Path.of("/"))
+        Assertions.assertEquals(
+            expected, NamespaceFile.of(NAMESPACE, Path.of("/"))
         );
     }
 
@@ -55,20 +57,22 @@ class NamespaceFileTest {
 
     @Test
     void shouldCreateGivenNamespaceAndValidStorageURI() {
-        Assertions.assertEquals(new NamespaceFile(
+        Assertions.assertEquals(
+            new NamespaceFile(
                 Path.of("sub/dir/file.txt"),
                 URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
-            NAMESPACE
+                NAMESPACE
             ), NamespaceFile.of(NAMESPACE, URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"))
         );
     }
 
     @Test
     void shouldCreateGivenNamespaceAndValidRelativeURI() {
-        Assertions.assertEquals(new NamespaceFile(
+        Assertions.assertEquals(
+            new NamespaceFile(
                 Path.of("sub/dir/file.txt"),
                 URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
-            NAMESPACE
+                NAMESPACE
             ), NamespaceFile.of(NAMESPACE, URI.create("/sub/dir/file.txt"))
         );
     }
@@ -88,20 +92,22 @@ class NamespaceFileTest {
 
     @Test
     void shouldCreateGivenNamespaceAndNullPath() {
-        Assertions.assertEquals(new NamespaceFile(
+        Assertions.assertEquals(
+            new NamespaceFile(
                 Path.of(""),
                 URI.create("kestra:///io/kestra/test/_files/"),
-            NAMESPACE
+                NAMESPACE
             ), NamespaceFile.of(NAMESPACE)
         );
     }
 
     @Test
     void shouldCreateGivenNamespaceAndRootPath() {
-        Assertions.assertEquals(new NamespaceFile(
+        Assertions.assertEquals(
+            new NamespaceFile(
                 Path.of(""),
                 URI.create("kestra:///io/kestra/test/_files/"),
-            NAMESPACE
+                NAMESPACE
             ), NamespaceFile.of(NAMESPACE, Path.of("/"))
         );
     }
@@ -119,10 +125,11 @@ class NamespaceFileTest {
     @Test
     void shouldPreserveTrailingSlashForUri() {
         NamespaceFile namespaceFile = NamespaceFile.of(NAMESPACE, URI.create("/sub/dir/"));
-        Assertions.assertEquals(new NamespaceFile(
+        Assertions.assertEquals(
+            new NamespaceFile(
                 Path.of("sub/dir"),
                 URI.create("kestra:///io/kestra/test/_files/sub/dir/"),
-            NAMESPACE
+                NAMESPACE
             ), namespaceFile
         );
         Assertions.assertTrue(namespaceFile.isDirectory());

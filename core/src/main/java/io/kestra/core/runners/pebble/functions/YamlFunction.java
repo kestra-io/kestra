@@ -1,24 +1,26 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-import java.util.List;
-import java.util.Map;
-
 public class YamlFunction implements Function {
     final static ObjectMapper MAPPER = new ObjectMapper(
         new YAMLFactory()
     ).findAndRegisterModules();
-    private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>() {};
+    private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>() {
+    };
 
     public List<String> getArgumentNames() {
         return List.of("yaml");

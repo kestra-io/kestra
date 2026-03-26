@@ -1,9 +1,10 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.contexts.KestraContext;
-import lombok.extern.slf4j.Slf4j;
-
 import java.lang.Thread.UncaughtExceptionHandler;
+
+import io.kestra.core.contexts.KestraContext;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class ThreadUncaughtExceptionHandler implements UncaughtExceptionHandler {

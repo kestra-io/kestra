@@ -1,13 +1,14 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import org.jooq.Condition;
-import org.jooq.impl.DSL;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.jooq.Condition;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.jdbc.AbstractJdbcRepository;
 
 public abstract class PostgresDashboardRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Dashboard> jdbcRepository, String query) {

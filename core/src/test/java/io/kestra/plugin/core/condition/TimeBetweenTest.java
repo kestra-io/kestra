@@ -1,24 +1,26 @@
 package io.kestra.plugin.core.condition;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
+import java.time.OffsetTime;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.time.OffsetTime;
-import java.util.Map;
-import java.util.stream.Stream;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContextFactory;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class TimeBetweenTest {
-    
+
     @Inject
     RunContextFactory runContextFactory;
 
@@ -43,15 +45,15 @@ class TimeBetweenTest {
             .before(Property.ofValue(before))
             .after(Property.ofValue(after))
             .build();
-        
+
         ConditionContext conditionContext = ConditionContext.builder()
             .variables(Map.of("trigger", Map.of("date", date)))
             .runContext(runContextFactory.of())
             .build();
-        
+
         // WHEN
         boolean test = build.test(conditionContext);
-        
+
         // THEN
         assertThat(test).isEqualTo(result);
     }

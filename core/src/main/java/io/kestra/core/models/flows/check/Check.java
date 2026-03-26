@@ -1,14 +1,14 @@
 package io.kestra.core.models.flows.check;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Represents a check within a Kestra flow.
@@ -25,30 +25,30 @@ import java.util.Objects;
 @Getter
 @NoArgsConstructor
 public class Check {
-    
+
     /**
      * The condition to evaluate.
      */
     @NotNull
     @NotEmpty
     String condition;
-    
+
     /**
      * The message associated with this check, will be displayed when the condition evaluates to {@code false}.
      */
     @NotEmpty
     String message;
-    
+
     /**
      * Defines the style of the message displayed in the UI when the condition evaluates to {@code false}.
      */
     Style style = Style.INFO;
-    
+
     /**
      * The behavior to apply when the condition evaluates to {@code false}.
      */
     Behavior behavior = Behavior.BLOCK_EXECUTION;
-    
+
     /**
      * The visual style used to display the message when the check fails.
      */
@@ -70,7 +70,7 @@ public class Check {
          */
         INFO;
     }
-    
+
     /**
      * Defines how the flow should behave when the condition evaluates to {@code false}.
      */
@@ -88,7 +88,7 @@ public class Check {
          */
         CREATE_EXECUTION;
     }
-    
+
     /**
      * Resolves the effective behavior for a list of {@link Check}s based on priority.
      *
@@ -99,11 +99,11 @@ public class Check {
         if (checks == null || checks.isEmpty()) {
             return Behavior.CREATE_EXECUTION;
         }
-        
+
         return checks.stream()
             .map(Check::getBehavior)
             .filter(Objects::nonNull).min(Comparator.comparingInt(Enum::ordinal))
             .orElse(Behavior.CREATE_EXECUTION);
     }
-    
+
 }

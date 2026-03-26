@@ -7,12 +7,11 @@ public record PluginClassAndMetadata<T>(
     String license,
     String title,
     String icon,
-    String alias
-) {
+    String alias) {
     public static <T> PluginClassAndMetadata<T> create(RegisteredPlugin registered,
-                                                       Class<? extends T> pluginClass,
-                                                       Class<T> pluginBaseClass,
-                                                       String alias) {
+        Class<? extends T> pluginClass,
+        Class<T> pluginBaseClass,
+        String alias) {
         return new PluginClassAndMetadata<>(
             pluginClass,
             pluginBaseClass,

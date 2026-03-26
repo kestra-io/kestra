@@ -10,6 +10,7 @@ datasources:
     connectionTimeout: 30000
     idleTimeout: 600000
     maxLifetime: 1800000
+    transactionIsolation: TRANSACTION_READ_COMMITTED
 
 flyway:
   datasources:
@@ -33,6 +34,9 @@ kestra:
         retention: 30d
   queue:
     type: mysql
+    message-protection:
+      enabled: true
+      limit: 1048576
   repository:
     type: mysql
   storage:
@@ -44,9 +48,22 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
-      message-protection:
-        enabled: true
-        limit: 1048576
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+
+  controller:
+    port: ${random.port}
   worker:
-    liveness:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
+# Disable Micronaut GRPC
+grpc:
+  server:
+    enabled: false
+    health:
       enabled: false

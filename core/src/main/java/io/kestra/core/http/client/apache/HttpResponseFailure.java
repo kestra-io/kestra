@@ -1,13 +1,14 @@
 package io.kestra.core.http.client.apache;
 
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.HttpService;
-import io.kestra.core.http.client.HttpClientResponseException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import org.apache.hc.core5.http.HttpEntityContainer;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpService;
+import io.kestra.core.http.client.HttpClientResponseException;
 
 public final class HttpResponseFailure {
     private HttpResponseFailure() {
@@ -26,4 +27,3 @@ public final class HttpResponseFailure {
         return new HttpClientResponseException(error, HttpResponse.from(response, context));
     }
 }
-

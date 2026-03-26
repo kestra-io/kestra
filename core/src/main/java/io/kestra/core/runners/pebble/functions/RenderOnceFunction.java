@@ -1,14 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.StringUtils;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Singleton;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Singleton
 @Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)

@@ -697,6 +697,10 @@
       "drag to reorder columns": "कॉलम को पुनः क्रमबद्ध करने के लिए खींचें",
       "edit filter": "फ़िल्टर संपादित करें",
       "empty": "आपके पास अभी तक कोई सहेजा हुआ फ़िल्टर नहीं है।",
+      "enabled": {
+        "description": "सक्षम द्वारा फ़िल्टर करें",
+        "label": "सक्रिय"
+      },
       "end_date": "समाप्ति तिथि",
       "enter description": "फ़िल्टर विवरण दर्ज करें",
       "enter label": "फ़िल्टर लेबल दर्ज करें",
@@ -756,7 +760,10 @@
         "description": "मेट्रिक प्रकार द्वारा फ़िल्टर करें",
         "label": "मेट्रिक"
       },
-      "name": "नाम",
+      "name": {
+        "description": "नाम से फ़िल्टर करें",
+        "label": "नाम"
+      },
       "namespace": {
         "description": "namespace द्वारा फ़िल्टर करें",
         "label": "Namespace"
@@ -947,6 +954,10 @@
         "disabled": "अक्षम",
         "enabled": "सक्रिय",
         "label": "ट्रिगर स्थिति"
+      },
+      "type": {
+        "description": "प्रकार के अनुसार फ़िल्टर करें",
+        "label": "प्रकार"
       },
       "update": "अपडेट",
       "username": {

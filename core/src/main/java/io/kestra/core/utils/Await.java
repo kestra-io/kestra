@@ -43,11 +43,13 @@ public class Await {
         long start = System.currentTimeMillis();
         while (!condition.getAsBoolean()) {
             if (System.currentTimeMillis() - start > timeout.toMillis()) {
-                throw new TimeoutException(String.format(
-                    "Await failed to terminate within %s.%s",
-                    timeout,
-                    errorMessageInCaseOfFailure == null ? "" : " " + errorMessageInCaseOfFailure.get()
-                ));
+                throw new TimeoutException(
+                    String.format(
+                        "Await failed to terminate within %s.%s",
+                        timeout,
+                        errorMessageInCaseOfFailure == null ? "" : " " + errorMessageInCaseOfFailure.get()
+                    )
+                );
             } else {
                 try {
                     Thread.sleep(sleep.toMillis());
@@ -59,7 +61,8 @@ public class Await {
     }
 
     private static <T> BooleanSupplier untilSupplier(Supplier<T> supplier, AtomicReference<T> result) {
-        return () -> {
+        return () ->
+        {
             T t = supplier.get();
             if (t != null) {
                 result.set(t);

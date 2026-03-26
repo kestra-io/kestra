@@ -10,9 +10,9 @@ public interface NamespaceService {
     /**
      * Checks whether a given namespace exists. A namespace is considered existing if at least one Flow is within the namespace or a parent namespace.
      *
-     * @param tenant        The tenant ID.
-     * @param namespace     The namespace - cannot be null.
-     * @return  {@code true} if the namespace exists, {@code false} otherwise.
+     * @param tenant The tenant ID.
+     * @param namespace The namespace - cannot be null.
+     * @return {@code true} if the namespace exists, {@code false} otherwise.
      */
     boolean isNamespaceExists(String tenant, String namespace);
 
@@ -21,8 +21,8 @@ public interface NamespaceService {
      * <p>
      * WARNING: As namespace management is an EE feature, this will always return {@code false} in OSS.
      *
-     * @param tenant        The tenant ID.
-     * @param namespace     The namespace to check.
+     * @param tenant The tenant ID.
+     * @param namespace The namespace to check.
      * @return {@code true} if existing namespace is required and doesn't exist, {@code false} otherwise.
      */
     default boolean requireExistingNamespace(String tenant, String namespace) {
@@ -34,9 +34,9 @@ public interface NamespaceService {
      * <p>
      * WARNING: As namespace management is an EE feature, this will always return {@code true} in OSS.
      *
-     * @param tenant        The target tenant ID.
-     * @param namespace     The target namespace to check.
-     * @param fromTenant    The source tenant ID.
+     * @param tenant The target tenant ID.
+     * @param namespace The target namespace to check.
+     * @param fromTenant The source tenant ID.
      * @param fromNamespace The source namespace.
      * @return {@code true} if the namespace is allowed, {@code false} otherwise.
      */
@@ -48,9 +48,9 @@ public interface NamespaceService {
      * Checks that the namespace is allowed from the namespace denoted by 'fromTenant' and 'fromNamespace'.
      * If not, throws a ResourceAccessDeniedException.
      *
-     * @param tenant        The target tenant ID.
-     * @param namespace     The target namespace to check.
-     * @param fromTenant    The source tenant ID.
+     * @param tenant The target tenant ID.
+     * @param namespace The target namespace to check.
+     * @param fromTenant The source tenant ID.
      * @param fromNamespace The source namespace.
      * @throws ResourceAccessDeniedException if the namespace is not allowed.
      */
@@ -59,10 +59,10 @@ public interface NamespaceService {
     /**
      * Returns true if all namespaces are allowed from the namespace in the 'fromTenant' tenant.
      * <p>
-     *  WARNING: As namespace management is an EE feature, this will always return {@code true} in OSS.
+     * WARNING: As namespace management is an EE feature, this will always return {@code true} in OSS.
      *
-     * @param tenant        The target tenant ID.
-     * @param fromTenant    The source tenant ID.
+     * @param tenant The target tenant ID.
+     * @param fromTenant The source tenant ID.
      * @param fromNamespace The source namespace.
      * @return {@code true} if all namespaces are allowed, {@code false} otherwise.
      */
@@ -74,8 +74,8 @@ public interface NamespaceService {
      * Checks that all namespaces are allowed from the namespace in the 'fromTenant' tenant.
      * If not, throws a ResourceAccessDeniedException.
      *
-     * @param tenant        The target tenant ID.
-     * @param fromTenant    The source tenant ID.
+     * @param tenant The target tenant ID.
+     * @param fromTenant The source tenant ID.
      * @param fromNamespace The source namespace.
      * @throws ResourceAccessDeniedException if all namespaces aren't allowed.
      */

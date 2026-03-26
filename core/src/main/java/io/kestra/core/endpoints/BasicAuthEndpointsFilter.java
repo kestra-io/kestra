@@ -1,5 +1,11 @@
 package io.kestra.core.endpoints;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Optional;
+
+import org.reactivestreams.Publisher;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.*;
@@ -12,11 +18,6 @@ import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
-import org.reactivestreams.Publisher;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Optional;
 
 @Filter("/**")
 @Requires(property = "endpoints.all.basic-auth")

@@ -1,22 +1,23 @@
 package io.kestra.core.test.flow;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.TestSuiteAssertionValidation;
-import jakarta.validation.Valid;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 import static io.kestra.core.test.flow.Assertion.Operator.*;
 
@@ -57,7 +58,7 @@ public class Assertion {
             && isNull == null && isNotNull == null);
     }
 
-    public enum Operator{
+    public enum Operator {
         ENDS_WITH("endsWith"),
         STARTS_WITH("startsWith"),
         CONTAINS("contains"),
@@ -73,6 +74,7 @@ public class Assertion {
         IS_NOT_NULL("isNotNull"),;
 
         public final String key;
+
         Operator(String key) {
             this.key = key;
         }
@@ -97,37 +99,48 @@ public class Assertion {
             var description = runContext.render(this.getDescription()).as(String.class);
             var taskId = Optional.ofNullable(this.getTaskId());
 
-
             runContext.render(this.getIsNull()).as(Boolean.class)
-                .ifPresent(isNullExpected ->
-                    results.add(
-                        getIsNullResult(IS_NULL, isNullExpected, actualValueQuery, actualValue, taskId, description, errorMessage))
+                .ifPresent(
+                    isNullExpected -> results.add(
+                        getIsNullResult(IS_NULL, isNullExpected, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    )
                 );
             runContext.render(this.getIsNotNull()).as(Boolean.class)
-                .ifPresent(isNotNullExpected ->
-                    results.add(
-                        getIsNullResult(IS_NOT_NULL, !isNotNullExpected, actualValueQuery, actualValue, taskId, description, errorMessage))
+                .ifPresent(
+                    isNotNullExpected -> results.add(
+                        getIsNullResult(IS_NOT_NULL, !isNotNullExpected, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    )
                 );
             runContext.render(this.getEndsWith()).as(String.class)
-                .ifPresent(expectedValue -> results.add(
-                    endsWith(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
-                ));
+                .ifPresent(
+                    expectedValue -> results.add(
+                        endsWith(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    )
+                );
             runContext.render(this.getStartsWith()).as(String.class)
-                .ifPresent(expectedValue -> results.add(
-                    startsWith(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
-                ));
+                .ifPresent(
+                    expectedValue -> results.add(
+                        startsWith(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    )
+                );
             runContext.render(this.getEqualTo()).as(Object.class)
-                .ifPresent(expectedValue -> results.add(
-                    equalTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
-                ));
+                .ifPresent(
+                    expectedValue -> results.add(
+                        equalTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    )
+                );
             runContext.render(this.getContains()).as(String.class)
-                .ifPresent(expectedValue -> results.add(
-                    contains(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
-                ));
+                .ifPresent(
+                    expectedValue -> results.add(
+                        contains(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    )
+                );
             runContext.render(this.getNotEqualTo()).as(Object.class)
-                .ifPresent(expectedValue -> results.add(
-                    notEqualTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
-                ));
+                .ifPresent(
+                    expectedValue -> results.add(
+                        notEqualTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    )
+                );
             var expectedGreaterThanValue = runContext.render(this.getGreaterThan()).as(Double.class);
             if (expectedGreaterThanValue.isPresent()) {
                 results.add(
@@ -143,7 +156,8 @@ public class Assertion {
             var expectedLessThanValue = runContext.render(this.getLessThan()).as(Double.class);
             if (expectedLessThanValue.isPresent()) {
                 results.add(
-                    lessThan(expectedLessThanValue.get(), actualValueQuery, actualValue, taskId, description, errorMessage));
+                    lessThan(expectedLessThanValue.get(), actualValueQuery, actualValue, taskId, description, errorMessage)
+                );
             }
             var expectedLessThanOrEqualToValue = runContext.render(this.getLessThanOrEqualTo()).as(Double.class);
             if (expectedLessThanOrEqualToValue.isPresent()) {
@@ -168,10 +182,12 @@ public class Assertion {
                 errors.add(new AssertionRunError("no assertions found", null));
             }
         } catch (IllegalVariableEvaluationException e) {
-            errors.add(new AssertionRunError(
-                "Could not evaluate assertion: `%s`".formatted(getDisplayableAssertion()),
-                "error was: %s".formatted(e.getMessage())
-            ));
+            errors.add(
+                new AssertionRunError(
+                    "Could not evaluate assertion: `%s`".formatted(getDisplayableAssertion()),
+                    "error was: %s".formatted(e.getMessage())
+                )
+            );
         }
         return new AssertionRunResult(results, errors);
     }
@@ -184,13 +200,15 @@ public class Assertion {
         }
     }
 
-    private AssertionResult getIsNullResult(Operator operator, Boolean isNullExpected, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> userErrorMessage) {
+    private AssertionResult getIsNullResult(Operator operator, Boolean isNullExpected, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
+        Optional<String> userErrorMessage) {
         boolean isNull = actualValue == null;
         boolean isSuccess = isNullExpected.equals(isNull);
 
         String errorMessage = null;
         if (!isSuccess) {
-            errorMessage = userErrorMessage.orElseGet(() -> {
+            errorMessage = userErrorMessage.orElseGet(() ->
+            {
                 if (isNullExpected) {
                     return "expected '%s' to be null but was '%s'".formatted(actualValueQuery, actualValue);
                 } else {
@@ -218,12 +236,16 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to equal '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to equal '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
-    private AssertionResult notEqualTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+    private AssertionResult notEqualTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
+        Optional<String> errorMessage) {
         var isSuccess = !expectedValue.equals(actualValue);
         return new AssertionResult(
             NOT_EQUAL_TO.toString(),
@@ -232,8 +254,11 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to not equal '%s'"
-                .formatted(actualValueQuery, expectedValue.toString()))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to not equal '%s'"
+                        .formatted(actualValueQuery, expectedValue.toString())
+                )
         );
     }
 
@@ -246,12 +271,16 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to end with '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to end with '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
-    private AssertionResult startsWith(String expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+    private AssertionResult startsWith(String expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
+        Optional<String> errorMessage) {
         var isSuccess = ((String) actualValue).startsWith(expectedValue);
         return new AssertionResult(
             STARTS_WITH.toString(),
@@ -260,8 +289,11 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to start with '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to start with '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
@@ -274,12 +306,16 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to contain '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to contain '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
-    private AssertionResult greaterThan(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) throws IllegalVariableEvaluationException {
+    private AssertionResult greaterThan(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage)
+        throws IllegalVariableEvaluationException {
         var isSuccess = tryToParseDouble(actualValue) > expectedValue;
         return new AssertionResult(
             GREATER_THAN.toString(),
@@ -288,12 +324,16 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to be greater than '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to be greater than '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
-    private AssertionResult greaterThanOrEqualTo(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) throws IllegalVariableEvaluationException {
+    private AssertionResult greaterThanOrEqualTo(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
+        Optional<String> errorMessage) throws IllegalVariableEvaluationException {
         var isSuccess = tryToParseDouble(actualValue) >= expectedValue;
         return new AssertionResult(
             GREATER_THAN_OR_EQUAL_TO.toString(),
@@ -302,12 +342,16 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to be greater than or equal to '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to be greater than or equal to '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
-    private AssertionResult lessThan(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) throws IllegalVariableEvaluationException {
+    private AssertionResult lessThan(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage)
+        throws IllegalVariableEvaluationException {
         var isSuccess = tryToParseDouble(actualValue) < expectedValue;
         return new AssertionResult(
             LESS_THAN.toString(),
@@ -316,12 +360,16 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to be less than '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to be less than '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
-    private AssertionResult lessThanOrEqualTo(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) throws IllegalVariableEvaluationException {
+    private AssertionResult lessThanOrEqualTo(Double expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
+        Optional<String> errorMessage) throws IllegalVariableEvaluationException {
         var isSuccess = tryToParseDouble(actualValue) <= expectedValue;
         return new AssertionResult(
             LESS_THAN_OR_EQUAL_TO.toString(),
@@ -330,8 +378,11 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to be less than or equal to '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedValue, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to be less than or equal to '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedValue, actualValue)
+                )
         );
     }
 
@@ -356,12 +407,16 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to contain '%s' but was '%s'"
-                .formatted(actualValueQuery, expectedInList, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to contain '%s' but was '%s'"
+                        .formatted(actualValueQuery, expectedInList, actualValue)
+                )
         );
     }
 
-    private AssertionResult notIn(List<String> notExpectedInList, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+    private AssertionResult notIn(List<String> notExpectedInList, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
+        Optional<String> errorMessage) {
         var isSuccess = notExpectedInList.stream().noneMatch(actualValue::equals);
         return new AssertionResult(
             NOT_IN.toString(),
@@ -370,8 +425,11 @@ public class Assertion {
             isSuccess,
             taskId.orElse(null),
             description.orElse(null),
-            isSuccess ? null : errorMessage.orElse("expected '%s' to not contain '%s' but was '%s'"
-                .formatted(actualValueQuery, notExpectedInList, actualValue))
+            isSuccess ? null
+                : errorMessage.orElse(
+                    "expected '%s' to not contain '%s' but was '%s'"
+                        .formatted(actualValueQuery, notExpectedInList, actualValue)
+                )
         );
     }
 }

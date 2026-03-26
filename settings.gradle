@@ -13,6 +13,7 @@ develocity {
     server = "https://develocity.kestra.io"
     buildScan {
         uploadInBackground = !isCI
+        tag("kestra_wip")
         publishing.onlyIf {
             it.authenticated
         }
@@ -49,10 +50,15 @@ include 'jdbc-h2'
 include 'jdbc-mysql'
 include 'jdbc-postgres'
 
+include 'queue'
+include 'queue-jdbc'
+
 include 'webserver'
 include 'executor'
 include 'scheduler'
 include 'worker'
+include 'worker-controller'
+include 'indexer'
 
 include 'ui'
 include 'model'

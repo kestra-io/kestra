@@ -1,8 +1,8 @@
 package io.kestra.jdbc.server;
 
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.models.ServerType;
-import io.kestra.core.server.*;
+import java.time.Duration;
+import java.time.Instant;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,15 +12,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.time.Duration;
-import java.time.Instant;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.models.ServerType;
+import io.kestra.core.server.*;
 
 import static io.kestra.core.server.ServiceLivenessManagerTest.newServiceForState;
 import static io.kestra.core.server.ServiceLivenessManagerTest.serviceInstanceFor;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
 import static org.mockito.ArgumentMatchers.any;
 
-@ExtendWith({MockitoExtension.class})
+@ExtendWith({ MockitoExtension.class })
 @MockitoSettings(strictness = Strictness.LENIENT)
 class JdbcServiceLivenessManagerTest {
 

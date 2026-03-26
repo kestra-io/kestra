@@ -1,8 +1,14 @@
 package io.kestra.core.runners;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.pebble.*;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
@@ -13,11 +19,6 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Singleton
 public class VariableRenderer {
@@ -152,8 +153,8 @@ public class VariableRenderer {
      * This method can be used in fallback for rendering an input string.
      *
      * @param e The exception that was throw by the default variable renderer.
-     * @param inline           The expression to be rendered.
-     * @param variables        The context variables.
+     * @param inline The expression to be rendered.
+     * @param variables The context variables.
      * @return The rendered string.
      */
     protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -168,7 +169,8 @@ public class VariableRenderer {
     }
 
     private static String replaceRawTags(Matcher rawMatcher, Map<String, String> replacers) {
-        return rawMatcher.replaceAll(matchResult -> {
+        return rawMatcher.replaceAll(matchResult ->
+        {
             var uuid = UUID.randomUUID().toString();
             replacers.put(uuid, matchResult.group(1));
             return uuid;
@@ -216,7 +218,7 @@ public class VariableRenderer {
         return this.renderObject(object, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         if (object instanceof Map map) {
             return Optional.of(this.render(map, variables, recursive));

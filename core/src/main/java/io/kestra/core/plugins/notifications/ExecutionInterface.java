@@ -1,9 +1,10 @@
 package io.kestra.core.plugins.notifications;
 
-import io.kestra.core.models.property.Property;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.Map;
+
+import io.kestra.core.models.property.Property;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface ExecutionInterface {
     @Schema(

@@ -1,22 +1,25 @@
 package io.kestra.core.services;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.services.PluginDefaultServiceTest.DefaultPrecedenceTester;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -37,15 +40,19 @@ class PluginDefaultServiceOverrideTest {
             .propBaz("taskValue")
             .build();
 
-        final PluginDefault flowDefault = new PluginDefault(DefaultPrecedenceTester.class.getName(), flowDefaultForced, ImmutableMap.of(
-            "propBar", "flowValue",
-            "propBaz", "flowValue"
-        ));
-        final PluginDefault globalDefault = new PluginDefault(DefaultPrecedenceTester.class.getName(), globalDefaultForced, ImmutableMap.of(
-            "propFoo", "globalValue",
-            "propBar", "globalValue",
-            "propBaz", "globalValue"
-        ));
+        final PluginDefault flowDefault = new PluginDefault(
+            DefaultPrecedenceTester.class.getName(), flowDefaultForced, ImmutableMap.of(
+                "propBar", "flowValue",
+                "propBaz", "flowValue"
+            )
+        );
+        final PluginDefault globalDefault = new PluginDefault(
+            DefaultPrecedenceTester.class.getName(), globalDefaultForced, ImmutableMap.of(
+                "propFoo", "globalValue",
+                "propBar", "globalValue",
+                "propBaz", "globalValue"
+            )
+        );
 
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceOverrideTest.class.getSimpleName());
         final Flow flowWithPluginDefault = Flow.builder()

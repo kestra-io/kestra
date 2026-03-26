@@ -1,6 +1,19 @@
 package io.kestra.plugin.core.flow;
 
+import java.io.*;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -22,22 +35,11 @@ import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.io.*;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -82,50 +84,50 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             title = "Add input and output files within a Working Directory to use them in a Python script.",
             code = """
-                id: api_json_to_mongodb
-                namespace: company.team
+                    id: api_json_to_mongodb
+                    namespace: company.team
 
-                tasks:
-                  - id: wdir
-                    type: io.kestra.plugin.core.flow.WorkingDirectory
-                    outputFiles:
-                      - output.json
-                    inputFiles:
-                      query.sql: |
-                        SELECT sum(total) as total, avg(quantity) as avg_quantity
-                        FROM sales;
                     tasks:
-                      - id: inline_script
-                        type: io.kestra.plugin.scripts.python.Script
-                        taskRunner:
-                          type: io.kestra.plugin.scripts.runner.docker.Docker
-                        containerImage: python:3.11-slim
-                        beforeCommands:
-                          - pip install requests kestra > /dev/null
-                        script: |
-                          import requests
-                          import json
-                          from kestra import Kestra
+                      - id: wdir
+                        type: io.kestra.plugin.core.flow.WorkingDirectory
+                        outputFiles:
+                          - output.json
+                        inputFiles:
+                          query.sql: |
+                            SELECT sum(total) as total, avg(quantity) as avg_quantity
+                            FROM sales;
+                        tasks:
+                          - id: inline_script
+                            type: io.kestra.plugin.scripts.python.Script
+                            taskRunner:
+                              type: io.kestra.plugin.scripts.runner.docker.Docker
+                            containerImage: python:3.11-slim
+                            beforeCommands:
+                              - pip install requests kestra > /dev/null
+                            script: |
+                              import requests
+                              import json
+                              from kestra import Kestra
 
-                          with open('query.sql', 'r') as input_file:
-                              sql = input_file.read()
+                              with open('query.sql', 'r') as input_file:
+                                  sql = input_file.read()
 
-                          response = requests.get('https://api.github.com')
-                          data = response.json()
+                              response = requests.get('https://api.github.com')
+                              data = response.json()
 
-                          with open('output.json', 'w') as output_file:
-                              json.dump(data, output_file)
+                              with open('output.json', 'w') as output_file:
+                                  json.dump(data, output_file)
 
-                          Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
+                              Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
 
-                  - id: load_to_mongodb
-                    type: io.kestra.plugin.mongodb.Load
-                    connection:
-                      uri: mongodb://host.docker.internal:27017/
-                    database: local
-                    collection: github
-                    from: "{{ outputs.wdir.uris['output.json'] }}"
-            """
+                      - id: load_to_mongodb
+                        type: io.kestra.plugin.mongodb.Load
+                        connection:
+                          uri: mongodb://host.docker.internal:27017/
+                        database: local
+                        collection: github
+                        from: "{{ outputs.wdir.uris['output.json'] }}"
+                """
         ),
         @Example(
             full = true,
@@ -171,7 +173,7 @@ import jakarta.validation.constraints.NotNull;
                           const colors = require("colors");
                           console.log(colors.red("Hello"));
                 """
-                           ),
+        ),
         @Example(
             full = true,
             title = "A working directory with a cache of the Python virtual environment.",
@@ -198,9 +200,9 @@ import jakarta.validation.constraints.NotNull;
                         commands:
                           - ./venv/bin/python -c "import pandas as pd; print(pd.__version__)"
                 """
-                           )
+        )
     },
-    aliases = {"io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker"}
+    aliases = { "io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker" }
 )
 @WorkingDirectoryTaskValidation
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
@@ -212,7 +214,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         description = """
             When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the task run and saved in Kestra's internal storage.
             Then, at the beginning of the next task execution, the file archive is retrieved and the working directory is initialized with it.
-            
+
             **Best Practice for Python Virtual Environments**: When caching Python virtual environments, use the full path to executables (e.g., `./venv/bin/pip` and `./venv/bin/python`) instead of attempting to activate the environment with `source` or `.` commands. This ensures compatibility across different shell environments and properly isolates dependencies within the cached venv.
             """
     )
@@ -244,18 +246,19 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {
         return WorkerTask.builder()
             .task(task)
-            .taskRun(TaskRun.builder()
-                .id(IdUtils.create())
-                .tenantId(parent.getTenantId())
-                .executionId(parent.getExecutionId())
-                .namespace(parent.getNamespace())
-                .flowId(parent.getFlowId())
-                .taskId(task.getId())
-                .parentTaskRunId(parent.getId())
-                .state(new State())
-                .build()
+            .taskRun(
+                TaskRun.builder()
+                    .id(IdUtils.create())
+                    .tenantId(parent.getTenantId())
+                    .executionId(parent.getExecutionId())
+                    .namespace(parent.getNamespace())
+                    .flowId(parent.getFlowId())
+                    .taskId(task.getId())
+                    .parentTaskRunId(parent.getId())
+                    .state(new State())
+                    .build()
             )
-            .runContext(runContext)
+            .data(WorkerTaskData.from(runContext))
             .build();
     }
 
@@ -292,7 +295,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         }
 
         if (this.inputFiles != null) {
-           FilesService.inputFiles(runContext, Map.of(), this.inputFiles);
+            FilesService.inputFiles(runContext, Map.of(), this.inputFiles);
         }
     }
 
@@ -323,7 +326,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             // Check that some files has been updated since the start of the task
             // TODO we may need to allow excluding files as some files always changed for dependencies (for ex .package-log.json)
             boolean cacheFilesAreUpdated = matchesList.stream()
-                .anyMatch(path -> {
+                .anyMatch(path ->
+                {
                     try {
                         return Files.getLastModifiedTime(path).toMillis() > cacheDownloadedTime;
                     } catch (IOException e) {
@@ -334,8 +338,10 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
             if (cacheFilesAreUpdated) {
                 runContext.logger().debug("Cache files changed, we update the cache");
-                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                     ZipOutputStream archive = new ZipOutputStream(bos)) {
+                try (
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ZipOutputStream archive = new ZipOutputStream(bos)
+                ) {
 
                     for (var path : matchesList) {
                         File file = path.toFile();
@@ -351,7 +357,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                     }
 
                     archive.finish();
-                    Path archiveFile = runContext.workingDir().createTempFile( ".zip");
+                    Path archiveFile = runContext.workingDir().createTempFile(".zip");
                     Files.write(archiveFile, bos.toByteArray());
                     URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), getId(), taskRun.getValue());
                     runContext.logger().debug("Caching in {}", uri);
@@ -373,9 +379,10 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             return null;
         }
 
-        try(Reader is = new BufferedReader(new InputStreamReader(runContext.storage().getFile(uri)))) {
+        try (Reader is = new BufferedReader(new InputStreamReader(runContext.storage().getFile(uri)))) {
             Map<String, URI> outputs = FileSerde
-                .readAll(is, new TypeReference<Map<String, URI>>() {})
+                .readAll(is, new TypeReference<Map<String, URI>>() {
+                })
                 .blockFirst();
             return new Outputs(outputs);
         }

@@ -1,8 +1,11 @@
 package io.kestra.core.killswitch;
 
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.services.IgnoreExecutionService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -34,6 +37,20 @@ public class KillSwitchService {
 
     public EvaluationType evaluate(TaskRun taskRun) {
         if (ignoreExecutionService.ignoreExecution(taskRun)) {
+            return EvaluationType.IGNORE;
+        }
+        return EvaluationType.PASS;
+    }
+
+    public EvaluationType evaluate(ExecutionCommand executionCommand) {
+        if (ignoreExecutionService.ignoreExecution(executionCommand)) {
+            return EvaluationType.IGNORE;
+        }
+        return EvaluationType.PASS;
+    }
+
+    public EvaluationType evaluate(ExecutionEvent executionEvent) {
+        if (ignoreExecutionService.ignoreExecution(executionEvent)) {
             return EvaluationType.IGNORE;
         }
         return EvaluationType.PASS;

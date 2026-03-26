@@ -1,13 +1,15 @@
 package io.kestra.core.http.client.apache;
 
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import lombok.AllArgsConstructor;
+import java.io.IOException;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.protocol.HttpContext;
 import org.slf4j.Logger;
 
-import java.io.IOException;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class LoggingResponseInterceptor extends AbstractLoggingInterceptor implements HttpResponseInterceptor {
@@ -28,6 +30,6 @@ public class LoggingResponseInterceptor extends AbstractLoggingInterceptor imple
 
     private static String buildResponseEntry(HttpResponse response) {
         return "response:" +
-            "\n    reason: "+ response.getReasonPhrase();
+            "\n    reason: " + response.getReasonPhrase();
     }
 }

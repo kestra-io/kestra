@@ -1,10 +1,5 @@
 package io.kestra.core.server;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.kestra.core.models.HasUID;
-import io.kestra.core.server.Service.ServiceState;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,20 +10,26 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.kestra.core.models.HasUID;
+import io.kestra.core.server.Service.ServiceState;
+
 /**
  * Runtime information about a Kestra's service (e.g., WORKER, EXECUTOR, etc.).
  *
- * @param uid        The service unique identifier.
- * @param type      The service type.
- * @param state     The state of the service.
- * @param server    The server running this service.
+ * @param uid The service unique identifier.
+ * @param type The service type.
+ * @param state The state of the service.
+ * @param server The server running this service.
  * @param createdAt Instant when this service was created.
  * @param updatedAt Instant when this service was updated.
- * @param events    The last of events attached to this service - used to provide some contextual information about a state changed.
- * @param config    The server configuration and liveness.
- * @param props     The server additional properties - an opaque map of key/value pairs.
- * @param seqId     A monolithic sequence id which is incremented each time the service instance is updated.
- *                  Used to detect non-transactional update of the instance.
+ * @param events The last of events attached to this service - used to provide some contextual information about a state changed.
+ * @param config The server configuration and liveness.
+ * @param props The server additional properties - an opaque map of key/value pairs.
+ * @param seqId A monolithic sequence id which is incremented each time the service instance is updated.
+ *        Used to detect non-transactional update of the instance.
  */
 @JsonInclude
 public record ServiceInstance(
@@ -42,8 +43,7 @@ public record ServiceInstance(
     ServerConfig config,
     Map<String, Object> props,
     Set<Metric> metrics,
-    long seqId
-) implements HasUID {
+    long seqId) implements HasUID {
 
     // TimestampedEvent type for state updated.
     private static final String SERVICE_STATE_UPDATED_EVENT_TYPE = "service.state.updated";
@@ -54,13 +54,13 @@ public record ServiceInstance(
      * @return a new {@link ServiceInstance}.
      */
     public static ServiceInstance create(final String id,
-                                         final ServiceType type,
-                                         final ServerInstance server,
-                                         final Instant createdAt,
-                                         final Instant updatedAt,
-                                         final ServerConfig config,
-                                         final Map<String, Object> props,
-                                         final Set<Metric> metrics) {
+        final ServiceType type,
+        final ServerInstance server,
+        final Instant createdAt,
+        final Instant updatedAt,
+        final ServerConfig config,
+        final Map<String, Object> props,
+        final Set<Metric> metrics) {
         return new ServiceInstance(
             id,
             type,
@@ -85,8 +85,7 @@ public record ServiceInstance(
         List<TimestampedEvent> events,
         ServerConfig config,
         Map<String, Object> props,
-        Set<Metric> metrics
-    ) {
+        Set<Metric> metrics) {
         this(id, type, state, server, createdAt, updatedAt, events, config, props, metrics, 0L);
     }
 
@@ -157,26 +156,26 @@ public record ServiceInstance(
     /**
      * Updates this service instance with the given state and instant.
      *
-     * @param newState  The new state.
+     * @param newState The new state.
      * @param updatedAt The update instant
      * @return a new {@link ServiceInstance}.
      */
     public ServiceInstance state(final ServiceState newState,
-                                 final Instant updatedAt) {
+        final Instant updatedAt) {
         return state(newState, updatedAt, null);
     }
 
     /**
      * Updates this service instance with the given state and instant.
      *
-     * @param newState  The new state.
+     * @param newState The new state.
      * @param updatedAt The update instant
-     * @param reason    The human-readable reason of the update.
+     * @param reason The human-readable reason of the update.
      * @return a new {@link ServiceInstance}.
      */
     public ServiceInstance state(final ServiceState newState,
-                                 final Instant updatedAt,
-                                 String reason) {
+        final Instant updatedAt,
+        String reason) {
 
         // add a default reason if a state changed is detected.
         if (reason == null && !state.equals(newState)) {
@@ -229,9 +228,9 @@ public record ServiceInstance(
     /**
      * A timestamped event value.
      *
-     * @param ts    The instant of this event.
+     * @param ts The instant of this event.
      * @param value The value of this event.
-     * @param type  The type of this event.
+     * @param type The type of this event.
      * @param state The service state during this event.
      */
     public record TimestampedEvent(Instant ts, String value, String type, ServiceState state) {
@@ -243,7 +242,7 @@ public record ServiceInstance(
      * This method will filter all services instance not having the expected property.
      *
      * @param property The property to group by.
-     * @return  The {@link ServiceInstance} grouped by the given property value.
+     * @return The {@link ServiceInstance} grouped by the given property value.
      */
     public static Map<String, List<ServiceInstance>> groupByProperty(final Collection<ServiceInstance> instances, final String property) {
         return instances.stream()

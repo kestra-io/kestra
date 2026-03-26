@@ -1,17 +1,19 @@
 package io.kestra.cli.commands.servers;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.ServerType;
-import io.kestra.core.runners.Indexer;
-import io.kestra.core.utils.Await;
-import io.kestra.core.services.IgnoreExecutionService;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import picocli.CommandLine;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.models.ServerType;
+import io.kestra.core.runners.Indexer;
+import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.Await;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "indexer",
@@ -23,11 +25,7 @@ public class IndexerCommand extends AbstractServerCommand {
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
 
-    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "deprecated - use '--ignore-indexer-record' instead")
-    @Deprecated
-    private List<String> skipIndexerRecords;
-
-    @CommandLine.Option(names = {"--ignore-indexer-records"}, split=",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
+    @CommandLine.Option(names = { "--ignore-indexer-records" }, split = ",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreIndexerRecords = Collections.emptyList();
 
     @SuppressWarnings("unused")
@@ -39,7 +37,7 @@ public class IndexerCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredIndexerRecords(skipIndexerRecords != null ? skipIndexerRecords : ignoreIndexerRecords);
+        this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
 
         super.call();
 

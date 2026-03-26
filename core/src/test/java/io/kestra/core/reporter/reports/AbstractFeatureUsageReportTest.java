@@ -1,13 +1,15 @@
 package io.kestra.core.reporter.reports;
 
-import io.kestra.core.reporter.Reportable;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.reporter.Reportable;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

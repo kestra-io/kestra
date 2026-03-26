@@ -71,6 +71,7 @@ import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
 import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
 import KsTimePicker from "./components/Form/KsTimePicker.vue"
 import KsTooltip from "./components/Feedback/KsTooltip.vue"
+import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import {vKsLoading} from "./components/Feedback/KsLoading"
@@ -151,6 +152,7 @@ export {
     KsTimelineItem,
     KsTimePicker,
     KsTooltip,
+    KsTopNavBar,
     KsTree,
     KsUpload,
 }
@@ -229,6 +231,7 @@ const KestraDesignSystem = {
         app.component("KsTimelineItem", KsTimelineItem)
         app.component("KsTimePicker", KsTimePicker)
         app.component("KsTooltip", KsTooltip)
+        app.component("KsTopNavBar", KsTopNavBar)
         app.component("KsTree", KsTree)
         app.component("KsUpload", KsUpload)
 
@@ -308,6 +311,7 @@ declare module "vue" {
         KsTimelineItem: typeof KsTimelineItem
         KsTimePicker: typeof KsTimePicker
         KsTooltip: typeof KsTooltip
+        KsTopNavBar: typeof KsTopNavBar
         KsTree: typeof KsTree
         KsUpload: typeof KsUpload
     }

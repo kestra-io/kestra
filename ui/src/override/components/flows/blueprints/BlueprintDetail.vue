@@ -1,6 +1,6 @@
 <template>
     <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-ks-loading="!blueprint">
-        <template #additional-right>
+        <template #actions>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
                     <ks-button type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">

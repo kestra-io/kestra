@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #additional-right v-if="miscStore.configs?.secretsEnabled">
+        <template #actions v-if="miscStore.configs?.secretsEnabled">
             <ul>
                 <li>
                     <ks-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">

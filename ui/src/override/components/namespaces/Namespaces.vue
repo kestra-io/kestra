@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <Action
                 v-if="!isOSS && canCreate"
                 :label="$t('create')"
@@ -94,7 +94,7 @@
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
-    
+
     const namespacesFilter = useNamespacesFilter();
     const {saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
 
@@ -142,7 +142,7 @@
     const systemNamespace = computed(
         () => miscStore.configs?.systemNamespace || "system",
     );
-    
+
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const namespacesHierarchy = computed(() => {

@@ -13,6 +13,7 @@
 
 <template>
     <el-dropdown
+        :persistent="false"
         v-bind="({...$attrs} as any)"
     >
         <template v-if="$slots.default" #default><slot /></template>

@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb">
-        <template #additional-right>
+        <template #actions>
             <Actions />
         </template>
     </TopNavBar>

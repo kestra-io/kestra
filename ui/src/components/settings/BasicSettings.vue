@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <ks-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
                 {{ $t("settings.blocks.save.label") }}
             </ks-button>

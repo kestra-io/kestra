@@ -1,59 +1,43 @@
 <template>
-    <nav class="d-flex align-items-center w-100 gap-3 top-bar">
-        <SidebarToggleButton
-            v-if="layoutStore.sideMenuCollapsed"
-            @toggle="layoutStore.setSideMenuCollapsed(false)"
-        />
-        <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
-            <div class="d-flex align-items-end gap-2">
-                <div class="d-flex flex-column gap-2">
-                    <ks-breadcrumb v-if="breadcrumb">
-                        <ks-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
-                            <a v-if="item.disabled || !item.link">
-                                {{ item.label }}
-                            </a>
-                            <RouterLink v-else :to="item.link">
-                                {{ item.label }}
-                            </RouterLink>
-                        </ks-breadcrumb-item>
-                    </ks-breadcrumb>
-                    <h1 class="h5 fw-semibold m-0 d-inline-flex">
-                        <slot name="title">
-                            {{ title }}
-                            <ks-tooltip v-if="description" :content="description">
-                                <Information class="ms-2 icon" />
-                            </ks-tooltip>
-                            <Badge v-if="beta" label="Beta" />
-                        </slot>
-                        <ks-button
-                            class="icon"
-                            :class="{'active': bookmarked}"
-                            :icon="bookmarked ? StarIcon : StarOutlineIcon"
-                            circle
-                            @click="onStarClick"
-                        />
-                    </h1>
-                    <div class="description">
-                        <slot name="description">
-                            {{ longDescription }}
-                        </slot>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
-            <div class="d-none d-lg-flex align-items-center">
-                <GlobalSearch class="trigger-flow-guided-step" />
-            </div>
-            <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <ks-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
-                    <TrashCan class="me-2" />
-                    <span>{{ $t("delete logs") }}</span>
-                </ks-button>
-            </div>
-            <slot name="additional-right" />
-        </div>
-    </nav>
+    <ks-top-nav-bar
+        :title="title"
+        :description="description"
+        :longDescription="longDescription"
+        :breadcrumb="breadcrumb"
+        :beta="beta"
+        :isBookmarked="bookmarked"
+        @star-click="onStarClick"
+    >
+        <template v-if="layoutStore.sideMenuCollapsed" #sidebar-toggle>
+            <SidebarToggleButton @toggle="layoutStore.setSideMenuCollapsed(false)" />
+        </template>
+        <template v-if="$slots.title" #title>
+            <slot name="title" />
+        </template>
+        <template v-if="$slots.description" #description>
+            <slot name="description" />
+        </template>
+        <template #search>
+            <GlobalSearch class="trigger-flow-guided-step" />
+        </template>
+        <template v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" #pre-action>
+            <ks-button @click="deleteLogs()">
+                <TrashCan class="me-2" />
+                <span>{{ $t("delete logs") }}</span>
+            </ks-button>
+        </template>
+        <template v-if="$slots['more-actions']" #more-actions>
+            <slot name="more-actions" />
+        </template>
+        <template v-if="$slots['actions']" #actions>
+            <slot name="actions" />
+        </template>
+        <template #badge v-if="beta || true">
+            <ks-button type="primary" size="small" class="beta-badge" round>
+                Beta
+            </ks-button>
+        </template>
+    </ks-top-nav-bar>
 </template>
 
 <script setup lang="ts">
@@ -62,10 +46,6 @@
     import {useRoute, RouterLink} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
-    import StarIcon from "vue-material-design-icons/Star.vue";
-    import Information from "vue-material-design-icons/Information.vue";
-    import Badge from "../global/Badge.vue";
     import {useLogsStore} from "../../stores/logs";
     import {useBookmarksStore} from "../../stores/bookmarks";
     import {useToast} from "../../utils/toast";
@@ -92,7 +72,6 @@
     const flowStore = useFlowStore();
     const layoutStore = useLayoutStore();
     const bookmarksStore = useBookmarksStore();
-
 
     const shouldDisplayDeleteButton = computed(() => {
         return route.name === "flows/update" && route.params?.tab === "logs";
@@ -149,112 +128,8 @@
     };
 </script>
 
-<style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-
-    nav {
-        top: 0;
-        position: sticky;
-        z-index: 1000;
-        padding: 1rem 2rem;
-        border-bottom: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-card);
-
-        .top-title, h1, .el-breadcrumb {
-            white-space: nowrap;
-            max-width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        .top-title {
-            position: relative;
-
-        &::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 40px;
-            height: 100%;
-            background: linear-gradient(to left, var(--ks-background-card), transparent);
-            pointer-events: none;
-            }
-        }
-
-        h1 {
-            line-height: 1.6;
-            display: flex !important;
-            align-items: center;
-        }
-
-        .description {
-            font-size: 0.875rem;
-            margin-top: -0.5rem;
-            color: var(--ks-content-secondary);
-        }
-
-        .icon {
-            border: none;
-            color: var(--ks-content-tertiary);
-
-            &:deep(svg) {
-                fill: currentColor;
-                stroke: currentColor;
-            }
-
-            &.active {
-                color: $base-purple-300;
-            }
-        }
-
-        :deep(.el-breadcrumb__item) {
-            display: inline-block;
-        }
-
-        :deep(.el-breadcrumb__inner) {
-            white-space: nowrap;
-            max-width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        .side {
-            :slotted(ul), :deep(ul) {
-                display: flex;
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                gap: .5rem;
-                align-items: center;
-            }
-        }
-
-        @media (max-width: 992px) {
-            padding: 0.75rem 1.5rem;
-        }
-
-        @media (max-width: 768px) {
-            padding: 0.75rem;
-
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
-            }
-        }
-        @media (max-width: 664px) {
-            padding: 0.75rem 0.5rem;
-            
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
-            }
-        }
+<style lang="scss" scoped>
+    .beta-badge {
+        border-radius: calc(var(--kel-border-radius-round) * 2);
     }
 </style>

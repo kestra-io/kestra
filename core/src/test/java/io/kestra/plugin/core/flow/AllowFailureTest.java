@@ -1,18 +1,21 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
 
-import java.util.concurrent.TimeoutException;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +37,7 @@ class AllowFailureTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/allow-failure.yaml"}, tenantId = "failed")
+    @LoadFlows(value = { "flows/valids/allow-failure.yaml" }, tenantId = "failed")
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             "failed",

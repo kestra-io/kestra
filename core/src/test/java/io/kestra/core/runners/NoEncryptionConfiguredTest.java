@@ -1,7 +1,14 @@
 package io.kestra.core.runners;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -9,16 +16,11 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.TaskOutputService;
+
 import io.micronaut.core.annotation.NonNull;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +35,9 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     @Inject
     private FlowInputOutput flowIO;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     // this will erase the property from the application-test.yml effectively making encryption not configured
     @Override
     public @NonNull Map<String, String> getProperties() {
@@ -44,22 +49,22 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     @SuppressWarnings("unchecked")
     @Test
     @ExecuteFlow("flows/valids/encrypted-string.yaml")
-    void encryptedStringOutput(Execution execution) {
+    void encryptedStringOutput(Execution execution) throws Exception {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
         TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
-        Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
+        Map<String, String> valueOutput = (Map<String, String>) taskOutputService.getOutputs(hello).get("value");
         assertThat(valueOutput.size()).isEqualTo(2);
         assertThat(valueOutput.get("type")).isEqualTo(EncryptedString.TYPE);
         // the value is not encrypted as there is no encryption key
         assertThat(valueOutput.get("value")).isEqualTo("Hello World");
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
-        assertThat(returnTask.getOutputs().get("value")).isEqualTo("Hello World");
+        assertThat(taskOutputService.getOutputs(returnTask).get("value")).isEqualTo("Hello World");
     }
 
     @Test
-    @LoadFlows({"flows/valids/inputs.yaml"})
+    @LoadFlows({ "flows/valids/inputs.yaml" })
     void secretInput() {
         assertThat(flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "inputs").isPresent()).isTrue();
 

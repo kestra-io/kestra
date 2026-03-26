@@ -1,15 +1,15 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class TasksWithStateFunction implements Function {
     public List<String> getArgumentNames() {
@@ -35,10 +35,12 @@ public class TasksWithStateFunction implements Function {
         List<Map<String, Object>> filteredTasks = new ArrayList<>();
 
         if (globalTasksMap != null) {
-            globalTasksMap.forEach((taskId, taskDetailsObj) -> {
+            globalTasksMap.forEach((taskId, taskDetailsObj) ->
+            {
                 if (taskDetailsObj instanceof Map) {
                     Map<String, Object> taskDetailsMap = (Map<String, Object>) taskDetailsObj;
-                    taskDetailsMap.forEach((key, valueObj) -> {
+                    taskDetailsMap.forEach((key, valueObj) ->
+                    {
                         Map<String, Object> transformedTask = new HashMap<>();
                         transformedTask.put("taskId", taskId);
 
@@ -50,8 +52,7 @@ public class TasksWithStateFunction implements Function {
                                     filteredTasks.add(transformedTask);
                                 }
 
-                            }
-                            else if (valueObj instanceof Map) {
+                            } else if (valueObj instanceof Map) {
                                 Map<String, Object> nestedMap = (Map<String, Object>) valueObj;
                                 Object stateFromNested = nestedMap.get("state");
                                 if (stateFromNested instanceof String) {

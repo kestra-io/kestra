@@ -1,3 +1,4 @@
 package io.kestra.core.storages;
 
-public record NamespaceFileRevision(Integer revision) {}
+public record NamespaceFileRevision(Integer revision) {
+}

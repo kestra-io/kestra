@@ -8,6 +8,7 @@ import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.plugin.core.dashboard.chart.bars.BarOption;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -21,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Schema(
     title = "Compare categorical data visually with bar charts."
-    )
+)
 @Plugin(
     examples = {
         @Example(

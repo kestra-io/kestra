@@ -1,5 +1,10 @@
 package io.kestra.jdbc.services;
 
+import java.util.Map;
+
+import org.jooq.*;
+import org.jooq.Record;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.filters.*;
@@ -7,17 +12,14 @@ import io.kestra.core.services.AbstractFilterService;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
+
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.jooq.*;
-import org.jooq.Record;
 
-import java.util.Map;
-
-import static org.jooq.impl.DSL.*;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
+import static org.jooq.impl.DSL.*;
 
 @Singleton
 @Requires(bean = AbstractJdbcDashboardRepository.class)
@@ -55,6 +57,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
             case OR -> orCondition(fieldsMapping, (Or<F>) filter);
             case REGEX -> regexCondition(fieldsMapping.get(filter.getField()), (Regex<F>) filter);
             case STARTS_WITH -> startsWithCondition(fieldsMapping.get(filter.getField()), (StartsWith<F>) filter);
+            case PREFIX -> prefixCondition(fieldsMapping.get(filter.getField()), (Prefix<F>) filter);
         };
     }
 
@@ -147,6 +150,11 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return query.and(field(field).startsWith(filter.getValue()));
     }
 
+    @Override
+    protected <F extends Enum<F>> SelectConditionStep<Record> prefix(SelectConditionStep<Record> query, String field, Prefix<F> filter) {
+        return query.and(prefixCondition(field, filter));
+    }
+
     private <F extends Enum<F>> org.jooq.Condition containsCondition(String field, Contains<F> filter) {
         if (filter.getLabelKey() != null) {
             return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getLabelKey(), filter.getValue())), QueryFilter.Op.EQUALS);
@@ -221,6 +229,11 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     private <F extends Enum<F>> org.jooq.Condition startsWithCondition(String field, StartsWith<F> filter) {
         return field(field).startsWith(filter.getValue());
+    }
+
+    private <F extends Enum<F>> org.jooq.Condition prefixCondition(String field, Prefix<F> filter) {
+        return field(field).eq(filter.getValue())
+            .or(field(field).startsWith(filter.getValue() + "."));
     }
 
 }

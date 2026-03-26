@@ -1,9 +1,9 @@
 package io.kestra.core.server;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,7 +68,7 @@ class ServiceTest {
         Assertions.assertTrue(Service.ServiceState.DISCONNECTED.isDisconnectedOrTerminating());
         Assertions.assertTrue(Service.ServiceState.TERMINATING.isDisconnectedOrTerminating());
     }
-    
+
     @Test
     void shouldMapRenamedEmptyStateToInactive() {
         assertThat(Service.ServiceState.fromString("EMPTY")).isEqualTo(Service.ServiceState.INACTIVE);

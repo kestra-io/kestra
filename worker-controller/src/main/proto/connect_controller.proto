@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+import "request.proto";
+
+// Service for worker connection and registration
+service ConnectControllerService {
+  // [Unary] Called by a worker to connect and resolve its worker group
+  rpc connect(ConnectRequest) returns (ConnectResponse);
+}
+
+// Request message for worker connection
+message ConnectRequest {
+  RequestOrResponseHeader header = 1;
+  // The worker group key provided by the worker configuration
+  string workerGroupKey = 2;
+}
+
+// Response message for worker connection
+message ConnectResponse {
+  RequestOrResponseHeader header = 1;
+  // The resolved worker group name (may be empty if no group is resolved)
+  string workerGroup = 2;
+}

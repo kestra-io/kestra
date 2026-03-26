@@ -1,12 +1,13 @@
 package io.kestra.webserver.utils;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.utils.DateUtils;
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.ZonedDateTime;
 import java.util.List;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.utils.DateUtils;
+
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @Builder
@@ -40,20 +41,23 @@ public class QueryFilterUtils {
     private static QueryFilter createUpdatedStartDateFilter(QueryFilter filter, ZonedDateTime resolvedStartDate) {
         return QueryFilter.builder()
             .field(QueryFilter.Field.START_DATE)
-            .operation(filter != null ?
-                isTimeRangeFilter(filter)  ? timeRangeOperation(filter): filter.operation() :
-                QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+            .operation(filter != null ? isTimeRangeFilter(filter) ? timeRangeOperation(filter) : filter.operation() : QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
             .value(resolvedStartDate.toString())
             .build();
     }
+
     protected static List<QueryFilter> updateFilters(List<QueryFilter> filters, ZonedDateTime resolvedStartDate) {
         boolean hasDateFilter = filters.stream().anyMatch(filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter));
 
-        List<QueryFilter> updatedFilters = new java.util.ArrayList<>(filters.stream()
-            .map(filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter)
-                ? createUpdatedStartDateFilter(filter, resolvedStartDate)
-                : filter)
-            .toList());
+        List<QueryFilter> updatedFilters = new java.util.ArrayList<>(
+            filters.stream()
+                .map(
+                    filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter)
+                        ? createUpdatedStartDateFilter(filter, resolvedStartDate)
+                        : filter
+                )
+                .toList()
+        );
 
         if (!hasDateFilter && resolvedStartDate != null) {
             updatedFilters.add(createUpdatedStartDateFilter(null, resolvedStartDate));

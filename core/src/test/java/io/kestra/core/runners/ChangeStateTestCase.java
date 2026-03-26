@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -58,8 +59,8 @@ public class ChangeStateTestCase {
         runnerUtils.emitAndAwaitExecution(e -> e.getState().isTerminated(), markedAs);
 
         //We wait for the subflow execution to pass from failed to success
-        Execution lastParentExecution = runnerUtils.awaitFlowExecution(e ->
-            e.getTaskRunList().getFirst().getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE, "subflow-parent-of-failed");
+        Execution lastParentExecution = runnerUtils
+            .awaitFlowExecution(e -> e.getTaskRunList().getFirst().getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE, "subflow-parent-of-failed");
 
         // assert for the parent flow
         assertThat(lastParentExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED); // FIXME should be success but it's FAILED on unit tests

@@ -1,11 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

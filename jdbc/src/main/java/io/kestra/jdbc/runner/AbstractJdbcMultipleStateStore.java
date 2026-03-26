@@ -1,0 +1,92 @@
+package io.kestra.jdbc.runner;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Record1;
+import org.jooq.SelectConditionStep;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
+public abstract class AbstractJdbcMultipleStateStore extends AbstractJdbcRepository implements MultipleConditionStateStore {
+    protected io.kestra.jdbc.AbstractJdbcRepository<MultipleConditionWindow> jdbcRepository;
+
+    public AbstractJdbcMultipleStateStore(io.kestra.jdbc.AbstractJdbcRepository<MultipleConditionWindow> jdbcRepository) {
+        this.jdbcRepository = jdbcRepository;
+    }
+
+    @Override
+    public Optional<MultipleConditionWindow> get(FlowId flow, String conditionId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(VALUE_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(
+                        field("namespace").eq(flow.getNamespace())
+                            .and(buildTenantCondition(flow.getTenantId()))
+                            .and(field("flow_id").eq(flow.getId()))
+                            .and(field("condition_id").eq(conditionId))
+                    );
+
+                return this.jdbcRepository.fetchOne(select);
+            });
+    }
+
+    @Override
+    public List<MultipleConditionWindow> expired(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(VALUE_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(
+                        getEndDataCondition().and(buildTenantCondition(tenantId))
+                    );
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    protected Condition getEndDataCondition() {
+        return field("end_date").lt(Timestamp.from(Instant.now()));
+    }
+
+    @Override
+    public synchronized void save(List<MultipleConditionWindow> multipleConditionWindows) {
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+
+                multipleConditionWindows
+                    .forEach(window ->
+                    {
+                        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(window);
+                        this.jdbcRepository.persist(window, context, fields);
+                    });
+            });
+    }
+
+    @Override
+    public void delete(MultipleConditionWindow multipleConditionWindow) {
+        this.jdbcRepository.delete(multipleConditionWindow);
+    }
+}

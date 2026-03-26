@@ -1,13 +1,13 @@
 package io.micronaut.web.router.resource;
 
-import io.micronaut.context.annotation.Replaces;
-import io.micronaut.core.io.ResourceLoader;
-import io.micronaut.core.util.CollectionUtils;
-
-import jakarta.inject.Singleton;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+
+import io.micronaut.context.annotation.Replaces;
+import io.micronaut.core.io.ResourceLoader;
+import io.micronaut.core.util.CollectionUtils;
+import jakarta.inject.Singleton;
 
 /**
  * StaticResourceResolver hack in order to support ui
@@ -22,7 +22,7 @@ public class VueStaticResourceResolver extends StaticResourceResolver {
         super(configurations);
 
         if (CollectionUtils.isNotEmpty(configurations)) {
-            for (StaticResourceConfiguration config: configurations) {
+            for (StaticResourceConfiguration config : configurations) {
                 if (config.getMapping().contains("/ui/")) {
                     this.uiResourceLoader = config.getResourceLoaders();
                 }

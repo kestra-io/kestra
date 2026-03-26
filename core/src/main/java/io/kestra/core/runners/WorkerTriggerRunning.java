@@ -1,14 +1,14 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.conditions.ConditionContext;
+
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @SuperBuilder
@@ -24,26 +24,26 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
     private AbstractTrigger trigger;
 
     @NotNull
-    private Trigger triggerContext;
-
-    @NotNull
-    private ConditionContext conditionContext;
+    private WorkerTriggerData data;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public String uid() {
-        return triggerContext.uid();
+        return IdUtils.fromParts(
+            data.tenantId(),
+            data.namespace(),
+            data.flowId(),
+            trigger.getId()
+        );
     }
 
-    public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance, int partition) {
+    public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance) {
         return WorkerTriggerRunning.builder()
             .trigger(workerTrigger.getTrigger())
-            .triggerContext(workerTrigger.getTriggerContext())
-            .conditionContext(workerTrigger.getConditionContext())
+            .data(workerTrigger.getData())
             .workerInstance(workerInstance)
-            .partition(partition)
             .build();
     }
 }

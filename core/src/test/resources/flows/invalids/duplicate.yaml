@@ -1,12 +1,6 @@
 id: duplicate
 namespace: io.kestra.tests
 
-listeners:
-  - tasks:
-      - id: listen
-        type: io.kestra.plugin.core.debug.Return
-        format: "{{taskrun.startDate}}"
-
 tasks:
   - id: date
     type: io.kestra.plugin.core.debug.Return

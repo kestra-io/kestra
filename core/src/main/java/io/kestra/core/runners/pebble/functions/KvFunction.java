@@ -1,20 +1,21 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Singleton
@@ -75,7 +76,7 @@ public class KvFunction implements Function {
         String inheritedNamespace = flowNamespace;
         while (value.isEmpty()) {
             value = kvStoreService.get(tenantId, inheritedNamespace, flowNamespace).getValue(key);
-            if (!inheritedNamespace.contains(".")){
+            if (!inheritedNamespace.contains(".")) {
                 return value;
             }
             inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));

@@ -1,5 +1,8 @@
 package io.kestra.core.plugins.notifications;
 
+import java.time.Duration;
+import java.util.*;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -14,17 +17,16 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 import io.kestra.core.utils.UriProvider;
 
-import java.time.Duration;
-import java.util.*;
-
 public final class ExecutionService {
-    private ExecutionService() {}
+    private ExecutionService() {
+    }
 
     public static Execution findExecution(RunContext runContext, Property<String> executionId) throws IllegalVariableEvaluationException, NoSuchElementException {
-        ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
+        ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).services().additionalService(ExecutionRepositoryInterface.class);
 
         RetryUtils.Instance<Execution, NoSuchElementException> retryInstance = RetryUtils
-            .of(Exponential.builder()
+            .of(
+                Exponential.builder()
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(1))
                     .maxInterval(Duration.ofSeconds(15))
@@ -55,8 +57,8 @@ public final class ExecutionService {
     /**
      * ExecutionRepository can be out of sync in ElasticSearch stack, with this filter we try to mitigate that
      *
-     * @param execution                 the Execution we fetched from ExecutionRepository
-     * @param isCurrentExecution        true if this *Execution Task is configured to send a notification for the current Execution
+     * @param execution the Execution we fetched from ExecutionRepository
+     * @param isCurrentExecution true if this *Execution Task is configured to send a notification for the current Execution
      * @param flowTriggerExecutionState the Execution State that triggered the Flow trigger, if any
      * @return true if we think we fetched the right Execution data for our usecase
      */
@@ -83,7 +85,7 @@ public final class ExecutionService {
 
     public static Map<String, Object> executionMap(RunContext runContext, ExecutionInterface executionInterface) throws IllegalVariableEvaluationException {
         Execution execution = findExecution(runContext, executionInterface.getExecutionId());
-        UriProvider uriProvider = ((DefaultRunContext) runContext).getApplicationContext().getBean(UriProvider.class);
+        UriProvider uriProvider = ((DefaultRunContext) runContext).services().uriProvider();
 
         Map<String, Object> templateRenderMap = new HashMap<>();
         templateRenderMap.put("duration", execution.getState().humanDuration());

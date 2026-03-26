@@ -1,6 +1,16 @@
 package io.kestra.core.services;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Plugin;
@@ -22,6 +32,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
+
 import jakarta.inject.Inject;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -29,14 +40,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -88,17 +91,19 @@ class PluginDefaultServiceTest {
         Object result = pluginDefaultService.recursiveDefaults(TEST_FLOW_AS_MAP, defaults);
 
         // Then
-        Assertions.assertEquals(Map.of(
-            "id", "test",
-            "namespace", "type",
-            "tasks", List.of(
-                Map.of(
-                    "id", "my-task",
-                    "type", "io.kestra.test",
-                    "taskRunner", Map.of("type", "io.kestra.test")
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.test",
+                        "taskRunner", Map.of("type", "io.kestra.test")
+                    )
                 )
-            )
-        ), result);
+            ), result
+        );
     }
 
     @Test
@@ -113,52 +118,55 @@ class PluginDefaultServiceTest {
         Object result = pluginDefaultService.recursiveDefaults(TEST_FLOW_AS_MAP, defaults);
 
         // Then
-        Assertions.assertEquals(Map.of(
-            "id", "test",
-            "namespace", "type",
-            "tasks", List.of(
-                Map.of(
-                    "id", "my-task",
-                    "type", "io.kestra.test",
-                    "default-key", "default-value"
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.test",
+                        "default-key", "default-value"
+                    )
                 )
-            )
-        ), result);
+            ), result
+        );
     }
 
     @Test
     public void injectFlowAndGlobals() throws FlowProcessingException, JsonProcessingException {
-        String source = String.format("""
-            id: default-test
-            namespace: io.kestra.tests
+        String source = String.format(
+            """
+                id: default-test
+                namespace: io.kestra.tests
 
-            triggers:
-            - id: trigger
-              type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTriggerTester
-              conditions:
-              - type: io.kestra.plugin.core.condition.ExpressionCondition
+                triggers:
+                - id: trigger
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTriggerTester
+                  conditions:
+                  - type: io.kestra.plugin.core.condition.ExpressionCondition
 
-            tasks:
-            - id: test
-              type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-              set: 666
+                tasks:
+                - id: test
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  set: 666
 
-            pluginDefaults:
-            - type: "%s"
-              forced: false
-              values:
-                set: 123
-                value: 1
-                arrays: [1]
-            - type: "%s"
-              forced: false
-              values:
-                set: 123
-            - type: "%s"
-              forced: false
-              values:
-                expression: "{{ test }}"
-            """,
+                pluginDefaults:
+                - type: "%s"
+                  forced: false
+                  values:
+                    set: 123
+                    value: 1
+                    arrays: [1]
+                - type: "%s"
+                  forced: false
+                  values:
+                    set: 123
+                - type: "%s"
+                  forced: false
+                  values:
+                    expression: "{{ test }}"
+                """,
             DefaultTester.class.getName(),
             DefaultTriggerTester.class.getName(),
             Expression.class.getName()
@@ -183,30 +191,30 @@ class PluginDefaultServiceTest {
     public void shouldInjectForcedDefaultsGivenForcedTrue() throws FlowProcessingException {
         // Given
         String source = """
-            id: default-test
-            namespace: io.kestra.tests
+                id: default-test
+                namespace: io.kestra.tests
 
-            tasks:
-            - id: test
-              type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-              set: 1
+                tasks:
+                - id: test
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  set: 1
 
-            pluginDefaults:
-            - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-              forced: true
-              values:
-                set: 2
-            - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-              forced: true
-              values:
-                set: 3
-            - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-              forced: false
-              values:
-                set: 4
-                value: 1
-                arrays: [1]
-        """;
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  forced: true
+                  values:
+                    set: 2
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  forced: true
+                  values:
+                    set: 3
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  forced: false
+                  values:
+                    set: 4
+                    value: 1
+                    arrays: [1]
+            """;
 
         // When
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
@@ -260,20 +268,21 @@ class PluginDefaultServiceTest {
     void shouldInjectFlowDefaultsGivenAlias() throws FlowProcessingException {
         // Given
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
-        GenericFlow flow = GenericFlow.fromYaml(tenant, """
-              id: default-test
-              namespace: io.kestra.tests
+        GenericFlow flow = GenericFlow.fromYaml(
+            tenant, """
+                  id: default-test
+                  namespace: io.kestra.tests
 
-              tasks:
-              - id: test
-                type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-                set: 666
+                  tasks:
+                  - id: test
+                    type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                    set: 666
 
-              pluginDefaults:
-                 - type: io.kestra.core.services.DefaultTesterAlias
-                   values:
-                     value: 1
-            """
+                  pluginDefaults:
+                     - type: io.kestra.core.services.DefaultTesterAlias
+                       values:
+                         value: 1
+                """
         );
         // When
         FlowWithSource injected = pluginDefaultService.injectAllDefaults(flow, true);
@@ -285,20 +294,21 @@ class PluginDefaultServiceTest {
     @Test
     void shouldInjectFlowDefaultsGivenType() throws FlowProcessingException {
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
-        GenericFlow flow = GenericFlow.fromYaml(tenant, """
-                  id: default-test
-                  namespace: io.kestra.tests
+        GenericFlow flow = GenericFlow.fromYaml(
+            tenant, """
+                      id: default-test
+                      namespace: io.kestra.tests
 
-                  tasks:
-                  - id: test
-                    type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-                    set: 666
+                      tasks:
+                      - id: test
+                        type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                        set: 666
 
-                  pluginDefaults:
-                     - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-                       values:
-                         defaultValue: overridden
-            """
+                      pluginDefaults:
+                         - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                           values:
+                             defaultValue: overridden
+                """
         );
 
         FlowWithSource injected = pluginDefaultService.injectAllDefaults(flow, true);
@@ -309,21 +319,22 @@ class PluginDefaultServiceTest {
     public void shouldNotInjectDefaultsGivenExistingTaskValue() throws FlowProcessingException {
         // Given
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
-        GenericFlow flow = GenericFlow.fromYaml(tenant, """
-            id: default-test
-            namespace: io.kestra.tests
+        GenericFlow flow = GenericFlow.fromYaml(
+            tenant, """
+                  id: default-test
+                  namespace: io.kestra.tests
 
-            tasks:
-            - id: test
-              type: io.kestra.plugin.core.log.Log
-              message: testing
-              level: INFO
+                  tasks:
+                  - id: test
+                    type: io.kestra.plugin.core.log.Log
+                    message: testing
+                    level: INFO
 
-            pluginDefaults:
-             - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-               values:
-                 defaultValue: WARN
-          """
+                  pluginDefaults:
+                   - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                     values:
+                       defaultValue: WARN
+                """
         );
 
         // When

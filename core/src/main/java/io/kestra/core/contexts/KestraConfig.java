@@ -3,8 +3,6 @@ package io.kestra.core.contexts;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 
-import java.util.regex.Pattern;
-
 /**
  * Kestra application properties.
  */

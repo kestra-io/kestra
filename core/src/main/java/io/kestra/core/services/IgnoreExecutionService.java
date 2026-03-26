@@ -1,16 +1,20 @@
 package io.kestra.core.services;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.FlowId;
-import jakarta.annotation.Nullable;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.runners.ExecutionEvent;
+
+import jakarta.annotation.Nullable;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service that deals with ignore execution from the command line.
@@ -23,6 +27,7 @@ public class IgnoreExecutionService {
     private volatile List<NamespaceId> ignoredNamespaces = Collections.emptyList();
     private volatile List<String> ignoredTenants = Collections.emptyList();
     private volatile List<String> ignoredIndexerRecords = Collections.emptyList();
+    private volatile List<String> ignoredQueueRecords = Collections.emptyList();
 
     public synchronized void setIgnoredExecutions(List<String> ignoredExecutions) {
         this.ignoredExecutions = ignoredExecutions == null ? Collections.emptyList() : ignoredExecutions;
@@ -44,6 +49,10 @@ public class IgnoreExecutionService {
         this.ignoredIndexerRecords = ignoredIndexerRecords == null ? Collections.emptyList() : ignoredIndexerRecords;
     }
 
+    public synchronized void setIgnoredQueueRecords(List<String> ignoredQueueRecords) {
+        this.ignoredQueueRecords = ignoredQueueRecords == null ? Collections.emptyList() : ignoredQueueRecords;
+    }
+
     /**
      * Warning: this method didn't check the flow, so it must be used only when neither of the others can be used.
      *
@@ -61,6 +70,20 @@ public class IgnoreExecutionService {
     }
 
     /**
+     * @return true if the execution referenced by this execution should be ignored
+     */
+    public boolean ignoreExecution(ExecutionCommand executionCommand) {
+        return ignoreExecution(executionCommand.tenantId(), executionCommand.namespace(), executionCommand.flowId(), executionCommand.executionId());
+    }
+
+    /**
+     * @return true if the execution referenced by execution event run should be ignored
+     */
+    public boolean ignoreExecution(ExecutionEvent executionEvent) {
+        return ignoreExecution(executionEvent.tenantId(), executionEvent.namespace(), executionEvent.flowId(), executionEvent.executionId());
+    }
+
+    /**
      * @return true if the execution referenced by this task run should be ignored
      */
     public boolean ignoreExecution(TaskRun taskRun) {
@@ -69,10 +92,20 @@ public class IgnoreExecutionService {
 
     /**
      * Ignore an indexer record based on its key.
+     * 
      * @param key the record key as computed by <code>QueueService.key(record)</code>, can be null
      */
     public boolean ignoreIndexerRecord(@Nullable String key) {
         return key != null && ignoredIndexerRecords.contains(key);
+    }
+
+    /**
+     * Ignore a queue record based on its key.
+     * 
+     * @param key the record key as computed by <code>QueueService.key(record)</code>, can be null
+     */
+    public boolean ignoreQueueRecord(@Nullable String key) {
+        return key != null && ignoredQueueRecords.contains(key);
     }
 
     @VisibleForTesting

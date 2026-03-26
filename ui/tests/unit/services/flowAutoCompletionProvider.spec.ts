@@ -6,7 +6,7 @@ const defaultFlow = `inputs:
   - id: input1
     type: STRING
   - id: input2
-    type: BOOLEAN
+    type: BOOL
 labels:
   myLabel1: "myLabelValue1"
   myLabel2: "myLabelValue2"
@@ -155,12 +155,14 @@ describe("FlowAutoCompletionProvider", () => {
             "labels",
             "envs",
             "globals",
+            "parent",
             "parents",
             "error",
             "kestra",
             "secret(namespace=${1:flow.namespace}, key='${2:MY_SECRET}')",
             "kv(namespace=${1:flow.namespace}, key='${2:my_key}')",
             "currentEachOutput(outputs=${1:outputs.forEach})",
+            "iterationOutput(taskId=${1:'myTaskId'}, iteration=${2:taskrun.iteration - 1})",
             "decrypt(key=${1:secret('encryption_key')}, encrypted=${2:outputs.request.encryptedBody})",
             "encrypt(key=${1:secret('encryption_key')}, plaintext=${2:'value_to_encrypt'})",
             "errorLogs()",
@@ -182,6 +184,8 @@ describe("FlowAutoCompletionProvider", () => {
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
             "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
+            "ksuid()",
+            "parentOutput()"
         ]);
     })
 

@@ -2,7 +2,6 @@ package io.kestra.core.utils;
 
 public class CaseUtils {
 
-
     public static String camelToSnake(String str) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < str.length(); i++) {

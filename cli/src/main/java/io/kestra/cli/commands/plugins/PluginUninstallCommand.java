@@ -1,19 +1,20 @@
 package io.kestra.cli.commands.plugins;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.plugins.LocalPluginManager;
 import io.kestra.core.plugins.MavenPluginDownloader;
 import io.kestra.core.plugins.PluginArtifact;
 import io.kestra.core.plugins.PluginManager;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import picocli.CommandLine;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 @CommandLine.Command(
     name = "uninstall",

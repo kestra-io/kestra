@@ -1,12 +1,11 @@
 package io.kestra.core.docs;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.kestra.core.utils.Enums;
 
+import io.kestra.core.utils.Enums;
 
 public enum SchemaType {
     FLOW,
-    TEMPLATE,
     TASK,
     TRIGGER,
     PLUGINDEFAULT,

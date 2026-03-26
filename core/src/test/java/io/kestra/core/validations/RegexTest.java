@@ -1,12 +1,13 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.models.validations.ModelValidator;
-import io.micronaut.core.annotation.Introspected;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.validations.ModelValidator;
+
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,7 +17,6 @@ class RegexTest {
     private ModelValidator modelValidator;
 
     @AllArgsConstructor
-    @Introspected
     @Getter
     public static class RegexCls {
         @Regex

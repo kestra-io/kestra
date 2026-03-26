@@ -1,12 +1,13 @@
 package io.kestra.core.services;
 
+import java.util.Optional;
+
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.runners.WorkerJob;
+
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 /**
  * Provides business logic to manipulate Worker Groups.

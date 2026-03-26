@@ -1,13 +1,14 @@
 package io.kestra.core.metrics;
 
-import io.kestra.core.server.ServiceType;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.core.convert.format.MapFormat;
-import lombok.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import io.kestra.core.server.ServiceType;
+
+import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.core.convert.format.MapFormat;
+import lombok.*;
 
 @Getter
 @NoArgsConstructor
@@ -26,4 +27,3 @@ public class MetricConfig {
 
     Map<ServiceType, Set<String>> sharedServiceInstanceMetrics = Map.of();
 }
-

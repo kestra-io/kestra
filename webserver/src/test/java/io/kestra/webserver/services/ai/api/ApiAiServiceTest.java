@@ -1,14 +1,8 @@
 package io.kestra.webserver.services.ai.api;
 
-import io.kestra.core.services.InstanceService;
-import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
-import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
-import io.kestra.webserver.services.ai.GenerationResult;
-import io.kestra.webserver.services.ai.UserInfo;
-import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.client.BlockingHttpClient;
+import java.util.Map;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,8 +11,16 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Map;
-import java.util.Optional;
+import io.kestra.core.services.InstanceService;
+import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
+import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
+import io.kestra.webserver.services.ai.GenerationResult;
+import io.kestra.webserver.services.ai.UserInfo;
+
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.client.BlockingHttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;

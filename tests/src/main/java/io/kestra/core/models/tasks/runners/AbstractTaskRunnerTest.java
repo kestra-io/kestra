@@ -1,5 +1,17 @@
 package io.kestra.core.models.tasks.runners;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.*;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
@@ -13,18 +25,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.*;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,8 +34,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 public abstract class AbstractTaskRunnerTest {
-    @Inject protected TestRunContextFactory runContextFactory;
-    @Inject private StorageInterface storage;
+    @Inject
+    protected TestRunContextFactory runContextFactory;
+    @Inject
+    private StorageInterface storage;
 
     @Test
     protected void run() throws Exception {
@@ -55,8 +59,10 @@ public abstract class AbstractTaskRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
-        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(
-            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(
+                ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'"))
+            )
         );
 
         var taskRunner = taskRunner();
@@ -72,8 +78,11 @@ public abstract class AbstractTaskRunnerTest {
     protected void fail() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(
-            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1"))));
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(
+                ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1"))
+            )
+        );
 
         var taskRunner = taskRunner();
         assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
@@ -117,15 +126,17 @@ public abstract class AbstractTaskRunnerTest {
         List<String> renderedCommands = ScriptService.replaceInternalStorage(
             runContext,
             taskRunner.additionalVars(runContext, commands),
-            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), null, List.of(
-                "cat " + wdir + "{{internalStorageFile}} && echo",
-                "cat " + wdir + "hello.txt && echo",
-                "cat " + wdir + "hello.txt > " + wdir + "output.txt",
-                "echo -n 'file from output dir' > {{outputDir}}/file.txt",
-                "mkdir {{outputDir}}/nested",
-                "echo -n 'nested file from output dir' > {{outputDir}}/nested/file.txt",
-                "echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'"
-            )),
+            ScriptService.scriptCommands(
+                List.of("/bin/sh", "-c"), null, List.of(
+                    "cat " + wdir + "{{internalStorageFile}} && echo",
+                    "cat " + wdir + "hello.txt && echo",
+                    "cat " + wdir + "hello.txt > " + wdir + "output.txt",
+                    "echo -n 'file from output dir' > {{outputDir}}/file.txt",
+                    "mkdir {{outputDir}}/nested",
+                    "echo -n 'nested file from output dir' > {{outputDir}}/nested/file.txt",
+                    "echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'"
+                )
+            ),
             taskRunner instanceof RemoteRunnerInterface
         );
         Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(renderedCommands));
@@ -155,10 +166,14 @@ public abstract class AbstractTaskRunnerTest {
     protected void failWithInput() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(ScriptService.scriptCommands(
-            List.of("/bin/sh", "-c"),
-            Collections.emptyList(),
-            List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1")))
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(
+                ScriptService.scriptCommands(
+                    List.of("/bin/sh", "-c"),
+                    Collections.emptyList(),
+                    List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1")
+                )
+            )
         );
 
         var taskRunner = taskRunner();
@@ -177,12 +192,16 @@ public abstract class AbstractTaskRunnerTest {
         Mockito.when(commands.relativeWorkingDirectoryFilesPaths(false)).thenCallRealMethod();
 
         var taskRunner1 = taskRunner();
-        Property<List<String>> renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
-            runContext,
-            taskRunner1.additionalVars(runContext, commands),
-            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
-            taskRunner1 instanceof RemoteRunnerInterface
-        ));
+        Property<List<String>> renderedCommands = Property.ofValue(
+            ScriptService.replaceInternalStorage(
+                runContext,
+                taskRunner1.additionalVars(runContext, commands),
+                ScriptService.scriptCommands(
+                    List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")
+                ),
+                taskRunner1 instanceof RemoteRunnerInterface
+            )
+        );
         Mockito.when(commands.getCommands()).thenReturn(
             renderedCommands
         );
@@ -191,12 +210,14 @@ public abstract class AbstractTaskRunnerTest {
         assertThat(result).isNotNull();
         assertThat(result.getExitCode()).isZero();
 
-        renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
-            runContext,
-            taskRunner1.additionalVars(runContext, commands),
-            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
-            taskRunner1 instanceof RemoteRunnerInterface
-        ));
+        renderedCommands = Property.ofValue(
+            ScriptService.replaceInternalStorage(
+                runContext,
+                taskRunner1.additionalVars(runContext, commands),
+                ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
+                taskRunner1 instanceof RemoteRunnerInterface
+            )
+        );
         Mockito.when(commands.getCommands()).thenReturn(
             renderedCommands
         );

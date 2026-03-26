@@ -6,11 +6,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PrefixTest {
 
-    enum TestField { NAMESPACE }
+    enum TestField {
+        NAMESPACE
+    }
 
     @Test
     void shouldBuildWithCorrectType() {
-        Prefix<TestField> prefix = Prefix.<TestField>builder()
+        Prefix<TestField> prefix = Prefix.<TestField> builder()
             .field(TestField.NAMESPACE)
             .value("io.kestra.tests")
             .build();
@@ -22,7 +24,7 @@ class PrefixTest {
 
     @Test
     void shouldHaveCorrectDefaults() {
-        Prefix<TestField> prefix = Prefix.<TestField>builder()
+        Prefix<TestField> prefix = Prefix.<TestField> builder()
             .field(TestField.NAMESPACE)
             .value("test")
             .build();

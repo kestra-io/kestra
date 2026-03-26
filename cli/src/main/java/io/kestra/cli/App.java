@@ -1,5 +1,14 @@
 package io.kestra.cli;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.stream.Stream;
+
+import org.slf4j.bridge.SLF4JBridgeHandler;
+
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
 import io.kestra.cli.commands.migrations.MigrationCommand;
@@ -7,22 +16,13 @@ import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
-import io.kestra.cli.commands.templates.TemplateCommand;
 import io.kestra.cli.services.EnvironmentProvider;
+
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
-import io.micronaut.core.annotation.Introspected;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.stream.Stream;
 
 @Command(
     name = "kestra",
@@ -35,14 +35,12 @@ import java.util.stream.Stream;
         PluginCommand.class,
         ServerCommand.class,
         FlowCommand.class,
-        TemplateCommand.class,
         SysCommand.class,
         ConfigCommand.class,
         NamespaceCommand.class,
         MigrationCommand.class
     }
 )
-@Introspected
 public class App implements Callable<Integer> {
 
     public static void main(String[] args) {
@@ -85,14 +83,14 @@ public class App implements Callable<Integer> {
 
         if (!AbstractCommand.class.isAssignableFrom(targetCommand) && args.length == 0) {
             // if no command provided, show help
-            args = new String[]{"--help"};
+            args = new String[] { "--help" };
         }
 
         // Call Picocli command
         int exitCode;
         try {
-             exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
-        } catch (CommandLine.InitializationException e){
+            exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
+        } catch (CommandLine.InitializationException e) {
             System.err.println("Could not initialize picocli CommandLine, err: " + e.getMessage());
             e.printStackTrace();
             exitCode = 1;
@@ -114,11 +112,10 @@ public class App implements Callable<Integer> {
     }
 
     public static ApplicationContext applicationContext(Class<?> mainClass,
-                                                        String[] environments,
-                                                        String... args) {
+        String[] environments,
+        String... args) {
         return App.applicationContext(mainClass, getCommandLine(mainClass, args), environments);
     }
-
 
     /**
      * Create an {@link ApplicationContext} with additional properties based on configuration files (--config) and
@@ -127,8 +124,8 @@ public class App implements Callable<Integer> {
      * @return the application context created
      */
     protected static ApplicationContext applicationContext(Class<?> mainClass,
-                                                           CommandLine commandLine,
-                                                           String[] environments) {
+        CommandLine commandLine,
+        String[] environments) {
 
         ApplicationContextBuilder builder = ApplicationContext
             .builder()

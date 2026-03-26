@@ -1,17 +1,16 @@
 package io.kestra.core.models.flows.input;
 
+import java.net.URI;
+import java.util.List;
 import java.util.Set;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.validations.FileInputValidation;
+
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @SuperBuilder
 @Getter
@@ -19,17 +18,14 @@ import java.util.List;
 @FileInputValidation
 public class FileInput extends Input<URI> {
 
-    private static final String DEFAULT_EXTENSION = ".upl";
+    public static final String DEFAULT_EXTENSION = ".upl";
 
-    @Deprecated(since = "0.24", forRemoval = true)
-    public String extension;
-    
     /**
      * List of allowed file extensions (e.g., [".csv", ".txt", ".pdf"]).
      * Each extension must start with a dot.
      */
     private List<String> allowedFileExtensions;
-    
+
     /**
      * Gets the file extension from the URI's path
      */
@@ -52,16 +48,5 @@ public class FileInput extends Input<URI> {
                 Set.of()
             );
         }
-    }
-
-    public static String findFileInputExtension(@NotNull final List<Input<?>> inputs, @NotNull final String fileName) {
-        String res = inputs.stream()
-            .filter(in -> in instanceof FileInput)
-            .filter(in -> in.getId().equals(fileName))
-            .filter(flowInput -> ((FileInput) flowInput).getExtension() != null)
-            .map(flowInput -> ((FileInput) flowInput).getExtension())
-            .findFirst()
-            .orElse(FileInput.DEFAULT_EXTENSION);
-        return res.startsWith(".") ? res : "." + res;
     }
 }

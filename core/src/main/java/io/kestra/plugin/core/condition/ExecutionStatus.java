@@ -1,24 +1,24 @@
 package io.kestra.plugin.core.condition;
 
+import java.util.List;
+
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -45,7 +45,7 @@ import jakarta.validation.Valid;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: "This flow will execute when any flow enters FAILED or KILLED state."
-                
+
                 triggers:
                   - id: flow_trigger
                     type: io.kestra.plugin.core.trigger.Flow
@@ -57,7 +57,7 @@ import jakarta.validation.Valid;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.ExecutionStatusCondition", "io.kestra.plugin.core.condition.ExecutionStatusCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.ExecutionStatusCondition", "io.kestra.plugin.core.condition.ExecutionStatusCondition" }
 )
 public class ExecutionStatus extends Condition {
     @Valid

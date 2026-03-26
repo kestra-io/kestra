@@ -1,6 +1,14 @@
 package io.kestra.core.validations.factory;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+
+import org.hibernate.validator.HibernateValidator;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
+
 import io.kestra.core.models.property.PropertyValueExtractor;
+
 import io.micronaut.configuration.hibernate.validator.ValidatorFactoryProvider;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Replaces;
@@ -11,13 +19,6 @@ import io.micronaut.core.annotation.TypeHint;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.*;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-
-import org.hibernate.validator.HibernateValidator;
-import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 
 /**
  * Produce a Validator factory provider that replace {@link ValidatorFactoryProvider} from micronaut
@@ -53,6 +54,7 @@ public class CustomValidatorFactoryProvider {
 
     /**
      * Produces a Validator factory class.
+     * 
      * @param environment optional param for environment
      * @return validator factory
      */
@@ -72,9 +74,11 @@ public class CustomValidatorFactoryProvider {
         if (ignoreXmlConfiguration) {
             validatorConfiguration.ignoreXmlConfiguration();
         }
-        environment.ifPresent(env -> {
+        environment.ifPresent(env ->
+        {
             Optional<Properties> config = env.getProperty("hibernate.validator", Properties.class);
-            config.ifPresent(properties -> {
+            config.ifPresent(properties ->
+            {
                 for (Map.Entry<Object, Object> entry : properties.entrySet()) {
                     Object value = entry.getValue();
                     if (value != null) {
@@ -95,7 +99,7 @@ public class CustomValidatorFactoryProvider {
     /**
      * The custom ValueExtractors has to be set here
      */
-    protected void configureValueExtractor(Configuration<?> validatorConfiguration ){
+    protected void configureValueExtractor(Configuration<?> validatorConfiguration) {
         validatorConfiguration.addValueExtractor(propertyValueExtractor);
     }
 }

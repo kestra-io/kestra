@@ -1,8 +1,5 @@
 package io.kestra.core.plugins;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Builder;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -15,15 +12,19 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.Builder;
+
 import static java.util.function.Predicate.not;
 
 /**
  * A specific plugin artifact.
  *
- * @param groupId    the group identifier of this plugin artifact
+ * @param groupId the group identifier of this plugin artifact
  * @param artifactId the artifact identifier of this plugin artifact
- * @param version    the version of this plugin artifact
- * @param uri        the location of this plugin artifact.
+ * @param version the version of this plugin artifact
+ * @param uri the location of this plugin artifact.
  */
 @Builder(toBuilder = true)
 public record PluginArtifact(
@@ -32,9 +33,8 @@ public record PluginArtifact(
     String extension,
     String classifier,
     String version,
-    URI uri
-) implements Comparable<PluginArtifact> {
-    
+    URI uri) implements Comparable<PluginArtifact> {
+
     private static final Pattern ARTIFACT_PATTERN = Pattern.compile(
         "([^: ]+):([^: ]+)(:([^: ]*)(:([^: ]+))?)?:([^: ]+)"
     );
@@ -44,7 +44,7 @@ public record PluginArtifact(
 
     public static final String JAR_EXTENSION = "jar";
     public static final String KESTRA_GROUP_ID = "io.kestra";
-    
+
     /**
      * Static helper method for constructing a new {@link PluginArtifact} from a JAR file.
      *
@@ -79,15 +79,17 @@ public record PluginArtifact(
     public static PluginArtifact fromCoordinates(final String coordinates) {
         Matcher m = ARTIFACT_PATTERN.matcher(coordinates);
         if (!m.matches()) {
-            throw new IllegalArgumentException("Bad artifact coordinates " + coordinates
-                + ", expected format is <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>");
+            throw new IllegalArgumentException(
+                "Bad artifact coordinates " + coordinates
+                    + ", expected format is <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>"
+            );
         }
         return new PluginArtifact(
             m.group(1),
             m.group(2),
             Optional.ofNullable(m.group(4)).filter(not(String::isEmpty)).orElse(JAR_EXTENSION),
             Optional.ofNullable(m.group(6)).filter(not(String::isEmpty)).orElse(null),
-            "LATEST".equalsIgnoreCase(m.group(7)) ? "LATEST": m.group(7),
+            "LATEST".equalsIgnoreCase(m.group(7)) ? "LATEST" : m.group(7),
             null
         );
     }
@@ -137,7 +139,7 @@ public record PluginArtifact(
     public String toString() {
         return toCoordinates();
     }
-    
+
     @JsonIgnore
     public boolean isOfficial() {
         return groupId.startsWith(KESTRA_GROUP_ID);
@@ -152,11 +154,11 @@ public record PluginArtifact(
 
     public String toFileName() {
         String name = Stream.of(
-                groupId.replace(".", "_"),
-                artifactId,
-                classifier,
-                version.replace(".", "_")
-            )
+            groupId.replace(".", "_"),
+            artifactId,
+            classifier,
+            version.replace(".", "_")
+        )
             .filter(Objects::nonNull)
             .filter(it -> !it.isEmpty())
             .collect(Collectors.joining("__"));

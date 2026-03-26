@@ -10,8 +10,8 @@
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #actions>
-                <el-tooltip 
-                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                <el-tooltip
+                    :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
                     <el-button
@@ -119,8 +119,8 @@
 
         <Block :heading="$t('settings.blocks.theme.label')">
             <template #actions>
-                <el-tooltip 
-                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                <el-tooltip
+                    :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
                     <el-button
@@ -222,8 +222,8 @@
 
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
             <template #actions>
-                <el-tooltip 
-                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                <el-tooltip
+                    :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
                     <el-button
@@ -272,17 +272,12 @@
             </template>
         </Block>
 
-        <Block :heading="$t('settings.blocks.export.label')" v-if="canReadFlows || canReadTemplates" last>
+        <Block :heading="$t('settings.blocks.export.label')" v-if="canReadFlows" last>
             <template #content>
                 <Row>
                     <Column>
                         <el-button v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
                             {{ $t("settings.blocks.export.fields.flows") }}
-                        </el-button>
-                    </Column>
-                    <Column>
-                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!miscStore?.configs?.isTemplateEnabled" class="w-100">
-                            {{ $t("settings.blocks.export.fields.templates") }}
                         </el-button>
                     </Column>
                 </Row>
@@ -306,7 +301,6 @@
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";
-    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -476,14 +470,14 @@
             },
             checkDefaultStates() {
                 this.hasDefaultMainConfig = this.isObjectEqual(
-                    this.pendingSettings, 
-                    this.defaultMainConfig, 
+                    this.pendingSettings,
+                    this.defaultMainConfig,
                     Object.keys(this.defaultMainConfig)
                 );
-                
+
                 this.hasDefaultPreferences = this.isObjectEqual(
-                    this.pendingSettings, 
-                    this.defaultPreferences, 
+                    this.pendingSettings,
+                    this.defaultPreferences,
                     Object.keys(this.defaultPreferences)
                 );
 
@@ -497,21 +491,21 @@
                 Object.keys(this.defaultLocalization).forEach(key => {
                     this.pendingSettings[key] = this.defaultLocalization[key];
                 });
-                
+
                 this.saveAllSettings();
             },
             restoreDefaultConfigurations(){
                 Object.keys(this.defaultMainConfig).forEach(key => {
                     this.pendingSettings[key] = this.defaultMainConfig[key];
                 });
-                
+
                 this.saveAllSettings();
             },
             restoreDefaultPreferences(){
                 Object.keys(this.defaultPreferences).forEach(key => {
                     this.pendingSettings[key] = this.defaultPreferences[key];
                 });
-                
+
                 this.saveAllSettings();
             },
             handleBeforeUnload(e) {
@@ -592,13 +586,6 @@
                                 );
                             });
                     });
-            },
-            exportTemplates() {
-                return this.templateStore
-                    .exportTemplateByQuery({})
-                    .then(_ => {
-                        this.$toast().success(this.$t("templates exported"));
-                    })
             },
             onLogDisplayChange(value) {
                 this.pendingSettings.logDisplay = value;
@@ -753,7 +740,7 @@
             document.removeEventListener("click", this.handleNavigationClick, true);
         },
         computed: {
-            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore, useAuthStore, useFlowStore),
+            ...mapStores(useLayoutStore, useMiscStore, useAuthStore, useFlowStore),
             mappedTheme() {
                 return this.miscStore.theme;
             },
@@ -807,9 +794,6 @@
             },
             canReadFlows() {
                 return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
-            },
-            canReadTemplates() {
-                return this.authStore.user?.isAllowed(permission.TEMPLATE, action.READ);
             },
             logDisplayOptions() {
                 return  [

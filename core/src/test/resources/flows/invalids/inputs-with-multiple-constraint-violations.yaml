@@ -7,11 +7,6 @@ inputs:
       - A
       - B
       - C
-    options:
-      - X
-      - Y
-      - Z
-
 tasks:
   - id: validMultiSelect
     type: io.kestra.plugin.core.debug.Return

@@ -1,0 +1,7 @@
+dependencies {
+    implementation project(':core')
+    implementation project(':queue')
+
+    implementation project(':jdbc')
+    implementation("io.micronaut.sql:micronaut-jooq")
+}

@@ -1,0 +1,20 @@
+id: parents-output
+namespace: io.kestra.tests
+
+tasks:
+  - id: value
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      some: output
+  - id: if
+    type: io.kestra.plugin.core.flow.If
+    condition: "true"
+    then:
+      - id: forEach
+        type: io.kestra.plugin.core.flow.ForEach
+        values: [ 1, 2, 3 ]
+        tasks:
+        - id: parentOutput
+          type: io.kestra.plugin.core.output.OutputValues
+          values:
+            parentOutput: "{{parentOutput(0)}}"

@@ -1,16 +1,17 @@
 package io.kestra.core.models.conditions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.utils.Rethrow;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 

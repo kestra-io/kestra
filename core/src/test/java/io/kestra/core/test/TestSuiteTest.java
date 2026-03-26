@@ -1,7 +1,8 @@
 package io.kestra.core.test;
 
-import io.kestra.core.serializers.YamlParser;
 import org.junit.jupiter.api.Test;
+
+import io.kestra.core.serializers.YamlParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

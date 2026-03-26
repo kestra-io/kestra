@@ -1,14 +1,15 @@
 package io.kestra.core.models.executions;
 
-import io.kestra.core.models.Label;
-import io.kestra.core.utils.IdUtils;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.flows.State;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.utils.IdUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,126 +18,186 @@ class ExecutionTest {
     @Test
     void hasTaskRunJoinableTrue() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TaskRun.builder()
-                .id("test")
-                .state(new State(State.Type.RUNNING, new State()))
-                .build())
+            .taskRunList(
+                Collections.singletonList(
+                    TaskRun.builder()
+                        .id("test")
+                        .state(new State(State.Type.RUNNING, new State()))
+                        .build()
+                )
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
-            .id("test")
-            .state(new State(State.Type.FAILED, new State()
-                .withState(State.Type.RUNNING)
-            ))
-            .build()
-        )).isTrue();
+        assertThat(
+            execution.hasTaskRunJoinable(
+                TaskRun.builder()
+                    .id("test")
+                    .state(
+                        new State(
+                            State.Type.FAILED, new State()
+                                .withState(State.Type.RUNNING)
+                        )
+                    )
+                    .build()
+            )
+        ).isTrue();
     }
 
     @Test
     void hasTaskRunJoinableSameState() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TaskRun.builder()
-                .id("test")
-                .state(new State())
-                .build())
+            .taskRunList(
+                Collections.singletonList(
+                    TaskRun.builder()
+                        .id("test")
+                        .state(new State())
+                        .build()
+                )
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
-            .id("test")
-            .state(new State())
-            .build()
-        )).isFalse();
+        assertThat(
+            execution.hasTaskRunJoinable(
+                TaskRun.builder()
+                    .id("test")
+                    .state(new State())
+                    .build()
+            )
+        ).isFalse();
     }
 
     @Test
     void hasTaskRunJoinableFailedExecutionFromExecutor() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TaskRun.builder()
-                .id("test")
-                .state(new State(State.Type.FAILED, new State()
-                    .withState(State.Type.RUNNING)
-                ))
-                .build())
+            .taskRunList(
+                Collections.singletonList(
+                    TaskRun.builder()
+                        .id("test")
+                        .state(
+                            new State(
+                                State.Type.FAILED, new State()
+                                    .withState(State.Type.RUNNING)
+                            )
+                        )
+                        .build()
+                )
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
-            .id("test")
-            .state(new State(State.Type.RUNNING, new State()))
-            .build()
-        )).isFalse();
+        assertThat(
+            execution.hasTaskRunJoinable(
+                TaskRun.builder()
+                    .id("test")
+                    .state(new State(State.Type.RUNNING, new State()))
+                    .build()
+            )
+        ).isFalse();
     }
 
     @Test
     void hasTaskRunJoinableRestartFailed() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TaskRun.builder()
-                .id("test")
-                .state(new State(State.Type.CREATED, new State()
-                    .withState(State.Type.RUNNING)
-                    .withState(State.Type.FAILED)
-                ))
-                .build())
+            .taskRunList(
+                Collections.singletonList(
+                    TaskRun.builder()
+                        .id("test")
+                        .state(
+                            new State(
+                                State.Type.CREATED, new State()
+                                    .withState(State.Type.RUNNING)
+                                    .withState(State.Type.FAILED)
+                            )
+                        )
+                        .build()
+                )
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
-            .id("test")
-            .state(new State(State.Type.FAILED, new State()
-                .withState(State.Type.RUNNING)
-            ))
-            .build()
-        )).isFalse();
+        assertThat(
+            execution.hasTaskRunJoinable(
+                TaskRun.builder()
+                    .id("test")
+                    .state(
+                        new State(
+                            State.Type.FAILED, new State()
+                                .withState(State.Type.RUNNING)
+                        )
+                    )
+                    .build()
+            )
+        ).isFalse();
     }
 
     @Test
     void hasTaskRunJoinableRestartSuccess() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TaskRun.builder()
-                .id("test")
-                .state(new State(State.Type.CREATED, new State()
-                    .withState(State.Type.RUNNING)
-                    .withState(State.Type.SUCCESS)
-                ))
-                .build())
+            .taskRunList(
+                Collections.singletonList(
+                    TaskRun.builder()
+                        .id("test")
+                        .state(
+                            new State(
+                                State.Type.CREATED, new State()
+                                    .withState(State.Type.RUNNING)
+                                    .withState(State.Type.SUCCESS)
+                            )
+                        )
+                        .build()
+                )
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
-            .id("test")
-            .state(new State(State.Type.SUCCESS, new State()
-                .withState(State.Type.RUNNING)
-                .withState(State.Type.SUCCESS)
-            ))
-            .build()
-        )).isTrue();
+        assertThat(
+            execution.hasTaskRunJoinable(
+                TaskRun.builder()
+                    .id("test")
+                    .state(
+                        new State(
+                            State.Type.SUCCESS, new State()
+                                .withState(State.Type.RUNNING)
+                                .withState(State.Type.SUCCESS)
+                        )
+                    )
+                    .build()
+            )
+        ).isTrue();
     }
 
     @Test
     void hasTaskRunJoinableAfterRestart() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TaskRun.builder()
-                .id("test")
-                .state(new State(State.Type.CREATED, new State()
-                    .withState(State.Type.RUNNING)
-                    .withState(State.Type.FAILED)
-                ))
-                .build())
+            .taskRunList(
+                Collections.singletonList(
+                    TaskRun.builder()
+                        .id("test")
+                        .state(
+                            new State(
+                                State.Type.CREATED, new State()
+                                    .withState(State.Type.RUNNING)
+                                    .withState(State.Type.FAILED)
+                            )
+                        )
+                        .build()
+                )
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
-            .id("test")
-            .state(new State(State.Type.SUCCESS, new State()
-                .withState(State.Type.RUNNING)
-                .withState(State.Type.FAILED)
-                .withState(State.Type.CREATED)
-                .withState(State.Type.RUNNING)
-            ))
-            .build()
-        )).isTrue();
+        assertThat(
+            execution.hasTaskRunJoinable(
+                TaskRun.builder()
+                    .id("test")
+                    .state(
+                        new State(
+                            State.Type.SUCCESS, new State()
+                                .withState(State.Type.RUNNING)
+                                .withState(State.Type.FAILED)
+                                .withState(State.Type.CREATED)
+                                .withState(State.Type.RUNNING)
+                        )
+                    )
+                    .build()
+            )
+        ).isTrue();
     }
 
     @Test

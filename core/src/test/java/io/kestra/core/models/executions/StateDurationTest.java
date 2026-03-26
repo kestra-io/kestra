@@ -1,17 +1,17 @@
 package io.kestra.core.models.executions;
 
-import io.kestra.core.models.flows.State;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.flows.State;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class StateDurationTest {
-
 
     private static final Instant NOW = Instant.now();
     private static final Instant ONE = NOW.minus(Duration.ofDays(1000));

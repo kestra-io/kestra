@@ -1,16 +1,15 @@
 package io.kestra.plugin.core.dashboard.data;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.Contains;
 import io.kestra.core.models.dashboards.filters.GreaterThanOrEqualTo;
 import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
-import io.kestra.core.models.dashboards.filters.Prefix;
-
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public interface IExecutions extends IData<IExecutions.Fields> {
 
@@ -21,7 +20,8 @@ public interface IExecutions extends IData<IExecutions.Fields> {
             List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
             if (!namespaceFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.NAMESPACE));
-                namespaceFilters.forEach(f -> {
+                namespaceFilters.forEach(f ->
+                {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
                 });
             }
@@ -29,11 +29,12 @@ public interface IExecutions extends IData<IExecutions.Fields> {
             List<QueryFilter> labelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LABELS)).toList();
             if (!labelFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LABELS));
-                labelFilters.forEach(f -> {
+                labelFilters.forEach(f ->
+                {
                     if (f.value() instanceof Map<?, ?> m) {
-                        m.forEach((key, value) -> updatedWhere.add(Contains.<Fields>builder().field(Fields.LABELS).labelKey(key.toString()).value(value).build()));
+                        m.forEach((key, value) -> updatedWhere.add(Contains.<Fields> builder().field(Fields.LABELS).labelKey(key.toString()).value(value).build()));
                     } else {
-                        updatedWhere.add(Contains.<Fields>builder().field(Fields.LABELS).value(f.value()).build());
+                        updatedWhere.add(Contains.<Fields> builder().field(Fields.LABELS).value(f.value()).build());
                     }
                 });
             }
@@ -41,7 +42,8 @@ public interface IExecutions extends IData<IExecutions.Fields> {
             List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
             if (!flowFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
-                flowFilters.forEach(f -> {
+                flowFilters.forEach(f ->
+                {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
                 });
             }
@@ -49,23 +51,22 @@ public interface IExecutions extends IData<IExecutions.Fields> {
             List<QueryFilter> stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
             if (!stateFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.STATE));
-                stateFilters.forEach(f -> {
+                stateFilters.forEach(f ->
+                {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.STATE, f.value()));
                 });
             }
 
-
         }
-
 
         if (startDate != null || endDate != null) {
             if (startDate != null) {
                 updatedWhere.removeIf(f -> f.getField().equals(Fields.START_DATE));
-                updatedWhere.add(GreaterThanOrEqualTo.<Fields>builder().field(Fields.START_DATE).value(startDate.toInstant()).build());
+                updatedWhere.add(GreaterThanOrEqualTo.<Fields> builder().field(Fields.START_DATE).value(startDate.toInstant()).build());
             }
             if (endDate != null) {
                 updatedWhere.removeIf(f -> f.getField().equals(Fields.END_DATE));
-                updatedWhere.add(LessThanOrEqualTo.<Fields>builder().field(Fields.END_DATE).value(endDate.toInstant()).build());
+                updatedWhere.add(LessThanOrEqualTo.<Fields> builder().field(Fields.END_DATE).value(endDate.toInstant()).build());
             }
         }
 

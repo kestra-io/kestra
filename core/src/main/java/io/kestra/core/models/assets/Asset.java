@@ -1,11 +1,16 @@
 package io.kestra.core.models.assets;
 
+import java.time.Instant;
+import java.util.*;
+
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -13,9 +18,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
-import java.util.*;
 
 @Getter
 @NoArgsConstructor
@@ -63,8 +65,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         Map<String, Object> metadata,
         Instant created,
         Instant updated,
-        boolean deleted
-    ) {
+        boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
         this.id = id;

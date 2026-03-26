@@ -1,13 +1,14 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.triggers.TriggerContext;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.triggers.TriggerId;
 
 /**
  * Utility class for server logging
@@ -19,7 +20,8 @@ public final class Logs {
     private static final String TRIGGER_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[trigger: {}] ";
     private static final String TASKRUN_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[task: {}] [execution: {}] [taskrun: {}] ";
 
-    private Logs() {}
+    private Logs() {
+    }
 
     public static void logExecution(FlowId flow, Logger logger, Level level, String message, Object... args) {
         String finalMsg = FLOW_PREFIX_WITH_TENANT + message;
@@ -43,15 +45,15 @@ public final class Logs {
     }
 
     /**
-     * Log a {@link TriggerContext} via the scheduler logger named: 'trigger.{tenantId}.{namespace}.{flowId}.{triggerId}'.
+     * Log a {@link TriggerId} via the scheduler logger named: 'trigger.{tenantId}.{namespace}.{flowId}.{triggerId}'.
      */
-    public static void logTrigger(TriggerContext triggerContext, Level level, String message, Object... args) {
-        Logger logger = logger(triggerContext);
-        logTrigger(triggerContext, logger, level, message, args);
+    public static void logTrigger(TriggerId trigger, Level level, String message, Object... args) {
+        Logger logger = logger(trigger);
+        logTrigger(trigger, logger, level, message, args);
     }
 
-    public static void logTrigger(TriggerContext triggerContext, Logger logger, Level level, String message, Object... args) {
-        Object[] executionArgs = new Object[] { triggerContext.getTenantId(), triggerContext.getNamespace(), triggerContext.getFlowId(), triggerContext.getTriggerId() };
+    public static void logTrigger(TriggerId trigger, Logger logger, Level level, String message, Object... args) {
+        Object[] executionArgs = new Object[] { trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
         logger.atLevel(level).log(TRIGGER_PREFIX_WITH_TENANT + message, finalArgs);
     }
@@ -77,9 +79,9 @@ public final class Logs {
         );
     }
 
-    private static Logger logger(TriggerContext triggerContext) {
+    private static Logger logger(TriggerId trigger) {
         return LoggerFactory.getLogger(
-            "scheduler." + triggerContext.getTenantId() + "." + triggerContext.getNamespace() + "." + triggerContext.getFlowId() + "." + triggerContext.getTriggerId()
+            "scheduler." + trigger.getTenantId() + "." + trigger.getNamespace() + "." + trigger.getFlowId() + "." + trigger.getTriggerId()
         );
     }
 

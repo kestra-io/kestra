@@ -35,7 +35,7 @@ public interface Disposable {
      * Creates a new {@code Disposable} from a list of disposable.
      *
      * @param disposables The list.
-     * @return  a new {@code Disposable}
+     * @return a new {@code Disposable}
      */
     static Disposable of(List<Disposable> disposables) {
         return of(() -> disposables.forEach(Disposable::dispose));

@@ -1,15 +1,15 @@
 package io.kestra.core.models.property;
 
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.StorageContext;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.StorageContext;
 
 /**
  * Helper class for fetching content from a URI.

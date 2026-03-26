@@ -1,11 +1,11 @@
 package io.kestra.core.services;
 
+import java.util.Collections;
+import java.util.List;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.Collections;
-import java.util.List;
 
 @Singleton
 public class StartExecutorService {
@@ -27,7 +27,7 @@ public class StartExecutorService {
             }
 
             this.startExecutors = startExecutors;
-            this.notStartExecutors  =notStartExecutors;
+            this.notStartExecutors = notStartExecutors;
         }
     }
 

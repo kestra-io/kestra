@@ -1,5 +1,17 @@
 package io.kestra.plugin.core.storage;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.ReversedLinesFileReader;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -8,21 +20,11 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.FileUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.Charsets;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.ReversedLinesFileReader;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 @SuperBuilder
 @ToString
@@ -42,22 +44,22 @@ import java.nio.charset.StandardCharsets;
             title = "",
             full = true,
             code = """
-                id: reverse_file
-                namespace: company.team
+                    id: reverse_file
+                    namespace: company.team
 
-                tasks:
-                  - id: generate_file
-                    type: io.kestra.plugin.scripts.shell.Commands
-                    commands:
-                      - echo "1\n2\n3" > numbers.txt
-                    outputFiles:
-                      - "numbers.txt"
+                    tasks:
+                      - id: generate_file
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                          - echo "1\n2\n3" > numbers.txt
+                        outputFiles:
+                          - "numbers.txt"
 
-                  - id: reverse
-                    type: io.kestra.plugin.core.storage.Reverse
-                    from: "{{ outputs.generate_file.outputFiles['numbers.txt'] }}"
+                      - id: reverse
+                        type: io.kestra.plugin.core.storage.Reverse
+                        from: "{{ outputs.generate_file.outputFiles['numbers.txt'] }}"
 
-            """
+                """
         ),
     },
     aliases = "io.kestra.core.tasks.storages.Reverse"

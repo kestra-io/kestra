@@ -1,17 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import com.google.common.io.CharStreams;
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.Rethrow;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,6 +10,21 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Test;
+
+import com.google.common.io.CharStreams;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.Rethrow;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,7 +98,7 @@ class SplitTest {
 
         Split.Output run = result.run(runContext);
         assertThat(run.getUris().size()).isEqualTo(3);
-        
+
         String allContent = readAll(run.getUris());
         assertThat(allContent).contains("[ERROR] Error message 1");
         assertThat(allContent).contains("[WARN] Warning message 1");
@@ -117,7 +120,6 @@ class SplitTest {
             .collect(Collectors.joining());
     }
 
-
     URI storageUpload(int count) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("unit", "");
 
@@ -136,7 +138,7 @@ class SplitTest {
 
         List<String> regexContent = List.of(
             "[ERROR] Error message 1",
-            "[WARN] Warning message 1", 
+            "[WARN] Warning message 1",
             "[INFO] Info message 1",
             "[ERROR] Error message 2",
             "[WARN] Warning message 2",

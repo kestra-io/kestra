@@ -7,11 +7,6 @@ labels:
 inputs:
 - id: string
   type: STRING
-- id: enum
-  type: ENUM
-  values:
-    - ENUM_VALUE
-    - OTHER_ONE
 - id: optional
   type: STRING
   required: false
@@ -93,12 +88,12 @@ inputs:
   after: "01:00:00"
   before: "11:59:59"
   required: false
-- name: secret
+- id: secret
   type: SECRET
-- name: array
+- id: array
   type: ARRAY
   itemType: INT
-- name: yaml1
+- id: yaml1
   type: YAML
   defaults:
     property: something
@@ -107,7 +102,7 @@ inputs:
       value: value1
     - key: key2
       value: value2
-- name: yaml2
+- id: yaml2
   type: YAML
   defaults:
     property: something
@@ -117,7 +112,7 @@ inputs:
       - key: key2
         value: value2
 # required true and an empty default value will only work if we correctly serialize default values which is what this input is about to test.
-- name: empty
+- id: empty
   type: STRING
   defaults: ''
   required: true

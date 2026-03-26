@@ -1,15 +1,16 @@
 package io.kestra.plugin.core.dashboard.data;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.dashboards.filters.*;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.filters.*;
+
 public interface IMetrics extends IData<IMetrics.Fields> {
 
-    default List<AbstractFilter<IMetrics.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<IMetrics.Fields>> where) {
+    default List<AbstractFilter<IMetrics.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate,
+        List<AbstractFilter<IMetrics.Fields>> where) {
         List<AbstractFilter<IMetrics.Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
 
         if (filters == null) {
@@ -19,7 +20,8 @@ public interface IMetrics extends IData<IMetrics.Fields> {
         List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
         if (!namespaceFilters.isEmpty()) {
             updatedWhere.removeIf(filter -> filter.getField().equals(Fields.NAMESPACE));
-            namespaceFilters.forEach(f -> {
+            namespaceFilters.forEach(f ->
+            {
                 updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
             });
         }
@@ -27,7 +29,8 @@ public interface IMetrics extends IData<IMetrics.Fields> {
         List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
         if (!flowFilters.isEmpty()) {
             updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
-            flowFilters.forEach(f -> {
+            flowFilters.forEach(f ->
+            {
                 updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
             });
         }

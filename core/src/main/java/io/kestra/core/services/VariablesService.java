@@ -1,12 +1,13 @@
 package io.kestra.core.services;
 
+import java.util.Collections;
+import java.util.Map;
+
 import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.storages.StorageContext;
-import jakarta.inject.Singleton;
 
-import java.util.Collections;
-import java.util.Map;
+import jakarta.inject.Singleton;
 
 /**
  * Service for working with {@link Variables}.

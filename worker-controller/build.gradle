@@ -1,0 +1,57 @@
+plugins {
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+ext {
+    grpcVersion = '1.71.0'
+    protobufVersion = '3.25.1'
+}
+
+configurations {
+    tests
+    implementation.extendsFrom(micronaut)
+}
+
+dependencies {
+    // Kestra
+    annotationProcessor project(':processor')
+    implementation project(":core")
+
+    implementation group: 'dev.failsafe', name: 'failsafe'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+    
+    // test
+    testAnnotationProcessor project(':processor')
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':storage-local')
+
+    testImplementation project(':tests')
+    testImplementation project(':jdbc')
+    testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':jdbc-h2')
+    testImplementation("io.micronaut.sql:micronaut-jooq")
+    
+    // gRPC
+    implementation("io.micronaut.grpc:micronaut-grpc-server-runtime")
+    implementation("io.micronaut.grpc:micronaut-grpc-client-runtime")
+    implementation("io.grpc:grpc-services:$grpcVersion")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {
+                // avoid issues javax packages
+                option '@generated=omit'
+            }
+        }
+    }
+}

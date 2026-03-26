@@ -1,17 +1,19 @@
 package io.kestra.core.metrics;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.util.Collections;
-import java.util.List;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -43,10 +45,12 @@ class MetricRegistryTest {
             .flowId("flow")
             .flowRevision(1)
             .state(State.of(State.Type.SUCCESS, Collections.emptyList()))
-            .labels(List.of(
-                new Label("execution-label-foo", "bar"),
-                new Label(Label.CORRELATION_ID, "correlationId")
-            ))
+            .labels(
+                List.of(
+                    new Label("execution-label-foo", "bar"),
+                    new Label(Label.CORRELATION_ID, "correlationId")
+                )
+            )
             .build();
         var tags = metricRegistry.tags(execution);
 
@@ -69,11 +73,13 @@ class MetricRegistryTest {
             .flowId("flow")
             .flowRevision(1)
             .state(State.of(State.Type.SUCCESS, Collections.emptyList()))
-            .labels(List.of(
-                new Label("execution-label-foo", "test1"),
-                new Label("execution-label-bar", "test2"),
-                new Label(Label.CORRELATION_ID, "correlationId")
-            ))
+            .labels(
+                List.of(
+                    new Label("execution-label-foo", "test1"),
+                    new Label("execution-label-bar", "test2"),
+                    new Label(Label.CORRELATION_ID, "correlationId")
+                )
+            )
             .build();
 
         assertThat(metricRegistry.tags(executionContainingConfiguredLabel)).containsExactly(
@@ -90,10 +96,12 @@ class MetricRegistryTest {
             .flowId("flow")
             .flowRevision(1)
             .state(State.of(State.Type.SUCCESS, Collections.emptyList()))
-            .labels(List.of(
-                new Label("execution-label-bar", "test2"),
-                new Label(Label.CORRELATION_ID, "correlationId")
-            ))
+            .labels(
+                List.of(
+                    new Label("execution-label-bar", "test2"),
+                    new Label(Label.CORRELATION_ID, "correlationId")
+                )
+            )
             .build();
 
         assertThat(metricRegistry.tags(executionNotContainingConfiguredLabel)).containsExactly(

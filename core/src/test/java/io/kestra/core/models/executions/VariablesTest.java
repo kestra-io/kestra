@@ -1,15 +1,17 @@
 package io.kestra.core.models.executions;
 
+import java.net.URI;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.net.URI;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;

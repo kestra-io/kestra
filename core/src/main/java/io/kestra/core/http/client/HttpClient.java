@@ -1,25 +1,22 @@
 package io.kestra.core.http.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.HttpSseEvent;
-import io.kestra.core.http.client.apache.*;
-import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.micrometer.common.KeyValues;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultApacheHttpClientObservationConvention;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
-import io.micrometer.observation.ObservationRegistry;
-import io.micronaut.http.MediaType;
-import jakarta.annotation.Nullable;
-import lombok.Builder;
-import lombok.extern.slf4j.Slf4j;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.List;
+import java.util.function.Consumer;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.ContextBuilder;
@@ -43,21 +40,28 @@ import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.util.List;
-import java.util.function.Consumer;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpSseEvent;
+import io.kestra.core.http.client.apache.*;
+import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.micrometer.common.KeyValues;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultApacheHttpClientObservationConvention;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
+import io.micrometer.observation.ObservationRegistry;
+import io.micronaut.http.MediaType;
+import jakarta.annotation.Nullable;
+import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HttpClient implements Closeable {
@@ -72,7 +76,7 @@ public class HttpClient implements Closeable {
         this.runContext = runContext;
         this.configuration = configuration == null ? HttpConfiguration.builder().build() : configuration;
         if (runContext instanceof DefaultRunContext defaultRunContext) {
-            this.observationRegistry = defaultRunContext.getApplicationContext().findBean(ObservationRegistry.class).orElse(null);
+            this.observationRegistry = defaultRunContext.services().observationRegistry().orElse(null);
         }
 
         this.client = this.createClient();
@@ -89,21 +93,24 @@ public class HttpClient implements Closeable {
 
         if (observationRegistry != null) {
             // micrometer, must be placed before the retry strategy (see https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
-            builder.addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
+            builder.addExecInterceptorAfter(
+                ChainElement.RETRY.name(), "micrometer",
                 new ObservationExecChainHandler(observationRegistry, new CustomApacheHttpClientObservationConvention())
             );
         }
 
         // logger
         if (this.configuration.getLogs() != null && this.configuration.getLogs().length > 0) {
-            if (ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_HEADERS) ||
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
+            if (
+                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_HEADERS) ||
+                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
             ) {
                 builder.addRequestInterceptorLast(new LoggingRequestInterceptor(runContext.logger(), this.configuration.getLogs()));
             }
 
-            if (ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_HEADERS) ||
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
+            if (
+                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_HEADERS) ||
+                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
             ) {
                 builder.addResponseInterceptorLast(new LoggingResponseInterceptor(runContext.logger(), this.configuration.getLogs()));
             }
@@ -214,12 +221,12 @@ public class HttpClient implements Closeable {
      */
     public <T> HttpResponse<T> request(HttpRequest request, Class<T> cls) throws HttpClientException, IllegalVariableEvaluationException {
         boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
-        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ?
-            runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class) :
-            null;
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
+            : null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, r -> {
+        return this.request(request, httpClientContext, r ->
+        {
             this.throwIfResponseNotAllowed(r, httpClientContext, allowFailed, allowedResponseCodes);
             T body = bodyHandler(cls, r.getEntity());
 
@@ -236,12 +243,12 @@ public class HttpClient implements Closeable {
      */
     public HttpResponse<Void> request(HttpRequest request, Consumer<HttpResponse<InputStream>> consumer) throws HttpClientException, IllegalVariableEvaluationException {
         boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
-        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ?
-            runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class) :
-            null;
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
+            : null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, r -> {
+        return this.request(request, httpClientContext, r ->
+        {
             this.throwIfResponseNotAllowed(r, httpClientContext, allowFailed, allowedResponseCodes);
             HttpResponse<InputStream> from = HttpResponse.from(
                 r,
@@ -265,14 +272,15 @@ public class HttpClient implements Closeable {
      */
     public <T> HttpResponse<T> request(HttpRequest request) throws HttpClientException, IllegalVariableEvaluationException {
         boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
-        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ?
-            runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class) :
-            null;
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ? runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class)
+            : null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, response -> {
+        return this.request(request, httpClientContext, response ->
+        {
             this.throwIfResponseNotAllowed(response, httpClientContext, allowFailed, allowedResponseCodes);
-            T body = JacksonMapper.ofJson().readValue(response.getEntity().getContent(), new TypeReference<>() {});
+            T body = JacksonMapper.ofJson().readValue(response.getEntity().getContent(), new TypeReference<>() {
+            });
 
             return HttpResponse.from(response, body, request, httpClientContext);
         });
@@ -290,11 +298,11 @@ public class HttpClient implements Closeable {
     public <T> HttpResponse<Void> sseRequest(
         HttpRequest request,
         Class<T> cls,
-        Consumer<HttpSseEvent<T>> eventConsumer
-    ) throws HttpClientException, IllegalVariableEvaluationException {
+        Consumer<HttpSseEvent<T>> eventConsumer) throws HttpClientException, IllegalVariableEvaluationException {
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        HttpClientResponseHandler<HttpResponse<Void>> responseHandler = response -> {
+        HttpClientResponseHandler<HttpResponse<Void>> responseHandler = response ->
+        {
 
             parseSse(response.getEntity().getContent(), cls, eventConsumer);
 
@@ -406,8 +414,7 @@ public class HttpClient implements Closeable {
         String eventId,
         String eventName,
         String comment,
-        Duration retry
-    ) {
+        Duration retry) {
         String dataStr = dataBuffer.toString();
         T parsedData = null;
 
@@ -425,14 +432,13 @@ public class HttpClient implements Closeable {
             }
         }
 
-        HttpSseEvent<T> event = HttpSseEvent.<T>builder()
+        HttpSseEvent<T> event = HttpSseEvent.<T> builder()
             .data(parsedData)
             .id(eventId)
             .name(eventName)
             .comment(comment)
             .retry(retry)
             .build();
-
 
         if (eventConsumer != null) {
             eventConsumer.accept(event);
@@ -459,7 +465,8 @@ public class HttpClient implements Closeable {
             AuthScope digestScope = new AuthScope(uri.getHost(), port);
             UsernamePasswordCredentials digestCredentials = new UsernamePasswordCredentials(username, password.toCharArray());
 
-            httpClientContext.setCredentialsProvider((authScope, context) -> {
+            httpClientContext.setCredentialsProvider((authScope, context) ->
+            {
                 if (digestScope.match(authScope) >= 0) {
                     return digestCredentials;
                 }
@@ -474,8 +481,7 @@ public class HttpClient implements Closeable {
         org.apache.hc.core5.http.HttpResponse response,
         HttpClientContext context,
         boolean allowFailed,
-        List<Integer> allowedResponseCodes
-    ) throws IOException {
+        List<Integer> allowedResponseCodes) throws IOException {
         if (isAllowedStatusCode(response.getCode(), allowFailed, allowedResponseCodes)) {
             return;
         }
@@ -498,8 +504,7 @@ public class HttpClient implements Closeable {
     private <T> HttpResponse<T> request(
         HttpRequest request,
         HttpClientContext httpClientContext,
-        HttpClientResponseHandler<HttpResponse<T>> responseHandler
-    ) throws HttpClientException {
+        HttpClientResponseHandler<HttpResponse<T>> responseHandler) throws HttpClientException {
         try {
             return this.client.execute(request.to(runContext), httpClientContext, responseHandler);
         } catch (SocketException e) {

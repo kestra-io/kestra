@@ -1,6 +1,7 @@
 package io.kestra.core.server;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+
 import io.kestra.core.utils.Enums;
 
 /**
@@ -12,6 +13,7 @@ public enum ServiceType {
     SCHEDULER,
     WEBSERVER,
     WORKER,
+    CONTROLLER,
     INVALID;
 
     @JsonCreator

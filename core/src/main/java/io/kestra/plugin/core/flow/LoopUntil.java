@@ -1,6 +1,16 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -19,21 +29,14 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
-import io.micronaut.core.annotation.Introspected;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @SuperBuilder
 @ToString
@@ -172,13 +175,15 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             return false;
         }
 
-        Integer iterationCount = Optional.ofNullable(parentTaskRun.getOutputs())
-            .map(outputs -> (Integer) outputs.get("iterationCount"))
+        Integer iterationCount = Optional.ofNullable(runContext.currentOutput())
+            .map(out -> (Integer) out.get("iterationCount"))
             .orElse(0);
 
         Optional<Integer> maxIterations = runContext.render(this.getCheckFrequency().getMaxIterations()).as(Integer.class);
         if (maxIterations.isPresent() && iterationCount > maxIterations.get()) {
-            if (printLog) {logger.warn("Max iterations reached");}
+            if (printLog) {
+                logger.warn("Max iterations reached");
+            }
             return true;
         }
         Instant creationDate = parentTaskRun.getState()
@@ -189,10 +194,14 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             .findFirst().get()
             .getDate();
         Optional<Duration> maxDuration = runContext.render(this.getCheckFrequency().getMaxDuration()).as(Duration.class);
-        if (maxDuration.isPresent()
-            && creationDate != null
-            && creationDate.plus(maxDuration.get()).isBefore(Instant.now())) {
-            if (printLog) {logger.warn("Max duration reached");}
+        if (
+            maxDuration.isPresent()
+                && creationDate != null
+                && creationDate.plus(maxDuration.get()).isBefore(Instant.now())
+        ) {
+            if (printLog) {
+                logger.warn("Max duration reached");
+            }
 
             return true;
         }
@@ -207,9 +216,10 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             return Optional.empty();
         }
 
-        if (childTaskExecuted
-            && this.reachedMaximums(runContext, execution, parentTaskRun, true)
-            && Boolean.TRUE.equals(runContext.render(this.failOnMaxReached).as(Boolean.class).orElseThrow())
+        if (
+            childTaskExecuted
+                && this.reachedMaximums(runContext, execution, parentTaskRun, true)
+                && Boolean.TRUE.equals(runContext.render(this.failOnMaxReached).as(Boolean.class).orElseThrow())
         ) {
             return Optional.of(State.Type.FAILED);
         }
@@ -233,30 +243,31 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
         return execution
             .getTaskRunList()
             .stream()
-            .filter(t -> t.getParentTaskRunId() != null
-                && t.getParentTaskRunId().equals(parentTaskRun.getId())
-                && t.getState().isTerminatedNoFail()
+            .filter(
+                t -> t.getParentTaskRunId() != null
+                    && t.getParentTaskRunId().equals(parentTaskRun.getId())
+                    && t.getState().isTerminatedNoFail()
             ).count() == tasks.size();
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public LoopUntil.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
-       Map<String, Object> outputs = (Map<String, Object>) runContext.getVariables().get("outputs");
-        if (outputs != null && outputs.get(this.id) != null) {
-            return Output.builder().iterationCount((Integer) ((Map<String, Object>) outputs.get(this.id)).get("iterationCount")).build();
+        Map<String, Object> outputs = runContext.currentOutput();
+        if (!MapUtils.isEmpty(outputs)) {
+            return Output.builder().iterationCount((Integer) outputs.get("iterationCount")).build();
         }
-        return LoopUntil.Output.builder()
+        return Output.builder()
             .iterationCount(INITIAL_LOOP_VALUE)
             .build();
     }
 
-    public LoopUntil.Output outputs(TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        String value = parentTaskRun != null ?
-            String.valueOf(Optional.ofNullable(parentTaskRun.getOutputs())
+    public LoopUntil.Output outputs(Map<String, Object> previousOutput) throws IllegalVariableEvaluationException {
+        String value = String.valueOf(
+            Optional.ofNullable(previousOutput)
                 .map(outputs -> outputs.get("iterationCount"))
-                .orElse("0")) : "0";
+                .orElse("0")
+        );
 
         return Output.builder()
             .iterationCount(Integer.parseInt(value) + 1)
@@ -270,7 +281,6 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     }
 
     @SuperBuilder(toBuilder = true)
-    @Introspected
     @Getter
     @NoArgsConstructor
     public static class CheckFrequency {

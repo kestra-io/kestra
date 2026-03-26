@@ -1,6 +1,7 @@
 package io.kestra.webserver.utils.filepreview;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.Getter;
 
 @Getter

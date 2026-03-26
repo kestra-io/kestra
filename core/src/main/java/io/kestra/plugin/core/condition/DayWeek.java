@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -9,13 +12,11 @@ import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -53,7 +54,7 @@ import jakarta.validation.constraints.NotNull;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.DayWeekCondition", "io.kestra.plugin.core.condition.DayWeekCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.DayWeekCondition", "io.kestra.plugin.core.condition.DayWeekCondition" }
 )
 public class DayWeek extends Condition implements ScheduleCondition {
     @NotNull

@@ -1,5 +1,17 @@
 package io.kestra.plugin.core.http;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
@@ -11,20 +23,10 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalInt;
 
 @SuperBuilder
 @ToString
@@ -358,9 +360,11 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
             if (body != null) {
                 OptionalInt illegalChar = body.chars().filter(c -> !Character.isDefined(c)).findFirst();
                 if (illegalChar.isPresent()) {
-                    throw new IllegalArgumentException("Illegal unicode code point in request body: " + illegalChar.getAsInt() +
-                        ", the Request task only support valid Unicode strings as body.\n" +
-                        "You can try using the Download task instead.");
+                    throw new IllegalArgumentException(
+                        "Illegal unicode code point in request body: " + illegalChar.getAsInt() +
+                            ", the Request task only support valid Unicode strings as body.\n" +
+                            "You can try using the Download task instead."
+                    );
                 }
             }
 
@@ -379,7 +383,8 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
         return bytes;
     }
 
-    public Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body) throws GeneralSecurityException, URISyntaxException, IOException, IllegalVariableEvaluationException {
+    public Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body)
+        throws GeneralSecurityException, URISyntaxException, IOException, IllegalVariableEvaluationException {
         boolean encrypt = runContext.render(this.encryptBody).as(Boolean.class).orElseThrow();
         return Output.builder()
             .code(response.getStatus().getCode())

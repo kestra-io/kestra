@@ -1,12 +1,14 @@
 package io.kestra.core.repositories;
 
+import java.util.*;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.models.Setting;
 import io.kestra.jdbc.JdbcMapper;
-import jakarta.validation.ConstraintViolationException;
 
-import java.util.*;
+import jakarta.validation.ConstraintViolationException;
 
 public class InMemorySettingRepository implements SettingRepositoryInterface {
     private final Map<String, String> settings = new HashMap<>();
@@ -19,8 +21,10 @@ public class InMemorySettingRepository implements SettingRepositoryInterface {
 
     @Override
     public List<Setting> findAll() {
-        return new ArrayList<>(settings.values().stream().map(this::deserialize)
-            .filter(Optional::isPresent).map(Optional::get).toList());
+        return new ArrayList<>(
+            settings.values().stream().map(this::deserialize)
+                .filter(Optional::isPresent).map(Optional::get).toList()
+        );
     }
 
     @Override
@@ -55,6 +59,7 @@ public class InMemorySettingRepository implements SettingRepositoryInterface {
             throw new RuntimeException(e);
         }
     }
+
     private Optional<Setting> deserialize(String jsonString) {
         if (jsonString == null) {
             return Optional.empty();

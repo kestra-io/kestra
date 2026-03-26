@@ -1,13 +1,14 @@
 package io.kestra.core.runners.test;
 
+import java.util.Arrays;
+
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Arrays;
 
 @SuperBuilder
 @ToString

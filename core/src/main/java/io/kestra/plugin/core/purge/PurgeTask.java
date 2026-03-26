@@ -1,24 +1,28 @@
 package io.kestra.plugin.core.purge;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public interface PurgeTask<T> {
     Property<List<String>> getNamespaces();
+
     Property<String> getNamespacePattern();
+
     Property<Boolean> getIncludeChildNamespaces();
+
     Property<String> filterPattern();
 
     String filterTargetExtractor(T item);
@@ -26,8 +30,7 @@ public interface PurgeTask<T> {
     @VisibleForTesting
     default List<String> findNamespaces(RunContext runContext) throws IllegalVariableEvaluationException {
         String tenantId = runContext.flowInfo().tenantId();
-        FlowRepositoryInterface flowRepositoryInterface = ((DefaultRunContext) runContext)
-            .getApplicationContext().getBean(FlowRepositoryInterface.class);
+        FlowRepositoryInterface flowRepositoryInterface = ((DefaultRunContext) runContext).services().additionalService(FlowRepositoryInterface.class);
         List<String> distinctNamespaces = flowRepositoryInterface.findDistinctNamespace(tenantId);
         List<String> renderedNamespaces = runContext.render(getNamespaces()).asList(String.class);
         String renderedNamespacePattern = runContext.render(getNamespacePattern()).as(String.class).orElse(null);
@@ -38,30 +41,38 @@ public interface PurgeTask<T> {
 
         List<String> filesNamespaces = new ArrayList<>();
         if (StringUtils.isNotBlank(renderedNamespacePattern)) {
-            filesNamespaces.addAll(distinctNamespaces.stream()
-                .filter(ns -> FilenameUtils.wildcardMatch(ns, renderedNamespacePattern))
-                .toList());
+            filesNamespaces.addAll(
+                distinctNamespaces.stream()
+                    .filter(ns -> FilenameUtils.wildcardMatch(ns, renderedNamespacePattern))
+                    .toList()
+            );
         } else if (!renderedNamespaces.isEmpty()) {
             if (runContext.render(getIncludeChildNamespaces()).as(Boolean.class).orElse(true)) {
-                filesNamespaces.addAll(distinctNamespaces.stream()
-                    .filter(ns -> {
-                        for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.startsWith(renderedNamespace)) {
-                                return true;
+                filesNamespaces.addAll(
+                    distinctNamespaces.stream()
+                        .filter(ns ->
+                        {
+                            for (String renderedNamespace : renderedNamespaces) {
+                                if (ns.startsWith(renderedNamespace)) {
+                                    return true;
+                                }
                             }
-                        }
-                        return false;
-                    }).toList());
+                            return false;
+                        }).toList()
+                );
             } else {
-                filesNamespaces.addAll(distinctNamespaces.stream()
-                    .filter(ns -> {
-                        for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.equals(renderedNamespace)) {
-                                return true;
+                filesNamespaces.addAll(
+                    distinctNamespaces.stream()
+                        .filter(ns ->
+                        {
+                            for (String renderedNamespace : renderedNamespaces) {
+                                if (ns.equals(renderedNamespace)) {
+                                    return true;
+                                }
                             }
-                        }
-                        return false;
-                    }).toList());
+                            return false;
+                        }).toList()
+                );
             }
 
             // add the rendered namespace if not already present, this can happen it's a parent namespace with no flow

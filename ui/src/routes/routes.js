@@ -78,11 +78,6 @@ export default [
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
     {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?",   component: () => import("../components/plugins/Plugin.vue")},
 
-    //Templates
-    {name: "templates/list", path: "/:tenant?/templates", component: () => import("../components/templates/Templates.vue")},
-    {name: "templates/create", path: "/:tenant?/templates/new", component: () => import("../components/templates/TemplateEdit.vue")},
-    {name: "templates/update", path: "/:tenant?/templates/edit/:namespace/:id", component: () => import("../components/templates/TemplateEdit.vue")},
-
     //Logs
     {
         name: "logs/list",

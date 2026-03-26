@@ -1,13 +1,14 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.QueryFilter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.jooq.Name;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Predicate;
+import io.kestra.core.models.QueryFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +36,8 @@ public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
 
     @Test
     public void defaultConditions() {
-        Arrays.stream(QueryFilter.Field.values()).filter(Predicate.not(fieldsWithSpecificConditions::contains)).forEach(field -> {
+        Arrays.stream(QueryFilter.Field.values()).filter(Predicate.not(fieldsWithSpecificConditions::contains)).forEach(field ->
+        {
             String assertValue = "anyValue";
             Name columnName = DSL.quotedName(field.name().toLowerCase());
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.EQUALS, null)).isEqualTo(
@@ -69,8 +71,8 @@ public class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                 DSL.field(columnName).likeRegex(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.PREFIX, null)).isEqualTo(
-                DSL.field(columnName).like(assertValue + ".%")
-                    .or(DSL.field(columnName).eq(assertValue))
+                DSL.field(columnName).eq(assertValue)
+                    .or(DSL.field(columnName).startsWith(assertValue + "."))
             );
         });
     }

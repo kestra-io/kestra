@@ -1,16 +1,5 @@
 package io.kestra.core.repositories;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import io.kestra.core.models.FetchVersion;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.QueryFilter.Field;
-import io.kestra.core.models.QueryFilter.Op;
-import io.kestra.core.models.kv.PersistedKvMetadata;
-import io.kestra.core.utils.TestsUtils;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -18,9 +7,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
+import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.utils.TestsUtils;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 public abstract class AbstractKvMetadataRepositoryTest {
@@ -35,7 +38,8 @@ public abstract class AbstractKvMetadataRepositoryTest {
         kvMetadataRepositoryInterface.save(metadata);
 
         ArrayListTotal<PersistedKvMetadata> persistedMetadata = kvMetadataRepositoryInterface.find(
-            Pageable.UNPAGED, tenant, List.of(filter), false, true);
+            Pageable.UNPAGED, tenant, List.of(filter), false, true
+        );
 
         assertThat(persistedMetadata).hasSize(1);
         assertThat(persistedMetadata.getFirst().getName()).isEqualTo(metadata.getName());
@@ -185,7 +189,6 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(found.getFirst().getVersion()).isEqualTo(1);
         assertThat(found.getFirst().isLast()).isFalse();
 
-
         found = kvMetadataRepositoryInterface.find(
             Pageable.unpaged(),
             tenantId,
@@ -245,18 +248,19 @@ public abstract class AbstractKvMetadataRepositoryTest {
         metadata = kvMetadataRepositoryInterface.save(metadata.toBuilder().description(changedDescription).build());
         assertThat(metadata.getVersion()).isEqualTo(2);
 
-        Integer purgedAmount = kvMetadataRepositoryInterface.purge(List.of(
-            PersistedKvMetadata.builder()
-                .tenantId(tenantId)
-                .namespace(namespace)
-                .name(key).build()
-        ));
+        Integer purgedAmount = kvMetadataRepositoryInterface.purge(
+            List.of(
+                PersistedKvMetadata.builder()
+                    .tenantId(tenantId)
+                    .namespace(namespace)
+                    .name(key).build()
+            )
+        );
 
         assertThat(purgedAmount).isEqualTo(2);
 
         assertThat(kvMetadataRepositoryInterface.findByName(tenantId, namespace, key).isPresent()).isFalse();
     }
-
 
     protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {
         return PersistedKvMetadata.builder()

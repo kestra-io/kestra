@@ -1,15 +1,16 @@
 package io.kestra.repository.postgres;
 
+import java.util.*;
+
+import org.jooq.Condition;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.AbstractJdbcRepository;
-import org.jooq.Condition;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-
-import java.util.*;
 
 public abstract class PostgresExecutionRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Execution> jdbcRepository, String query, Map<String, String> labels) {
@@ -19,8 +20,9 @@ public abstract class PostgresExecutionRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
         }
 
-        if (labels != null)  {
-            labels.forEach((key, value) -> {
+        if (labels != null) {
+            labels.forEach((key, value) ->
+            {
                 String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
                 conditions.add(DSL.condition(sql));
             });
@@ -46,7 +48,8 @@ public abstract class PostgresExecutionRepositoryService {
             }
         } else {
             var labels = input.getLeft();
-            labels.forEach((key, value) -> {
+            labels.forEach((key, value) ->
+            {
                 String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
                 switch (operation) {
                     case EQUALS -> conditions.add(DSL.condition(sql));
@@ -64,13 +67,17 @@ public abstract class PostgresExecutionRepositoryService {
     }
 
     public static Condition statesFilter(List<State.Type> state) {
-        return DSL.or(state
-            .stream()
-            .map(Enum::name)
-            .map(s -> DSL.field("state_current")
-                .eq(DSL.field("CAST(? AS state_type)", SQLDataType.VARCHAR(50).getArrayType(), s)
-                ))
-            .toList()
+        return DSL.or(
+            state
+                .stream()
+                .map(Enum::name)
+                .map(
+                    s -> DSL.field("state_current")
+                        .eq(
+                            DSL.field("CAST(? AS state_type)", SQLDataType.VARCHAR(50).getArrayType(), s)
+                        )
+                )
+                .toList()
         );
     }
 

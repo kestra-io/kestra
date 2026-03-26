@@ -93,7 +93,7 @@
             ],
             button: {
                 text: "Talk to us",
-                href: "https://kestra.io/demo?utm_source=app$&utm_campaign=enterprise&utm_content=stats"
+                href: "https://kestra.io/demo?utm_source=app$utm_medium=referral&&utm_campaign=enterprise&utm_content=ee"
             }
         },
         {
@@ -110,7 +110,7 @@
             ],
             button: {
                 text: "Join Early Adopter Program",
-                href: "https://kestra.io/cloud?utm_source=app&utm_campaign=cloud&utm_content=stats"
+                href: "https://kestra.io/cloud?utm_source=app&utm_medium=referral&utm_campaign=enterprise&utm_content=cloud"
             }
         }
     ]

@@ -48,7 +48,7 @@ export function useContextButtons() {
                   title: t("contextBar.help"),
                   icon: Slack,
 
-                  url: "https://kestra.io/slack",
+                  url: "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=context-bar",
               },
               issue: {
                   title: t("contextBar.issue"),
@@ -66,7 +66,7 @@ export function useContextButtons() {
                   title: t("contextBar.star"),
                   icon: Star,
 
-                  url: "https://github.com/kestra-io/kestra",
+                  url: "https://github.com/kestra-io/kestra?utm_source=app&utm_medium=referral&utm_campaign=context-bar",
               },
           }
         : {};

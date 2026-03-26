@@ -1,12 +1,13 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.jdbc.AbstractJdbcRepository;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.List;
+import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.jdbc.AbstractJdbcRepository;
 
 public abstract class H2DashboardRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Dashboard> jdbcRepository, String query) {

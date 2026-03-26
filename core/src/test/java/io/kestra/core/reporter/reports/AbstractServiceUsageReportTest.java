@@ -1,17 +1,5 @@
 package io.kestra.core.reporter.reports;
 
-import io.kestra.core.models.collectors.ServiceUsage;
-import io.kestra.core.reporter.Reportable;
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceType;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,6 +7,20 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.collectors.ServiceUsage;
+import io.kestra.core.reporter.Reportable;
+import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceType;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 @MicronautTest
 public abstract class AbstractServiceUsageReportTest {
@@ -63,10 +65,10 @@ public abstract class AbstractServiceUsageReportTest {
             days++;
         }
 
-
         // When
         Instant now = end.plusDays(1).atStartOfDay(zoneId).toInstant();
-        ServiceUsageReport.ServiceUsageEvent event = serviceUsageReport.report(now,
+        ServiceUsageReport.ServiceUsageEvent event = serviceUsageReport.report(
+            now,
             Reportable.TimeInterval.of(start.atStartOfDay(zoneId), end.plusDays(1).atStartOfDay(zoneId))
         );
 

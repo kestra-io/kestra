@@ -1,18 +1,20 @@
 package io.kestra.core.models.property;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -46,7 +48,6 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
     @NotNull
     private Object from;
-
 
     @Override
     public Output run(RunContext runContext) throws Exception {

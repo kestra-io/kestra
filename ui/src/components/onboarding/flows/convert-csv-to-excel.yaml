@@ -1,0 +1,13 @@
+id: heron_265424
+namespace: company.team
+
+tasks:
+  - id: download_csv
+    type: io.kestra.plugin.core.http.Download
+    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/products.csv
+  - id: convert_csv_to_ion
+    type: io.kestra.plugin.serdes.csv.CsvToIon
+    from: "{{ outputs.download_csv.uri }}"
+  - id: convert_ion_to_excel
+    type: io.kestra.plugin.serdes.excel.IonToExcel
+    from: "{{ outputs.convert_csv_to_ion.uri }}"

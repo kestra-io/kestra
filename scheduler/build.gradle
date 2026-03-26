@@ -5,6 +5,7 @@ configurations {
 dependencies {
     annotationProcessor project(':processor')
     implementation project(":core")
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
     // test
     testAnnotationProcessor project(':processor')

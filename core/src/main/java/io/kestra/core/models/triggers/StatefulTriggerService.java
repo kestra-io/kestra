@@ -1,15 +1,16 @@
 package io.kestra.core.models.triggers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVValueAndMetadata;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.kv.KVMetadata;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 
 public class StatefulTriggerService {
     public record Entry(String uri, String version, Instant modifiedAt, Instant lastSeenAt) {
@@ -18,7 +19,8 @@ public class StatefulTriggerService {
         }
     }
 
-    public record StateUpdate(boolean fire, boolean isNew) {}
+    public record StateUpdate(boolean fire, boolean isNew) {
+    }
 
     public static Map<String, Entry> readState(RunContext runContext, String key, Optional<Duration> ttl) {
         try {
@@ -27,7 +29,8 @@ public class StatefulTriggerService {
                 return new HashMap<>();
             }
 
-            var entries = JacksonMapper.ofJson().readValue((byte[]) kv.get().value(), new TypeReference<List<Entry>>() {});
+            var entries = JacksonMapper.ofJson().readValue((byte[]) kv.get().value(), new TypeReference<List<Entry>>() {
+            });
 
             var cutoff = ttl.map(d -> Instant.now().minus(d)).orElse(Instant.MIN);
 

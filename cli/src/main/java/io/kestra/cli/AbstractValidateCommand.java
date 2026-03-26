@@ -1,9 +1,17 @@
 package io.kestra.cli;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.YamlParser;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -15,20 +23,13 @@ import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import picocli.CommandLine;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 public abstract class AbstractValidateCommand extends AbstractApiCommand {
     @CommandLine.Parameters(index = "0", description = "The directory containing files to check")
     protected Path directory;
 
-    @CommandLine.Option(names = {"--local"}, description = "Whether validation should be done locally or using a remote server", defaultValue = "false")
+    @CommandLine.Option(names = { "--local" }, description = "Whether validation should be done locally or using a remote server", defaultValue = "false")
     protected boolean local;
 
     @Inject
@@ -45,7 +46,8 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
     public static void handleException(ConstraintViolationException e, String resource) {
         stdErr("\t@|fg(red) Unable to parse {0} due to the following error(s):|@", resource);
         e.getConstraintViolations()
-            .forEach(constraintViolation -> {
+            .forEach(constraintViolation ->
+            {
                 stdErr(
                     "\t- @|bold,yellow {0} : {1} |@",
                     constraintViolation.getMessage().replace("\n", " - "),
@@ -76,8 +78,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         ModelValidator modelValidator,
         Function<Object, String> identity,
         Function<Object, List<String>> warningsFunction,
-        Function<Object, List<String>> infosFunction
-    ) throws Exception {
+        Function<Object, List<String>> infosFunction) throws Exception {
         super.call();
 
         AtomicInteger returnCode = new AtomicInteger(0);
@@ -97,7 +98,8 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
 
             if (this.local) {
                 // Perform local validation
-                flows.forEach(flow -> {
+                flows.forEach(flow ->
+                {
                     try {
                         Object parse = YamlParser.parse(flow.toFile(), cls);
                         modelValidator.validate(parse);
@@ -132,7 +134,8 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
                         Argument.listOf(ValidateConstraintViolation.class)
                     );
 
-                    validations.forEach(throwConsumer(validation -> {
+                    validations.forEach(throwConsumer(validation ->
+                    {
                         if (validation.getConstraints() == null) {
                             stdOut("@|green \u2713|@ - {0}", validation.getIdentity());
                         } else {

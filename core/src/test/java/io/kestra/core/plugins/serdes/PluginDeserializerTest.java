@@ -1,13 +1,5 @@
 package io.kestra.core.plugins.serdes;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import io.kestra.core.models.Plugin;
-import io.kestra.core.plugins.PluginRegistry;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +7,16 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+import io.kestra.core.models.Plugin;
+import io.kestra.core.plugins.PluginRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,7 +58,8 @@ class PluginDeserializerTest {
             """;
 
         // When
-        InvalidTypeIdException exception = Assertions.assertThrows(InvalidTypeIdException.class, () -> {
+        InvalidTypeIdException exception = Assertions.assertThrows(InvalidTypeIdException.class, () ->
+        {
             om.readValue(input, TestPluginHolder.class);
         });
 

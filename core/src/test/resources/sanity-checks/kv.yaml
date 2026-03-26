@@ -16,8 +16,7 @@ tasks:
   - id: put
     type: io.kestra.plugin.core.kv.Put
     key: "{{ vars.key }}"
-    value:
-      - value: "{{ vars.data_updated }}"
+    value: "{{ vars.data_updated }}"
 
   - id: get
     type: io.kestra.plugin.core.kv.Get
@@ -37,5 +36,5 @@ tasks:
 
   - id: assert_delete_get_keys
     type: io.kestra.plugin.core.execution.Assert
-    conditions: 
+    conditions:
       - "{{ outputs.get_keys.keys | length == 0 }}"

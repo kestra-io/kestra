@@ -1,15 +1,17 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.time.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 @MicronautTest
 class RenderFunctionTest {
@@ -42,7 +44,11 @@ class RenderFunctionTest {
 
     @Test
     void shouldRenderForNull() throws IllegalVariableEvaluationException {
-        String rendered = variableRenderer.render("{{ render(input) }}", new HashMap<>(){{put("input", null);}});
+        String rendered = variableRenderer.render("{{ render(input) }}", new HashMap<>() {
+            {
+                put("input", null);
+            }
+        });
         Assertions.assertEquals("", rendered);
     }
 
@@ -50,13 +56,13 @@ class RenderFunctionTest {
     void shouldRenderForDateTime() throws IllegalVariableEvaluationException {
         Instant now = Instant.now();
         LocalDateTime datetime = LocalDateTime.ofInstant(now, ZoneOffset.UTC);
-        String rendered = variableRenderer.render("{{ render(input) }}",  Map.of("input", datetime));
+        String rendered = variableRenderer.render("{{ render(input) }}", Map.of("input", datetime));
         Assertions.assertEquals(datetime.toString(), rendered);
     }
 
     @Test
     void shouldRenderForDuration() throws IllegalVariableEvaluationException {
-        String rendered = variableRenderer.render("{{ render(input) }}",  Map.of("input", Duration.ofSeconds(5)));
+        String rendered = variableRenderer.render("{{ render(input) }}", Map.of("input", Duration.ofSeconds(5)));
         Assertions.assertEquals(Duration.ofSeconds(5).toString(), rendered);
     }
 }

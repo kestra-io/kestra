@@ -1,11 +1,13 @@
 package io.kestra.core.models.tasks.logs;
 
-import io.kestra.core.models.executions.LogEntry;
 import java.time.Instant;
+
+import io.kestra.core.models.executions.LogEntry;
 
 public final class LogRecordMapper {
 
-    private LogRecordMapper(){}
+    private LogRecordMapper() {
+    }
 
     public static LogRecord mapToLogRecord(LogEntry log) {
         return mapToLogRecord(log, null);

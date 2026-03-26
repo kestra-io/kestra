@@ -1,39 +1,37 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.ListUtils;
+import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.validations.ScheduleValidation;
-import io.kestra.core.validations.TimezoneId;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
-import lombok.AccessLevel;
 import lombok.*;
+import lombok.AccessLevel;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -56,41 +54,41 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             title = "Schedule a flow every 15 minutes.",
             full = true,
             code = """
-            id: scheduled_flow
-            namespace: company.team
+                id: scheduled_flow
+                namespace: company.team
 
-            tasks:
-              - id: sleep_randomly
-                type: io.kestra.plugin.scripts.shell.Commands
-                taskRunner:
-                  type: io.kestra.plugin.core.runner.Process
-                commands:
-                  - echo "{{ trigger.date ?? execution.startDate }}"
-                  - sleep $((RANDOM % 60 + 1))
+                tasks:
+                  - id: sleep_randomly
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    taskRunner:
+                      type: io.kestra.plugin.core.runner.Process
+                    commands:
+                      - echo "{{ trigger.date ?? execution.startDate }}"
+                      - sleep $((RANDOM % 60 + 1))
 
-            triggers:
-              - id: every_15_minutes
-                type: io.kestra.plugin.core.trigger.Schedule
-                cron: "*/15 * * * *"
-            """
+                triggers:
+                  - id: every_15_minutes
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "*/15 * * * *"
+                """
         ),
         @Example(
             full = true,
             title = "Schedule a flow every day at 6:30 AM",
             code = """
-                id: daily_flow
-                namespace: company.team
+                    id: daily_flow
+                    namespace: company.team
 
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: It's {{ trigger.date ?? taskrun.startDate | date("HH:mm") }}
+                    tasks:
+                      - id: log
+                        type: io.kestra.plugin.core.log.Log
+                        message: It's {{ trigger.date ?? taskrun.startDate | date("HH:mm") }}
 
-                triggers:
-                  - id: schedule
-                    type: io.kestra.plugin.core.trigger.Schedule
-                    cron: 30 6 * * *
-            """
+                    triggers:
+                      - id: schedule
+                        type: io.kestra.plugin.core.trigger.Schedule
+                        cron: 30 6 * * *
+                """
         ),
         @Example(
             title = "Schedule a flow every hour using the cron nickname `@hourly`.",
@@ -136,20 +134,20 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             title = "Schedule a flow every day at 9:00 AM and pause a schedule trigger after a failed execution using the `stopAfter` property.",
             full = true,
             code = """
-            id: business_critical_flow
-            namespace: company.team
+                id: business_critical_flow
+                namespace: company.team
 
-            tasks:
-              - id: important_task
-                type: io.kestra.plugin.core.log.Log
-                message: "if this run fails, disable the schedule until the issue is fixed"
+                tasks:
+                  - id: important_task
+                    type: io.kestra.plugin.core.log.Log
+                    message: "if this run fails, disable the schedule until the issue is fixed"
 
-            triggers:
-              - id: stop_after_failed
-                type: io.kestra.plugin.core.trigger.Schedule
-                cron: "0 9 * * *"
-                stopAfter:
-                  - FAILED"""
+                triggers:
+                  - id: stop_after_failed
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 9 * * *"
+                    stopAfter:
+                      - FAILED"""
         )
     },
     aliases = "io.kestra.core.models.triggers.types.Schedule"
@@ -200,10 +198,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @PluginProperty
     private Boolean withSeconds = false;
 
-    @TimezoneId
-    @Schema(
-        title = "The [time zone identifier](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (i.e. the second column in [the Wikipedia table](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)) to use for evaluating the cron expression. Default value is the server default zone ID."
-    )
     @PluginProperty
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
@@ -213,15 +207,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @Null
     private final Duration interval = null;
 
-    @Valid
-    @Schema(
-        title = "(Deprecated) Conditions on date. Use `conditions` instead.",
-        description = "List of schedule conditions in order to limit the schedule trigger date."
-    )
-    @PluginProperty
-    @Deprecated
-    private List<ScheduleCondition> scheduleConditions;
-    
     private Map<String, Object> inputs;
 
     @Schema(
@@ -234,22 +219,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @Getter(AccessLevel.NONE)
     private transient ExecutionTime executionTime;
 
-    @Schema(
-        title = "(Deprecated) Backfill",
-        description = "This property is deprecated and will be removed in the future. Instead, you can now go to the Triggers tab and start a highly customizable backfill process directly from the UI. This will allow you to backfill missed scheduled executions by providing a specific date range and custom labels. Read more about it in the [Backfill](https://kestra.io/docs/concepts/backfill) documentation."
-    )
-    @PluginProperty
-    @Deprecated
-    private Map<String, Object> backfill;
-    
     private RecoverMissedSchedules recoverMissedSchedules;
-
-    @Override
-    public List<Condition> getConditions() {
-        List<Condition> conditions = Stream.concat(ListUtils.emptyOnNull(this.conditions).stream(),
-            ListUtils.emptyOnNull(this.scheduleConditions).stream().map(c -> (Condition) c)).toList();
-        return conditions.isEmpty() ? null : conditions;
-    }
 
     @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
@@ -279,7 +249,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                         return next.get().truncatedTo(ChronoUnit.SECONDS);
                     }
                 } catch (InternalException e) {
-                    conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
+                    conditionContext.getRunContext().logger()
+                        .warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
                 }
             }
 
@@ -290,12 +261,12 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             // is after the end, then we calculate again the nextDate
             // based on now()
             if (backfill != null && nextDate != null && nextDate.isAfter(backfill.getEnd())) {
-                nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
+                nextDate = computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(null);
             }
         }
         // no previous present & no backfill or recover missed schedules, just provide now
         else {
-            nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
+            nextDate = computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(null);
         }
 
         // if max delay reached, we calculate a new date except if we are doing a backfill
@@ -316,7 +287,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     public ZonedDateTime nextEvaluationDate() {
         // it didn't take into account the schedule condition, but as they are taken into account inside eval() it's OK.
         ExecutionTime executionTime = this.executionTime();
-        return computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
+        return computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(convertDateTime(SchedulerClock.now()));
     }
 
     @Override
@@ -327,7 +298,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 Optional<ZonedDateTime> previous = this.truePreviousNextDateWithCondition(
                     executionTime,
                     conditionContext,
-                    ZonedDateTime.now(),
+                    SchedulerClock.now(),
                     false
                 );
 
@@ -335,10 +306,11 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                     return previous.get().truncatedTo(ChronoUnit.SECONDS);
                 }
             } catch (InternalException e) {
-                conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
+                conditionContext.getRunContext().logger()
+                    .warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
             }
         }
-        return computePreviousEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
+        return computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(convertDateTime(SchedulerClock.now()));
     }
 
     @Override
@@ -373,7 +345,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
         // we are in the future don't allow
         // No use case, just here for prevention but it should never happen
-        if (next.compareTo(ZonedDateTime.now().plus(Duration.ofSeconds(1))) > 0) {
+        if (next.compareTo(SchedulerClock.now().plus(Duration.ofSeconds(1))) > 0) {
             if (log.isTraceEnabled()) {
                 log.trace("Schedule is in the future, execution skipped, this behavior should never happen.");
             }
@@ -410,7 +382,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             null
         );
 
-       return Optional.of(execution);
+        return Optional.of(execution);
     }
 
     public Cron parseCron() {
@@ -442,10 +414,12 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private ConditionContext conditionContext(ConditionContext conditionContext, Output output) {
-        return conditionContext.withVariables(ImmutableMap.of(
-            "schedule", output.toMap(),
-            "trigger", output.toMap()
-        ));
+        return conditionContext.withVariables(
+            ImmutableMap.of(
+                "schedule", output.toMap(),
+                "trigger", output.toMap()
+            )
+        );
     }
 
     @VisibleForTesting
@@ -489,14 +463,12 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     @VisibleForTesting
     Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) throws InternalException {
-        int upperYearBound = ZonedDateTime.now().getYear() + 10;
-        int lowerYearBound = ZonedDateTime.now().getYear() - 10;
+        int upperYearBound = SchedulerClock.now().getYear() + 10;
+        int lowerYearBound = SchedulerClock.now().getYear() - 10;
 
         while ((next && toTestDate.getYear() < upperYearBound) || (!next && toTestDate.getYear() > lowerYearBound)) {
 
-            Optional<ZonedDateTime> currentDate = next ?
-                executionTime.nextExecution(toTestDate) :
-                executionTime.lastExecution(toTestDate);
+            Optional<ZonedDateTime> currentDate = next ? executionTime.nextExecution(toTestDate) : executionTime.lastExecution(toTestDate);
 
             if (currentDate.isEmpty()) {
                 return currentDate;
@@ -512,7 +484,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
             if (!currentConditionContext.getVariables().containsKey("trigger")) {
                 currentConditionContext = currentConditionContext.withVariables(
-                    ImmutableMap.<String, Object>builder()
+                    ImmutableMap.<String, Object> builder()
                         .putAll(currentConditionContext.getVariables())
                         .put("trigger", currentOutput.get().toMap())
                         .build()
@@ -542,10 +514,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         }
 
         while (
-            (output.getDate().getYear() < ZonedDateTime.now().getYear() + 10) &&
-                (output.getDate().getYear() > ZonedDateTime.now().getYear() - 10)
+            (output.getDate().getYear() < SchedulerClock.now().getYear() + 10) &&
+                (output.getDate().getYear() > SchedulerClock.now().getYear() - 10)
         ) {
-            if (output.getDate().plus(this.lateMaximumDelay).compareTo(ZonedDateTime.now()) < 0) {
+            if (output.getDate().plus(this.lateMaximumDelay).compareTo(SchedulerClock.now()) < 0) {
                 output = this.scheduleDates(executionTime, output.getNext()).orElse(null);
                 if (output == null) {
                     return null;
@@ -562,7 +534,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         final ConditionContext finalConditionContext;
         if (!conditionContext.getVariables().containsKey("trigger") && conditionContext.getVariables().containsKey("schedule")) {
             finalConditionContext = conditionContext.withVariables(
-                ImmutableMap.<String, Object>builder()
+                ImmutableMap.<String, Object> builder()
                     .putAll(conditionContext.getVariables())
                     .put("trigger", conditionContext.getVariables().get("schedule"))
                     .build()

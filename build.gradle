@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.3.2"
+    id "com.gradleup.shadow" version "9.4.0"
     id "application"
 
     // test
@@ -38,6 +38,9 @@ plugins {
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.0" apply false
+
+    // Formatting
+    id "io.kestra.gradle.spotless-conventions" version "1.0.3"
 }
 
 idea {
@@ -61,9 +64,17 @@ java {
         languageVersion = JavaLanguageVersion.of(25)
     }
 }
-compileJava {
-    // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-    options.release = 21
+
+
+abstract class GenericLocationProvider implements CommandLineArgumentProvider {
+    @InputFile
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract RegularFileProperty getDistribution()
+
+    @Override
+    Iterable<String> asArguments() {
+        ["-javaagent:${distribution.get().asFile.absolutePath}"]
+    }
 }
 
 dependencies {
@@ -83,18 +94,18 @@ allprojects {
     if (it.name != 'platform') {
         group = "io.kestra"
 
+        // Formatting
+        apply plugin: "io.kestra.gradle.spotless-conventions"
+
         java {
             toolchain {
                 languageVersion = JavaLanguageVersion.of(25)
             }
         }
-        compileJava {
-            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-            options.release = 21
-        }
 
         repositories {
             mavenCentral()
+            mavenLocal()
         }
 
         // micronaut
@@ -189,10 +200,6 @@ subprojects {subProj ->
                 languageVersion = JavaLanguageVersion.of(25)
             }
         }
-        compileJava {
-            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-            options.release = 21
-        }
 
         configurations {
             agent {
@@ -220,7 +227,7 @@ subprojects {subProj ->
             testImplementation "org.junit.jupiter:junit-jupiter-params"
             testImplementation "org.junit-pioneer:junit-pioneer"
             testImplementation 'org.mockito:mockito-junit-jupiter'
-            mockitoAgent("org.mockito:mockito-core:5.22.0") {
+            mockitoAgent("org.mockito:mockito-core:5.23.0") {
                 transitive = false // just the core
             }
 
@@ -231,6 +238,9 @@ subprojects {subProj ->
 
             //assertj
             testImplementation 'org.assertj:assertj-core'
+
+            // awaitility
+            testImplementation 'org.awaitility:awaitility'
 
             agent "org.aspectj:aspectjweaver:1.9.25.1"
 
@@ -243,6 +253,7 @@ subprojects {subProj ->
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")
+                project.develocity.buildScan.value("${t.path}#maxHeapSize", t.maxHeapSize)
             }
             t.doLast {
                 logger.lifecycle("[TASK END]   ${t.path}")
@@ -336,7 +347,7 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
-            t.dependsOn("test")// explicit depend to insure they are run before
+            t.mustRunAfter(tasks.named('test'))
         }
 
         // test task (default)
@@ -355,14 +366,22 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
             commonTestConfig(t)
-            jvmArgs = [
-                "-javaagent:${configurations.agent.singleFile}",
-                "-javaagent:${configurations.mockitoAgent.singleFile}"
-            ]
+            jvmArgumentProviders.add(
+                objects.newInstance(GenericLocationProvider).tap {
+                    distribution = configurations.mockitoAgent.singleFile
+                }
+            )
+
+            jvmArgumentProviders.add(
+                objects.newInstance(GenericLocationProvider).tap {
+                    distribution = configurations.agent.singleFile
+                }
+            )
         }
 
         tasks.named('check') {
             dependsOn(tasks.named('test'))// default behaviour
+            dependsOn(tasks.named('flakyTest'))
         }
 
         testlogger {
@@ -380,6 +399,7 @@ subprojects {subProj ->
 
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    dependsOn(tasks.named('flakyTest'))
     finalizedBy jacocoTestReport
 }
 

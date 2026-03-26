@@ -1,12 +1,13 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.util.Map;
+
 import io.kestra.core.runners.pebble.AbstractIndent;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.Map;
 
 public class NindentFilter extends AbstractIndent implements Filter {
     @Override

@@ -1,8 +1,11 @@
 package io.kestra.core.models.triggers;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import io.kestra.core.models.flows.State;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.core.annotation.Introspected;
+import io.kestra.core.runners.WorkerTrigger;
+
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -13,15 +16,11 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-
 @SuperBuilder(toBuilder = true)
 @ToString
 @Getter
 @NoArgsConstructor
-@Introspected
-public class TriggerContext {
+public class TriggerContext implements TriggerId {
     @Setter
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]")
     private String tenantId;
@@ -35,6 +34,9 @@ public class TriggerContext {
     @NotNull
     private String triggerId;
 
+    /**
+     * The timestamp when this trigger was last executed.
+     */
     @NotNull
     private ZonedDateTime date;
 
@@ -66,19 +68,6 @@ public class TriggerContext {
         return new TriggerContextBuilderImpl();
     }
 
-    public String uid() {
-        return uid(this);
-    }
-
-    public static String uid(TriggerContext trigger) {
-        return IdUtils.fromParts(
-            trigger.getTenantId(),
-            trigger.getNamespace(),
-            trigger.getFlowId(),
-            trigger.getTriggerId()
-        );
-    }
-
     public Boolean getDisabled() {
         return this.disabled != null ? this.disabled : Boolean.FALSE;
     }
@@ -86,5 +75,15 @@ public class TriggerContext {
     // This is a hack to make JavaDoc working as annotation processor didn't run before JavaDoc.
     // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
     public static abstract class TriggerContextBuilder<C extends TriggerContext, B extends TriggerContextBuilder<C, B>> {
+    }
+
+    public static TriggerContext of(WorkerTrigger trigger) {
+        return TriggerContext.builder()
+            .tenantId(trigger.getData().tenantId())
+            .namespace(trigger.getData().namespace())
+            .flowId(trigger.getData().flowId())
+            .triggerId(trigger.getTrigger().getId())
+            .date(trigger.getData().date())
+            .build();
     }
 }

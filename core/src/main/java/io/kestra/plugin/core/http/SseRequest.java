@@ -1,8 +1,15 @@
 package io.kestra.plugin.core.http;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpSseEvent;
 import io.kestra.core.http.client.HttpClient;
@@ -14,6 +21,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -21,12 +29,6 @@ import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -127,8 +129,7 @@ public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        JsonQuery jqQuery = runContext.
-            render(this.concatJqExpression)
+        JsonQuery jqQuery = runContext.render(this.concatJqExpression)
             .as(String.class)
             .map(throwFunction(pattern -> JsonQuery.compile(pattern, Versions.JQ_1_6)))
             .orElse(null);
@@ -139,7 +140,8 @@ public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.
             HttpRequest request = this.request(runContext);
 
             AtomicReference<Long> counter = new AtomicReference<>(0L);
-            client.sseRequest(request, String.class, event -> {
+            client.sseRequest(request, String.class, event ->
+            {
                 counter.getAndSet(counter.get() + 1);
 
                 try {
@@ -155,13 +157,15 @@ public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.
             if (jqQuery != null) {
                 resultJq = events
                     .stream()
-                    .map(throwFunction(event -> {
+                    .map(throwFunction(event ->
+                    {
                         JsonNode in = JacksonMapper.ofJson().valueToTree(event);
 
                         AtomicReference<String> local = new AtomicReference<>();
 
                         try {
-                            jqQuery.apply(Scope.newChildScope(SCOPE), in, v -> {
+                            jqQuery.apply(Scope.newChildScope(SCOPE), in, v ->
+                            {
                                 if (v instanceof TextNode) {
                                     local.set(v.textValue());
                                 } else if (v instanceof NumericNode) {

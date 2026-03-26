@@ -1,24 +1,27 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.hc.client5.http.utils.Base64;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
-import org.apache.hc.client5.http.utils.Base64;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -40,13 +43,15 @@ class HttpFunctionTest {
 
     @Test
     void postWithBodyHttpCall() throws IllegalVariableEvaluationException {
-        String rendered = variableRenderer.render("{{ http(url,'POST',body=body) }}", Map.of(
-            "url", "https://dummyjson.com/todos/add",
-            "body", Map.of(
-                "todo", "New todo",
-                "userId", 1,
-                "completed", false
-            ))
+        String rendered = variableRenderer.render(
+            "{{ http(url,'POST',body=body) }}", Map.of(
+                "url", "https://dummyjson.com/todos/add",
+                "body", Map.of(
+                    "todo", "New todo",
+                    "userId", 1,
+                    "completed", false
+                )
+            )
         );
         Assertions.assertTrue(rendered.contains("\"todo\":\"New todo\""));
     }
@@ -60,7 +65,8 @@ class HttpFunctionTest {
 
     @Test
     void getWithQueryHttpCall() throws IllegalVariableEvaluationException, JsonProcessingException {
-        String rendered = variableRenderer.render("""
+        String rendered = variableRenderer.render(
+            """
                 {{
                   http(
                     url,
@@ -84,27 +90,33 @@ class HttpFunctionTest {
             - yaml
             - content
             """;
-        stubFor(post(urlMatching("/yamlApi"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/x-yaml")
-                .withBody(responseBody)));
+        stubFor(
+            post(urlMatching("/yamlApi"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/x-yaml")
+                        .withBody(responseBody)
+                )
+        );
 
         // Assert that we receive properly YAML but we also can access the body as an object directly
-        String rendered = variableRenderer.render("""
-            {{
-                http(
-                    url,
-                    'POST',
-                    body=body,
-                    contentType='application/yaml',
-                    accept='application/yaml'
-                ).with[0]
-            }}""", Map.of(
-            "url", "http://localhost:28182/yamlApi",
-            "body", Map.of(
-                "request", "body",
-                "with", List.of("yaml", "content")
-            ))
+        String rendered = variableRenderer.render(
+            """
+                {{
+                    http(
+                        url,
+                        'POST',
+                        body=body,
+                        contentType='application/yaml',
+                        accept='application/yaml'
+                    ).with[0]
+                }}""", Map.of(
+                "url", "http://localhost:28182/yamlApi",
+                "body", Map.of(
+                    "request", "body",
+                    "with", List.of("yaml", "content")
+                )
+            )
         );
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
@@ -120,16 +132,22 @@ class HttpFunctionTest {
 
     @Test
     void withHeaders() throws IllegalVariableEvaluationException {
-        stubFor(post(urlMatching("/withHeadersApi"))
-            .withHeader("custom-header", equalTo("custom-value"))
-            .withHeader("multiple-value-header", havingExactly("value1", "value2"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody("""
-                    {"headers":"received"}"""
-                )));
+        stubFor(
+            post(urlMatching("/withHeadersApi"))
+                .withHeader("custom-header", equalTo("custom-value"))
+                .withHeader("multiple-value-header", havingExactly("value1", "value2"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(
+                            """
+                                {"headers":"received"}"""
+                        )
+                )
+        );
 
-        String rendered = variableRenderer.render("""
+        String rendered = variableRenderer.render(
+            """
                 {{
                     http(
                         url,
@@ -149,22 +167,31 @@ class HttpFunctionTest {
 
     @Test
     void withOptions() throws IllegalVariableEvaluationException {
-        stubFor(get(urlMatching("/withBasicAuthApi"))
-            .withHeader("Authorization", equalTo("Basic " + Base64.encodeBase64String("myUser:myPassword".getBytes(StandardCharsets.UTF_8))))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody("""
-                    {"successfully":"authenticated"}"""
-                )));
+        stubFor(
+            get(urlMatching("/withBasicAuthApi"))
+                .withHeader("Authorization", equalTo("Basic " + Base64.encodeBase64String("myUser:myPassword".getBytes(StandardCharsets.UTF_8))))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(
+                            """
+                                {"successfully":"authenticated"}"""
+                        )
+                )
+        );
 
-        String rendered = variableRenderer.render("""
+        String rendered = variableRenderer.render(
+            """
                 {{
                     http(
                         url,
                         'GET',
                         options={
-                            'basicAuthUser': user,
-                            'basicAuthPassword': password
+                            'auth': {
+                                'type': 'BASIC',
+                                'username': user,
+                                'password': password
+                            }
                         }
                     )
                 }}""", Map.of(

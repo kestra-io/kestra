@@ -3,6 +3,7 @@ package io.kestra.cli.commands.migrations;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
 import io.kestra.cli.commands.migrations.metadata.MetadataMigrationCommand;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -13,7 +14,10 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         TenantMigrationCommand.class,
-        MetadataMigrationCommand.class
+        MetadataMigrationCommand.class,
+        V2TriggerMigrationCommand.class,
+        V2ExecutionResubmitMigrationCommand.class,
+        V2ExecutionOutputMigrationCommand.class
     }
 )
 @Slf4j
@@ -23,6 +27,6 @@ public class MigrationCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.runCli(new String[]{"migrate",  "--help"});
+        return App.runCli(new String[] { "migrate", "--help" });
     }
 }

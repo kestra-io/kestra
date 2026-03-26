@@ -1,6 +1,15 @@
 package io.kestra.plugin.core.trigger;
 
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.stream.Streams;
+import org.slf4j.Logger;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
@@ -16,7 +25,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
@@ -25,6 +34,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.PreconditionFilterValidation;
+
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,13 +46,6 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.stream.Streams;
-import org.slf4j.Logger;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.State.Type.PAUSED;
 import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
@@ -298,24 +301,14 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     private Preconditions preconditions;
 
-    @SuppressWarnings("deprecation")
-    public Optional<Execution> evaluate(Optional<MultipleConditionStorageInterface> multipleConditionStorage, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
+    public Optional<Execution> evaluate(Optional<MultipleConditionStateStore> multipleConditionStorage, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();
 
         // merge outputs from all the matched executions
         Map<String, Object> outputs = current.getOutputs();
         if (multipleConditionStorage.isPresent()) {
-            List<String> multipleConditionIds = new ArrayList<>();
             if (this.preconditions != null) {
-                multipleConditionIds.add(this.preconditions.getId());
-            }
-            ListUtils.emptyOnNull(this.conditions).stream()
-                .filter(condition -> condition instanceof io.kestra.plugin.core.condition.MultipleCondition)
-                .map(condition -> (io.kestra.plugin.core.condition.MultipleCondition) condition)
-                .forEach(condition -> multipleConditionIds.add(condition.getId()));
-
-            for (String id : multipleConditionIds) {
-                Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, id);
+                Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, this.preconditions.getId());
                 if (multipleConditionWindow.isPresent()) {
                     outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
                 }
@@ -336,18 +329,20 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .flowRevision(flow.getRevision())
             .labels(labels)
             .state(new State())
-            .trigger(ExecutionTrigger.of(
-                this,
-                Output.builder()
-                    .executionId(current.getId())
-                    .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
-                    .namespace(current.getNamespace())
-                    .flowId(current.getFlowId())
-                    .flowRevision(current.getFlowRevision())
-                    .state(current.getState().getCurrent())
-                    .outputs(outputs)
-                    .build()
-            ));
+            .trigger(
+                ExecutionTrigger.of(
+                    this,
+                    Output.builder()
+                        .executionId(current.getId())
+                        .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
+                        .namespace(current.getNamespace())
+                        .flowId(current.getFlowId())
+                        .flowRevision(current.getFlowRevision())
+                        .state(current.getState().getCurrent())
+                        .outputs(outputs)
+                        .build()
+                )
+            );
 
         try {
             if (this.inputs != null) {
@@ -421,16 +416,20 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         public Map<String, Condition> getConditions() {
             AtomicInteger conditionId = new AtomicInteger();
             Map<String, Condition> flowsCondition = ListUtils.emptyOnNull(flows).stream()
-                .map(upstreamFlow -> Map.entry(
-                    "condition_" + conditionId.incrementAndGet(),
-                    new UpstreamFlowCondition(upstreamFlow)
-                ))
+                .map(
+                    upstreamFlow -> Map.entry(
+                        "condition_" + conditionId.incrementAndGet(),
+                        new UpstreamFlowCondition(upstreamFlow)
+                    )
+                )
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             Map<String, Condition> whereConditions = ListUtils.emptyOnNull(where).stream()
-                .map(filter -> Map.entry(
-                    "condition_" + conditionId.incrementAndGet() + "_" + filter.getId(),
-                    new FilterCondition(filter)
-                ))
+                .map(
+                    filter -> Map.entry(
+                        "condition_" + conditionId.incrementAndGet() + "_" + filter.getId(),
+                        new FilterCondition(filter)
+                    )
+                )
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             Map<String, Condition> conditions = HashMap.newHashMap(flowsCondition.size() + whereConditions.size());
             conditions.putAll(flowsCondition);
@@ -442,10 +441,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         public Map<String, Condition> getUpstreamFlowsConditions() {
             AtomicInteger conditionId = new AtomicInteger();
             return ListUtils.emptyOnNull(flows).stream()
-                .map(upstreamFlow -> Map.entry(
-                    "condition_" + conditionId.incrementAndGet(),
-                    new UpstreamFlowCondition(upstreamFlow)
-                ))
+                .map(
+                    upstreamFlow -> Map.entry(
+                        "condition_" + conditionId.incrementAndGet(),
+                        new UpstreamFlowCondition(upstreamFlow)
+                    )
+                )
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
@@ -453,10 +454,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         public Map<String, Condition> getWhereConditions() {
             AtomicInteger conditionId = new AtomicInteger();
             return ListUtils.emptyOnNull(where).stream()
-                .map(filter -> Map.entry(
-                    "condition_" + conditionId.incrementAndGet() + "_" + filter.getId(),
-                    new FilterCondition(filter)
-                ))
+                .map(
+                    filter -> Map.entry(
+                        "condition_" + conditionId.incrementAndGet() + "_" + filter.getId(),
+                        new FilterCondition(filter)
+                    )
+                )
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 

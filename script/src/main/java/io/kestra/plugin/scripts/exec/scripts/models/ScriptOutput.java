@@ -1,16 +1,18 @@
 package io.kestra.plugin.scripts.exec.scripts.models;
 
+import java.net.URI;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.runners.TaskRunnerDetailResult;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
 
-import java.net.URI;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder

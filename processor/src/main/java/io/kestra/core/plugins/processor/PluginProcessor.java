@@ -1,7 +1,14 @@
 package io.kestra.core.plugins.processor;
 
-import io.kestra.core.models.annotations.Plugin;
-import lombok.NoArgsConstructor;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -21,15 +28,10 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+
+import io.kestra.core.models.annotations.Plugin;
+
+import lombok.NoArgsConstructor;
 
 import static com.google.common.base.Throwables.getStackTraceAsString;
 
@@ -37,12 +39,13 @@ import static com.google.common.base.Throwables.getStackTraceAsString;
  * Processes {@link Plugin} annotations and generates the service provider
  * configuration files described in {@link java.util.ServiceLoader}.
  * <p>
- * Processor Options:<ul>
- *   <li>{@code -Adebug} - turns on debug statements</li>
- *   <li>{@code -Averify=true} - turns on extra verification</li>
+ * Processor Options:
+ * <ul>
+ * <li>{@code -Adebug} - turns on debug statements</li>
+ * <li>{@code -Averify=true} - turns on extra verification</li>
  * </ul>
  */
-@SupportedOptions({"debug", "verify"})
+@SupportedOptions({ "debug", "verify" })
 public class PluginProcessor extends AbstractProcessor {
 
     public static final String PLUGIN_RESOURCE_FILE = ServicesFiles.getPath(io.kestra.core.models.Plugin.class.getCanonicalName());
@@ -74,15 +77,17 @@ public class PluginProcessor extends AbstractProcessor {
 
     /**
      * <ol>
-     *  <li> For each class annotated with {@link Plugin}<ul>
-     *      <li> Verify the class is not abstract and implement the {@link io.kestra.core.models.Plugin} interface.
-     *      </ul>
+     * <li>For each class annotated with {@link Plugin}
+     * <ul>
+     * <li>Verify the class is not abstract and implement the {@link io.kestra.core.models.Plugin} interface.
+     * </ul>
      *
-     * <li> Create a file named {@code META-INF/services/io.kestra.core.plugins.processor.Plugin}
-     *       <li> For each {@link Plugin} annotated class for this interface <ul>
-     *           <li> Create an entry in the file
-     *           </ul>
-     *       </ul>
+     * <li>Create a file named {@code META-INF/services/io.kestra.core.plugins.processor.Plugin}
+     * <li>For each {@link Plugin} annotated class for this interface
+     * <ul>
+     * <li>Create an entry in the file
+     * </ul>
+     * </ul>
      * </ol>
      */
     @Override
@@ -121,9 +126,10 @@ public class PluginProcessor extends AbstractProcessor {
 
             // Checks whether the class annotated with @Plugin
             // do implement the Plugin interface, is not abstract, and defines a no-arg constructor.
-            if (types.isSubtype(pluginType.asType(), pluginInterface.asType())
-                && isNotAbstract(pluginType)
-                && hasNoArgConstructor(pluginType)
+            if (
+                types.isSubtype(pluginType.asType(), pluginInterface.asType())
+                    && isNotAbstract(pluginType)
+                    && hasNoArgConstructor(pluginType)
             ) {
                 log("plugin provider: " + pluginType.getQualifiedName());
                 plugins.add(getBinaryName(pluginType));
@@ -211,7 +217,7 @@ public class PluginProcessor extends AbstractProcessor {
     }
 
     private boolean hasAnnotation(TypeElement typeElement,
-                                  Class<? extends Annotation> annotationClass) {
+        Class<? extends Annotation> annotationClass) {
         for (AnnotationMirror annotationMirror : typeElement.getAnnotationMirrors()) {
             if (annotationMirror.getAnnotationType().toString().equals(annotationClass.getName())) {
                 return true;

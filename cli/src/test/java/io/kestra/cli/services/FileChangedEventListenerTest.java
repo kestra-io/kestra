@@ -1,16 +1,5 @@
 package io.kestra.cli.services;
 
-import io.kestra.core.junit.annotations.FlakyTest;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.TestsUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.*;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,10 +9,23 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.*;
+
+import io.kestra.core.junit.annotations.FlakyTest;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.TestsUtils;
+
+import jakarta.inject.Inject;
+
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@MicronautTest(environments = {"test", "file-watch"}, transactional = false)
+@KestraTest(environments = { "test", "file-watch" })
 class FileChangedEventListenerTest {
     public static final String FILE_WATCH = "build/file-watch";
     @Inject

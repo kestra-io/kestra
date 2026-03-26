@@ -6,7 +6,7 @@ import java.util.Optional;
  * Service interface for updating the state of a service instance.
  *
  * @see ServiceLivenessManager
- * @see AbstractServiceLivenessCoordinator
+ * @see DefaultServiceLivenessUpdater
  */
 public interface ServiceLivenessUpdater {
 
@@ -33,7 +33,7 @@ public interface ServiceLivenessUpdater {
      * @return an optional of the {@link ServiceInstance} or {@link Optional#empty()} if the service is not running.
      */
     default ServiceStateTransition.Response update(final ServiceInstance instance,
-                                                   final Service.ServiceState newState) {
+        final Service.ServiceState newState) {
         return update(instance, newState, null);
     }
 
@@ -45,10 +45,11 @@ public interface ServiceLivenessUpdater {
      *
      * @param instance The service instance.
      * @param newState The new state of the service.
-     * @param reason   The human-readable reason of the state transition
+     * @param reason The human-readable reason of the state transition
      * @return an optional of the {@link ServiceInstance} or {@link Optional#empty()} if the service is not running.
      */
     ServiceStateTransition.Response update(final ServiceInstance instance,
-                                           final Service.ServiceState newState,
-                                           final String reason);
+        final Service.ServiceState newState,
+        final String reason);
+
 }

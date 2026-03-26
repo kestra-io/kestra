@@ -1,5 +1,9 @@
 package io.kestra.core.runners.pebble;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.micronaut.context.ApplicationContext;
 import io.pebbletemplates.pebble.extension.Extension;
 import io.pebbletemplates.pebble.extension.Filter;
@@ -7,10 +11,6 @@ import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.extension.core.CoreExtension;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Singleton
 public class PebbleExpressionService {

@@ -1,6 +1,13 @@
 package io.micronaut.retry.intercept;
 
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.annotations.Retryable;
+
 import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
@@ -15,13 +22,6 @@ import io.micronaut.retry.annotation.DefaultRetryPredicate;
 import io.micronaut.retry.event.RetryEvent;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Replace {@link DefaultRetryInterceptor} only to catch Throwable
@@ -80,7 +80,7 @@ public class OverrideRetryInterceptor implements MethodInterceptor<Object, Objec
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private static List<Class<? extends Throwable>> resolveIncludes(AnnotationValue<Retryable> retry, String includes) {
         Class<?>[] values = retry.classValues(includes);
         return (List) Collections.unmodifiableList(Arrays.asList(values));

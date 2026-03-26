@@ -13,10 +13,6 @@ interface TriggerFindOptions {
     [key: string]: any;
 }
 
-interface TriggerUpdateOptions {
-    [key: string]: any;
-}
-
 interface TriggerBackfillOptions {
     [key: string]: any;
 }
@@ -44,10 +40,24 @@ export interface TriggerDeleteOptions {
     triggerId: string;
 }
 
+interface CreateBackfillOptions {
+    namespace: string;
+    flowId: string;
+    triggerId: string;
+    backfill: any;
+}
+
+interface TriggerDisabledOptions {
+    namespace: string;
+    flowId: string;
+    triggerId: string;
+    disabled: boolean;
+}
+
 export const useTriggerStore = defineStore("trigger", () => {
 
     const axios = useAxios();
-    
+
     async function search(options: TriggerSearchOptions) {
         const sortString = options.sort ? `?sort=${options.sort}` : "";
         delete options.sort;
@@ -69,11 +79,6 @@ export const useTriggerStore = defineStore("trigger", () => {
 
     async function find(options: TriggerFindOptions) {
         const response = await axios.get(`${apiUrl()}/triggers/${options.namespace}/${options.flowId}`, {params: options});
-        return response.data;
-    }
-
-    async function update(options: TriggerUpdateOptions) {
-        const response = await axios.put(`${apiUrl()}/triggers`, options);
         return response.data;
     }
 
@@ -132,6 +137,16 @@ export const useTriggerStore = defineStore("trigger", () => {
         return response.data;
     }
 
+    async function createBackfill(options: CreateBackfillOptions) {
+        const response = await axios.put(`${apiUrl()}/triggers/backfill/`, options);
+        return response.data;
+    }
+
+    async function setDisabled(options: TriggerDisabledOptions) {
+        const response = await axios.put(`${apiUrl()}/set-disabled`, options);
+        return response.data;
+    }
+
     async function setDisabledByQuery(options: TriggerBulkOptions) {
         const response = await axios.post(`${apiUrl()}/triggers/set-disabled/by-query`, null, {params: options});
         return response.data;
@@ -172,7 +187,6 @@ export const useTriggerStore = defineStore("trigger", () => {
     return {
         search,
         find,
-        update,
         pauseBackfill,
         unpauseBackfill,
         deleteBackfill,

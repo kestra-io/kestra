@@ -1,20 +1,21 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-import io.kestra.core.utils.WindowsUtils;
-import jakarta.annotation.Nullable;
-
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.utils.WindowsUtils;
+
+import jakarta.annotation.Nullable;
+
 /**
  * Represents a NamespaceFile object.
  *
- * @param path      The path of file relative to the namespace.
- * @param uri       The URI of the namespace file in the Kestra's internal storage.
+ * @param path The path of file relative to the namespace.
+ * @param uri The URI of the namespace file in the Kestra's internal storage.
  * @param namespace The namespace of the file.
  * @param version The version of the file.
  */
@@ -22,8 +23,8 @@ public record NamespaceFile(
     String path,
     URI uri,
     String namespace,
-    int version
-) {
+    int version) {
+
     private static final Pattern capturePathWithoutVersion = Pattern.compile("(.*)(?:\\.v\\d+)?$");
 
     public NamespaceFile(Path path, URI uri, String namespace) {
@@ -61,7 +62,7 @@ public record NamespaceFile(
     /**
      * Static factory method for constructing a new {@link NamespaceFile} object.
      *
-     * @param uri       The path of file relative to the namespace or fully qualified URI.
+     * @param uri The path of file relative to the namespace or fully qualified URI.
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
@@ -74,13 +75,17 @@ public record NamespaceFile(
         final NamespaceFile namespaceFile;
         if (uri.getScheme() != null) {
             if (!uri.getScheme().equalsIgnoreCase("kestra")) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri
-                ));
+                throw new IllegalArgumentException(
+                    String.format(
+                        "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri
+                    )
+                );
             }
             if (!uri.getPath().startsWith(StorageContext.namespaceFilePrefix(namespace))) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri)
+                throw new IllegalArgumentException(
+                    String.format(
+                        "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri
+                    )
                 );
             }
             namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path), version);
@@ -109,7 +114,7 @@ public record NamespaceFile(
     /**
      * Static factory method for constructing a new {@link NamespaceFile} object.
      *
-     * @param path      The path of file relative to the namespace.
+     * @param path The path of file relative to the namespace.
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
@@ -149,11 +154,11 @@ public record NamespaceFile(
     }
 
     public static Path normalize(Path path) {
-        if(path == null){
+        if (path == null) {
             return Path.of("/");
         }
         String compatiblePath = toLogicalPath(path);
-        if(!compatiblePath.startsWith("/")){
+        if (!compatiblePath.startsWith("/")) {
             compatiblePath = "/" + compatiblePath;
         }
         return Path.of(compatiblePath);
@@ -161,6 +166,7 @@ public record NamespaceFile(
 
     /**
      * Returns the path of file relative to the namespace.
+     * 
      * @return The path.
      */
     public Path filePath() {
@@ -216,7 +222,9 @@ public record NamespaceFile(
      * @param path the {@link Path} to convert
      * @return a String representing the logical path with forward slashes
      */
-    public static String toLogicalPath(Path path){ return toLogicalPath(path.toString());}
+    public static String toLogicalPath(Path path) {
+        return toLogicalPath(path.toString());
+    }
 
     /**
      * Converts a path string to a canonical **logical path**.

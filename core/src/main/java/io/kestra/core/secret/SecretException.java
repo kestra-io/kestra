@@ -1,8 +1,8 @@
 package io.kestra.core.secret;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
-
 import java.io.Serial;
+
+import io.kestra.core.exceptions.KestraRuntimeException;
 
 /**
  * Top-level exception for Secrets.

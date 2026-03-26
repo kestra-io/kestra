@@ -1,10 +1,11 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.utils.DateUtils;
+import java.util.Date;
+
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import java.util.Date;
+import io.kestra.core.utils.DateUtils;
 
 public final class MysqlRepositoryUtils {
     private MysqlRepositoryUtils() {

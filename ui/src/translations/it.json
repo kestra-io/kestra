@@ -697,6 +697,10 @@
       "drag to reorder columns": "Trascina per riordinare le colonne",
       "edit filter": "Modifica filtro",
       "empty": "Non hai ancora nessun filtro salvato.",
+      "enabled": {
+        "description": "Filtra per abilitato",
+        "label": "Abilitato"
+      },
       "end_date": "Data di Fine",
       "enter description": "Inserisci la descrizione del filtro",
       "enter label": "Inserisci il filtro label",
@@ -756,7 +760,10 @@
         "description": "Filtra per tipo di metrica",
         "label": "Metrica"
       },
-      "name": "Nome",
+      "name": {
+        "description": "Filtra per nome",
+        "label": "Nome"
+      },
       "namespace": {
         "description": "Filtra per namespace",
         "label": "Namespace"
@@ -947,6 +954,10 @@
         "disabled": "Disabilitato",
         "enabled": "Abilitato",
         "label": "Stato del Trigger"
+      },
+      "type": {
+        "description": "Filtra per tipo",
+        "label": "Tipo"
       },
       "update": "Aggiorna",
       "username": {

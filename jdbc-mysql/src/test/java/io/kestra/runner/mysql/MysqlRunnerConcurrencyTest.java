@@ -1,6 +1,6 @@
 package io.kestra.runner.mysql;
 
-import io.kestra.jdbc.runner.JdbcConcurrencyRunnerTest;
+import io.kestra.core.runners.AbstractRunnerConcurrencyTest;
 
-public class MysqlRunnerConcurrencyTest extends JdbcConcurrencyRunnerTest {
+public class MysqlRunnerConcurrencyTest extends AbstractRunnerConcurrencyTest {
 }

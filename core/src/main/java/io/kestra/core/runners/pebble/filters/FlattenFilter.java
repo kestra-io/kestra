@@ -1,15 +1,14 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FlattenFilter implements Filter {
     private final List<String> argumentNames = new ArrayList<>();
@@ -18,7 +17,6 @@ public class FlattenFilter implements Filter {
     public List<String> getArgumentNames() {
         return this.argumentNames;
     }
-
 
     @Override
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) throws PebbleException {

@@ -1,8 +1,10 @@
 package io.kestra.core.models.dashboards.charts;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ChartOption;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

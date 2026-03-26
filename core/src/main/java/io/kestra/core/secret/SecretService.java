@@ -1,13 +1,5 @@
 package io.kestra.core.secret;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.micronaut.data.model.Pageable;
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.Strings;
-
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
@@ -16,13 +8,22 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.Strings;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.repositories.ArrayListTotal;
+
+import io.micronaut.data.model.Pageable;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 @Singleton
 @Slf4j
 public class SecretService<META> {
     private static final String SECRET_PREFIX = "SECRET_";
 
     private Map<String, String> decodedSecrets;
-
 
     @PostConstruct
     private void postConstruct() {
@@ -31,8 +32,8 @@ public class SecretService<META> {
 
     public void decode() {
         decodedSecrets = System.getenv().entrySet().stream()
-            .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX))
-            .<Map.Entry<String, String>>mapMulti((entry, consumer) -> {
+            .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX)).<Map.Entry<String, String>> mapMulti((entry, consumer) ->
+            {
                 try {
                     String value = entry.getValue().replaceAll("\\R", "");
                     consumer.accept(Map.entry(entry.getKey(), new String(Base64.getDecoder().decode(value))));
@@ -40,10 +41,12 @@ public class SecretService<META> {
                     log.error("Could not decode secret '{}', make sure it is Base64-encoded: {}", entry.getKey(), e.getMessage());
                 }
             })
-            .collect(Collectors.toMap(
-                entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(),
-                Map.Entry::getValue
-            ));
+            .collect(
+                Collectors.toMap(
+                    entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(),
+                    Map.Entry::getValue
+                )
+            );
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
@@ -58,7 +61,8 @@ public class SecretService<META> {
         final Predicate<String> queryPredicate = filters.stream()
             .filter(filter -> filter.field().equals(QueryFilter.Field.QUERY) && filter.value() != null)
             .findFirst()
-            .map(filter -> {
+            .map(filter ->
+            {
                 if (filter.operation().equals(QueryFilter.Op.EQUALS)) {
                     return (Predicate<String>) s -> Strings.CI.contains(s, (String) filter.value());
                 } else if (filter.operation().equals(QueryFilter.Op.NOT_EQUALS)) {

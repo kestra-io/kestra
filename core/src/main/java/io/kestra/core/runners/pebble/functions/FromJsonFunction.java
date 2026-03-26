@@ -1,15 +1,17 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.List;
-import java.util.Map;
 
 public class FromJsonFunction implements Function {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
@@ -32,7 +34,8 @@ public class FromJsonFunction implements Function {
             throw new PebbleException(null, "The 'fromJson' function expects an argument 'json' with type string.", lineNumber, self.getName());
         }
 
-        String json = (String) args.get("json");;
+        String json = (String) args.get("json");
+        ;
 
         try {
             return MAPPER.readValue(json, JacksonMapper.OBJECT_TYPE_REFERENCE);

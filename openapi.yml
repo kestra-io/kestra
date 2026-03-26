@@ -3650,6 +3650,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiAsyncEvent"
+  /api/v1/{tenant}/executions/{executionId}/eval:
+    post:
+      tags:
+      - Executions
+      summary: Evaluate a variable expression for this execution
+      operationId: evalExpression
+      parameters:
+      - name: executionId
+        in: path
+        description: The execution id
+        required: true
+        schema:
+          type: string
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: The Pebble expression that should be evaluated
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+      responses:
+        "200":
+          description: evalExpression 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionController.EvalResult"
   /api/v1/{tenant}/executions/{executionId}/eval/{taskRunId}:
     post:
       tags:

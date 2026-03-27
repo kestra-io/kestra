@@ -74,7 +74,7 @@
         addFilter,
         removeFilter,
         updateFilter,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied
     } = useFilters(
@@ -140,7 +140,7 @@
         toggleOptions,
         updateChart,
         refreshData,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied,
         editSavedFilter: (filter: SavedFilter) => {

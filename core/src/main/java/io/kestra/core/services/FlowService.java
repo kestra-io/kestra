@@ -221,6 +221,10 @@ public class FlowService {
             triggersDeleted.forEach(
                 trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
             );
+
+            if (flow.isDeleted()) {
+                return;
+            }
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
@@ -231,6 +235,12 @@ public class FlowService {
                     trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
             FlowService.findNewTrigger(flow, previous)
+                .stream()
+                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
+                .forEach(
+                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+                );
+            FlowService.findUnchangedTrigger(flow, previous)
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
                 .forEach(
@@ -681,6 +691,17 @@ public class FlowService {
                 oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
                     .stream()
                     .noneMatch(trigger -> trigger.getId().equals(oldTrigger.getId()))
+            )
+            .toList();
+    }
+
+    public static List<AbstractTrigger> findUnchangedTrigger(Flow flow, Flow previous) {
+        return ListUtils.emptyOnNull(flow.getTriggers())
+            .stream()
+            .filter(
+                current -> ListUtils.emptyOnNull(previous.getTriggers())
+                    .stream()
+                    .anyMatch(prev -> prev.getId().equals(current.getId()) && EqualsBuilder.reflectionEquals(prev, current))
             )
             .toList();
     }

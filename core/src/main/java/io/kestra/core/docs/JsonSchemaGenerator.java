@@ -428,6 +428,9 @@ public class JsonSchemaGenerator {
                 if (!pluginPropertyAnnotation.group().isEmpty()) {
                     memberAttributes.put("$group", pluginPropertyAnnotation.group());
                 }
+                if (pluginPropertyAnnotation.secret()) {
+                    memberAttributes.put("$secret", true);
+                }
             }
 
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);

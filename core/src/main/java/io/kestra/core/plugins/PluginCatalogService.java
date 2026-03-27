@@ -10,11 +10,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Version;
 
@@ -35,6 +37,7 @@ public class PluginCatalogService {
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
 
     private final HttpClient httpClient;
+    private final ExecutorService iconLoaderExecutor;
 
     private CompletableFuture<List<PluginManifest>> plugins;
 
@@ -54,20 +57,25 @@ public class PluginCatalogService {
      * @param httpClient the HTTP Client to connect to Kestra API.
      * @param icons specifies whether icons must be loaded for plugins.
      * @param communityOnly specifies whether only OSS plugins must be returned.
+     * @param executorsUtils the {@link ExecutorsUtils} for creating thread pools.
      */
     public PluginCatalogService(final HttpClient httpClient,
         final boolean icons,
-        final boolean communityOnly) {
+        final boolean communityOnly,
+        final ExecutorsUtils executorsUtils) {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
+        if (icons) {
+            int maxAsyncThreads = Math.max(4, executorsUtils.getAllocatedCpuCores());
+            this.iconLoaderExecutor = executorsUtils.maxCachedThreadPool(maxAsyncThreads, "api-plugin-catalog");
+        } else {
+            this.iconLoaderExecutor = null;
+        }
 
         Version version = Version.of(KestraContext.getContext().getVersion());
         this.currentStableVersion = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
-
-        // Immediately trigger an async load of plugin artifacts.
-        this.isLoaded.set(true);
-        this.plugins = CompletableFuture.supplyAsync(this::load);
+        // Loading is deferred to the first get() call to avoid blocking HTTP calls at startup.
     }
 
     /**
@@ -114,6 +122,10 @@ public class PluginCatalogService {
 
     public synchronized List<PluginManifest> get() {
         try {
+            if (this.plugins == null) {
+                this.isLoaded.set(true);
+                this.plugins = CompletableFuture.supplyAsync(this::load);
+            }
             List<PluginManifest> artifacts = this.plugins.get();
             if (!artifacts.isEmpty()) {
                 loaded = artifacts;
@@ -149,30 +161,52 @@ public class PluginCatalogService {
                 )
                 .body();
 
-            List<PluginManifest> artifacts = plugins
-                .parallelStream()
+            List<Map<String, Object>> filteredPlugins = plugins
+                .stream()
                 .filter(plugin -> !plugin.get("name").equals("core"))
                 .filter(plugin -> !oss || !"EE".equals(plugin.get("license")))
-                .map(plugin ->
-                {
-                    // Get artifact
+                .toList();
+
+            // Load icons in parallel using a dedicated executor to avoid saturating the ForkJoinPool.
+            Map<String, String> iconsByGroup = Map.of();
+            if (icons && iconLoaderExecutor != null) {
+                List<String> groups = filteredPlugins.stream()
+                    .map(plugin -> (String) plugin.get("group"))
+                    .distinct()
+                    .toList();
+
+                List<CompletableFuture<Map.Entry<String, String>>> iconFutures = groups.stream()
+                    .map(group -> CompletableFuture.supplyAsync(() -> {
+                        try {
+                            HttpResponse<String> response = httpClient
+                                .toBlocking()
+                                .exchange(
+                                    HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + group),
+                                    String.class
+                                );
+                            String icon = response.getBody()
+                                .map(svg -> Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8)))
+                                .orElse(null);
+                            return Map.entry(group, icon != null ? icon : "");
+                        } catch (Exception e) {
+                            log.debug("Failed to load icon for plugin group '{}': {}", group, e.getMessage());
+                            return Map.entry(group, "");
+                        }
+                    }, iconLoaderExecutor))
+                    .toList();
+
+                iconsByGroup = iconFutures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(entry -> !entry.getValue().isEmpty())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            }
+
+            Map<String, String> finalIconsByGroup = iconsByGroup;
+            List<PluginManifest> artifacts = filteredPlugins.stream()
+                .map(plugin -> {
                     String groupId = "EE".equals(plugin.get("license")) ? "io.kestra.plugin.ee" : "io.kestra.plugin";
                     String artifactId = (String) plugin.get("name");
-
-                    String icon = null;
-                    if (icons) {
-                        // Get icon
-                        HttpResponse<String> response = httpClient
-                            .toBlocking()
-                            .exchange(
-                                HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + plugin.get("group")),
-                                String.class
-                            );
-                        icon = response.getBody()
-                            .map(svg -> Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8)))
-                            .orElse(null);
-                    }
-
+                    String icon = finalIconsByGroup.getOrDefault((String) plugin.get("group"), null);
                     return new PluginManifest(
                         (String) plugin.get("title"),
                         icon,

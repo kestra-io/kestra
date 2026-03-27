@@ -568,6 +568,10 @@ export function useFilters(
             ...encodeAppliedFiltersToQuery(resetFilters)
         };
 
+        if (route.query.size) {
+            query.size = route.query.size;
+        }
+
         router.replace({query});
     };
     

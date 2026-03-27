@@ -1,6 +1,9 @@
 package io.kestra.core.test;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
@@ -8,14 +11,13 @@ import io.kestra.core.models.TenantInterface;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TestSuiteValidation;
+
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -82,7 +84,7 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
             newTestSuite.getTestCases(),
             newTestSuite.isDeleted(),
             newTestSuite.isDisabled()
-            );
+        );
     }
 
     public TestSuite delete() {

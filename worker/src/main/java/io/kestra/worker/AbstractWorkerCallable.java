@@ -1,19 +1,21 @@
 package io.kestra.worker;
 
-import io.kestra.core.models.WorkerJobLifecycle;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.Exceptions;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
-import lombok.Getter;
-import lombok.Synchronized;
-import org.slf4j.Logger;
-
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+
+import io.kestra.core.models.WorkerJobLifecycle;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.Exceptions;
+
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import lombok.Getter;
+import lombok.Synchronized;
 
 import static io.kestra.core.models.flows.State.Type.*;
 

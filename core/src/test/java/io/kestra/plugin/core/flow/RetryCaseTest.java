@@ -1,5 +1,12 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
@@ -8,18 +15,12 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,7 +77,8 @@ public class RetryCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<List<State.Type>> stateHistory = new AtomicReference<>(new ArrayList<>());
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("retry-new-execution-task-duration") && execution.getState().getCurrent().isTerminated()) {
                 List<State.Type> stateHistoryList = stateHistory.get();
@@ -103,7 +105,8 @@ public class RetryCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<List<State.Type>> stateHistory = new AtomicReference<>(new ArrayList<>());
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("retry-new-execution-task-attempts") && execution.getState().getCurrent().isTerminated()) {
                 List<State.Type> stateHistoryList = stateHistory.get();
@@ -130,7 +133,8 @@ public class RetryCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<List<State.Type>> stateHistory = new AtomicReference<>(new ArrayList<>());
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("retry-new-execution-flow-duration") && execution.getState().getCurrent().isTerminated()) {
                 List<State.Type> stateHistoryList = stateHistory.get();
@@ -157,7 +161,8 @@ public class RetryCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<List<State.Type>> stateHistory = new AtomicReference<>(new ArrayList<>());
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("retry-new-execution-flow-attempts") && execution.getState().getCurrent().isTerminated()) {
                 List<State.Type> stateHistoryList = stateHistory.get();

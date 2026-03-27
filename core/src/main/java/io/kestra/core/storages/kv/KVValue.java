@@ -1,8 +1,8 @@
 package io.kestra.core.storages.kv;
 
-import jakarta.annotation.Nullable;
-
 import java.util.Optional;
+
+import jakarta.annotation.Nullable;
 
 /**
  * A K/V store entry value.
@@ -13,6 +13,6 @@ public record KVValue(@Nullable Object value) {
 
     @Override
     public String toString() {
-        return "{value="+ value + ", type=" + Optional.ofNullable(value).map(val ->val.getClass().getSimpleName()).orElse("null") + "}";
+        return "{value=" + value + ", type=" + Optional.ofNullable(value).map(val -> val.getClass().getSimpleName()).orElse("null") + "}";
     }
 }

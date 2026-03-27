@@ -1,14 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.exceptions.MigrationRequiredException;
-import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.kv.KVValue;
-import io.kestra.core.storages.kv.KVValueAndMetadata;
-import io.kestra.core.utils.Hashing;
-import io.kestra.core.utils.Slugify;
-import jakarta.annotation.Nullable;
-
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -16,6 +7,16 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
+
+import io.kestra.core.exceptions.MigrationRequiredException;
+import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.utils.Hashing;
+import io.kestra.core.utils.Slugify;
+
+import jakarta.annotation.Nullable;
 
 public record StateStore(RunContext runContext, boolean hashTaskRunValue) {
 
@@ -27,9 +28,9 @@ public record StateStore(RunContext runContext, boolean hashTaskRunValue) {
      * Gets the state for the given state name, sub-name and task run value.
      *
      * @param flowScoped if true, will scope it to flow, otherwise to namespace
-     * @param stateName       state name
-     * @param stateSubName    state sub-name (optional)
-     * @param taskRunValue    task run value
+     * @param stateName state name
+     * @param stateSubName state sub-name (optional)
+     * @param taskRunValue task run value
      * @return an InputStream of the state data
      */
     public InputStream getState(boolean flowScoped, String stateName, @Nullable String stateSubName, String taskRunValue) throws IOException, ResourceExpiredException {
@@ -61,10 +62,10 @@ public record StateStore(RunContext runContext, boolean hashTaskRunValue) {
      * Sets the state for the given state name, sub-name and task run value.
      *
      * @param flowScoped if true, will scope it to flow, otherwise to namespace
-     * @param stateName       state name
-     * @param stateSubName    state sub-name (optional)
-     * @param taskRunValue    task run value
-     * @param value           the state value to store
+     * @param stateName state name
+     * @param stateSubName state sub-name (optional)
+     * @param taskRunValue task run value
+     * @param value the state value to store
      * @return the KV Store key at which the state is stored
      */
     public String putState(boolean flowScoped, String stateName, String stateSubName, String taskRunValue, byte[] value) throws IOException {
@@ -81,6 +82,7 @@ public record StateStore(RunContext runContext, boolean hashTaskRunValue) {
 
     /**
      * Deletes the stateName for the given name, sub-name and task run value.
+     * 
      * @param flowScoped if true, will scope it to flow, otherwise to namespace
      * @param stateName state name
      * @param stateSubName state sub-name (optional)

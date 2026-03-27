@@ -1,16 +1,5 @@
 package io.kestra.core.serializers;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +7,20 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+
+import io.kestra.core.models.validations.ManualConstraintViolation;
+
+import jakarta.validation.ConstraintViolationException;
 
 public final class YamlParser {
     private static final ObjectMapper STRICT_MAPPER = JacksonMapper.ofYaml()
@@ -35,13 +38,13 @@ public final class YamlParser {
         return read(input, cls, type(cls));
     }
 
-    public static  <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
+    public static <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
         ObjectMapper currentMapper = strict ? STRICT_MAPPER : NON_STRICT_MAPPER;
 
         try {
             return currentMapper.convertValue(input, cls);
         } catch (IllegalArgumentException e) {
-            if(e.getCause() instanceof JsonProcessingException jsonProcessingException) {
+            if (e.getCause() instanceof JsonProcessingException jsonProcessingException) {
                 throw toConstraintViolationException(input, type(cls), jsonProcessingException);
             }
 
@@ -81,6 +84,7 @@ public final class YamlParser {
             throw toConstraintViolationException(input, resource, e);
         }
     }
+
     private static String formatYamlErrorMessage(String originalMessage, JsonProcessingException e) {
         StringBuilder friendlyMessage = new StringBuilder();
         if (originalMessage.contains("Expected a field name")) {
@@ -99,6 +103,7 @@ public final class YamlParser {
         // Return a generic but cleaner message for other YAML errors
         return friendlyMessage.toString();
     }
+
     @SuppressWarnings("unchecked")
     public static <T> ConstraintViolationException toConstraintViolationException(T target, String resource, JsonProcessingException e) {
         if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
@@ -136,7 +141,8 @@ public final class YamlParser {
                         unrecognizedPropertyException.getPathReference(),
                         null
                     )
-                ));
+                )
+            );
         } else {
             String userFriendlyMessage = formatYamlErrorMessage(e.getMessage(), e);
             return new ConstraintViolationException(

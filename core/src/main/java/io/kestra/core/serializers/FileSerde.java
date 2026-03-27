@@ -1,19 +1,20 @@
 package io.kestra.core.serializers;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
+import java.io.*;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
-import java.util.Objects;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
-import java.io.*;
-import java.util.function.Consumer;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 public final class FileSerde {
     /**
@@ -25,9 +26,11 @@ public final class FileSerde {
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = JacksonMapper.ofIon();
     private static final ObjectMapper JSON_OBJECT_MAPPER = JacksonMapper.ofJson();
-    private static final TypeReference<Object> DEFAULT_TYPE_REFERENCE = new TypeReference<>(){};
+    private static final TypeReference<Object> DEFAULT_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
-    private FileSerde() {}
+    private FileSerde() {
+    }
 
     public static void write(OutputStream output, Object row) throws IOException {
         if (row != null) { // avoid writing "null"
@@ -41,7 +44,8 @@ public final class FileSerde {
      */
     @Deprecated(since = "0.19", forRemoval = true)
     public static Consumer<FluxSink<Object>> reader(BufferedReader input) {
-        return s -> {
+        return s ->
+        {
             String row;
 
             try {
@@ -60,7 +64,8 @@ public final class FileSerde {
      */
     @Deprecated(since = "0.19", forRemoval = true)
     public static <T> Consumer<FluxSink<T>> reader(BufferedReader input, Class<T> cls) {
-        return s -> {
+        return s ->
+        {
             String row;
 
             try {
@@ -90,7 +95,7 @@ public final class FileSerde {
             }
 
             consumer.accept(convert(row));
-            nbLines ++;
+            nbLines++;
         }
 
         return false;
@@ -149,10 +154,11 @@ public final class FileSerde {
     }
 
     public static <T> Flux<T> readAll(MappingIterator<T> mappingIterator) throws IOException {
-        return Flux.<T>create(sink -> {
-                mappingIterator.forEachRemaining(sink::next);
-                sink.complete();
-            }, FluxSink.OverflowStrategy.BUFFER)
+        return Flux.<T> create(sink ->
+        {
+            mappingIterator.forEachRemaining(sink::next);
+            sink.complete();
+        }, FluxSink.OverflowStrategy.BUFFER)
             .doFinally(throwConsumer(ignored -> mappingIterator.close()));
     }
 
@@ -167,7 +173,8 @@ public final class FileSerde {
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
      */
     public static <T> Mono<Long> writeAll(ObjectMapper objectMapper, Writer writer, Flux<T> values) throws IOException {
-        SequenceWriter seqWriter = createSequenceWriter(objectMapper, writer, new TypeReference<T>() {});
+        SequenceWriter seqWriter = createSequenceWriter(objectMapper, writer, new TypeReference<T>() {
+        });
         return writeAll(values, seqWriter);
     }
 

@@ -1,18 +1,19 @@
 package io.kestra.core.topologies;
 
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,14 +30,16 @@ public class FlowTopologyTest {
     void should_findDependencies_simpleCase() throws FlowProcessingException {
         // Given
         var tenantId = randomTenantId();
-        var child = flowService.importFlow(tenantId,
+        var child = flowService.importFlow(
+            tenantId,
             """
                 id: child
                 namespace: io.kestra.unittest
                 tasks:
                   - id: download
                     type: io.kestra.plugin.core.http.Download
-                """);
+                """
+        );
         var parent = flowService.importFlow(tenantId, """
             id: parent
             namespace: io.kestra.unittest
@@ -57,12 +60,14 @@ public class FlowTopologyTest {
         // When
         computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
         System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
 
@@ -77,15 +82,18 @@ public class FlowTopologyTest {
     void should_findDependencies_subchildAndSuperParent() throws FlowProcessingException {
         // Given
         var tenantId = randomTenantId();
-        var subChild = flowService.importFlow(tenantId,
+        var subChild = flowService.importFlow(
+            tenantId,
             """
                 id: sub_child
                 namespace: io.kestra.unittest
                 tasks:
                   - id: download
                     type: io.kestra.plugin.core.http.Download
-                """);
-        var child = flowService.importFlow(tenantId,
+                """
+        );
+        var child = flowService.importFlow(
+            tenantId,
             """
                 id: child
                 namespace: io.kestra.unittest
@@ -94,7 +102,8 @@ public class FlowTopologyTest {
                     type: io.kestra.core.tasks.flows.Flow
                     flowId: sub_child
                     namespace: io.kestra.unittest
-                """);
+                """
+        );
         var superParent = flowService.importFlow(tenantId, """
             id: super_parent
             namespace: io.kestra.unittest
@@ -124,13 +133,15 @@ public class FlowTopologyTest {
         // When
         computeAndSaveTopologies(List.of(subChild, child, superParent, parent, unrelatedFlow));
         System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
         System.out.println();
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
 
@@ -147,7 +158,8 @@ public class FlowTopologyTest {
     void should_findDependencies_cyclicTriggers() throws FlowProcessingException {
         // Given
         var tenantId = randomTenantId();
-        var triggeredFlowOne = flowService.importFlow(tenantId,
+        var triggeredFlowOne = flowService.importFlow(
+            tenantId,
             """
                 id: triggered_flow_one
                 namespace: io.kestra.unittest
@@ -161,7 +173,8 @@ public class FlowTopologyTest {
                       - type: io.kestra.plugin.core.condition.ExecutionStatus
                         in:
                           - FAILED
-                """);
+                """
+        );
         var triggeredFlowTwo = flowService.importFlow(tenantId, """
             id: triggered_flow_two
             namespace: io.kestra.unittest
@@ -180,13 +193,15 @@ public class FlowTopologyTest {
         // When
         computeAndSaveTopologies(List.of(triggeredFlowOne, triggeredFlowTwo));
 
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", triggeredFlowTwo.getId(), false, true).toList();
 
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
 
@@ -203,7 +218,8 @@ public class FlowTopologyTest {
     void flowTriggerWithTargetFlow() throws FlowProcessingException {
         // Given
         var tenantId = randomTenantId();
-        var parent = flowService.importFlow(tenantId,
+        var parent = flowService.importFlow(
+            tenantId,
             """
                 id: parent
                 namespace: io.kestra.unittest
@@ -211,7 +227,7 @@ public class FlowTopologyTest {
                   - id: a
                     type: BOOL
                     defaults: true
-                
+
                   - id: b
                     type: BOOL
                     defaults: "{{ inputs.a == true }}"
@@ -222,7 +238,8 @@ public class FlowTopologyTest {
                   - id: helloA
                     type: io.kestra.plugin.core.log.Log
                     message: Hello A
-                """);
+                """
+        );
         var child = flowService.importFlow(tenantId, """
             id: child
             namespace: io.kestra.unittest
@@ -252,12 +269,14 @@ public class FlowTopologyTest {
         // When
         computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
         System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+        flowTopologyRepository.findAll(tenantId).forEach(topology ->
+        {
             System.out.println(FlowTopologyTestData.of(topology));
         });
 
@@ -272,20 +291,19 @@ public class FlowTopologyTest {
      * this function mimics the production behaviour
      */
     private void computeAndSaveTopologies(List<@NotNull FlowWithSource> flows) {
-        flows.forEach(flow ->
-            flowTopologyService
+        flows.forEach(
+            flow -> flowTopologyService
                 .topology(
                     flow,
                     flows
                 ).distinct()
                 .forEach(topology -> flowTopologyRepository.save(topology))
-            );
+        );
     }
 
     private static String randomTenantId() {
         return FlowTopologyTest.class + IdUtils.create();
     }
-
 
     record FlowTopologyTestData(String sourceUid, String destinationUid) {
         public FlowTopologyTestData(FlowWithSource parent, FlowWithSource child) {

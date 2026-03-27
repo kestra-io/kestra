@@ -1,18 +1,19 @@
 package io.kestra.core.runners;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import java.time.Duration;
+import java.util.NoSuchElementException;
 
-import io.kestra.core.models.tasks.retrys.Exponential;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.utils.RetryUtils;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.RetryUtils;
 
-import java.time.Duration;
-import java.util.NoSuchElementException;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @SuperBuilder
 @ToString
@@ -22,8 +23,8 @@ import java.util.NoSuchElementException;
 public class ListenersTestTask extends Task implements RunnableTask<ListenersTestTask.Output> {
     @Override
     public ListenersTestTask.Output run(RunContext runContext) throws Exception {
-        ExecutionRepositoryInterface executionRepository =  ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
-        RetryUtils.Instance<Execution, NoSuchElementException> retryInstance =  ((DefaultRunContext)runContext).getApplicationContext().getBean(RetryUtils.class)
+        ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
+        RetryUtils.Instance<Execution, NoSuchElementException> retryInstance = ((DefaultRunContext) runContext).getApplicationContext().getBean(RetryUtils.class)
             .of(
                 Exponential.builder()
                     .delayFactor(2.0)

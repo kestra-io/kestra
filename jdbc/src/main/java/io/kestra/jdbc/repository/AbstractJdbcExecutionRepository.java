@@ -1,5 +1,22 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.Comparator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -10,6 +27,7 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.ExecutionStatistics;
@@ -30,6 +48,7 @@ import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -37,25 +56,8 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import io.kestra.core.models.executions.TaskRun;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.Comparator;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
     private static final int FETCH_SIZE = 100;
@@ -102,8 +104,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
         ApplicationContext applicationContext,
         AbstractJdbcExecutorStateStorage executorStateStorage,
-        JdbcFilterService filterService
-    ) {
+        JdbcFilterService filterService) {
         this.jdbcRepository = jdbcRepository;
         this.executorStateStorage = executorStateStorage;
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
@@ -133,11 +134,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
      **/
     @Override
     public Flux<Execution> findAllByTriggerExecutionId(String tenantId,
-                                                       String triggerExecutionId) {
+        String triggerExecutionId) {
         return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()
-                .transaction(configuration -> {
+                .transaction(configuration ->
+                {
                     SelectConditionStep<Record1<Object>> select = DSL
                         .using(configuration)
                         .select(field("value"))
@@ -164,7 +166,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -191,7 +194,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted, boolean withAccessControl) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -224,7 +228,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = this.findSelect(
@@ -251,12 +256,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
         @Nullable ChildFilter childFilter,
-        boolean deleted
-    ) {
+        boolean deleted) {
         return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()
-                .transaction(configuration -> {
+                .transaction(configuration ->
+                {
                     DSLContext context = DSL.using(configuration);
 
                     SelectConditionStep<Record1<Object>> select = this.findSelect(
@@ -290,8 +295,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     private SelectConditionStep<Record1<Object>> findSelect(
         DSLContext context,
         @Nullable String tenantId,
-        @Nullable List<QueryFilter> filters
-    ) {
+        @Nullable List<QueryFilter> filters) {
 
         SelectConditionStep<Record1<Object>> select = context
             .select(
@@ -319,8 +323,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
         @Nullable ChildFilter childFilter,
-        boolean deleted
-    ) {
+        boolean deleted) {
         SelectConditionStep<Record1<Object>> select = context
             .select(
                 field("value")
@@ -347,30 +350,35 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     public Flux<Execution> findAllAsync(@Nullable String tenantId) {
-        return Flux.create(emitter -> this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                DSLContext context = DSL.using(configuration);
+        return Flux.create(
+            emitter -> this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration ->
+                {
+                    DSLContext context = DSL.using(configuration);
 
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
+                    SelectConditionStep<Record1<Object>> select = context
+                        .select(field("value"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(this.defaultFilter(tenantId));
 
-                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()) {
-                    stream.map((Record record) -> jdbcRepository.map(record))
-                        .forEach(emitter::next);
-                } finally {
-                    emitter.complete();
-                }
-            }), FluxSink.OverflowStrategy.BUFFER);
+                    try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()) {
+                        stream.map((Record record) -> jdbcRepository.map(record))
+                            .forEach(emitter::next);
+                    } finally {
+                        emitter.complete();
+                    }
+                }),
+            FluxSink.OverflowStrategy.BUFFER
+        );
     }
 
     @Override
     public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
@@ -388,8 +396,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public ArrayListTotal<TaskRun> findTaskRun(
         Pageable pageable,
         @Nullable String tenantId,
-        List<QueryFilter> filters
-    ) {
+        List<QueryFilter> filters) {
         throw new UnsupportedOperationException();
     }
 
@@ -401,8 +408,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
-        boolean isTaskRun
-    ) {
+        boolean isTaskRun) {
         if (isTaskRun) {
             throw new UnsupportedOperationException();
         }
@@ -445,8 +451,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
         @Nullable List<State.Type> states,
-        boolean isTaskRun
-    ) {
+        boolean isTaskRun) {
         if (isTaskRun) {
             throw new UnsupportedOperationException();
         }
@@ -484,28 +489,30 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Result<Record> records,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupType
-    ) {
+        @Nullable DateUtils.GroupType groupType) {
         DateUtils.GroupType groupByType = groupType != null ? groupType : DateUtils.groupByType(Duration.between(startDate, endDate));
 
-        return fillDate(records
-            .stream()
-            .map(record ->
-                ExecutionStatistics.builder()
-                    .date(this.jdbcRepository.getDate(record, groupByType.val()))
-                    .durationMax(record.get("duration_max", Long.class))
-                    .durationMin(record.get("duration_min", Long.class))
-                    .durationSum(record.get("duration_sum", Long.class))
-                    .stateCurrent(record.get("state_current", String.class))
-                    .count(record.get("count", Long.class))
-                    .build()
-            )
-            .collect(Collectors.groupingBy(ExecutionStatistics::getDate))
-            .entrySet()
-            .stream()
-            .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
-            .sorted(Comparator.comparing(DailyExecutionStatistics::getStartDate))
-            .toList(), startDate, endDate);
+        return fillDate(
+            records
+                .stream()
+                .map(
+                    record -> ExecutionStatistics.builder()
+                        .date(this.jdbcRepository.getDate(record, groupByType.val()))
+                        .durationMax(record.get("duration_max", Long.class))
+                        .durationMin(record.get("duration_min", Long.class))
+                        .durationSum(record.get("duration_sum", Long.class))
+                        .stateCurrent(record.get("state_current", String.class))
+                        .count(record.get("count", Long.class))
+                        .build()
+                )
+                .collect(Collectors.groupingBy(ExecutionStatistics::getDate))
+                .entrySet()
+                .stream()
+                .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
+                .sorted(Comparator.comparing(DailyExecutionStatistics::getStartDate))
+                .toList(),
+            startDate, endDate
+        );
     }
 
     private Results dailyStatisticsQueryForAllTenants(
@@ -517,8 +524,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         ZonedDateTime startDate,
         ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state
-    ) {
+        @Nullable List<State.Type> state) {
         return dailyStatisticsQuery(
             this.defaultFilter(),
             fields,
@@ -545,8 +551,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         ZonedDateTime startDate,
         ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state
-    ) {
+        @Nullable List<State.Type> state) {
         return dailyStatisticsQuery(
             this.defaultFilter(tenantId),
             fields,
@@ -573,21 +578,23 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         ZonedDateTime startDate,
         ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state
-    ) {
+        @Nullable List<State.Type> state) {
         List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate), "start_date", groupBy));
         List<Field<?>> selectFields = new ArrayList<>(fields);
-        selectFields.addAll(List.of(
-            DSL.count().as("count"),
-            DSL.min(field("state_duration", Long.class)).as("duration_min"),
-            DSL.max(field("state_duration", Long.class)).as("duration_max"),
-            DSL.sum(field("state_duration", Long.class)).as("duration_sum")
-        ));
+        selectFields.addAll(
+            List.of(
+                DSL.count().as("count"),
+                DSL.min(field("state_duration", Long.class)).as("duration_min"),
+                DSL.max(field("state_duration", Long.class)).as("duration_max"),
+                DSL.sum(field("state_duration", Long.class)).as("duration_sum")
+            )
+        );
         selectFields.addAll(groupByFields(Duration.between(startDate, endDate), "start_date", groupBy, true));
 
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<?> select = context
@@ -624,8 +631,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String query,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter
-    ) {
+        @Nullable ChildFilter childFilter) {
         if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
             if (scope.contains(FlowScope.USER)) {
                 select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
@@ -663,14 +669,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         }
 
         if (flows != null) {
-            select = select.and(DSL.or(
-                flows
-                    .stream()
-                    .map(e -> field("namespace").eq(e.getNamespace())
-                        .and(field("flow_id").eq(e.getId()))
-                    )
-                    .toList()
-            ));
+            select = select.and(
+                DSL.or(
+                    flows
+                        .stream()
+                        .map(
+                            e -> field("namespace").eq(e.getNamespace())
+                                .and(field("flow_id").eq(e.getId()))
+                        )
+                        .toList()
+                )
+            );
         }
 
         return select;
@@ -698,8 +707,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         ZonedDateTime endDate,
         ChronoUnit unit,
         String format,
-        String groupByType
-    ) {
+        String groupByType) {
         List<DailyExecutionStatistics> filledResult = new ArrayList<>();
         ZonedDateTime currentDate = startDate;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
@@ -716,11 +724,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 .stream()
                 .filter(e -> formatter.format(e.getStartDate()).equals(finalCurrentDate))
                 .findFirst()
-                .orElse(DailyExecutionStatistics.builder()
-                    .startDate(currentDate.toInstant())
-                    .groupBy(groupByType)
-                    .duration(DailyExecutionStatistics.Duration.builder().build())
-                    .build()
+                .orElse(
+                    DailyExecutionStatistics.builder()
+                        .startDate(currentDate.toInstant())
+                        .groupBy(groupByType)
+                        .duration(DailyExecutionStatistics.Duration.builder().build())
+                        .build()
                 );
 
             filledResult.add(dailyExecutionStatistics);
@@ -737,21 +746,24 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         DailyExecutionStatistics build = DailyExecutionStatistics.builder()
             .startDate(date)
             .groupBy(groupByType)
-            .duration(DailyExecutionStatistics.Duration.builder()
-                .avg(Duration.ofMillis(durationSum / count))
-                .min(result.stream().map(ExecutionStatistics::getDurationMin).min(Long::compare).map(Duration::ofMillis).orElse(null))
-                .max(result.stream().map(ExecutionStatistics::getDurationMax).max(Long::compare).map(Duration::ofMillis).orElse(null))
-                .sum(Duration.ofMillis(durationSum))
-                .count(count)
-                .build()
+            .duration(
+                DailyExecutionStatistics.Duration.builder()
+                    .avg(Duration.ofMillis(durationSum / count))
+                    .min(result.stream().map(ExecutionStatistics::getDurationMin).min(Long::compare).map(Duration::ofMillis).orElse(null))
+                    .max(result.stream().map(ExecutionStatistics::getDurationMax).max(Long::compare).map(Duration::ofMillis).orElse(null))
+                    .sum(Duration.ofMillis(durationSum))
+                    .count(count)
+                    .build()
             )
             .build();
 
-        result.forEach(record -> build.getExecutionCounts()
-            .compute(
-                State.Type.valueOf(record.getStateCurrent()),
-                (type, current) -> record.getCount()
-            ));
+        result.forEach(
+            record -> build.getExecutionCounts()
+                .compute(
+                    State.Type.valueOf(record.getStateCurrent()),
+                    (type, current) -> record.getCount()
+                )
+        );
 
         return build;
     }
@@ -769,15 +781,18 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         List<ExecutionCount> result = this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext dslContext = DSL.using(configuration);
 
                 SelectConditionStep<?> select = dslContext
-                    .select(List.of(
-                        field("namespace"),
-                        field("flow_id"),
-                        DSL.count().as("count")
-                    ))
+                    .select(
+                        List.of(
+                            field("namespace"),
+                            field("flow_id"),
+                            DSL.count().as("count")
+                        )
+                    )
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
@@ -790,13 +805,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 }
 
                 List<Condition> orConditions = new ArrayList<>();
-                orConditions.addAll(ListUtils.emptyOnNull(flows)
-                    .stream()
-                    .map(flow -> DSL.and(
-                        field("namespace").eq(flow.getNamespace()),
-                        field("flow_id").eq(flow.getFlowId())
-                    ))
-                    .toList());
+                orConditions.addAll(
+                    ListUtils.emptyOnNull(flows)
+                        .stream()
+                        .map(
+                            flow -> DSL.and(
+                                field("namespace").eq(flow.getNamespace()),
+                                field("flow_id").eq(flow.getFlowId())
+                            )
+                        )
+                        .toList()
+                );
 
                 orConditions.addAll(
                     ListUtils.emptyOnNull(namespaces)
@@ -810,54 +829,68 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 // map result to flow
                 return select
-                    .groupBy(List.of(
-                        field("namespace"),
-                        field("flow_id")
-                    ))
+                    .groupBy(
+                        List.of(
+                            field("namespace"),
+                            field("flow_id")
+                        )
+                    )
                     .fetchMany()
                     .resultsOrRows()
                     .getFirst()
                     .result()
                     .stream()
-                    .map(record -> new ExecutionCount(
-                        record.getValue("namespace", String.class),
-                        record.getValue("flow_id", String.class),
-                        record.getValue("count", Long.class)
-                    ))
+                    .map(
+                        record -> new ExecutionCount(
+                            record.getValue("namespace", String.class),
+                            record.getValue("flow_id", String.class),
+                            record.getValue("count", Long.class)
+                        )
+                    )
                     .toList();
             });
 
         List<ExecutionCount> counts = new ArrayList<>();
         // fill missing with count at 0
         if (!ListUtils.isEmpty(flows)) {
-            counts.addAll(flows
-                .stream()
-                .map(flow -> result
+            counts.addAll(
+                flows
                     .stream()
-                    .filter(executionCount -> executionCount.getNamespace().equals(flow.getNamespace()) &&
-                        executionCount.getFlowId().equals(flow.getFlowId())
+                    .map(
+                        flow -> result
+                            .stream()
+                            .filter(
+                                executionCount -> executionCount.getNamespace().equals(flow.getNamespace()) &&
+                                    executionCount.getFlowId().equals(flow.getFlowId())
+                            )
+                            .findFirst()
+                            .orElse(
+                                new ExecutionCount(
+                                    flow.getNamespace(),
+                                    flow.getFlowId(),
+                                    0L
+                                )
+                            )
                     )
-                    .findFirst()
-                    .orElse(new ExecutionCount(
-                        flow.getNamespace(),
-                        flow.getFlowId(),
-                        0L
-                    ))
-                )
-                .toList());
+                    .toList()
+            );
         }
 
         if (!ListUtils.isEmpty(namespaces)) {
             Map<String, Long> groupedByNamespace = result.stream()
-                .collect(Collectors.groupingBy(
-                    ExecutionCount::getNamespace,
-                    Collectors.summingLong(ExecutionCount::getCount)
-                ));
+                .collect(
+                    Collectors.groupingBy(
+                        ExecutionCount::getNamespace,
+                        Collectors.summingLong(ExecutionCount::getCount)
+                    )
+                );
 
-            counts.addAll(groupedByNamespace.entrySet()
-                .stream()
-                .map(entry -> new ExecutionCount(entry.getKey(), null, entry.getValue()))
-                .toList());
+            counts.addAll(
+                groupedByNamespace.entrySet()
+                    .stream()
+                    .map(entry -> new ExecutionCount(entry.getKey(), null, entry.getValue()))
+                    .toList()
+            );
         }
 
         return counts;
@@ -866,11 +899,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @Override
     public List<Execution> lastExecutions(
         String tenantId,
-        @Nullable List<FlowFilter> flows
-    ) {
+        @Nullable List<FlowFilter> flows) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Select<Record2<Object, Integer>> subquery = context
@@ -887,16 +920,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION)
                     .and(field("end_date").isNotNull())
-                    .and(DSL.or(
-                            ListUtils.emptyOnNull(flows).isEmpty() ?
-                                DSL.trueCondition()
-                                :
-                                DSL.or(
+                    .and(
+                        DSL.or(
+                            ListUtils.emptyOnNull(flows).isEmpty() ? DSL.trueCondition()
+                                : DSL.or(
                                     flows.stream()
-                                        .map(flow -> DSL.and(
-                                            field("namespace").eq(flow.getNamespace()),
-                                            field("flow_id").eq(flow.getId())
-                                        ))
+                                        .map(
+                                            flow -> DSL.and(
+                                                field("namespace").eq(flow.getNamespace()),
+                                                field("flow_id").eq(flow.getId())
+                                            )
+                                        )
                                         .toList()
                                 )
                         )
@@ -911,7 +945,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 return mainQuery.fetch().map(this.jdbcRepository::map);
             });
     }
-
 
     @Override
     public Execution save(Execution execution) {
@@ -942,7 +975,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Execution update(Execution execution) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSL.using(configuration)
                     .update(this.jdbcRepository.getTable())
                     .set(this.jdbcRepository.persistFields((execution)))
@@ -984,7 +1018,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Integer purge(List<Execution> executions) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 // we send the event before to be sure that if sending the event crash, we would not delete the exec
@@ -999,7 +1034,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectForUpdateOfStep<Record1<Object>> from = context
@@ -1051,11 +1087,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> descriptors,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Pageable pageable
-    ) {
+        Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Map<String, ? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
@@ -1102,8 +1138,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             });
     }
 
-    public Double fetchValue(String tenantId, DataFilterKPI<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+    public Double fetchValue(String tenantId, DataFilterKPI<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Executions.Fields> columnDescriptor = dataFilter.getColumns();
             String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
@@ -1158,7 +1196,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     @SuppressWarnings("unchecked")
-    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {
+    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
+        Map<F, String> fieldsMapping) {
         if (!ListUtils.isEmpty(filters)) {
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
             selectConditionStep = applyStateFilters(filters, selectConditionStep);
@@ -1172,7 +1211,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             if (!labelFilters.isEmpty()) {
                 Map<String, String> mergedMap = new HashMap<>();
 
-                labelFilters.forEach(labelFilter -> {
+                labelFilters.forEach(labelFilter ->
+                {
                     if (labelFilter.getLabelKey() != null) {
                         mergedMap.put(labelFilter.getLabelKey(), labelFilter.getValue().toString());
                     } else if (labelFilter.getValue() instanceof String stringLabel) {
@@ -1198,13 +1238,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private <F extends Enum<F>> SelectConditionStep<Record>  applyStateFilters(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private <F extends Enum<F>> SelectConditionStep<Record> applyStateFilters(
         List<AbstractFilter<F>> filters,
-        SelectConditionStep<Record>  selectConditionStep) {
+        SelectConditionStep<Record> selectConditionStep) {
 
         List<String> stateFilters = filters.stream()
-            .flatMap(descriptor -> {
+            .flatMap(descriptor ->
+            {
                 if (descriptor.getField().equals(Executions.Fields.STATE)) {
                     if (descriptor instanceof In inFilter) {
                         return inFilter.getValues().stream();
@@ -1218,14 +1259,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         if (!stateFilters.isEmpty()) {
             selectConditionStep = selectConditionStep.and(
-                statesFilter(stateFilters.stream()
-                    .map(State.Type::valueOf)
-                    .toList())
+                statesFilter(
+                    stateFilters.stream()
+                        .map(State.Type::valueOf)
+                        .toList()
+                )
             );
         }
 
         List<String> stateNotFilters = filters.stream()
-            .flatMap(descriptor -> {
+            .flatMap(descriptor ->
+            {
                 if (descriptor.getField().equals(Executions.Fields.STATE)) {
                     if (descriptor instanceof NotIn notInFilter) {
                         return notInFilter.getValues().stream();
@@ -1239,9 +1283,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         if (!stateNotFilters.isEmpty()) {
             selectConditionStep = selectConditionStep.and(
-                DSL.not(statesFilter(stateNotFilters.stream()
-                    .map(State.Type::valueOf)
-                    .toList()))
+                DSL.not(
+                    statesFilter(
+                        stateNotFilters.stream()
+                            .map(State.Type::valueOf)
+                            .toList()
+                    )
+                )
             );
         }
         return selectConditionStep;

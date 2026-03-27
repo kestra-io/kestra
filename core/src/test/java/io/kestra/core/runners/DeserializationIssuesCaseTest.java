@@ -1,26 +1,25 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowListenersInterface;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.TestsUtils;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -154,65 +153,65 @@ public class DeserializationIssuesCaseTest {
         """;
 
     public static final String INVALID_SUBFLOW_EXECUTION_KEY = "1XKpihp8y2m3KEHR0hVEKN";
-    public static final String INVALID_SUBFLOW_EXECUTION_VALUE =  """
-    {
-      "execution": {
-        "id": "1XKpihp8y2m3KEHR0hVEKN",
-        "state": {
-          "current": "CREATED",
-          "duration": 0.000201173,
-          "histories": [
-            {
-              "date": "2024-01-10T13:48:32.752Z",
-              "state": "CREATED"
-            }
-          ],
-          "startDate": "2024-01-10T13:48:32.752Z"
-        },
-        "flowId": "hello-world",
-        "deleted": false,
-        "trigger": {
-          "id": "subflow",
-          "type": "io.kestra.notfound.Invalid",
-          "variables": {
-            "flowId": "subflox",
-            "namespace": "company.team",
-            "executionId": "4NzSyOQBYj1CxVg3bTghbZ",
-            "flowRevision": 1
-          }
-        },
-        "namespace": "company.team",
-        "originalId": "1XKpihp8y2m3KEHR0hVEKN",
-        "flowRevision": 2
-      },
-      "parentTask": {
-        "id": "subflow",
-        "type": "io.kestra.notfound.Invalid"
-      },
-      "parentTaskRun": {
-        "id": "6Gc6Dkk7medsWtg1WJfZpN",
-        "state": {
-          "current": "RUNNING",
-          "duration": 0.039446974,
-          "histories": [
-            {
-              "date": "2024-01-10T13:48:32.713Z",
-              "state": "CREATED"
+    public static final String INVALID_SUBFLOW_EXECUTION_VALUE = """
+        {
+          "execution": {
+            "id": "1XKpihp8y2m3KEHR0hVEKN",
+            "state": {
+              "current": "CREATED",
+              "duration": 0.000201173,
+              "histories": [
+                {
+                  "date": "2024-01-10T13:48:32.752Z",
+                  "state": "CREATED"
+                }
+              ],
+              "startDate": "2024-01-10T13:48:32.752Z"
             },
-            {
-              "date": "2024-01-10T13:48:32.752Z",
-              "state": "RUNNING"
-            }
-          ],
-          "startDate": "2024-01-10T13:48:32.713Z"
-        },
-        "flowId": "subflox",
-        "taskId": "subflow",
-        "namespace": "company.team",
-        "executionId": "4NzSyOQBYj1CxVg3bTghbZ"
-      }
-    }
-    """;
+            "flowId": "hello-world",
+            "deleted": false,
+            "trigger": {
+              "id": "subflow",
+              "type": "io.kestra.notfound.Invalid",
+              "variables": {
+                "flowId": "subflox",
+                "namespace": "company.team",
+                "executionId": "4NzSyOQBYj1CxVg3bTghbZ",
+                "flowRevision": 1
+              }
+            },
+            "namespace": "company.team",
+            "originalId": "1XKpihp8y2m3KEHR0hVEKN",
+            "flowRevision": 2
+          },
+          "parentTask": {
+            "id": "subflow",
+            "type": "io.kestra.notfound.Invalid"
+          },
+          "parentTaskRun": {
+            "id": "6Gc6Dkk7medsWtg1WJfZpN",
+            "state": {
+              "current": "RUNNING",
+              "duration": 0.039446974,
+              "histories": [
+                {
+                  "date": "2024-01-10T13:48:32.713Z",
+                  "state": "CREATED"
+                },
+                {
+                  "date": "2024-01-10T13:48:32.752Z",
+                  "state": "RUNNING"
+                }
+              ],
+              "startDate": "2024-01-10T13:48:32.713Z"
+            },
+            "flowId": "subflox",
+            "taskId": "subflow",
+            "namespace": "company.team",
+            "executionId": "4NzSyOQBYj1CxVg3bTghbZ"
+          }
+        }
+        """;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -225,12 +224,13 @@ public class DeserializationIssuesCaseTest {
     @Inject
     private FlowListenersInterface flowListeners;
 
-    public record QueueMessage(Class<?> type, String key, String value) {}
-
+    public record QueueMessage(Class<?> type, String key, String value) {
+    }
 
     public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
-        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
+        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either ->
+        {
             if (either != null) {
                 workerTaskResult.set(either.getLeft());
             }
@@ -249,9 +249,10 @@ public class DeserializationIssuesCaseTest {
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
-    public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
+    public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException {
         AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>();
-        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, either -> {
+        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, either ->
+        {
             if (either != null) {
                 workerTriggerResult.set(either.getLeft());
             }
@@ -276,8 +277,7 @@ public class DeserializationIssuesCaseTest {
         Await.until(
             () -> flows.get() != null && flows.get()
                 .stream()
-                .anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2"))
-            ,
+                .anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2")),
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );

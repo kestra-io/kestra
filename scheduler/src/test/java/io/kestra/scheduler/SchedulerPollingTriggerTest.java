@@ -1,39 +1,41 @@
 package io.kestra.scheduler;
 
-import io.kestra.core.models.Label;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.SchedulerTriggerStateInterface;
-import io.kestra.core.tasks.test.FailingPollingTrigger;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.runner.JdbcScheduler;
-import io.kestra.plugin.core.condition.Expression;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.runners.FlowListeners;
-import io.kestra.core.runners.TestMethodScopedWorker;
-import io.kestra.core.runners.Worker;
-import io.kestra.plugin.core.execution.Fail;
-import io.kestra.core.tasks.test.PollingTrigger;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.SchedulerTriggerStateInterface;
+import io.kestra.core.runners.TestMethodScopedWorker;
+import io.kestra.core.runners.Worker;
+import io.kestra.core.tasks.test.FailingPollingTrigger;
+import io.kestra.core.tasks.test.PollingTrigger;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
+import io.kestra.plugin.core.condition.Expression;
+import io.kestra.plugin.core.execution.Fail;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,7 +74,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution ->
+            {
                 if (execution.getLeft().getFlowId().equals(flow.getId())) {
                     last.set(execution.getLeft());
                     queueCount.countDown();
@@ -113,7 +116,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(execution -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(execution ->
+            {
                 if (execution.getLeft().getFlowId().equals(flow.getId())) {
                     last.set(execution.getLeft());
                     queueCount.countDown();
@@ -152,7 +156,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                         .type(Expression.class.getName())
                         .expression(new Property<>("{{ trigger.date | date() < now() }}"))
                         .build()
-                ))
+                )
+            )
             .build();
         Flow flow = createPollingTriggerFlow(pollingTrigger);
         doReturn(List.of(flow))
@@ -167,7 +172,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution ->
+            {
                 if (execution.getLeft().getFlowId().equals(flow.getId())) {
                     last.set(execution.getLeft());
                     queueCount.countDown();
@@ -210,7 +216,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution ->
+            {
                 if (execution.getLeft().getFlowId().equals(flow.getId())) {
                     last.set(execution.getLeft());
                     queueCount.countDown();

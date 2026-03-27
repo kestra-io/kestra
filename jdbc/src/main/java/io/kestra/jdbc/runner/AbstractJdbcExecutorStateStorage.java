@@ -1,14 +1,15 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.runners.ExecutorState;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import java.util.Map;
+
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 
-import java.util.Map;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.runners.ExecutorState;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 
 public abstract class AbstractJdbcExecutorStateStorage {
     protected io.kestra.jdbc.AbstractJdbcRepository<ExecutorState> jdbcRepository;

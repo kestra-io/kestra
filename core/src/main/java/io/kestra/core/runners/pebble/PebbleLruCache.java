@@ -1,13 +1,13 @@
 package io.kestra.core.runners.pebble;
 
+import java.util.function.Function;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import io.pebbletemplates.pebble.cache.PebbleCache;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 @Slf4j
 public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {

@@ -1,8 +1,10 @@
 package io.kestra.core.utils;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 

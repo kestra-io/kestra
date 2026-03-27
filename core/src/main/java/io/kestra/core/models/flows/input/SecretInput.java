@@ -1,16 +1,17 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.regex.Pattern;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.Regex;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.regex.Pattern;
 
 @SuperBuilder
 @Getter

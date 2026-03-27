@@ -1,7 +1,8 @@
 package io.kestra.repository.h2;
 
-import io.kestra.jdbc.repository.AbstractJdbcExecutionRepositoryTest;
 import org.junit.jupiter.api.Test;
+
+import io.kestra.jdbc.repository.AbstractJdbcExecutionRepositoryTest;
 
 public class H2ExecutionRepositoryTest extends AbstractJdbcExecutionRepositoryTest {
     @Test

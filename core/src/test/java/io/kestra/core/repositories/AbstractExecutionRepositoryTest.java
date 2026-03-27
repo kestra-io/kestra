@@ -1,7 +1,25 @@
 package io.kestra.core.repositories;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
+
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
@@ -27,25 +45,10 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
+
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.event.Level;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -77,20 +80,27 @@ public abstract class AbstractExecutionRepositoryTest {
             .flowRevision(1)
             .state(finalState);
 
-
         List<TaskRun> taskRuns = Arrays.asList(
-            TaskRun.of(execution.build(), ResolvedTask.of(
-                    Return.builder().id("first").type(Return.class.getName()).format(Property.ofValue("test")).build())
+            TaskRun.of(
+                execution.build(), ResolvedTask.of(
+                    Return.builder().id("first").type(Return.class.getName()).format(Property.ofValue("test")).build()
                 )
+            )
                 .withState(State.Type.SUCCESS),
-            spyTaskRun(TaskRun.of(execution.build(), ResolvedTask.of(
-                        Return.builder().id("second").type(Return.class.getName()).format(Property.ofValue("test")).build())
+            spyTaskRun(
+                TaskRun.of(
+                    execution.build(), ResolvedTask.of(
+                        Return.builder().id("second").type(Return.class.getName()).format(Property.ofValue("test")).build()
                     )
+                )
                     .withState(state),
                 state
             ),
-            TaskRun.of(execution.build(), ResolvedTask.of(
-                Return.builder().id("third").type(Return.class.getName()).format(Property.ofValue("test")).build())).withState(state)
+            TaskRun.of(
+                execution.build(), ResolvedTask.of(
+                    Return.builder().id("third").type(Return.class.getName()).format(Property.ofValue("test")).build()
+                )
+            ).withState(state)
         );
 
         if (flowId == null) {
@@ -99,7 +109,6 @@ public abstract class AbstractExecutionRepositoryTest {
 
         return execution.taskRunList(List.of(taskRuns.getFirst(), taskRuns.get(1)));
     }
-
 
     static TaskRun spyTaskRun(TaskRun taskRun, State.Type state) {
         TaskRun spy = spy(taskRun);
@@ -114,8 +123,9 @@ public abstract class AbstractExecutionRepositoryTest {
     static State randomDuration(State.Type state) {
         State finalState = new State();
 
-        finalState = spy(finalState
-            .withState(state != null ? state : State.Type.SUCCESS)
+        finalState = spy(
+            finalState
+                .withState(state != null ? state : State.Type.SUCCESS)
         );
 
         Random rand = new Random();
@@ -139,43 +149,52 @@ public abstract class AbstractExecutionRepositoryTest {
                 .build();
         }
 
-        executionRepository.save(builder(State.Type.RUNNING, null)
-            .labels(List.of(
-                new Label("key", "value"),
-                new Label("key2", "value2")
-            ))
-            .trigger(executionTrigger)
-            .build()
+        executionRepository.save(
+            builder(State.Type.RUNNING, null)
+                .labels(
+                    List.of(
+                        new Label("key", "value"),
+                        new Label("key2", "value2")
+                    )
+                )
+                .trigger(executionTrigger)
+                .build()
         );
         for (int i = 1; i < 28; i++) {
-            executionRepository.save(builder(
-                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                i < 15 ? null : "second"
-            ).trigger(executionTrigger).build());
+            executionRepository.save(
+                builder(
+                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                    i < 15 ? null : "second"
+                ).trigger(executionTrigger).build()
+            );
         }
 
         // add a NORMAL kind execution, it should be fetched correctly
-        executionRepository.save(builder(
-            State.Type.SUCCESS,
-            null
-        )
-            .trigger(executionTrigger)
-            .kind(ExecutionKind.NORMAL)
-            .build());
+        executionRepository.save(
+            builder(
+                State.Type.SUCCESS,
+                null
+            )
+                .trigger(executionTrigger)
+                .kind(ExecutionKind.NORMAL)
+                .build()
+        );
 
         // add a test execution, this should be ignored in search & statistics
-        executionRepository.save(builder(
-            State.Type.SUCCESS,
-            null
-        )
-            .trigger(executionTrigger)
-            .kind(ExecutionKind.TEST)
-            .build());
+        executionRepository.save(
+            builder(
+                State.Type.SUCCESS,
+                null
+            )
+                .trigger(executionTrigger)
+                .kind(ExecutionKind.TEST)
+                .build()
+        );
     }
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all(QueryFilter filter, int expectedSize){
+    void should_find_all(QueryFilter filter, int expectedSize) {
         inject("executionTriggerId");
 
         ArrayListTotal<Execution> entries = executionRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
@@ -200,7 +219,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all(QueryFilter filter){
+    void should_fail_to_find_all(QueryFilter filter) {
         assertThrows(InvalidQueryFiltersException.class, () -> executionRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
     }
 
@@ -219,52 +238,62 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void find() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, null);
         assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
-        List<QueryFilter> filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.STATE)
-            .operation(QueryFilter.Op.EQUALS)
-            .value( List.of(State.Type.RUNNING, State.Type.FAILED))
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.STATE)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(List.of(State.Type.RUNNING, State.Type.FAILED))
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(8L);
 
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value"))
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Map.of("key", "value"))
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(1L);
 
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value2"))
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
-        assertThat(executions.getTotal()).isEqualTo(0L);
-
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value", "keyTest", "valueTest"))
-            .build()
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Map.of("key", "value2"))
+                .build()
         );
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(0L);
 
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.FLOW_ID)
-            .operation(QueryFilter.Op.EQUALS)
-            .value("second")
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Map.of("key", "value", "keyTest", "valueTest"))
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
+        assertThat(executions.getTotal()).isEqualTo(0L);
+
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.FLOW_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("second")
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(13L);
 
-        filters = List.of(QueryFilter.builder()
+        filters = List.of(
+            QueryFilter.builder()
                 .field(QueryFilter.Field.FLOW_ID)
                 .operation(QueryFilter.Op.EQUALS)
                 .value("second")
@@ -275,15 +304,17 @@ public abstract class AbstractExecutionRepositoryTest {
                 .value(NAMESPACE)
                 .build()
         );
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(13L);
 
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.NAMESPACE)
-            .operation(QueryFilter.Op.STARTS_WITH)
-            .value("io.kestra")
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.NAMESPACE)
+                .operation(QueryFilter.Op.STARTS_WITH)
+                .value("io.kestra")
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(29L);
     }
 
@@ -294,38 +325,44 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(executionTriggerId);
         inject();
 
-        var filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.TRIGGER_EXECUTION_ID)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(executionTriggerId)
-            .build());
+        var filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.TRIGGER_EXECUTION_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(executionTriggerId)
+                .build()
+        );
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.CHILD_FILTER)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(ExecutionRepositoryInterface.ChildFilter.CHILD)
-            .build());
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.CHILD_FILTER)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(ExecutionRepositoryInterface.ChildFilter.CHILD)
+                .build()
+        );
 
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
 
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.CHILD_FILTER)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(ExecutionRepositoryInterface.ChildFilter.MAIN)
-            .build());
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.CHILD_FILTER)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(ExecutionRepositoryInterface.ChildFilter.MAIN)
+                .build()
+        );
 
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger()).isNull();
 
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, null);
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, null);
         assertThat(executions.getTotal()).isEqualTo(58L);
     }
 
@@ -333,16 +370,18 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findWithSort() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  MAIN_TENANT, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))), MAIN_TENANT, null);
         assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
-        var filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.STATE)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(List.of(State.Type.RUNNING, State.Type.FAILED))
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        var filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.STATE)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(List.of(State.Type.RUNNING, State.Type.FAILED))
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(8L);
     }
 
@@ -354,17 +393,18 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(taskRuns.getTotal()).isEqualTo(77L);
         assertThat(taskRuns.size()).isEqualTo(10);
 
-        var filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value"))
-            .build());
+        var filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Map.of("key", "value"))
+                .build()
+        );
 
         taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(taskRuns.getTotal()).isEqualTo(1L);
         assertThat(taskRuns.size()).isEqualTo(1);
     }
-
 
     @Test
     protected void findById() {
@@ -373,7 +413,8 @@ public abstract class AbstractExecutionRepositoryTest {
         Optional<Execution> full = executionRepository.findById(MAIN_TENANT, ExecutionFixture.EXECUTION_1.getId());
         assertThat(full.isPresent()).isTrue();
 
-        full.ifPresent(current -> {
+        full.ifPresent(current ->
+        {
             assertThat(full.get().getId()).isEqualTo(ExecutionFixture.EXECUTION_1.getId());
         });
     }
@@ -385,7 +426,8 @@ public abstract class AbstractExecutionRepositoryTest {
         Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_TEST.getId());
         assertThat(full.isPresent()).isTrue();
 
-        full.ifPresent(current -> {
+        full.ifPresent(current ->
+        {
             assertThat(full.get().getId()).isEqualTo(ExecutionFixture.EXECUTION_TEST.getId());
         });
     }
@@ -443,16 +485,20 @@ public abstract class AbstractExecutionRepositoryTest {
     @Test
     protected void dailyStatistics() throws InterruptedException {
         for (int i = 0; i < 28; i++) {
-            executionRepository.save(builder(
-                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                i < 15 ? null : "second"
-            ).build());
+            executionRepository.save(
+                builder(
+                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                    i < 15 ? null : "second"
+                ).build()
+            );
         }
 
-        executionRepository.save(builder(
-            State.Type.SUCCESS,
-            "second"
-        ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build());
+        executionRepository.save(
+            builder(
+                State.Type.SUCCESS,
+                "second"
+            ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build()
+        );
 
         // mysql need some time ...
         Thread.sleep(500);
@@ -467,7 +513,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            false);
+            false
+        );
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
@@ -487,7 +534,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            false);
+            false
+        );
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
@@ -502,7 +550,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            false);
+            false
+        );
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
 
@@ -516,7 +565,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            false);
+            false
+        );
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
     }
@@ -524,16 +574,20 @@ public abstract class AbstractExecutionRepositoryTest {
     @Test
     protected void taskRunsDailyStatistics() {
         for (int i = 0; i < 28; i++) {
-            executionRepository.save(builder(
-                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                i < 15 ? null : "second"
-            ).build());
+            executionRepository.save(
+                builder(
+                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                    i < 15 ? null : "second"
+                ).build()
+            );
         }
 
-        executionRepository.save(builder(
-            State.Type.SUCCESS,
-            "second"
-        ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build());
+        executionRepository.save(
+            builder(
+                State.Type.SUCCESS,
+                "second"
+            ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build()
+        );
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
             null,
@@ -545,7 +599,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            true);
+            true
+        );
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
@@ -565,7 +620,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            true);
+            true
+        );
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(57L);
@@ -580,7 +636,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            true);
+            true
+        );
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(55L);
 
@@ -594,7 +651,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null,
             null,
-            true);
+            true
+        );
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(2L);
     }
@@ -603,10 +661,12 @@ public abstract class AbstractExecutionRepositoryTest {
     @Test
     protected void executionsCount() throws InterruptedException {
         for (int i = 0; i < 14; i++) {
-            executionRepository.save(builder(
-                State.Type.SUCCESS,
-                i < 2 ? "first" : (i < 5 ? "second" : "third")
-            ).build());
+            executionRepository.save(
+                builder(
+                    State.Type.SUCCESS,
+                    i < 2 ? "first" : (i < 5 ? "second" : "third")
+                ).build()
+            );
         }
 
         // mysql need some time ...
@@ -711,21 +771,27 @@ public abstract class AbstractExecutionRepositoryTest {
             .flowId("some-execution")
             .flowRevision(1)
             .labels(Label.from(Map.of("country", "FR")))
-            .state(new State(Type.SUCCESS,
-                List.of(new State.History(State.Type.CREATED, Instant.now()))))
+            .state(
+                new State(
+                    Type.SUCCESS,
+                    List.of(new State.History(State.Type.CREATED, Instant.now()))
+                )
+            )
             .taskRunList(List.of())
             .kind(ExecutionKind.TEST)
             .build();
         executionRepository.save(testExecution);
 
-
-        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
+            tenantId, Executions.builder()
                 .type(Executions.class.getName())
-                .columns(Map.of(
-                    "count", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
-                    "country", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.LABELS).labelKey("country").build(),
-                    "date", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.START_DATE).build()
-                )).build(),
+                .columns(
+                    Map.of(
+                        "count", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                        "country", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.LABELS).labelKey("country").build(),
+                        "date", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.START_DATE).build()
+                    )
+                ).build(),
             ZonedDateTime.now().minus(1, ChronoUnit.HOURS),
             ZonedDateTime.now(),
             null
@@ -735,7 +801,8 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data.get(0).get("count")).isEqualTo(1L);
         assertThat(data.get(0).get("country")).isEqualTo("FR");
         Instant startDate = execution.getState().getStartDate();
-        assertThat(data.get(0).get("date")).isEqualTo(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(ZonedDateTime.ofInstant(startDate, ZoneId.systemDefault()).withSecond(0).withNano(0)));
+        assertThat(data.get(0).get("date"))
+            .isEqualTo(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(ZonedDateTime.ofInstant(startDate, ZoneId.systemDefault()).withSecond(0).withNano(0)));
     }
 
     private static Execution buildWithCreatedDate(Instant instant) {
@@ -763,21 +830,25 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void shouldFindByLabel() {
         inject();
 
-        List<QueryFilter> filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value"))
-            .build());
-        List<Execution> executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Map.of("key", "value"))
+                .build()
+        );
+        List<Execution> executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.size()).isEqualTo(1L);
 
         // Filtering by two pairs of labels, since now its a and behavior, it should not return anything
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value", "keyother", "valueother"))
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Map.of("key", "value", "keyother", "valueother"))
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(executions.size()).isEqualTo(0L);
     }
 

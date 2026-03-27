@@ -1,15 +1,17 @@
 package io.kestra.repository.postgres;
 
+import java.util.Collections;
+
+import org.jooq.Condition;
+
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jooq.Condition;
-
-import java.util.Collections;
 
 @Singleton
 @PostgresRepositoryEnabled
@@ -17,7 +19,7 @@ import java.util.Collections;
 public class PostgresTemplateRepository extends AbstractJdbcTemplateRepository {
     @Inject
     public PostgresTemplateRepository(@Named("templates") PostgresRepository<Template> repository,
-                                      ApplicationContext applicationContext) {
+        ApplicationContext applicationContext) {
         super(repository, applicationContext);
     }
 

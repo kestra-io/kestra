@@ -1,6 +1,11 @@
 package io.kestra.core.plugins;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -11,17 +16,13 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.runners.RunContext;
+
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 
 @KestraTest(startRunner = true)
 class AdditionalPluginTest {

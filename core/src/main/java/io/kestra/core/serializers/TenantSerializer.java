@@ -1,14 +1,16 @@
 package io.kestra.core.serializers;
 
+import java.io.Serial;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import io.kestra.core.models.TenantInterface;
-import io.micronaut.core.annotation.Introspected;
 
-import java.io.Serial;
-import java.util.List;
+import io.kestra.core.models.TenantInterface;
+
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Singleton;
 
 @Introspected
@@ -21,8 +23,7 @@ public class TenantSerializer extends BeanSerializerModifier {
     public List<BeanPropertyWriter> changeProperties(
         SerializationConfig config,
         BeanDescription beanDesc,
-        List<BeanPropertyWriter> beanProperties
-    ) {
+        List<BeanPropertyWriter> beanProperties) {
         if (!TenantInterface.class.isAssignableFrom(beanDesc.getBeanClass())) {
             return beanProperties;
         }

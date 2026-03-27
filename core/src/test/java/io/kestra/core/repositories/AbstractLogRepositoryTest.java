@@ -1,5 +1,18 @@
 package io.kestra.core.repositories;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
+
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
@@ -13,31 +26,17 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.kestra.plugin.core.dashboard.data.LogsKPI;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatReflectiveOperationException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -67,7 +66,7 @@ public abstract class AbstractLogRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all(QueryFilter filter){
+    void should_find_all(QueryFilter filter) {
         logRepository.save(logEntry(Level.INFO, "executionId").build());
 
         ArrayListTotal<LogEntry> entries = logRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
@@ -77,7 +76,7 @@ public abstract class AbstractLogRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_async(QueryFilter filter){
+    void should_find_async(QueryFilter filter) {
         logRepository.save(logEntry(Level.INFO, "executionId").build());
 
         Flux<LogEntry> find = logRepository.findAsync(MAIN_TENANT, List.of(filter));
@@ -88,15 +87,13 @@ public abstract class AbstractLogRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_delete_with_filter(QueryFilter filter){
+    void should_delete_with_filter(QueryFilter filter) {
         logRepository.save(logEntry(Level.INFO, "executionId").build());
 
         logRepository.deleteByFilters(MAIN_TENANT, List.of(filter));
 
         assertThat(logRepository.findAllAsync(MAIN_TENANT).collectList().block()).isEmpty();
     }
-
-
 
     static Stream<QueryFilter> filterCombinations() {
         return Stream.of(
@@ -150,10 +147,11 @@ public abstract class AbstractLogRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all(QueryFilter filter){
+    void should_fail_to_find_all(QueryFilter filter) {
         assertThrows(
             InvalidQueryFiltersException.class,
-            () -> logRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
+            () -> logRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter))
+        );
 
     }
 
@@ -176,14 +174,14 @@ public abstract class AbstractLogRepositoryTest {
         ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, MAIN_TENANT, null);
         assertThat(find.size()).isZero();
 
-
         LogEntry save = logRepository.save(builder.build());
         logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // should only be loaded by execution id
 
         find = logRepository.find(Pageable.UNPAGED, MAIN_TENANT, null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
-        var filters = List.of(QueryFilter.builder()
+        var filters = List.of(
+            QueryFilter.builder()
                 .field(QueryFilter.Field.MIN_LEVEL)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(Level.WARN)
@@ -192,8 +190,9 @@ public abstract class AbstractLogRepositoryTest {
                 .field(Field.START_DATE)
                 .operation(QueryFilter.Op.GREATER_THAN)
                 .value(Instant.now().minus(1, ChronoUnit.HOURS))
-                .build());
-        find = logRepository.find(Pageable.UNPAGED,  "doe", filters);
+                .build()
+        );
+        find = logRepository.find(Pageable.UNPAGED, "doe", filters);
         assertThat(find.size()).isZero();
 
         find = logRepository.find(Pageable.UNPAGED, MAIN_TENANT, null);
@@ -343,16 +342,20 @@ public abstract class AbstractLogRepositoryTest {
         // test log should not be included in the results
         logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build());
 
-        var results = logRepository.fetchData(MAIN_TENANT,
+        var results = logRepository.fetchData(
+            MAIN_TENANT,
             Logs.builder()
                 .type(Logs.class.getName())
-                .columns(Map.of(
-                    "count", ColumnDescriptor.<Logs.Fields>builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build()
-                ))
+                .columns(
+                    Map.of(
+                        "count", ColumnDescriptor.<Logs.Fields> builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build()
+                    )
+                )
                 .build(),
             ZonedDateTime.now().minusHours(3),
             ZonedDateTime.now(),
-            null);
+            null
+        );
 
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
@@ -365,14 +368,16 @@ public abstract class AbstractLogRepositoryTest {
         // test log should not be included in the results
         logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build());
 
-        var results = logRepository.fetchValue(MAIN_TENANT,
+        var results = logRepository.fetchValue(
+            MAIN_TENANT,
             LogsKPI.builder()
                 .type(LogsKPI.class.getName())
-                .columns(ColumnDescriptor.<Logs.Fields>builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build())
+                .columns(ColumnDescriptor.<Logs.Fields> builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build())
                 .build(),
             ZonedDateTime.now().minusHours(3),
             ZonedDateTime.now(),
-            false);
+            false
+        );
 
         assertThat(results).isEqualTo(1.0);
     }

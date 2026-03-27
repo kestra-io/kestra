@@ -1,5 +1,8 @@
 package io.kestra.runner.h2;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -9,10 +12,9 @@ import io.kestra.core.runners.FlowListenersTest;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 class H2FlowListenersTest extends FlowListenersTest {
     @Inject

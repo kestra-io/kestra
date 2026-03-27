@@ -1,12 +1,14 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.runners.ScheduleContextInterface;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import lombok.Getter;
+import java.util.function.Consumer;
+
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
-import java.util.function.Consumer;
+import io.kestra.core.runners.ScheduleContextInterface;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+
+import lombok.Getter;
 
 @Getter
 public class JdbcSchedulerContext implements ScheduleContextInterface {
@@ -20,7 +22,8 @@ public class JdbcSchedulerContext implements ScheduleContextInterface {
 
     @Override
     public void doInTransaction(Consumer<ScheduleContextInterface> consumer) {
-        this.dslContextWrapper.transaction(configuration -> {
+        this.dslContextWrapper.transaction(configuration ->
+        {
             this.context = DSL.using(configuration);
 
             consumer.accept(this);

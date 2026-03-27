@@ -1,23 +1,19 @@
 package io.kestra.core.http.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.apache.*;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.micrometer.common.KeyValues;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultApacheHttpClientObservationConvention;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
-import io.micrometer.observation.ObservationRegistry;
-import io.micronaut.http.MediaType;
-import jakarta.annotation.Nullable;
-import lombok.Builder;
-import lombok.extern.slf4j.Slf4j;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.*;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.List;
+import java.util.function.Consumer;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.ContextBuilder;
@@ -39,18 +35,26 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.*;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.util.List;
-import java.util.function.Consumer;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.apache.*;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.micrometer.common.KeyValues;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultApacheHttpClientObservationConvention;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
+import io.micrometer.observation.ObservationRegistry;
+import io.micronaut.http.MediaType;
+import jakarta.annotation.Nullable;
+import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HttpClient implements Closeable {
@@ -81,21 +85,24 @@ public class HttpClient implements Closeable {
 
         if (observationRegistry != null) {
             // micrometer, must be placed before the retry strategy (see https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
-            builder.addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
+            builder.addExecInterceptorAfter(
+                ChainElement.RETRY.name(), "micrometer",
                 new ObservationExecChainHandler(observationRegistry, new CustomApacheHttpClientObservationConvention())
             );
         }
 
         // logger
         if (this.configuration.getLogs() != null && this.configuration.getLogs().length > 0) {
-            if (ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_HEADERS) ||
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
+            if (
+                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_HEADERS) ||
+                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.REQUEST_BODY)
             ) {
                 builder.addRequestInterceptorLast(new LoggingRequestInterceptor(runContext.logger(), this.configuration.getLogs()));
             }
 
-            if (ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_HEADERS) ||
-                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
+            if (
+                ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_HEADERS) ||
+                    ArrayUtils.contains(this.configuration.getLogs(), HttpConfiguration.LoggingType.RESPONSE_BODY)
             ) {
                 builder.addResponseInterceptorLast(new LoggingResponseInterceptor(runContext.logger(), this.configuration.getLogs()));
             }
@@ -219,7 +226,8 @@ public class HttpClient implements Closeable {
     public <T> HttpResponse<T> request(HttpRequest request, Class<T> cls) throws HttpClientException, IllegalVariableEvaluationException {
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, r -> {
+        return this.request(request, httpClientContext, r ->
+        {
             T body = bodyHandler(cls, r.getEntity());
 
             return HttpResponse.from(r, body, request, httpClientContext);
@@ -236,7 +244,8 @@ public class HttpClient implements Closeable {
     public HttpResponse<Void> request(HttpRequest request, Consumer<HttpResponse<InputStream>> consumer) throws HttpClientException, IllegalVariableEvaluationException {
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, r -> {
+        return this.request(request, httpClientContext, r ->
+        {
             HttpResponse<InputStream> from = HttpResponse.from(
                 r,
                 r.getEntity() != null ? r.getEntity().getContent() : null,
@@ -260,8 +269,10 @@ public class HttpClient implements Closeable {
     public <T> HttpResponse<T> request(HttpRequest request) throws HttpClientException, IllegalVariableEvaluationException {
         HttpClientContext httpClientContext = this.clientContext(request);
 
-        return this.request(request, httpClientContext, response -> {
-            T body = JacksonMapper.ofJson().readValue(response.getEntity().getContent(), new TypeReference<>() {});
+        return this.request(request, httpClientContext, response ->
+        {
+            T body = JacksonMapper.ofJson().readValue(response.getEntity().getContent(), new TypeReference<>() {
+            });
 
             return HttpResponse.from(response, body, request, httpClientContext);
         });
@@ -276,8 +287,7 @@ public class HttpClient implements Closeable {
     private <T> HttpResponse<T> request(
         HttpRequest request,
         HttpClientContext httpClientContext,
-        HttpClientResponseHandler<HttpResponse<T>> responseHandler
-    ) throws HttpClientException {
+        HttpClientResponseHandler<HttpResponse<T>> responseHandler) throws HttpClientException {
         try {
             return this.client.execute(request.to(runContext), httpClientContext, responseHandler);
         } catch (SocketException e) {

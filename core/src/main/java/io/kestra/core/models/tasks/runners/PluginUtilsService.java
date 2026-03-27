@@ -1,17 +1,5 @@
 package io.kestra.core.models.tasks.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowService;
-import jakarta.validation.constraints.NotNull;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,17 +21,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.FlowService;
+
+import jakarta.validation.constraints.NotNull;
+
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
 
-    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
+    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
     public static Map<String, String> createOutputFiles(
         Path tempDirectory,
         List<String> outputFiles,
-        Map<String, Object> additionalVars
-    ) throws IOException {
+        Map<String, Object> additionalVars) throws IOException {
         return PluginUtilsService.createOutputFiles(tempDirectory, outputFiles, additionalVars, false);
     }
 
@@ -51,8 +54,7 @@ abstract public class PluginUtilsService {
         Path tempDirectory,
         List<String> outputFiles,
         Map<String, Object> additionalVars,
-        Boolean isDir
-    ) throws IOException {
+        Boolean isDir) throws IOException {
         List<String> outputs = new ArrayList<>();
 
         if (outputFiles != null && !outputFiles.isEmpty()) {
@@ -62,7 +64,8 @@ abstract public class PluginUtilsService {
         Map<String, String> result = new HashMap<>();
         if (!outputs.isEmpty()) {
             outputs
-                .forEach(throwConsumer(s -> {
+                .forEach(throwConsumer(s ->
+                {
                     PluginUtilsService.validFilename(s);
                     File tempFile;
 
@@ -79,7 +82,7 @@ abstract public class PluginUtilsService {
             if (!isDir) {
                 additionalVars.put("temp", result);
             }
-            additionalVars.put(isDir ? "outputDirs": "outputFiles", result);
+            additionalVars.put(isDir ? "outputDirs" : "outputFiles", result);
         }
 
         return result;
@@ -87,8 +90,9 @@ abstract public class PluginUtilsService {
 
     private static void validFilename(String s) {
         if (s.startsWith("./") || s.startsWith("..") || s.startsWith("/")) {
-            throw new IllegalArgumentException("Invalid outputFile (only relative path is supported) " +
-                "for path '" + s + "'"
+            throw new IllegalArgumentException(
+                "Invalid outputFile (only relative path is supported) " +
+                    "for path '" + s + "'"
             );
         }
     }
@@ -98,11 +102,13 @@ abstract public class PluginUtilsService {
     }
 
     @SuppressWarnings("unchecked")
-    public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
+    public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles)
+        throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
             Map<String, String> castedInputFiles = (Map<String, String>) inputFiles;
             Map<String, String> nullFilteredInputFiles = new HashMap<>();
-            castedInputFiles.forEach((key, val) -> {
+            castedInputFiles.forEach((key, val) ->
+            {
                 if (val != null) {
                     nullFilteredInputFiles.put(key, val);
                 }
@@ -119,13 +125,11 @@ abstract public class PluginUtilsService {
         }
     }
 
-
     public static void createInputFiles(
         RunContext runContext,
         Path workingDirectory,
         Map<String, String> inputFiles,
-        Map<String, Object> additionalVars
-    ) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        Map<String, Object> additionalVars) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
         if (inputFiles != null && inputFiles.size() > 0) {
             for (String fileName : inputFiles.keySet()) {
                 String finalFileName = runContext.render(fileName);
@@ -215,7 +219,7 @@ abstract public class PluginUtilsService {
                 realNamespace = runContext.render(namespace);
                 realFlowId = runContext.render(flowId);
                 // validate that the flow exists: a.k.a access is authorized by this namespace
-                FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
+                FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
                 flowService.checkAllowedNamespace(flowInfo.tenantId(), realNamespace, flowInfo.tenantId(), flowInfo.namespace());
             } else if (namespace != null || flowId != null) {
                 throw new IllegalArgumentException("Both `namespace` and `flowId` must be set when `executionId` is set.");
@@ -236,5 +240,6 @@ abstract public class PluginUtilsService {
         return new ExecutionInfo(realTenantId, realNamespace, realFlowId, realExecutionId);
     }
 
-    public record ExecutionInfo(String tenantId, String namespace, String flowId, String id) {}
+    public record ExecutionInfo(String tenantId, String namespace, String flowId, String id) {
+    }
 }

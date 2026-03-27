@@ -1,33 +1,36 @@
 package io.kestra.core.models;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.QueryFilter.Resource;
-import java.util.List;
-import java.util.stream.Stream;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class QueryFilterTest {
 
     @ParameterizedTest
     @MethodSource("validOperationFilters")
-    void should_validate_all_operations(QueryFilter filter, Resource resource){
+    void should_validate_all_operations(QueryFilter filter, Resource resource) {
         assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(filter), resource));
     }
 
     @ParameterizedTest
     @MethodSource("invalidOperationFilters")
-    void should_fail_to_validate_all_operations(QueryFilter filter, Resource resource){
+    void should_fail_to_validate_all_operations(QueryFilter filter, Resource resource) {
         InvalidQueryFiltersException e = assertThrows(
             InvalidQueryFiltersException.class,
-            () -> QueryFilter.validateQueryFilters(List.of(filter), resource));
+            () -> QueryFilter.validateQueryFilters(List.of(filter), resource)
+        );
         assertThat(e.formatedInvalidObjects()).contains("Operation");
     }
 

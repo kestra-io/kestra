@@ -1,5 +1,10 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Map;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -10,16 +15,11 @@ import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
-import java.util.Map;
-
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -54,7 +54,7 @@ import jakarta.validation.constraints.NotNull;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.DayWeekInMonthCondition", "io.kestra.plugin.core.condition.DayWeekInMonthCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.DayWeekInMonthCondition", "io.kestra.plugin.core.condition.DayWeekInMonthCondition" }
 )
 public class DayWeekInMonth extends Condition implements ScheduleCondition {
     @NotNull
@@ -95,7 +95,8 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         } else if (renderedDayInMonth.equals(DayInMonth.THIRD)) {
             computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
         } else if (renderedDayInMonth.equals(DayInMonth.FOURTH)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek))
+                .with(TemporalAdjusters.next(renderedDayOfWeek));
         } else {
             throw new IllegalArgumentException("Invalid dayInMonth");
         }

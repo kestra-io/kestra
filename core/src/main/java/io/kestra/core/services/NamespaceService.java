@@ -1,14 +1,15 @@
 package io.kestra.core.services;
 
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.utils.NamespaceUtils;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.utils.NamespaceUtils;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class NamespaceService {
@@ -23,9 +24,9 @@ public class NamespaceService {
     /**
      * Checks whether a given namespace exists. A namespace is considered existing if at least one Flow is within the namespace or a parent namespace
      *
-     * @param tenant        The tenant ID
-     * @param namespace     The namespace - cannot be null.
-     * @return  {@code true} if the namespace exist. Otherwise {@link false}.
+     * @param tenant The tenant ID
+     * @param namespace The namespace - cannot be null.
+     * @return {@code true} if the namespace exist. Otherwise {@link false}.
      */
     public boolean isNamespaceExists(String tenant, String namespace) {
         Objects.requireNonNull(namespace, "namespace cannot be null");

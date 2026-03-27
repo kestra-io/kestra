@@ -1,7 +1,8 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.jdbc.repository.AbstractJdbcExecutionRepositoryTest;
 import org.junit.jupiter.api.Test;
+
+import io.kestra.jdbc.repository.AbstractJdbcExecutionRepositoryTest;
 
 public class PostgresExecutionRepositoryTest extends AbstractJdbcExecutionRepositoryTest {
     @Test

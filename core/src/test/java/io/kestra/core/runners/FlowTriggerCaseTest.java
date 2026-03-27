@@ -1,22 +1,23 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.utils.TestsUtils;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +38,8 @@ public class FlowTriggerCaseTest {
         AtomicReference<Execution> flowListenerNoInput = new AtomicReference<>();
         AtomicReference<Execution> flowListenerNamespace = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getState().getCurrent() == State.Type.SUCCESS) {
                 if (flowListenerNoInput.get() == null && execution.getFlowId().equals("trigger-flow-listener-no-inputs")) {
@@ -89,7 +91,8 @@ public class FlowTriggerCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(4);
         List<Execution> flowListeners = new ArrayList<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId().equals("trigger-flow-listener-with-pause")) {
                 flowListeners.add(execution);
@@ -116,7 +119,8 @@ public class FlowTriggerCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(5);
         List<Execution> flowListeners = new ArrayList<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId().equals("trigger-flow-listener-with-concurrency-limit")) {
                 flowListeners.add(execution);

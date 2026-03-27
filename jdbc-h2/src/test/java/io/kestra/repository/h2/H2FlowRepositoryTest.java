@@ -1,16 +1,18 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.jdbc.repository.AbstractJdbcFlowRepositoryTest;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.jdbc.repository.AbstractJdbcFlowRepositoryTest;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,9 +36,11 @@ public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
 
         SearchResult<Flow> flow = search
             .stream()
-            .filter(flowSearchResult -> flowSearchResult.getModel()
-                .getId()
-                .equals("trigger-multiplecondition-listener"))
+            .filter(
+                flowSearchResult -> flowSearchResult.getModel()
+                    .getId()
+                    .equals("trigger-multiplecondition-listener")
+            )
             .findFirst()
             .orElseThrow();
         assertThat(flow.getFragments().getFirst()).contains("condition.MultipleCondition[/mark]");

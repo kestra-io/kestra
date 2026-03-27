@@ -1,15 +1,16 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.models.flows.sla.SLAMonitor;
-import io.kestra.core.models.flows.sla.SLAMonitorStorage;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import java.time.Instant;
+import java.util.Map;
+import java.util.function.Consumer;
+
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.function.Consumer;
+import io.kestra.core.models.flows.sla.SLAMonitor;
+import io.kestra.core.models.flows.sla.SLAMonitorStorage;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 
 public abstract class AbstractJdbcSLAMonitorStorage extends AbstractJdbcRepository implements SLAMonitorStorage {
     protected io.kestra.jdbc.AbstractJdbcRepository<SLAMonitor> jdbcRepository;
@@ -22,7 +23,8 @@ public abstract class AbstractJdbcSLAMonitorStorage extends AbstractJdbcReposito
     public void save(SLAMonitor slaMonitor) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(slaMonitor);
                 this.jdbcRepository.persist(slaMonitor, context, fields);
@@ -33,7 +35,8 @@ public abstract class AbstractJdbcSLAMonitorStorage extends AbstractJdbcReposito
     public void purge(String executionId) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 context.delete(this.jdbcRepository.getTable())
                     .where(field("execution_id").eq(executionId))
@@ -45,7 +48,8 @@ public abstract class AbstractJdbcSLAMonitorStorage extends AbstractJdbcReposito
     public void processExpired(Instant date, Consumer<SLAMonitor> consumer) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 var select = context.select()
                     .from(this.jdbcRepository.getTable())
@@ -54,7 +58,8 @@ public abstract class AbstractJdbcSLAMonitorStorage extends AbstractJdbcReposito
                     .skipLocked();
 
                 this.jdbcRepository.fetch(select)
-                    .forEach(slaMonitor -> {
+                    .forEach(slaMonitor ->
+                    {
                         consumer.accept(slaMonitor);
                         jdbcRepository.delete(slaMonitor);
                     });

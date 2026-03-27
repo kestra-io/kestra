@@ -1,5 +1,10 @@
 package io.kestra.plugin.core.log;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -9,6 +14,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.LogService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -16,10 +22,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.event.Level;
-
-import java.time.ZonedDateTime;
-import java.util.List;
 
 @SuperBuilder
 @ToString
@@ -90,12 +92,12 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        LogService logService = ((DefaultRunContext)runContext).getApplicationContext().getBean(LogService.class);
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
+        LogService logService = ((DefaultRunContext) runContext).getApplicationContext().getBean(LogService.class);
+        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();
-        if (namespace == null){
+        if (namespace == null) {
             flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
         } else if (!flowInfo.namespace().equals(runContext.render(namespace).as(String.class).orElse(null))) {
             flowService.checkAllowedNamespace(flowInfo.tenantId(), runContext.render(namespace).as(String.class).orElse(null), flowInfo.tenantId(), flowInfo.namespace());
@@ -115,7 +117,6 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
 
         return Output.builder().count(deleted).build();
     }
-
 
     @SuperBuilder(toBuilder = true)
     @Getter

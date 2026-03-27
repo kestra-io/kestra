@@ -1,10 +1,12 @@
 package io.kestra.core.models.flows.input;
 
-import io.kestra.core.models.flows.Input;
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import io.kestra.core.models.flows.Input;
+
 class FileInputTest {
 
     @Test

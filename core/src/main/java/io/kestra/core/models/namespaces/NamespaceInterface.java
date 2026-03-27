@@ -6,7 +6,6 @@ import io.kestra.core.models.HasUID;
 public interface NamespaceInterface extends DeletedInterface, HasUID {
     String getId();
 
-
     /** {@inheritDoc **/
     @Override
     default String uid() {

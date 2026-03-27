@@ -1,14 +1,16 @@
 package io.kestra.core.services;
 
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.junit.annotations.KestraTest;
+
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
 @KestraTest
 @Slf4j

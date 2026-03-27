@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.OffsetTime;
+import java.util.Map;
+
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
@@ -10,13 +13,11 @@ import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.OffsetTime;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -51,7 +52,7 @@ import java.util.Map;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.TimeBetweenCondition", "io.kestra.plugin.core.condition.TimeBetweenCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.TimeBetweenCondition", "io.kestra.plugin.core.condition.TimeBetweenCondition" }
 )
 public class TimeBetween extends Condition implements ScheduleCondition {
     @NotNull

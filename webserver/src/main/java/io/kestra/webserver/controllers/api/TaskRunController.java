@@ -1,5 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
@@ -9,6 +13,7 @@ import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
@@ -25,10 +30,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
-
 @Controller("/api/v1/{tenant}/taskruns")
 @Requires(property = "kestra.repository.type", value = "elasticsearch")
 public class TaskRunController {
@@ -40,25 +41,27 @@ public class TaskRunController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
-    @Operation(tags = {"Executions"}, summary = "Search for taskruns, only available with the Elasticsearch repository")
+    @Operation(tags = { "Executions" }, summary = "Search for taskruns, only available with the Elasticsearch repository")
     public PagedResults<TaskRun> searchTaskRun(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
         // Deprecated params
-        @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Parameter(description = "A flow id filter",deprecated = true) @Nullable @QueryValue String flowId,
-        @Parameter(description = "The start datetime",deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
-            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-        }) @Nullable @QueryValue Duration timeRange,
-        @Parameter(description = "A state filter",deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Parameter(
+            description = "A time range filter relative to the current time", deprecated = true, examples = {
+                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+            }
+        ) @Nullable @QueryValue Duration timeRange,
+        @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Parameter(description = "The trigger execution id",deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
 
     ) throws HttpStatusException {
@@ -78,13 +81,16 @@ public class TaskRunController {
             childFilter,
             state,
             null,
-            triggerExecutionId);
+            triggerExecutionId
+        );
 
-        return PagedResults.of(executionRepository.findTaskRun(
-            PageableUtils.from(page, size, sort),
-            tenantService.resolveTenant(),
-            filters
-        ));
+        return PagedResults.of(
+            executionRepository.findTaskRun(
+                PageableUtils.from(page, size, sort),
+                tenantService.resolveTenant(),
+                filters
+            )
+        );
     }
 
 }

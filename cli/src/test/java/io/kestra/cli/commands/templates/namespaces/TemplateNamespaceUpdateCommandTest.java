@@ -1,15 +1,16 @@
 package io.kestra.cli.commands.templates.namespaces;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.runtime.server.EmbeddedServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,7 +63,7 @@ class TemplateNamespaceUpdateCommandTest {
             };
             Integer call = PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
 
-//            assertThat(call, is(1));
+            //            assertThat(call, is(1));
             assertThat(out.toString()).contains("Unable to parse templates");
             assertThat(out.toString()).contains("must not be empty");
         }

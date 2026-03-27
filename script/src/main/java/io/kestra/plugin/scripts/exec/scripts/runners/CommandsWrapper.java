@@ -1,32 +1,34 @@
 package io.kestra.plugin.scripts.exec.scripts.runners;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.RunnableTaskException;
-import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
-import io.kestra.core.models.tasks.runners.*;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContextInitializer;
-import io.kestra.core.utils.NamespaceFilesUtils;
-import io.kestra.plugin.core.runner.Process;
-import io.kestra.core.models.tasks.NamespaceFiles;
-import io.kestra.core.runners.FilesService;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
-import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
-import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
-import io.kestra.plugin.scripts.runner.docker.Docker;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.With;
-import org.apache.commons.lang3.SystemUtils;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+
+import org.apache.commons.lang3.SystemUtils;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.NamespaceFiles;
+import io.kestra.core.models.tasks.RunnableTaskException;
+import io.kestra.core.models.tasks.runners.*;
+import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.FilesService;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextInitializer;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.NamespaceFilesUtils;
+import io.kestra.plugin.core.runner.Process;
+import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
+import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
+import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
+import io.kestra.plugin.scripts.runner.docker.Docker;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.With;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -166,11 +168,10 @@ public class CommandsWrapper implements TaskCommands {
         List<String> renderedBeforeCommands = this.renderCommands(runContext, beforeCommands);
         List<String> renderedInterpreter = this.renderCommands(runContext, interpreter);
 
-        List<String> finalCommands = renderedBeforeCommands.isEmpty() && renderedInterpreter.isEmpty() ?
-            renderedCommands :
-            ScriptService.scriptCommands(
+        List<String> finalCommands = renderedBeforeCommands.isEmpty() && renderedInterpreter.isEmpty() ? renderedCommands
+            : ScriptService.scriptCommands(
                 renderedInterpreter,
-                this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) :  renderedBeforeCommands,
+                this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) : renderedBeforeCommands,
                 renderedCommands,
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );
@@ -303,8 +304,10 @@ public class CommandsWrapper implements TaskCommands {
         TargetOS os = this.getTargetOS();
 
         // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
-        if (os == TargetOS.WINDOWS ||
-            (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process)) {
+        if (
+            os == TargetOS.WINDOWS ||
+                (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process)
+        ) {
             return List.of("");
         }
         // errexit option may be unsupported by non-shell interpreter.

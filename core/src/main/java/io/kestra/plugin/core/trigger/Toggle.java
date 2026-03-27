@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.trigger;
 
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -11,18 +14,16 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Map;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -119,8 +120,11 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
             flowVariables.get("namespace"),
             flowVariables.get("id")
         )
-            .orElseThrow(() -> new IllegalArgumentException("Unable to find flow " + realNamespace + "." + realFlowId + ". Make sure the flow exists and the current execution is authorized to access it."));
-
+            .orElseThrow(
+                () -> new IllegalArgumentException(
+                    "Unable to find flow " + realNamespace + "." + realFlowId + ". Make sure the flow exists and the current execution is authorized to access it."
+                )
+            );
 
         // load the trigger from the database
         TriggerContext triggerContext = TriggerContext.builder()
@@ -130,7 +134,8 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
             .triggerId(realTrigger)
             .build();
         TriggerRepositoryInterface triggerRepository = applicationContext.getBean(TriggerRepositoryInterface.class);
-        Trigger currentTrigger = triggerRepository.findLast(triggerContext).orElseThrow(() -> new IllegalArgumentException("Unable to find trigger " + realTrigger + " for the flow " + realNamespace + "." + realFlowId));
+        Trigger currentTrigger = triggerRepository.findLast(triggerContext)
+            .orElseThrow(() -> new IllegalArgumentException("Unable to find trigger " + realTrigger + " for the flow " + realNamespace + "." + realFlowId));
         currentTrigger = currentTrigger.toBuilder().disabled(!enabled).build();
 
         // update the trigger by emitting inside the queue

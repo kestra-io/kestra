@@ -1,14 +1,15 @@
 package io.kestra.runner.mysql;
 
-import io.kestra.core.runners.ExecutionDelay;
-import io.kestra.jdbc.runner.AbstractJdbcExecutionDelayStorage;
-import io.kestra.repository.mysql.MysqlRepository;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
+
+import io.kestra.core.runners.ExecutionDelay;
+import io.kestra.jdbc.runner.AbstractJdbcExecutionDelayStorage;
+import io.kestra.repository.mysql.MysqlRepository;
+
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MysqlQueueEnabled

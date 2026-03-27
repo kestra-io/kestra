@@ -1,11 +1,12 @@
 package io.kestra.cli.commands.flows;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,7 +29,7 @@ class FlowValidateCommandTest {
     }
 
     @Test
-     // github action kestra-io/validate-action requires being able to validate Flows from OSS CLI against a remote EE instance
+    // github action kestra-io/validate-action requires being able to validate Flows from OSS CLI against a remote EE instance
     void runForEEInstance() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));

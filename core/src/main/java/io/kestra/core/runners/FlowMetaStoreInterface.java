@@ -1,11 +1,11 @@
 package io.kestra.core.runners;
 
+import java.util.Collection;
+import java.util.Optional;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
-
-import java.util.Collection;
-import java.util.Optional;
 
 public interface FlowMetaStoreInterface {
     /**

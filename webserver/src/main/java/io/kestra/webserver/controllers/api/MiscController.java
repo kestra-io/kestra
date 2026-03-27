@@ -1,7 +1,13 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
@@ -16,6 +22,7 @@ import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -31,11 +38,6 @@ import jakarta.inject.Inject;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Controller("/api/v1")
@@ -104,10 +106,9 @@ public class MiscController {
     @Inject
     protected EditionProvider editionProvider;
 
-
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    @Operation(tags = { "Misc" }, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public Configuration getConfiguration() throws JsonProcessingException { // JsonProcessingException might be thrown in EE
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
@@ -121,10 +122,12 @@ public class MiscController {
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
-            .preview(Preview.builder()
-                .initial(this.initialPreviewRows)
-                .max(this.maxPreviewRows)
-                .build())
+            .preview(
+                Preview.builder()
+                    .initial(this.initialPreviewRows)
+                    .max(this.maxPreviewRows)
+                    .build()
+            )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
@@ -132,8 +135,7 @@ public class MiscController {
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
-            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"))
-            ;
+            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"));
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -149,7 +151,7 @@ public class MiscController {
 
     @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve instance usage information")
+    @Operation(tags = { "Misc" }, summary = "Retrieve instance usage information")
     public ApiUsage getUsages() {
         ZonedDateTime now = ZonedDateTime.now();
         FeatureUsageReport.UsageEvent event = featureUsageReport.report(now.toInstant(), Reportable.TimeInterval.of(now.minus(Duration.ofDays(1)), now));
@@ -161,19 +163,17 @@ public class MiscController {
 
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
+    @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
     public HttpResponse<Void> createBasicAuth(
-        @RequestBody @Body BasicAuthCredentials basicAuthCredentials
-    ) {
+        @RequestBody @Body BasicAuthCredentials basicAuthCredentials) {
         basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
 
         return HttpResponse.noContent();
     }
 
-
     @Get("/basicAuthValidationErrors")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    @Operation(tags = { "Misc" }, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public List<String> getBasicAuthConfigErrors() {
         return basicAuthService.validationErrors();
     }

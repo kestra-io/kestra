@@ -1,26 +1,28 @@
 package io.kestra.plugin.core.log;
 
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.models.tasks.runners.PluginUtilsService;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.slf4j.event.Level;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.slf4j.event.Level;
+
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.runners.PluginUtilsService;
+import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.FileSerde;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -91,7 +93,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
             runContext.render(this.executionId).as(String.class).orElse(null)
         );
 
-        LogRepositoryInterface logRepository = ((DefaultRunContext)runContext).getApplicationContext().getBean(LogRepositoryInterface.class);
+        LogRepositoryInterface logRepository = ((DefaultRunContext) runContext).getApplicationContext().getBean(LogRepositoryInterface.class);
 
         File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
         AtomicLong count = new AtomicLong();
@@ -103,7 +105,8 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
                 for (String taskId : renderedTaskId) {
                     logRepository
                         .findByExecutionIdAndTaskId(executionInfo.tenantId(), executionInfo.namespace(), executionInfo.flowId(), executionInfo.id(), taskId, logLevel)
-                        .forEach(throwConsumer(log -> {
+                        .forEach(throwConsumer(log ->
+                        {
                             count.incrementAndGet();
                             FileSerde.write(output, log);
                         }));
@@ -111,7 +114,8 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
             } else {
                 logRepository
                     .findByExecutionId(executionInfo.tenantId(), executionInfo.namespace(), executionInfo.flowId(), executionInfo.id(), logLevel)
-                    .forEach(throwConsumer(log -> {
+                    .forEach(throwConsumer(log ->
+                    {
                         count.incrementAndGet();
                         FileSerde.write(output, log);
                     }));

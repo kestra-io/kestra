@@ -1,9 +1,9 @@
 package io.kestra.core.runners;
 
+import java.util.Set;
+
 import io.micronaut.context.annotation.Secondary;
 import jakarta.inject.Singleton;
-
-import java.util.Set;
 
 /**
  * Service interface for accessing Worker Groups data from a Kestra's Executor service.
@@ -29,7 +29,7 @@ public interface WorkerGroupExecutorInterface {
      * @param key The Worker Group's key - can be {@code null}.
      * @return {@code true} if the worker group is available, or is {@code null}, {@code false} otherwise.
      */
-     boolean isWorkerGroupAvailableForKey(String key);
+    boolean isWorkerGroupAvailableForKey(String key);
 
     /**
      * Returns the list of all existing Worker Groups' Keys.

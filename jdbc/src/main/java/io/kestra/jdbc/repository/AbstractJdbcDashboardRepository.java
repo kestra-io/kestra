@@ -1,7 +1,17 @@
 package io.kestra.jdbc.repository;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.jooq.*;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -12,21 +22,12 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
+
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.validation.ConstraintViolationException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.*;
-import org.jooq.impl.DSL;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static io.kestra.core.utils.MathUtils.roundDouble;
 
@@ -38,7 +39,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     private final Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new ConcurrentHashMap<>();
 
     List<QueryBuilderInterface<?>> queryBuilders;
-    
+
     /**
      * {@inheritDoc}
      **/
@@ -46,24 +47,24 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public long count() {
         return jdbcRepository.count(this.defaultFilter());
     }
-    
-    
+
     @Override
     public Optional<Dashboard> get(String tenantId, String id) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 Select<Record2<String, String>> from;
 
                 from = context
-                        .select(
-                            field("source_code", String.class),
-                            field("value", String.class)
-                        )
-                        .from(jdbcRepository.getTable())
-                        .where(this.defaultFilter(tenantId))
-                        .and(field("id", String.class).eq(id));
+                    .select(
+                        field("source_code", String.class),
+                        field("value", String.class)
+                    )
+                    .from(jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .and(field("id", String.class).eq(id));
                 Record2<String, String> fetched = from.fetchAny();
 
                 if (fetched == null) {
@@ -81,7 +82,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public ArrayListTotal<Dashboard> list(Pageable pageable, String tenantId, String query) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
@@ -101,7 +103,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public List<Dashboard> findAll(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
@@ -119,7 +122,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public List<Dashboard> findAllWithNoAcl(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
@@ -152,7 +156,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
         this.jdbcRepository.persist(dashboard, fields);
         this.eventPublisher.publishEvent(CrudEvent.of(previousDashboard, dashboard));
-        
+
         return dashboard;
     }
 
@@ -176,7 +180,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
+    public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate,
+        ZonedDateTime endDate, Pageable pageable) throws IOException {
         @SuppressWarnings("unchecked")
         QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
             dataChart.getData().repositoryClass(),
@@ -191,7 +196,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public <F extends Enum<F>> List<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public <F extends Enum<F>> List<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate,
+        ZonedDateTime endDate) throws IOException {
         @SuppressWarnings("unchecked")
         QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
             dataChart.getData().repositoryClass(),
@@ -206,7 +212,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
         if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
             Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);
-            if (totalValue == null || totalValue == 0) return List.of(Map.of("value", 0.0));
+            if (totalValue == null || totalValue == 0)
+                return List.of(Map.of("value", 0.0));
             double percentageValue = (filteredValue / totalValue) * 100;
             return List.of(Map.of("value", roundDouble(percentageValue, 2)));
         }

@@ -1,6 +1,14 @@
 package io.kestra.scheduler;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -18,21 +26,15 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Sleep;
+
 import io.micronaut.context.ApplicationContext;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @KestraTest(rebuildContext = true)
 abstract public class AbstractSchedulerTest {
@@ -60,17 +62,19 @@ abstract public class AbstractSchedulerTest {
             .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup, null))
             .build();
 
-        return createFlow(null, Collections.singletonList(schedule), List.of(
-            PluginDefault.builder()
-                .type(UnitTest.class.getName())
-                .values(Map.of("defaultInjected", "done"))
-                .build()
-        ));
+        return createFlow(
+            null, Collections.singletonList(schedule), List.of(
+                PluginDefault.builder()
+                    .type(UnitTest.class.getName())
+                    .values(Map.of("defaultInjected", "done"))
+                    .build()
+            )
+        );
     }
 
     /**
      * @deprecated try to use {@link AbstractSchedulerTest#createFlow(String, List)} with 'tenantId' instead to be
-     * extra sure these tests do not share resources
+     *             extra sure these tests do not share resources
      */
     @Deprecated
     protected static FlowWithSource createFlow(List<AbstractTrigger> triggers) {
@@ -86,20 +90,22 @@ abstract public class AbstractSchedulerTest {
             .id(IdUtils.create())
             .tenantId(tenantId)
             .namespace("io.kestra.unittest")
-            .inputs(List.of(
-                StringInput.builder()
-                    .type(Type.STRING)
-                    .id("testInputs")
-                    .required(false)
-                    .defaults(Property.ofValue("test"))
-                    .build(),
-                StringInput.builder()
-                    .type(Type.STRING)
-                    .id("def")
-                    .required(false)
-                    .defaults(Property.ofValue("awesome"))
-                    .build()
-            ))
+            .inputs(
+                List.of(
+                    StringInput.builder()
+                        .type(Type.STRING)
+                        .id("testInputs")
+                        .required(false)
+                        .defaults(Property.ofValue("test"))
+                        .build(),
+                    StringInput.builder()
+                        .type(Type.STRING)
+                        .id("def")
+                        .required(false)
+                        .defaults(Property.ofValue("awesome"))
+                        .build()
+                )
+            )
             .revision(1)
             .labels(
                 List.of(
@@ -108,11 +114,15 @@ abstract public class AbstractSchedulerTest {
                 )
             )
             .triggers(triggers)
-            .tasks(Collections.singletonList(Return.builder()
-                .id("test")
-                .type(Return.class.getName())
-                .format(Property.ofExpression("{{ inputs.testInputs }}"))
-                .build()));
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("test")
+                        .type(Return.class.getName())
+                        .format(Property.ofExpression("{{ inputs.testInputs }}"))
+                        .build()
+                )
+            );
 
         if (list != null) {
             builder.pluginDefaults(list);
@@ -148,7 +158,6 @@ abstract public class AbstractSchedulerTest {
             .ifPresent(t -> triggerState.get().update(executionService.resetExecution(flow, terminated, t)));
     }
 
-
     protected static int COUNTER = 0;
 
     @SuperBuilder
@@ -177,14 +186,17 @@ abstract public class AbstractSchedulerTest {
                     .flowId(context.getFlowId())
                     .flowRevision(conditionContext.getFlow().getRevision())
                     .state(new State())
-                    .trigger(ExecutionTrigger.builder()
-                        .id(this.getId())
-                        .type(this.getType())
-                        .variables(ImmutableMap.of(
-                            "counter", COUNTER,
-                            "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
-                        ))
-                        .build()
+                    .trigger(
+                        ExecutionTrigger.builder()
+                            .id(this.getId())
+                            .type(this.getType())
+                            .variables(
+                                ImmutableMap.of(
+                                    "counter", COUNTER,
+                                    "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
+                                )
+                            )
+                            .build()
                     )
                     .build();
 

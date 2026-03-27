@@ -1,20 +1,20 @@
 package io.kestra.core.runners;
 
+import java.io.IOException;
+import java.io.Serial;
+
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.kestra.core.plugins.PluginModule;
 
-import java.io.IOException;
-import java.io.Serial;
+import io.kestra.core.plugins.PluginModule;
 
 @SuppressWarnings("this-escape")
 public class RunContextModule extends SimpleModule {
     @Serial
     private static final long serialVersionUID = 1L;
-
 
     public static final String NAME = "kestra-context";
 

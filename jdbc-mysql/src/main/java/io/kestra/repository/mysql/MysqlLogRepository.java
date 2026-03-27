@@ -1,25 +1,27 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
-import io.kestra.jdbc.services.JdbcFilterService;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
+import java.util.Arrays;
+import java.util.Date;
+
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import java.util.Arrays;
-import java.util.Date;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
+import io.kestra.jdbc.services.JdbcFilterService;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MysqlRepositoryEnabled
 public class MysqlLogRepository extends AbstractJdbcLogRepository {
     @Inject
     public MysqlLogRepository(@Named("logs") MysqlRepository<LogEntry> repository,
-                              JdbcFilterService filterService) {
+        JdbcFilterService filterService) {
         super(repository, filterService);
     }
 
@@ -49,4 +51,3 @@ public class MysqlLogRepository extends AbstractJdbcLogRepository {
         }
     }
 }
-

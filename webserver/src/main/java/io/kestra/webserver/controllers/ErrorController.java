@@ -1,10 +1,21 @@
 package io.kestra.webserver.controllers;
 
+import java.io.FileNotFoundException;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+
 import io.kestra.core.exceptions.*;
+
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -17,17 +28,8 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
 import io.micronaut.web.router.exceptions.UnsatisfiedBodyRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedQueryValueRouteException;
-import lombok.extern.slf4j.Slf4j;
-
-import java.io.FileNotFoundException;
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
@@ -104,12 +106,12 @@ public class ErrorController {
                 "errors",
                 e.getConstraintViolations()
                     .stream()
-                    .map(ex -> new JsonError(ex.getMessage())
-                        .path(ex.getPropertyPath().toString())
+                    .map(
+                        ex -> new JsonError(ex.getMessage())
+                            .path(ex.getPropertyPath().toString())
                     )
                     .collect(Collectors.toList())
             );
-
 
         return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
     }
@@ -212,7 +214,7 @@ public class ErrorController {
 
     private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {
         return HttpResponse
-            .<JsonError>status(status, reason)
+            .<JsonError> status(status, reason)
             .body(jsonError);
     }
 

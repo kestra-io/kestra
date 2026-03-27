@@ -1,10 +1,17 @@
 package io.kestra.core.http;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.URI;
+import java.net.http.HttpHeaders;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -18,17 +25,13 @@ import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.net.URI;
-import java.net.http.HttpHeaders;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Builder
 @Value
@@ -100,8 +103,9 @@ public class HttpRequest {
         // headers
         if (this.headers != null) {
             this.headers.map()
-                .forEach((key, value) -> value
-                    .forEach(headerValue -> builder.addHeader(key, headerValue))
+                .forEach(
+                    (key, value) -> value
+                        .forEach(headerValue -> builder.addHeader(key, headerValue))
                 );
         }
 
@@ -117,8 +121,7 @@ public class HttpRequest {
         return builder;
     }
 
-
-    public static class HttpRequestBuilder  {
+    public static class HttpRequestBuilder {
         public HttpRequestBuilder addHeader(String name, String value) {
             Map<String, List<String>> allHeaders = new HashMap<>(this.headers == null ? Map.of() : this.headers.map());
 
@@ -173,7 +176,7 @@ public class HttpRequest {
                     .contentType(entity.getContentType())
                     .charset(charset)
                     .build();
-        }
+            }
             if (mimeType.equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
                 return ByteArrayRequestBody.builder()
                     .contentType(mimeType)
@@ -297,7 +300,6 @@ public class HttpRequest {
         }
     }
 
-
     @Getter
     @AllArgsConstructor
     @SuperBuilder
@@ -342,7 +344,8 @@ public class HttpRequest {
                 builder.setCharset(this.charset);
             }
 
-            content.forEach((key, value) -> {
+            content.forEach((key, value) ->
+            {
                 switch (value) {
                     case File fileValue -> builder.addPart(
                         key,

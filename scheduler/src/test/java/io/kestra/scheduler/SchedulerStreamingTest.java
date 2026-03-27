@@ -1,28 +1,5 @@
 package io.kestra.scheduler;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.runners.FlowListeners;
-import io.kestra.core.runners.TestMethodScopedWorker;
-import io.kestra.core.runners.Worker;
-import io.kestra.core.models.triggers.TriggerService;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.runner.JdbcScheduler;
-import jakarta.inject.Inject;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +7,32 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerService;
+import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.TestMethodScopedWorker;
+import io.kestra.core.runners.Worker;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
+
+import jakarta.inject.Inject;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -55,7 +58,8 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
 
     private void run(Flow flow, CountDownLatch queueCount, Consumer<List<Execution>> consumer) throws Exception {
         // wait for execution
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             queueCount.countDown();
         });
 
@@ -90,7 +94,8 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
         this.run(
             flow,
             queueCount,
-            executionList -> {
+            executionList ->
+            {
                 List<Execution> executionCount = executionList.stream()
                     .filter(e -> e.getNamespace().equals(flow.getNamespace()) && e.getFlowId().equals(flow.getId()))
                     .toList();
@@ -116,7 +121,8 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
         this.run(
             flow,
             queueCount,
-            executionList -> {
+            executionList ->
+            {
                 List<Execution> executionCount = executionList.stream()
                     .filter(e -> e.getNamespace().equals(flow.getNamespace()) && e.getFlowId().equals(flow.getId()))
                     .toList();
@@ -146,7 +152,8 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
         public Publisher<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
             startedEvaluate.compute(this.failed, (val, integer) -> integer == null ? 1 : integer + 1);
 
-            return Flux.create(fluxSink -> {
+            return Flux.create(fluxSink ->
+            {
                 for (int i = 0; i < executionsToCreate; i++) {
                     executionCount++;
 
@@ -156,8 +163,8 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
                             conditionContext,
                             context,
                             ImmutableMap.of(
-                            "startedEvaluate", startedEvaluate.get(failed),
-                            "executionCount", executionCount
+                                "startedEvaluate", startedEvaluate.get(failed),
+                                "executionCount", executionCount
                             )
                         );
 

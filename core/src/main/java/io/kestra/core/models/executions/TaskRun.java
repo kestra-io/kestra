@@ -1,23 +1,24 @@
 package io.kestra.core.models.executions;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @ToString
 @EqualsAndHashCode
@@ -94,6 +95,7 @@ public class TaskRun implements TenantInterface {
             this.forceExecution
         );
     }
+
     public TaskRun withStateAndAttempt(State.Type state) {
         List<TaskRunAttempt> newAttempts = new ArrayList<>(this.attempts != null ? this.attempts : List.of());
 
@@ -190,8 +192,7 @@ public class TaskRun implements TenantInterface {
             return null;
         }
 
-        return this
-            .attempts
+        return this.attempts
             .stream()
             .reduce((a, b) -> b)
             .orElse(null);
@@ -203,9 +204,10 @@ public class TaskRun implements TenantInterface {
         if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.isEmpty()) {
             taskRunBuilder.attempts = new ArrayList<>();
 
-            taskRunBuilder.attempts.add(TaskRunAttempt.builder()
-                .state(new State(this.state, State.Type.KILLED))
-                .build()
+            taskRunBuilder.attempts.add(
+                TaskRunAttempt.builder()
+                    .state(new State(this.state, State.Type.KILLED))
+                    .build()
             );
         } else {
             ArrayList<TaskRunAttempt> taskRunAttempts = new ArrayList<>(taskRunBuilder.attempts);
@@ -213,9 +215,10 @@ public class TaskRun implements TenantInterface {
             if (!lastAttempt.getState().isTerminated()) {
                 taskRunAttempts.set(taskRunBuilder.attempts.size() - 1, lastAttempt.withState(State.Type.KILLED));
             } else {
-                taskRunAttempts.add(TaskRunAttempt.builder()
-                    .state(new State().withState(State.Type.KILLED))
-                    .build()
+                taskRunAttempts.add(
+                    TaskRunAttempt.builder()
+                        .state(new State().withState(State.Type.KILLED))
+                        .build()
                 );
             }
 
@@ -260,7 +263,7 @@ public class TaskRun implements TenantInterface {
      * This method is used when the retry is apply on a task
      * but the retry type is NEW_EXECUTION
      *
-     * @param retry     Contains the retry configuration
+     * @param retry Contains the retry configuration
      * @param execution Contains the attempt number and original creation date
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */

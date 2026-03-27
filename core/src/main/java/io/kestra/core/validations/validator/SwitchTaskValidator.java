@@ -1,7 +1,8 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.plugin.core.flow.Switch;
 import io.kestra.core.validations.SwitchTaskValidation;
+import io.kestra.plugin.core.flow.Switch;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -22,8 +23,10 @@ public class SwitchTaskValidator implements ConstraintValidator<SwitchTaskValida
             return true;
         }
 
-        if ((value.getCases() == null || value.getCases().isEmpty()) &&
-            (value.getDefaults() == null || value.getDefaults().isEmpty())) {
+        if (
+            (value.getCases() == null || value.getCases().isEmpty()) &&
+                (value.getDefaults() == null || value.getDefaults().isEmpty())
+        ) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("No task defined, neither cases or default have any tasks")
                 .addConstraintViolation();

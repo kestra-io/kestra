@@ -1,20 +1,20 @@
 package io.kestra.jdbc;
 
-import io.micronaut.flyway.FlywayConfigurationProperties;
-import io.micronaut.flyway.FlywayMigrator;
-import jakarta.annotation.PostConstruct;
-import lombok.SneakyThrows;
-import org.jooq.DSLContext;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.jooq.Table;
-import org.jooq.impl.DSL;
+import java.util.List;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
-import java.util.List;
-import java.util.Optional;
+import org.jooq.DSLContext;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
+
+import io.micronaut.flyway.FlywayConfigurationProperties;
+import io.micronaut.flyway.FlywayMigrator;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -39,14 +39,17 @@ public class JdbcTestUtils {
 
     @PostConstruct
     public void setup() {
-        dslContextWrapper.transaction((configuration) -> {
+        dslContextWrapper.transaction((configuration) ->
+        {
             DSLContext dslContext = DSL.using(configuration);
 
             this.tables = dslContext
                 .meta()
                 .getTables()
                 .stream()
-                .filter(throwPredicate(table -> (table.getSchema().getName().equals(Optional.ofNullable(dataSource.getConnection().getSchema()).orElse(dataSource.getConnection().getCatalog())))))
+                .filter(
+                    throwPredicate(table -> (table.getSchema().getName().equals(Optional.ofNullable(dataSource.getConnection().getSchema()).orElse(dataSource.getConnection().getCatalog()))))
+                )
                 .filter(table -> tableConfigs.getTableConfigs().stream().anyMatch(conf -> conf.table().equalsIgnoreCase(table.getName())))
                 .toList();
         });
@@ -54,14 +57,17 @@ public class JdbcTestUtils {
 
     @SneakyThrows
     public void drop() {
-        dslContextWrapper.transaction((configuration) -> {
+        dslContextWrapper.transaction((configuration) ->
+        {
             DSLContext dslContext = DSL.using(configuration);
 
             this.tables.forEach(t -> dslContext.delete(t).execute());
         });
     }
+
     public void migrate() {
-        dslContextWrapper.transaction((configuration) -> {
+        dslContextWrapper.transaction((configuration) ->
+        {
             flywayMigrator.run(config, dataSource);
         });
     }

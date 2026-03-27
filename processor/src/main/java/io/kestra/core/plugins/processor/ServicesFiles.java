@@ -16,7 +16,8 @@ import java.util.Set;
 final class ServicesFiles {
     public static final String SERVICES_PATH = "META-INF/services";
 
-    private ServicesFiles() {}
+    private ServicesFiles() {
+    }
 
     /**
      * Returns an absolute path to a service file given the class name of the service.

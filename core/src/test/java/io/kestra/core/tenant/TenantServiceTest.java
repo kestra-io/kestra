@@ -1,8 +1,10 @@
 package io.kestra.core.tenant;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

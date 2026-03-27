@@ -1,12 +1,13 @@
 package io.kestra.core.contexts;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import io.kestra.core.junit.annotations.KestraTest;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,16 +20,21 @@ class MavenPluginRepositoryConfigTest {
     @Test
     void shouldInjectAllMavenPluginRepositories() {
         Assertions.assertEquals(2, repositories.size());
-        assertThat(repositories).containsExactlyInAnyOrder(MavenPluginRepositoryConfig.builder()
-            .id("central")
-            .url("https://repo.maven.apache.org/maven2/")
-            .build(), MavenPluginRepositoryConfig.builder()
-            .id("secured")
-            .url("https://registry.test.org/maven")
-            .basicAuth(new MavenPluginRepositoryConfig.BasicAuth(
-                "username",
-                "password"
-            ))
-            .build());
+        assertThat(repositories).containsExactlyInAnyOrder(
+            MavenPluginRepositoryConfig.builder()
+                .id("central")
+                .url("https://repo.maven.apache.org/maven2/")
+                .build(),
+            MavenPluginRepositoryConfig.builder()
+                .id("secured")
+                .url("https://registry.test.org/maven")
+                .basicAuth(
+                    new MavenPluginRepositoryConfig.BasicAuth(
+                        "username",
+                        "password"
+                    )
+                )
+                .build()
+        );
     }
 }

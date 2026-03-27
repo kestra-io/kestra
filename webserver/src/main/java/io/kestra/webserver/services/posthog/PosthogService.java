@@ -1,16 +1,18 @@
 package io.kestra.webserver.services.posthog;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.posthog.java.DefaultPostHogLogger;
 import com.posthog.java.PostHog;
+
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
+
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Singleton;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Singleton
 public class PosthogService {
@@ -35,13 +37,16 @@ public class PosthogService {
 
     public void capture(String distinctId, String event, Map<String, Object> properties) {
         properties = new HashMap<>(properties);
-        properties.putAll(Map.of(
-            "from", "APP",
-            "iid", instanceService.fetch(),
-            "app", Map.of(
-                "version", versionProvider.getVersion(),
-                "type", editionProvider.get()
-            )));
+        properties.putAll(
+            Map.of(
+                "from", "APP",
+                "iid", instanceService.fetch(),
+                "app", Map.of(
+                    "version", versionProvider.getVersion(),
+                    "type", editionProvider.get()
+                )
+            )
+        );
 
         postHog.capture(distinctId, event, properties);
     }

@@ -1,17 +1,18 @@
 package io.kestra.core.utils;
 
+import java.util.*;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
-
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings({ "unchecked" })
 @Slf4j
 public class MapUtils {
     private static final String CONFLICT_AT_KEY_MSG = "Conflict at key: '{}', ignoring it. Map keys are: {}";
 
     /**
      * Merge map a with map b.
+     * 
      * @see #deepMerge(Map, Map) that perform a deep merge which is more costly but safer for some use cases.
      */
     public static Map<String, Object> merge(Map<String, Object> a, Map<String, Object> b) {
@@ -146,10 +147,10 @@ public class MapUtils {
      * Utility method for merging multiple {@link Map}s that can contains nullable values.
      * Note that the maps provided are assumed to be flat, so this method does not perform a recursive merge.
      *
-     * @param maps  The Map to be merged.
-     * @return     the merged Map.
+     * @param maps The Map to be merged.
+     * @return the merged Map.
      */
-    public static Map<String, Object> mergeWithNullableValues(final Map<String, Object>...maps) {
+    public static Map<String, Object> mergeWithNullableValues(final Map<String, Object>... maps) {
         return Arrays.stream(maps)
             .flatMap(map -> map.entrySet().stream())
             // https://bugs.openjdk.org/browse/JDK-8148463

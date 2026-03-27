@@ -1,7 +1,20 @@
 package io.kestra.worker;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -12,27 +25,17 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.plugin.core.flow.Pause;
-import io.kestra.plugin.core.flow.Sleep;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.Sleep;
+import io.kestra.plugin.core.flow.WorkingDirectory;
+
 import io.micronaut.context.ApplicationContext;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.utils.Rethrow.throwSupplier;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -127,7 +130,8 @@ class WorkerTest {
         workerTaskQueue.emit(workerTask);
 
         Await.until(
-            throwSupplier(() -> {
+            throwSupplier(() ->
+            {
                 WorkerTaskResult taskResult = workerTaskResult.get();
                 return "WorkerTaskResult was " + (taskResult == null ? null : JacksonMapper.ofJson().writeValueAsString(taskResult));
             }),
@@ -166,7 +170,8 @@ class WorkerTest {
         executionKilledQueue.emit(ExecutionKilledExecution.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
 
         Await.until(
-            () -> {
+            () ->
+            {
                 // copy the list to avoid concurrent modification exception if a WorkerTaskResult arrives in the queue
                 var copy = new ArrayList<>(workerTaskResult);
                 return copy.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5;
@@ -198,7 +203,8 @@ class WorkerTest {
 
     @Test
     void shouldCreateInstanceGivenApplicationContext() {
-        Assertions.assertDoesNotThrow(() -> {
+        Assertions.assertDoesNotThrow(() ->
+        {
             try (var worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)) {
                 // do nothing
             }

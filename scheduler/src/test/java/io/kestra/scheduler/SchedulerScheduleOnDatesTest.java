@@ -1,10 +1,19 @@
 package io.kestra.scheduler;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
@@ -15,16 +24,9 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.trigger.ScheduleOnDates;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import jakarta.inject.Inject;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,9 +51,11 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             .type(ScheduleOnDates.class.getName())
             .dates(Property.ofValue(dates))
             .timezone(zone)
-            .inputs(Map.of(
-                "testInputs", "test-inputs"
-            ));
+            .inputs(
+                Map.of(
+                    "testInputs", "test-inputs"
+                )
+            );
     }
 
     private FlowWithSource createScheduleFlow(String zone, String triggerId) {
@@ -70,7 +74,6 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             flowListenersServiceSpy
         );
     }
-
 
     @Test
     void scheduleOnDates() throws Exception {
@@ -101,7 +104,8 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, throwConsumer(either -> {
+            Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, throwConsumer(either ->
+            {
                 Execution execution = either.getLeft();
                 assertThat(execution.getInputs().get("testInputs")).isEqualTo("test-inputs");
                 assertThat(execution.getInputs().get("def")).isEqualTo("awesome");
@@ -157,7 +161,8 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+            {
                 Execution execution = either.getLeft();
                 assertThat(execution.getFlowId()).isEqualTo(flow.getId());
                 queueCount.countDown();
@@ -208,7 +213,8 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+            {
                 Execution execution = either.getLeft();
                 assertThat(execution.getFlowId()).isEqualTo(flow.getId());
                 queueCount.countDown();
@@ -263,8 +269,10 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
 
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
             // depending on the exact timing of events, the next date can be now or after
-            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS),
-                oneOf(now.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS), after.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS)));
+            assertThat(
+                newTrigger.getNextExecutionDate().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS),
+                oneOf(now.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS), after.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS))
+            );
         }
     }
 }

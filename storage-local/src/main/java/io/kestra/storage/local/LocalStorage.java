@@ -1,20 +1,5 @@
 package io.kestra.storage.local;
 
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.FileAttributes;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.StorageObject;
-import jakarta.validation.constraints.NotNull;
-import jakarta.annotation.Nullable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
@@ -25,6 +10,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.StorageObject;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
@@ -60,7 +62,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     protected Path getPath(URI uri, Path basePath) {
-        if(uri == null) {
+        if (uri == null) {
             return basePath;
         }
 
@@ -118,7 +120,8 @@ public class LocalStorage implements StorageInterface {
             .map(fsPathUri::relativize)
             .map(URI::getPath)
             .filter(Predicate.not(String::isEmpty))
-            .map(path -> {
+            .map(path ->
+            {
                 String prefixPath = prefix.getPath();
                 return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
             })
@@ -135,7 +138,8 @@ public class LocalStorage implements StorageInterface {
         try (Stream<Path> stream = Files.list(getLocalPath(tenantId, uri))) {
             return stream
                 .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
-                .map(throwFunction(file -> {
+                .map(throwFunction(file ->
+                {
                     URI relative = URI.create(
                         getLocalPath(tenantId, null).relativize(
                             Path.of(file.toUri())
@@ -150,11 +154,12 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public List<FileAttributes> listInstanceResource(@Nullable String namespace, URI uri) throws IOException{
+    public List<FileAttributes> listInstanceResource(@Nullable String namespace, URI uri) throws IOException {
         try (Stream<Path> stream = Files.list(getInstancePath(uri))) {
             return stream
                 .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
-                .map(throwFunction(file -> {
+                .map(throwFunction(file ->
+                {
                     URI relative = URI.create(
                         getInstancePath(null).relativize(
                             Path.of(file.toUri())
@@ -210,7 +215,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public FileAttributes getInstanceAttributes(@Nullable String namespace, URI uri) throws IOException{
+    public FileAttributes getInstanceAttributes(@Nullable String namespace, URI uri) throws IOException {
         return getAttributeFromPath(getInstancePath(uri));
     }
 
@@ -252,7 +257,8 @@ public class LocalStorage implements StorageInterface {
             Files.move(
                 getLocalPath(tenantId, from),
                 getLocalPath(tenantId, to),
-                StandardCopyOption.ATOMIC_MOVE);
+                StandardCopyOption.ATOMIC_MOVE
+            );
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException(e.getMessage());
         }
@@ -265,7 +271,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public boolean deleteInstanceResource(@Nullable String namespace, URI uri) throws IOException{
+    public boolean deleteInstanceResource(@Nullable String namespace, URI uri) throws IOException {
         return deleteFromPath(getInstancePath(uri));
     }
 

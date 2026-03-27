@@ -1,14 +1,15 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.runners.ExecutionDelay;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.runners.ExecutionDelay;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 
 public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepository {
     protected io.kestra.jdbc.AbstractJdbcRepository<ExecutionDelay> jdbcRepository;
@@ -23,7 +24,8 @@ public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepo
     public void get(Consumer<ExecutionDelay> consumer) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
@@ -33,7 +35,8 @@ public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepo
                     .skipLocked();
 
                 this.jdbcRepository.fetch(select)
-                    .forEach(executionDelay -> {
+                    .forEach(executionDelay ->
+                    {
                         consumer.accept(executionDelay);
                         jdbcRepository.delete(executionDelay);
                     });

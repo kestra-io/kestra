@@ -1,20 +1,21 @@
 package io.kestra.cli.commands.flows;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.net.URL;
+
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.net.URL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowUpdatesCommandTest {
     @Test
-    void runWithDelete()  {
+    void runWithDelete() {
         URL directory = FlowUpdatesCommandTest.class.getClassLoader().getResource("flows");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
@@ -40,7 +41,7 @@ class FlowUpdatesCommandTest {
             assertThat(out.toString()).contains("successfully updated !");
             out.reset();
 
-            args = new String[]{
+            args = new String[] {
                 "--plugins",
                 "/tmp", // pass this arg because it can cause failure
                 "--server",
@@ -59,7 +60,7 @@ class FlowUpdatesCommandTest {
     }
 
     @Test
-    void runNoDelete()  {
+    void runNoDelete() {
         URL directory = FlowUpdatesCommandTest.class.getClassLoader().getResource("flows");
         URL subDirectory = FlowUpdatesCommandTest.class.getClassLoader().getResource("flows/same/flowsSubFolder");
 
@@ -87,7 +88,7 @@ class FlowUpdatesCommandTest {
             out.reset();
 
             // no "delete" arg should behave as no-delete
-            args = new String[]{
+            args = new String[] {
                 "--plugins",
                 "/tmp", // pass this arg because it can cause failure
                 "--server",
@@ -101,7 +102,7 @@ class FlowUpdatesCommandTest {
             assertThat(out.toString()).contains("1 flow(s)");
             out.reset();
 
-            args = new String[]{
+            args = new String[] {
                 "--plugins",
                 "/tmp", // pass this arg because it can cause failure
                 "--server",
@@ -147,7 +148,7 @@ class FlowUpdatesCommandTest {
     }
 
     @Test
-    void helper()  {
+    void helper() {
         URL directory = FlowUpdatesCommandTest.class.getClassLoader().getResource("helper");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));

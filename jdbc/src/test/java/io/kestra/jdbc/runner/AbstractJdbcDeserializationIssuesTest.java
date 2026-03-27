@@ -1,13 +1,8 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.runners.DeserializationIssuesCaseTest;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JdbcTableConfigs;
-import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
@@ -15,8 +10,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.runners.DeserializationIssuesCaseTest;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.jdbc.JdbcTableConfigs;
+import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
+import jakarta.inject.Inject;
 
 @KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
@@ -60,7 +62,8 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
 
         Map<Field<Object>, Object> fields = fields(queueMessage);
 
-        dslContextWrapper.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
 
             context

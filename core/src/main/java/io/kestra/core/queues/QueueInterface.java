@@ -1,12 +1,12 @@
 package io.kestra.core.queues;
 
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.models.Pauseable;
-import io.kestra.core.utils.Either;
-
 import java.io.Closeable;
 import java.util.List;
 import java.util.function.Consumer;
+
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.Pauseable;
+import io.kestra.core.utils.Either;
 
 public interface QueueInterface<T> extends Closeable, Pauseable {
     default void emit(T message) throws QueueException {

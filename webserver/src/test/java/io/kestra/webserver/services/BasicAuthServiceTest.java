@@ -1,5 +1,32 @@
 package io.kestra.webserver.services;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+
+import io.kestra.core.exceptions.ValidationErrorException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.Setting;
+import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.Await;
+import io.kestra.webserver.models.events.Event;
+import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
+
+import io.micronaut.context.env.Environment;
+import jakarta.inject.Inject;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.and;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -15,29 +42,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import io.kestra.core.exceptions.ValidationErrorException;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.Setting;
-import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.InstanceService;
-import io.kestra.core.utils.Await;
-import io.kestra.webserver.models.events.Event;
-import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
-import io.micronaut.context.env.Environment;
-import jakarta.inject.Inject;
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
 @WireMockTest(httpPort = 28181)
 @KestraTest(environments = Environment.TEST)
@@ -68,26 +72,32 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    void isBasicAuthInitialized(){
-        settingRepositoryInterface.save(Setting.builder()
-            .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(new BasicAuthConfiguration("username", "password", null, null))
-            .build());
+    void isBasicAuthInitialized() {
+        settingRepositoryInterface.save(
+            Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new BasicAuthConfiguration("username", "password", null, null))
+                .build()
+        );
         assertTrue(basicAuthService.isBasicAuthInitialized());
 
         deleteSetting();
         assertFalse(basicAuthService.isBasicAuthInitialized());
 
-        settingRepositoryInterface.save(Setting.builder()
-            .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(new BasicAuthConfiguration("username", null, null, null))
-            .build());
+        settingRepositoryInterface.save(
+            Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new BasicAuthConfiguration("username", null, null, null))
+                .build()
+        );
         assertFalse(basicAuthService.isBasicAuthInitialized());
 
-        settingRepositoryInterface.save(Setting.builder()
-            .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(new BasicAuthConfiguration(null, null, null, null))
-            .build());
+        settingRepositoryInterface.save(
+            Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new BasicAuthConfiguration(null, null, null, null))
+                .build()
+        );
         assertFalse(basicAuthService.isBasicAuthInitialized());
     }
 
@@ -102,7 +112,7 @@ class BasicAuthServiceTest {
 
     @MethodSource("getConfigs")
     @ParameterizedTest
-    void should_no_save_config_at_init(ConfigWrapper configWrapper){
+    void should_no_save_config_at_init(ConfigWrapper configWrapper) {
         deleteSetting();
         basicAuthService.basicAuthConfiguration = configWrapper.config;
         basicAuthService.init();
@@ -133,7 +143,7 @@ class BasicAuthServiceTest {
 
     @MethodSource("invalidConfigs")
     @ParameterizedTest
-    void should_save_error_when_validation_errors(ConfigWrapper configWrapper, String errorMessage){
+    void should_save_error_when_validation_errors(ConfigWrapper configWrapper, String errorMessage) {
         deleteSetting();
         basicAuthService.basicAuthConfiguration = configWrapper.config;
         basicAuthService.init();
@@ -146,7 +156,10 @@ class BasicAuthServiceTest {
             Arguments.of(new ConfigWrapper(new BasicAuthConfiguration("username", PASSWORD)), "Invalid username for Basic Authentication. Please provide a valid email address."),
             Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(null, PASSWORD)), "No user name set for Basic Authentication. Please provide a user name."),
             Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME + "a".repeat(244), PASSWORD)), "The length of email or password should not exceed 256 characters."),
-            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, "pas")), "Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number"),
+            Arguments.of(
+                new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, "pas")),
+                "Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number"
+            ),
             Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, null)), "No password set for Basic Authentication. Please provide a password."),
             Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, PASSWORD + "a".repeat(246))), "The length of email or password should not exceed 256 characters.")
 
@@ -154,7 +167,7 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    void should_remove_validation_error_when_init_with_correct_config(){
+    void should_remove_validation_error_when_init_with_correct_config() {
         deleteSetting();
         settingRepositoryInterface.save(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).value(List.of("errors")).build());
         basicAuthService.basicAuthConfiguration = basicAuthConfiguration;
@@ -172,13 +185,15 @@ class BasicAuthServiceTest {
         assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
 
         Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(
-            BASIC_AUTH_SETTINGS_KEY);
+            BASIC_AUTH_SETTINGS_KEY
+        );
         assertThat(maybeSetting.isPresent()).isTrue();
         assertThat(maybeSetting.get().getValue()).isEqualTo(JacksonMapper.toMap(applicationYamlConfiguration));
     }
 
     private void awaitOssAuthEventApiCall(String email) throws TimeoutException {
-        Await.until(() -> {
+        Await.until(() ->
+        {
             try {
                 verify(
                     1,
@@ -199,12 +214,14 @@ class BasicAuthServiceTest {
     }
 
     private void deleteSetting() {
-        if (settingRepositoryInterface.findByKey(BASIC_AUTH_SETTINGS_KEY).isPresent()){
+        if (settingRepositoryInterface.findByKey(BASIC_AUTH_SETTINGS_KEY).isPresent()) {
             settingRepositoryInterface.delete(
-                Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
+                Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build()
+            );
         }
     }
 
     //Useful because micronaut tries to inject the configuration and made a multiple competing ParameterResolvers exception
-    record ConfigWrapper(BasicAuthConfiguration config){}
+    record ConfigWrapper(BasicAuthConfiguration config) {
+    }
 }

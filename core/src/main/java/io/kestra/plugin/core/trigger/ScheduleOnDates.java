@@ -1,5 +1,12 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.function.Predicate;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -11,19 +18,13 @@ import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.validations.TimezoneId;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.function.Predicate;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -99,9 +100,14 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
         // lastEvaluation date is the last one from the trigger context or the first date of the list
         return last
-            .map(throwFunction(context -> nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
-                .orElse(ZonedDateTime.now().plusYears(1) // it's not ideal, but we need a date or the trigger will keep evaluated
-            )))
+            .map(
+                throwFunction(
+                    context -> nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
+                        .orElse(
+                            ZonedDateTime.now().plusYears(1) // it's not ideal, but we need a date or the trigger will keep evaluated
+                        )
+                )
+            )
             .orElse(conditionContext.getRunContext().render(dates).asList(ZonedDateTime.class).stream().sorted().findFirst().orElse(ZonedDateTime.now()))
             .truncatedTo(ChronoUnit.SECONDS);
     }

@@ -1,12 +1,12 @@
 package io.kestra.core.contexts;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-import java.util.Optional;
+import io.kestra.core.junit.annotations.KestraTest;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

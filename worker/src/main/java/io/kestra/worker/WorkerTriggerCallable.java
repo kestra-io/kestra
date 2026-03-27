@@ -1,13 +1,14 @@
 package io.kestra.worker;
 
+import java.util.Optional;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTrigger;
-import lombok.Getter;
 
-import java.util.Optional;
+import lombok.Getter;
 
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
 

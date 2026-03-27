@@ -1,5 +1,11 @@
 package io.kestra.jdbc.runner;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
@@ -12,16 +18,10 @@ import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
+import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.kestra.core.services.SkipExecutionService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -30,7 +30,8 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This class is responsible to batch-indexed asynchronously queue messages.<p>
+ * This class is responsible to batch-indexed asynchronously queue messages.
+ * <p>
  * Some queue messages are indexed synchronously via the {@link JdbcQueueIndexer}.
  */
 @SuppressWarnings("this-escape")
@@ -64,8 +65,7 @@ public class JdbcIndexer implements Indexer {
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         SkipExecutionService skipExecutionService,
-        QueueService queueService
-    ) {
+        QueueService queueService) {
         this.logRepository = logRepository;
         this.logQueue = (JdbcQueue<LogEntry>) logQueue;
         this.metricRepository = metricRepositor;
@@ -92,7 +92,8 @@ public class JdbcIndexer implements Indexer {
     }
 
     protected <T> void sendBatch(JdbcQueue<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
-        this.receiveCancellations.addFirst(queueInterface.receiveBatch(Indexer.class, eithers -> {
+        this.receiveCancellations.addFirst(queueInterface.receiveBatch(Indexer.class, eithers ->
+        {
             // first, log all deserialization issues
             eithers.stream().filter(either -> either.isRight()).forEach(either -> log.error("unable to deserialize an item: {}", either.getRight().getMessage()));
 
@@ -100,7 +101,8 @@ public class JdbcIndexer implements Indexer {
             List<T> items = eithers.stream()
                 .filter(either -> either.isLeft())
                 .map(either -> either.getLeft())
-                .filter(it -> {
+                .filter(it ->
+                {
                     if (skipExecutionService.skipIndexerRecord(queueService.key(it))) {
                         log.warn("Skipping indexer record for key: {}", queueService.key(it));
                         return false;
@@ -112,11 +114,14 @@ public class JdbcIndexer implements Indexer {
             if (!ListUtils.isEmpty(items)) {
                 String itemClassName = items.getFirst().getClass().getName();
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, MetricRegistry.METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION, "type", itemClassName).increment();
-                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", itemClassName).increment(items.size());
+                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", itemClassName)
+                    .increment(items.size());
 
-                this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", itemClassName).record(() -> {
+                this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", itemClassName).record(() ->
+                {
                     int saved = saveRepositoryInterface.saveBatch(items);
-                    this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", itemClassName).increment(saved);
+                    this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", itemClassName)
+                        .increment(saved);
                 });
             }
         }));
@@ -132,11 +137,13 @@ public class JdbcIndexer implements Indexer {
     public String getId() {
         return id;
     }
+
     /** {@inheritDoc} **/
     @Override
     public ServiceType getType() {
         return ServiceType.INDEXER;
     }
+
     /** {@inheritDoc} **/
     @Override
     public ServiceState getState() {

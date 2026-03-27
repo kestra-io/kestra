@@ -1,19 +1,20 @@
 package io.kestra.jdbc;
 
+import java.io.Closeable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.runners.*;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.Closeable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 @Slf4j
 @Singleton
@@ -28,10 +29,12 @@ public class JdbcWorkerJobQueueService implements Closeable {
     }
 
     public Runnable subscribe(JdbcQueue<WorkerJob> workerJobQueue, String workerId, String workerGroup, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
-        this.disposable.set(workerJobQueue.receiveTransaction(workerGroup, Worker.class, (dslContext, eithers) -> {
+        this.disposable.set(workerJobQueue.receiveTransaction(workerGroup, Worker.class, (dslContext, eithers) ->
+        {
             final WorkerInstance workerInstance = new WorkerInstance(workerId, workerGroup);
 
-            eithers.forEach(either -> {
+            eithers.forEach(either ->
+            {
                 if (either.isRight()) {
                     log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
                     return;

@@ -22,7 +22,9 @@ public class Concurrency {
     private Behavior behavior = Behavior.QUEUE;
 
     public enum Behavior {
-        QUEUE, CANCEL, FAIL;
+        QUEUE,
+        CANCEL,
+        FAIL;
     }
 
     public static boolean possibleTransitions(State.Type type) {

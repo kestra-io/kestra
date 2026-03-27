@@ -3,6 +3,7 @@ package io.kestra.cli.commands.templates.namespaces;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
 import io.kestra.core.models.templates.TemplateEnabled;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

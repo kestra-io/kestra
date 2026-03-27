@@ -1,8 +1,10 @@
 package io.kestra.core.validations.validator;
 
 import com.cronutils.model.Cron;
+
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.plugin.core.trigger.Schedule;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -29,7 +31,7 @@ public class ScheduleValidator implements ConstraintValidator<ScheduleValidation
                 parsed.validate();
             } catch (IllegalArgumentException e) {
                 context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate( "invalid cron expression '" + value.getCron() + "': " + e.getMessage())
+                context.buildConstraintViolationWithTemplate("invalid cron expression '" + value.getCron() + "': " + e.getMessage())
                     .addConstraintViolation();
                 return false;
             }

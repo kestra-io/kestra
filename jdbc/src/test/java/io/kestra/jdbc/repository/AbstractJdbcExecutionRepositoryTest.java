@@ -1,11 +1,13 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.jdbc.JdbcTestUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
+
+import org.junit.jupiter.api.BeforeEach;
+
+import io.kestra.jdbc.JdbcTestUtils;
+
+import jakarta.inject.Inject;
 
 public abstract class AbstractJdbcExecutionRepositoryTest extends io.kestra.core.repositories.AbstractExecutionRepositoryTest {
     @Inject

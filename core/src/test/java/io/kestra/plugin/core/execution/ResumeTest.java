@@ -1,5 +1,10 @@
 package io.kestra.plugin.core.execution;
 
+import java.time.Duration;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -7,11 +12,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.Await;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,8 +28,10 @@ class ResumeTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml",
-        "flows/valids/resume-execution.yaml"})
+    @LoadFlows(
+        { "flows/valids/pause-test.yaml",
+            "flows/valids/resume-execution.yaml" }
+    )
     void resume() throws Exception {
         Execution pause = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
         String pauseId = pause.getId();

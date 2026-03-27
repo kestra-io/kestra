@@ -1,18 +1,20 @@
 package io.kestra.runner.mysql;
 
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.kestra.jdbc.runner.JdbcQueue;
-import io.micronaut.context.ApplicationContext;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import io.kestra.jdbc.runner.JdbcQueue;
+
+import io.micronaut.context.ApplicationContext;
 
 public class MysqlQueue<T> extends JdbcQueue<T> {
 
@@ -38,10 +40,14 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             // force using the dedicated index, or it made a scan of the PK index
             .from(this.table.useIndex("ix_type__consumers"))
             .where(AbstractJdbcRepository.field("type").eq(queueType()))
-            .and(DSL.or(List.of(
-                AbstractJdbcRepository.field("consumers").isNull(),
-                AbstractJdbcRepository.field("consumers").in(QUEUE_CONSUMERS.allForConsumerNotIn(queueType))
-            )));
+            .and(
+                DSL.or(
+                    List.of(
+                        AbstractJdbcRepository.field("consumers").isNull(),
+                        AbstractJdbcRepository.field("consumers").in(QUEUE_CONSUMERS.allForConsumerNotIn(queueType))
+                    )
+                )
+            );
 
         if (consumerGroup != null) {
             select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
@@ -89,7 +95,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
         static {
             CONSUMERS = new HashSet<>();
-            String[] elements = {"indexer", "executor", "worker", "scheduler"};
+            String[] elements = { "indexer", "executor", "worker", "scheduler" };
             List<String> results = new ArrayList<>();
             // Generate all combinations and their permutations
             generateCombinations(elements, new boolean[elements.length], new ArrayList<>(), results);

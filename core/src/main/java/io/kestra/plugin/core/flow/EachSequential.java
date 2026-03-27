@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -16,17 +19,14 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -37,7 +37,8 @@ import java.util.Optional;
     title = "For each value in the list, execute one or more tasks sequentially (Deprecated).",
     description = "This task is deprecated, please use the `io.kestra.plugin.core.flow.ForEach` task instead.\n\n" +
         "The list of `tasks` will be executed for each item sequentially. " +
-        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`. \n\n" +
+        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`. \n\n"
+        +
         "You can access the current iteration value using the variable `{{ taskrun.value }}`. " +
         "The task list will be executed sequentially for each item.\n\n" +
         "We highly recommend triggering a subflow for each value. " +
@@ -100,7 +101,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     @Schema(
         title = "The list of values for this task",
         description = "The value can be passed as a string, a list of strings, or a list of objects.",
-        oneOf = {String.class, Object[].class}
+        oneOf = { String.class, Object[].class }
     )
     private Object value;
 

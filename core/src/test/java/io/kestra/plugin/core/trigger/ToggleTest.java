@@ -1,7 +1,10 @@
 package io.kestra.plugin.core.trigger;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.time.ZonedDateTime;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -12,16 +15,16 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.scheduler.AbstractScheduler;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.scheduler.AbstractScheduler;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.time.ZonedDateTime;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true, startScheduler = true)
 class ToggleTest {
@@ -39,7 +42,7 @@ class ToggleTest {
     private RunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows({"flows/valids/trigger-toggle.yaml"})
+    @LoadFlows({ "flows/valids/trigger-toggle.yaml" })
     void toggle() throws Exception {
         // we need to await for the scheduler to be ready otherwise there may be an issue with updating the trigger
         Await.until(() -> scheduler.isReady());
@@ -55,7 +58,8 @@ class ToggleTest {
         triggerRepository.save(trigger);
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<Trigger> receive = TestsUtils.receive(triggerQueue, either -> {
+        Flux<Trigger> receive = TestsUtils.receive(triggerQueue, either ->
+        {
             if (either.isLeft()) {
                 countDownLatch.countDown();
             }

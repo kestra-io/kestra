@@ -1,10 +1,5 @@
 package io.kestra.core.server;
 
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.micronaut.core.annotation.Introspected;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -13,6 +8,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+
+import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+
+import io.micronaut.core.annotation.Introspected;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.server.Service.ServiceState.*;
 
@@ -25,12 +26,10 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
 
     private final static int DEFAULT_SCHEDULE_JITTER_MAX_MS = 500;
 
-    protected static String DEFAULT_REASON_FOR_DISCONNECTED =
-        "The service was detected as non-responsive after the session timeout. " +
+    protected static String DEFAULT_REASON_FOR_DISCONNECTED = "The service was detected as non-responsive after the session timeout. " +
         "Service transitioned to the 'DISCONNECTED' state.";
 
-    protected static String DEFAULT_REASON_FOR_NOT_RUNNING =
-        "The service was detected as non-responsive or terminated after termination grace period. " +
+    protected static String DEFAULT_REASON_FOR_NOT_RUNNING = "The service was detected as non-responsive or terminated after termination grace period. " +
         "Service transitioned to the 'NOT_RUNNING' state.";
 
     private static final String TASK_NAME = "service-liveness-coordinator-task";
@@ -45,13 +44,13 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     /**
      * Creates a new {@link AbstractServiceLivenessCoordinator} instance.
      *
-     * @param store        The {@link ServiceInstanceRepositoryInterface}.
+     * @param store The {@link ServiceInstanceRepositoryInterface}.
      * @param serverConfig The server configuration.
      */
     @Inject
     public AbstractServiceLivenessCoordinator(final ServiceLivenessStore store,
-                                              final ServiceRegistry serviceRegistry,
-                                              final ServerConfig serverConfig) {
+        final ServiceRegistry serviceRegistry,
+        final ServerConfig serverConfig) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
         this.store = store;
@@ -62,9 +61,11 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
      **/
     @Override
     protected void onSchedule(Instant now) throws Exception {
-        if (Optional.ofNullable(serviceRegistry.get(ServiceType.EXECUTOR))
-            .filter(service -> service.instance().is(RUNNING))
-            .isEmpty()) {
+        if (
+            Optional.ofNullable(serviceRegistry.get(ServiceType.EXECUTOR))
+                .filter(service -> service.instance().is(RUNNING))
+                .isEmpty()
+        ) {
             log.debug(
                 "The liveness coordinator task was temporarily disabled. Executor is not yet in the RUNNING state."
             );
@@ -105,8 +106,8 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     protected abstract void handleAllWorkersForUncleanShutdown(final Instant now);
 
     protected abstract void update(final ServiceInstance instance,
-                                   final Service.ServiceState state,
-                                   final String reason) ;
+        final Service.ServiceState state,
+        final String reason);
 
     /**
      * {@inheritDoc}
@@ -122,30 +123,32 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     }
 
     protected List<ServiceInstance> filterAllUncleanShutdownServices(final List<ServiceInstance> instances,
-                                                                     final Instant now) {
+        final Instant now) {
         // List of services for which we don't know the actual state
         final List<ServiceInstance> uncleanShutdownServices = new ArrayList<>();
 
         // ...all services that have transitioned to DISCONNECTED or TERMINATING for more than terminationGracePeriod.
-        uncleanShutdownServices.addAll(instances.stream()
-            .filter(nonRunning -> nonRunning.state().isDisconnectedOrTerminating())
-            .filter(disconnectedOrTerminating -> disconnectedOrTerminating.isTerminationGracePeriodElapsed(now))
-            .peek(instance -> maybeLogNonRespondingAfterTerminationGracePeriod(instance, now))
-            .toList()
+        uncleanShutdownServices.addAll(
+            instances.stream()
+                .filter(nonRunning -> nonRunning.state().isDisconnectedOrTerminating())
+                .filter(disconnectedOrTerminating -> disconnectedOrTerminating.isTerminationGracePeriodElapsed(now))
+                .peek(instance -> maybeLogNonRespondingAfterTerminationGracePeriod(instance, now))
+                .toList()
         );
         // ...all services that have transitioned to TERMINATED_FORCED.
-        uncleanShutdownServices.addAll(instances.stream()
-            .filter(nonRunning -> nonRunning.is(Service.ServiceState.TERMINATED_FORCED))
-            // Only select workers that have been terminated for at least the grace period, to ensure that all in-flight
-            // task runs had enough time to be fully handled by the executors.
-            .filter(terminated -> terminated.isTerminationGracePeriodElapsed(now))
-            .toList()
+        uncleanShutdownServices.addAll(
+            instances.stream()
+                .filter(nonRunning -> nonRunning.is(Service.ServiceState.TERMINATED_FORCED))
+                // Only select workers that have been terminated for at least the grace period, to ensure that all in-flight
+                // task runs had enough time to be fully handled by the executors.
+                .filter(terminated -> terminated.isTerminationGracePeriodElapsed(now))
+                .toList()
         );
         return uncleanShutdownServices;
     }
 
     protected List<ServiceInstance> filterAllNonRespondingServices(final List<ServiceInstance> instances,
-                                                                   final Instant now) {
+        final Instant now) {
         return instances.stream()
             .filter(instance -> Objects.nonNull(instance.config())) // protect against non-complete instance
             .filter(instance -> instance.config().liveness().enabled())
@@ -153,17 +156,21 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
             // exclude any service running on the same server as the executor, to prevent the latter from shutting down.
             .filter(instance -> !instance.server().id().equals(serverId))
             // only keep services eligible for liveness probe
-            .filter(instance -> {
+            .filter(instance ->
+            {
                 final Instant minInstantForLivenessProbe = now.minus(instance.config().liveness().initialDelay());
                 return instance.createdAt().isBefore(minInstantForLivenessProbe);
             })
             // warn
-            .peek(instance -> log.warn("Detected non-responding service [id={}, type={}, hostname={}] after timeout ({}ms).",
-                instance.uid(),
-                instance.type(),
-                instance.server().hostname(),
-                now.toEpochMilli() - instance.updatedAt().toEpochMilli()
-            ))
+            .peek(
+                instance -> log.warn(
+                    "Detected non-responding service [id={}, type={}, hostname={}] after timeout ({}ms).",
+                    instance.uid(),
+                    instance.type(),
+                    instance.server().hostname(),
+                    now.toEpochMilli() - instance.updatedAt().toEpochMilli()
+                )
+            )
             .toList();
 
     }
@@ -190,8 +197,10 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
             store.findAllInstancesInStates(Set.of(CREATED, RUNNING))
                 .stream()
                 .filter(instance -> instance.createdAt().isAfter(lastScheduledExecution()))
-                .forEach(instance -> {
-                    log.debug("Detected new service [id={}, type={}, hostname={}] (started at: {}).",
+                .forEach(instance ->
+                {
+                    log.debug(
+                        "Detected new service [id={}, type={}, hostname={}] (started at: {}).",
                         instance.uid(),
                         instance.type(),
                         instance.server().hostname(),
@@ -202,13 +211,14 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     }
 
     protected void safelyUpdate(final ServiceInstance instance,
-                                final Service.ServiceState state,
-                                final String reason) {
+        final Service.ServiceState state,
+        final String reason) {
         try {
             update(instance, state, reason);
         } catch (Exception e) {
             // Log and ignore exception - it's safe to ignore error because the run() method is supposed to schedule at fix rate.
-            log.error("Unexpected error while service [id={}, type={}, hostname={}] transition from {} to {}.",
+            log.error(
+                "Unexpected error while service [id={}, type={}, hostname={}] transition from {} to {}.",
                 instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
@@ -220,9 +230,10 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     }
 
     protected static void maybeLogNonRespondingAfterTerminationGracePeriod(final ServiceInstance instance,
-                                                                           final Instant now) {
+        final Instant now) {
         if (instance.state().isDisconnectedOrTerminating()) {
-            log.warn("Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
+            log.warn(
+                "Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
                 instance.uid(),
                 instance.type(),
                 instance.server().hostname(),

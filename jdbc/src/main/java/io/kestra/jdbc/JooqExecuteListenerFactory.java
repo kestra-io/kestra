@@ -1,17 +1,20 @@
 package io.kestra.jdbc;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Factory;
-import lombok.extern.slf4j.Slf4j;
-import org.jooq.ExecuteContext;
-import org.jooq.ExecuteListener;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.sql.DataSource;
+
+import org.jooq.ExecuteContext;
+import org.jooq.ExecuteListener;
+
+import io.kestra.core.metrics.MetricRegistry;
+
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Factory;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Factory
@@ -47,9 +50,9 @@ public class JooqExecuteListenerFactory {
                             .record(duration);
 
                         if (log.isTraceEnabled()) {
-                            log.trace("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows() , ctx.query());
+                            log.trace("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows(), ctx.query());
                         } else if (log.isDebugEnabled()) {
-                            log.debug("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows() , ctx.sql());
+                            log.debug("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows(), ctx.sql());
                         }
                     }
                 };

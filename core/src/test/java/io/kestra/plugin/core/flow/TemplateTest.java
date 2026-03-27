@@ -1,6 +1,16 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -12,21 +22,14 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.plugin.core.log.Log;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.log.Log;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
-
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,8 +60,7 @@ public class TemplateTest {
         RunnerUtils runnerUtils,
         TemplateRepositoryInterface templateRepository,
         QueueInterface<LogEntry> logQueue,
-        FlowInputOutput flowIO
-    ) throws TimeoutException, QueueException {
+        FlowInputOutput flowIO) throws TimeoutException, QueueException {
         templateRepository.create(TEMPLATE_1);
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
@@ -68,27 +70,28 @@ public class TemplateTest {
             "io.kestra.tests",
             "with-template",
             null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, ImmutableMap.of(
-                "with-string", "myString",
-                "with-optional", "myOpt"
-            )),
+            (flow, execution1) -> flowIO.readExecutionInputs(
+                flow, execution1, ImmutableMap.of(
+                    "with-string", "myString",
+                    "with-optional", "myOpt"
+                )
+            ),
             Duration.ofSeconds(60)
         );
 
         assertThat(execution.getTaskRunList()).hasSize(4);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         // FIXME plugin default injection into a template didn't work anymore, is it really an issue?
-//        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("myString") && logEntry.getLevel() == Level.ERROR);
+        //        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("myString") && logEntry.getLevel() == Level.ERROR);
         receive.blockLast();
-//        assertThat(matchingLog, notNullValue());
+        //        assertThat(matchingLog, notNullValue());
     }
 
     @Test
-    @LoadFlows({"flows/templates/with-template.yaml"})
+    @LoadFlows({ "flows/templates/with-template.yaml" })
     void withTemplate() throws TimeoutException, QueueException {
         TemplateTest.withTemplate(runnerUtils, templateRepository, logQueue, flowIO);
     }
-
 
     public static void withFailedTemplate(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -98,13 +101,14 @@ public class TemplateTest {
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().endsWith("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
+        LogEntry matchingLog = TestsUtils
+            .awaitLog(logs, logEntry -> logEntry.getMessage().endsWith("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
         receive.blockLast();
         assertThat(matchingLog).isNotNull();
     }
 
     @Test
-    @LoadFlows({"flows/templates/with-failed-template.yaml"})
+    @LoadFlows({ "flows/templates/with-failed-template.yaml" })
     void withFailedTemplate() throws TimeoutException, QueueException {
         TemplateTest.withFailedTemplate(runnerUtils, logQueue);
     }

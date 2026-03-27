@@ -1,5 +1,10 @@
 package io.kestra.plugin.core.execution;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
@@ -7,11 +12,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;

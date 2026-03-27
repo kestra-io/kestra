@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
@@ -16,14 +18,13 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
+
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -86,20 +87,23 @@ public class Exit extends Task implements ExecutionUpdatableTask {
         // if the state is killed, we send a kill event and end here
         if (exitState == State.Type.KILLED) {
             @SuppressWarnings("unchecked")
-            QueueInterface<ExecutionKilled> killQueue = ((DefaultRunContext) runContext).getApplicationContext().getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
-            killQueue.emit(ExecutionKilledExecution
-                .builder()
-                .state(ExecutionKilled.State.REQUESTED)
-                .executionId(execution.getId())
-                .isOnKillCascade(false)
-                .tenantId(execution.getTenantId())
-                .build()
+            QueueInterface<ExecutionKilled> killQueue = ((DefaultRunContext) runContext).getApplicationContext()
+                .getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
+            killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution.getId())
+                    .isOnKillCascade(false)
+                    .tenantId(execution.getTenantId())
+                    .build()
             );
             return execution.withState(exitState);
         }
 
         return execution.findLastNotTerminated()
-            .map(taskRun -> {
+            .map(taskRun ->
+            {
                 try {
                     TaskRun newTaskRun = taskRun.withState(exitState);
                     Execution newExecution = execution.withTaskRun(newTaskRun);
@@ -135,6 +139,10 @@ public class Exit extends Task implements ExecutionUpdatableTask {
     }
 
     public enum ExitState {
-        SUCCESS, WARNING, KILLED, FAILED, CANCELED
+        SUCCESS,
+        WARNING,
+        KILLED,
+        FAILED,
+        CANCELED
     }
 }

@@ -1,15 +1,17 @@
 package io.kestra.jdbc.repository;
 
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.AbstractFlowTopologyRepositoryTest;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.jdbc.JdbcTestUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,8 +52,6 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
         assertThat(list.size()).isEqualTo(2);
     }
-
-
 
     @BeforeEach
     protected void init() {

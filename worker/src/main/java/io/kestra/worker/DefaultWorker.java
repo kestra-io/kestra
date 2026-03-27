@@ -1,10 +1,40 @@
 package io.kestra.worker;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.commons.lang3.time.StopWatch;
+import org.slf4j.Logger;
+import org.slf4j.event.Level;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -30,6 +60,7 @@ import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
@@ -41,34 +72,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.apache.commons.lang3.time.StopWatch;
-import org.slf4j.Logger;
-import org.slf4j.event.Level;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import static io.kestra.core.models.flows.State.Type.*;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
@@ -180,8 +183,8 @@ public class DefaultWorker implements Worker {
     /**
      * Creates a new {@link DefaultWorker} instance.
      *
-     * @param workerId       The worker service ID.
-     * @param numThreads     The worker num threads.
+     * @param workerId The worker service ID.
+     * @param numThreads The worker num threads.
      * @param workerGroupKey The worker group (EE).
      */
     @Inject
@@ -191,8 +194,7 @@ public class DefaultWorker implements Worker {
         @Nullable @Parameter String workerGroupKey,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         WorkerGroupService workerGroupService,
-        ExecutorsUtils executorsUtils
-    ) {
+        ExecutorsUtils executorsUtils) {
         this.id = workerId;
         this.numThreads = numThreads;
         this.workerGroupKey = workerGroupKey;
@@ -206,7 +208,7 @@ public class DefaultWorker implements Worker {
     void initMetricsAndTracer() {
         // the method is called twice due to how we create the bean, see https://github.com/micronaut-projects/micronaut-core/issues/11656
         if (this.init.compareAndSet(false, true)) {
-            String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
+            String[] tags = this.workerGroup == null ? new String[0] : new String[] { MetricRegistry.TAG_WORKER_GROUP, this.workerGroup };
             // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION, numThreads, tags);
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);
@@ -237,7 +239,8 @@ public class DefaultWorker implements Worker {
 
     @Override
     public void run() {
-        this.receiveCancellations.addFirst(this.executionKilledQueue.receive(executionKilled -> {
+        this.receiveCancellations.addFirst(this.executionKilledQueue.receive(executionKilled ->
+        {
             if (executionKilled == null || !executionKilled.isLeft()) {
                 return;
             }
@@ -273,34 +276,38 @@ public class DefaultWorker implements Worker {
             }
         }));
 
-        this.receiveCancellations.addFirst(this.workerJobQueue.subscribe(
-            this.id,
-            this.workerGroup,
-            either -> {
-                pendingJobCount.incrementAndGet();
-                executorService.execute(() -> {
-                    pendingJobCount.decrementAndGet();
-                    runningJobCount.incrementAndGet();
+        this.receiveCancellations.addFirst(
+            this.workerJobQueue.subscribe(
+                this.id,
+                this.workerGroup,
+                either ->
+                {
+                    pendingJobCount.incrementAndGet();
+                    executorService.execute(() ->
+                    {
+                        pendingJobCount.decrementAndGet();
+                        runningJobCount.incrementAndGet();
 
-                    try {
-                        if (either.isRight()) {
-                            log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
-                            handleDeserializationError(either.getRight());
-                            return;
-                        }
+                        try {
+                            if (either.isRight()) {
+                                log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
+                                handleDeserializationError(either.getRight());
+                                return;
+                            }
 
-                        WorkerJob workerTask = either.getLeft();
-                        if (workerTask instanceof WorkerTask task) {
-                            handleTask(task);
-                        } else if (workerTask instanceof WorkerTrigger trigger) {
-                            handleTrigger(trigger);
+                            WorkerJob workerTask = either.getLeft();
+                            if (workerTask instanceof WorkerTask task) {
+                                handleTask(task);
+                            } else if (workerTask instanceof WorkerTrigger trigger) {
+                                handleTrigger(trigger);
+                            }
+                        } finally {
+                            runningJobCount.decrementAndGet();
                         }
-                    } finally {
-                        runningJobCount.decrementAndGet();
-                    }
-                });
-            }
-        ));
+                    });
+                }
+            )
+        );
 
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
         if (this.maintenanceService.isInMaintenanceMode()) {
@@ -311,8 +318,7 @@ public class DefaultWorker implements Worker {
 
         if (workerGroupKey != null) {
             log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
-        }
-        else {
+        } else {
             log.info("Worker started with {} thread(s)", numThreads);
         }
     }
@@ -413,7 +419,9 @@ public class DefaultWorker implements Worker {
                     WorkerTaskResult workerTaskResult = null;
                     try {
                         if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
-                            workerTaskResult = new WorkerTaskResult(currentWorkerTask.getTaskRun().withState(SKIPPED).addAttempt(TaskRunAttempt.builder().workerId(this.id).state(new State().withState(SKIPPED)).build()));
+                            workerTaskResult = new WorkerTaskResult(
+                                currentWorkerTask.getTaskRun().withState(SKIPPED).addAttempt(TaskRunAttempt.builder().workerId(this.id).state(new State().withState(SKIPPED)).build())
+                            );
                             this.workerTaskResultQueue.emit(workerTaskResult);
                         } else {
                             workerTaskResult = this.run(currentWorkerTask, false);
@@ -475,11 +483,12 @@ public class DefaultWorker implements Worker {
 
         var flow = workerTrigger.getConditionContext().getFlow();
         if (flow.getLabels() != null) {
-            evaluate = evaluate.map(execution -> {
-                    List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-                    executionLabels.addAll(LabelService.labelsExcludingSystem(flow));
-                    return execution.withLabels(executionLabels);
-                }
+            evaluate = evaluate.map(execution ->
+            {
+                List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
+                executionLabels.addAll(LabelService.labelsExcludingSystem(flow));
+                return execution.withLabels(executionLabels);
+            }
             );
         }
 
@@ -503,8 +512,10 @@ public class DefaultWorker implements Worker {
 
         logError(workerTrigger, e);
         try {
-            Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
-                .withState(FAILED) : null;
+            Execution execution = workerTrigger.getTrigger().isFailOnTriggerError()
+                ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
+                    .withState(FAILED)
+                : null;
             if (execution != null) {
                 try {
                     logQueue.emitAsync(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
@@ -520,8 +531,10 @@ public class DefaultWorker implements Worker {
                     .build()
             );
         } catch (QueueException ex) {
-            log.error("Unable to send the worker trigger result {}.{}.{}",
-                workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId(), workerTrigger.getTriggerContext().getTriggerId(), ex);
+            log.error(
+                "Unable to send the worker trigger result {}.{}.{}",
+                workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId(), workerTrigger.getTriggerContext().getTriggerId(), ex
+            );
         }
     }
 
@@ -559,8 +572,10 @@ public class DefaultWorker implements Worker {
                     .build()
             );
         } catch (QueueException ex) {
-            log.error("Unable to send the worker trigger result {}.{}.{}",
-                workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId(), workerTrigger.getTriggerContext().getTriggerId(), ex);
+            log.error(
+                "Unable to send the worker trigger result {}.{}.{}",
+                workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId(), workerTrigger.getTriggerContext().getTriggerId(), ex
+            );
         }
     }
 
@@ -580,69 +595,75 @@ public class DefaultWorker implements Worker {
 
         this.metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, MetricRegistry.METRIC_WORKER_TRIGGER_DURATION_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
-            .record(() -> {
-                    StopWatch stopWatch = new StopWatch();
-                    stopWatch.start();
+            .record(() ->
+            {
+                StopWatch stopWatch = new StopWatch();
+                stopWatch.start();
 
-                    this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
-                        .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT_DESCRIPTION, new AtomicInteger(0), metricRegistry.tags(workerTrigger, workerGroup)));
-                    this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
+                this.evaluateTriggerRunningCount.computeIfAbsent(
+                    workerTrigger.getTriggerContext().uid(), s -> metricRegistry
+                        .gauge(
+                            MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT_DESCRIPTION, new AtomicInteger(0),
+                            metricRegistry.tags(workerTrigger, workerGroup)
+                        )
+                );
+                this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
-                    DefaultRunContext runContext = (DefaultRunContext) workerTrigger.getConditionContext().getRunContext();
-                    runContextInitializer.forWorker(runContext, workerTrigger);
-                    try {
+                DefaultRunContext runContext = (DefaultRunContext) workerTrigger.getConditionContext().getRunContext();
+                runContextInitializer.forWorker(runContext, workerTrigger);
+                try {
 
-                        logService.logTrigger(
-                            workerTrigger.getTriggerContext(),
-                            runContext.logger(),
-                            Level.INFO,
-                            "Type {} started",
-                            workerTrigger.getTrigger().getType()
-                        );
+                    logService.logTrigger(
+                        workerTrigger.getTriggerContext(),
+                        runContext.logger(),
+                        Level.INFO,
+                        "Type {} started",
+                        workerTrigger.getTrigger().getType()
+                    );
 
-                        if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                            WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
-                            io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
+                    if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
+                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
+                        io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
-                            if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleTriggerError(workerTrigger, workerCallable.getException());
-                            }
-
-                            if (!state.equals(FAILED)) {
-                                this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
-                            }
-                        } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
-                            WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
-                                runContext,
-                                workerTrigger,
-                                streamingTrigger,
-                                throwable -> this.handleTriggerError(workerTrigger, throwable),
-                                execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution))
-                            );
-                            io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
-
-                            // here the realtime trigger fail before the publisher being call so we create a fail execution
-                            if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleRealtimeTriggerError(workerTrigger, workerCallable.getException());
-                            }
+                        if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
+                            this.handleTriggerError(workerTrigger, workerCallable.getException());
                         }
-                    } catch (Exception e) {
-                        this.handleTriggerError(workerTrigger, e);
-                    } finally {
-                        logService.logTrigger(
-                            workerTrigger.getTriggerContext(),
-                            runContext.logger(),
-                            Level.INFO,
-                            "Type {} completed in {}",
-                            workerTrigger.getTrigger().getType(),
-                            DurationFormatUtils.formatDurationHMS(stopWatch.getTime(TimeUnit.MILLISECONDS))
+
+                        if (!state.equals(FAILED)) {
+                            this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
+                        }
+                    } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
+                        WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
+                            runContext,
+                            workerTrigger,
+                            streamingTrigger,
+                            throwable -> this.handleTriggerError(workerTrigger, throwable),
+                            execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution))
                         );
+                        io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
-                        workerTrigger.getConditionContext().getRunContext().cleanup();
+                        // here the realtime trigger fail before the publisher being call so we create a fail execution
+                        if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
+                            this.handleRealtimeTriggerError(workerTrigger, workerCallable.getException());
+                        }
                     }
+                } catch (Exception e) {
+                    this.handleTriggerError(workerTrigger, e);
+                } finally {
+                    logService.logTrigger(
+                        workerTrigger.getTriggerContext(),
+                        runContext.logger(),
+                        Level.INFO,
+                        "Type {} completed in {}",
+                        workerTrigger.getTrigger().getType(),
+                        DurationFormatUtils.formatDurationHMS(stopWatch.getTime(TimeUnit.MILLISECONDS))
+                    );
 
-                    this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
+                    workerTrigger.getConditionContext().getRunContext().cleanup();
                 }
+
+                this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
+            }
             );
 
         metricRegistry
@@ -658,12 +679,14 @@ public class DefaultWorker implements Worker {
         if (workerTask.getTaskRun().getState().getCurrent() == CREATED) {
             metricRegistry
                 .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, MetricRegistry.METRIC_WORKER_QUEUED_DURATION_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
-                .record(Duration.between(
-                    workerTask.getTaskRun().getState().getStartDate(), Instant.now()
-                ));
+                .record(
+                    Duration.between(
+                        workerTask.getTaskRun().getState().getStartDate(), Instant.now()
+                    )
+                );
         }
 
-        if (! Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+        if (!Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
@@ -730,8 +753,9 @@ public class DefaultWorker implements Worker {
             // get last state
             TaskRunAttempt lastAttempt = workerTask.getTaskRun().lastAttempt();
             if (lastAttempt == null) {
-                throw new IllegalStateException("Can find lastAttempt on taskRun '" +
-                    workerTask.getTaskRun().toString(true) + "'"
+                throw new IllegalStateException(
+                    "Can find lastAttempt on taskRun '" +
+                        workerTask.getTaskRun().toString(true) + "'"
                 );
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
@@ -744,10 +768,11 @@ public class DefaultWorker implements Worker {
                 return new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
             }
 
-            if (workerTask.getTask().getRetry() != null &&
-                workerTask.getTask().getRetry().getWarningOnRetry() &&
-                workerTask.getTaskRun().attemptNumber() > 1 &&
-                state == SUCCESS
+            if (
+                workerTask.getTask().getRetry() != null &&
+                    workerTask.getTask().getRetry().getWarningOnRetry() &&
+                    workerTask.getTaskRun().attemptNumber() > 1 &&
+                    state == SUCCESS
             ) {
                 state = WARNING;
             }
@@ -771,18 +796,22 @@ public class DefaultWorker implements Worker {
             this.workerTaskResultQueue.emit(workerTaskResult);
 
             // upload the cache file, hash may not be present if we didn't succeed in computing it
-            if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled() && hash.isPresent() &&
-                (state == State.Type.SUCCESS || state == State.Type.WARNING)) {
+            if (
+                workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled() && hash.isPresent() &&
+                    (state == State.Type.SUCCESS || state == State.Type.WARNING)
+            ) {
                 runContext.logger().info("Uploading a cache entry for task '{}'", workerTask.getTask().getId());
 
-                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                     ZipOutputStream archive = new ZipOutputStream(bos)) {
+                try (
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ZipOutputStream archive = new ZipOutputStream(bos)
+                ) {
                     var zipEntry = new ZipEntry("outputs.ion");
                     archive.putNextEntry(zipEntry);
                     archive.write(JacksonMapper.ofIon().writeValueAsBytes(workerTask.getTaskRun().getOutputs()));
                     archive.closeEntry();
                     archive.finish();
-                    Path archiveFile = runContext.workingDir().createTempFile( ".zip");
+                    Path archiveFile = runContext.workingDir().createTempFile(".zip");
                     Files.write(archiveFile, bos.toByteArray());
                     URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), workerTask.getTaskRun().getValue());
                     runContext.logger().debug("Caching entry uploaded in URI {}", uri);
@@ -836,8 +865,7 @@ public class DefaultWorker implements Worker {
             digest.update(json);
             byte[] bytes = digest.digest();
             return Optional.of(HexFormat.of().formatHex(bytes));
-        } catch (RuntimeException | IllegalVariableEvaluationException | JsonProcessingException |
-                 NoSuchAlgorithmException e) {
+        } catch (RuntimeException | IllegalVariableEvaluationException | JsonProcessingException | NoSuchAlgorithmException e) {
             runContext.logger().error("Unable to create the cache key for the task '{}'", task.getId(), e);
             return Optional.empty();
         }
@@ -910,8 +938,10 @@ public class DefaultWorker implements Worker {
                 .build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
-            logger.error("Unable to execute the task '" + workerTask.getTask().getId() +
-                "': only runnable tasks can be executed by the worker but the task is of type " + workerTask.getTask().getClass());
+            logger.error(
+                "Unable to execute the task '" + workerTask.getTask().getId() +
+                    "': only runnable tasks can be executed by the worker but the task is of type " + workerTask.getTask().getClass()
+            );
             return workerTask.withTaskRun(taskRun);
         }
 
@@ -920,7 +950,8 @@ public class DefaultWorker implements Worker {
             .workerId(this.id);
 
         // emit the attempt so the execution knows that the task is in RUNNING
-        this.workerTaskResultQueue.emit(new WorkerTaskResult(
+        this.workerTaskResultQueue.emit(
+            new WorkerTaskResult(
                 workerTask.getTaskRun()
                     .withAttempts(this.addAttempt(workerTask, builder.build()))
             )
@@ -942,7 +973,8 @@ public class DefaultWorker implements Worker {
             .withLogFile(runContext.logFileURI());
 
         // metrics
-        runContext.metrics().forEach(metric -> {
+        runContext.metrics().forEach(metric ->
+        {
             try {
                 this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric, workerTask.getExecutionKind()));
             } catch (QueueException e) {
@@ -992,7 +1024,7 @@ public class DefaultWorker implements Worker {
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {
-        return ImmutableList.<TaskRunAttempt>builder()
+        return ImmutableList.<TaskRunAttempt> builder()
             .addAll(workerTask.getTaskRun().getAttempts() == null ? new ArrayList<>() : workerTask.getTaskRun().getAttempts())
             .add(taskRunAttempt)
             .build();
@@ -1005,12 +1037,14 @@ public class DefaultWorker implements Worker {
         long index = Hashing.hashToLong(String.join("-", tags));
 
         return this.metricRunningCount
-            .computeIfAbsent(index, l -> metricRegistry.gauge(
-                MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
-                MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION,
-                new AtomicInteger(0),
-                metricRegistry.tags(workerTask, workerGroup)
-            ));
+            .computeIfAbsent(
+                index, l -> metricRegistry.gauge(
+                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
+                    MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION,
+                    new AtomicInteger(0),
+                    metricRegistry.tags(workerTask, workerGroup)
+                )
+            );
     }
 
     /**
@@ -1073,7 +1107,8 @@ public class DefaultWorker implements Worker {
         AtomicReference<ServiceState> shutdownState = new AtomicReference<>();
         // start shutdown
         Thread.ofVirtual().name("worker-shutdown").start(
-            () -> {
+            () ->
+            {
                 try {
                     this.receiveCancellations.forEach(Runnable::run);
                     this.executorService.shutdown();
@@ -1099,7 +1134,8 @@ public class DefaultWorker implements Worker {
 
         // wait for task completion
         Await.until(
-            () -> {
+            () ->
+            {
                 ServiceState serviceState = shutdownState.get();
                 if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
                     log.info("All working threads are terminated.");
@@ -1127,7 +1163,7 @@ public class DefaultWorker implements Worker {
     }
 
     private void awaitForRealtimeTriggers(final List<AbstractWorkerCallable> callables,
-                                          final Duration timeout) {
+        final Duration timeout) {
         final Instant deadline = Instant.now().plus(timeout);
         for (AbstractWorkerCallable callable : callables) {
             if (callable instanceof WorkerTriggerRealtimeCallable t) {
@@ -1178,7 +1214,8 @@ public class DefaultWorker implements Worker {
     public List<WorkerJob> getWorkerThreadTasks() {
         return this.workerCallableReferences
             .stream()
-            .map(throwFunction(workerCallable -> {
+            .map(throwFunction(workerCallable ->
+            {
                 if (workerCallable instanceof WorkerTaskCallable workerTaskCallable) {
                     return workerTaskCallable.workerTask;
                 } else if (workerCallable instanceof AbstractWorkerTriggerCallable workerTriggerCallable) {

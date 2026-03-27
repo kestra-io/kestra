@@ -1,16 +1,18 @@
 package io.kestra.core.repositories;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.plugin.core.dashboard.data.Logs;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
-import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
-
-import java.time.ZonedDateTime;
-import java.util.List;
 
 public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry>, QueryBuilderInterface<Logs.Fields> {
     /**
@@ -18,9 +20,9 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
      * <p>
      * This method will verify the current user's permissions.
      *
-     * @param tenantId          The tenant'sID.
-     * @param executionId       The execution's ID.
-     * @param minLevel          The minimum log-level.
+     * @param tenantId The tenant'sID.
+     * @param executionId The execution's ID.
+     * @param minLevel The minimum log-level.
      * @return The list of log entries.
      */
     List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel);
@@ -30,9 +32,9 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
      * <p>
      * This method will NOT verify the current user's permissions.
      *
-     * @param tenantId          The tenant'sID.
-     * @param executionId       The execution's ID.
-     * @param minLevel          The minimum log-level.
+     * @param tenantId The tenant'sID.
+     * @param executionId The execution's ID.
+     * @param minLevel The minimum log-level.
      * @return The list of log entries.
      */
     List<LogEntry> findByExecutionIdWithoutAcl(String tenantId, String executionId, Level minLevel);
@@ -76,13 +78,11 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
     ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String tenantId,
-        List<QueryFilter> filters
-        );
+        List<QueryFilter> filters);
 
     Flux<LogEntry> findAsync(
         @Nullable String tenantId,
-        List<QueryFilter> filters
-    );
+        List<QueryFilter> filters);
 
     Flux<LogEntry> findAllAsync(@Nullable String tenantId);
 

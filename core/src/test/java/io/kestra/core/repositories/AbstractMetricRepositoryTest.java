@@ -1,10 +1,18 @@
 package io.kestra.core.repositories;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.devskiller.friendly_id.FriendlyId;
-import io.kestra.core.models.QueryFilter;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
-import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
@@ -12,22 +20,11 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.models.executions.metrics.Timer;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.dashboard.data.IMetrics;
-import io.kestra.plugin.core.dashboard.data.Logs;
 import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.kestra.plugin.core.dashboard.data.MetricsKPI;
-import io.micronaut.data.model.Pageable;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -89,30 +86,29 @@ public abstract class AbstractMetricRepositoryTest {
 
     }
 
-     @Test
-     void names() {
-         String executionId = FriendlyId.createFriendlyId();
-         TaskRun taskRun1 = taskRun(executionId, "task");
-         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
+    @Test
+    void names() {
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(executionId, "task");
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
 
-         TaskRun taskRun2 = taskRun(executionId, "task2");
-         MetricEntry counter2 = MetricEntry.of(taskRun2, counter("counter2"), null);
+        TaskRun taskRun2 = taskRun(executionId, "task2");
+        MetricEntry counter2 = MetricEntry.of(taskRun2, counter("counter2"), null);
 
-         MetricEntry test = MetricEntry.of(taskRun2, counter("test"), ExecutionKind.TEST);
+        MetricEntry test = MetricEntry.of(taskRun2, counter("test"), ExecutionKind.TEST);
 
-         metricRepository.save(counter);
-         metricRepository.save(counter2);
-         metricRepository.save(test); // should only be retrieved by execution id
+        metricRepository.save(counter);
+        metricRepository.save(counter2);
+        metricRepository.save(test); // should only be retrieved by execution id
 
+        List<String> flowMetricsNames = metricRepository.flowMetrics(null, "namespace", "flow");
+        List<String> taskMetricsNames = metricRepository.taskMetrics(null, "namespace", "flow", "task");
+        List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(null, "namespace", "flow");
 
-         List<String> flowMetricsNames = metricRepository.flowMetrics(null, "namespace", "flow");
-         List<String> taskMetricsNames = metricRepository.taskMetrics(null, "namespace", "flow", "task");
-         List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(null, "namespace", "flow");
-
-         assertThat(flowMetricsNames.size()).isEqualTo(2);
-         assertThat(taskMetricsNames.size()).isEqualTo(1);
-         assertThat(tasksWithMetrics.size()).isEqualTo(2);
-     }
+        assertThat(flowMetricsNames.size()).isEqualTo(2);
+        assertThat(taskMetricsNames.size()).isEqualTo(1);
+        assertThat(tasksWithMetrics.size()).isEqualTo(2);
+    }
 
     @Test
     void findAllAsync() {
@@ -150,10 +146,13 @@ public abstract class AbstractMetricRepositoryTest {
         metricRepository.save(counter);
         metricRepository.save(testCounter);
 
-        var results = metricRepository.fetchData(null,
-            Metrics.builder().type(Metrics.class.getName()).columns(Map.of(
-                "count", ColumnDescriptor.<Metrics.Fields>builder().field(Metrics.Fields.EXECUTION_ID).agg(AggregationType.COUNT).build()
-            )).build(),
+        var results = metricRepository.fetchData(
+            null,
+            Metrics.builder().type(Metrics.class.getName()).columns(
+                Map.of(
+                    "count", ColumnDescriptor.<Metrics.Fields> builder().field(Metrics.Fields.EXECUTION_ID).agg(AggregationType.COUNT).build()
+                )
+            ).build(),
             null,
             null,
             Pageable.UNPAGED
@@ -172,8 +171,10 @@ public abstract class AbstractMetricRepositoryTest {
         metricRepository.save(counter);
         metricRepository.save(testCounter);
 
-        var results = metricRepository.fetchValue(null,
-            MetricsKPI.builder().type(MetricsKPI.class.getName()).columns(ColumnDescriptor.<Metrics.Fields>builder().field(Metrics.Fields.EXECUTION_ID).agg(AggregationType.COUNT).build()).build(),
+        var results = metricRepository.fetchValue(
+            null,
+            MetricsKPI.builder().type(MetricsKPI.class.getName()).columns(ColumnDescriptor.<Metrics.Fields> builder().field(Metrics.Fields.EXECUTION_ID).agg(AggregationType.COUNT).build())
+                .build(),
             null,
             null,
             false

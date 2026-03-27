@@ -1,17 +1,18 @@
 package io.kestra.cli.commands.namespaces.files;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Test;
-
-import jakarta.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+
+import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.annotation.Nullable;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;

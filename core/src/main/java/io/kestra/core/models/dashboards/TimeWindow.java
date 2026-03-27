@@ -1,13 +1,16 @@
 package io.kestra.core.models.dashboards;
 
+import java.time.Duration;
+
+import org.hibernate.validator.constraints.time.DurationMax;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.validations.DashboardWindowValidation;
+
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.validator.constraints.time.DurationMax;
-
-import java.time.Duration;
 
 @SuperBuilder(toBuilder = true)
 @Getter

@@ -33,9 +33,8 @@ public class InvalidQueryFiltersException extends KestraRuntimeException {
         this.invalids = List.of(invalid);
     }
 
-
-    public String formatedInvalidObjects(){
-        if (invalids == null || invalids.isEmpty()){
+    public String formatedInvalidObjects() {
+        if (invalids == null || invalids.isEmpty()) {
             return INVALID_QUERY_FILTER_MESSAGE;
         }
         return String.join(", ", invalids);

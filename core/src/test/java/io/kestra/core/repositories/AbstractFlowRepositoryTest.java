@@ -1,6 +1,23 @@
 package io.kestra.core.repositories;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -27,6 +44,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
+
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -35,21 +53,6 @@ import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.event.Level;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -92,7 +95,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all(QueryFilter filter){
+    void should_find_all(QueryFilter filter) {
 
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
@@ -112,7 +115,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all_with_source(QueryFilter filter){
+    void should_find_all_with_source(QueryFilter filter) {
 
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
@@ -141,19 +144,21 @@ public abstract class AbstractFlowRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all(QueryFilter filter){
+    void should_fail_to_find_all(QueryFilter filter) {
         assertThrows(
             InvalidQueryFiltersException.class,
-            () -> flowRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
+            () -> flowRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter))
+        );
 
     }
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all_with_source(QueryFilter filter){
+    void should_fail_to_find_all_with_source(QueryFilter filter) {
         assertThrows(
             InvalidQueryFiltersException.class,
-            () -> flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
+            () -> flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT, List.of(filter))
+        );
 
     }
 
@@ -225,7 +230,8 @@ public abstract class AbstractFlowRepositoryTest {
             Optional<FlowWithSource> full = flowRepository.findByIdWithSource(MAIN_TENANT, flow.getNamespace(), flow.getId());
             assertThat(full.isPresent()).isTrue();
 
-            full.ifPresent(current -> {
+            full.ifPresent(current ->
+            {
                 assertThat(full.get().getRevision()).isEqualTo(1);
                 assertThat(full.get().getSource()).contains("# comment");
                 assertThat(full.get().getSource()).doesNotContain("revision:");
@@ -326,150 +332,182 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void find_paginationPartial() {
-        assertThat(flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null)
-            .size())
+        assertThat(
+            flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null)
+                .size()
+        )
             .describedAs("When paginating at MAX-1, it should return MAX-1")
             .isEqualTo(Helpers.FLOWS_COUNT - 1);
 
-        assertThat(flowRepository.findWithSource(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null)
-            .size())
+        assertThat(
+            flowRepository.findWithSource(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null)
+                .size()
+        )
             .describedAs("When paginating at MAX-1, it should return MAX-1")
             .isEqualTo(Helpers.FLOWS_COUNT - 1);
     }
 
     @Test
     void find_paginationGreaterThanExisting() {
-        assertThat(flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null)
-            .size())
+        assertThat(
+            flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null)
+                .size()
+        )
             .describedAs("When paginating requesting a larger amount than existing, it should return existing MAX")
             .isEqualTo(Helpers.FLOWS_COUNT);
-        assertThat(flowRepository.findWithSource(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null)
-            .size())
+        assertThat(
+            flowRepository.findWithSource(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null)
+                .size()
+        )
             .describedAs("When paginating requesting a larger amount than existing, it should return existing MAX")
             .isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
     void find_prefixMatchingAllNamespaces() {
-        assertThat(flowRepository.find(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
-            )
-        ).size())
+        assertThat(
+            flowRepository.find(
+                Pageable.UNPAGED,
+                MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
+                )
+            ).size()
+        )
             .describedAs("When filtering on NAMESPACE START_WITH a pattern that match all, it should return all")
             .isEqualTo(Helpers.FLOWS_COUNT);
 
-        assertThat(flowRepository.findWithSource(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
-            )
-        ).size())
+        assertThat(
+            flowRepository.findWithSource(
+                Pageable.UNPAGED,
+                MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
+                )
+            ).size()
+        )
             .describedAs("When filtering on NAMESPACE START_WITH a pattern that match all, it should return all")
             .isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
     void find_aSpecifiedNamespace() {
-        assertThat(flowRepository.find(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
-            )
-        ).size()).isEqualTo(1L);
+        assertThat(
+            flowRepository.find(
+                Pageable.UNPAGED,
+                MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
+                )
+            ).size()
+        ).isEqualTo(1L);
 
-        assertThat(flowRepository.findWithSource(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
-            )
-        ).size()).isEqualTo(1L);
+        assertThat(
+            flowRepository.findWithSource(
+                Pageable.UNPAGED,
+                MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
+                )
+            ).size()
+        ).isEqualTo(1L);
     }
 
     @Test
     void find_aSpecificSubNamespace() {
-        assertThat(flowRepository.find(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
-            )
-        ).size())
+        assertThat(
+            flowRepository.find(
+                Pageable.UNPAGED,
+                MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
+                )
+            ).size()
+        )
             .isEqualTo(1L);
 
-        assertThat(flowRepository.findWithSource(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
-            )
-        ).size())
+        assertThat(
+            flowRepository.findWithSource(
+                Pageable.UNPAGED,
+                MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
+                )
+            ).size()
+        )
             .isEqualTo(1L);
     }
 
     @Test
     void find_aSpecificLabel() {
         assertThat(
-            flowRepository.find(Pageable.UNPAGED, MAIN_TENANT,
+            flowRepository.find(
+                Pageable.UNPAGED, MAIN_TENANT,
                 List.of(
                     QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("country", "FR")).build()
                 )
-            ).size())
+            ).size()
+        )
             .isEqualTo(1);
 
         assertThat(
-            flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT,
+            flowRepository.findWithSource(
+                Pageable.UNPAGED, MAIN_TENANT,
                 List.of(
                     QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("country", "FR")).build()
                 )
-            ).size())
+            ).size()
+        )
             .isEqualTo(1);
     }
 
     @Test
     void find_aSpecificFlowByNamespaceAndLabel() {
         assertThat(
-            flowRepository.find(Pageable.UNPAGED, MAIN_TENANT,
+            flowRepository.find(
+                Pageable.UNPAGED, MAIN_TENANT,
                 List.of(
                     QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
                     QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key2", "value2")).build()
                 )
-            ).size())
+            ).size()
+        )
             .isEqualTo(1);
 
         assertThat(
-            flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT,
+            flowRepository.findWithSource(
+                Pageable.UNPAGED, MAIN_TENANT,
                 List.of(
                     QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
                     QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key2", "value2")).build()
                 )
-            ).size())
+            ).size()
+        )
             .isEqualTo(1);
     }
 
     @Test
     void find_noResult_forAnUnknownNamespace() {
         assertThat(
-            flowRepository.find(Pageable.UNPAGED, MAIN_TENANT,
+            flowRepository.find(
+                Pageable.UNPAGED, MAIN_TENANT,
                 List.of(
                     QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
                     QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key1", "value2")).build()
                 )
-            ).size())
+            ).size()
+        )
             .isEqualTo(0);
 
         assertThat(
-            flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT,
+            flowRepository.findWithSource(
+                Pageable.UNPAGED, MAIN_TENANT,
                 List.of(
                     QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
                     QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key1", "value2")).build()
                 )
-            ).size())
+            ).size()
+        )
             .isEqualTo(0);
     }
 
@@ -546,10 +584,14 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
-            .triggers(Collections.singletonList(UnitTest.builder()
-                .id("sleep")
-                .type(UnitTest.class.getName())
-                .build()))
+            .triggers(
+                Collections.singletonList(
+                    UnitTest.builder()
+                        .id("sleep")
+                        .type(UnitTest.class.getName())
+                        .build()
+                )
+            )
             .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
 
@@ -577,7 +619,6 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
     }
 
-
     @Test
     void removeTriggerDelete() throws TimeoutException {
         String flowId = IdUtils.create();
@@ -586,10 +627,14 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
-            .triggers(Collections.singletonList(UnitTest.builder()
-                .id("sleep")
-                .type(UnitTest.class.getName())
-                .build()))
+            .triggers(
+                Collections.singletonList(
+                    UnitTest.builder()
+                        .id("sleep")
+                        .type(UnitTest.class.getName())
+                        .build()
+                )
+            )
             .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
 
@@ -761,7 +806,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void shouldReturnForGivenQueryWildCardFilters() {
         List<QueryFilter> filters = List.of(
-           QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value("*").build()
+            QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value("*").build()
         );
         ArrayListTotal<Flow> flows = flowRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
         assertThat(flows.size()).isEqualTo(10);
@@ -844,7 +889,8 @@ public abstract class AbstractFlowRepositoryTest {
             // Then
             Assertions.assertTrue(count > 0);
         } finally {
-            Optional.ofNullable(toDelete).ifPresent(flow -> {
+            Optional.ofNullable(toDelete).ifPresent(flow ->
+            {
                 flowRepository.delete(flow);
             });
         }
@@ -855,11 +901,14 @@ public abstract class AbstractFlowRepositoryTest {
             .id(IdUtils.create())
             .namespace(namespace)
             .tenantId(MAIN_TENANT)
-            .tasks(List.of(Return.builder()
-                .id(IdUtils.create())
-                .type(Return.class.getName())
-                .build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id(IdUtils.create())
+                        .type(Return.class.getName())
+                        .build()
+                )
+            )
             .build();
     }
 
@@ -927,14 +976,17 @@ public abstract class AbstractFlowRepositoryTest {
                     .flowId(context.getFlowId())
                     .flowRevision(conditionContext.getFlow().getRevision())
                     .state(new State())
-                    .trigger(ExecutionTrigger.builder()
-                        .id(this.getId())
-                        .type(this.getType())
-                        .variables(ImmutableMap.of(
-                            "counter", COUNTER,
-                            "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
-                        ))
-                        .build()
+                    .trigger(
+                        ExecutionTrigger.builder()
+                            .id(this.getId())
+                            .type(this.getType())
+                            .variables(
+                                ImmutableMap.of(
+                                    "counter", COUNTER,
+                                    "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
+                                )
+                            )
+                            .build()
                     )
                     .build();
 

@@ -1,19 +1,19 @@
 package io.kestra.plugin.core.condition;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.conditions.ConditionContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.conditions.ConditionContext;
-
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString

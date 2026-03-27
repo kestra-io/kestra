@@ -1,15 +1,16 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceType;
-import io.micronaut.data.model.Pageable;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceType;
+
+import io.micronaut.data.model.Pageable;
 
 /**
  * Repository service for storing service instance.
@@ -40,8 +41,8 @@ public interface ServiceInstanceRepositoryInterface {
      * @return a list of {@link ServiceInstance}.
      */
     ArrayListTotal<ServiceInstance> find(Pageable pageable,
-                                         Set<Service.ServiceState> states,
-                                         Set<ServiceType> types);
+        Set<Service.ServiceState> states,
+        Set<ServiceType> types);
 
     /**
      * Deletes the given service instance.
@@ -77,12 +78,12 @@ public interface ServiceInstanceRepositoryInterface {
      *
      * @param type The service type.
      * @param from The date from (inclusive)
-     * @param to   The date to (exclusive)
+     * @param to The date to (exclusive)
      * @return the list of {@link ServiceInstance}.
      */
     List<ServiceInstance> findAllInstancesBetween(final ServiceType type,
-                                                  final Instant from,
-                                                  final Instant to);
+        final Instant from,
+        final Instant to);
 
     /**
      * Purge all instances in the EMPTY state older than the until date.

@@ -1,10 +1,11 @@
 package io.kestra.cli.commands.servers;
 
+import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.App;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.App;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -28,7 +29,7 @@ public class ServerCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "server",  "--help");
+        PicocliRunner.call(App.class, "server", "--help");
 
         return 0;
     }

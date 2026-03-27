@@ -1,14 +1,21 @@
 package io.kestra.core.models.executions;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.classic.spi.ThrowableProxy;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.CRC32;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
+
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
@@ -27,6 +34,10 @@ import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
@@ -36,15 +47,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.CRC32;
 
 @Builder(toBuilder = true)
 @Slf4j
@@ -172,10 +174,10 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @return a new {@link Execution}.
      */
     public static Execution newExecution(final FlowInterface flow,
-                                         final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
-                                         final List<Label> labels,
-                                         final Optional<ZonedDateTime> scheduleDate,
-                                         @Nullable final ExecutionKind kind) {
+        final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
+        final List<Label> labels,
+        final Optional<ZonedDateTime> scheduleDate,
+        @Nullable final ExecutionKind kind) {
         Execution execution = builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -204,7 +206,6 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return execution;
     }
-
 
     /**
      * Customization of Lombok-generated builder.
@@ -307,7 +308,8 @@ public class Execution implements DeletedInterface, TenantInterface {
         if (!b) {
             throw new IllegalStateException(
                 "Can't replace taskRun '" + taskRun.getId() + "' on execution'" + this.getId()
-                    + "'");
+                    + "'"
+            );
         }
 
         return new Execution(
@@ -400,7 +402,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
-        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun>emptyList()
+        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()
             : this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
@@ -409,7 +411,8 @@ public class Execution implements DeletedInterface, TenantInterface {
         if (find.isEmpty()) {
             throw new InternalException(
                 "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
-                    + this.toStringState());
+                    + this.toStringState()
+            );
         }
 
         return find.get();
@@ -417,17 +420,22 @@ public class Execution implements DeletedInterface, TenantInterface {
 
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values)
         throws InternalException {
-        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun>emptyList()
+        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()
             : this.taskRunList)
             .stream()
-            .filter(taskRun -> taskRun.getTaskId().equals(id) && findParentsValues(taskRun,
-                true).equals(values))
+            .filter(
+                taskRun -> taskRun.getTaskId().equals(id) && findParentsValues(
+                    taskRun,
+                    true
+                ).equals(values)
+            )
             .findFirst();
 
         if (find.isEmpty()) {
             throw new InternalException(
                 "Can't find taskrun with taskrunId '" + id + "' & value '" + values
-                    + "' on execution '" + this.id + "' " + this.toStringState());
+                    + "' on execution '" + this.id + "' " + this.toStringState()
+            );
         }
 
         return find.get();
@@ -444,8 +452,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     public List<ResolvedTask> findTaskDependingFlowState(
         List<ResolvedTask> resolvedTasks,
         List<ResolvedTask> resolvedErrors,
-        List<ResolvedTask> resolvedFinally
-    ) {
+        List<ResolvedTask> resolvedFinally) {
         return this.findTaskDependingFlowState(resolvedTasks, resolvedErrors, resolvedFinally, null);
     }
 
@@ -464,8 +471,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         List<ResolvedTask> resolvedTasks,
         @Nullable List<ResolvedTask> resolvedErrors,
         @Nullable List<ResolvedTask> resolvedFinally,
-        TaskRun parentTaskRun
-    ) {
+        TaskRun parentTaskRun) {
         return findTaskDependingFlowState(resolvedTasks, resolvedErrors, resolvedFinally, parentTaskRun, null);
     }
 
@@ -486,8 +492,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         @Nullable List<ResolvedTask> resolvedErrors,
         @Nullable List<ResolvedTask> resolvedFinally,
         TaskRun parentTaskRun,
-        @Nullable State.Type terminalState
-    ) {
+        @Nullable State.Type terminalState) {
         resolvedTasks = removeDisabled(resolvedTasks);
         resolvedErrors = removeDisabled(resolvedErrors);
         resolvedFinally = removeDisabled(resolvedFinally);
@@ -519,9 +524,11 @@ public class Execution implements DeletedInterface, TenantInterface {
             }
         }
 
-        if (resolvedFinally != null && (
-            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailed(resolvedTasks, parentTaskRun
-        ))) {
+        if (
+            resolvedFinally != null && (this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailed(
+                resolvedTasks, parentTaskRun
+            ))
+        ) {
             return resolvedFinally;
         }
 
@@ -553,10 +560,12 @@ public class Execution implements DeletedInterface, TenantInterface {
         return this
             .getTaskRunList()
             .stream()
-            .filter(t -> resolvedTasks
-                .stream()
-                .anyMatch(
-                    resolvedTask -> FlowableUtils.isTaskRunFor(resolvedTask, t, parentTaskRun))
+            .filter(
+                t -> resolvedTasks
+                    .stream()
+                    .anyMatch(
+                        resolvedTask -> FlowableUtils.isTaskRunFor(resolvedTask, t, parentTaskRun)
+                    )
             )
             .toList();
     }
@@ -588,37 +597,42 @@ public class Execution implements DeletedInterface, TenantInterface {
             return Optional.empty();
         }
 
-        return Streams.findLast(this.taskRunList
-            .stream()
-            .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
+        return Streams.findLast(
+            this.taskRunList
+                .stream()
+                .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
         );
     }
 
     public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
-        return Streams.findLast(taskRuns
-            .stream()
-            .filter(t -> t.getState().getCurrent() == state)
+        return Streams.findLast(
+            taskRuns
+                .stream()
+                .filter(t -> t.getState().getCurrent() == state)
         );
     }
 
     public Optional<TaskRun> findLastCreated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
-            .stream()
-            .filter(t -> t.getState().isCreated())
+        return Streams.findLast(
+            taskRuns
+                .stream()
+                .filter(t -> t.getState().isCreated())
         );
     }
 
     public Optional<TaskRun> findLastRunning(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
-            .stream()
-            .filter(t -> t.getState().isRunning())
+        return Streams.findLast(
+            taskRuns
+                .stream()
+                .filter(t -> t.getState().isRunning())
         );
     }
 
     public Optional<TaskRun> findLastTerminated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
-            .stream()
-            .filter(t -> t.getState().isTerminated())
+        return Streams.findLast(
+            taskRuns
+                .stream()
+                .filter(t -> t.getState().isTerminated())
         );
     }
 
@@ -680,8 +694,10 @@ public class Execution implements DeletedInterface, TenantInterface {
             .filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst()
             .orElse(null);
         if (resolvedTask == null) {
-            log.warn("Can't find task for taskRun '{}' in parentTaskRun '{}'",
-                taskRun.getId(), parentTaskRun.getId());
+            log.warn(
+                "Can't find task for taskRun '{}' in parentTaskRun '{}'",
+                taskRun.getId(), parentTaskRun.getId()
+            );
             return false;
         }
         return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry());
@@ -723,22 +739,25 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun,
-                                      boolean allowFailure, boolean allowWarning, State.Type terminalState) {
+        boolean allowFailure, boolean allowWarning, State.Type terminalState) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
         var state = this
             .findLastByState(taskRuns, State.Type.KILLED)
             .map(taskRun -> taskRun.getState().getCurrent())
-            .or(() -> this
-                .findLastByState(taskRuns, State.Type.FAILED)
-                .map(taskRun -> taskRun.getState().getCurrent())
+            .or(
+                () -> this
+                    .findLastByState(taskRuns, State.Type.FAILED)
+                    .map(taskRun -> taskRun.getState().getCurrent())
             )
-            .or(() -> this
-                .findLastByState(taskRuns, State.Type.WARNING)
-                .map(taskRun -> taskRun.getState().getCurrent())
+            .or(
+                () -> this
+                    .findLastByState(taskRuns, State.Type.WARNING)
+                    .map(taskRun -> taskRun.getState().getCurrent())
             )
-            .or(() -> this
-                .findLastByState(taskRuns, State.Type.PAUSED)
-                .map(taskRun -> taskRun.getState().getCurrent())
+            .or(
+                () -> this
+                    .findLastByState(taskRuns, State.Type.PAUSED)
+                    .map(taskRun -> taskRun.getState().getCurrent())
             )
             .orElse(terminalState);
 
@@ -825,7 +844,8 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return this
             .findLastNotTerminated()
-            .map(taskRun -> {
+            .map(taskRun ->
+            {
                 TaskRunAttempt lastAttempt = taskRun.lastAttempt();
                 if (lastAttempt == null) {
                     return newAttemptsTaskRunForFailedExecution(taskRun, e);
@@ -833,7 +853,8 @@ public class Execution implements DeletedInterface, TenantInterface {
                     return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e);
                 }
             })
-            .map(t -> {
+            .map(t ->
+            {
                 try {
                     return new FailedExecutionWithLog(
                         this.withTaskRun(t.getTaskRun()),
@@ -843,7 +864,8 @@ public class Execution implements DeletedInterface, TenantInterface {
                     return null;
                 }
             })
-            .orElseGet(() -> new FailedExecutionWithLog(
+            .orElseGet(
+                () -> new FailedExecutionWithLog(
                     this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED)
                         : this,
                     RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
@@ -873,10 +895,12 @@ public class Execution implements DeletedInterface, TenantInterface {
         return new FailedTaskRunWithLog(
             taskRun
                 .withAttempts(
-                    Collections.singletonList(TaskRunAttempt.builder()
-                        .state(new State())
-                        .build()
-                        .withState(State.Type.FAILED))
+                    Collections.singletonList(
+                        TaskRunAttempt.builder()
+                            .state(new State())
+                            .build()
+                            .withState(State.Type.FAILED)
+                    )
                 )
                 .withState(State.Type.FAILED),
             RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun, kind))
@@ -899,8 +923,10 @@ public class Execution implements DeletedInterface, TenantInterface {
                     Stream
                         .concat(
                             taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
-                            Stream.of(lastAttempt
-                                .withState(State.Type.FAILED))
+                            Stream.of(
+                                lastAttempt
+                                    .withState(State.Type.FAILED)
+                            )
                         )
                         .toList()
                 )
@@ -948,16 +974,19 @@ public class Execution implements DeletedInterface, TenantInterface {
         }
 
         // we pre-compute the map of taskrun by id to avoid traversing the list of all taskrun for each taskrun
-        Map<String, TaskRun> byIds = this.taskRunList.stream().collect(Collectors.toMap(
-            taskRun -> taskRun.getId(),
-            taskRun -> taskRun
-        ));
+        Map<String, TaskRun> byIds = this.taskRunList.stream().collect(
+            Collectors.toMap(
+                taskRun -> taskRun.getId(),
+                taskRun -> taskRun
+            )
+        );
 
         Map<String, Object> result = new HashMap<>();
         this.taskRunList.stream()
             .filter(taskRun -> taskRun.getOutputs() != null)
             .collect(Collectors.groupingBy(taskRun -> taskRun.getTaskId()))
-            .forEach((taskId, taskRuns) -> {
+            .forEach((taskId, taskRuns) ->
+            {
                 Map<String, Object> taskOutputs = new HashMap<>();
                 for (TaskRun current : taskRuns) {
                     if (!MapUtils.isEmpty(current.getOutputs())) {
@@ -1015,7 +1044,6 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return result;
     }
-
 
     public List<Map<String, Object>> parents(TaskRun taskRun) {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -1115,17 +1143,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             .toList();
     }
 
-
     public List<String> findParentsValues(TaskRun taskRun, boolean withCurrent) {
-        return (withCurrent ?
-            Stream.concat(findParents(taskRun).stream(), Stream.of(taskRun)) :
-            findParents(taskRun).stream()
-        )
+        return (withCurrent ? Stream.concat(findParents(taskRun).stream(), Stream.of(taskRun)) : findParents(taskRun).stream())
             .filter(t -> t.getValue() != null)
             .map(TaskRun::getValue)
             .toList();
     }
-
 
     public Execution toDeleted() {
         return this.toBuilder()
@@ -1145,11 +1168,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             "\n  taskRunList=" +
             "\n  [" +
             "\n    " +
-            (this.taskRunList == null ? "" : this.taskRunList
-                .stream()
-                .map(t -> t.toString(true))
-                .collect(Collectors.joining(",\n    "))
-            ) +
+            (this.taskRunList == null ? ""
+                : this.taskRunList
+                    .stream()
+                    .map(t -> t.toString(true))
+                    .collect(Collectors.joining(",\n    ")))
+            +
             "\n  ], " +
             "\n  inputs=" + this.getInputs() +
             "\n)";
@@ -1161,11 +1185,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             "\n  taskRunList=" +
             "\n  [" +
             "\n    " +
-            (this.taskRunList == null ? "" : this.taskRunList
-                .stream()
-                .map(TaskRun::toStringState)
-                .collect(Collectors.joining(",\n    "))
-            ) +
+            (this.taskRunList == null ? ""
+                : this.taskRunList
+                    .stream()
+                    .map(TaskRun::toStringState)
+                    .collect(Collectors.joining(",\n    ")))
+            +
             "\n  ] " +
             "\n)";
     }

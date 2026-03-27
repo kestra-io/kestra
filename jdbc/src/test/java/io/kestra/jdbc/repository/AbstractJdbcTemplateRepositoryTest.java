@@ -1,16 +1,18 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.templates.Template;
-import io.kestra.jdbc.JdbcTestUtils;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.templates.Template;
+import io.kestra.jdbc.JdbcTestUtils;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

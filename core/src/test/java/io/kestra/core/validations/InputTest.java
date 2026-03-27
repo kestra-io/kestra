@@ -1,15 +1,17 @@
 package io.kestra.core.validations;
 
+import java.net.URI;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.net.URI;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

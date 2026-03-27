@@ -1,15 +1,17 @@
 package io.kestra.core.test;
 
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.test.flow.Assertion;
 import io.kestra.core.test.flow.AssertionResult;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.test.flow.Assertion.Operator.EQUAL_TO;
 import static io.kestra.core.test.flow.Assertion.Operator.IS_NOT_NULL;
@@ -32,7 +34,8 @@ class AssertionTest {
         assertThat(assertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
-            .satisfies(result -> {
+            .satisfies(result ->
+            {
                 assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(true);
                 assertThat(result).extracting(AssertionResult::description).isEqualTo("my description");
                 assertThat(result).extracting(AssertionResult::errorMessage).isNull();
@@ -50,7 +53,8 @@ class AssertionTest {
         assertThat(assertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
-            .satisfies(result -> {
+            .satisfies(result ->
+            {
                 assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
                 assertThat(result).extracting(AssertionResult::errorMessage).isEqualTo("error message");
             });
@@ -68,7 +72,8 @@ class AssertionTest {
         assertThat(assertion.run(runContextFactory.of()).errors())
             .hasSize(1)
             .first()
-            .satisfies(result -> {
+            .satisfies(result ->
+            {
                 assertThat(result.message()).contains("Could not evaluate assertion");
                 assertThat(result.details()).contains("invalid-pebble-expression()");
                 assertThat(result.details()).contains("io.pebbletemplates.pebble.error.PebbleException");
@@ -100,7 +105,8 @@ class AssertionTest {
         assertThat(assertion.run(runContext).results())
             .hasSize(1)
             .first()
-            .satisfies(result -> {
+            .satisfies(result ->
+            {
                 assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
                 assertThat(result).extracting(AssertionResult::errorMessage)
                     .isEqualTo("expected '{{ outputs.my_task.res }}' to equal 'expectedValue2' but was 'actualValue1'");
@@ -345,10 +351,11 @@ class AssertionTest {
             .build();
         assertThat(testedAssertion.run(runContextFactory.of()).results())
             .first()
-            .satisfies(result -> {
-                    assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
-                    assertThat(result).extracting(AssertionResult::errorMessage).isEqualTo("expected 'value1' to be null but was 'value1'");
-                }
+            .satisfies(result ->
+            {
+                assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
+                assertThat(result).extracting(AssertionResult::errorMessage).isEqualTo("expected 'value1' to be null but was 'value1'");
+            }
             );
     }
 
@@ -370,10 +377,11 @@ class AssertionTest {
             .build();
         assertThat(testedAssertion.run(runContextFactory.of()).results())
             .first()
-            .satisfies(result -> {
-                    assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
-                    assertThat(result).extracting(AssertionResult::errorMessage).isEqualTo("expected 'null' to be not null but was 'null'");
-                }
+            .satisfies(result ->
+            {
+                assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
+                assertThat(result).extracting(AssertionResult::errorMessage).isEqualTo("expected 'null' to be not null but was 'null'");
+            }
             );
     }
 

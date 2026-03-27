@@ -1,14 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -18,6 +9,17 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +45,6 @@ class LocalFilesTest {
         );
     }
 
-
     @Test
     void run() throws Exception {
         var runContext = runContextFactory.of(Map.of("toto", "tata"));
@@ -52,11 +53,13 @@ class LocalFilesTest {
         var task = LocalFiles.builder()
             .id(IdUtils.create())
             .type(LocalFiles.class.getName())
-            .inputs(Map.of(
-                "hello-input.txt", "Hello Input",
-                "execution.txt", "{{toto}}",
-                "application-test.yml", storageFile.toString()
-            ))
+            .inputs(
+                Map.of(
+                    "hello-input.txt", "Hello Input",
+                    "execution.txt", "{{toto}}",
+                    "application-test.yml", storageFile.toString()
+                )
+            )
             .outputs(Property.ofValue(List.of("hello-input.txt")))
             .build();
         var outputs = task.run(runContext);
@@ -80,11 +83,13 @@ class LocalFilesTest {
         var task = LocalFiles.builder()
             .id(IdUtils.create())
             .type(LocalFiles.class.getName())
-            .inputs(Map.of(
-                "test/hello-input.txt", "Hello Input",
-                "test/sub/dir/2/execution.txt", "{{toto}}",
-                "test/sub/dir/3/application-test.yml", storageFile.toString()
-            ))
+            .inputs(
+                Map.of(
+                    "test/hello-input.txt", "Hello Input",
+                    "test/sub/dir/2/execution.txt", "{{toto}}",
+                    "test/sub/dir/3/application-test.yml", storageFile.toString()
+                )
+            )
             .outputs(Property.ofValue(List.of("test/**")))
             .build();
         var outputs = task.run(runContext);
@@ -93,10 +98,18 @@ class LocalFilesTest {
         assertThat(outputs.getUris()).isNotNull();
         assertThat(outputs.getUris().size()).isEqualTo(3);
         assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
-        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
-            .readAllBytes())).isEqualTo("tata");
-        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/3/application-test.yml"))
-            .readAllBytes())).isEqualTo(new String(storageInterface.get(MAIN_TENANT, null, storageFile).readAllBytes()));
+        assertThat(
+            new String(
+                storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
+                    .readAllBytes()
+            )
+        ).isEqualTo("tata");
+        assertThat(
+            new String(
+                storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/3/application-test.yml"))
+                    .readAllBytes()
+            )
+        ).isEqualTo(new String(storageInterface.get(MAIN_TENANT, null, storageFile).readAllBytes()));
         runContext.cleanup();
     }
 
@@ -108,10 +121,12 @@ class LocalFilesTest {
         var task = LocalFiles.builder()
             .id(IdUtils.create())
             .type(LocalFiles.class.getName())
-            .inputs(Map.of(
-                "hello-input.txt", "Hello Input",
-                "execution.txt", "{{toto}}"
-            ))
+            .inputs(
+                Map.of(
+                    "hello-input.txt", "Hello Input",
+                    "execution.txt", "{{toto}}"
+                )
+            )
             .build();
 
         assertThrows(IllegalVariableEvaluationException.class, () -> task.run(runContext));

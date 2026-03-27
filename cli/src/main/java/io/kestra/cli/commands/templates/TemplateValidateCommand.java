@@ -1,13 +1,14 @@
 package io.kestra.cli.commands.templates;
 
+import java.util.Collections;
+
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.models.validations.ModelValidator;
+
 import jakarta.inject.Inject;
 import picocli.CommandLine;
-
-import java.util.Collections;
 
 @CommandLine.Command(
     name = "validate",
@@ -24,7 +25,8 @@ public class TemplateValidateCommand extends AbstractValidateCommand {
         return this.call(
             Template.class,
             modelValidator,
-            (Object object) -> {
+            (Object object) ->
+            {
                 Template template = (Template) object;
                 return template.getNamespace() + " / " + template.getId();
             },

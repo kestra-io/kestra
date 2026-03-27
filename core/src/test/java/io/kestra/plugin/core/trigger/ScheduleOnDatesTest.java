@@ -1,5 +1,12 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -14,13 +21,8 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,7 +49,7 @@ class ScheduleOnDatesTest {
             .build();
         var triggerContext = TriggerContext.builder().date(now).build();
         var trigger = Trigger.of(triggerContext, now);
-        var conditionContext =conditionContext(scheduleOnDates);
+        var conditionContext = conditionContext(scheduleOnDates);
 
         // when
         ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.of(trigger));
@@ -110,10 +112,12 @@ class ScheduleOnDatesTest {
                     new Label("flow-label-2", "flow-label-2")
                 )
             )
-            .inputs(List.of(
-                StringInput.builder().id("input1").type(Type.STRING).required(false).build(),
-                StringInput.builder().id("input2").type(Type.STRING).defaults(Property.ofValue("default")).build()
-            ))
+            .inputs(
+                List.of(
+                    StringInput.builder().id("input1").type(Type.STRING).required(false).build(),
+                    StringInput.builder().id("input2").type(Type.STRING).defaults(Property.ofValue("default")).build()
+                )
+            )
             .build();
 
         TriggerContext triggerContext = TriggerContext.builder()

@@ -1,18 +1,20 @@
 package io.kestra.cli.commands.flows;
 
-import io.kestra.cli.commands.flows.namespaces.FlowNamespaceUpdateCommand;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.zip.ZipFile;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.cli.commands.flows.namespaces.FlowNamespaceUpdateCommand;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.runtime.server.EmbeddedServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

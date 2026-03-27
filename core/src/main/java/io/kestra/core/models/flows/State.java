@@ -1,16 +1,5 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.kestra.core.models.tasks.Task;
-import io.micronaut.core.annotation.Introspected;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DurationFormatUtils;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,6 +7,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.time.DurationFormatUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.kestra.core.models.tasks.Task;
+
+import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
 @Slf4j
@@ -226,7 +229,7 @@ public class State {
      * This is to disambiguate between a RESTARTED after PAUSED and RESTARTED after FAILED state.
      */
     public boolean failedThenRestarted() {
-       return this.current ==  Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
+        return this.current == Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
     }
 
     @Introspected
@@ -287,11 +290,11 @@ public class State {
             return this == Type.SUCCESS;
         }
 
-        public boolean isKilled(){
+        public boolean isKilled() {
             return this == Type.KILLED;
         }
 
-        public boolean isQueued(){
+        public boolean isQueued() {
             return this == Type.QUEUED;
         }
 

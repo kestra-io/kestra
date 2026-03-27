@@ -1,14 +1,15 @@
 package io.kestra.cli.commands.flows.namespaces;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.net.URL;
+
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.net.URL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ class FlowNamespaceUpdateCommandTest {
             assertThat(out.toString()).contains("namespace 'io.kestra.cli' successfully updated");
             out.reset();
 
-            args = new String[]{
+            args = new String[] {
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -112,7 +113,7 @@ class FlowNamespaceUpdateCommandTest {
             out.reset();
 
             // no "delete" arg should behave as no-delete
-            args = new String[]{
+            args = new String[] {
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -125,7 +126,7 @@ class FlowNamespaceUpdateCommandTest {
             assertThat(out.toString()).contains("1 flow(s)");
             out.reset();
 
-            args = new String[]{
+            args = new String[] {
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",

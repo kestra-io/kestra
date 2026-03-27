@@ -1,5 +1,10 @@
 package io.kestra.core.runners;
 
+import java.time.ZonedDateTime;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -8,15 +13,11 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
-
-import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,7 +43,8 @@ public class ScheduleDateCaseTest {
 
         CountDownLatch latch1 = new CountDownLatch(1);
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e ->
+        {
             if (e.getLeft().getId().equals(execution.getId())) {
                 if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
                     latch1.countDown();

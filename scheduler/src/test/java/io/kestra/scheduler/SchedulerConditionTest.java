@@ -1,22 +1,5 @@
 package io.kestra.scheduler;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.FlowListeners;
-import io.kestra.core.runners.SchedulerTriggerStateInterface;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.runner.JdbcScheduler;
-import io.kestra.plugin.core.condition.DayWeekInMonth;
-import io.kestra.plugin.core.trigger.Schedule;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -25,6 +8,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.SchedulerTriggerStateInterface;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
+import io.kestra.plugin.core.condition.DayWeekInMonth;
+import io.kestra.plugin.core.trigger.Schedule;
+
+import jakarta.inject.Inject;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,23 +46,26 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;
 
-
     private static FlowWithSource createScheduleFlow() {
         Schedule schedule = Schedule.builder()
             .id("hourly")
             .type(Schedule.class.getName())
             .cron("0 0 * * *")
-            .inputs(Map.of(
-                "testInputs", "test-inputs"
-            ))
-            .conditions(List.of(
-                DayWeekInMonth.builder()
-                    .type(DayWeekInMonth.class.getName())
-                    .date("{{ trigger.date }}")
-                    .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
-                    .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                    .build()
-            ))
+            .inputs(
+                Map.of(
+                    "testInputs", "test-inputs"
+                )
+            )
+            .conditions(
+                List.of(
+                    DayWeekInMonth.builder()
+                        .type(DayWeekInMonth.class.getName())
+                        .date("{{ trigger.date }}")
+                        .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
+                        .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
+                        .build()
+                )
+            )
             .build();
 
         return createFlow(Collections.singletonList(schedule));
@@ -94,12 +99,15 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .findById(any(), any());
 
         // scheduler
-        try (AbstractScheduler scheduler = new JdbcScheduler(
-            applicationContext,
-            flowListenersServiceSpy
-        )) {
+        try (
+            AbstractScheduler scheduler = new JdbcScheduler(
+                applicationContext,
+                flowListenersServiceSpy
+            )
+        ) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either ->
+            {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     terminateExecution(execution, trigger, flow);

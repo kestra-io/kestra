@@ -1,7 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.utils.PathMatcherPredicate;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -9,6 +7,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
+
+import io.kestra.core.utils.PathMatcherPredicate;
 
 /**
  * Service interface for accessing the files attached to a namespace (a.k.a., Namespace Files).
@@ -88,7 +88,7 @@ public interface Namespace {
      * @param path the file path.
      * @return the {@link InputStream}.
      * @throws IllegalArgumentException if the given {@link Path} is {@code null} or invalid.
-     * @throws IOException              if an error happens while accessing the file.
+     * @throws IOException if an error happens while accessing the file.
      */
     InputStream getFileContent(Path path) throws IOException;
 

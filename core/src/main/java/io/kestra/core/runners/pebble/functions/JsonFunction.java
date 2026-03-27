@@ -1,10 +1,10 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.Map;
+
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Map;
 
 @Slf4j
 @Deprecated

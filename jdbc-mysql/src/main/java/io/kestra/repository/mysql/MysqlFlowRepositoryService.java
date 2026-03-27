@@ -1,14 +1,14 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
+import java.util.*;
+
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import java.util.*;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.jdbc.AbstractJdbcRepository;
 
 import static io.kestra.core.models.QueryFilter.Op.EQUALS;
 
@@ -21,7 +21,8 @@ public abstract class MysqlFlowRepositoryService {
         }
 
         if (labels != null) {
-            labels.forEach((key, value) -> {
+            labels.forEach((key, value) ->
+            {
                 Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
                 conditions.add(valueField.eq(value != null));
             });
@@ -38,10 +39,11 @@ public abstract class MysqlFlowRepositoryService {
         List<Condition> conditions = new ArrayList<>();
 
         if (labels instanceof Map<?, ?> labelValues) {
-            labelValues.forEach((key, value) -> {
+            labelValues.forEach((key, value) ->
+            {
                 Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
-               if(operation.equals(EQUALS))
-                conditions.add(valueField.eq(value != null));
+                if (operation.equals(EQUALS))
+                    conditions.add(valueField.eq(value != null));
 
             });
         }

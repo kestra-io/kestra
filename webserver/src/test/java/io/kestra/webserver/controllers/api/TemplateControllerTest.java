@@ -1,11 +1,14 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.micronaut.http.HttpRequest.DELETE;
-import static io.micronaut.http.HttpRequest.POST;
-import static io.micronaut.http.HttpRequest.PUT;
-import static io.micronaut.http.HttpStatus.NO_CONTENT;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.List;
+import java.util.zip.ZipFile;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.tasks.Task;
@@ -16,6 +19,7 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
@@ -27,15 +31,13 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.List;
-import java.util.zip.ZipFile;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static io.micronaut.http.HttpRequest.DELETE;
+import static io.micronaut.http.HttpRequest.POST;
+import static io.micronaut.http.HttpRequest.PUT;
+import static io.micronaut.http.HttpStatus.NO_CONTENT;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @io.micronaut.context.annotation.Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
@@ -78,7 +80,8 @@ class TemplateControllerTest {
     @Test
     void create() {
         Template template = createTemplate();
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+        {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/io.kestra.tests/" + template.getId()));
         });
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
@@ -91,7 +94,8 @@ class TemplateControllerTest {
 
     @Test
     void idNotFound() {
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+        {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/io.kestra.tests/notFound"));
         });
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
@@ -117,7 +121,8 @@ class TemplateControllerTest {
             DELETE("/api/v1/main/templates/" + template.getNamespace() + "/" + template.getId())
         );
         assertThat(deleteResult.getStatus().getCode()).isEqualTo(NO_CONTENT.getCode());
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+        {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/" + template.getNamespace() + "/" + template.getId()));
         });
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
@@ -141,7 +146,8 @@ class TemplateControllerTest {
     @Test
     void listDistinctNamespace() {
         List<String> namespaces = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/templates/distinct-namespaces"), Argument.listOf(String.class));
+            HttpRequest.GET("/api/v1/main/templates/distinct-namespaces"), Argument.listOf(String.class)
+        );
         assertThat(namespaces.size()).isZero();
         Template t1 = Template.builder()
             .id(IdUtils.create())
@@ -153,7 +159,8 @@ class TemplateControllerTest {
         client.toBlocking().retrieve(POST("/api/v1/main/templates", createTemplate()), Template.class);
         client.toBlocking().retrieve(POST("/api/v1/main/templates", createTemplate()), Template.class);
         namespaces = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/templates/distinct-namespaces"), Argument.listOf(String.class));
+            HttpRequest.GET("/api/v1/main/templates/distinct-namespaces"), Argument.listOf(String.class)
+        );
 
         assertThat(namespaces.size()).isEqualTo(2);
     }
@@ -166,8 +173,10 @@ class TemplateControllerTest {
         client.toBlocking().retrieve(POST("/api/v1/main/templates", createTemplate()), Template.class);
         int size = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/search?namespace=kestra.test"), Argument.of(PagedResults.class, Template.class)).getResults().size();
 
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/export/by-query?namespace=kestra.test"),
-            Argument.of(byte[].class));
+        byte[] zip = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/templates/export/by-query?namespace=kestra.test"),
+            Argument.of(byte[].class)
+        );
         File file = File.createTempFile("templates", ".zip");
         Files.write(file.toPath(), zip);
 
@@ -188,13 +197,16 @@ class TemplateControllerTest {
         List<IdWithNamespace> ids = List.of(
             new IdWithNamespace(NAMESPACE, template1.getId()),
             new IdWithNamespace(NAMESPACE, template2.getId()),
-            new IdWithNamespace(NAMESPACE, template3.getId()));
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/templates/export/by-ids?namespace=kestra.test", ids),
-            Argument.of(byte[].class));
+            new IdWithNamespace(NAMESPACE, template3.getId())
+        );
+        byte[] zip = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/templates/export/by-ids?namespace=kestra.test", ids),
+            Argument.of(byte[].class)
+        );
         File file = File.createTempFile("templates", ".zip");
         Files.write(file.toPath(), zip);
 
-        try(ZipFile zipFile = new ZipFile(file)) {
+        try (ZipFile zipFile = new ZipFile(file)) {
             assertThat(zipFile.stream().count()).isEqualTo(3L);
         }
 
@@ -227,8 +239,10 @@ class TemplateControllerTest {
         int size = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/search?namespace=kestra.test"), Argument.of(PagedResults.class, Template.class)).getResults().size();
 
         // extract the created templates
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/export/by-query?namespace=kestra.test"),
-            Argument.of(byte[].class));
+        byte[] zip = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/templates/export/by-query?namespace=kestra.test"),
+            Argument.of(byte[].class)
+        );
         File temp = File.createTempFile("templates", ".zip");
         Files.write(temp.toPath(), zip);
 
@@ -260,13 +274,16 @@ class TemplateControllerTest {
 
         assertThat(response.getBody().get().getCount()).isEqualTo(3);
 
-        HttpClientResponseException templateA = assertThrows(HttpClientResponseException.class, () -> {
+        HttpClientResponseException templateA = assertThrows(HttpClientResponseException.class, () ->
+        {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/kestra.test.delete/template-a"));
         });
-        HttpClientResponseException templateB = assertThrows(HttpClientResponseException.class, () -> {
+        HttpClientResponseException templateB = assertThrows(HttpClientResponseException.class, () ->
+        {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/kestra.test.delete/template-b"));
         });
-        HttpClientResponseException templateC = assertThrows(HttpClientResponseException.class, () -> {
+        HttpClientResponseException templateC = assertThrows(HttpClientResponseException.class, () ->
+        {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/kestra.test.delete/template-c"));
         });
 
@@ -286,7 +303,8 @@ class TemplateControllerTest {
 
         assertThat(response.getBody().get().getCount()).isEqualTo(1);
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
+        {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/templates/kestra.test.delete/toDelete"));
         });
 

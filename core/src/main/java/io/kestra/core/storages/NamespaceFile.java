@@ -1,24 +1,24 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.utils.WindowsUtils;
-import jakarta.annotation.Nullable;
-
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import io.kestra.core.utils.WindowsUtils;
+
+import jakarta.annotation.Nullable;
+
 /**
  * Represents a NamespaceFile object.
  *
- * @param path      The path of file relative to the namespace.
- * @param uri       The URI of the namespace file in the Kestra's internal storage.
+ * @param path The path of file relative to the namespace.
+ * @param uri The URI of the namespace file in the Kestra's internal storage.
  * @param namespace The namespace of the file.
  */
 public record NamespaceFile(
     String path,
     URI uri,
-    String namespace
-) {
+    String namespace) {
 
     public NamespaceFile(Path path, URI uri, String namespace) {
         this(path.toString(), uri, namespace);
@@ -39,7 +39,7 @@ public record NamespaceFile(
     /**
      * Static factory method for constructing a new {@link NamespaceFile} object.
      *
-     * @param uri       The path of file relative to the namespace or fully qualified URI.
+     * @param uri The path of file relative to the namespace or fully qualified URI.
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
@@ -52,13 +52,17 @@ public record NamespaceFile(
         final NamespaceFile namespaceFile;
         if (uri.getScheme() != null) {
             if (!uri.getScheme().equalsIgnoreCase("kestra")) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri
-                ));
+                throw new IllegalArgumentException(
+                    String.format(
+                        "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri
+                    )
+                );
             }
             if (!uri.getPath().startsWith(StorageContext.namespaceFilePrefix(namespace))) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri)
+                throw new IllegalArgumentException(
+                    String.format(
+                        "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri
+                    )
                 );
             }
             namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path));
@@ -82,7 +86,7 @@ public record NamespaceFile(
     /**
      * Static factory method for constructing a new {@link NamespaceFile} object.
      *
-     * @param path      The path of file relative to the namespace.
+     * @param path The path of file relative to the namespace.
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
@@ -106,7 +110,7 @@ public record NamespaceFile(
 
         return new NamespaceFile(
             pathWithoutTrailingSlash,
-            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(pathWithoutTrailingSlash).toString().replace("\\","/")),
+            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(pathWithoutTrailingSlash).toString().replace("\\", "/")),
             namespace
         );
     }

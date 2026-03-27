@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.kv;
 
+import java.util.*;
+import java.util.function.Predicate;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -9,6 +12,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.kv.KVEntry;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -16,10 +20,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 @Slf4j
 @SuperBuilder(toBuilder = true)
@@ -58,7 +58,6 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
-
 
     @Override
     public Output run(RunContext runContext) throws Exception {

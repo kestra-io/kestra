@@ -9,6 +9,7 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.validations.TimeSeriesChartValidation;
 import io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor;
 import io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesOption;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -23,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 @TimeSeriesChartValidation
 @Schema(
     title = "Track trends over time with dynamic time series charts."
-    )
+)
 @Plugin(
     examples = {
         @Example(

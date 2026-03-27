@@ -1,8 +1,15 @@
 package io.kestra.webserver.filter;
 
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Optional;
+
+import org.reactivestreams.Publisher;
+
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.BasicAuthService.SaltedBasicAuthConfiguration;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -17,13 +24,8 @@ import io.micronaut.web.router.MethodBasedRouteMatch;
 import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
 import jakarta.inject.Inject;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Optional;
 
 //We want to authenticate only Kestra endpoints
 @Filter("/api/v1/**")
@@ -37,7 +39,6 @@ public class AuthenticationFilter implements HttpServerFilter {
     @Inject
     private BasicAuthService basicAuthService;
 
-
     @Override
     public int getOrder() {
         return ORDER;
@@ -45,21 +46,21 @@ public class AuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        return Mono.fromCallable(() -> {
-                SaltedBasicAuthConfiguration configuration = basicAuthService.configuration();
-                if (configuration == null) {
-                    configuration = new SaltedBasicAuthConfiguration();
-                }
-                return configuration;
-            })
+        return Mono.fromCallable(() ->
+        {
+            SaltedBasicAuthConfiguration configuration = basicAuthService.configuration();
+            if (configuration == null) {
+                configuration = new SaltedBasicAuthConfiguration();
+            }
+            return configuration;
+        })
             .subscribeOn(Schedulers.boundedElastic())
             .flux()
-            .flatMap(basicAuthConfiguration -> {
+            .flatMap(basicAuthConfiguration ->
+            {
                 boolean isConfigEndpoint = request.getPath().endsWith("/configs")
-                    || (
-                    (request.getPath().endsWith("/basicAuth") || request.getPath().endsWith("/basicAuthValidationErrors"))
-                        && !basicAuthService.isBasicAuthInitialized()
-                );
+                    || ((request.getPath().endsWith("/basicAuth") || request.getPath().endsWith("/basicAuthValidationErrors"))
+                        && !basicAuthService.isBasicAuthInitialized());
 
                 boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
                     .map(Collection::stream)
@@ -74,10 +75,13 @@ public class AuthenticationFilter implements HttpServerFilter {
                     .or(() -> fromAuthorizationHeader(request))
                     .map(BasicAuth::from);
 
-                if (basicAuth.isEmpty() ||
-                    !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
-                    !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(),
-                        basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
+                if (
+                    basicAuth.isEmpty() ||
+                        !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
+                        !AuthUtils.encodePassword(
+                            basicAuthConfiguration.getSalt(),
+                            basicAuth.get().password()
+                        ).equals(basicAuthConfiguration.getPassword())
                 ) {
                     Boolean isFromLoginPage = Optional.ofNullable(request.getHeaders().get("Referer")).map(referer -> referer.split("\\?")[0].endsWith("/login")).orElse(false);
 

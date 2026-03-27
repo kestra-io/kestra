@@ -1,6 +1,12 @@
 package io.kestra.plugin.core.execution;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.slf4j.Logger;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -14,14 +20,11 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
-import java.time.ZonedDateTime;
-import java.util.List;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -116,7 +119,7 @@ public class Count extends Task implements RunnableTask<Count.Output> {
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
-        ExecutionRepositoryInterface executionRepository = ((DefaultRunContext)runContext)
+        ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext)
             .getApplicationContext()
             .getBean(ExecutionRepositoryInterface.class);
 
@@ -127,7 +130,7 @@ public class Count extends Task implements RunnableTask<Count.Output> {
         var flowInfo = runContext.flowInfo();
 
         // check that all flows are allowed
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
+        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
         if (flows != null) {
             flows.forEach(flow -> flowService.checkAllowedNamespace(flowInfo.tenantId(), flow.getNamespace(), flowInfo.tenantId(), flowInfo.namespace()));
         }
@@ -150,15 +153,19 @@ public class Count extends Task implements RunnableTask<Count.Output> {
 
         List<Result> count = executionCounts
             .stream()
-            .filter(throwPredicate(item -> runContext
-                .render(this.expression, ImmutableMap.of("count", item.getCount().intValue()))
-                .equals("true")
-            ))
-            .map(item -> Result.builder()
-                .namespace(item.getNamespace())
-                .flowId(item.getFlowId())
-                .count(item.getCount())
-                .build()
+            .filter(
+                throwPredicate(
+                    item -> runContext
+                        .render(this.expression, ImmutableMap.of("count", item.getCount().intValue()))
+                        .equals("true")
+                )
+            )
+            .map(
+                item -> Result.builder()
+                    .namespace(item.getNamespace())
+                    .flowId(item.getFlowId())
+                    .count(item.getCount())
+                    .build()
             )
             .toList();
 

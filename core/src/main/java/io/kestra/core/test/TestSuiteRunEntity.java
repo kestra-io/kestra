@@ -1,13 +1,12 @@
 package io.kestra.core.test;
 
+import java.time.Instant;
+import java.util.List;
+
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.test.flow.UnitTestResult;
-
-import java.time.Instant;
-import java.util.List;
-
 
 public record TestSuiteRunEntity(
     String uid,
@@ -23,8 +22,7 @@ public record TestSuiteRunEntity(
     String namespace,
     String flowId,
     TestState state,
-    List<UnitTestResult> results
-) implements DeletedInterface, TenantInterface, HasUID {
+    List<UnitTestResult> results) implements DeletedInterface, TenantInterface, HasUID {
 
     public static TestSuiteRunEntity create(String tenantId, TestSuiteUid testSuiteUid, TestSuiteRunResult testSuiteRunResult) {
         return new TestSuiteRunEntity(
@@ -62,6 +60,7 @@ public record TestSuiteRunEntity(
 
     /**
      * only used for backup
+     * 
      * @param newTenantId the tenant to migrate to
      */
     public TestSuiteRunEntity migrateToTenant(String newTenantId) {

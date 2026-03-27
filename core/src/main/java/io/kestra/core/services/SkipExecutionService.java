@@ -1,13 +1,15 @@
 package io.kestra.core.services;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import jakarta.annotation.Nullable;
-import jakarta.inject.Singleton;
-
 import java.util.Collections;
 import java.util.List;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+
+import jakarta.annotation.Nullable;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class SkipExecutionService {
@@ -54,6 +56,7 @@ public class SkipExecutionService {
 
     /**
      * Skip an indexer records based on its key.
+     * 
      * @param key the record key as computed by <code>QueueService.key(record)</code>, can be null
      */
     public boolean skipIndexerRecord(@Nullable String key) {

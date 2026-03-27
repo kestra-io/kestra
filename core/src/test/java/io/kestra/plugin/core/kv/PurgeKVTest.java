@@ -1,8 +1,11 @@
 package io.kestra.plugin.core.kv;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -18,12 +21,12 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.kv.PurgeKV.Output;
+
 import jakarta.inject.Inject;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 public class PurgeKVTest {
@@ -41,7 +44,6 @@ public class PurgeKVTest {
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
-
 
     @BeforeEach
     protected void setup() throws IOException {
@@ -152,7 +154,7 @@ public class PurgeKVTest {
         KVStore kvStore1 = runContext.namespaceKv(namespace);
         kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
         kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
-        kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused",(Duration) null), "unused"));
+        kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", (Duration) null), "unused"));
         kvStore1.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
 
         PurgeKV purgeKV = PurgeKV.builder()
@@ -179,7 +181,6 @@ public class PurgeKVTest {
         kvStore1.put("key_2", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
         kvStore1.put("not_found", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
 
-
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
             .keyPattern(Property.ofValue("*ey*"))
@@ -198,13 +199,17 @@ public class PurgeKVTest {
         addNamespace(CHILD_NAMESPACE);
     }
 
-    private void addNamespace(String namespace){
-        flowRepositoryInterface.create(GenericFlow.of(Flow.builder()
-            .tenantId(MAIN_TENANT)
-            .namespace(namespace)
-            .id("flow1")
-            .tasks(List.of(PurgeKV.builder().type(PurgeKV.class.getName()).build()))
-            .build()));
+    private void addNamespace(String namespace) {
+        flowRepositoryInterface.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .tenantId(MAIN_TENANT)
+                    .namespace(namespace)
+                    .id("flow1")
+                    .tasks(List.of(PurgeKV.builder().type(PurgeKV.class.getName()).build()))
+                    .build()
+            )
+        );
     }
 
 }

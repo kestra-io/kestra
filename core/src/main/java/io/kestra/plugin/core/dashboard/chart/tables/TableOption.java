@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.dashboard.chart.tables;
 
 import io.kestra.core.models.dashboards.ChartOption;
+
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

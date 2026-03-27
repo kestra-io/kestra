@@ -1,22 +1,24 @@
 package io.kestra.jdbc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.executor.WorkerJobRunningStateStore;
-import io.kestra.core.runners.WorkerTriggerResult;
-import io.kestra.core.utils.Either;
-import io.kestra.jdbc.runner.JdbcQueue;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.runners.WorkerTriggerResult;
+import io.kestra.core.utils.Either;
+import io.kestra.executor.WorkerJobRunningStateStore;
+import io.kestra.jdbc.runner.JdbcQueue;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
@@ -30,9 +32,12 @@ public class JdbcWorkerTriggerResultQueueService implements Closeable {
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-    public Runnable receive(JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue, String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
-        disposable.set(workerTriggerResultQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
-            eithers.forEach(either -> {
+    public Runnable receive(JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue, String consumerGroup, Class<?> queueType,
+        Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
+        disposable.set(workerTriggerResultQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) ->
+        {
+            eithers.forEach(either ->
+            {
                 if (either.isRight()) {
                     log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
                     try {

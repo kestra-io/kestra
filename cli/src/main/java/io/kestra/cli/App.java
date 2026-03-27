@@ -1,22 +1,5 @@
 package io.kestra.cli;
 
-import io.kestra.cli.commands.configs.sys.ConfigCommand;
-import io.kestra.cli.commands.flows.FlowCommand;
-import io.kestra.cli.commands.migrations.MigrationCommand;
-import io.kestra.cli.commands.namespaces.NamespaceCommand;
-import io.kestra.cli.commands.plugins.PluginCommand;
-import io.kestra.cli.commands.servers.ServerCommand;
-import io.kestra.cli.commands.sys.SysCommand;
-import io.kestra.cli.commands.templates.TemplateCommand;
-import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.ApplicationContextBuilder;
-import io.micronaut.context.env.Environment;
-import io.micronaut.core.annotation.Introspected;
-import org.slf4j.bridge.SLF4JBridgeHandler;
-import picocli.CommandLine;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -25,6 +8,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+
+import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import io.kestra.cli.commands.configs.sys.ConfigCommand;
+import io.kestra.cli.commands.flows.FlowCommand;
+import io.kestra.cli.commands.migrations.MigrationCommand;
+import io.kestra.cli.commands.namespaces.NamespaceCommand;
+import io.kestra.cli.commands.plugins.PluginCommand;
+import io.kestra.cli.commands.servers.ServerCommand;
+import io.kestra.cli.commands.sys.SysCommand;
+import io.kestra.cli.commands.templates.TemplateCommand;
+
+import io.micronaut.configuration.picocli.MicronautFactory;
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.context.env.Environment;
+import io.micronaut.core.annotation.Introspected;
+import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "kestra",
@@ -68,8 +70,8 @@ public class App implements Callable<Integer> {
         // Call Picocli command
         int exitCode = 0;
         try {
-             exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
-        } catch (CommandLine.InitializationException e){
+            exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
+        } catch (CommandLine.InitializationException e) {
             System.err.println("Could not initialize picoli ComandLine, err: " + e.getMessage());
             e.printStackTrace();
             exitCode = 1;
@@ -88,7 +90,7 @@ public class App implements Callable<Integer> {
      * @return the application context created
      */
     protected static ApplicationContext applicationContext(Class<?> mainClass,
-                                                           String[] args) {
+        String[] args) {
 
         ApplicationContextBuilder builder = ApplicationContext
             .builder()

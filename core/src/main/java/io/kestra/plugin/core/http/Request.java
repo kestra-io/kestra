@@ -1,5 +1,17 @@
 package io.kestra.plugin.core.http;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
@@ -11,20 +23,10 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalInt;
 
 @SuperBuilder
 @ToString
@@ -34,10 +36,10 @@ import java.util.OptionalInt;
 @Schema(
     title = "Make an HTTP API request to a specified URL and store the response as an output.",
     description = """
-                  This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
-                  Kestra offers hundreds of plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
-                  By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
-                  Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
+        This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
+        Kestra offers hundreds of plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
+        By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
+        Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
 )
 @Plugin(
     examples = {
@@ -275,38 +277,38 @@ import java.util.OptionalInt;
                 """
         ),
         @Example(
-          title = "Send a multiline JSON message using HTTP POST request and inputs with a pebble expression. We recommend this method to avoid JSON string interpolation",
-          full = true,
-          code = """
-              id: http_multiline_json
-              namespace: company.team
+            title = "Send a multiline JSON message using HTTP POST request and inputs with a pebble expression. We recommend this method to avoid JSON string interpolation",
+            full = true,
+            code = """
+                id: http_multiline_json
+                namespace: company.team
 
-              inputs:
-                - id: title
-                  type: STRING
-                  defaults: This is the title of the request
-                - id: message
-                  type: STRING
-                  defaults: |-
-                    This is my long
-                    multiline message.
-                - id: priority
-                  type: INT
-                  defaults: 5
+                inputs:
+                  - id: title
+                    type: STRING
+                    defaults: This is the title of the request
+                  - id: message
+                    type: STRING
+                    defaults: |-
+                      This is my long
+                      multiline message.
+                  - id: priority
+                    type: INT
+                    defaults: 5
 
-              tasks:
-                - id: send
-                  type: io.kestra.plugin.core.http.Request
-                  uri: "https://reqres.in/api/test-request"
-                  method: "POST"
-                  body: |
-                    {{ {
-                      "title": inputs.title,
-                      "message": inputs.message,
-                      "priority": inputs.priority
-                    } }}
-              """
-      )
+                tasks:
+                  - id: send
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://reqres.in/api/test-request"
+                    method: "POST"
+                    body: |
+                      {{ {
+                        "title": inputs.title,
+                        "message": inputs.message,
+                        "priority": inputs.priority
+                      } }}
+                """
+        )
     },
     aliases = "io.kestra.plugin.fs.http.Request"
 )
@@ -334,9 +336,11 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
             if (body != null) {
                 OptionalInt illegalChar = body.chars().filter(c -> !Character.isDefined(c)).findFirst();
                 if (illegalChar.isPresent()) {
-                    throw new IllegalArgumentException("Illegal unicode code point in request body: " + illegalChar.getAsInt() +
-                        ", the Request task only support valid Unicode strings as body.\n" +
-                        "You can try using the Download task instead.");
+                    throw new IllegalArgumentException(
+                        "Illegal unicode code point in request body: " + illegalChar.getAsInt() +
+                            ", the Request task only support valid Unicode strings as body.\n" +
+                            "You can try using the Download task instead."
+                    );
                 }
             }
 
@@ -344,7 +348,8 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
         }
     }
 
-    public Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body) throws GeneralSecurityException, URISyntaxException, IOException, IllegalVariableEvaluationException {
+    public Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body)
+        throws GeneralSecurityException, URISyntaxException, IOException, IllegalVariableEvaluationException {
         boolean encrypt = runContext.render(this.encryptBody).as(Boolean.class).orElseThrow();
         return Output.builder()
             .code(response.getStatus().getCode())

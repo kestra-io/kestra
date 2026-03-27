@@ -1,20 +1,23 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
-import org.jooq.exception.DataAccessException;
-
 import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * This class is responsible to index the queue synchronously at message production time.<p>
+ * This class is responsible to index the queue synchronously at message production time.
+ * <p>
  * Some queue messages are batch-indexed asynchronously via the {@link JdbcIndexer}
  * which listen to (receive) those queue messages.
  */
@@ -28,7 +31,8 @@ public class JdbcQueueIndexer {
     @Inject
     public JdbcQueueIndexer(ApplicationContext applicationContext) {
         applicationContext.getBeansOfType(JdbcQueueIndexerInterface.class)
-            .forEach(saveRepositoryInterface -> {
+            .forEach(saveRepositoryInterface ->
+            {
                 String typeName = ((ParameterizedType) ((Class<?>) saveRepositoryInterface.getClass()
                     .getGenericSuperclass()).getGenericInterfaces()[1]).getActualTypeArguments()[0].getTypeName();
 
@@ -45,23 +49,27 @@ public class JdbcQueueIndexer {
     public void accept(DSLContext context, Object item) {
         if (repositories.containsKey(item.getClass())) {
             this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, MetricRegistry.METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION, "type", item.getClass().getName()).increment();
-            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", item.getClass().getName()).increment();
+            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", item.getClass().getName())
+                .increment();
 
-            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", item.getClass().getName()).record(() -> {
-                JdbcQueueIndexerInterface<?> jdbcIndexerInterface = repositories.get(item.getClass());
-                if (jdbcIndexerInterface instanceof FlowTopologyRepositoryInterface) {
-                    // we allow flow topology to fail indexation
-                    try {
+            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", item.getClass().getName())
+                .record(() ->
+                {
+                    JdbcQueueIndexerInterface<?> jdbcIndexerInterface = repositories.get(item.getClass());
+                    if (jdbcIndexerInterface instanceof FlowTopologyRepositoryInterface) {
+                        // we allow flow topology to fail indexation
+                        try {
+                            jdbcIndexerInterface.save(context, cast(item));
+                        } catch (DataAccessException e) {
+                            log.error("Unable to index a flow topology, skipping it", e);
+                        }
+                    } else {
                         jdbcIndexerInterface.save(context, cast(item));
-                    } catch (DataAccessException e) {
-                        log.error("Unable to index a flow topology, skipping it", e);
                     }
-                } else {
-                    jdbcIndexerInterface.save(context, cast(item));
-                }
 
-                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", item.getClass().getName()).increment();
-            });
+                    this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", item.getClass().getName())
+                        .increment();
+                });
 
         }
     }

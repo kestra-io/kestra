@@ -1,15 +1,17 @@
 package io.kestra.core.runners;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 // TODO for 2.0: this class is used as a queue consumer (which should have been the ExecutorInterface instead),
 //  a queue message (only in Kafka) and an execution context.

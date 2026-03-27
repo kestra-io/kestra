@@ -1,15 +1,17 @@
 package io.kestra.core.runners;
 
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,7 +25,7 @@ public class EmptyVariablesTest {
     private FlowInputOutput flowIO;
 
     @Test
-    @LoadFlows({"flows/valids/empty-variables.yml"})
+    @LoadFlows({ "flows/valids/empty-variables.yml" })
     void emptyVariables() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,

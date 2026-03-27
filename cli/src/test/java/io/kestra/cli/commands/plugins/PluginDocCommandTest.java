@@ -1,12 +1,5 @@
 package io.kestra.cli.commands.plugins;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +8,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,8 +28,12 @@ class PluginDocCommandTest {
         pluginsPath.toFile().deleteOnExit();
 
         FileUtils.copyFile(
-            new File(Objects.requireNonNull(PluginListCommandTest.class.getClassLoader()
-                .getResource("plugins/" + PLUGIN_TEMPLATE_TEST)).toURI()),
+            new File(
+                Objects.requireNonNull(
+                    PluginListCommandTest.class.getClassLoader()
+                        .getResource("plugins/" + PLUGIN_TEMPLATE_TEST)
+                ).toURI()
+            ),
             new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/" + PLUGIN_TEMPLATE_TEST))
         );
 
@@ -38,7 +41,7 @@ class PluginDocCommandTest {
         docPath.toFile().deleteOnExit();
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), docPath.toAbsolutePath().toString()};
+            String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString(), docPath.toAbsolutePath().toString() };
             PicocliRunner.call(PluginDocCommand.class, ctx, args);
 
             List<Path> files = Files.list(docPath).toList();
@@ -71,23 +74,23 @@ class PluginDocCommandTest {
                 """);
 
             assertThat(readmeContent).contains("""
-                    /> Subgroup title
+                /> Subgroup title
 
-                    Subgroup description
-
-
-                    ### Tasks
-                    * [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)
+                Subgroup description
 
 
+                ### Tasks
+                * [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)
 
 
-                    ## Guides
-                    * [Authentication](./guides/authentication.md)
-                       \s
-                    * [Reporting](./guides/reporting.md)
-                       \s
-                    """);
+
+
+                ## Guides
+                * [Authentication](./guides/authentication.md)
+                   \s
+                * [Reporting](./guides/reporting.md)
+                   \s
+                """);
 
             // check @PluginProperty from an interface
             var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");

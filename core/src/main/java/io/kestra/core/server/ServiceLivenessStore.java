@@ -1,9 +1,9 @@
 package io.kestra.core.server;
 
-import io.kestra.core.server.Service.ServiceState;
-
 import java.util.List;
 import java.util.Set;
+
+import io.kestra.core.server.Service.ServiceState;
 
 /**
  * Service interface for querying the state of service instances.
@@ -12,7 +12,7 @@ import java.util.Set;
  * @see ServiceLivenessUpdater
  * @see AbstractServiceLivenessCoordinator
  */
-public interface ServiceLivenessStore  {
+public interface ServiceLivenessStore {
 
     /**
      * Finds all service instances which are in one of the given states.

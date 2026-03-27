@@ -1,15 +1,15 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
 import java.io.IOException;
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
  * Custom serializer for {@link RunContext}.
@@ -43,11 +43,8 @@ public class RunContextSerializer extends StdSerializer<RunContext> {
      * overrides the mapper-level {@code NON_NULL} policy, matching the behavior of {@link RunContext}'s property annotations.
      */
     private record RunContextData(
-        @JsonInclude
-        Map<String, Object> variables,
-        @JsonInclude
-        List<String> secretInputs,
-        @JsonInclude
-        String traceParent
-    ) {}
+        @JsonInclude Map<String, Object> variables,
+        @JsonInclude List<String> secretInputs,
+        @JsonInclude String traceParent) {
+    }
 }

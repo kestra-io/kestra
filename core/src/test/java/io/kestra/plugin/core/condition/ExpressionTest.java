@@ -1,11 +1,13 @@
 package io.kestra.plugin.core.condition;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.property.Property;
 import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 

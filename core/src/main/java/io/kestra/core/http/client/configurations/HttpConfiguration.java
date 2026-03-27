@@ -1,19 +1,20 @@
 package io.kestra.core.http.client.configurations;
 
+import java.net.Proxy;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
+
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
+
 import io.micronaut.logging.LogLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.jackson.Jacksonized;
-
-import java.net.Proxy;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.List;
 
 @Builder(toBuilder = true)
 @Getter
@@ -146,7 +147,6 @@ public class HttpConfiguration {
             return this;
         }
 
-
         @Deprecated
         public HttpConfigurationBuilder proxyType(Proxy.Type proxyType) {
             if (this.proxy == null) {
@@ -217,7 +217,6 @@ public class HttpConfiguration {
             return this;
         }
 
-
         @SuppressWarnings("DeprecatedIsStillUsed")
         @Deprecated
         public HttpConfigurationBuilder basicAuthUser(String basicAuthUser) {
@@ -251,19 +250,19 @@ public class HttpConfiguration {
         @Deprecated
         public HttpConfigurationBuilder logLevel(LogLevel logLevel) {
             if (logLevel == LogLevel.TRACE) {
-                this.logs = new LoggingType[]{
+                this.logs = new LoggingType[] {
                     LoggingType.REQUEST_HEADERS,
                     LoggingType.REQUEST_BODY,
                     LoggingType.RESPONSE_HEADERS,
                     LoggingType.RESPONSE_BODY
                 };
             } else if (logLevel == LogLevel.DEBUG) {
-                this.logs = new LoggingType[]{
+                this.logs = new LoggingType[] {
                     LoggingType.REQUEST_HEADERS,
                     LoggingType.RESPONSE_HEADERS,
                 };
             } else if (logLevel == LogLevel.INFO) {
-                this.logs = new LoggingType[]{
+                this.logs = new LoggingType[] {
                     LoggingType.RESPONSE_HEADERS,
                 };
             }

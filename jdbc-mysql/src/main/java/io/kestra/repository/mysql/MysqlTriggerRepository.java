@@ -1,31 +1,30 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.runners.ScheduleContextInterface;
-import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
-import io.kestra.jdbc.runner.JdbcSchedulerContext;
-import io.kestra.jdbc.services.JdbcFilterService;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.List;
 
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
+import io.kestra.jdbc.services.JdbcFilterService;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+
 @Singleton
 @MysqlRepositoryEnabled
 public class MysqlTriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject
     public MysqlTriggerRepository(@Named("triggers") MysqlRepository<Trigger> repository,
-                                  JdbcFilterService filterService) {
+        JdbcFilterService filterService) {
         super(repository, filterService);
     }
 

@@ -1,6 +1,12 @@
 package io.kestra.core.reporter;
 
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.UUID;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.models.collectors.Result;
@@ -8,6 +14,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.VersionProvider;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -20,37 +27,32 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.URI;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.UUID;
-
 @Singleton
 @Slf4j
 public class ServerEventSender {
-    
+
     private static final String SESSION_UUID = IdUtils.create();
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofJson();
-    
+
     @Inject
     @Client
     private ReactorHttpClient client;
-    
+
     @Inject
     private VersionProvider versionProvider;
-    
+
     @Inject
     private InstanceService instanceService;
-    
+
     private final ServerType serverType;
-    
+
     @Value("${kestra.anonymous-usage-report.uri}")
     protected URI url;
-    
-    public ServerEventSender( ) {
+
+    public ServerEventSender() {
         this.serverType = KestraContext.getContext().getServerType();
     }
-    
+
     public void send(final Instant now, final Type type, Object event) {
         ServerEvent serverEvent = ServerEvent
             .builder()
@@ -65,11 +67,11 @@ public class ServerEventSender {
             .build();
         try {
             MutableHttpRequest<ServerEvent> request = this.request(serverEvent, type);
-            
+
             if (log.isTraceEnabled()) {
                 log.trace("Report anonymous usage: '{}'", OBJECT_MAPPER.writeValueAsString(serverEvent));
             }
-            
+
             this.handleResponse(client.toBlocking().retrieve(request, Argument.of(Result.class), Argument.of(JsonError.class)));
         } catch (HttpClientResponseException t) {
             log.trace("Unable to report anonymous usage with body '{}'", t.getResponse().getBody(String.class), t);
@@ -77,11 +79,11 @@ public class ServerEventSender {
             log.trace("Unable to handle anonymous usage", t);
         }
     }
-    
-    private void handleResponse (Result result){
-        
+
+    private void handleResponse(Result result) {
+
     }
-    
+
     protected MutableHttpRequest<ServerEvent> request(ServerEvent event, Type type) throws Exception {
         URI baseUri = URI.create(this.url.toString().endsWith("/") ? this.url.toString() : this.url + "/");
         URI resolvedUri = baseUri.resolve(type.name().toLowerCase());

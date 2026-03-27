@@ -1,6 +1,16 @@
 
 package io.kestra.core.serializers;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.yaml.snakeyaml.LoaderOptions;
+
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.system.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,28 +33,24 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.diff.JsonDiff;
+
 import io.kestra.core.plugins.PluginModule;
 import io.kestra.core.runners.RunContextModule;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
-import org.apache.commons.lang3.tuple.Pair;
-import org.yaml.snakeyaml.LoaderOptions;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
 
 import static com.fasterxml.jackson.core.StreamReadConstraints.DEFAULT_MAX_STRING_LEN;
 
 public final class JacksonMapper {
-    public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
-    public static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
-    public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {};
+    public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {
+    };
+    public static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {
+    };
+    public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
-    private JacksonMapper() {}
+    private JacksonMapper() {
+    }
 
     static {
         StreamReadConstraints.overrideDefaultStreamReadConstraints(
@@ -109,7 +115,8 @@ public final class JacksonMapper {
     }
 
     public static List<String> toList(Object object) {
-        return MAPPER.convertValue(object, new TypeReference<>() {});
+        return MAPPER.convertValue(object, new TypeReference<>() {
+        });
     }
 
     public static Object toObject(String json) throws JsonProcessingException {
@@ -158,12 +165,12 @@ public final class JacksonMapper {
     }
 
     private static IonSystem createIonSystem() {
-         return IonSystemBuilder.standard()
+        return IonSystemBuilder.standard()
             .withIonTextWriterBuilder(IonTextWriterBuilder.standard().withWriteTopLevelValuesOnNewLines(true))
             .build();
     }
 
-    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object before, Object after)  {
+    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object before, Object after) {
         JsonNode beforeNode = MAPPER.valueToTree(before);
         JsonNode afterNode = MAPPER.valueToTree(after);
 
@@ -172,7 +179,7 @@ public final class JacksonMapper {
 
         return Pair.of(patch, revert);
     }
-    
+
     public static JsonNode applyPatchesOnJsonNode(JsonNode jsonObject, List<JsonNode> patches) {
         for (JsonNode patch : patches) {
             try {

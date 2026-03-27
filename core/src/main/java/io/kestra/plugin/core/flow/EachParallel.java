@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -17,14 +20,11 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -35,14 +35,16 @@ import java.util.Optional;
     title = "For each value in the list, execute one or more tasks in parallel (Deprecated).",
     description = "This task is deprecated, please use the `io.kestra.plugin.core.flow.ForEach` task instead.\n\n" +
         "The list of `tasks` will be executed for each item in parallel. " +
-        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`.\n" +
+        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`.\n"
+        +
         "You can access the current iteration value using the variable `{{ taskrun.value }}`.\n\n" +
         "The task list will be executed in parallel for each item. For example, if you have a list with 3 elements and 2 tasks defined in the list of `tasks`, all " +
         "6 tasks will be computed in parallel without any order guarantee.\n\n" +
         "If you want to execute a group of sequential tasks for each value in parallel, you can wrap the list of `tasks` " +
         "with the [Sequential task](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.sequential).\n" +
         "If your list of values is large, you can limit the number of concurrent tasks using the `concurrent` property.\n\n" +
-        "We highly recommend triggering a subflow for each value (e.g. using the [ForEachItem](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.foreachitem) task) instead of specifying many tasks wrapped in a `Sequential` task. " +
+        "We highly recommend triggering a subflow for each value (e.g. using the [ForEachItem](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.foreachitem) task) instead of specifying many tasks wrapped in a `Sequential` task. "
+        +
         "This allows better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) for more details."
 )
 @Plugin(
@@ -136,7 +138,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The list of values for this task",
         description = "The value can be passed as a string, a list of strings, or a list of objects.",
-        oneOf = {String.class, Object[].class}
+        oneOf = { String.class, Object[].class }
     )
     private Object value;
 

@@ -1,20 +1,5 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.plugin.core.debug.Return;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URL;
@@ -24,6 +9,23 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,15 +94,16 @@ public abstract class AbstractExecutionServiceTest {
         executionRepository.save(execution);
 
         for (int i = 0; i < 10; i++) {
-            logRepository.save(LogEntry.builder()
-                .executionId(execution.getId())
-                .tenantId(MAIN_TENANT)
-                .timestamp(Instant.now())
-                .message("Message " + i)
-                .flowId(flow.getId())
-                .level(Level.INFO)
-                .namespace(flow.getNamespace())
-                .build()
+            logRepository.save(
+                LogEntry.builder()
+                    .executionId(execution.getId())
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now())
+                    .message("Message " + i)
+                    .flowId(flow.getId())
+                    .level(Level.INFO)
+                    .namespace(flow.getNamespace())
+                    .build()
             );
         }
 
@@ -121,7 +124,6 @@ public abstract class AbstractExecutionServiceTest {
         assertThat(purge.getExecutionsCount()).isEqualTo(1);
         assertThat(purge.getLogsCount()).isEqualTo(10);
         assertThat(purge.getStoragesCount()).isEqualTo(5);
-
 
         purge = executionService.purge(
             true,

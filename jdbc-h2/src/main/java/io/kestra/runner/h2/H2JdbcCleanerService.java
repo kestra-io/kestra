@@ -1,9 +1,11 @@
 package io.kestra.runner.h2;
 
+import org.jooq.Condition;
+
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcCleanerService;
+
 import jakarta.inject.Singleton;
-import org.jooq.Condition;
 
 @Singleton
 @H2QueueEnabled

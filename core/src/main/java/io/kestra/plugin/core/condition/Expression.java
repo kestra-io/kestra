@@ -3,20 +3,17 @@ package io.kestra.plugin.core.condition;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -40,18 +37,18 @@ import jakarta.validation.constraints.NotNull;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: Average value has gone below 10
-                
+
                 triggers:
                   - id: expression_trigger
                     type: io.kestra.plugin.core.trigger.Schedule
                     cron: "*/1 * * * *"
                     conditions:
                       - type: io.kestra.plugin.core.condition.Expression
-                        expression: "{{ kv('average_value') < 10 }}"    
+                        expression: "{{ kv('average_value') < 10 }}"
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.VariableCondition", "io.kestra.plugin.core.condition.ExpressionCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.VariableCondition", "io.kestra.plugin.core.condition.ExpressionCondition" }
 )
 public class Expression extends Condition {
     @NotNull

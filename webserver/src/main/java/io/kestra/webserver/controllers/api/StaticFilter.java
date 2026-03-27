@@ -1,5 +1,14 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.apache.commons.io.IOUtils;
+import org.reactivestreams.Publisher;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
@@ -12,14 +21,6 @@ import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
-import org.apache.commons.io.IOUtils;
-import org.reactivestreams.Publisher;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -44,7 +45,8 @@ public class StaticFilter implements HttpServerFilter {
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         return Publishers
-            .map(chain.proceed(request), (MutableHttpResponse<?> response) -> {
+            .map(chain.proceed(request), (MutableHttpResponse<?> response) ->
+            {
                 try {
                     Optional<? extends MutableHttpResponse<?>> alteredResponse = Stream
                         .of(
@@ -55,14 +57,19 @@ public class StaticFilter implements HttpServerFilter {
                             // debug mode
                             response.getBody(SystemFile.class)
                                 .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
-                                .map(throwFunction(n -> IOUtils.toString(
-                                    Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
-                                    StandardCharsets.UTF_8
-                                )))
+                                .map(
+                                    throwFunction(
+                                        n -> IOUtils.toString(
+                                            Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
+                                            StandardCharsets.UTF_8
+                                        )
+                                    )
+                                )
                         )
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .map(s -> {
+                        .map(s ->
+                        {
                             String finalBody = replace(s);
 
                             return (MutableHttpResponse<?>) HttpResponse

@@ -3,6 +3,7 @@ package io.kestra.core.validations.validator;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.ArrayInput;
 import io.kestra.core.validations.ArrayInputValidation;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;

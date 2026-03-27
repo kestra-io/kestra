@@ -1,9 +1,10 @@
 package io.kestra.scheduler;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.TriggerContext;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 @Getter

@@ -4,8 +4,8 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.worker.DefaultWorker;
+
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -17,12 +17,11 @@ import jakarta.inject.Inject;
 public class TestMethodScopedWorker extends DefaultWorker {
     @Inject
     public TestMethodScopedWorker(@Parameter String workerId,
-                                  @Parameter Integer numThreads,
-                                  @Nullable @Parameter String workerGroupKey,
-                                  ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-                                  WorkerGroupService workerGroupService,
-                                  ExecutorsUtils executorsUtils
-    ) {
+        @Parameter Integer numThreads,
+        @Nullable @Parameter String workerGroupKey,
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        WorkerGroupService workerGroupService,
+        ExecutorsUtils executorsUtils) {
         super(workerId, numThreads, workerGroupKey, eventPublisher, workerGroupService, executorsUtils);
     }
 

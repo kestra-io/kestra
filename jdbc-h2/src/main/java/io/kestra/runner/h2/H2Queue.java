@@ -1,15 +1,17 @@
 package io.kestra.runner.h2;
 
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.kestra.jdbc.runner.JdbcQueue;
-import io.micronaut.context.ApplicationContext;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import io.kestra.jdbc.runner.JdbcQueue;
+
+import io.micronaut.context.ApplicationContext;
 
 public class H2Queue<T> extends JdbcQueue<T> {
     public H2Queue(Class<T> cls, ApplicationContext applicationContext) {
@@ -23,16 +25,20 @@ public class H2Queue<T> extends JdbcQueue<T> {
 
     @Override
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate) {
-        var select =  ctx.select(
-                AbstractJdbcRepository.field("value"),
-                AbstractJdbcRepository.field("offset")
-            )
+        var select = ctx.select(
+            AbstractJdbcRepository.field("value"),
+            AbstractJdbcRepository.field("offset")
+        )
             .from(this.table)
             .where(AbstractJdbcRepository.field("type").eq(queueType()))
-            .and(DSL.or(List.of(
-                AbstractJdbcRepository.field("consumers").isNull(),
-                DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", queueType)
-            )));
+            .and(
+                DSL.or(
+                    List.of(
+                        AbstractJdbcRepository.field("consumers").isNull(),
+                        DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", queueType)
+                    )
+                )
+            );
 
         if (consumerGroup != null) {
             select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
@@ -62,7 +68,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
                 DSL.field(
                     "ARRAY_APPEND(COALESCE(\"consumers\", ARRAY[]), ?)",
                     SQLDataType.VARCHAR(50).getArrayType(),
-                    (Object) new String[]{queueType}
+                    (Object) new String[] { queueType }
                 )
             )
             .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())

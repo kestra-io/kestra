@@ -1,13 +1,15 @@
 package io.kestra.core.services;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.kestra.core.junit.annotations.KestraTest;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,14 +31,15 @@ class TaskGlobalDefaultConfigurationTest {
         Map<String, Object> tasks = Map.of("tasks", defaults);
         Map<String, Object> kestra = Map.of("kestra", tasks);
 
-
         try (ApplicationContext ctx = ApplicationContext.run(kestra, Environment.CLI, Environment.TEST)) {
             TaskGlobalDefaultConfiguration taskDefaultGlobalConfiguration = ctx.getBean(TaskGlobalDefaultConfiguration.class);
 
-            assertThat(((Map<String, String>) taskDefaultGlobalConfiguration.getDefaults()
-                .getFirst()
-                .getValues()
-                .get("env")).keySet()).isEqualTo(Set.of("AB_VALUE", "ABCVALUE"));
+            assertThat(
+                ((Map<String, String>) taskDefaultGlobalConfiguration.getDefaults()
+                    .getFirst()
+                    .getValues()
+                    .get("env")).keySet()
+            ).isEqualTo(Set.of("AB_VALUE", "ABCVALUE"));
         }
     }
 }

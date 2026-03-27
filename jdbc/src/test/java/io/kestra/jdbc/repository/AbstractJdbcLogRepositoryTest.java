@@ -1,8 +1,10 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.jdbc.JdbcTestUtils;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
+
+import io.kestra.jdbc.JdbcTestUtils;
+
+import jakarta.inject.Inject;
 
 public abstract class AbstractJdbcLogRepositoryTest extends io.kestra.core.repositories.AbstractLogRepositoryTest {
     @Inject

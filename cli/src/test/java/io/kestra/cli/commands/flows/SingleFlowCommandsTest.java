@@ -1,14 +1,15 @@
 package io.kestra.cli.commands.flows;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.net.URL;
+
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.net.URL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

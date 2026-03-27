@@ -1,15 +1,16 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.jdbc.AbstractJdbcRepository;
 
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
@@ -35,7 +36,8 @@ public abstract class JdbcFlowRepositoryService {
 
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 return context.select(DSL.asterisk())
@@ -56,8 +58,9 @@ public abstract class JdbcFlowRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(List.of("fulltext"), query));
         }
 
-        if (labels != null)  {
-            labels.forEach((key, value) -> {
+        if (labels != null) {
+            labels.forEach((key, value) ->
+            {
                 Field<String> field = DSL.field("JQ_STRING(\"value\", '.labels." + key + "')", String.class);
 
                 if (value == null) {

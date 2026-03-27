@@ -1,6 +1,14 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.function.TriFunction;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -23,25 +31,19 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.commons.lang3.function.TriFunction;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -197,15 +199,22 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         Output.OutputBuilder builder = Output.builder();
 
         if (this.args != null) {
-            builder.args(runContext.render(this.args
-                .entrySet()
-                .stream()
-                .map(throwFunction(e -> new AbstractMap.SimpleEntry<>(
-                    e.getKey(),
-                    runContext.render(e.getValue())
-                )))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-            ));
+            builder.args(
+                runContext.render(
+                    this.args
+                        .entrySet()
+                        .stream()
+                        .map(
+                            throwFunction(
+                                e -> new AbstractMap.SimpleEntry<>(
+                                    e.getKey(),
+                                    runContext.render(e.getValue())
+                                )
+                            )
+                        )
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                )
+            );
         }
 
         return builder.build();
@@ -249,7 +258,8 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     }
 
     @SuppressWarnings("deprecated")
-    public static FlowWithSource injectTemplate(Flow flow, Execution execution, TriFunction<String, String, String, io.kestra.core.models.templates.Template> provider) throws InternalException {
+    public static FlowWithSource injectTemplate(Flow flow, Execution execution, TriFunction<String, String, String, io.kestra.core.models.templates.Template> provider)
+        throws InternalException {
         AtomicReference<Flow> flowReference = new AtomicReference<>(flow);
 
         boolean haveTemplate = true;
@@ -261,7 +271,8 @@ public class Template extends Task implements FlowableTask<Template.Output> {
                 .toList();
 
             templates
-                .forEach(throwConsumer(templateTask -> {
+                .forEach(throwConsumer(templateTask ->
+                {
                     io.kestra.core.models.templates.Template template = provider.apply(
                         execution.getTenantId(),
                         templateTask.getNamespace(),

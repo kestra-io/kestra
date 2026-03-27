@@ -1,13 +1,14 @@
 package io.kestra.core.models.flows;
 
+import java.util.Optional;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.utils.IdUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-
-import java.util.Optional;
 
 /**
  * Represents a unique and global identifier for a flow.
@@ -22,7 +23,6 @@ public interface FlowId {
 
     String getTenantId();
 
-
     static String uid(FlowId flow) {
         return uid(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.ofNullable(flow.getRevision()));
     }
@@ -36,7 +36,7 @@ public interface FlowId {
     }
 
     static String uidWithoutRevision(String tenantId, String namespace, String id) {
-        return of(tenantId, namespace, id,null).toString();
+        return of(tenantId, namespace, id, null).toString();
     }
 
     static String uid(Trigger trigger) {
@@ -50,7 +50,7 @@ public interface FlowId {
     /**
      * Static helper method for constructing a new {@link FlowId}.
      *
-     * @return   a new {@link FlowId}.
+     * @return a new {@link FlowId}.
      */
     static FlowId of(String tenantId, String namespace, String id, Integer revision) {
         return new Default(tenantId, namespace, id, revision);

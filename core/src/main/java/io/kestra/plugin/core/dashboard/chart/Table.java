@@ -8,6 +8,7 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.plugin.core.dashboard.chart.tables.TableColumnDescriptor;
 import io.kestra.plugin.core.dashboard.chart.tables.TableOption;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -21,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Schema(
     title = "Display structured data in a clear, sortable table."
-    )
+)
 @Plugin(
     examples = {
         @Example(

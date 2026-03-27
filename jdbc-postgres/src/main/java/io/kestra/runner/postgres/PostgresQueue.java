@@ -1,21 +1,22 @@
 package io.kestra.runner.postgres;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.NonNull;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
+import io.micronaut.context.ApplicationContext;
 
 import static org.jooq.impl.DSL.*;
 
@@ -55,9 +56,9 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         }
 
         var select = ctx.select(
-                AbstractJdbcRepository.field("value"),
-                AbstractJdbcRepository.field("offset")
-            )
+            AbstractJdbcRepository.field("value"),
+            AbstractJdbcRepository.field("offset")
+        )
             .from(this.table)
             .where(DSL.condition("type = CAST(? AS queue_type)", queueType()))
             .and(AbstractJdbcRepository.field("consumer_" + queueType, Boolean.class).isFalse());
@@ -101,7 +102,8 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     @Override
     protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {
         return fetch
-            .map(record -> {
+            .map(record ->
+            {
                 try {
                     return Either.left(MAPPER.readValue(record.get("value", JSONB.class).data(), cls));
                 } catch (JsonProcessingException e) {

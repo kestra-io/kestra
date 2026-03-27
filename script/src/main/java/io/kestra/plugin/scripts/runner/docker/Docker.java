@@ -1,41 +1,5 @@
 package io.kestra.plugin.scripts.runner.docker;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.*;
-import com.github.dockerjava.api.exception.InternalServerErrorException;
-import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.*;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.NameParser;
-import com.sun.jna.LastErrorException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.retrys.Exponential;
-import io.kestra.core.models.tasks.runners.*;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.RetryUtils;
-import io.kestra.core.utils.UnixModeToPosixFilePermissions;
-import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
-import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.IOUtils;
-import org.apache.hc.core5.http.ConnectionClosedException;
-import org.slf4j.Logger;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -50,6 +14,45 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.core5.http.ConnectionClosedException;
+import org.slf4j.Logger;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.exception.InternalServerErrorException;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.NameParser;
+import com.sun.jna.LastErrorException;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.models.tasks.runners.*;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.RetryUtils;
+import io.kestra.core.utils.UnixModeToPosixFilePermissions;
+import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
+
+import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -161,7 +164,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     @Schema(
         title = "Docker configuration file.",
         description = "Docker configuration file that can set access credentials to private container registries. Usually located in `~/.docker/config.json`.",
-        anyOf = {String.class, Map.class}
+        anyOf = { String.class, Map.class }
     )
     @PluginProperty(dynamic = true)
     private Object config;
@@ -236,9 +239,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     @Schema(
         title = "The pull policy for a container image.",
         description = """
-        Use the `IF_NOT_PRESENT` pull policy to avoid pulling already existing images.
-        Use the `ALWAYS` pull policy to pull the latest version of an image
-        even if an image with the same tag already exists."""
+            Use the `IF_NOT_PRESENT` pull policy to avoid pulling already existing images.
+            Use the `ALWAYS` pull policy to pull the latest version of an image
+            even if an image with the same tag already exists."""
     )
     @Builder.Default
     protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
@@ -399,12 +402,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
                 // first, create an archive
                 Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
-                try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
-                     TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
+                try (
+                    FileOutputStream fos = new FileOutputStream(fileArchive.toString());
+                    TarArchiveOutputStream out = new TarArchiveOutputStream(fos)
+                ) {
                     out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
                     out.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX); // allow large archive name
 
-                    for (Path file: relativeWorkingDirectoryFilesPaths) {
+                    for (Path file : relativeWorkingDirectoryFilesPaths) {
                         Path resolvedFile = runContext.workingDir().resolve(file);
                         TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());
                         // Preserve POSIX permissions if supported
@@ -458,7 +463,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             }
 
             if (!Boolean.TRUE.equals(runContext.render(wait).as(Boolean.class).orElseThrow())) {
-                return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
+                return TaskRunnerResult.<DockerTaskRunnerDetailResult> builder()
                     .exitCode(0)
                     .logConsumer(defaultLogConsumer)
                     .details(DockerTaskRunnerDetailResult.builder().containerId(exec.getId()).build())
@@ -514,7 +519,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                         public void onComplete() {
                             // Still flush last line even if there is no newline at the end
                             try {
-                                logBuffers.entrySet().stream().filter(entry -> !entry.getValue().isEmpty()).forEach(throwConsumer(entry -> {
+                                logBuffers.entrySet().stream().filter(entry -> !entry.getValue().isEmpty()).forEach(throwConsumer(entry ->
+                                {
                                     String log = entry.getValue().toString();
                                     this.send(log, entry.getKey() == StreamType.STDERR);
                                 }));
@@ -533,7 +539,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 Await.until(ended::get);
 
                 if (exitCode != 0) {
-                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
+                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                         downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
                     }
 
@@ -542,11 +548,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
 
-                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
+                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                     downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
                 }
 
-                return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
+                return TaskRunnerResult.<DockerTaskRunnerDetailResult> builder()
                     .exitCode(exitCode)
                     .logConsumer(defaultLogConsumer)
                     .details(DockerTaskRunnerDetailResult.builder().containerId(exec.getId()).build())
@@ -563,7 +569,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                             logger.trace("Container deleted: {}", exec.getId());
                         }
 
-                        if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
+                        if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                             dockerClient.removeVolumeCmd(filesVolumeName).exec();
 
                             if (logger.isTraceEnabled()) {
@@ -577,13 +583,19 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             }
         } catch (RuntimeException e) {
             try {
-                if (e.getCause() instanceof IOException io &&
-                    io.getCause() instanceof LastErrorException socketException &&
-                    socketException.getMessage().contains("No such file or directory") &&
-                    Socket.class.isAssignableFrom(Class.forName(io.getStackTrace()[0].getClassName()))) {
-                    throw new IllegalStateException("Docker socket is not accessible or not found. " +
-                        "Please make sure you properly mounted the Docker socket into your Kestra container (`-v /var/run/docker.sock:/var/run/docker.sock`) and that your user or group has at least the read and write privilege. " +
-                        "Tried socket: " + resolvedHost, e);
+                if (
+                    e.getCause() instanceof IOException io &&
+                        io.getCause() instanceof LastErrorException socketException &&
+                        socketException.getMessage().contains("No such file or directory") &&
+                        Socket.class.isAssignableFrom(Class.forName(io.getStackTrace()[0].getClassName()))
+                ) {
+                    throw new IllegalStateException(
+                        "Docker socket is not accessible or not found. " +
+                            "Please make sure you properly mounted the Docker socket into your Kestra container (`-v /var/run/docker.sock:/var/run/docker.sock`) and that your user or group has at least the read and write privilege. "
+                            +
+                            "Tried socket: " + resolvedHost,
+                        e
+                    );
                 }
             } catch (ClassNotFoundException ignored) {
                 // If we can't check if the stacktrace class is a Socket, we just ignore the exception
@@ -595,8 +607,10 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     private void downloadOutputFiles(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands) throws IOException {
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
-        try (InputStream is = copyArchiveFromContainerCmd.exec();
-             TarArchiveInputStream tar = new TarArchiveInputStream(is)) {
+        try (
+            InputStream is = copyArchiveFromContainerCmd.exec();
+            TarArchiveInputStream tar = new TarArchiveInputStream(is)
+        ) {
             TarArchiveEntry entry;
             while ((entry = tar.getNextEntry()) != null) {
                 // each entry contains the working directory as the first part, we need to remove it
@@ -622,8 +636,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
      * See <a href="https://docs.docker.com/reference/cli/docker/container/stop/">{@code docker container stop}</a>.
      *
      * @param dockerClient client for the Docker Engine API
-     * @param containerId  container to kill
-     * @param logger       standard logger
+     * @param containerId container to kill
+     * @param logger standard logger
      */
     private void kill(final DockerClient dockerClient, final String containerId, final Logger logger) {
         try {
@@ -678,11 +692,12 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return DockerService.client(dockerClientConfig);
     }
 
-    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars) throws IllegalVariableEvaluationException, IOException {
+    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars)
+        throws IllegalVariableEvaluationException, IOException {
         Optional<Boolean> volumeEnabledConfig = runContext.pluginConfiguration(VOLUME_ENABLED_CONFIG);
         if (volumeEnabledConfig.isEmpty()) {
             // check the legacy property and emit a warning if used
-            Optional<Boolean> property = ((DefaultRunContext)runContext).getApplicationContext().getProperty(
+            Optional<Boolean> property = ((DefaultRunContext) runContext).getApplicationContext().getProperty(
                 LEGACY_VOLUME_ENABLED_CONFIG,
                 Boolean.class
             );
@@ -705,17 +720,17 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         HostConfig hostConfig = new HostConfig();
 
-        container.withEnv(this.env(runContext, taskCommands)
-            .entrySet()
-            .stream()
-            .map(r -> r.getKey() + "=" + r.getValue())
-            .toList()
+        container.withEnv(
+            this.env(runContext, taskCommands)
+                .entrySet()
+                .stream()
+                .map(r -> r.getKey() + "=" + r.getValue())
+                .toList()
         );
 
         if (workingDirectory != null) {
             container.withWorkingDir(windowsToUnixPath(workingDirectory.toAbsolutePath().toString()));
         }
-
 
         if (this.getUser() != null) {
             container.withUser(runContext.render(this.getUser(), additionalVars));
@@ -726,47 +741,57 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
 
         if (this.getExtraHosts() != null) {
-            hostConfig.withExtraHosts(runContext.render(this.getExtraHosts(), additionalVars)
-                .toArray(String[]::new));
+            hostConfig.withExtraHosts(
+                runContext.render(this.getExtraHosts(), additionalVars)
+                    .toArray(String[]::new)
+            );
         }
 
         List<Bind> binds = new ArrayList<>();
         if (FileHandlingStrategy.MOUNT.equals(runContext.render(this.fileHandlingStrategy).as(FileHandlingStrategy.class).orElse(null)) && workingDirectory != null) {
             String bindPath = windowsToUnixPath(workingDirectory.toString());
-            binds.add(new Bind(
-                bindPath,
-                new Volume(bindPath),
-                AccessMode.rw
-            ));
+            binds.add(
+                new Bind(
+                    bindPath,
+                    new Volume(bindPath),
+                    AccessMode.rw
+                )
+            );
         }
         if (volumesEnabled && this.getVolumes() != null) {
-            binds.addAll(runContext.render(this.getVolumes())
-                .stream()
-                .map(Bind::parse)
-                .toList());
+            binds.addAll(
+                runContext.render(this.getVolumes())
+                    .stream()
+                    .map(Bind::parse)
+                    .toList()
+            );
         }
         if (!binds.isEmpty()) {
             hostConfig.withBinds(binds);
         }
 
         if (this.getDeviceRequests() != null) {
-            hostConfig.withDeviceRequests(this
-                .getDeviceRequests()
-                .stream()
-                .map(throwFunction(deviceRequest -> new com.github.dockerjava.api.model.DeviceRequest()
-                    .withDriver(runContext.render(deviceRequest.getDriver()).as(String.class).orElse(null))
-                    .withCount(runContext.render(deviceRequest.getCount()).as(Integer.class).orElse(null))
-                    .withDeviceIds(runContext.render(deviceRequest.getDeviceIds()).asList(String.class))
-                    .withCapabilities(runContext.render(deviceRequest.getCapabilities()).asList(List.class))
-                    .withOptions(runContext.render(deviceRequest.getOptions()).asMap(String.class, String.class))
-                ))
-                .toList()
+            hostConfig.withDeviceRequests(
+                this
+                    .getDeviceRequests()
+                    .stream()
+                    .map(
+                        throwFunction(
+                            deviceRequest -> new com.github.dockerjava.api.model.DeviceRequest()
+                                .withDriver(runContext.render(deviceRequest.getDriver()).as(String.class).orElse(null))
+                                .withCount(runContext.render(deviceRequest.getCount()).as(Integer.class).orElse(null))
+                                .withDeviceIds(runContext.render(deviceRequest.getDeviceIds()).asList(String.class))
+                                .withCapabilities(runContext.render(deviceRequest.getCapabilities()).asList(List.class))
+                                .withOptions(runContext.render(deviceRequest.getOptions()).asMap(String.class, String.class))
+                        )
+                    )
+                    .toList()
             );
         }
 
         if (this.getCpu() != null && this.getCpu().getCpus() != null) {
             Double cpuValue = runContext.render(this.getCpu().getCpus()).as(Double.class).orElseThrow();
-            hostConfig.withNanoCPUs((long)(cpuValue * 1_000_000_000L));
+            hostConfig.withNanoCPUs((long) (cpuValue * 1_000_000_000L));
         }
 
         if (this.getMemory() != null) {
@@ -808,10 +833,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
 
         if (this.getPortBindings() != null) {
-            hostConfig.withPortBindings(runContext.render(this.getPortBindings(), additionalVars)
-                .stream()
-                .map(PortBinding::parse)
-                .toList()
+            hostConfig.withPortBindings(
+                runContext.render(this.getPortBindings(), additionalVars)
+                    .stream()
+                    .map(PortBinding::parse)
+                    .toList()
             );
         }
 
@@ -858,7 +884,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
         // and prevent errors with Podman trying to pull "image:tag:tag"
         try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
-            new RetryUtils().<Boolean, InternalServerErrorException>of(
+            new RetryUtils().<Boolean, InternalServerErrorException> of(
                 Exponential.builder()
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(5))
@@ -868,7 +894,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             ).run(
                 (bool, throwable) -> throwable instanceof InternalServerErrorException ||
                     throwable.getCause() instanceof ConnectionClosedException,
-                () -> {
+                () ->
+                {
                     var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
                     var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
                     pull

@@ -1,18 +1,19 @@
 package io.kestra.jdbc.runner;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiConsumer;
 
 public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRepository {
     protected static final Field<String> VALUE_FIELD = field("value", String.class);
@@ -57,7 +58,8 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
     public List<ExecutionQueued> getAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(AbstractJdbcRepository.field("value"))
@@ -70,13 +72,14 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
     public void remove(Execution execution) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transaction(configuration ->
+            {
                 DSL
-                .using(configuration)
-                .deleteFrom(this.jdbcRepository.getTable())
-                .where(buildTenantCondition(execution.getTenantId()))
-                .and(field("key").eq(IdUtils.fromParts(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId())))
-                .execute();
+                    .using(configuration)
+                    .deleteFrom(this.jdbcRepository.getTable())
+                    .where(buildTenantCondition(execution.getTenantId()))
+                    .and(field("key").eq(IdUtils.fromParts(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId())))
+                    .execute();
             });
     }
 }

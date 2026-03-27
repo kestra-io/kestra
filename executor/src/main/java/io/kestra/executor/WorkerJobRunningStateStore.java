@@ -14,7 +14,7 @@ public interface WorkerJobRunningStateStore {
      * Deletes a running worker job for the given key.
      *
      * <p>
-     *     A key can be a {@link WorkerTask} Task Run ID.
+     * A key can be a {@link WorkerTask} Task Run ID.
      * </p>
      *
      * @param key the key of the worker job to be deleted.

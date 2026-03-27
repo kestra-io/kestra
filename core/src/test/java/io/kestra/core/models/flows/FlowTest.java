@@ -1,5 +1,13 @@
 package io.kestra.core.models.flows;
 
+import java.io.File;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.input.StringInput;
@@ -10,15 +18,9 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.io.File;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,7 +76,6 @@ class FlowTest {
         assertThat(validate.get().getMessage()).contains("Illegal flow id update");
     }
 
-
     @Test
     void switchTaskInvalid() {
         Flow flow = this.parse("flows/invalids/switch-invalid.yaml");
@@ -112,11 +113,12 @@ class FlowTest {
     void updateTask() throws InternalException {
         Flow flow = this.parse("flows/valids/each-sequential-nested.yaml");
 
-        Flow updated = flow.updateTask("1-2-2_return", Return.builder()
-            .id("1-2-2_return")
-            .type(Return.class.getName())
-            .format(Property.ofExpression("{{task.id}}"))
-            .build()
+        Flow updated = flow.updateTask(
+            "1-2-2_return", Return.builder()
+                .id("1-2-2_return")
+                .type(Return.class.getName())
+                .format(Property.ofExpression("{{task.id}}"))
+                .build()
         );
 
         Task findUpdated = updated.findTaskByTaskId("1-2-2_return");

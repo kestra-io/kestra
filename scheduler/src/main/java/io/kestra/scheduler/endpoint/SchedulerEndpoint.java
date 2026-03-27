@@ -1,9 +1,14 @@
 package io.kestra.scheduler.endpoint;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.scheduler.AbstractScheduler;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.management.endpoint.annotation.Read;
@@ -11,10 +16,6 @@ import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
 
 @Endpoint(id = "scheduler", defaultSensitive = false)
 @Requires(property = "kestra.server-type", pattern = "(SCHEDULER|STANDALONE)")
@@ -29,7 +30,8 @@ public class SchedulerEndpoint {
         List<SchedulerEndpointSchedule> result = scheduler.schedulerTriggers()
             .stream()
             .filter(flowWithTriggers -> !(flowWithTriggers.getFlow() instanceof FlowWithException))
-            .map(flowWithTrigger -> {
+            .map(flowWithTrigger ->
+            {
                 String uid = Trigger.uid(flowWithTrigger.getFlow(), flowWithTrigger.getAbstractTrigger());
 
                 return new SchedulerEndpointSchedule(

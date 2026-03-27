@@ -1,9 +1,32 @@
 package io.kestra.plugin.core.http;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Map;
+import java.util.Objects;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
+
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.http.client.HttpClientRequestException;
+import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.*;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -12,6 +35,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.http.*;
@@ -20,34 +44,13 @@ import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Objects;
-
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.assertj.core.api.Assertions.assertThat;
-import io.kestra.core.http.client.HttpClientResponseException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class RequestTest {
@@ -98,7 +101,6 @@ class RequestTest {
         assertThat(output.getUri()).isEqualTo(URI.create(url));
         assertThat(output.getHeaders().get("content-length").getFirst()).isEqualTo("512789");
     }
-
 
     @Test
     void head404() throws Exception {
@@ -154,9 +156,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/redirect"))
-                .options(HttpConfiguration.builder()
-                    .followRedirects(Property.ofValue(false))
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .followRedirects(Property.ofValue(false))
+                        .build()
                 )
                 .build();
 
@@ -179,9 +182,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
-                .options(HttpConfiguration.builder()
-                    .allowFailed(Property.ofValue(true))
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .allowFailed(Property.ofValue(true))
+                        .build()
                 )
                 .build();
 
@@ -260,10 +264,11 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/hello"))
-                .options(HttpConfiguration.builder()
-                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
-                    .ssl(SslOptions.builder().insecureTrustAllCertificates(Property.ofValue(true)).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
+                        .ssl(SslOptions.builder().insecureTrustAllCertificates(Property.ofValue(true)).build())
+                        .build()
                 )
                 .build();
 
@@ -287,10 +292,11 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/hello"))
-                .options(HttpConfiguration.builder()
-                    .allowFailed(Property.ofValue(true))
-                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .allowFailed(Property.ofValue(true))
+                        .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
+                        .build()
                 )
                 .build();
 
@@ -342,16 +348,21 @@ class RequestTest {
                 .method(Property.ofValue("POST"))
                 .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
                 .uri(Property.ofValue(server.getURL().toString() + "/post/url-encoded"))
-                .headers(Property.ofValue(Map.of(
-                    "test", "{{ inputs.test }}"
-                )))
+                .headers(
+                    Property.ofValue(
+                        Map.of(
+                            "test", "{{ inputs.test }}"
+                        )
+                    )
+                )
                 .formData(Property.ofValue(ImmutableMap.of("hello", "world")))
                 .build();
 
-
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of(
-                "test", "value"
-            ));
+            RunContext runContext = TestsUtils.mockRunContext(
+                this.runContextFactory, task, ImmutableMap.of(
+                    "test", "value"
+                )
+            );
 
             Request.Output output = task.run(runContext);
 
@@ -452,77 +463,79 @@ class RequestTest {
             assertThat(output.getCode()).isEqualTo(200);
         }
     }
-     @Test
-     void multipartInlineContent_doesNotThrowContentTooLong() throws Exception {
-         Path tmp = Files.createTempFile("kestra-large-", ".txt");
-
-         try {
-             int size = 5 * 1024 * 1024; // large enough to trigger old client-side ContentTooLongException
-             byte[] payloadBytes = new byte[size];
-             Arrays.fill(payloadBytes, (byte) 'a');
-             Files.write(tmp, payloadBytes);
-
-             URI bigStorage;
-             try (InputStream in = Files.newInputStream(tmp)) {
-                 bigStorage = storageInterface.put(
-                     MAIN_TENANT,
-                     null,
-                     new URI("/" + FriendlyId.createFriendlyId()),
-                     in
-                 );
-             }
-
-             try (
-                 ApplicationContext applicationContext = ApplicationContext.run();
-                 EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-             ) {
-                 Request task = Request.builder()
-                     .id(RequestTest.class.getSimpleName())
-                     .type(RequestTest.class.getName())
-                     .method(Property.ofValue("POST"))
-                     .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
-                     .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
-                     .formData(Property.ofValue(ImmutableMap.of(
-                         "hello", "world",
-                         "file", ImmutableMap.of(
-                             "content", bigStorage.toString(),
-                             "name", "big.txt"
-                         )
-                     )))
-                     .build();
-
-                 RunContext runContext =
-                     TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
-
-                     assertThatThrownBy(() -> task.run(runContext))
-                         .isInstanceOf(HttpClientResponseException.class)
-                         .hasMessageContaining("response code '413'");
-             }
-         } finally {
-             Files.deleteIfExists(tmp);
-         }
-     }
 
     @Test
-     void multipartFromEntity_doesNotMaterialize_andKeepsEntityForSend() throws Exception {
-         HttpEntity entity = MultipartEntityBuilder.create()
+    void multipartInlineContent_doesNotThrowContentTooLong() throws Exception {
+        Path tmp = Files.createTempFile("kestra-large-", ".txt");
+
+        try {
+            int size = 5 * 1024 * 1024; // large enough to trigger old client-side ContentTooLongException
+            byte[] payloadBytes = new byte[size];
+            Arrays.fill(payloadBytes, (byte) 'a');
+            Files.write(tmp, payloadBytes);
+
+            URI bigStorage;
+            try (InputStream in = Files.newInputStream(tmp)) {
+                bigStorage = storageInterface.put(
+                    MAIN_TENANT,
+                    null,
+                    new URI("/" + FriendlyId.createFriendlyId()),
+                    in
+                );
+            }
+
+            try (
+                ApplicationContext applicationContext = ApplicationContext.run();
+                EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
+            ) {
+                Request task = Request.builder()
+                    .id(RequestTest.class.getSimpleName())
+                    .type(RequestTest.class.getName())
+                    .method(Property.ofValue("POST"))
+                    .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+                    .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
+                    .formData(
+                        Property.ofValue(
+                            ImmutableMap.of(
+                                "hello", "world",
+                                "file", ImmutableMap.of(
+                                    "content", bigStorage.toString(),
+                                    "name", "big.txt"
+                                )
+                            )
+                        )
+                    )
+                    .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+                assertThatThrownBy(() -> task.run(runContext))
+                    .isInstanceOf(HttpClientResponseException.class)
+                    .hasMessageContaining("response code '413'");
+            }
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    }
+
+    @Test
+    void multipartFromEntity_doesNotMaterialize_andKeepsEntityForSend() throws Exception {
+        HttpEntity entity = MultipartEntityBuilder.create()
             .addTextBody("hello", "world")
             .addBinaryBody(
-            "file",
-            "abc".getBytes(StandardCharsets.UTF_8),
-            ContentType.DEFAULT_BINARY,
-            "a.txt"
+                "file",
+                "abc".getBytes(StandardCharsets.UTF_8),
+                ContentType.DEFAULT_BINARY,
+                "a.txt"
             )
             .build();
 
-        io.kestra.core.http.HttpRequest.RequestBody body =
-            io.kestra.core.http.HttpRequest.RequestBody.from(entity);
+        io.kestra.core.http.HttpRequest.RequestBody body = io.kestra.core.http.HttpRequest.RequestBody.from(entity);
 
-            HttpEntity rebuilt = body.to();
+        HttpEntity rebuilt = body.to();
 
-            assertThat(rebuilt).isSameAs(entity);
-        }
-
+        assertThat(rebuilt).isSameAs(entity);
+    }
 
     @Test
     void bytes() {
@@ -553,10 +566,13 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
-                .options(HttpConfiguration.builder()
-                    .auth(BasicAuthConfiguration.builder().username(Property.ofValue("John"))
-                        .password(Property.ofValue("p4ss")).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .auth(
+                            BasicAuthConfiguration.builder().username(Property.ofValue("John"))
+                                .password(Property.ofValue("p4ss")).build()
+                        )
+                        .build()
                 )
                 .build();
 
@@ -580,10 +596,11 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
-                .options(HttpConfiguration.builder()
-                    .basicAuthUser("John")
-                    .basicAuthPassword("p4ss")
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .basicAuthUser("John")
+                        .basicAuthPassword("p4ss")
+                        .build()
                 )
                 .build();
 
@@ -608,9 +625,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/auth/bearer"))
-                .options(HttpConfiguration.builder()
-                    .auth(BearerAuthConfiguration.builder().token(Property.ofValue(id)).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .auth(BearerAuthConfiguration.builder().token(Property.ofValue(id)).build())
+                        .build()
                 )
                 .build();
 
@@ -712,7 +730,8 @@ class RequestTest {
             return request.getHeaders()
                 .getAuthorization()
                 .filter(v -> v.startsWith("Basic "))
-                .map(v -> {
+                .map(v ->
+                {
                     String decode = new String(
                         Base64.getDecoder().decode(v.substring(6).getBytes(StandardCharsets.UTF_8)),
                         StandardCharsets.UTF_8
@@ -752,7 +771,8 @@ class RequestTest {
             Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
 
             return Mono.from(uploadPublisher)
-                .map(throwFunction(success -> {
+                .map(throwFunction(success ->
+                {
                     try (FileInputStream fileInputStream = new FileInputStream(tempFile)) {
                         return hello + " > " + IOUtils.toString(fileInputStream, StandardCharsets.UTF_8);
                     }

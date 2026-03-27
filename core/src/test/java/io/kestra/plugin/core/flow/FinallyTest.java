@@ -1,5 +1,11 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -7,13 +13,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +30,7 @@ class FinallyTest {
     private FlowInputOutput flowIO;
 
     @Test
-    @LoadFlows({"flows/valids/finally-sequential.yaml"})
+    @LoadFlows({ "flows/valids/finally-sequential.yaml" })
     void sequentialWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -46,7 +47,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-sequential.yaml"})
+    @LoadFlows({ "flows/valids/finally-sequential.yaml" })
     void sequentialWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -63,7 +64,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-sequential-error.yaml"})
+    @LoadFlows({ "flows/valids/finally-sequential-error.yaml" })
     void sequentialErrorBlockWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -80,7 +81,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-sequential-error-first.yaml"})
+    @LoadFlows({ "flows/valids/finally-sequential-error-first.yaml" })
     void sequentialErrorFirst() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "finally-sequential-error-first");
 
@@ -92,7 +93,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-sequential-error.yaml"})
+    @LoadFlows({ "flows/valids/finally-sequential-error.yaml" })
     void sequentialErrorBlockWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -111,7 +112,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-allowfailure.yaml"})
+    @LoadFlows({ "flows/valids/finally-allowfailure.yaml" })
     void allowFailureWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -128,7 +129,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-allowfailure.yaml"})
+    @LoadFlows({ "flows/valids/finally-allowfailure.yaml" })
     void allowFailureWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -147,7 +148,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-parallel.yaml"})
+    @LoadFlows({ "flows/valids/finally-parallel.yaml" })
     void parallelWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -164,7 +165,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-parallel.yaml"})
+    @LoadFlows({ "flows/valids/finally-parallel.yaml" })
     void parallelWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -183,7 +184,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-foreach.yaml"})
+    @LoadFlows({ "flows/valids/finally-foreach.yaml" })
     void forEachWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -200,7 +201,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-foreach.yaml"})
+    @LoadFlows({ "flows/valids/finally-foreach.yaml" })
     void forEachWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -219,7 +220,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-eachparallel.yaml"})
+    @LoadFlows({ "flows/valids/finally-eachparallel.yaml" })
     void eachParallelWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -236,7 +237,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-eachparallel.yaml"})
+    @LoadFlows({ "flows/valids/finally-eachparallel.yaml" })
     void eachParallelWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -255,7 +256,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-dag.yaml"})
+    @LoadFlows({ "flows/valids/finally-dag.yaml" })
     void dagWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -272,7 +273,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-dag.yaml"})
+    @LoadFlows({ "flows/valids/finally-dag.yaml" })
     void dagWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -291,7 +292,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-flow.yaml"})
+    @LoadFlows({ "flows/valids/finally-flow.yaml" })
     void flowWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -308,7 +309,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-flow.yaml"})
+    @LoadFlows({ "flows/valids/finally-flow.yaml" })
     void flowWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -325,7 +326,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-flow-error.yaml"})
+    @LoadFlows({ "flows/valids/finally-flow-error.yaml" })
     void flowErrorBlockWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -342,7 +343,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-flow-error.yaml"})
+    @LoadFlows({ "flows/valids/finally-flow-error.yaml" })
     void flowErrorBlockWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -361,7 +362,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-flow-error-first.yaml"})
+    @LoadFlows({ "flows/valids/finally-flow-error-first.yaml" })
     void flowErrorFirst() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "finally-flow-error-first");
 

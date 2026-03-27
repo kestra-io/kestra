@@ -1,10 +1,10 @@
 package io.kestra.core.models.tasks;
 
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.List;
+
+import io.kestra.core.models.property.Property;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface OutputFilesInterface {
     @Schema(

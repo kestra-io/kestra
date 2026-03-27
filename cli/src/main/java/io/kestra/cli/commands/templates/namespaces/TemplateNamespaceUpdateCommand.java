@@ -1,24 +1,24 @@
 package io.kestra.cli.commands.templates.namespaces;
 
+import java.nio.file.Files;
+import java.util.List;
+
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.serializers.YamlParser;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
-
-import java.nio.file.Files;
-import java.util.List;
-
-import jakarta.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "update",

@@ -1,5 +1,12 @@
 package io.kestra.core.services;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.*;
@@ -9,13 +16,8 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,11 +41,15 @@ class FlowServiceTest {
             .namespace(namespace)
             .tenantId(tenantId)
             .revision(revision)
-            .tasks(Collections.singletonList(Return.builder()
-                .id(taskId)
-                .type(Return.class.getName())
-                .format(Property.ofValue("test"))
-                .build()))
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id(taskId)
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
             .build();
 
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
@@ -244,18 +250,22 @@ class FlowServiceTest {
     void warnings() {
         FlowWithSource flow = create("test", "test", 1).toBuilder()
             .namespace("system")
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("flow-trigger")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .build()
-            ))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("flow-trigger")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .build()
+                )
+            )
             .build();
 
         List<String> warnings = flowService.warnings(flow, null);
 
         assertThat(warnings.size()).isEqualTo(1);
-        assertThat(warnings).containsExactlyInAnyOrder("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger 'flow-trigger'.");
+        assertThat(warnings).containsExactlyInAnyOrder(
+            "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger 'flow-trigger'."
+        );
     }
 
     @Test
@@ -293,21 +303,27 @@ class FlowServiceTest {
         FlowWithSource flow = FlowWithSource.builder()
             .id("flowId")
             .namespace(TEST_NAMESPACE)
-            .inputs(List.of(
-                StringInput.builder()
-                    .id("inputWithId")
-                    .type(Type.STRING)
-                    .build(),
-                StringInput.builder()
-                    .name("inputWithName")
-                    .type(Type.STRING)
-                    .build()
-            ))
-            .tasks(Collections.singletonList(Echo.builder()
-                .id("taskId")
-                .type(Return.class.getName())
-                .format(Property.ofValue("test"))
-                .build()))
+            .inputs(
+                List.of(
+                    StringInput.builder()
+                        .id("inputWithId")
+                        .type(Type.STRING)
+                        .build(),
+                    StringInput.builder()
+                        .name("inputWithName")
+                        .type(Type.STRING)
+                        .build()
+                )
+            )
+            .tasks(
+                Collections.singletonList(
+                    Echo.builder()
+                        .id("taskId")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
             .build();
 
         assertThat(flowService.deprecationPaths(flow)).containsExactlyInAnyOrder("inputs[1].name", "tasks[0]");
@@ -344,7 +360,7 @@ class FlowServiceTest {
 
     @Test
     void findByNamespacePrefix() {
-        FlowWithSource flow = create(null, "some.namespace","findByTest", "test", 1);
+        FlowWithSource flow = create(null, "some.namespace", "findByTest", "test", 1);
         flowRepository.create(GenericFlow.of(flow));
         assertThat(flowService.findByNamespacePrefix(null, "some.namespace").size()).isEqualTo(1);
     }
@@ -359,14 +375,16 @@ class FlowServiceTest {
     @Test
     void checkSubflowNotFound() {
         FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
-            .tasks(List.of(
-                io.kestra.plugin.core.flow.Subflow.builder()
-                    .id("subflowTask")
-                    .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace(TEST_NAMESPACE)
-                    .flowId("nonExistentSubflow")
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    io.kestra.plugin.core.flow.Subflow.builder()
+                        .id("subflowTask")
+                        .type(io.kestra.plugin.core.flow.Subflow.class.getName())
+                        .namespace(TEST_NAMESPACE)
+                        .flowId("nonExistentSubflow")
+                        .build()
+                )
+            )
             .build();
 
         List<String> exceptions = flowService.checkValidSubflows(flow, null);
@@ -381,14 +399,16 @@ class FlowServiceTest {
         flowRepository.create(GenericFlow.of(subflow));
 
         FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
-            .tasks(List.of(
-                io.kestra.plugin.core.flow.Subflow.builder()
-                    .id("subflowTask")
-                    .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace(TEST_NAMESPACE)
-                    .flowId("existingSubflow")
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    io.kestra.plugin.core.flow.Subflow.builder()
+                        .id("subflowTask")
+                        .type(io.kestra.plugin.core.flow.Subflow.class.getName())
+                        .namespace(TEST_NAMESPACE)
+                        .flowId("existingSubflow")
+                        .build()
+                )
+            )
             .build();
 
         List<String> exceptions = flowService.checkValidSubflows(flow, null);

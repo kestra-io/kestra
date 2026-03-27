@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -16,15 +19,12 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -202,7 +202,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The list of values for which Kestra will execute a group of tasks",
         description = "The values can be passed as a string, a list of strings, or a list of objects.",
-        oneOf = {String.class, Object[].class}
+        oneOf = { String.class, Object[].class }
     )
     private Object values;
 
@@ -212,10 +212,10 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The number of concurrent task groups for each value in the `values` array",
         description = """
-        If you set the `concurrencyLimit` property to 0, Kestra will execute all task groups concurrently for all values (zero limits!). \
+            If you set the `concurrencyLimit` property to 0, Kestra will execute all task groups concurrently for all values (zero limits!). \
 
 
-        If you set the `concurrencyLimit` property to 1, Kestra will execute each task group one after the other starting with the first value in the list (limit concurrency to one task group that can be actively running at any time)."""
+            If you set the `concurrencyLimit` property to 1, Kestra will execute each task group one after the other starting with the first value in the list (limit concurrency to one task group that can be actively running at any time)."""
     )
     @PluginProperty
     private final Integer concurrencyLimit = 1;

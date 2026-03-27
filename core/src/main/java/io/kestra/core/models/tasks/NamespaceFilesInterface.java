@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks;
 
 import io.kestra.core.models.annotations.PluginProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface NamespaceFilesInterface {

@@ -1,5 +1,7 @@
 package io.kestra.runner.mysql;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
@@ -11,13 +13,13 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.runners.*;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.apache.commons.lang3.NotImplementedException;
 
 @Factory
 @MysqlQueueEnabled

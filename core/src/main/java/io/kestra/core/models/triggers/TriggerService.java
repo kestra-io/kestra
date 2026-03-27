@@ -1,27 +1,26 @@
 package io.kestra.core.models.triggers;
 
+import java.time.ZonedDateTime;
+import java.util.*;
+
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Output;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
-import java.time.ZonedDateTime;
-import java.util.*;
-
 public abstract class TriggerService {
     public static Execution generateExecution(
         AbstractTrigger trigger,
         ConditionContext conditionContext,
         TriggerContext context,
-        Map<String, Object> variables
-    ) {
+        Map<String, Object> variables) {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, variables, runContext.logFileURI());
 
@@ -32,8 +31,7 @@ public abstract class TriggerService {
         AbstractTrigger trigger,
         ConditionContext conditionContext,
         TriggerContext context,
-        Output output
-    ) {
+        Output output) {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output, runContext.logFileURI());
 
@@ -44,8 +42,7 @@ public abstract class TriggerService {
         AbstractTrigger trigger,
         ConditionContext conditionContext,
         TriggerContext context,
-        Output output
-    ) {
+        Output output) {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output, runContext.logFileURI());
 
@@ -59,8 +56,7 @@ public abstract class TriggerService {
         List<Label> labels,
         Map<String, Object> inputs,
         Map<String, Object> variables,
-        Optional<ZonedDateTime> scheduleDate
-    ) {
+        Optional<ZonedDateTime> scheduleDate) {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, variables);
 
@@ -96,7 +92,7 @@ public abstract class TriggerService {
 
         // add inputs and inject defaults
         if (!allInputs.isEmpty()) {
-            FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
+            FlowInputOutput flowInputOutput = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowInputOutput.class);
             execution = execution.withInputs(flowInputOutput.readExecutionInputs(conditionContext.getFlow(), execution, allInputs));
         }
 
@@ -108,8 +104,7 @@ public abstract class TriggerService {
         AbstractTrigger trigger,
         TriggerContext context,
         ExecutionTrigger executionTrigger,
-        Integer flowRevision
-    ) {
+        Integer flowRevision) {
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(trigger.getLabels()));
         if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
             // add a correlation ID if none exist

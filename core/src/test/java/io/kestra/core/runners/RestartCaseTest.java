@@ -1,34 +1,31 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.State.Type;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.ExecutionService;
-
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.Type;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static org.assertj.core.api.Assertions.assertThat;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -58,7 +55,8 @@ public class RestartCaseTest {
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> execution.getState().getCurrent() == Type.SUCCESS && execution.getId().equals(firstExecution.getId()),
-            throwRunnable(() -> {
+            throwRunnable(() ->
+            {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
@@ -97,7 +95,8 @@ public class RestartCaseTest {
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> execution.getState().getCurrent() == Type.FAILED && execution.getTaskRunList().getFirst().getAttempts().size() == 2,
-            throwRunnable(() -> {
+            throwRunnable(() ->
+            {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 executionQueue.emit(restartedExec);
 
@@ -132,7 +131,8 @@ public class RestartCaseTest {
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> execution.getState().getCurrent() == Type.FAILED && execution.findTaskRunsByTaskId("failStep").stream().findFirst().get().getAttempts().size() == 2,
-            throwRunnable(() -> {
+            throwRunnable(() ->
+            {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 executionQueue.emit(restartedExec);
 
@@ -168,7 +168,8 @@ public class RestartCaseTest {
         Execution finishedRestartedExecution = runnerUtils.awaitChildExecution(
             flow,
             firstExecution,
-            throwRunnable(() -> {
+            throwRunnable(() ->
+            {
                 Execution restartedExec = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
                 executionQueue.emit(restartedExec);
 
@@ -218,7 +219,8 @@ public class RestartCaseTest {
 
     public void restartSubflow() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either ->
+        {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isFailed()) {
                 countDownLatch.countDown();
@@ -235,7 +237,8 @@ public class RestartCaseTest {
 
         // there is 3 values so we must restart it 3 times to end the 3 subflows
         CountDownLatch successLatch = new CountDownLatch(3);
-        receiveSubflows = TestsUtils.receive(executionQueue, either -> {
+        receiveSubflows = TestsUtils.receive(executionQueue, either ->
+        {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isSuccess()) {
                 successLatch.countDown();
@@ -276,7 +279,8 @@ public class RestartCaseTest {
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> executionService.isTerminated(flow, execution) && execution.getState().isSuccess() && execution.getId().equals(firstExecution.getId()),
-            throwRunnable(() -> {
+            throwRunnable(() ->
+            {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
@@ -313,7 +317,8 @@ public class RestartCaseTest {
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> executionService.isTerminated(flow, execution) && execution.getState().isSuccess() && execution.getId().equals(firstExecution.getId()),
-            throwRunnable(() -> {
+            throwRunnable(() ->
+            {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
@@ -338,14 +343,13 @@ public class RestartCaseTest {
             .forEach(state -> assertThat(state.getCurrent()).isIn(Type.SUCCESS, Type.SKIPPED));
     }
 
-
-    public void restartOrReplayLoopUntil() throws Exception{
+    public void restartOrReplayLoopUntil() throws Exception {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "loop-until-restart").orElseThrow();
 
         Execution firstExecution = runnerUtils.runOne(MAIN_TENANT, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
-         // restarting case
+        // restarting case
         Execution restartedExecution = executionService.restart(firstExecution, null);
         assertThat(restartedExecution).isNotNull();
         assertThat(restartedExecution.getId()).isEqualTo(firstExecution.getId());
@@ -362,7 +366,6 @@ public class RestartCaseTest {
             .filter(history -> history.getState() == Type.RESTARTED).findFirst().get();
         assertThat(lastRestarted1).isNotNull();
         assertThat(lastRestarted1.getDate().plus(3, ChronoUnit.SECONDS)).isBefore(lastState1.getDate());
-
 
         // replaying case
         Execution replayedExecution = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("loop_test", List.of()).getId(), null);

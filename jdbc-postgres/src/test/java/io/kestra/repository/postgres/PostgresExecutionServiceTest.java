@@ -1,12 +1,14 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.repositories.AbstractExecutionServiceTest;
-import io.kestra.jdbc.JdbcTestUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
+
+import org.junit.jupiter.api.BeforeEach;
+
+import io.kestra.core.repositories.AbstractExecutionServiceTest;
+import io.kestra.jdbc.JdbcTestUtils;
+
+import jakarta.inject.Inject;
 
 class PostgresExecutionServiceTest extends AbstractExecutionServiceTest {
     @Inject

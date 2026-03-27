@@ -1,16 +1,16 @@
 package io.kestra.plugin.scripts.runner.docker;
 
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
-import io.kestra.core.models.tasks.runners.TaskCommands;
-import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
+import java.util.Collections;
+import java.util.List;
+
 import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.List;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
+import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -30,10 +30,14 @@ class DockerTest extends AbstractTaskRunnerTest {
             .pullPolicy(Property.ofValue(PullPolicy.ALWAYS))
             .build();
 
-        var taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
-            "/bin/sh", "-c",
-            "echo Hello World!"
-        )));
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(
+                List.of(
+                    "/bin/sh", "-c",
+                    "echo Hello World!"
+                )
+            )
+        );
         var result = docker.run(runContext, taskCommands, Collections.emptyList());
 
         assertThat(result).isNotNull();
@@ -54,11 +58,15 @@ class DockerTest extends AbstractTaskRunnerTest {
             .cpu(cpuConfig)
             .build();
 
-        var taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
-                "/bin/sh", "-c",
-                "CPU_LIMIT=$(cat /sys/fs/cgroup/cpu.max || cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us) && " +
-                    "echo \"::{\\\"outputs\\\":{\\\"cpuLimit\\\":\\\"$CPU_LIMIT\\\"}}::\""
-            )));
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(
+                List.of(
+                    "/bin/sh", "-c",
+                    "CPU_LIMIT=$(cat /sys/fs/cgroup/cpu.max || cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us) && " +
+                        "echo \"::{\\\"outputs\\\":{\\\"cpuLimit\\\":\\\"$CPU_LIMIT\\\"}}::\""
+                )
+            )
+        );
         var result = docker.run(runContext, taskCommands, Collections.emptyList());
 
         assertThat(result).isNotNull();

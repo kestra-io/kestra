@@ -1,16 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import com.google.common.io.CharStreams;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.Rethrow;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -21,6 +10,20 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Test;
+
+import com.google.common.io.CharStreams;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Rethrow;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,7 +98,6 @@ class SplitTest {
             .map(Rethrow.throwFunction(uri -> CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, uri)))))
             .collect(Collectors.joining());
     }
-
 
     URI storageUpload(int count) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("unit", "");

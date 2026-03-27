@@ -1,23 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.State.Type;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.apache.commons.lang3.StringUtils;
-import reactor.core.publisher.Flux;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,6 +13,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.Type;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.TestsUtils;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -103,14 +105,15 @@ public class FlowConcurrencyCaseTest {
         assertThat(execution1.getState().isRunning()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
-        var executionResult1  = new AtomicReference<Execution>();
-        var executionResult2  = new AtomicReference<Execution>();
+        var executionResult1 = new AtomicReference<Execution>();
+        var executionResult2 = new AtomicReference<Execution>();
 
         CountDownLatch latch1 = new CountDownLatch(1);
         CountDownLatch latch2 = new CountDownLatch(1);
         CountDownLatch latch3 = new CountDownLatch(1);
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e ->
+        {
             if (e.getLeft().getId().equals(execution1.getId())) {
                 executionResult1.set(e.getLeft());
                 if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
@@ -144,10 +147,11 @@ public class FlowConcurrencyCaseTest {
     public void flowConcurrencyWithForEachItem(String tenantId) throws QueueException, URISyntaxException, IOException, TimeoutException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution forEachItem = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-for-each-item", null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5));
+        Execution forEachItem = runnerUtils.runOneUntilRunning(
+            tenantId, NAMESPACE, "flow-concurrency-for-each-item", null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5)
+        );
         assertThat(forEachItem.getState().getCurrent()).isEqualTo(Type.RUNNING);
-
 
         Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), Duration.ofSeconds(60));
         assertThat(terminated.getState().getCurrent()).isEqualTo(Type.SUCCESS);
@@ -155,16 +159,20 @@ public class FlowConcurrencyCaseTest {
         List<Execution> executions = runnerUtils.awaitFlowExecutionNumber(2, tenantId, NAMESPACE, "flow-concurrency-queue");
 
         assertThat(executions).extracting(e -> e.getState().getCurrent()).containsOnly(Type.SUCCESS);
-        assertThat(executions.stream()
-            .map(e -> e.getState().getHistories())
-            .flatMap(List::stream)
-            .map(State.History::getState)
-            .toList()).contains(Type.QUEUED);
+        assertThat(
+            executions.stream()
+                .map(e -> e.getState().getHistories())
+                .flatMap(List::stream)
+                .map(State.History::getState)
+                .toList()
+        ).contains(Type.QUEUED);
     }
 
     public void flowConcurrencyQueueRestarted(String tenantId) throws Exception {
-        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE,
-            "flow-concurrency-queue-fail", null, null, Duration.ofSeconds(30));
+        Execution execution1 = runnerUtils.runOneUntilRunning(
+            tenantId, NAMESPACE,
+            "flow-concurrency-queue-fail", null, null, Duration.ofSeconds(30)
+        );
         Flow flow = flowRepository
             .findById(tenantId, NAMESPACE, "flow-concurrency-queue-fail", Optional.empty())
             .orElseThrow();
@@ -174,15 +182,16 @@ public class FlowConcurrencyCaseTest {
         assertThat(execution1.getState().isRunning()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
-        var executionResult1  = new AtomicReference<Execution>();
-        var executionResult2  = new AtomicReference<Execution>();
+        var executionResult1 = new AtomicReference<Execution>();
+        var executionResult2 = new AtomicReference<Execution>();
 
         CountDownLatch latch1 = new CountDownLatch(2);
         AtomicReference<Execution> failedExecution = new AtomicReference<>();
         CountDownLatch latch2 = new CountDownLatch(1);
         CountDownLatch latch3 = new CountDownLatch(1);
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e ->
+        {
             if (e.getLeft().getId().equals(execution1.getId())) {
                 executionResult1.set(e.getLeft());
                 if (e.getLeft().getState().getCurrent() == Type.FAILED) {
@@ -234,14 +243,15 @@ public class FlowConcurrencyCaseTest {
         assertThat(execution1.getState().isRunning()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
-        var executionResult1  = new AtomicReference<Execution>();
-        var executionResult2  = new AtomicReference<Execution>();
+        var executionResult1 = new AtomicReference<Execution>();
+        var executionResult2 = new AtomicReference<Execution>();
 
         CountDownLatch latch1 = new CountDownLatch(1);
         CountDownLatch latch2 = new CountDownLatch(1);
         CountDownLatch latch3 = new CountDownLatch(1);
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e ->
+        {
             if (e.getLeft().getId().equals(execution1.getId())) {
                 executionResult1.set(e.getLeft());
                 if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
@@ -275,7 +285,8 @@ public class FlowConcurrencyCaseTest {
     public void flowConcurrencySubflow(String tenantId) throws TimeoutException, QueueException, InterruptedException {
         CountDownLatch successLatch = new CountDownLatch(1);
         CountDownLatch canceledLatch = new CountDownLatch(1);
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e ->
+        {
             if (e.getLeft().getFlowId().equals("flow-concurrency-cancel")) {
                 if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
                     successLatch.countDown();
@@ -301,7 +312,8 @@ public class FlowConcurrencyCaseTest {
 
         // run another execution to be sure that everything work (purge is correctly done)
         CountDownLatch newSuccessLatch = new CountDownLatch(1);
-        Flux<Execution> secondReceive = TestsUtils.receive(executionQueue, e -> {
+        Flux<Execution> secondReceive = TestsUtils.receive(executionQueue, e ->
+        {
             if (e.getLeft().getFlowId().equals("flow-concurrency-cancel")) {
                 if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
                     newSuccessLatch.countDown();

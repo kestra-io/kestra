@@ -1,17 +1,11 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Output;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.State.History;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.SubflowExecutionResult;
-import io.kestra.core.runners.Services;
-import io.kestra.core.services.VariablesService;
-import io.micronaut.context.ApplicationContext;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,11 +17,19 @@ import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.History;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.Services;
+import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.services.VariablesService;
+
+import io.micronaut.context.ApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,7 +40,10 @@ class SubflowTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(SubflowTest.class);
 
-    private static final State DEFAULT_SUCCESS_STATE = State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now())));
+    private static final State DEFAULT_SUCCESS_STATE = State.of(
+        State.Type.SUCCESS,
+        List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now()))
+    );
     public static final String EXECUTION_ID = "executionId";
 
     @Mock
@@ -123,7 +128,6 @@ class SubflowTest {
 
         Map<String, Object> outputs = Map.of("key", "value");
         Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(outputs);
-
 
         Subflow subflow = Subflow.builder()
             .outputs(outputs)

@@ -2,6 +2,7 @@ package io.kestra.core.exceptions;
 
 import java.io.Serial;
 import java.util.List;
+
 import lombok.Getter;
 
 /**
@@ -25,9 +26,8 @@ public class ValidationErrorException extends KestraRuntimeException {
         this.invalids = invalids;
     }
 
-
-    public String formatedInvalidObjects(){
-        if (invalids == null || invalids.isEmpty()){
+    public String formatedInvalidObjects() {
+        if (invalids == null || invalids.isEmpty()) {
             return VALIDATION_ERROR_MESSAGE;
         }
         return String.join(", ", invalids);

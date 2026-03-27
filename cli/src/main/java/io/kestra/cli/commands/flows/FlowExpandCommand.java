@@ -1,14 +1,15 @@
 package io.kestra.cli.commands.flows;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
+
 import jakarta.inject.Inject;
 import picocli.CommandLine;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "expand",

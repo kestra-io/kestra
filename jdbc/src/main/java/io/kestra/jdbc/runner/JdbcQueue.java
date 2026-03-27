@@ -1,33 +1,5 @@
 package io.kestra.jdbc.runner;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.CaseFormat;
-import com.google.common.collect.Iterables;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.*;
-import io.kestra.core.utils.Either;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JdbcTableConfigs;
-import io.kestra.jdbc.JdbcMapper;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Timer;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.exception.DataException;
-import org.jooq.impl.DSL;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -39,6 +11,36 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.exception.DataException;
+import org.jooq.impl.DSL;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.CaseFormat;
+import com.google.common.collect.Iterables;
+
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.queues.*;
+import io.kestra.core.utils.Either;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.jdbc.JdbcMapper;
+import io.kestra.jdbc.JdbcTableConfigs;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
@@ -112,10 +114,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
+                throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
             }
         }
-
 
         Map<Field<Object>, Object> fields = new HashMap<>();
         fields.put(AbstractJdbcRepository.field("type"), queueType());
@@ -137,7 +138,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Map<Field<Object>, Object> fields = this.produceFields(consumerGroup, key, message);
 
         try {
-            dslContextWrapper.transaction(configuration -> {
+            dslContextWrapper.transaction(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 if (!skipIndexer) {
@@ -158,14 +160,14 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             throw new QueueException("Unable to emit a message to the queue", e);
         }
 
-        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
-            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        String[] tags = consumerGroup == null ? new String[] { MetricRegistry.TAG_QUEUE_TYPE, queueType() }
+            : new String[] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
         metricRegistry
             .counter(MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT, MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION, tags)
             .increment();
     }
 
-    public void emitOnly(String consumerGroup, T message) throws QueueException{
+    public void emitOnly(String consumerGroup, T message) throws QueueException {
         this.produce(consumerGroup, queueService.key(message), message, true);
     }
 
@@ -191,7 +193,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
      * This is used to purge a queue for a specific key.
      */
     public void deleteByKey(String key) throws QueueException {
-        dslContextWrapper.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration ->
+        {
             int deleted = DSL
                 .using(configuration)
                 .delete(this.table)
@@ -212,8 +215,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
      */
     public void deleteByKeys(List<String> keys) throws QueueException {
         // process in batches of 100 items to avoid too big IN clausecQueue
-        Iterables.partition(keys, 100).forEach(batch -> {
-            dslContextWrapper.transaction(configuration -> {
+        Iterables.partition(keys, 100).forEach(batch ->
+        {
+            dslContextWrapper.transaction(configuration ->
+            {
                 int deleted = DSL
                     .using(configuration)
                     .delete(this.table)
@@ -231,9 +236,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Long offset, boolean forUpdate) {
         var select = ctx.select(
-                AbstractJdbcRepository.field("value"),
-                AbstractJdbcRepository.field("offset")
-            )
+            AbstractJdbcRepository.field("value"),
+            AbstractJdbcRepository.field("offset")
+        )
             .from(this.table)
             .where(buildTypeCondition(queueType()));
 
@@ -273,8 +278,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
-        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
-            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        String[] tags = consumerGroup == null ? new String[] { MetricRegistry.TAG_QUEUE_TYPE, queueType() }
+            : new String[] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
         AtomicInteger pollSize = new AtomicInteger();
         this.metricRegistry
             .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
@@ -282,7 +287,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         AtomicLong maxOffset = new AtomicLong();
 
         // fetch max offset
-        dslContextWrapper.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration ->
+        {
             var select = DSL
                 .using(configuration)
                 .select(DSL.max(AbstractJdbcRepository.field("offset")).as("max"))
@@ -302,8 +308,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         Timer timer = this.metricRegistry
             .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
-        return this.poll(() -> timer.record(() -> {
-            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
+        return this.poll(() -> timer.record(() ->
+        {
+            Result<Record> fetch = dslContextWrapper.transactionResult(configuration ->
+            {
                 DSLContext ctx = DSL.using(configuration);
 
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
@@ -329,7 +337,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.receiveImpl(
             consumerGroup,
             queueType,
-            (dslContext, eithers) -> {
+            (dslContext, eithers) ->
+            {
                 eithers.forEach(consumer);
             },
             false,
@@ -349,7 +358,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.receiveImpl(
             consumerGroup,
             queueType,
-            (dslContext, eithers) -> {
+            (dslContext, eithers) ->
+            {
                 consumer.accept(eithers);
             },
             false,
@@ -372,19 +382,20 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Class<?> queueType,
         BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer,
         Boolean inTransaction,
-        boolean forUpdate
-    ) {
+        boolean forUpdate) {
         String queueName = queueName(queueType);
-        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName } :
-            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName, MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        String[] tags = consumerGroup == null ? new String[] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName }
+            : new String[] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName, MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
         AtomicInteger pollSize = new AtomicInteger();
         this.metricRegistry
             .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
 
         Timer timer = this.metricRegistry
             .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
-        return this.poll(() -> timer.record(() -> {
-            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
+        return this.poll(() -> timer.record(() ->
+        {
+            Result<Record> fetch = dslContextWrapper.transactionResult(configuration ->
+            {
                 DSLContext ctx = DSL.using(configuration);
 
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
@@ -404,13 +415,14 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             if (!inTransaction) {
                 consumer.accept(null, this.map(fetch));
-                dslContextWrapper.transaction(configuration ->
-                    this.updateGroupOffsets(
+                dslContextWrapper.transaction(
+                    configuration -> this.updateGroupOffsets(
                         DSL.using(configuration),
                         consumerGroup,
                         queueName,
                         fetch.map(record -> record.get("offset", Long.class))
-                    ));
+                    )
+                );
             }
 
             pollSize.set(fetch.size());
@@ -429,7 +441,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     protected Runnable poll(Supplier<Integer> runnable) {
         AtomicBoolean running = new AtomicBoolean(true);
 
-        poolExecutor.execute(() -> {
+        poolExecutor.execute(() ->
+        {
             List<Configuration.Step> steps = configuration.computeSteps();
             Duration sleep = configuration.minPollInterval;
             ZonedDateTime lastPoll = ZonedDateTime.now();
@@ -479,7 +492,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {
         return fetch
-            .map(record -> {
+            .map(record ->
+            {
                 try {
                     return Either.left(MAPPER.readValue(record.get("value", String.class), cls));
                 } catch (JsonProcessingException e) {
@@ -542,7 +556,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             return steps;
         }
 
-        public record Step (Duration pollInterval, Duration switchInterval) implements Comparable<Step> {
+        public record Step(Duration pollInterval, Duration switchInterval) implements Comparable<Step> {
             @Override
             public int compareTo(Step o) {
                 return this.switchInterval.compareTo(o.switchInterval);

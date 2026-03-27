@@ -1,6 +1,19 @@
 package io.kestra.core.utils;
 
+import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
@@ -11,21 +24,11 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.plugin.core.log.Log;
+
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.nio.file.Path;
-import java.util.stream.Collectors;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-
-import java.io.ByteArrayInputStream;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -132,10 +135,12 @@ class NamespaceFilesUtilsTest {
         storageInterface.put(MAIN_TENANT, ns1, toNamespacedStorageUri(ns1, URI.create("/test.txt")), data);
         storageInterface.put(MAIN_TENANT, ns2, toNamespacedStorageUri(ns2, URI.create("/test.txt")), data);
 
-        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder()
-            .namespaces(Property.ofValue(List.of(ns1, ns2)))
-            .folderPerNamespace(Property.ofValue(true))
-            .build());
+        namespaceFilesUtils.loadNamespaceFiles(
+            runContext, NamespaceFiles.builder()
+                .namespaces(Property.ofValue(List.of(ns1, ns2)))
+                .folderPerNamespace(Property.ofValue(true))
+                .build()
+        );
 
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();

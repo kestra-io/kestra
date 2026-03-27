@@ -1,9 +1,5 @@
 package io.kestra.core.storages;
 
-import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -13,6 +9,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.annotation.Nullable;
 
 /**
  * The default {@link Namespace} implementation.
@@ -34,7 +35,7 @@ public class InternalNamespace implements Namespace {
      * Creates a new {@link InternalNamespace} instance.
      *
      * @param namespace The namespace
-     * @param storage   The storage.
+     * @param storage The storage.
      */
     public InternalNamespace(@Nullable final String tenant, final String namespace, final StorageInterface storage) {
         this(LOG, tenant, namespace, storage);
@@ -43,10 +44,10 @@ public class InternalNamespace implements Namespace {
     /**
      * Creates a new {@link InternalNamespace} instance.
      *
-     * @param logger    The logger to be used by this class.
+     * @param logger The logger to be used by this class.
      * @param namespace The namespace
-     * @param tenant    The tenant.
-     * @param storage   The storage.
+     * @param tenant The tenant.
+     * @param storage The storage.
      */
     public InternalNamespace(final Logger logger, @Nullable final String tenant, final String namespace, final StorageInterface storage) {
         this.logger = Objects.requireNonNull(logger, "logger cannot be null");
@@ -89,7 +90,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> all(final String prefix, final boolean includeDirectories) throws IOException {
-        URI namespacePrefix = URI.create(NamespaceFile.of(namespace, Optional.ofNullable(prefix).map(Path::of).orElse(null)).storagePath().toString().replace("\\","/") + "/");
+        URI namespacePrefix = URI.create(NamespaceFile.of(namespace, Optional.ofNullable(prefix).map(Path::of).orElse(null)).storagePath().toString().replace("\\", "/") + "/");
         return storage.allByPrefix(tenant, namespace, namespacePrefix, includeDirectories)
             .stream()
             .map(uri -> new NamespaceFile(relativize(uri), uri, namespace))
@@ -142,17 +143,21 @@ public class InternalNamespace implements Namespace {
                 URI uri = storage.put(tenant, namespace, cleanUri, content);
                 NamespaceFile namespaceFile = new NamespaceFile(relativize(uri), uri, namespace);
                 if (exists) {
-                    logger.debug(String.format(
-                        "File '%s' overwritten into namespace '%s'.",
-                        path,
-                        namespace
-                    ));
+                    logger.debug(
+                        String.format(
+                            "File '%s' overwritten into namespace '%s'.",
+                            path,
+                            namespace
+                        )
+                    );
                 } else {
-                    logger.debug(String.format(
-                        "File '%s' added to namespace '%s'.",
-                        path,
-                        namespace
-                    ));
+                    logger.debug(
+                        String.format(
+                            "File '%s' added to namespace '%s'.",
+                            path,
+                            namespace
+                        )
+                    );
                 }
                 yield namespaceFile;
             }
@@ -161,31 +166,37 @@ public class InternalNamespace implements Namespace {
                     URI uri = storage.put(tenant, namespace, namespaceFilesPrefix.toUri(), content);
                     yield new NamespaceFile(relativize(uri), uri, namespace);
                 } else {
-                    throw new IOException(String.format(
-                        "File '%s' already exists in namespace '%s' and conflict is set to %s",
-                        path,
-                        namespace,
-                        Conflicts.ERROR
-                    ));
+                    throw new IOException(
+                        String.format(
+                            "File '%s' already exists in namespace '%s' and conflict is set to %s",
+                            path,
+                            namespace,
+                            Conflicts.ERROR
+                        )
+                    );
                 }
             }
             case SKIP -> {
                 if (!exists) {
                     URI uri = storage.put(tenant, namespace, namespaceFilesPrefix.toUri(), content);
                     NamespaceFile namespaceFile = new NamespaceFile(relativize(uri), uri, namespace);
-                    logger.debug(String.format(
-                        "File '%s' added to namespace '%s'.",
-                        path,
-                        namespace
-                    ));
+                    logger.debug(
+                        String.format(
+                            "File '%s' added to namespace '%s'.",
+                            path,
+                            namespace
+                        )
+                    );
                     yield namespaceFile;
                 } else {
-                    logger.debug(String.format(
-                        "File '%s' already exists in namespace '%s' and conflict is set to %s. Skipping.",
-                        path,
-                        namespace,
-                        Conflicts.SKIP
-                    ));
+                    logger.debug(
+                        String.format(
+                            "File '%s' already exists in namespace '%s' and conflict is set to %s. Skipping.",
+                            path,
+                            namespace,
+                            Conflicts.SKIP
+                        )
+                    );
                     URI uri = URI.create(StorageContext.KESTRA_PROTOCOL + namespaceFilesPrefix);
                     yield new NamespaceFile(relativize(uri), uri, namespace);
                 }
@@ -206,6 +217,6 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public boolean delete(Path path) throws IOException {
-        return storage.delete(tenant, namespace, URI.create(path.toString().replace("\\","/")));
+        return storage.delete(tenant, namespace, URI.create(path.toString().replace("\\", "/")));
     }
 }

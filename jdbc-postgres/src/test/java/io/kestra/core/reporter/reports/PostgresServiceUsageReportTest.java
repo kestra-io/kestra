@@ -4,5 +4,5 @@ import io.kestra.core.junit.annotations.KestraTest;
 
 @KestraTest
 class PostgresServiceUsageReportTest extends AbstractServiceUsageReportTest {
-    
+
 }

@@ -1,14 +1,14 @@
 package io.kestra.core.repositories;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import java.util.Collections;
 
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 
-import java.time.Duration;
-import java.util.Collections;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 class ExecutionFixture {
     public static final Execution EXECUTION_1 = Execution.builder()
@@ -19,21 +19,29 @@ class ExecutionFixture {
         .flowRevision(1)
         .state(new State())
         .inputs(ImmutableMap.of("test", "value"))
-        .taskRunList(Collections.singletonList(
-            TaskRun.builder()
-                .id(IdUtils.create())
-                .namespace("io.kestra.unittest")
-                .flowId("full")
-                .state(new State())
-                .attempts(Collections.singletonList(
-                    TaskRunAttempt.builder()
-                        .build()
-                ))
-                .outputs(Variables.inMemory(ImmutableMap.of(
-                    "out", "value"
-                )))
-                .build()
-        ))
+        .taskRunList(
+            Collections.singletonList(
+                TaskRun.builder()
+                    .id(IdUtils.create())
+                    .namespace("io.kestra.unittest")
+                    .flowId("full")
+                    .state(new State())
+                    .attempts(
+                        Collections.singletonList(
+                            TaskRunAttempt.builder()
+                                .build()
+                        )
+                    )
+                    .outputs(
+                        Variables.inMemory(
+                            ImmutableMap.of(
+                                "out", "value"
+                            )
+                        )
+                    )
+                    .build()
+            )
+        )
         .build();
 
     public static final Execution EXECUTION_2 = Execution.builder()
@@ -44,21 +52,29 @@ class ExecutionFixture {
         .flowRevision(1)
         .state(new State())
         .inputs(ImmutableMap.of("test", 1))
-        .taskRunList(Collections.singletonList(
-            TaskRun.builder()
-                .id(IdUtils.create())
-                .namespace("io.kestra.unittest")
-                .flowId("full")
-                .state(new State())
-                .attempts(Collections.singletonList(
-                    TaskRunAttempt.builder()
-                        .build()
-                ))
-                .outputs(Variables.inMemory(ImmutableMap.of(
-                    "out", 1
-                )))
-                .build()
-        ))
+        .taskRunList(
+            Collections.singletonList(
+                TaskRun.builder()
+                    .id(IdUtils.create())
+                    .namespace("io.kestra.unittest")
+                    .flowId("full")
+                    .state(new State())
+                    .attempts(
+                        Collections.singletonList(
+                            TaskRunAttempt.builder()
+                                .build()
+                        )
+                    )
+                    .outputs(
+                        Variables.inMemory(
+                            ImmutableMap.of(
+                                "out", 1
+                            )
+                        )
+                    )
+                    .build()
+            )
+        )
         .build();
 
     public static final Execution EXECUTION_TEST = Execution.builder()
@@ -69,20 +85,28 @@ class ExecutionFixture {
         .state(new State())
         .inputs(ImmutableMap.of("test", 1))
         .kind(ExecutionKind.TEST)
-        .taskRunList(Collections.singletonList(
-            TaskRun.builder()
-                .id(IdUtils.create())
-                .namespace("io.kestra.unittest")
-                .flowId("full")
-                .state(new State())
-                .attempts(Collections.singletonList(
-                    TaskRunAttempt.builder()
-                        .build()
-                ))
-                .outputs(Variables.inMemory(ImmutableMap.of(
-                    "out", 1
-                )))
-                .build()
-        ))
+        .taskRunList(
+            Collections.singletonList(
+                TaskRun.builder()
+                    .id(IdUtils.create())
+                    .namespace("io.kestra.unittest")
+                    .flowId("full")
+                    .state(new State())
+                    .attempts(
+                        Collections.singletonList(
+                            TaskRunAttempt.builder()
+                                .build()
+                        )
+                    )
+                    .outputs(
+                        Variables.inMemory(
+                            ImmutableMap.of(
+                                "out", 1
+                            )
+                        )
+                    )
+                    .build()
+            )
+        )
         .build();
 }

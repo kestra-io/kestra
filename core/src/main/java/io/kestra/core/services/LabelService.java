@@ -1,18 +1,19 @@
 package io.kestra.core.services;
 
+import java.util.*;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
+
 import jakarta.annotation.Nullable;
 
-import java.util.*;
-
-
 public final class LabelService {
-    private LabelService() {}
+    private LabelService() {
+    }
 
     /**
      * Return flow labels excluding system labels.
@@ -56,7 +57,7 @@ public final class LabelService {
     }
 
     public static boolean containsAll(@Nullable List<Label> labelsContainer, @Nullable List<Label> labelsThatMustBeIncluded) {
-        Map<String, String> labelsContainerMap = ListUtils.emptyOnNull(labelsContainer).stream().collect(HashMap::new, (m, label)-> m.put(label.key(), label.value()), HashMap::putAll);
+        Map<String, String> labelsContainerMap = ListUtils.emptyOnNull(labelsContainer).stream().collect(HashMap::new, (m, label) -> m.put(label.key(), label.value()), HashMap::putAll);
 
         return ListUtils.emptyOnNull(labelsThatMustBeIncluded).stream().allMatch(label -> Objects.equals(labelsContainerMap.get(label.key()), label.value()));
     }

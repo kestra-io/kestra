@@ -1,8 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
@@ -10,6 +11,7 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.webserver.controllers.api.MiscController.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -19,9 +21,10 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import java.util.List;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
@@ -74,22 +77,29 @@ class MiscControllerTest {
 
             assertThat(response).containsExactly("error1", "error2");
         } finally {
-            if (settingRepository.findByKey(BASIC_AUTH_ERROR_CONFIG).isPresent()){
+            if (settingRepository.findByKey(BASIC_AUTH_ERROR_CONFIG).isPresent()) {
                 settingRepository.delete(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).build());
             }
         }
     }
 
     @Test
-    void saveInvalidBasicAuthConfig(){
+    void saveInvalidBasicAuthConfig() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth",
-                new BasicAuthCredentials("uid", "invalid", "invalid"))));
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/basicAuth",
+                    new BasicAuthCredentials("uid", "invalid", "invalid")
+                )
+            )
+        );
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(e.getResponse().getBody(JsonError.class)).isPresent();
         JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
-        assertThat(jsonError.getMessage()).isEqualTo("Invalid username for Basic Authentication. Please provide a valid email address., Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number: Resource fails validation");
+        assertThat(jsonError.getMessage()).isEqualTo(
+            "Invalid username for Basic Authentication. Please provide a valid email address., Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number: Resource fails validation"
+        );
     }
 
     @Test
@@ -113,10 +123,12 @@ class MiscControllerTest {
                     MiscController.Configuration.class
                 )
             );
-            Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/main/dashboards")
-                    .basicAuth(username, password),
-                MiscController.Configuration.class)
+            Assertions.assertDoesNotThrow(
+                () -> client.toBlocking().retrieve(
+                    HttpRequest.GET("/api/v1/main/dashboards")
+                        .basicAuth(username, password),
+                    MiscController.Configuration.class
+                )
             );
         } finally {
             basicAuthService.save(basicAuthConfiguration);

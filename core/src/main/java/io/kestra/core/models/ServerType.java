@@ -1,6 +1,6 @@
 package io.kestra.core.models;
 
-public enum  ServerType {
+public enum ServerType {
     EXECUTOR,
     INDEXER,
     SCHEDULER,

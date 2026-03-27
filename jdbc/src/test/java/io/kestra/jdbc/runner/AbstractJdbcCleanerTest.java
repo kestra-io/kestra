@@ -1,5 +1,11 @@
 package io.kestra.jdbc.runner;
 
+import java.time.Duration;
+import java.time.Instant;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueException;
@@ -8,18 +14,14 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-@KestraTest(environments = {"test", "cleaner"}, startRunner = true, startWorker = false)
+@KestraTest(environments = { "test", "cleaner" }, startRunner = true, startWorker = false)
 public abstract class AbstractJdbcCleanerTest {
     @Inject
     private JdbcCleaner cleaner;
@@ -51,7 +53,6 @@ public abstract class AbstractJdbcCleanerTest {
         long deleted = cleaner.deleteQueue();
         assertThat(deleted).isGreaterThanOrEqualTo(5); // we cannot be sure in CI to have the exact count so that's the best we can do
     }
-
 
     private LogEntry logEntry() {
         return LogEntry.builder()

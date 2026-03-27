@@ -1,16 +1,16 @@
 package io.kestra.core.models.flows.input;
 
+import java.net.URI;
+import java.util.List;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.validations.FileInputValidation;
+
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @SuperBuilder
 @Getter

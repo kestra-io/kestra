@@ -1,11 +1,18 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.Regex;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
@@ -14,12 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
-
 @SuperBuilder
 @Getter
 @NoArgsConstructor
@@ -27,7 +28,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     @Schema(
         title = "Deprecated, please use `values` instead."
     )
-//    @NotNull
+    //    @NotNull
     @Deprecated
     List<@Regex String> options;
 
@@ -49,7 +50,6 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     )
     @Builder.Default
     private Type itemType = Type.STRING;
-
 
     @Schema(
         title = "If the user can provide customs value."

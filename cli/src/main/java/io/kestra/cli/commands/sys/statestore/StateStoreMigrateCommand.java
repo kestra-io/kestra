@@ -1,5 +1,13 @@
 package io.kestra.cli.commands.sys.statestore;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -8,18 +16,11 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 @CommandLine.Command(
     name = "migrate",
@@ -39,16 +40,22 @@ public class StateStoreMigrateCommand extends AbstractCommand {
         StorageInterface storageInterface = this.applicationContext.getBean(StorageInterface.class);
         RunContextFactory runContextFactory = this.applicationContext.getBean(RunContextFactory.class);
 
-        flowRepository.findAllForAllTenants().stream().map(flow -> Map.entry(flow, List.of(
-            URI.create("/" + flow.getNamespace().replace(".", "/") + "/" + Slugify.of(flow.getId()) + "/states"),
-            URI.create("/" + flow.getNamespace().replace(".", "/") + "/states")
-        ))).map(potentialStateStoreUrisForAFlow -> Map.entry(potentialStateStoreUrisForAFlow.getKey(), potentialStateStoreUrisForAFlow.getValue().stream().flatMap(uri -> {
+        flowRepository.findAllForAllTenants().stream().map(
+            flow -> Map.entry(
+                flow, List.of(
+                    URI.create("/" + flow.getNamespace().replace(".", "/") + "/" + Slugify.of(flow.getId()) + "/states"),
+                    URI.create("/" + flow.getNamespace().replace(".", "/") + "/states")
+                )
+            )
+        ).map(potentialStateStoreUrisForAFlow -> Map.entry(potentialStateStoreUrisForAFlow.getKey(), potentialStateStoreUrisForAFlow.getValue().stream().flatMap(uri ->
+        {
             try {
                 return storageInterface.allByPrefix(potentialStateStoreUrisForAFlow.getKey().getTenantId(), potentialStateStoreUrisForAFlow.getKey().getNamespace(), uri, false).stream();
             } catch (IOException e) {
                 return Stream.empty();
             }
-        }).toList())).forEach(stateStoreFileUrisForAFlow -> stateStoreFileUrisForAFlow.getValue().forEach(stateStoreFileUri -> {
+        }).toList())).forEach(stateStoreFileUrisForAFlow -> stateStoreFileUrisForAFlow.getValue().forEach(stateStoreFileUri ->
+        {
             Flow flow = stateStoreFileUrisForAFlow.getKey();
             String[] flowQualifierWithStateQualifiers = stateStoreFileUri.getPath().split("/states/");
             String[] statesUriPart = flowQualifierWithStateQualifiers[1].split("/");

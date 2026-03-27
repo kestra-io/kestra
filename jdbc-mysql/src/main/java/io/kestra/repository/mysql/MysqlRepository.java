@@ -1,16 +1,10 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.queues.QueueService;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import io.kestra.jdbc.JdbcTableConfig;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.Sort.Order;
-import jakarta.inject.Inject;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -21,10 +15,18 @@ import org.jooq.Select;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import io.kestra.core.queues.QueueService;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.jdbc.AbstractJdbcRepository;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.Sort.Order;
+import jakarta.inject.Inject;
 
 @SuppressWarnings("this-escape")
 @MysqlRepositoryEnabled
@@ -33,8 +35,8 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 
     @Inject
     public MysqlRepository(@Parameter JdbcTableConfig jdbcTableConfig,
-                           QueueService queueService,
-                           JooqDSLContextWrapper dslContextWrapper) {
+        QueueService queueService,
+        JooqDSLContextWrapper dslContextWrapper) {
         super(jdbcTableConfig, queueService, dslContextWrapper);
         this.table = DSL.table(DSL.quotedName(this.getTable().getName()));
     }
@@ -67,7 +69,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
     }
 
     @Override
-    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField){
+    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField) {
         return this.sort(select, Pageable.from(Sort.of(Order.asc(orderField))));
     }
 

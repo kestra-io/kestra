@@ -1,19 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.serializers.JacksonMapper;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,7 +7,23 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -118,7 +120,8 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
             if (this.files instanceof List<?> listValue) {
                 finalFiles = (List<String>) listValue;
             } else if (this.files instanceof String stringValue) {
-                final TypeReference<List<String>> reference = new TypeReference<>() {};
+                final TypeReference<List<String>> reference = new TypeReference<>() {
+                };
 
                 finalFiles = JacksonMapper.ofJson(false).readValue(
                     runContext.render(stringValue),
@@ -128,7 +131,8 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
                 throw new Exception("Invalid `files` properties with type '" + this.files.getClass() + "'");
             }
 
-            finalFiles.forEach(throwConsumer(s -> {
+            finalFiles.forEach(throwConsumer(s ->
+            {
                 URI from = new URI(runContext.render(s));
                 try (InputStream inputStream = runContext.storage().getFile(from)) {
                     IOUtils.copyLarge(inputStream, fileOutputStream);

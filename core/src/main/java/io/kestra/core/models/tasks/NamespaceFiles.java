@@ -1,15 +1,16 @@
 package io.kestra.core.models.tasks;
 
+import java.util.List;
+
 import io.kestra.core.models.property.Property;
+
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
-import jakarta.validation.Valid;
 import lombok.extern.jackson.Jacksonized;
 
 @Builder

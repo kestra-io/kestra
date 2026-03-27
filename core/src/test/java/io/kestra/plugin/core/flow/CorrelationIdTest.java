@@ -1,6 +1,15 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -9,17 +18,10 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.LoadFlows;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,15 +36,18 @@ class CorrelationIdTest {
     private RunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows({"flows/valids/subflow-parent.yaml",
-        "flows/valids/subflow-child.yaml",
-        "flows/valids/subflow-grand-child.yaml"})
+    @LoadFlows(
+        { "flows/valids/subflow-parent.yaml",
+            "flows/valids/subflow-child.yaml",
+            "flows/valids/subflow-grand-child.yaml" }
+    )
     void shouldHaveCorrelationId() throws QueueException, TimeoutException, InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
         AtomicReference<Execution> child = new AtomicReference<>();
         AtomicReference<Execution> grandChild = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("subflow-child") && execution.getState().getCurrent().isTerminated()) {
                 child.set(execution);

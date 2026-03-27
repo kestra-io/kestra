@@ -1,19 +1,5 @@
 package io.kestra.plugin.scripts.runner.docker;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.NameParser;
-import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
-import com.github.dockerjava.transport.DockerHttpClient;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.MapUtils;
-import org.apache.commons.lang3.SystemUtils;
-
-import jakarta.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -22,6 +8,23 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.SystemUtils;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.NameParser;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.MapUtils;
+
+import jakarta.annotation.Nullable;
 
 public class DockerService {
     public static DockerClient client(DockerClientConfig dockerClientConfig) {
@@ -51,7 +54,8 @@ public class DockerService {
         return "unix:///dind/docker.sock";
     }
 
-    public static DockerClient client(RunContext runContext, @Nullable String host, @Nullable Object config, @Nullable Credentials credentials, @Nullable String image) throws IOException, IllegalVariableEvaluationException {
+    public static DockerClient client(RunContext runContext, @Nullable String host, @Nullable Object config, @Nullable Credentials credentials, @Nullable String image)
+        throws IOException, IllegalVariableEvaluationException {
         DefaultDockerClientConfig.Builder dockerClientConfigBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(DockerService.findHost(runContext, host));
 
@@ -72,7 +76,8 @@ public class DockerService {
     }
 
     @SuppressWarnings("unchecked")
-    public static Path createConfig(RunContext runContext, @Nullable Object config, @Nullable List<Credentials> credentials, @Nullable String image) throws IllegalVariableEvaluationException, IOException {
+    public static Path createConfig(RunContext runContext, @Nullable Object config, @Nullable List<Credentials> credentials, @Nullable String image)
+        throws IllegalVariableEvaluationException, IOException {
         Map<String, Object> finalConfig = new HashMap<>();
 
         if (config != null) {

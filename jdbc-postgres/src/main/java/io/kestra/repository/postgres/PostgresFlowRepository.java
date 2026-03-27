@@ -1,24 +1,24 @@
 package io.kestra.repository.postgres;
 
+import java.util.Map;
+
+import org.jooq.Condition;
+
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jooq.Condition;
-
-import java.util.List;
-import java.util.Map;
 
 @Singleton
 @PostgresRepositoryEnabled
 public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
     @Inject
     public PostgresFlowRepository(@Named("flows") PostgresRepository<FlowInterface> repository,
-                                  ApplicationContext applicationContext) {
+        ApplicationContext applicationContext) {
         super(repository, applicationContext);
     }
 
@@ -29,9 +29,8 @@ public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
 
     @Override
     protected Condition findCondition(Object value, QueryFilter.Op operation) {
-        return PostgresFlowRepositoryService.findCondition( value, operation);
+        return PostgresFlowRepositoryService.findCondition(value, operation);
     }
-
 
     @Override
     protected Condition findSourceCodeCondition(String query) {

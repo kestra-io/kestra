@@ -1,5 +1,9 @@
 package io.kestra.core.runners;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -8,14 +12,11 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +44,8 @@ public class ChangeStateTestCase {
         // await for the last execution
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Execution> lastExecution = new AtomicReference<>();
-        Flux<Execution> receivedExecutions = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receivedExecutions = TestsUtils.receive(executionQueue, either ->
+        {
             Execution exec = either.getLeft();
             if (execution.getId().equals(exec.getId()) && exec.getState().getCurrent() == State.Type.SUCCESS) {
                 lastExecution.set(exec);
@@ -66,7 +68,8 @@ public class ChangeStateTestCase {
         // await for the subflow execution
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Execution> lastExecution = new AtomicReference<>();
-        Flux<Execution> receivedExecutions = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receivedExecutions = TestsUtils.receive(executionQueue, either ->
+        {
             Execution exec = either.getLeft();
             if ("failed-first".equals(exec.getFlowId()) && exec.getState().getCurrent() == State.Type.FAILED) {
                 lastExecution.set(exec);
@@ -90,7 +93,8 @@ public class ChangeStateTestCase {
         // await for the parent execution
         CountDownLatch parentLatch = new CountDownLatch(1);
         AtomicReference<Execution> lastParentExecution = new AtomicReference<>();
-        receivedExecutions = TestsUtils.receive(executionQueue, either -> {
+        receivedExecutions = TestsUtils.receive(executionQueue, either ->
+        {
             Execution exec = either.getLeft();
             if (execution.getId().equals(exec.getId()) && exec.getState().isTerminated()) {
                 lastParentExecution.set(exec);

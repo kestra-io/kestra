@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.storage;
 
+import java.net.URI;
+import java.util.NoSuchElementException;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -9,13 +12,11 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageInterface;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.NoSuchElementException;
 
 @SuperBuilder
 @ToString
@@ -51,7 +52,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
 
     @Override
     public Delete.Output run(RunContext runContext) throws Exception {
-        StorageInterface storageInterface = ((DefaultRunContext)runContext).getApplicationContext().getBean(StorageInterface.class);
+        StorageInterface storageInterface = ((DefaultRunContext) runContext).getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri).as(String.class).orElseThrow());
 
         boolean delete = storageInterface.delete(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), render);

@@ -1,11 +1,5 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.models.Plugin;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
@@ -16,7 +10,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,6 +19,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.models.Plugin;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import static java.util.Objects.requireNonNull;
 
@@ -155,7 +156,8 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 this.plugins.remove(identifier);
 
                 // Remove all classes to this plugin from the registry
-                this.pluginClassByIdentifier.entrySet().removeIf(entry -> {
+                this.pluginClassByIdentifier.entrySet().removeIf(entry ->
+                {
                     PluginClassAndMetadata metadata = entry.getValue();
                     return metadata.type().getClassLoader().equals(current.getClassLoader());
                 });
@@ -200,7 +202,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
         if (existing != null && existing.crc32() == plugin.crc32()) {
             return; // same plugin already registered
         }
-        
+
         lock.lock();
         try {
             if (existing != null) {
@@ -212,7 +214,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
             lock.unlock();
         }
     }
-    
+
     protected void registerAll(Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> plugins) {
         pluginClassByIdentifier.putAll(plugins);
     }
@@ -220,30 +222,35 @@ public class DefaultPluginRegistry implements PluginRegistry {
     @SuppressWarnings("unchecked")
     protected Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> getPluginClassesByIdentifier(final RegisteredPlugin plugin) {
         Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> classes = new HashMap<>();
-        classes.putAll(plugin.allClass()
-            .stream()
-            .map(cls -> {
+        classes.putAll(
+            plugin.allClass()
+                .stream()
+                .map(cls ->
+                {
 
-                Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) cls;
-                Class<Plugin> pluginBaseClass = plugin.baseClass(pluginClass.getName());
+                    Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) cls;
+                    Class<Plugin> pluginBaseClass = plugin.baseClass(pluginClass.getName());
 
-                return new SimpleEntry<>(
-                    ClassTypeIdentifier.create(cls.getName()),
-                    PluginClassAndMetadata.create(plugin, pluginClass, pluginBaseClass, null)
-                );
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                    return new SimpleEntry<>(
+                        ClassTypeIdentifier.create(cls.getName()),
+                        PluginClassAndMetadata.create(plugin, pluginClass, pluginBaseClass, null)
+                    );
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+        );
 
-        classes.putAll(plugin.getAliases().values().stream().map(e -> {
-                Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) e.getValue();
-                Class<Plugin> pluginBaseClass = plugin.baseClass(pluginClass.getName());
+        classes.putAll(plugin.getAliases().values().stream().map(e ->
+        {
+            Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) e.getValue();
+            Class<Plugin> pluginBaseClass = plugin.baseClass(pluginClass.getName());
 
-                return new SimpleEntry<>(
-                    ClassTypeIdentifier.create(e.getKey()),
-                    PluginClassAndMetadata.create(plugin, pluginClass, pluginBaseClass, e.getKey())
-                );
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+            return new SimpleEntry<>(
+                ClassTypeIdentifier.create(e.getKey()),
+                PluginClassAndMetadata.create(plugin, pluginClass, pluginBaseClass, e.getKey())
+            );
+        })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+        );
         return classes;
     }
 

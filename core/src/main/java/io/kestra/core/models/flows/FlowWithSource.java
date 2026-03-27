@@ -1,14 +1,12 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Objects;
-import java.util.regex.Pattern;
 
 @SuperBuilder(toBuilder = true)
 @Getter

@@ -1,7 +1,15 @@
 package io.kestra.plugin.core.kv;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.cronutils.utils.VisibleForTesting;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.annotations.Example;
@@ -16,18 +24,13 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @SuperBuilder(toBuilder = true)
@@ -91,7 +94,6 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
     @Builder.Default
     private Property<Boolean> includeChildNamespaces = Property.ofValue(true);
 
-
     @Override
     public Output run(RunContext runContext) throws Exception {
         List<String> kvNamespaces = findNamespaces(runContext);
@@ -104,17 +106,20 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
             KVStore kvStore = runContext.namespaceKv(ns);
             List<KVEntry> kvEntries = new ArrayList<>();
             List<KVEntry> allKvEntries = kvStore.listAll();
-            if (purgeExpiredOnly){
+            if (purgeExpiredOnly) {
                 Instant now = Instant.now();
-                kvEntries.addAll(allKvEntries.stream()
-                    .filter(kv -> kv.expirationDate() != null && kv.expirationDate().isBefore(now))
-                    .toList());
+                kvEntries.addAll(
+                    allKvEntries.stream()
+                        .filter(kv -> kv.expirationDate() != null && kv.expirationDate().isBefore(now))
+                        .toList()
+                );
             } else {
                 kvEntries.addAll(allKvEntries);
             }
             List<String> keys = kvEntries.stream()
                 .map(KVEntry::key)
-                .filter(key -> {
+                .filter(key ->
+                {
                     if (keyFiltering) {
                         return FilenameUtils.wildcardMatch(key, renderedKeyPattern);
                     }
@@ -149,30 +154,38 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
 
         List<String> kvNamespaces = new ArrayList<>();
         if (StringUtils.isNotBlank(renderedNamespacePattern)) {
-            kvNamespaces.addAll(distinctNamespaces.stream()
-                .filter(ns -> FilenameUtils.wildcardMatch(ns, renderedNamespacePattern))
-                .toList());
+            kvNamespaces.addAll(
+                distinctNamespaces.stream()
+                    .filter(ns -> FilenameUtils.wildcardMatch(ns, renderedNamespacePattern))
+                    .toList()
+            );
         } else if (!renderedNamespaces.isEmpty()) {
-            if (runContext.render(includeChildNamespaces).as(Boolean.class).orElse(true)){
-                kvNamespaces.addAll(distinctNamespaces.stream()
-                    .filter(ns -> {
-                        for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.startsWith(renderedNamespace)){
-                                return true;
+            if (runContext.render(includeChildNamespaces).as(Boolean.class).orElse(true)) {
+                kvNamespaces.addAll(
+                    distinctNamespaces.stream()
+                        .filter(ns ->
+                        {
+                            for (String renderedNamespace : renderedNamespaces) {
+                                if (ns.startsWith(renderedNamespace)) {
+                                    return true;
+                                }
                             }
-                        }
-                        return false;
-                    }).toList());
+                            return false;
+                        }).toList()
+                );
             } else {
-                kvNamespaces.addAll(distinctNamespaces.stream()
-                    .filter(ns -> {
-                        for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.equals(renderedNamespace)){
-                                return true;
+                kvNamespaces.addAll(
+                    distinctNamespaces.stream()
+                        .filter(ns ->
+                        {
+                            for (String renderedNamespace : renderedNamespaces) {
+                                if (ns.equals(renderedNamespace)) {
+                                    return true;
+                                }
                             }
-                        }
-                        return false;
-                    }).toList());
+                            return false;
+                        }).toList()
+                );
             }
         } else {
             kvNamespaces.addAll(distinctNamespaces);
@@ -184,7 +197,6 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
         }
         return kvNamespaces;
     }
-
 
     @Builder
     @Getter

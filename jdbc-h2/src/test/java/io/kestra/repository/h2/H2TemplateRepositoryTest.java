@@ -1,6 +1,7 @@
 package io.kestra.repository.h2;
 
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepositoryTest;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.util.StringUtils;
 

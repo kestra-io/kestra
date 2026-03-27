@@ -1,9 +1,20 @@
 package io.kestra.jdbc.runner;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
+import java.util.List;
+import java.util.concurrent.atomic.LongAdder;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Requires;
@@ -13,15 +24,6 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.Temporal;
-import java.util.List;
-import java.util.concurrent.atomic.LongAdder;
 
 @Singleton
 @JdbcRunnerEnabled
@@ -38,10 +40,9 @@ public class JdbcCleaner {
 
     @Inject
     public JdbcCleaner(@Named("queues") JdbcTableConfig jdbcTableConfig,
-                       JooqDSLContextWrapper dslContextWrapper,
-                       Configuration configuration,
-                       JdbcCleanerService jdbcCleanerService
-    ) {
+        JooqDSLContextWrapper dslContextWrapper,
+        Configuration configuration,
+        JdbcCleanerService jdbcCleanerService) {
         this.dslContextWrapper = dslContextWrapper;
         this.configuration = configuration;
         this.jdbcCleanerService = jdbcCleanerService;
@@ -53,8 +54,10 @@ public class JdbcCleaner {
     public long deleteQueue() {
         LongAdder totalDeleted = new LongAdder();
         // first, delete types that are configured more specifically
-        ListUtils.emptyOnNull(configuration.getTypes()).forEach(type -> {
-            dslContextWrapper.transaction(configuration -> {
+        ListUtils.emptyOnNull(configuration.getTypes()).forEach(type ->
+        {
+            dslContextWrapper.transaction(configuration ->
+            {
                 var condition = UPDATED_FIELD.lessOrEqual(period(configuration, type.getRetention()))
                     .and(jdbcCleanerService.buildTypeCondition(type.getType()));
                 int deleted = delete(configuration, condition);
@@ -64,7 +67,8 @@ public class JdbcCleaner {
         });
 
         // then, delete all other records
-        dslContextWrapper.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration ->
+        {
             var condition = UPDATED_FIELD.lessOrEqual(period(configuration, this.configuration.getRetention()));
             int deleted = delete(configuration, condition);
             log.info("Cleaned {} records from {}", deleted, this.queueTable.getName());

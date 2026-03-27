@@ -1,6 +1,13 @@
 package io.kestra.core.runners;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -8,16 +15,11 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+
 import io.micronaut.core.annotation.NonNull;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +60,7 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     }
 
     @Test
-    @LoadFlows({"flows/valids/inputs.yaml"})
+    @LoadFlows({ "flows/valids/inputs.yaml" })
     void secretInput() {
         assertThat(flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "inputs").isPresent()).isTrue();
 

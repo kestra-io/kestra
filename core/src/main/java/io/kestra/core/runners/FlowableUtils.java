@@ -1,8 +1,14 @@
 package io.kestra.core.runners;
 
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
@@ -14,16 +20,10 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public class FlowableUtils {
     public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
-        List<ResolvedTask> tasks
-    ) {
+        List<ResolvedTask> tasks) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
@@ -33,8 +33,7 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
-        List<ResolvedTask> _finally
-    ) {
+        List<ResolvedTask> _finally) {
         return resolveSequentialNexts(execution, tasks, errors, _finally, null);
     }
 
@@ -43,8 +42,7 @@ public class FlowableUtils {
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
         List<ResolvedTask> _finally,
-        TaskRun parentTaskRun
-    ) {
+        TaskRun parentTaskRun) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
@@ -56,8 +54,7 @@ public class FlowableUtils {
         List<ResolvedTask> errors,
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
-        State.Type terminalState
-    ) {
+        State.Type terminalState) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun, terminalState);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
@@ -66,8 +63,7 @@ public class FlowableUtils {
     private static List<NextTaskRun> innerResolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> currentTasks,
-        TaskRun parentTaskRun
-    ) {
+        TaskRun parentTaskRun) {
         // nothing
         if (currentTasks == null || currentTasks.isEmpty() || execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
@@ -109,8 +105,7 @@ public class FlowableUtils {
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
         List<ResolvedTask> _finally,
-        TaskRun parentTaskRun
-    ) {
+        TaskRun parentTaskRun) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
 
         // nothing
@@ -161,12 +156,13 @@ public class FlowableUtils {
         TaskRun parentTaskRun,
         RunContext runContext,
         boolean allowFailure,
-        boolean allowWarning
-    ) {
-        if (ListUtils.emptyOnNull(tasks).stream()
-            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
-            .findAny()
-            .isEmpty()) {
+        boolean allowWarning) {
+        if (
+            ListUtils.emptyOnNull(tasks).stream()
+                .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
+                .findAny()
+                .isEmpty()
+        ) {
             return Optional.of(State.Type.SUCCESS);
         }
 
@@ -190,8 +186,7 @@ public class FlowableUtils {
         TaskRun parentTaskRun,
         RunContext runContext,
         boolean allowFailure,
-        boolean allowWarning
-    ) {
+        boolean allowWarning) {
         return resolveState(
             execution,
             tasks,
@@ -214,8 +209,7 @@ public class FlowableUtils {
         RunContext runContext,
         boolean allowFailure,
         boolean allowWarning,
-        State.Type terminalState
-    ) {
+        State.Type terminalState) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun, terminalState);
 
         if (currentTasks == null) {
@@ -252,10 +246,11 @@ public class FlowableUtils {
 
         return tasks
             .stream()
-            .map(task -> ResolvedTask.builder()
-                .task(task)
-                .parentId(parentTaskRun.getId())
-                .build()
+            .map(
+                task -> ResolvedTask.builder()
+                    .task(task)
+                    .parentId(parentTaskRun.getId())
+                    .build()
             )
             .toList();
     }
@@ -270,8 +265,7 @@ public class FlowableUtils {
         List<ResolvedTask> errors,
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
-        Integer concurrency
-    ) {
+        Integer concurrency) {
         return resolveParallelNexts(
             execution,
             tasks,
@@ -293,8 +287,7 @@ public class FlowableUtils {
         List<ResolvedTask> errors,
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
-        Integer concurrency
-    ) {
+        Integer concurrency) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
         }
@@ -367,8 +360,7 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
-        List<Dag.DagTask> taskDependencies
-    ) {
+        List<Dag.DagTask> taskDependencies) {
         return resolveParallelNexts(
             execution,
             tasks,
@@ -377,14 +369,16 @@ public class FlowableUtils {
             parentTaskRun,
             concurrency,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
-                .filter(nextTaskRun -> {
+                .filter(nextTaskRun ->
+                {
                     Task task = nextTaskRun.getTask();
                     List<String> taskDependIds = taskDependencies
                         .stream()
-                        .filter(taskDepend -> taskDepend
-                            .getTask()
-                            .getId()
-                            .equals(task.getId())
+                        .filter(
+                            taskDepend -> taskDepend
+                                .getTask()
+                                .getId()
+                                .equals(task.getId())
                         )
                         .findFirst()
                         .map(Dag.DagTask::getDependsOn)
@@ -392,10 +386,11 @@ public class FlowableUtils {
 
                     // Check if have no dependencies OR all dependencies are terminated
                     return taskDependIds == null ||
-                        new HashSet<>(taskRuns
-                            .stream()
-                            .filter(taskRun -> taskRun.getState().isTerminated())
-                            .map(TaskRun::getTaskId).toList()
+                        new HashSet<>(
+                            taskRuns
+                                .stream()
+                                .filter(taskRun -> taskRun.getState().isTerminated())
+                                .map(TaskRun::getTaskId).toList()
                         )
                             .containsAll(taskDependIds);
                 })
@@ -409,8 +404,7 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
-        BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction
-    ) {
+        BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
         }
@@ -453,9 +447,10 @@ public class FlowableUtils {
         // find all not created tasks
         List<ResolvedTask> notFinds = currentTasks
             .stream()
-            .filter(resolvedTask -> taskRuns
-                .stream()
-                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
+            .filter(
+                resolvedTask -> taskRuns
+                    .stream()
+                    .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
             )
             .toList();
 
@@ -473,17 +468,17 @@ public class FlowableUtils {
                 nextTaskRunStream = nextTaskRunStream.limit(concurrency - runningCount);
             }
 
-
             return nextTaskRunStream.toList();
         }
 
         return Collections.emptyList();
     }
 
-    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
+    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {
+    };
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
         List<Object> values;
 
@@ -499,11 +494,9 @@ public class FlowableUtils {
             for (Object obj : (List<Object>) value) {
                 if (obj instanceof String stringObj) {
                     values.add(runContext.render(stringObj));
-                }
-                else if (obj instanceof Integer) {
+                } else if (obj instanceof Integer) {
                     values.add(runContext.render(obj.toString()));
-                }
-                else if(obj instanceof Map mapObj) {
+                } else if (obj instanceof Map mapObj) {
                     //JSON or YAML map
                     values.add(runContext.render(mapObj));
                 } else {
@@ -525,8 +518,9 @@ public class FlowableUtils {
             .count();
 
         if (nullCount > 0) {
-            throw new IllegalVariableEvaluationException("Found '" + nullCount + "' null values on Each, " +
-                "with values=" + Arrays.toString(values.toArray())
+            throw new IllegalVariableEvaluationException(
+                "Found '" + nullCount + "' null values on Each, " +
+                    "with values=" + Arrays.toString(values.toArray())
             );
         }
 
@@ -537,12 +531,13 @@ public class FlowableUtils {
             try {
                 String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
                 for (Task task : tasks) {
-                    result.add(ResolvedTask.builder()
-                        .task(task)
-                        .value(resolvedValue)
-                        .iteration(iteration)
-                        .parentId(parentTaskRun.getId())
-                        .build()
+                    result.add(
+                        ResolvedTask.builder()
+                            .task(task)
+                            .value(resolvedValue)
+                            .iteration(iteration)
+                            .parentId(parentTaskRun.getId())
+                            .build()
                     );
                 }
             } catch (JsonProcessingException e) {
@@ -556,11 +551,7 @@ public class FlowableUtils {
 
     public static boolean isTaskRunFor(ResolvedTask resolvedTask, TaskRun taskRun, TaskRun parentTaskRun) {
         return resolvedTask.getTask().getId().equals(taskRun.getTaskId()) &&
-            (
-                parentTaskRun == null || parentTaskRun.getId().equals(taskRun.getParentTaskRunId())
-            ) &&
-            (
-                resolvedTask.getValue() == null || resolvedTask.getValue().equals(taskRun.getValue())
-            );
+            (parentTaskRun == null || parentTaskRun.getId().equals(taskRun.getParentTaskRunId())) &&
+            (resolvedTask.getValue() == null || resolvedTask.getValue().equals(taskRun.getValue()));
     }
 }

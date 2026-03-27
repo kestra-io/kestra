@@ -1,6 +1,7 @@
 package io.kestra.runner.h2;
 
 import io.kestra.jdbc.runner.JdbcTemplateRunnerTest;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.util.StringUtils;
 

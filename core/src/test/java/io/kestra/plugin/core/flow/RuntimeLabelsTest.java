@@ -1,7 +1,10 @@
 package io.kestra.plugin.core.flow;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -11,11 +14,11 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunnerUtils;
+
 import jakarta.inject.Inject;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-import org.junit.jupiter.api.Test;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class RuntimeLabelsTest {
@@ -24,7 +27,7 @@ class RuntimeLabelsTest {
     private RunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows({"flows/valids/labels-update-task.yml"})
+    @LoadFlows({ "flows/valids/labels-update-task.yml" })
     void update() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -57,9 +60,9 @@ class RuntimeLabelsTest {
             new Label("keyFromMap", "valueFromMap"),
             new Label("keyFromList", "valueFromList"),
             new Label("keyFromExecution", "valueFromExecution"),
-            new Label("overriddenExecutionLabelKey", labelsOverriderTaskRunId));
+            new Label("overriddenExecutionLabelKey", labelsOverriderTaskRunId)
+        );
     }
-
 
     @Test
     @ExecuteFlow("flows/valids/npe-labels-update-task.yml")
@@ -72,7 +75,7 @@ class RuntimeLabelsTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/primitive-labels-flow.yml"})
+    @LoadFlows({ "flows/valids/primitive-labels-flow.yml" })
     void primitiveTypeLabels() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -101,11 +104,12 @@ class RuntimeLabelsTest {
             new Label("boolValue", "true"),
             new Label("floatValue", "3.14"),
             new Label("taskRunId", labelsTaskRunId),
-            new Label("existingLabel", "someValue"));
+            new Label("existingLabel", "someValue")
+        );
     }
 
     @Test
-    @LoadFlows({"flows/valids/primitive-labels-flow.yml"})
+    @LoadFlows({ "flows/valids/primitive-labels-flow.yml" })
     void primitiveTypeLabelsOverrideExistingLabels() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -135,11 +139,12 @@ class RuntimeLabelsTest {
             new Label("intValue", "42"),
             new Label("boolValue", "true"),
             new Label("floatValue", "3.14"),
-            new Label("taskRunId", labelsTaskRunId));
+            new Label("taskRunId", labelsTaskRunId)
+        );
     }
 
     @Test
-    @LoadFlows({"flows/valids/labels-update-task-deduplicate.yml"})
+    @LoadFlows({ "flows/valids/labels-update-task-deduplicate.yml" })
     void updateGetsDeduplicated() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,

@@ -1,16 +1,16 @@
 package io.kestra.plugin.core.condition;
 
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -55,11 +55,11 @@ public class FlowNamespaceCondition extends Condition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         if (!prefix && conditionContext.getFlow().getNamespace().equals(this.namespace)) {
-            return  true;
+            return true;
         }
 
         if (prefix && conditionContext.getFlow().getNamespace().startsWith(this.namespace)) {
-            return  true;
+            return true;
         }
 
         return false;

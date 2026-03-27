@@ -1,12 +1,13 @@
 package io.kestra.runner.postgres;
 
-import io.kestra.core.runners.DeserializationIssuesCaseTest;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.kestra.jdbc.runner.AbstractJdbcDeserializationIssuesTest;
+import java.util.Map;
+
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import java.util.Map;
+import io.kestra.core.runners.DeserializationIssuesCaseTest;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import io.kestra.jdbc.runner.AbstractJdbcDeserializationIssuesTest;
 
 class PostgresJdbcDeserializationIssuesTest extends AbstractJdbcDeserializationIssuesTest {
     protected Map<Field<Object>, Object> fields(DeserializationIssuesCaseTest.QueueMessage queueMessage) {

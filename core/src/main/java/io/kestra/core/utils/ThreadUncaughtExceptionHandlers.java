@@ -1,11 +1,11 @@
 package io.kestra.core.utils;
 
-import io.micronaut.context.ApplicationContext;
-import lombok.extern.slf4j.Slf4j;
-
 import java.lang.Thread.UncaughtExceptionHandler;
+
+import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton

@@ -1,6 +1,14 @@
 package io.kestra.core.runners;
 
+import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -12,19 +20,12 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.Schedule;
+
 import lombok.AllArgsConstructor;
 import lombok.With;
-
-import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Class for building {@link RunContext} variables.
@@ -54,7 +55,7 @@ public final class RunVariables {
      * @return a new immutable {@link Map}.
      */
     static Map<String, Object> of(final TaskRun taskRun) {
-        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object> builder()
             .put("id", taskRun.getId())
             .put("startDate", taskRun.getState().getStartDate())
             .put("attemptsCount", taskRun.getAttempts() == null ? 0 : taskRun.getAttempts().size());
@@ -86,10 +87,10 @@ public final class RunVariables {
             .put("namespace", flow.getNamespace());
 
         Optional.ofNullable(flow.getRevision())
-            .ifPresent(revision ->  builder.put("revision", revision));
+            .ifPresent(revision -> builder.put("revision", revision));
 
         Optional.ofNullable(flow.getTenantId())
-            .ifPresent(tenantId ->  builder.put("tenantId", tenantId));
+            .ifPresent(tenantId -> builder.put("tenantId", tenantId));
 
         return builder.build();
     }
@@ -139,13 +140,14 @@ public final class RunVariables {
         /**
          * Builds the immutable map of run variables.
          *
-         * @param logger    The {@link RunContextLogger logger}
-         * @return          The immutable map of variables.
+         * @param logger The {@link RunContextLogger logger}
+         * @return The immutable map of variables.
          */
         Map<String, Object> build(RunContextLogger logger, PropertyContext propertyContext);
     }
 
-    public record KestraConfiguration(String environment, String url) { }
+    public record KestraConfiguration(String environment, String url) {
+    }
 
     /**
      * Default builder class for constructing variables.
@@ -245,7 +247,8 @@ public final class RunVariables {
 
                     Map<String, Object> tasksMap = new HashMap<>();
 
-                    execution.getTaskRunList().forEach(taskRun -> {
+                    execution.getTaskRunList().forEach(taskRun ->
+                    {
                         if (taskRun.getState() != null) {
                             if (taskRun.getValue() == null) {
                                 tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
@@ -285,11 +288,12 @@ public final class RunVariables {
                 if (flow != null && flow.getInputs() != null) {
                     // Create a new PropertyContext with 'flow' variables which are required by some pebble expressions.
                     PropertyContextWithVariables context = new PropertyContextWithVariables(propertyContext, Map.of("flow", RunVariables.of(flow)));
-                    
+
                     // we add default inputs value from the flow if not already set, this will be useful for triggers
                     flow.getInputs().stream()
                         .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
-                        .forEach(input -> {
+                        .forEach(input ->
+                        {
                             try {
                                 inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
                             } catch (IllegalVariableEvaluationException e) {
@@ -305,7 +309,7 @@ public final class RunVariables {
                     if (logger != null && !ListUtils.isEmpty(secretInputs)) {
                         for (String secretInput : secretInputs) {
                             Object secretValue = inputs.get(secretInput);
-                            if(secretValue != null) {
+                            if (secretValue != null) {
                                 String secret;
                                 // if decryption is disabled, secret input would be still a map of type and encrypted value
                                 if (!decryptVariables) {
@@ -356,7 +360,8 @@ public final class RunVariables {
                 .map(Execution::getVariables)
                 .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
                 .map(HashMap::new)
-                .ifPresent(variables -> {
+                .ifPresent(variables ->
+                {
                     Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
                     builder.put("vars", ImmutableMap.copyOf(variables));
 
@@ -398,7 +403,7 @@ public final class RunVariables {
                 decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
             } else if (inputs.containsKey(id)) {
                 try {
-                    Map<String, String> encryptedString = (Map<String,String>) inputs.get(id);
+                    Map<String, String> encryptedString = (Map<String, String>) inputs.get(id);
                     if (encryptedString != null) {
                         String decoded = secret.decrypt(encryptedString.get("value"));
                         inputs.put(id, decoded);
@@ -410,18 +415,18 @@ public final class RunVariables {
         }
     }
 
-    private RunVariables(){}
-    
+    private RunVariables() {
+    }
+
     private record PropertyContextWithVariables(
         PropertyContext delegate,
-        Map<String, Object> variables
-    ) implements PropertyContext {
-        
+        Map<String, Object> variables) implements PropertyContext {
+
         @Override
         public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
             return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
         }
-        
+
         @Override
         public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
             return delegate.render(inline, variables.isEmpty() ? this.variables : variables);

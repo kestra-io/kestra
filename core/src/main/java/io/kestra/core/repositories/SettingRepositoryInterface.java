@@ -1,9 +1,10 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.models.Setting;
-
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.models.Setting;
+
 import jakarta.validation.ConstraintViolationException;
 
 public interface SettingRepositoryInterface {

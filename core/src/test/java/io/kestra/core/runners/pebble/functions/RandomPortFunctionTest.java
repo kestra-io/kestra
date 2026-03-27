@@ -1,18 +1,21 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.Collections;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class RandomPortFunctionTest {
-    @Inject VariableRenderer variableRenderer;
+    @Inject
+    VariableRenderer variableRenderer;
 
     @Test
     void checkIsDefined() throws IllegalVariableEvaluationException {

@@ -1,12 +1,5 @@
 package io.kestra.core.server;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.micronaut.core.annotation.Introspected;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -16,6 +9,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.utils.ExecutorsUtils;
+
+import io.micronaut.core.annotation.Introspected;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for scheduling a task that operate on Worker liveness.
@@ -34,11 +36,11 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
     /**
      * Creates a new {@link AbstractServiceLivenessTask} instance.
      *
-     * @param name          the task name.
+     * @param name the task name.
      * @param configuration the liveness configuration.
      */
     protected AbstractServiceLivenessTask(final String name,
-                                          final ServerConfig configuration) {
+        final ServerConfig configuration) {
         this.name = Objects.requireNonNull(name, "name cannot be null");
         this.serverConfig = Objects.requireNonNull(configuration, "serverConfig cannot be null");
         this.lastScheduledExecution = Instant.now();
@@ -95,7 +97,7 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
         if (!isLivenessEnabled()) {
             log.warn(
                 "Server liveness is disabled (kestra.server.liveness.enabled=false) " +
-                "If you are running in production environment, please ensure this property is configured to 'true'."
+                    "If you are running in production environment, please ensure this property is configured to 'true'."
             );
         }
         if (scheduledExecutorService == null && !isStopped.get()) {
@@ -110,7 +112,8 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
             );
         } else {
             throw new IllegalStateException(
-                "The task '" + name + "' is either already started or already stopped, cannot re-start");
+                "The task '" + name + "' is either already started or already stopped, cannot re-start"
+            );
         }
     }
 

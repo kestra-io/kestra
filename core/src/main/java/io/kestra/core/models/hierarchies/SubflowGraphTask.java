@@ -1,5 +1,8 @@
 package io.kestra.core.models.hierarchies;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
@@ -11,10 +14,8 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
-import lombok.Getter;
 
-import java.util.List;
-import java.util.Optional;
+import lombok.Getter;
 
 @Getter
 public class SubflowGraphTask extends AbstractGraphTask {
@@ -48,7 +49,8 @@ public class SubflowGraphTask extends AbstractGraphTask {
 
     public record SubflowTaskWrapper<T extends Output>(RunContext runContext, ExecutableTask<T> subflowTask) implements TaskInterface, ExecutableTask<T> {
         @Override
-        public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext, FlowMetaStoreInterface flowExecutorInterface, Flow currentFlow, Execution currentExecution, TaskRun currentTaskRun) throws InternalException {
+        public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext, FlowMetaStoreInterface flowExecutorInterface, Flow currentFlow, Execution currentExecution,
+            TaskRun currentTaskRun) throws InternalException {
             return subflowTask.createSubflowExecutions(runContext, flowExecutorInterface, currentFlow, currentExecution, currentTaskRun);
         }
 

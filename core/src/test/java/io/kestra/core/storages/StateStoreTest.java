@@ -1,23 +1,24 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.exceptions.MigrationRequiredException;
-import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.utils.Hashing;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.log.Log;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.exceptions.MigrationRequiredException;
+import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.Hashing;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.log.Log;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,15 +52,18 @@ public class StateStoreTest {
         String state = IdUtils.create();
 
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        URI oldStateStoreFileUri = URI.create("kestra:/" + flowInfo.namespace().replace(".", "/") + "/" + flowInfo.id() + "/states/" + state + "/" + Hashing.hashToString("my-taskrun-value") + "/some-name");
+        URI oldStateStoreFileUri = URI
+            .create("kestra:/" + flowInfo.namespace().replace(".", "/") + "/" + flowInfo.id() + "/states/" + state + "/" + Hashing.hashToString("my-taskrun-value") + "/some-name");
         byte[] expectedContent = "from-old-state".getBytes();
         runContext.storage().putFile(new ByteArrayInputStream(expectedContent), oldStateStoreFileUri);
 
         String key = flowInfo.id() + "_states_" + state + "_some-name_" + Hashing.hashToString("my-taskrun-value");
         assertThat(runContext.storage().getFile(oldStateStoreFileUri).readAllBytes()).isEqualTo(expectedContent);
 
-        MigrationRequiredException migrationRequiredException = Assertions.assertThrows(MigrationRequiredException.class, () -> runContext.stateStore().getState(state, "some-name", "my-taskrun-value"));
-        assertThat(migrationRequiredException.getMessage()).isEqualTo("It looks like the State Store migration hasn't been run, please run the `/app/kestra sys state-store migrate` command before.");
+        MigrationRequiredException migrationRequiredException = Assertions
+            .assertThrows(MigrationRequiredException.class, () -> runContext.stateStore().getState(state, "some-name", "my-taskrun-value"));
+        assertThat(migrationRequiredException.getMessage())
+            .isEqualTo("It looks like the State Store migration hasn't been run, please run the `/app/kestra sys state-store migrate` command before.");
 
         assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).isEmpty()).isTrue();
     }

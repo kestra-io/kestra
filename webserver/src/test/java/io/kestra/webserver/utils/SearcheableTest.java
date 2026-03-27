@@ -1,10 +1,11 @@
 package io.kestra.webserver.utils;
 
-import io.kestra.core.repositories.ArrayListTotal;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import io.kestra.core.repositories.ArrayListTotal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -24,7 +25,7 @@ class SearcheableTest {
 
     @Test
     void shouldReturnMatchingResultsWhenSearchByQuery() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity>builder()
+        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
             .query("Alice")
             .searchableExtractor("name", TestEntity::name)
             .build();
@@ -36,7 +37,7 @@ class SearcheableTest {
 
     @Test
     void shouldSortResultsWhenSortedAscBySingleField() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity>builder()
+        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
             .sort(List.of("age:asc"))
             .sortableExtractor("age", TestEntity::age)
             .build();
@@ -50,7 +51,7 @@ class SearcheableTest {
 
     @Test
     void shouldSortResultsWhenSortedDesBySingleField() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity>builder()
+        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
             .sort(List.of("age:desc"))
             .sortableExtractor("age", TestEntity::age)
             .build();
@@ -64,7 +65,7 @@ class SearcheableTest {
 
     @Test
     void shouldSortResultsWhenSortedByMultipleFields() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity>builder()
+        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
             .sort(List.of("name:asc", "age:asc"))
             .sortableExtractor("name", TestEntity::name)
             .sortableExtractor("age", TestEntity::age)
@@ -79,7 +80,7 @@ class SearcheableTest {
 
     @Test
     void shouldReturnPaginatedResultsWhenPaginationApplied() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity>builder()
+        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
             .page(1)
             .size(2)
             .build();

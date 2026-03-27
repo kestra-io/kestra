@@ -1,15 +1,17 @@
 package io.kestra.cli.commands.servers;
 
+import java.util.Map;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.models.ServerType;
-import io.kestra.scheduler.AbstractScheduler;
 import io.kestra.core.utils.Await;
+import io.kestra.scheduler.AbstractScheduler;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
-
-import java.util.Map;
 
 @CommandLine.Command(
     name = "scheduler",

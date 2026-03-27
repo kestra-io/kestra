@@ -1,25 +1,27 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.templates.Template;
-import io.kestra.plugin.core.debug.Return;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.event.ApplicationEventListener;
-import io.micronaut.data.model.Pageable;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.templates.Template;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
+
+import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -114,7 +116,7 @@ public abstract class AbstractTemplateRepositoryTest {
         templateRepository.create(template3);
 
         // with pageable
-        List<Template> save = templateRepository.find(Pageable.from(1, 10),null, null, "kestra.test");
+        List<Template> save = templateRepository.find(Pageable.from(1, 10), null, null, "kestra.test");
         assertThat((long) save.size()).isGreaterThanOrEqualTo(3L);
 
         // without pageable

@@ -1,5 +1,13 @@
 package io.kestra.cli.services;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithPath;
@@ -9,21 +17,14 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.PluginDefaultService;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.io.watch.FileWatchConfiguration;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
-import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.Optional;
 
 @Singleton
 @Slf4j
@@ -65,7 +66,8 @@ public class FileChangedEventListener {
 
             flowListeners.run();
             // Init existing flows not already in files
-            flowListeners.listen(flows -> {
+            flowListeners.listen(flows ->
+            {
                 if (!isStarted) {
                     for (FlowInterface flow : flows) {
                         if (this.flows.stream().noneMatch(flowWithPath -> flowWithPath.uidWithoutRevision().equals(flow.uidWithoutRevision()))) {
@@ -78,11 +80,13 @@ public class FileChangedEventListener {
             });
 
             // Listen for new/updated/deleted flows
-            flowListeners.listen((current, previous) -> {
+            flowListeners.listen((current, previous) ->
+            {
                 // If deleted
                 if (current.isDeleted()) {
                     this.flows.stream().filter(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst()
-                        .ifPresent(flowWithPath -> {
+                        .ifPresent(flowWithPath ->
+                        {
                             deleteFile(Paths.get(flowWithPath.getPath()));
                         });
                     this.flows.removeIf(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision()));
@@ -157,7 +161,8 @@ public class FileChangedEventListener {
                                     flows.stream()
                                         .filter(flow -> flow.getPath().equals(filePath.toString()))
                                         .findFirst()
-                                        .ifPresent(flowWithPath -> {
+                                        .ifPresent(flowWithPath ->
+                                        {
                                             flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
                                             this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
                                         });
@@ -170,7 +175,8 @@ public class FileChangedEventListener {
                             flows.stream()
                                 .filter(flow -> flow.getPath().equals(filePath.toString()))
                                 .findFirst()
-                                .ifPresent(flowWithPath -> {
+                                .ifPresent(flowWithPath ->
+                                {
                                     flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
                                     this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
                                 });

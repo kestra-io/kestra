@@ -1,5 +1,11 @@
 package io.kestra.plugin.core.kv;
 
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -7,12 +13,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-import java.util.NoSuchElementException;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,10 +29,14 @@ class DeleteTest {
     void shouldOutputTrueGivenExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-                "key", TEST_KV_KEY,
-                "namespace", namespaceId
-            )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())
@@ -53,10 +59,14 @@ class DeleteTest {
     void shouldOutputFalseGivenNonExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-            "key", TEST_KV_KEY,
-            "namespace", namespaceId
-        )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())

@@ -1,17 +1,18 @@
 package io.kestra.core.http.client.apache;
 
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.HttpService;
-import io.kestra.core.http.client.HttpClientResponseException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import org.apache.hc.core5.http.EntityDetails;
 import org.apache.hc.core5.http.HttpEntityContainer;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpService;
+import io.kestra.core.http.client.HttpClientResponseException;
 
 public class FailedResponseInterceptor implements HttpResponseInterceptor {
     private final boolean allErrors;
@@ -25,7 +26,6 @@ public class FailedResponseInterceptor implements HttpResponseInterceptor {
         this.statusCodes = statusCodes;
         this.allErrors = false;
     }
-
 
     @Override
     public void process(org.apache.hc.core5.http.HttpResponse response, EntityDetails entity, HttpContext context) throws HttpException, IOException {

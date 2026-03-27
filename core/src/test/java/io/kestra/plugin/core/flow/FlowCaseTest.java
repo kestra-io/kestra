@@ -1,13 +1,5 @@
 package io.kestra.plugin.core.flow;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunnerUtils;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +7,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -53,7 +54,8 @@ public class FlowCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("minimal") && execution.getState().getCurrent().isTerminated()) {
                 triggered.set(execution);
@@ -79,12 +81,13 @@ public class FlowCaseTest {
         assertThat(triggered.get().getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
     }
 
-    @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
+    @SuppressWarnings({ "ResultOfMethodCallIgnored", "unchecked" })
     void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs, boolean testInherited) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("switch") && execution.getState().getCurrent().isTerminated()) {
                 triggered.set(execution);
@@ -130,10 +133,15 @@ public class FlowCaseTest {
 
         if (testInherited) {
             assertThat(triggered.get().getLabels().size()).isEqualTo(6);
-            assertThat(triggered.get().getLabels()).contains(new Label(Label.CORRELATION_ID, execution.getId()), new Label("mainFlowExecutionLabel", "execFoo"), new Label("mainFlowLabel", "flowFoo"), new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child"));
+            assertThat(triggered.get().getLabels()).contains(
+                new Label(Label.CORRELATION_ID, execution.getId()), new Label("mainFlowExecutionLabel", "execFoo"), new Label("mainFlowLabel", "flowFoo"),
+                new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child")
+            );
         } else {
             assertThat(triggered.get().getLabels().size()).isEqualTo(4);
-            assertThat(triggered.get().getLabels()).contains(new Label(Label.CORRELATION_ID, execution.getId()), new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child"));
+            assertThat(triggered.get().getLabels()).contains(
+                new Label(Label.CORRELATION_ID, execution.getId()), new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child")
+            );
             assertThat(triggered.get().getLabels()).doesNotContain(new Label("inherited", "label"));
         }
     }

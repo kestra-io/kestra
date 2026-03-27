@@ -1,6 +1,14 @@
 package io.kestra.core.runners;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import com.google.common.collect.Lists;
+
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
@@ -13,17 +21,11 @@ import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * This class is responsible to initialize and hydrate a {@link DefaultRunContext} for a specific run context.
@@ -60,7 +62,7 @@ public class RunContextInitializer {
      * @return The {@link RunContext} to initialize
      */
     public DefaultRunContext forPlugin(final DefaultRunContext runContext,
-                                       final Plugin plugin) {
+        final Plugin plugin) {
         runContext.init(applicationContext);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(plugin.getType(), plugin.getClass()));
         return runContext;
@@ -86,7 +88,7 @@ public class RunContextInitializer {
      * @return The initialized runContext
      */
     public DefaultRunContext forWorker(final DefaultRunContext runContext,
-                                       final WorkerTask workerTask) {
+        final WorkerTask workerTask) {
         return forWorker(runContext, workerTask, Function.identity());
     }
 
@@ -98,18 +100,18 @@ public class RunContextInitializer {
      * @return The runContext to initialize
      */
     public DefaultRunContext forWorkingDirectory(final DefaultRunContext runContext,
-                                                 final WorkerTask workerTask) {
-        return forWorker(runContext, workerTask, variables -> {
+        final WorkerTask workerTask) {
+        return forWorker(runContext, workerTask, variables ->
+        {
             variables.put("workerTaskrun", variables.get("taskrun"));
             return variables;
         });
     }
 
-
     @SuppressWarnings("unchecked")
     private DefaultRunContext forWorker(final DefaultRunContext runContext,
-                                        final WorkerTask workerTask,
-                                        final Function<Map<String, Object>, Map<String, Object>> variablesModifier) {
+        final WorkerTask workerTask,
+        final Function<Map<String, Object>, Map<String, Object>> variablesModifier) {
 
         runContext.init(applicationContext);
 
@@ -157,21 +159,19 @@ public class RunContextInitializer {
     /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTaskResult} and parent {@link TaskRun}.
      *
-     * @param runContext       The {@link RunContext} to initialize.
+     * @param runContext The {@link RunContext} to initialize.
      * @param workerTaskResult The {@link WorkerTaskResult}.
-     * @param parent           The parent {@link TaskRun}.
+     * @param parent The parent {@link TaskRun}.
      * @return The {@link RunContext} to initialize
      */
     @SuppressWarnings("unchecked")
     public DefaultRunContext forWorker(final DefaultRunContext runContext,
-                                       final WorkerTaskResult workerTaskResult,
-                                       final TaskRun parent) {
+        final WorkerTaskResult workerTaskResult,
+        final TaskRun parent) {
         Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.ENVS, runContextCache.getEnvVars()); // inject local worker env vars
 
-        Map<String, Object> outputs = variables.containsKey("outputs") ?
-            new HashMap<>((Map<String, Object>) variables.get("outputs")) :
-            new HashMap<>();
+        Map<String, Object> outputs = variables.containsKey("outputs") ? new HashMap<>((Map<String, Object>) variables.get("outputs")) : new HashMap<>();
 
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> current = result;
@@ -206,14 +206,14 @@ public class RunContextInitializer {
     /**
      * Initializes the given {@link RunContext} for the given {@link TriggerContext} and {@link AbstractTrigger}.
      *
-     * @param runContext     The {@link RunContext} to initialize.
+     * @param runContext The {@link RunContext} to initialize.
      * @param triggerContext The {@link TriggerContext}.
-     * @param trigger        The {@link AbstractTrigger}.
+     * @param trigger The {@link AbstractTrigger}.
      * @return The {@link RunContext} to initialize
      */
     public DefaultRunContext forScheduler(final DefaultRunContext runContext,
-                                          final TriggerContext triggerContext,
-                                          final AbstractTrigger trigger) {
+        final TriggerContext triggerContext,
+        final AbstractTrigger trigger) {
 
         runContext.init(applicationContext);
 
@@ -252,7 +252,7 @@ public class RunContextInitializer {
     /**
      * Creates a new {@link RunContext} instance from a given {@link WorkerTrigger}.
      *
-     * @param runContext    The {@link RunContext} to initialize.
+     * @param runContext The {@link RunContext} to initialize.
      * @param workerTrigger The {@link WorkerTrigger}.
      * @return The {@link RunContext} to initialize
      */

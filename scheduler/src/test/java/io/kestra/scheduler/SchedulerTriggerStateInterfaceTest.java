@@ -1,14 +1,16 @@
 package io.kestra.scheduler;
 
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.ZonedDateTime;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

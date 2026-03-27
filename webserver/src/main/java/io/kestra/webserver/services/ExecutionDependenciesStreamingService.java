@@ -1,5 +1,10 @@
 package io.kestra.webserver.services;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.topologies.FlowNode;
@@ -9,6 +14,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.controllers.api.ExecutionStatusEvent;
+
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -17,11 +23,6 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.FluxSink;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 
@@ -44,13 +45,13 @@ public class ExecutionDependenciesStreamingService {
 
     private Runnable queueConsumer;
 
-    public record Subscriber(String correlationId, List<FlowNode> dependencies, Map<String, Flow> flows, FluxSink<Event<ExecutionStatusEvent>> sink) {}
+    public record Subscriber(String correlationId, List<FlowNode> dependencies, Map<String, Flow> flows, FluxSink<Event<ExecutionStatusEvent>> sink) {
+    }
 
     @Inject
     public ExecutionDependenciesStreamingService(
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        ExecutionService executionService
-    ) {
+        ExecutionService executionService) {
         this.executionQueue = executionQueue;
         this.executionService = executionService;
     }
@@ -58,7 +59,8 @@ public class ExecutionDependenciesStreamingService {
     @PostConstruct
     void startQueueConsumer() {
         // Single queue consumer
-        this.queueConsumer = executionQueue.receive(either -> {
+        this.queueConsumer = executionQueue.receive(either ->
+        {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
                 return;
@@ -73,7 +75,8 @@ public class ExecutionDependenciesStreamingService {
                 Map<String, Subscriber> executionSubscribers = subscribers.get(correlationId.get());
 
                 if (!MapUtils.isEmpty(executionSubscribers)) {
-                    executionSubscribers.values().forEach(consumer -> {
+                    executionSubscribers.values().forEach(consumer ->
+                    {
                         var sink = consumer.sink();
                         if (isADependency(execution, consumer.dependencies(), correlationId.get())) {
                             var flow = consumer.flows.get(executionId);
@@ -81,7 +84,10 @@ public class ExecutionDependenciesStreamingService {
                                 if (isStopFollow(flow, execution)) {
                                     sink.next(Event.of(ExecutionStatusEvent.of(execution)).id("end"));
                                     // remove it from dependencies so we know when all dependencies are terminated
-                                    consumer.dependencies().removeIf(node -> node.getTenantId().equals(execution.getTenantId()) && node.getNamespace().equals(execution.getNamespace()) && node.getId().equals(execution.getFlowId()));
+                                    consumer.dependencies().removeIf(
+                                        node -> node.getTenantId().equals(execution.getTenantId()) && node.getNamespace().equals(execution.getNamespace())
+                                            && node.getId().equals(execution.getFlowId())
+                                    );
                                 } else {
                                     sink.next(Event.of(ExecutionStatusEvent.of(execution)).id("progress"));
                                 }
@@ -148,6 +154,7 @@ public class ExecutionDependenciesStreamingService {
 
     private boolean isADependency(Execution execution, List<FlowNode> nodes, String correlationId) {
         return execution.getLabels().stream().anyMatch(label -> label.key().equals(CORRELATION_ID) && label.value().equals(correlationId)) &&
-            nodes.stream().anyMatch(node -> node.getTenantId().equals(execution.getTenantId()) && node.getNamespace().equals(execution.getNamespace()) && node.getId().equals(execution.getFlowId()));
+            nodes.stream()
+                .anyMatch(node -> node.getTenantId().equals(execution.getTenantId()) && node.getNamespace().equals(execution.getNamespace()) && node.getId().equals(execution.getFlowId()));
     }
 }

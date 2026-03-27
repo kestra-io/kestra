@@ -1,10 +1,10 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.flows.FlowWithSource;
-
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import io.kestra.core.models.flows.FlowWithSource;
 
 public interface FlowListenersInterface {
     void run();

@@ -1,8 +1,8 @@
 package io.kestra.core.models.tasks.runners;
 
-import lombok.Getter;
-
 import java.io.Serial;
+
+import lombok.Getter;
 
 @Getter
 public class TaskException extends Exception {
@@ -17,6 +17,7 @@ public class TaskException extends Exception {
 
     /**
      * This constructor will certainly be removed in 0.21 as we keep it only because all task runners must be impacted.
+     * 
      * @deprecated use {@link #TaskException(int, AbstractLogConsumer)} instead.
      */
     @Deprecated(forRemoval = true, since = "0.20.0")
@@ -30,6 +31,7 @@ public class TaskException extends Exception {
 
     /**
      * This constructor will certainly be removed in 0.21 as we keep it only because all task runners must be impacted.
+     * 
      * @deprecated use {@link #TaskException(String, int, AbstractLogConsumer)} instead.
      */
     @Deprecated(forRemoval = true, since = "0.20.0")

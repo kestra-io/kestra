@@ -1,27 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.storages.FileAttributes;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.Rethrow;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.*;
-import io.micronaut.http.multipart.CompletedFileUpload;
-import io.micronaut.http.server.types.files.StreamedFile;
-import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.validation.Validated;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -36,6 +14,29 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.services.FlowService;
+import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.Rethrow;
+
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.annotation.*;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.server.types.files.StreamedFile;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
@@ -53,14 +54,12 @@ public class NamespaceFileController {
         Pattern.compile("/" + FLOWS_FOLDER + "(/.*)?$")
     );
 
-
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/search")
-    @Operation(tags = {"Files"}, summary = "Find files which path contain the given string in their URI")
+    @Operation(tags = { "Files" }, summary = "Find files which path contain the given string in their URI")
     public List<String> searchNamespaceFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The string the file path should contain") @QueryValue String q
-    ) throws IOException, URISyntaxException {
+        @Parameter(description = "The string the file path should contain") @QueryValue String q) throws IOException, URISyntaxException {
         URI baseNamespaceFilesUri = NamespaceFile.of(namespace).uri();
         return storageInterface.allByPrefix(tenantService.resolveTenant(), namespace, baseNamespaceFilesUri, false).stream()
             .map(storageUri -> "/" + baseNamespaceFilesUri.relativize(storageUri).getPath())
@@ -69,11 +68,10 @@ public class NamespaceFileController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files", produces = MediaType.APPLICATION_OCTET_STREAM)
-    @Operation(tags = {"Files"}, summary = "Get namespace file content")
+    @Operation(tags = { "Files" }, summary = "Get namespace file content")
     public HttpResponse<StreamedFile> getFileContent(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @QueryValue String path
-    ) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri") @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
             encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
@@ -86,11 +84,10 @@ public class NamespaceFileController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/stats")
-    @Operation(tags = {"Files"}, summary = "Get namespace file stats such as size, creation & modification dates and type")
+    @Operation(tags = { "Files" }, summary = "Get namespace file stats such as size, creation & modification dates and type")
     public FileAttributes getFileMetadatas(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
-    ) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
             encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
@@ -99,7 +96,7 @@ public class NamespaceFileController {
 
         // if stats is performed upon namespace root, and it doesn't exist yet, we create it
         if (path == null || path.isEmpty()) {
-            if(!storageInterface.exists(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri())) {
+            if (!storageInterface.exists(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri())) {
                 storageInterface.createDirectory(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri());
             }
             return storageInterface.getAttributes(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri());
@@ -110,11 +107,10 @@ public class NamespaceFileController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/directory")
-    @Operation(tags = {"Files"}, summary = "List directory content")
+    @Operation(tags = { "Files" }, summary = "List directory content")
     public List<FileAttributes> listNamespaceDirectoryFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
-    ) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
             encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
@@ -133,11 +129,10 @@ public class NamespaceFileController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}/files/directory")
-    @Operation(tags = {"Files"}, summary = "Create a directory")
+    @Operation(tags = { "Files" }, summary = "Create a directory")
     public void createNamespaceDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
-    ) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
             encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
@@ -149,12 +144,11 @@ public class NamespaceFileController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}/files", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = {"Files"}, summary = "Create a file")
+    @Operation(tags = { "Files" }, summary = "Create a file")
     public void createNamespaceFile(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @QueryValue String path,
-        @Parameter(description = "The file to upload") @Part CompletedFileUpload fileContent
-    ) throws Exception {
+        @Parameter(description = "The file to upload") @Part CompletedFileUpload fileContent) throws Exception {
         String tenantId = tenantService.resolveTenant();
         if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileContent.getInputStream())) {
@@ -184,8 +178,8 @@ public class NamespaceFileController {
 
     private void putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws Exception {
         String filePath = path.getPath();
-        if(filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
-            if(filePath.split("/").length != 3) {
+        if (filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
+            if (filePath.split("/").length != 3) {
                 throw new IllegalArgumentException("Invalid flow file path: " + filePath);
             }
 
@@ -204,16 +198,18 @@ public class NamespaceFileController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/export", produces = MediaType.APPLICATION_OCTET_STREAM)
-    @Operation(tags = {"Files"}, summary = "Export namespace files as a ZIP")
+    @Operation(tags = { "Files" }, summary = "Export namespace files as a ZIP")
     public HttpResponse<byte[]> exportNamespaceFiles(
-        @Parameter(description = "The namespace id") @PathVariable String namespace
-        ) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ZipOutputStream archive = new ZipOutputStream(bos)) {
+        @Parameter(description = "The namespace id") @PathVariable String namespace) throws IOException {
+        try (
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ZipOutputStream archive = new ZipOutputStream(bos)
+        ) {
 
             URI baseNamespaceFilesUri = NamespaceFile.of(namespace).uri();
             String tenantId = tenantService.resolveTenant();
-            storageInterface.allByPrefix(tenantId, namespace, baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
+            storageInterface.allByPrefix(tenantId, namespace, baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri ->
+            {
                 try (InputStream inputStream = storageInterface.get(tenantId, namespace, uri)) {
                     archive.putNextEntry(new ZipEntry(baseNamespaceFilesUri.relativize(uri).getPath()));
                     archive.write(inputStream.readAllBytes());
@@ -221,7 +217,8 @@ public class NamespaceFileController {
                 }
             }));
 
-            flowService.findByNamespaceWithSource(tenantId, namespace).forEach(Rethrow.throwConsumer(flowWithSource -> {
+            flowService.findByNamespaceWithSource(tenantId, namespace).forEach(Rethrow.throwConsumer(flowWithSource ->
+            {
                 try {
                     archive.putNextEntry(new ZipEntry(FLOWS_FOLDER + "/" + flowWithSource.getId() + ".yml"));
                     archive.write(flowWithSource.getSource().getBytes());
@@ -239,25 +236,23 @@ public class NamespaceFileController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "{namespace}/files")
-    @Operation(tags = {"Files"}, summary = "Move a file or directory")
+    @Operation(tags = { "Files" }, summary = "Move a file or directory")
     public void moveFileDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri to move from") @QueryValue URI from,
-        @Parameter(description = "The internal storage uri to move to") @QueryValue URI to
-    ) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri to move to") @QueryValue URI to) throws IOException, URISyntaxException {
         ensureWritableNamespaceFile(from);
         ensureWritableNamespaceFile(to);
 
-        storageInterface.move(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, from).uri(),NamespaceFile.of(namespace, to).uri());
+        storageInterface.move(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, from).uri(), NamespaceFile.of(namespace, to).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "{namespace}/files")
-    @Operation(tags = {"Files"}, summary = "Delete a file or directory")
+    @Operation(tags = { "Files" }, summary = "Delete a file or directory")
     public void deleteFileDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path
-    ) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (!path.startsWith("/")) {
             path = "/" + path;

@@ -1,9 +1,11 @@
 package io.kestra.jdbc.repository;
 
+import org.junit.jupiter.api.BeforeEach;
+
 import io.kestra.core.repositories.AbstractMetricRepositoryTest;
 import io.kestra.jdbc.JdbcTestUtils;
+
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractJdbcMetricRepositoryTest extends AbstractMetricRepositoryTest {
     @Inject

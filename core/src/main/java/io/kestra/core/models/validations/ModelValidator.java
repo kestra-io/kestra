@@ -1,13 +1,13 @@
 package io.kestra.core.models.validations;
 
+import java.util.Optional;
+import java.util.Set;
+
 import io.micronaut.validation.validator.Validator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-
-import java.util.Optional;
-import java.util.Set;
 
 @Singleton
 public class ModelValidator {
@@ -16,7 +16,8 @@ public class ModelValidator {
 
     public <T> void validate(T model) throws ConstraintViolationException {
         this.isValid(model)
-            .ifPresent(s -> {
+            .ifPresent(s ->
+            {
                 throw s;
             });
     }

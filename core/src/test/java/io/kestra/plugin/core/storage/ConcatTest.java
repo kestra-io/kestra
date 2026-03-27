@@ -1,14 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import com.google.common.io.CharStreams;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.junit.annotations.KestraTest;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.storages.StorageInterface;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -17,6 +8,18 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
+
+import com.google.common.io.CharStreams;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageInterface;
+
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -34,9 +37,13 @@ class ConcatTest {
         RunContext runContext = runContextFactory.of();
         URL resource = ConcatTest.class.getClassLoader().getResource("application-test.yml");
 
-        File file = new File(Objects.requireNonNull(ConcatTest.class.getClassLoader()
-            .getResource("application-test.yml"))
-            .toURI());
+        File file = new File(
+            Objects.requireNonNull(
+                ConcatTest.class.getClassLoader()
+                    .getResource("application-test.yml")
+            )
+                .toURI()
+        );
 
         URI put = storageInterface.put(
             MAIN_TENANT,
@@ -55,7 +62,6 @@ class ConcatTest {
 
         Concat.Output run = result.run(runContext);
         String s = CharStreams.toString(new InputStreamReader(new FileInputStream(file)));
-
 
         assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, run.getUri())))).isEqualTo(s + "\n" + s + "\n");
         assertThat(run.getUri().getPath()).endsWith(".yml");

@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.storage;
 
+import java.net.URI;
+import java.util.List;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -9,13 +12,11 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.StorageSplitInterface;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @SuperBuilder
 @ToString

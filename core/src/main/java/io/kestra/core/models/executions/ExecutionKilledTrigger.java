@@ -1,11 +1,14 @@
 package io.kestra.core.models.executions;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.utils.IdUtils;
+
 import jakarta.validation.constraints.NotNull;
-import java.util.Objects;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 

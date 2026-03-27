@@ -1,14 +1,14 @@
 package io.kestra.core.secret;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
@@ -23,8 +23,8 @@ public class SecretService {
 
     public void decode() {
         decodedSecrets = System.getenv().entrySet().stream()
-            .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX))
-            .<Map.Entry<String, String>>mapMulti((entry, consumer) -> {
+            .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX)).<Map.Entry<String, String>> mapMulti((entry, consumer) ->
+            {
                 try {
                     String value = entry.getValue().replaceAll("\\R", "");
                     consumer.accept(Map.entry(entry.getKey(), new String(Base64.getDecoder().decode(value))));
@@ -32,10 +32,12 @@ public class SecretService {
                     log.error("Could not decode secret '{}', make sure it is Base64-encoded: {}", entry.getKey(), e.getMessage());
                 }
             })
-            .collect(Collectors.toMap(
-                entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(),
-                Map.Entry::getValue
-            ));
+            .collect(
+                Collectors.toMap(
+                    entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(),
+                    Map.Entry::getValue
+                )
+            );
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {

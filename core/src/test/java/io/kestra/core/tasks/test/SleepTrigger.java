@@ -1,20 +1,21 @@
 package io.kestra.core.tasks.test;
 
+import java.time.Duration;
+import java.util.Optional;
+
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
-import java.time.Duration;
-import java.util.Optional;
 
 /**
  * This trigger is used in unit tests where we need a task that wait a little to be able to check the resubmit of triggers.

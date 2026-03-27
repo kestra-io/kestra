@@ -1,6 +1,14 @@
 package io.kestra.core.junit.extensions;
 
-import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.flows.Flow;
@@ -9,20 +17,16 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.context.ApplicationContext;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+
+import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 
 public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallback {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(
-        KestraTestExtension.class);
+        KestraTestExtension.class
+    );
 
     private ApplicationContext applicationContext;
 
@@ -36,12 +40,14 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
 
             if (applicationContext == null) {
                 throw new IllegalStateException(
-                    "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'");
+                    "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'"
+                );
             }
         }
 
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(
-            LocalFlowRepositoryLoader.class);
+            LocalFlowRepositoryLoader.class
+        );
 
         LoadFlows loadFlows = getLoadFlows(extensionContext);
 

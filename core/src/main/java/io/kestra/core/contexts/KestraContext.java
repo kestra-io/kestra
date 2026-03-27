@@ -1,22 +1,24 @@
 package io.kestra.core.contexts;
 
-import io.kestra.core.models.ServerType;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.VersionProvider;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Context;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.env.Environment;
-import io.micronaut.context.env.PropertySource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.models.ServerType;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.VersionProvider;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Context;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertySource;
 
 /**
  * Utility class for retrieving common information about a Kestra Server at runtime.
@@ -107,11 +109,11 @@ public abstract class KestraContext {
         /**
          * Creates a new {@link KestraContext} instance.
          *
-         * @param applicationContext     The {@link ApplicationContext}.
+         * @param applicationContext The {@link ApplicationContext}.
          * @param environment The {@link Environment}.
          */
         public Initializer(ApplicationContext applicationContext,
-                           Environment environment) {
+            Environment environment) {
             this.applicationContext = applicationContext;
             this.version = Optional.ofNullable(applicationContext.getBean(VersionProvider.class)).map(VersionProvider::getVersion).orElse(null);
             this.environment = environment;
@@ -139,6 +141,7 @@ public abstract class KestraContext {
             return Optional.ofNullable(environment)
                 .flatMap(env -> env.getProperty(KESTRA_WORKER_GROUP_KEY, String.class));
         }
+
         /** {@inheritDoc} **/
         @Override
         public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) {

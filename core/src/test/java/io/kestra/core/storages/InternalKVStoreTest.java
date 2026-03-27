@@ -1,19 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVEntry;
-import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVValueAndMetadata;
-import io.kestra.core.storages.kv.KVValue;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.storage.local.LocalStorage;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -21,13 +7,26 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVEntry;
+import io.kestra.core.storages.kv.KVMetadata;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.storage.local.LocalStorage;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,9 +63,10 @@ class InternalKVStoreTest {
         List<KVEntry> list = kv.list();
         assertThat(list.size()).isEqualTo(2);
 
-        list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
+        list.forEach(kvEntry ->
+        {
+            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
+            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
         });
 
         Map<String, KVEntry> map = list.stream().collect(Collectors.toMap(KVEntry::key, Function.identity()));
@@ -74,13 +74,17 @@ class InternalKVStoreTest {
         assertThat(map.size()).isEqualTo(2);
 
         KVEntry myKeyValue = map.get(TEST_KV_KEY);
-        assertThat(myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
-            myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())).isTrue();
+        assertThat(
+            myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
+                myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())
+        ).isTrue();
         assertThat(myKeyValue.description()).isEqualTo(description);
 
         KVEntry mySecondKeyValue = map.get("my-second-key");
-        assertThat(mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
-            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())).isTrue();
+        assertThat(
+            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
+                mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())
+        ).isTrue();
         assertThat(mySecondKeyValue.description()).isNull();
     }
 
@@ -99,9 +103,10 @@ class InternalKVStoreTest {
         List<KVEntry> list = kv.listAll();
         assertThat(list.size()).isEqualTo(3);
 
-        list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
+        list.forEach(kvEntry ->
+        {
+            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
+            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
         });
 
         List<String> keys = list.stream().map(KVEntry::key).toList();
@@ -215,17 +220,17 @@ class InternalKVStoreTest {
         // When
         Assertions.assertThrows(ResourceExpiredException.class, () -> kv.getValue(TEST_KV_KEY));
     }
-    
+
     @Test
     void shouldGetKVValueAndMetadata() throws IOException {
         // Given
         final InternalKVStore kv = kv();
         KVValueAndMetadata val = new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), complexValue);
         kv.put(TEST_KV_KEY, val);
-        
+
         // When
         Optional<KVValueAndMetadata> result = kv.findMetadataAndValue(TEST_KV_KEY);
-        
+
         // Then
         Assertions.assertEquals(val.value(), result.get().value());
         Assertions.assertEquals(val.metadata().getDescription(), result.get().metadata().getDescription());

@@ -1,12 +1,12 @@
 package io.kestra.core.models.triggers;
 
+import java.time.ZonedDateTime;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.runners.RunContext;
 
-import java.time.ZonedDateTime;
-
-public interface Schedulable extends PollingTriggerInterface{
+public interface Schedulable extends PollingTriggerInterface {
     String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
 
     /**
@@ -22,7 +22,7 @@ public interface Schedulable extends PollingTriggerInterface{
      */
     default RecoverMissedSchedules defaultRecoverMissedSchedules(RunContext runContext) {
         return runContext
-            .<String>pluginConfiguration(PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES)
+            .<String> pluginConfiguration(PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES)
             .map(conf -> RecoverMissedSchedules.valueOf(conf))
             .orElse(RecoverMissedSchedules.ALL);
     }

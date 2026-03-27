@@ -1,6 +1,7 @@
 package io.kestra.worker;
 
 import io.kestra.core.models.flows.State;
+
 import jakarta.inject.Singleton;
 
 @Singleton

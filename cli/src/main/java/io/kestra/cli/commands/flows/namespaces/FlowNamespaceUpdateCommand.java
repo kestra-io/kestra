@@ -1,9 +1,15 @@
 package io.kestra.cli.commands.flows.namespaces;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Stream;
+
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.YamlParser;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -15,11 +21,6 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Stream;
-
 @CommandLine.Command(
     name = "update",
     description = "Update flows in namespace",
@@ -28,7 +29,7 @@ import java.util.stream.Stream;
 @Slf4j
 public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
 
-    @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "Replace namespace of all flows by the one provided")
+    @CommandLine.Option(names = { "--override-namespaces" }, negatable = true, description = "Replace namespace of all flows by the one provided")
     public boolean override = false;
 
     @Inject

@@ -1,8 +1,12 @@
 package io.kestra.cli.commands.flows;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
@@ -11,9 +15,6 @@ import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "update",
@@ -43,7 +44,7 @@ public class FlowUpdateCommand extends AbstractApiCommand {
 
         String body = Files.readString(flowFile);
 
-        try(DefaultHttpClient client = client()) {
+        try (DefaultHttpClient client = client()) {
             MutableHttpRequest<String> request = HttpRequest
                 .PUT(apiUri("/flows/" + namespace + "/" + id, tenantService.getTenantId(tenantId)), body).contentType(MediaType.APPLICATION_YAML);
 
@@ -53,7 +54,7 @@ public class FlowUpdateCommand extends AbstractApiCommand {
             );
 
             stdOut("Flow successfully updated !");
-        } catch (HttpClientResponseException e){
+        } catch (HttpClientResponseException e) {
             AbstractValidateCommand.handleHttpException(e, "flow");
             return 1;
         }

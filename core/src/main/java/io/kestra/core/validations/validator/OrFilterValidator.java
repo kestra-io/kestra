@@ -1,7 +1,11 @@
 package io.kestra.core.validations.validator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.kestra.core.models.dashboards.filters.Or;
 import io.kestra.core.validations.OrFilterValidation;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -9,9 +13,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Singleton
 @Introspected

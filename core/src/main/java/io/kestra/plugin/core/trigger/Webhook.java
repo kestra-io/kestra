@@ -1,16 +1,16 @@
 package io.kestra.plugin.core.trigger;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.validations.WebhookValidation;
-import io.micronaut.http.HttpRequest;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
@@ -18,12 +18,14 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.WebhookValidation;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import io.micronaut.http.HttpRequest;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -108,7 +110,8 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         description = "The key is used for generating the webhook URL.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
-            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n" +
+            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n"
+            +
             "::\n"
     )
     @PluginProperty(dynamic = true)
@@ -129,24 +132,28 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
             .flowRevision(flow.getRevision())
             .variables(flow.getVariables())
             .state(new State())
-            .trigger(ExecutionTrigger.of(
-                this,
-                Output.builder()
-                    .body(tryMap(body)
-                        .or(() -> tryArray(body))
-                        .orElse(body)
-                    )
-                    .headers(request.getHeaders().asMap())
-                    .parameters(request.getParameters().asMap())
-                    .build()
-            ));
+            .trigger(
+                ExecutionTrigger.of(
+                    this,
+                    Output.builder()
+                        .body(
+                            tryMap(body)
+                                .or(() -> tryArray(body))
+                                .orElse(body)
+                        )
+                        .headers(request.getHeaders().asMap())
+                        .parameters(request.getParameters().asMap())
+                        .build()
+                )
+            );
 
         return Optional.of(builder.build());
     }
 
     private Optional<Object> tryMap(String body) {
         try {
-            return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {
+            }));
         } catch (Exception ignored) {
             return Optional.empty();
         }
@@ -154,7 +161,8 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
 
     private Optional<Object> tryArray(String body) {
         try {
-            return Optional.of(MAPPER.readValue(body, new TypeReference<List<Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<List<Object>>() {
+            }));
         } catch (Exception ignored) {
             return Optional.empty();
         }
@@ -178,7 +186,6 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         @Schema(title = "The headers for the webhook request")
         @NotNull
         private Map<String, List<String>> headers;
-
 
         @Schema(title = "The parameters for the webhook request")
         @NotNull

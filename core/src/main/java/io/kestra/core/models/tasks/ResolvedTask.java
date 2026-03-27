@@ -1,13 +1,14 @@
 package io.kestra.core.models.tasks;
 
+import java.util.List;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
-
-import java.util.List;
 
 @Builder
 @Value

@@ -1,16 +1,17 @@
 package io.kestra.core.runners;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
-import jakarta.inject.Singleton;
-import java.util.Objects;
-import lombok.Setter;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import jakarta.inject.Singleton;
+import lombok.Setter;
 
 @Singleton
 public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
@@ -30,16 +31,17 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Optional<FlowInterface> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
         Optional<FlowInterface> find = this.allFlows
             .stream()
-            .filter(flow -> ((flow.getTenantId() == null && tenantId == null) || Objects.equals(flow.getTenantId(), tenantId)) &&
-                flow.getNamespace().equals(namespace) &&
-                flow.getId().equals(id) &&
-                (revision.isEmpty() || revision.get().equals(flow.getRevision()))
+            .filter(
+                flow -> ((flow.getTenantId() == null && tenantId == null) || Objects.equals(flow.getTenantId(), tenantId)) &&
+                    flow.getNamespace().equals(namespace) &&
+                    flow.getId().equals(id) &&
+                    (revision.isEmpty() || revision.get().equals(flow.getRevision()))
             )
-            .map(it -> (FlowInterface)it)
+            .map(it -> (FlowInterface) it)
             .findFirst();
 
         if (find.isPresent()) {

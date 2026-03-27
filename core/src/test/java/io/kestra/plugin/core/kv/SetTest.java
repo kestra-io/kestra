@@ -1,5 +1,15 @@
 package io.kestra.plugin.core.kv;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
@@ -10,16 +20,8 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreException;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,11 +48,13 @@ class SetTest {
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
         String description = "myDescription";
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
-            "key", TEST_KEY,
-            "value", value,
-            "description", description
-        ));
+        final RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, set, Map.of(
+                "key", TEST_KEY,
+                "value", value,
+                "description", description
+            )
+        );
 
         // When
         set.run(runContext);
@@ -65,12 +69,14 @@ class SetTest {
     @Test
     void shouldSetKVGivenSameNamespace() throws Exception {
         // Given
-        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
-            "inputs", Map.of(
-                "key", TEST_KEY,
-                "value", "test-value"
+        RunContext runContext = this.runContextFactory.of(
+            "io.kestra.test", Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KEY,
+                    "value", "test-value"
+                )
             )
-        ));
+        );
 
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
@@ -92,12 +98,14 @@ class SetTest {
     @Test
     void shouldSetKVGivenChildNamespace() throws Exception {
         // Given
-        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
-            "inputs", Map.of(
-                "key", TEST_KEY,
-                "value", "test-value"
+        RunContext runContext = this.runContextFactory.of(
+            "io.kestra.test", Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KEY,
+                    "value", "test-value"
+                )
             )
-        ));
+        );
 
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
@@ -118,12 +126,14 @@ class SetTest {
     @Test
     void shouldFailGivenNonExistingNamespace() {
         // Given
-        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
-            "inputs", Map.of(
-                "key", TEST_KEY,
-                "value", "test-value"
+        RunContext runContext = this.runContextFactory.of(
+            "io.kestra.test", Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KEY,
+                    "value", "test-value"
+                )
             )
-        ));
+        );
 
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
@@ -149,10 +159,12 @@ class SetTest {
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
-            "key", TEST_KEY,
-            "value", value
-        ));
+        final RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, set, Map.of(
+                "key", TEST_KEY,
+                "value", value
+            )
+        );
 
         // When
         set.run(runContext);
@@ -176,10 +188,12 @@ class SetTest {
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
-            "key", TEST_KEY,
-            "value", value
-        ));
+        final RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, set, Map.of(
+                "key", TEST_KEY,
+                "value", value
+            )
+        );
 
         // When - Then
         KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> set.run(runContext));

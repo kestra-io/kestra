@@ -1,5 +1,11 @@
 package io.kestra.jdbc.repository;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.jooq.*;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.templates.Template;
@@ -8,15 +14,11 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import org.jooq.*;
-import org.jooq.impl.DSL;
-
-import java.util.List;
-import java.util.Optional;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 
@@ -36,7 +38,8 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public Optional<Template> findById(String tenantId, String namespace, String id) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -53,7 +56,8 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public List<Template> findAll(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -68,7 +72,8 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public List<Template> findAllWithNoAcl(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -83,7 +88,8 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public List<Template> findAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -100,11 +106,11 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable String namespace
-    ) {
+        @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
@@ -130,7 +136,8 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public List<Template> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
@@ -156,7 +163,8 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public List<Template> findByNamespace(String tenantId, String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
@@ -182,14 +190,14 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
         }
     }
 
-
     public Template update(Template template, Template previous) throws ConstraintViolationException {
         this
             .findById(previous.getTenantId(), previous.getNamespace(), previous.getId())
             .map(current -> current.validateUpdate(template))
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .ifPresent(s -> {
+            .ifPresent(s ->
+            {
                 throw s;
             });
 
@@ -227,14 +235,15 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     public List<String> findDistinctNamespace(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .select(field("namespace"))
-                .from(this.jdbcRepository.getTable())
-                .where(this.defaultFilter(tenantId))
-                .groupBy(field("namespace"))
-                .fetch()
-                .map(record -> record.getValue("namespace", String.class))
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .select(field("namespace"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .groupBy(field("namespace"))
+                    .fetch()
+                    .map(record -> record.getValue("namespace", String.class))
             );
     }
 }

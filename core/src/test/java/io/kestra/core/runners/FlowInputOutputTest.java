@@ -1,5 +1,20 @@
 package io.kestra.core.runners;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
@@ -17,26 +32,13 @@ import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.http.MediaType;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -59,7 +61,7 @@ class FlowInputOutputTest {
 
     @Inject
     StorageInterface storageInterface;
-    
+
     @MockBean(SecretService.class)
     SecretService testSecretService() {
         return new SecretService() {
@@ -94,9 +96,12 @@ class FlowInputOutputTest {
             .build();
         StringInput input2 = StringInput.builder()
             .id("input2")
-            .dependsOn(new DependsOn(
-                List.of("input1"),
-                "{{ inputs.input1 equals 'value1' }}"))
+            .dependsOn(
+                new DependsOn(
+                    List.of("input1"),
+                    "{{ inputs.input1 equals 'value1' }}"
+                )
+            )
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -110,7 +115,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "value1", true, false, null),
-                new InputAndValue(input2, "value2", true, false, null)),
+                new InputAndValue(input2, "value2", true, false, null)
+            ),
             values
         );
     }
@@ -144,7 +150,8 @@ class FlowInputOutputTest {
             List.of(
                 new InputAndValue(input1, "v1", true, false, null),
                 new InputAndValue(input2, "v2", true, false, null),
-                new InputAndValue(input3, "v3", true, false, null)),
+                new InputAndValue(input3, "v3", true, false, null)
+            ),
             values
         );
     }
@@ -178,7 +185,8 @@ class FlowInputOutputTest {
             List.of(
                 new InputAndValue(input1, "v1", true, false, null),
                 new InputAndValue(input2, "v2", false, false, null),
-                new InputAndValue(input3, "v3", false, false, null)),
+                new InputAndValue(input3, "v3", false, false, null)
+            ),
             values
         );
     }
@@ -191,9 +199,12 @@ class FlowInputOutputTest {
             .build();
         StringInput input2 = StringInput.builder()
             .id("input2")
-            .dependsOn(new DependsOn(
-                List.of("input1"),
-                "{{ inputs.input1 equals 'dummy' }}"))
+            .dependsOn(
+                new DependsOn(
+                    List.of("input1"),
+                    "{{ inputs.input1 equals 'dummy' }}"
+                )
+            )
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -207,7 +218,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "value1", true, false, null),
-                new InputAndValue(input2, "value2", false, false, null)),
+                new InputAndValue(input2, "value2", false, false, null)
+            ),
             values
         );
     }
@@ -220,9 +232,12 @@ class FlowInputOutputTest {
             .build();
         StringInput input2 = StringInput.builder()
             .id("input2")
-            .dependsOn(new DependsOn(
-                List.of("input1"),
-                "{{ inputs.dummy equals 'dummy' }}"))
+            .dependsOn(
+                new DependsOn(
+                    List.of("input1"),
+                    "{{ inputs.dummy equals 'dummy' }}"
+                )
+            )
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -285,7 +300,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "0", true, true, null),
-                new InputAndValue(input2, 0, true, true, null)),
+                new InputAndValue(input2, 0, true, true, null)
+            ),
             values
         );
     }
@@ -304,7 +320,7 @@ class FlowInputOutputTest {
             .type(Type.STRING)
             .defaults(Property.ofExpression("{{ inputs.input1 }}_world"))
             .required(false)
-            .dependsOn(new DependsOn(List.of("input1"),null))
+            .dependsOn(new DependsOn(List.of("input1"), null))
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -318,7 +334,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "hello", true, true, null),
-                new InputAndValue(input2, "hello_world", true, true, null)),
+                new InputAndValue(input2, "hello_world", true, true, null)
+            ),
             values
         );
     }
@@ -354,10 +371,9 @@ class FlowInputOutputTest {
         List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
 
         // Then
-        Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput)results.getFirst().input()).getValues().getFirst());
+        Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst());
     }
-    
-    
+
     @Test
     void shouldNotObfuscateSecretsWhenReadingInputs() {
         // Given
@@ -391,6 +407,7 @@ class FlowInputOutputTest {
         // Then
         assertThat(results.get("input")).isEqualTo(TEST_KV_VALUE);
     }
+
     @Test
     void shouldResolveZeroByteFileUpload() throws java.io.IOException {
         File tempFile = File.createTempFile("empty", ".txt");

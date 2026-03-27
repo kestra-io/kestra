@@ -1,24 +1,25 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.utils.TestsUtils;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunnerUtils;
-
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -87,7 +88,7 @@ public class EachSequentialTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-null.yaml"})
+    @LoadFlows({ "flows/valids/each-null.yaml" })
     void eachNull() throws TimeoutException, QueueException {
         EachSequentialTest.eachNullTest(runnerUtils, logQueue);
     }

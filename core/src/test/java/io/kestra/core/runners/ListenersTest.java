@@ -1,19 +1,22 @@
 package io.kestra.core.runners;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,7 +70,7 @@ class ListenersTest {
     }
 
     @Test
-    void flowableExecution() throws TimeoutException, QueueException{
+    void flowableExecution() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
             "io.kestra.tests",
@@ -110,7 +113,7 @@ class ListenersTest {
     }
 
     @Test
-    void failedMultipleListeners() throws TimeoutException, QueueException{
+    void failedMultipleListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
             "io.kestra.tests",

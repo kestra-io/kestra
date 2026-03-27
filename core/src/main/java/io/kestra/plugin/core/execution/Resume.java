@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.Map;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
@@ -9,15 +11,16 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.kestra.plugin.core.flow.Pause;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,9 +29,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDateTime;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -48,7 +48,7 @@ import java.util.Map;
         )
     }
 )
-public class Resume  extends Task implements RunnableTask<VoidOutput> {
+public class Resume extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set. In case you wonder why `executionId` is not enough — we require specifying the namespace to make permissions explicit. The Enterprise Edition of Kestra allows you to resume executions from another namespaces only if the permissions allow it. Check the [Allowed Namespaces](https://kestra.io/docs/enterprise/allowed-namespaces) documentation for more details."
     )
@@ -85,7 +85,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
             runContext.render(this.executionId).as(String.class).orElse(null)
         );
 
-        ApplicationContext applicationContext = ((DefaultRunContext)runContext).getApplicationContext();
+        ApplicationContext applicationContext = ((DefaultRunContext) runContext).getApplicationContext();
         ExecutionService executionService = applicationContext.getBean(ExecutionService.class);
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
         FlowMetaStoreInterface flowExecutor = applicationContext.getBean(FlowMetaStoreInterface.class);

@@ -2,10 +2,9 @@ package io.kestra.cli;
 
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
-import picocli.CommandLine;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import picocli.CommandLine;
 
 class VersionProvider implements CommandLine.IVersionProvider {
     private static io.kestra.core.utils.VersionProvider versionProvider;

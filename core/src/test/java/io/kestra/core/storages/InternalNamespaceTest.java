@@ -1,14 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.PathMatcherPredicate;
-import io.kestra.storage.local.LocalStorage;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +7,16 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.PathMatcherPredicate;
+import io.kestra.storage.local.LocalStorage;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +50,8 @@ class InternalNamespaceTest {
         assertThat(namespace.all()).containsExactlyInAnyOrder(
             NamespaceFile.of(namespaceId, Path.of("sub/dir/file1.txt")),
             NamespaceFile.of(namespaceId, Path.of("sub/dir/file2.txt")),
-            NamespaceFile.of(namespaceId, Path.of("sub/dir/file3.txt")));
+            NamespaceFile.of(namespaceId, Path.of("sub/dir/file3.txt"))
+        );
     }
 
     @Test
@@ -64,7 +66,7 @@ class InternalNamespaceTest {
         // Then
         assertThat(namespaceFile).isEqualTo(NamespaceFile.of(namespaceId, Path.of("sub/dir/file.txt")));
         // Then
-        try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
+        try (InputStream is = namespace.getFileContent(Path.of(namespaceFile.path()))) {
             assertThat(new String(is.readAllBytes())).isEqualTo("1");
         }
     }
@@ -83,7 +85,7 @@ class InternalNamespaceTest {
         namespace.putFile(namespaceFile, new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.OVERWRITE);
 
         // Then
-        try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
+        try (InputStream is = namespace.getFileContent(Path.of(namespaceFile.path()))) {
             assertThat(new String(is.readAllBytes())).isEqualTo("2");
         }
     }
@@ -119,7 +121,7 @@ class InternalNamespaceTest {
         namespace.putFile(namespaceFile, new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.SKIP);
 
         // Then
-        try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
+        try (InputStream is = namespace.getFileContent(Path.of(namespaceFile.path()))) {
             assertThat(new String(is.readAllBytes())).isEqualTo("1");
         }
     }
@@ -137,10 +139,11 @@ class InternalNamespaceTest {
         namespace.putFile(Path.of("/b/d/4.sql"), new ByteArrayInputStream("4".getBytes()));
         namespace.putFile(Path.of("/c/5.sql"), new ByteArrayInputStream("5".getBytes()));
 
-        List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching(PathMatcherPredicate.builder()
-            .includes(List.of("/a/**", "c/**"))
-            .excludes(List.of("**/2.sql"))
-            .build()
+        List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching(
+            PathMatcherPredicate.builder()
+                .includes(List.of("/a/**", "c/**"))
+                .excludes(List.of("**/2.sql"))
+                .build()
         );
 
         // Then

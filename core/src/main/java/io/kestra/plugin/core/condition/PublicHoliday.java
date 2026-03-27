@@ -1,7 +1,7 @@
 package io.kestra.plugin.core.condition;
 
-import de.focus_shift.jollyday.core.HolidayManager;
-import de.focus_shift.jollyday.core.ManagerParameters;
+import java.time.LocalDate;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -10,12 +10,13 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
+
+import de.focus_shift.jollyday.core.HolidayManager;
+import de.focus_shift.jollyday.core.ManagerParameters;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDate;
 
 @SuperBuilder
 @ToString
@@ -73,7 +74,7 @@ import java.time.LocalDate;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.PublicHolidayCondition", "io.kestra.plugin.core.condition.PublicHolidayCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.PublicHolidayCondition", "io.kestra.plugin.core.condition.PublicHolidayCondition" }
 )
 public class PublicHoliday extends Condition implements ScheduleCondition {
     @Schema(

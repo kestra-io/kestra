@@ -1,5 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.LocalPath;
@@ -7,16 +16,9 @@ import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.util.Map;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,7 +55,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", FLOW,
                 "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId)
         );
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ isFileEmpty('" + internalStorageFile + "') }}", variables));
@@ -68,8 +71,11 @@ class IsFileEmptyFunctionTest {
         storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
 
         boolean render = Boolean.parseBoolean(
-            variableRenderer.render("{{ isFileEmpty('" + filePath + "', namespace='" + namespace + "') }}",
-                Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT))));
+            variableRenderer.render(
+                "{{ isFileEmpty('" + filePath + "', namespace='" + namespace + "') }}",
+                Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT))
+            )
+        );
         assertFalse(render);
     }
 
@@ -84,7 +90,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", FLOW,
                 "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId)
         );
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ isFileEmpty('" + internalStorageFile + "') }}", variables));
@@ -97,7 +104,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme")
         );
 
@@ -111,7 +119,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
@@ -127,7 +136,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
@@ -144,14 +154,14 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
 
         assertThrows(SecurityException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
     }
-
 
     @Test
     void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException {
@@ -160,7 +170,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "io.kestra.tests",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );
@@ -175,7 +186,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );

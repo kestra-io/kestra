@@ -2,6 +2,7 @@ package io.kestra.cli.commands.sys.database;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.SneakyThrows;
 import picocli.CommandLine;

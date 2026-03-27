@@ -1,17 +1,5 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.Version;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpMethod;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.client.HttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,6 +13,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Version;
+
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpMethod;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.HttpClient;
 
 /**
  * Services for retrieving available plugin artifacts for Kestra.
@@ -46,31 +48,31 @@ public class PluginCatalogService {
 
     private final boolean icons;
     private final boolean oss;
-    
+
     private final Version currentStableVersion;
 
     /**
      * Creates a new {@link PluginCatalogService} instance.
      *
-     * @param httpClient    the HTTP Client to connect to Kestra API.
-     * @param icons         specifies whether icons must be loaded for plugins.
+     * @param httpClient the HTTP Client to connect to Kestra API.
+     * @param icons specifies whether icons must be loaded for plugins.
      * @param communityOnly specifies whether only OSS plugins must be returned.
      */
     public PluginCatalogService(final HttpClient httpClient,
-                                final boolean icons,
-                                final boolean communityOnly) {
+        final boolean icons,
+        final boolean communityOnly) {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
-        
+
         Version version = Version.of(KestraContext.getContext().getVersion());
         this.currentStableVersion = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
-        
+
         // Immediately trigger an async load of plugin artifacts.
         this.isLoaded.set(true);
         this.plugins = CompletableFuture.supplyAsync(this::load);
     }
-    
+
     /**
      * Resolves the version for the given artifacts.
      *
@@ -81,17 +83,18 @@ public class PluginCatalogService {
         if (ListUtils.isEmpty(artifacts)) {
             return List.of();
         }
-        
+
         final Map<String, ApiPluginArtifact> pluginsByGroupAndArtifactId = getAllCompatiblePlugins().stream()
             .collect(Collectors.toMap(it -> it.groupId() + ":" + it.artifactId(), Function.identity()));
-        
-        return artifacts.stream().map(it -> {
+
+        return artifacts.stream().map(it ->
+        {
             // Get all compatible versions for current artifact
             List<String> versions = Optional
                 .ofNullable(pluginsByGroupAndArtifactId.get(it.groupId() + ":" + it.artifactId()))
                 .map(ApiPluginArtifact::versions)
                 .orElse(List.of());
-            
+
             // Try to resolve the version
             String resolvedVersion = null;
             if (!versions.isEmpty()) {
@@ -153,7 +156,8 @@ public class PluginCatalogService {
                 .parallelStream()
                 .filter(plugin -> !plugin.get("name").equals("core"))
                 .filter(plugin -> !oss || !"EE".equals(plugin.get("license")))
-                .map(plugin -> {
+                .map(plugin ->
+                {
                     // Get artifact
                     String groupId = "EE".equals(plugin.get("license")) ? "io.kestra.plugin.ee" : "io.kestra.plugin";
                     String artifactId = (String) plugin.get("name");
@@ -193,11 +197,11 @@ public class PluginCatalogService {
             isLoaded.set(false);
         }
     }
-    
+
     private List<ApiPluginArtifact> getAllCompatiblePlugins() {
 
         MutableHttpRequest<Object> request = HttpRequest.create(
-            HttpMethod.GET, 
+            HttpMethod.GET,
             "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion
         );
         if (oss) {
@@ -213,24 +217,23 @@ public class PluginCatalogService {
             return List.of();
         }
     }
-    
+
     public record PluginManifest(
         String title,
         String icon,
         String groupId,
-        String artifactId
-    ) {
+        String artifactId) {
 
         @Override
         public String toString() {
             return groupId + ":" + artifactId + ":LATEST";
         }
     }
-    
+
     public record ApiPluginArtifact(
         String groupId,
         String artifactId,
         String license,
-        List<String> versions
-    ) {}
+        List<String> versions) {
+    }
 }

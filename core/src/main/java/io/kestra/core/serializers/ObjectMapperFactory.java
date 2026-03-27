@@ -2,7 +2,9 @@ package io.kestra.core.serializers;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.plugins.PluginModule;
+
 import io.micronaut.context.annotation.BootstrapContextCompatible;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Replaces;

@@ -1,21 +1,22 @@
 package io.kestra.cli.commands.templates;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.Map;
 
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.runtime.server.EmbeddedServer;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TemplateValidateCommandTest {
     @Test
-    void runLocal()  {
+    void runLocal() {
         URL directory = TemplateValidateCommandTest.class.getClassLoader().getResource("invalidsTemplates/template.yml");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));
@@ -34,7 +35,7 @@ class TemplateValidateCommandTest {
     }
 
     @Test
-    void runServer()  {
+    void runServer() {
         URL directory = TemplateValidateCommandTest.class.getClassLoader().getResource("invalidsTemplates/template.yml");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));

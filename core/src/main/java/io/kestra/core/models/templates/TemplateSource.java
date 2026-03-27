@@ -3,7 +3,6 @@ package io.kestra.core.models.templates;
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
 @Getter

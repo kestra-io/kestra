@@ -1,13 +1,15 @@
 package io.kestra.plugin.core.flow;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import java.util.List;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class FlowOutputTest {
@@ -19,7 +21,7 @@ class FlowOutputTest {
         assertThat(execution.getOutputs().get("key")).isEqualTo("{\"value\":\"flow-with-outputs\"}");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
-    
+
     @Test
     @ExecuteFlow("flows/valids/flow-with-optional-outputs.yml")
     void shouldGetSuccessExecutionForFlowWithOptionalOutputs(Execution execution) {

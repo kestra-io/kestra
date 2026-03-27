@@ -1,15 +1,17 @@
 package io.kestra.repository.h2;
 
+import java.util.List;
+
+import org.jooq.Condition;
+
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jooq.Condition;
-
-import java.util.List;
 
 @Singleton
 @H2RepositoryEnabled
@@ -17,7 +19,7 @@ import java.util.List;
 public class H2TemplateRepository extends AbstractJdbcTemplateRepository {
     @Inject
     public H2TemplateRepository(@Named("templates") H2Repository<Template> repository,
-                                ApplicationContext applicationContext) {
+        ApplicationContext applicationContext) {
         super(repository, applicationContext);
     }
 

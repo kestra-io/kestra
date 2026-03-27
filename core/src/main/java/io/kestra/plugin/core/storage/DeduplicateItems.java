@@ -1,21 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.core.util.functional.ThrowingFunction;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -26,6 +10,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.micronaut.core.util.functional.ThrowingFunction;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Schema(
     title = "Deduplicate a file by retaining only the latest item for each extracted key.",
@@ -40,12 +42,12 @@ import java.util.Map;
         @Example(
             code = {
                 """
-                tasks:
-                   - id: deduplicate
-                     type: io.kestra.plugin.core.storage.DeduplicateItems
-                     from: "{{ inputs.uri }}"
-                     expr: "{{ key }}"
-                """
+                    tasks:
+                       - id: deduplicate
+                         type: io.kestra.plugin.core.storage.DeduplicateItems
+                         from: "{{ inputs.uri }}"
+                         expr: "{{ key }}"
+                    """
             }
         )
     },
@@ -103,8 +105,10 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
 
         final Path path = runContext.workingDir().createTempFile(".ion");
         // 2nd iteration: write deduplicate
-        try (final BufferedWriter writer = Files.newBufferedWriter(path);
-             final BufferedReader reader = newBufferedReader(runContext, from)) {
+        try (
+            final BufferedWriter writer = Files.newBufferedWriter(path);
+            final BufferedReader reader = newBufferedReader(runContext, from)
+        ) {
             long offset = 0L;
             String item;
             while ((item = reader.readLine()) != null) {
@@ -179,11 +183,10 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
          * @param expression the 'pebble' expression.
          */
         public PebbleFieldExtractor(final RunContext runContext,
-                                    final String expression) {
+            final String expression) {
             this.runContext = runContext;
             this.expression = expression;
         }
-
 
         /** {@inheritDoc} */
         @Override

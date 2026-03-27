@@ -1,17 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.annotation.Property;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,6 +7,20 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Map;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.context.annotation.Property;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.NAMESPACE;
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;
@@ -28,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(rebuildContext = true)
-@Property(name="kestra.server-type", value="WORKER")
+@Property(name = "kestra.server-type", value = "WORKER")
 class ReadFileFunctionTest {
     @Inject
     VariableRenderer variableRenderer;
@@ -40,7 +42,8 @@ class ReadFileFunctionTest {
     void readNamespaceFile() throws IllegalVariableEvaluationException, IOException {
         String filePath = "file.txt";
         storageInterface.createDirectory(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE)));
-        storageInterface.put(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
+        storageInterface
+            .put(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
 
         String render = variableRenderer.render("{{ render(read('" + filePath + "')) }}", getVariables());
         assertThat(render).isEqualTo("Hello from " + NAMESPACE);
@@ -50,7 +53,8 @@ class ReadFileFunctionTest {
     void readNamespaceFileFromURI() throws IllegalVariableEvaluationException, IOException {
         String filePath = "file.txt";
         storageInterface.createDirectory(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE)));
-        storageInterface.put(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
+        storageInterface
+            .put(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
 
         Map<String, Object> variables = getVariablesWithExecution(NAMESPACE);
 
@@ -62,7 +66,8 @@ class ReadFileFunctionTest {
     void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
         String filePath = "file.txt";
         storageInterface.createDirectory(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE)));
-        storageInterface.put(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE) + "/" + filePath), new ByteArrayInputStream("Hello but not from flow.namespace".getBytes()));
+        storageInterface
+            .put(MAIN_TENANT, NAMESPACE, URI.create(StorageContext.namespaceFilePrefix(NAMESPACE) + "/" + filePath), new ByteArrayInputStream("Hello but not from flow.namespace".getBytes()));
 
         String render = variableRenderer.render("{{ read('" + filePath + "', namespace='" + NAMESPACE + "') }}", getVariables("different.namespace"));
         assertThat(render).isEqualTo("Hello but not from flow.namespace");
@@ -70,7 +75,9 @@ class ReadFileFunctionTest {
 
     @Test
     void readUnknownNamespaceFile() {
-        IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", getVariables()));
+        IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", getVariables())
+        );
         assertThat(illegalVariableEvaluationException.getCause().getCause().getClass()).isEqualTo(FileNotFoundException.class);
     }
 
@@ -94,7 +101,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "subflow",
                 "namespace", namespace,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", flowId,
@@ -122,7 +130,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", flowId,
                 "namespace", namespace,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId),
             "file", internalStorageFile
         );
@@ -135,7 +144,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "subflow",
                 "namespace", namespace,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", flowId,
@@ -164,10 +174,12 @@ class ReadFileFunctionTest {
     }
 
     @Test
-    @Property(name="kestra.server-type", value="EXECUTOR")
+    @Property(name = "kestra.server-type", value = "EXECUTOR")
     @Disabled("Moved on the next release")
     void readFailOnNonWorkerNodes() {
-        IllegalVariableEvaluationException exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
+        IllegalVariableEvaluationException exception = assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests")))
+        );
         assertThat(exception.getMessage()).contains("The 'read' function can only be used in the Worker as it access the internal storage.");
     }
 
@@ -185,7 +197,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
@@ -201,7 +214,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
@@ -218,7 +232,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
@@ -233,7 +248,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "io.kestra.tests",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );
@@ -248,7 +264,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );
@@ -268,7 +285,8 @@ class ReadFileFunctionTest {
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "trigger", Map.of("namespace", "notme", "flowId", "parent", "executionId", "parent")
         );

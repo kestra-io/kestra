@@ -1,8 +1,9 @@
 package io.kestra.core.utils;
 
+import java.util.concurrent.ThreadFactory;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.util.concurrent.ThreadFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 

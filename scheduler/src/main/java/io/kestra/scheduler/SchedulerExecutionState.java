@@ -1,9 +1,10 @@
 package io.kestra.scheduler;
 
+import java.util.Optional;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 
-import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 

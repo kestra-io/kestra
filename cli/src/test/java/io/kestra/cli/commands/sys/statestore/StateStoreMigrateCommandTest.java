@@ -1,5 +1,16 @@
 package io.kestra.cli.commands.sys.statestore;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.flows.Flow;
@@ -12,18 +23,9 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
 import io.kestra.plugin.core.log.Log;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,7 +48,8 @@ class StateStoreMigrateCommandTest {
 
             StorageInterface storage = ctx.getBean(StorageInterface.class);
             String tenantId = flow.getTenantId();
-            URI oldStateStoreUri = URI.create("/" + flow.getNamespace().replace(".", "/") + "/" + Slugify.of("a-flow") + "/states/my-state/" + Hashing.hashToString("my-taskrun-value") + "/sub-name");
+            URI oldStateStoreUri = URI
+                .create("/" + flow.getNamespace().replace(".", "/") + "/" + Slugify.of("a-flow") + "/states/my-state/" + Hashing.hashToString("my-taskrun-value") + "/sub-name");
             storage.put(
                 tenantId,
                 flow.getNamespace(),
@@ -55,11 +58,15 @@ class StateStoreMigrateCommandTest {
             );
             assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isTrue();
 
-            RunContext runContext = ctx.getBean(RunContextFactory.class).of(flow, Map.of("flow", Map.of(
-                "tenantId", tenantId,
-                "id", flow.getId(),
-                "namespace", flow.getNamespace()
-            )));
+            RunContext runContext = ctx.getBean(RunContextFactory.class).of(
+                flow, Map.of(
+                    "flow", Map.of(
+                        "tenantId", tenantId,
+                        "id", flow.getId(),
+                        "namespace", flow.getNamespace()
+                    )
+                )
+            );
             StateStore stateStore = new StateStore(runContext, true);
             Assertions.assertThrows(MigrationRequiredException.class, () -> stateStore.getState(true, "my-state", "sub-name", "my-taskrun-value"));
 

@@ -1,6 +1,17 @@
 package io.kestra.core.runners;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
+import org.slf4j.event.Level;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -19,17 +30,9 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Pause;
+
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
-import org.slf4j.event.Level;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +60,7 @@ class ExecutionServiceTest {
     RunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows({"flows/valids/restart_last_failed.yaml"})
+    @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
     void restartSimple() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart_last_failed");
         assertThat(execution.getTaskRunList()).hasSize(3);
@@ -76,7 +79,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart_last_failed.yaml"})
+    @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
     void restartSimpleRevision() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart_last_failed");
         assertThat(execution.getTaskRunList()).hasSize(3);
@@ -95,7 +98,6 @@ class ExecutionServiceTest {
             )
         );
 
-
         Execution restart = executionService.restart(execution, 2);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
@@ -109,7 +111,7 @@ class ExecutionServiceTest {
     }
 
     @RetryingTest(5)
-    @LoadFlows({"flows/valids/restart-each.yaml"})
+    @LoadFlows({ "flows/valids/restart-each.yaml" })
     void restartFlowable() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -126,7 +128,7 @@ class ExecutionServiceTest {
     }
 
     @RetryingTest(5)
-    @LoadFlows({"flows/valids/restart-each.yaml"})
+    @LoadFlows({ "flows/valids/restart-each.yaml" })
     void restartFlowable2() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -142,7 +144,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory.yaml"})
+    @LoadFlows({ "flows/valids/working-directory.yaml" })
     void restartDynamic() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory", null, (f, e) -> ImmutableMap.of("failed", "true"));
         assertThat(execution.getTaskRunList()).hasSize(3);
@@ -158,7 +160,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/logs.yaml"})
+    @LoadFlows({ "flows/valids/logs.yaml" })
     void replayFromBeginning() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "logs");
         assertThat(execution.getTaskRunList()).hasSize(5);
@@ -179,7 +181,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/logs.yaml"})
+    @LoadFlows({ "flows/valids/logs.yaml" })
     void replaySimple() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "logs");
         assertThat(execution.getTaskRunList()).hasSize(5);
@@ -198,7 +200,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart-each.yaml"})
+    @LoadFlows({ "flows/valids/restart-each.yaml" })
     void replayFlowable() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "NO"));
         assertThat(execution.getTaskRunList()).hasSize(20);
@@ -216,7 +218,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/parallel-nested.yaml"})
+    @LoadFlows({ "flows/valids/parallel-nested.yaml" })
     void replayParallel() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "parallel-nested");
         assertThat(execution.getTaskRunList()).hasSize(11);
@@ -236,7 +238,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/parallel-nested.yaml"})
+    @LoadFlows({ "flows/valids/parallel-nested.yaml" })
     void replayParallelRestartsRunningSibling() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "parallel-nested");
         assertThat(execution.getTaskRunList()).hasSize(11);
@@ -248,9 +250,11 @@ class ExecutionServiceTest {
         Execution executionWithRunningSibling = execution.withTaskRunList(
             execution.getTaskRunList()
                 .stream()
-                .map(taskRun -> taskRun.getId().equals(runningSibling.getId())
-                    ? taskRun.withState(State.Type.RUNNING)
-                    : taskRun)
+                .map(
+                    taskRun -> taskRun.getId().equals(runningSibling.getId())
+                        ? taskRun.withState(State.Type.RUNNING)
+                        : taskRun
+                )
                 .toList()
         );
 
@@ -301,7 +305,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/dynamic-task.yaml"})
+    @LoadFlows({ "flows/valids/dynamic-task.yaml" })
     void replayWithADynamicTask() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "dynamic-task");
         assertThat(execution.getTaskRunList()).hasSize(3);
@@ -321,7 +325,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-parallel-nested.yaml"})
+    @LoadFlows({ "flows/valids/each-parallel-nested.yaml" })
     void replayEachPara() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-parallel-nested");
         assertThat(execution.getTaskRunList()).hasSize(11);
@@ -341,7 +345,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-parallel-nested.yaml"})
+    @LoadFlows({ "flows/valids/each-parallel-nested.yaml" })
     void markAsEachPara() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-parallel-nested");
         Flow flow = flowRepository.findByExecution(execution);
@@ -373,7 +377,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
     void resumePausedToRunning() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
         Flow flow = flowRepository.findByExecution(execution);
@@ -393,7 +397,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
     void resumePausedToKilling() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
         Flow flow = flowRepository.findByExecution(execution);
@@ -432,7 +436,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause_no_tasks.yaml"})
+    @LoadFlows({ "flows/valids/pause_no_tasks.yaml" })
     void shouldKillPausedExecutions() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_no_tasks");
         Flow flow = flowRepository.findByExecution(execution);
@@ -460,7 +464,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause_no_tasks.yaml"})
+    @LoadFlows({ "flows/valids/pause_no_tasks.yaml" })
     void killToState() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_no_tasks");
         Flow flow = flowRepository.findByExecution(execution);
@@ -474,7 +478,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/change-state-errors.yaml"})
+    @LoadFlows({ "flows/valids/change-state-errors.yaml" })
     void changeStateWithErrorBranch() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "change-state-errors");
         Flow flow = flowRepository.findByExecution(execution);
@@ -492,13 +496,13 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-pause.yaml"})
+    @LoadFlows({ "flows/valids/each-pause.yaml" })
     void killExecutionWithFlowableTask() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "each-pause");
 
         TaskRun childTaskRun = execution.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("pause")).toList().getFirst();
 
-        Execution killed = executionService.killParentTaskruns(childTaskRun,execution);
+        Execution killed = executionService.killParentTaskruns(childTaskRun, execution);
 
         TaskRun parentTaskRun = killed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
 

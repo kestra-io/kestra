@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.execution;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.flows.State;
@@ -10,13 +13,11 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.ZonedDateTime;
-import java.util.List;
 
 @SuperBuilder
 @ToString
@@ -41,7 +42,7 @@ import java.util.List;
             }
         )
     },
-    aliases = {"io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge"}
+    aliases = { "io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge" }
 )
 public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output> {
     @Schema(
@@ -112,13 +113,13 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
 
     @Override
     public PurgeExecutions.Output run(RunContext runContext) throws Exception {
-        ExecutionService executionService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionService.class);
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
+        ExecutionService executionService = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionService.class);
+        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
-        if (renderedNamespace == null){
+        if (renderedNamespace == null) {
             flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
         } else if (!renderedNamespace.equals(flowInfo.namespace())) {
             flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());

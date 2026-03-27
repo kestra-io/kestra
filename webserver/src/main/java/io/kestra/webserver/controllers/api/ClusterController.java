@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.*;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
@@ -24,7 +25,7 @@ public class ClusterController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get("services/{id}")
-    @Operation(tags = {"Services"}, summary = "Get details about a service")
+    @Operation(tags = { "Services" }, summary = "Get details about a service")
     public HttpResponse<ServiceInstance> getService(@PathVariable("id") String id) throws HttpStatusException {
         return repository.findById(id)
             .map(HttpResponse::ok)

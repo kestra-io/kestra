@@ -1,6 +1,14 @@
 package io.kestra.webserver.controllers.api;
 
-import com.google.common.collect.ImmutableMap;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
@@ -9,6 +17,7 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -17,14 +26,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.GET;
@@ -82,7 +83,6 @@ class LogControllerTest {
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
 
-
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/main/logs/search?page=1&size=-1"))
@@ -120,26 +120,32 @@ class LogControllerTest {
     @Test
     void downloadLogsFromExecution() {
         LogEntry log1 = logEntry(Level.INFO);
-        executionRepository.save(Execution.builder()
-            .id(log1.getExecutionId())
-            .namespace("io.kestra.unittest")
-            .tenantId(MAIN_TENANT)
-            .flowId("full")
-            .flowRevision(1)
-            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-            .taskRunList(Collections.singletonList(
-                TaskRun.builder()
-                    .id(IdUtils.create())
-                    .namespace("io.kestra.unittest")
-                    .flowId("full")
-                    .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-                    .attempts(Collections.singletonList(
-                        TaskRunAttempt.builder()
+        executionRepository.save(
+            Execution.builder()
+                .id(log1.getExecutionId())
+                .namespace("io.kestra.unittest")
+                .tenantId(MAIN_TENANT)
+                .flowId("full")
+                .flowRevision(1)
+                .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+                .taskRunList(
+                    Collections.singletonList(
+                        TaskRun.builder()
+                            .id(IdUtils.create())
+                            .namespace("io.kestra.unittest")
+                            .flowId("full")
+                            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+                            .attempts(
+                                Collections.singletonList(
+                                    TaskRunAttempt.builder()
+                                        .build()
+                                )
+                            )
                             .build()
-                    ))
-                    .build()
-            ))
-            .build());
+                    )
+                )
+                .build()
+        );
         LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);
         logRepository.save(log1);
@@ -205,7 +211,6 @@ class LogControllerTest {
         logRepository.save(log1);
         logRepository.save(log2);
         logRepository.save(log3);
-
 
         PagedResults<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/logs/search?filters[timeRange][EQUALS]=PT25H"),

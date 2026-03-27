@@ -1,26 +1,27 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowSource;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlParser;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.services.FlowService;
-import jakarta.validation.ConstraintViolationException;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.TestsUtils;
+
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,16 +40,16 @@ class FlowValidationTest {
         public TestJsonProcessingException(String msg, JsonLocation location) {
             super(msg, location);
         }
+
         public TestJsonProcessingException(String msg) {
             super(msg);
         }
     }
 
-
     @Test
     void testFormatYamlErrorMessage_WithExpectedFieldName() throws JsonProcessingException {
         JsonProcessingException e = new TestJsonProcessingException("Expected a field name", new JsonLocation(null, 100, 5, 10));
-        Object dummyTarget = new Object();  // Dummy target for toConstraintViolationException
+        Object dummyTarget = new Object(); // Dummy target for toConstraintViolationException
 
         ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
 
@@ -94,7 +95,6 @@ class FlowValidationTest {
 
         assertThat(result.getMessage()).contains("YAML syntax error: Invalid structure").doesNotContain("at line");
     }
-
 
     @Test
     void testValidateFlowWithYamlSyntaxError() {
@@ -155,7 +155,8 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isEqualTo(true);
-        assertThat(validate.get().getMessage()).contains("Invalid input reference: use inputs[key-name] instead of inputs.key-name — keys with dashes require bracket notation, offending tasks: [hello]");
+        assertThat(validate.get().getMessage())
+            .contains("Invalid input reference: use inputs[key-name] instead of inputs.key-name — keys with dashes require bracket notation, offending tasks: [hello]");
     }
 
     @Test
@@ -164,8 +165,10 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isEqualTo(true);
-        assertThat(validate.get().getMessage()).contains("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending tasks: [use_output]");
-        assertThat(validate.get().getMessage()).contains("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending outputs: [final]");
+        assertThat(validate.get().getMessage())
+            .contains("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending tasks: [use_output]");
+        assertThat(validate.get().getMessage())
+            .contains("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending outputs: [final]");
     }
 
     @Test

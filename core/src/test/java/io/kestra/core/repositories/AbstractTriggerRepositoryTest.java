@@ -1,5 +1,16 @@
 package io.kestra.core.repositories;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
+
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
@@ -9,19 +20,10 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.event.Level;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -44,7 +46,7 @@ public abstract class AbstractTriggerRepositoryTest {
             .date(ZonedDateTime.now());
     }
 
-    protected static Trigger generateDefaultTrigger(){
+    protected static Trigger generateDefaultTrigger() {
         Trigger trigger = Trigger.builder()
             .tenantId(MAIN_TENANT)
             .triggerId("triggerId")
@@ -58,7 +60,7 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all(QueryFilter filter){
+    void should_find_all(QueryFilter filter) {
         triggerRepository.save(generateDefaultTrigger());
 
         ArrayListTotal<Trigger> entries = triggerRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
@@ -68,7 +70,7 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all_async(QueryFilter filter){
+    void should_find_all_async(QueryFilter filter) {
         triggerRepository.save(generateDefaultTrigger());
 
         List<Trigger> entries = triggerRepository.find(MAIN_TENANT, List.of(filter)).collectList().block();
@@ -91,7 +93,7 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all(QueryFilter filter){
+    void should_fail_to_find_all(QueryFilter filter) {
         assertThrows(InvalidQueryFiltersException.class, () -> triggerRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
     }
 
@@ -128,7 +130,6 @@ public abstract class AbstractTriggerRepositoryTest {
 
         assertThat(findLast.isPresent()).isTrue();
         assertThat(findLast.get().getExecutionId()).isEqualTo(save.getExecutionId());
-
 
         triggerRepository.save(trigger().build());
         triggerRepository.save(trigger().build());
@@ -178,12 +179,13 @@ public abstract class AbstractTriggerRepositoryTest {
     @Test
     void shouldCountForNullTenant() {
         // Given
-        triggerRepository.save(Trigger
-            .builder()
-            .triggerId(IdUtils.create())
-            .flowId(IdUtils.create())
-            .namespace("io.kestra.unittest")
-            .build()
+        triggerRepository.save(
+            Trigger
+                .builder()
+                .triggerId(IdUtils.create())
+                .flowId(IdUtils.create())
+                .namespace("io.kestra.unittest")
+                .build()
         );
         // When
         int count = triggerRepository.count(null);

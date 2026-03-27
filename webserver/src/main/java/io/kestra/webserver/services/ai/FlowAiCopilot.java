@@ -1,9 +1,13 @@
 package io.kestra.webserver.services.ai;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.exceptions.AiException;
 import io.kestra.core.models.flows.Flow;
@@ -11,12 +15,9 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Version;
 import io.kestra.webserver.models.ai.FlowGenerationPrompt;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.plugins.RegisteredPlugin.*;
 import static io.kestra.core.plugins.RegisteredPlugin.APP_BLOCKS_GROUP_NAME;
@@ -63,9 +64,11 @@ public class FlowAiCopilot {
             );
         String serializedPlugins;
         try {
-            serializedPlugins = JacksonMapper.ofJson().writeValueAsString(descriptionByType.entrySet().stream().map(e ->
-                Map.of("type", e.getKey(), "description", e.getValue())
-            ).toList());
+            serializedPlugins = JacksonMapper.ofJson().writeValueAsString(
+                descriptionByType.entrySet().stream().map(
+                    e -> Map.of("type", e.getKey(), "description", e.getValue())
+                ).toList()
+            );
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize plugin types for Gemini AI agent", e);
             serializedPlugins = "[]";
@@ -81,7 +84,8 @@ public class FlowAiCopilot {
 
     // Utility to minify a JSON schema by removing unnecessary fields
     private static void minifySchema(JsonNode node) {
-        if (node == null) return;
+        if (node == null)
+            return;
         if (node.isObject()) {
             ObjectNode obj = (ObjectNode) node;
             obj.remove("$dynamic");
@@ -124,7 +128,7 @@ public class FlowAiCopilot {
             ```yaml
             %s
             ```
-            
+
             User's prompt:
             ```
             %s

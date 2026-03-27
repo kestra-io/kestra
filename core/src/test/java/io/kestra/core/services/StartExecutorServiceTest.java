@@ -1,12 +1,14 @@
 package io.kestra.core.services;
 
-import io.micronaut.context.annotation.Property;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+
+import io.micronaut.context.annotation.Property;
+import jakarta.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.*;
 

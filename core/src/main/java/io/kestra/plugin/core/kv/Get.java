@@ -1,5 +1,10 @@
 package io.kestra.plugin.core.kv;
 
+import java.io.IOException;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -11,18 +16,14 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import java.io.IOException;
-import java.util.Objects;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Slf4j
 @SuperBuilder(toBuilder = true)
@@ -71,7 +72,6 @@ public class Get extends Task implements RunnableTask<Get.Output> {
     @Builder.Default
     private Property<Boolean> errorOnMissing = Property.ofValue(false);
 
-
     @Override
     public Output run(RunContext runContext) throws Exception {
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
@@ -84,7 +84,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         } else {
             FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
             flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
-            value =  runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+            value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         }
 
         if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && value.isEmpty()) {
@@ -97,13 +97,13 @@ public class Get extends Task implements RunnableTask<Get.Output> {
     }
 
     private Optional<KVValue> getValueWithInheritance(RunContext runContext, String flowNamespace, String renderedKey)
-            throws IOException, ResourceExpiredException {
+        throws IOException, ResourceExpiredException {
         Optional<KVValue> value = Optional.empty();
         KVStoreService kvStoreService = ((DefaultRunContext) runContext).getApplicationContext().getBean(KVStoreService.class);
         String inheritedNamespace = flowNamespace;
         while (value.isEmpty()) {
             value = kvStoreService.get(runContext.flowInfo().tenantId(), inheritedNamespace, flowNamespace).getValue(renderedKey);
-            if (!inheritedNamespace.contains(".")){
+            if (!inheritedNamespace.contains(".")) {
                 return value;
             }
             inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));

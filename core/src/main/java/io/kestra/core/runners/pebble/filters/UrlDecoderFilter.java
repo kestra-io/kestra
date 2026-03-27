@@ -8,14 +8,14 @@
  */
 package io.kestra.core.runners.pebble.filters;
 
-import io.pebbletemplates.pebble.extension.Filter;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+
+import io.pebbletemplates.pebble.extension.Filter;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class UrlDecoderFilter implements Filter {
 
@@ -26,7 +26,7 @@ public class UrlDecoderFilter implements Filter {
 
     @Override
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self,
-                        EvaluationContext context, int lineNumber) {
+        EvaluationContext context, int lineNumber) {
         if (input == null) {
             return null;
         }

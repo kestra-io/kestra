@@ -1,31 +1,35 @@
 package io.kestra.webserver.utils;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.micronaut.http.exceptions.HttpStatusException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
+import io.micronaut.http.exceptions.HttpStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RequestUtilsTest {
     @ParameterizedTest
-    @CsvSource({
-        "timestamp:2023-12-18T14:32:14Z,timestamp,2023-12-18T14:32:14Z",
-        "url:https://your@company.com,url,https://your@company.com",
-        "city:Düsseldorf,city,Düsseldorf",
-        "key:foo bar,key,foo bar",
-    })
+    @CsvSource(
+        {
+            "timestamp:2023-12-18T14:32:14Z,timestamp,2023-12-18T14:32:14Z",
+            "url:https://your@company.com,url,https://your@company.com",
+            "city:Düsseldorf,city,Düsseldorf",
+            "key:foo bar,key,foo bar",
+        }
+    )
     void toMap(String input, String key, String value) {
         final Map<String, String> resultMap = RequestUtils.toMap(List.of(input));
 
@@ -171,8 +175,8 @@ class RequestUtilsTest {
 
     @Test
     void testToFlowScopesInvalidValue() {
-        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-            RequestUtils.toFlowScopes("INVALID_SCOPE")
+        Exception exception = assertThrows(
+            IllegalArgumentException.class, () -> RequestUtils.toFlowScopes("INVALID_SCOPE")
         );
 
         assertTrue(exception.getMessage().contains("Invalid FlowScope value"));

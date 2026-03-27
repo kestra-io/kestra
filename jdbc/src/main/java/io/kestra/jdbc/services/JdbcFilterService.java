@@ -1,5 +1,10 @@
 package io.kestra.jdbc.services;
 
+import java.util.Map;
+
+import org.jooq.*;
+import org.jooq.Record;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.filters.*;
@@ -7,17 +12,14 @@ import io.kestra.core.services.AbstractFilterService;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
+
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.jooq.*;
-import org.jooq.Record;
 
-import java.util.Map;
-
-import static org.jooq.impl.DSL.*;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
+import static org.jooq.impl.DSL.*;
 
 @Singleton
 @Requires(bean = AbstractJdbcDashboardRepository.class)

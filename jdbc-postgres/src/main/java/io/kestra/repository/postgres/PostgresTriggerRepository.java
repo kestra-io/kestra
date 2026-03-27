@@ -1,23 +1,25 @@
 package io.kestra.repository.postgres;
 
+import java.util.Date;
+
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-
-import java.util.Date;
 
 @Singleton
 @PostgresRepositoryEnabled
 public class PostgresTriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject
     public PostgresTriggerRepository(@Named("triggers") PostgresRepository<Trigger> repository,
-                                     JdbcFilterService filterService) {
+        JdbcFilterService filterService) {
         super(repository, filterService);
     }
 

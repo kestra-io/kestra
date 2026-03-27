@@ -1,13 +1,15 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.tasks.retrys.Constant;
-import io.kestra.core.junit.annotations.KestraTest;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.tasks.retrys.Constant;
+
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,10 +21,12 @@ class RetryUtilsTest {
     RetryUtils retryUtils;
 
     private <T, E extends Throwable> RetryUtils.Instance<T, E> instance() {
-        return retryUtils.of(Constant.builder()
-            .interval(Duration.ofMillis(10))
-            .maxAttempts(3)
-            .build());
+        return retryUtils.of(
+            Constant.builder()
+                .interval(Duration.ofMillis(10))
+                .maxAttempts(3)
+                .build()
+        );
     }
 
     @Test
@@ -30,9 +34,11 @@ class RetryUtilsTest {
         RetryUtils.Instance<Boolean, Throwable> retrier = instance();
         AtomicInteger inc = new AtomicInteger(3);
 
-        RetryUtils.RetryFailed retryFailed = assertThrows(RetryUtils.RetryFailed.class, () -> {
+        RetryUtils.RetryFailed retryFailed = assertThrows(RetryUtils.RetryFailed.class, () ->
+        {
             retrier.run(
-                (o, throwable) -> {
+                (o, throwable) ->
+                {
                     inc.decrementAndGet();
                     return true;
                 },
@@ -64,10 +70,12 @@ class RetryUtilsTest {
         RetryUtils.Instance<Boolean, IOException> retrier = instance();
         AtomicInteger inc = new AtomicInteger(3);
 
-        RetryUtils.RetryFailed retryFailed = assertThrows(RetryUtils.RetryFailed.class, () -> {
+        RetryUtils.RetryFailed retryFailed = assertThrows(RetryUtils.RetryFailed.class, () ->
+        {
             retrier.run(
                 IOException.class,
-                () -> {
+                () ->
+                {
                     throw new IOException("test");
                 }
             );
@@ -85,7 +93,8 @@ class RetryUtilsTest {
 
         Boolean retry = retrier.run(
             IOException.class,
-            () -> {
+            () ->
+            {
                 boolean result = inc.getAndDecrement() == 1;
                 if (!result) {
                     throw new IOException("test");
@@ -102,10 +111,12 @@ class RetryUtilsTest {
     void exceptionNoRetry() {
         RetryUtils.Instance<Boolean, ConcurrentModificationException> retrier = instance();
 
-        assertThrows(IOException.class, () -> {
+        assertThrows(IOException.class, () ->
+        {
             retrier.run(
                 ConcurrentModificationException.class,
-                () -> {
+                () ->
+                {
                     throw new IOException("test");
                 }
             );

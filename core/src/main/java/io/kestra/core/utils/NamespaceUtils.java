@@ -1,11 +1,11 @@
 package io.kestra.core.utils;
 
+import java.util.*;
+import java.util.regex.Pattern;
+
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-
-import java.util.*;
-import java.util.regex.Pattern;
 
 @Singleton
 public class NamespaceUtils {

@@ -1,11 +1,12 @@
 package io.kestra.core.trace;
 
+import java.util.Map;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.RunContext;
+
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
-
-import java.util.Map;
 
 public final class TraceUtils {
     public static final AttributeKey<String> ATTR_UID = AttributeKey.stringKey("kestra.uid");
@@ -17,7 +18,8 @@ public final class TraceUtils {
 
     public static final AttributeKey<String> ATTR_SOURCE = AttributeKey.stringKey("kestra.source");
 
-    private TraceUtils() {}
+    private TraceUtils() {
+    }
 
     public static Attributes attributesFrom(Execution execution) {
         var builder = Attributes.builder()

@@ -1,6 +1,12 @@
 package io.kestra.core.runners;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
@@ -12,17 +18,13 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.GraphUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;

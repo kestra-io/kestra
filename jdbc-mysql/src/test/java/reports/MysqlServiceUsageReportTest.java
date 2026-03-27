@@ -5,5 +5,5 @@ import io.kestra.core.reporter.reports.AbstractServiceUsageReportTest;
 
 @KestraTest
 class MysqlServiceUsageReportTest extends AbstractServiceUsageReportTest {
-    
+
 }

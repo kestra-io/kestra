@@ -1,22 +1,24 @@
 package io.kestra.core.services;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.LogRepositoryInterface;
+
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
-
-import java.time.ZonedDateTime;
-import java.util.List;
 
 @Singleton
 public class LogService {

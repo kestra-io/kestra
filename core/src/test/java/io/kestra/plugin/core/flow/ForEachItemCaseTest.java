@@ -1,24 +1,5 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import reactor.core.publisher.Flux;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,6 +19,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.TestsUtils;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -71,7 +73,8 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow") && execution.getState().getCurrent().isTerminated()) {
                 triggered.set(execution);
@@ -81,9 +84,11 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
@@ -115,9 +120,11 @@ public class ForEachItemCaseTest {
     public void forEachItemEmptyItems() throws TimeoutException, URISyntaxException, IOException, QueueException {
         URI file = emptyItems();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList()).hasSize(4);
@@ -131,7 +138,8 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow-sleep")) {
                 if (execution.getState().getCurrent().isTerminated()) {
@@ -143,9 +151,11 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-no-wait", null,
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "for-each-item-no-wait", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // assert that not all subflows ran (depending on the speed of execution, there can be some)
         // be careful that it's racy.
@@ -180,7 +190,8 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow-failed") && execution.getState().getCurrent().isTerminated()) {
                 triggered.set(execution);
@@ -190,9 +201,11 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-failed", null,
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "for-each-item-failed", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(60));
+            Duration.ofSeconds(60)
+        );
 
         // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
@@ -223,7 +236,8 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-outputs-subflow") && execution.getState().getCurrent().isTerminated()) {
                 triggered.set(execution);
@@ -233,9 +247,11 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-outputs", null,
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "for-each-item-outputs", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
@@ -274,7 +290,8 @@ public class ForEachItemCaseTest {
 
     public void restartForEachItem() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(6);
-        Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either ->
+        {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isFailed()) {
                 countDownLatch.countDown();
@@ -283,9 +300,11 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 20);
-        final Execution failedExecution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "restart-for-each-item", null,
+        final Execution failedExecution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "restart-for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
         assertThat(failedExecution.getTaskRunList()).hasSize(3);
         assertThat(failedExecution.getState().getCurrent()).isEqualTo(FAILED);
 
@@ -303,7 +322,8 @@ public class ForEachItemCaseTest {
         );
 
         CountDownLatch successLatch = new CountDownLatch(6);
-        receiveSubflows = TestsUtils.receive(executionQueue, either -> {
+        receiveSubflows = TestsUtils.receive(executionQueue, either ->
+        {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isSuccess()) {
                 successLatch.countDown();
@@ -333,7 +353,8 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow") && execution.getState().getCurrent().isTerminated()) {
                 triggered.set(execution);
@@ -343,9 +364,11 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-in-if", null,
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "for-each-item-in-if", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
@@ -376,7 +399,8 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either ->
+        {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow-after-execution") && execution.getState().getCurrent().isTerminated()) {
                 triggered.set(execution);
@@ -386,9 +410,11 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-after-execution", null,
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, TEST_NAMESPACE, "for-each-item-after-execution", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();

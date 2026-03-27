@@ -1,9 +1,11 @@
 package io.kestra.runner.postgres;
 
-import io.kestra.jdbc.runner.JdbcCleanerService;
-import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
+
+import io.kestra.jdbc.runner.JdbcCleanerService;
+
+import jakarta.inject.Singleton;
 
 @Singleton
 @PostgresQueueEnabled

@@ -1,5 +1,22 @@
 package io.kestra.core.runners;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.slf4j.event.Level;
+
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -31,6 +48,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
@@ -42,23 +60,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -104,7 +106,7 @@ class RunContextTest {
     protected LocalFlowRepositoryLoader repositoryLoader;
 
     @Test
-    @LoadFlows({"flows/valids/logs.yaml"})
+    @LoadFlows({ "flows/valids/logs.yaml" })
     void logs() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         LogEntry matchingLog;
@@ -135,7 +137,7 @@ class RunContextTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/inputs-large.yaml"})
+    @LoadFlows({ "flows/valids/inputs-large.yaml" })
     void inputsLarge() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
@@ -158,7 +160,8 @@ class RunContextTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 3);
+        List<LogEntry> logEntries = TestsUtils
+            .awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 3);
         receive.blockLast();
         logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
 
@@ -190,7 +193,7 @@ class RunContextTest {
 
         long size = 1024L * 1024 * 1024;
 
-        Process p = Runtime.getRuntime().exec(new String[] {"dd", "if=/dev/zero", String.format("of=%s", path), "bs=1", "count=1", String.format("seek=%s", size)});
+        Process p = Runtime.getRuntime().exec(new String[] { "dd", "if=/dev/zero", String.format("of=%s", path), "bs=1", "count=1", String.format("seek=%s", size) });
         p.waitFor();
         p.destroy();
 
@@ -257,7 +260,8 @@ class RunContextTest {
 
     @Test
     void withDefaultInput() throws IllegalVariableEvaluationException {
-        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults(io.kestra.core.models.property.Property.ofValue("test")).build())).build();
+        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1)
+            .inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults(io.kestra.core.models.property.Property.ofValue("test")).build())).build();
         Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).build();
 
         RunContext runContext = runContextFactory.of(flow, execution);
@@ -267,8 +271,10 @@ class RunContextTest {
 
     @Test
     void withNullLabel() throws IllegalVariableEvaluationException {
-        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults(io.kestra.core.models.property.Property.ofValue("test")).build())).build();
-        Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).labels(List.of(new Label("key", null), new Label(null, "value"))).build();
+        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1)
+            .inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults(io.kestra.core.models.property.Property.ofValue("test")).build())).build();
+        Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State())
+            .labels(List.of(new Label("key", null), new Label(null, "value"))).build();
 
         RunContext runContext = runContextFactory.of(flow, execution);
 
@@ -277,18 +283,22 @@ class RunContextTest {
 
     @Test
     void renderMap() throws IllegalVariableEvaluationException {
-        RunContext runContext = runContextFactory.of(Map.of(
-            "key", "default",
-            "value", "default"
-        ));
+        RunContext runContext = runContextFactory.of(
+            Map.of(
+                "key", "default",
+                "value", "default"
+            )
+        );
 
         Map<String, String> rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"));
         assertThat(rendered.get("default")).isEqualTo("default");
 
-        rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"), Map.of(
-            "key", "key",
-            "value", "value"
-        ));
+        rendered = runContext.renderMap(
+            Map.of("{{key}}", "{{value}}"), Map.of(
+                "key", "key",
+                "value", "value"
+            )
+        );
         assertThat(rendered.get("key")).isEqualTo("value");
     }
 
@@ -376,5 +386,6 @@ class RunContextTest {
         }
     }
 
-    record TestBean(@NotNull String someValue) {}
+    record TestBean(@NotNull String someValue) {
+    }
 }

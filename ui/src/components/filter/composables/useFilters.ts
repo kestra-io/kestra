@@ -170,36 +170,6 @@ export function useFilters(
         router.push({query});
     };
 
-    const encodeAppliedFiltersToQuery = (filters: AppliedFilter[]) => {
-        const query: Record<string, any> = {};
-        const validUniqueFilters = getUniqueFilters(filters.filter(isValidFilter));
-
-        if (legacyQuery) {
-            validUniqueFilters.forEach(filter => {
-                if (configuration.keys?.find(k => k.key === filter.key)?.valueType === "key-value") {
-                    (filter.value as string[]).forEach(item => {
-                        const [k, v] = item.split(":");
-                        query[`${filter.key}.${k}`] = v;
-                    });
-                } else if (Array.isArray(filter.value)) {
-                    filter.value.forEach(item =>
-                        appendQueryParam(query, filter.key, item?.toString() ?? "")
-                    );
-                } else if (isTimeRange(filter)) {
-                    const {startDate, endDate} = filter.value as { startDate: Date; endDate: Date };
-                    query.startDate = startDate.toISOString();
-                    query.endDate = endDate.toISOString();
-                } else {
-                    query[filter.key] = filter.value?.toString() || "";
-                }
-            });
-        } else {
-            Object.assign(query, encodeFiltersToQuery(validUniqueFilters, keyOfComparator));
-        }
-
-        return query;
-    };
-
     const createAppliedFilter = (
         key: string,
         config: any,

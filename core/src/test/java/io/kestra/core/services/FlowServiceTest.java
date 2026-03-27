@@ -31,6 +31,7 @@ import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
 
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 
@@ -658,6 +659,31 @@ class FlowServiceTest {
         var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
         verify(triggerEventQueue).send(captor.capture());
         assertThat(captor.getValue()).isInstanceOf(TriggerUpdated.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
+    }
+
+    @Test
+    void shouldEmitTriggerCreatedWhenAddingNewTriggerToExistingFlow() throws FlowProcessingException, QueueException {
+        // Given — a flow with no triggers
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        flowService.create(GenericFlow.of(flow));
+        reset(triggerEventQueue);
+
+        // When — add a Schedule trigger
+        Flow updated = flow.toBuilder()
+            .triggers(List.of(Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build()))
+            .build();
+        flowService.update(GenericFlow.of(updated), GenericFlow.of(flow));
+
+        // Then — a TriggerCreated event is emitted (not TriggerUpdated)
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerCreated.class);
         assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
     }
 

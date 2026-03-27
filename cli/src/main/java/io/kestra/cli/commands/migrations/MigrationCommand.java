@@ -13,7 +13,6 @@ import picocli.CommandLine;
     description = "handle migrations",
     mixinStandardHelpOptions = true,
     subcommands = {
-        TenantMigrationCommand.class,
         MetadataMigrationCommand.class,
         V2TriggerMigrationCommand.class,
         V2ExecutionResubmitMigrationCommand.class,

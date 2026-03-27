@@ -1,0 +1,11 @@
+id: nocode-switch
+namespace: company.team
+tasks:
+  - id: my_switch
+    type: io.kestra.plugin.core.flow.Switch
+    value: "{{ inputs.branch }}"
+    cases:
+      case_a:
+        - id: log_a
+          type: io.kestra.plugin.core.log.Log
+          message: "branch a"

@@ -1,0 +1,10 @@
+id: nocode-foreach
+namespace: company.team
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["a", "b"]'
+    tasks:
+      - id: inner_log
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ taskrun.value }}"

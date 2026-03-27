@@ -1,0 +1,16 @@
+id: nocode-dag
+namespace: company.team
+tasks:
+  - id: dag_task
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: dag_a
+          type: io.kestra.plugin.core.log.Log
+          message: "dag task a"
+      - task:
+          id: dag_b
+          type: io.kestra.plugin.core.log.Log
+          message: "dag task b"
+        dependsOn:
+          - dag_a

@@ -1,0 +1,6 @@
+id: nocode-simple
+namespace: company.team
+tasks:
+  - id: my_log
+    type: io.kestra.plugin.core.log.Log
+    message: "Hello World!"

@@ -20,6 +20,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextProperty;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.PebbleUtil;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -239,7 +240,7 @@ public class Property<T> {
             String trimmedExpression = property.expression.trim();
             // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
             // Doing that allows us to, if it's an expression, first render then read it as a list.
-            if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+            if (PebbleUtil.startsWithOpeningBlockDelimiter(trimmedExpression) && PebbleUtil.endsWithClosingBlockDelimiter(trimmedExpression)) {
                 property.value = deserialize(context.render(property.expression, variables), type);
             }
             // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
@@ -297,7 +298,7 @@ public class Property<T> {
                 String trimmedExpression = property.expression.trim();
                 // We need to detect if the expression is already a map or if it's a pebble expression (for eg. referencing a variable containing a map).
                 // Doing that allows us to, if it's an expression, first render then read it as a map.
-                if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+                if (PebbleUtil.startsWithOpeningBlockDelimiter(trimmedExpression) && PebbleUtil.endsWithClosingBlockDelimiter(trimmedExpression)) {
                     property.value = deserialize(runContext.render(property.expression, variables), targetMapType);
                 }
                 // Otherwise if it's already a map we read it as a map first then render it from run context which handle map rendering by rendering each entry of the map (otherwise it will fail with nested expressions in values for eg.)

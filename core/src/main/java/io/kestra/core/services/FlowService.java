@@ -215,10 +215,15 @@ public class FlowService {
     private void recomputeTriggers(FlowWithSource flow) {
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
-        if (flow.isDeleted() || previous != null) {
-            List<AbstractTrigger> triggersDeleted = flow.isDeleted() ? ListUtils.emptyOnNull(flow.getTriggers()) : FlowService.findRemovedTrigger(flow, previous);
+        if (flow.isDeleted()) {
+            ListUtils.emptyOnNull(flow.getTriggers()).forEach(
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+            );
+            return;
+        }
 
-            triggersDeleted.forEach(
+        if (previous != null) {
+            FlowService.findRemovedTrigger(flow, previous).forEach(
                 trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
             );
 

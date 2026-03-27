@@ -6,7 +6,6 @@
     "packageManager": "npm@10.9.0",
     "scripts": {
         "dev": "vite --host",
-        "check:types": "vue-tsc --noEmit",
         "build": "vite build --emptyOutDir",
         "preview": "vite preview",
         "pretest:types": "openapi-ts",

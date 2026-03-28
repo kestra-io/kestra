@@ -1,27 +1,43 @@
 package io.kestra.core.runners;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.queues.event.DispatchEvent;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.validation.constraints.NotNull;
+import lombok.With;
 
 @Value
 @AllArgsConstructor
 @Builder
-public class WorkerTaskResult implements HasUID {
+public class WorkerTaskResult implements DispatchEvent, HasUID {
     @NotNull
+    @With
     TaskRun taskRun;
 
     List<TaskRun> dynamicTaskRuns;
 
+    @Nullable
+    @With
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    Map<String, Object> outputs;
+
     public WorkerTaskResult(TaskRun taskRun) {
-        this(taskRun, new ArrayList<>(1)); // there are usually very few dynamic task runs, so we init the list with a capacity of 1
+        this(taskRun, new ArrayList<>(1), null); // there are usually very few dynamic task runs, so we init the list with a capacity of 1
+    }
+
+    public WorkerTaskResult(TaskRun taskRun, Map<String, Object> outputs) {
+        this(taskRun, new ArrayList<>(1), outputs); // there are usually very few dynamic task runs, so we init the list with a capacity of 1
     }
 
     /**
@@ -30,5 +46,13 @@ public class WorkerTaskResult implements HasUID {
     @Override
     public String uid() {
         return taskRun.getId();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String key() {
+        return uid();
     }
 }

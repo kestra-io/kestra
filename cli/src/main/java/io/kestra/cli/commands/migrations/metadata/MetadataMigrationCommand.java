@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.migrations.metadata;
 
 import io.kestra.cli.AbstractCommand;
-import jakarta.inject.Inject;
+
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

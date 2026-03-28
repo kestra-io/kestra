@@ -1,15 +1,16 @@
 package io.kestra.plugin.core.dashboard.data;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.dashboards.filters.AbstractFilter;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+
 public interface ITriggers extends IData<ITriggers.Fields> {
 
-    default List<AbstractFilter<ITriggers.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<ITriggers.Fields>> where) {
+    default List<AbstractFilter<ITriggers.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate,
+        List<AbstractFilter<ITriggers.Fields>> where) {
         List<AbstractFilter<ITriggers.Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
 
         if (filters == null) {
@@ -34,7 +35,6 @@ public interface ITriggers extends IData<ITriggers.Fields> {
 
         return updatedWhere;
     }
-
 
     enum Fields {
         ID,

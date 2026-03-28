@@ -1,5 +1,11 @@
 package io.kestra.webserver.services;
 
+import java.util.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricConfig;
 import io.kestra.core.metrics.MetricRegistry;
@@ -11,16 +17,12 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
+
 import io.micrometer.core.instrument.Tag;
 import io.micronaut.data.model.Pageable;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest()
 class SharedServiceInstanceMetricServiceTest {
@@ -64,9 +66,8 @@ class SharedServiceInstanceMetricServiceTest {
         // When
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
 
-
         // Then
-        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutMetricNameTag = getGaugeWithTags("metric-name", Map.of("tag-key", "tag-value-one") );
+        Optional<io.micrometer.core.instrument.Gauge> gaugeWithoutMetricNameTag = getGaugeWithTags("metric-name", Map.of("tag-key", "tag-value-one"));
         Optional<io.micrometer.core.instrument.Gauge> gaugeWithMetricNameTags = getGaugeWithTags("metric-name", Map.of("tag-key", "tag-value-two"));
 
         assertThat(gaugeWithoutMetricNameTag).isPresent();
@@ -86,7 +87,6 @@ class SharedServiceInstanceMetricServiceTest {
         ServiceInstance serviceInstanceBeforeUpdate = buildServiceInstanceWithMetric(serviceInstanceId, metric);
         ServiceInstance serviceInstanceAfterUpdate = buildServiceInstanceWithMetric(serviceInstanceId, metricUpdated);
 
-
         // When
         mockServiceInstance(List.of(serviceInstanceBeforeUpdate));
         sharedServiceInstanceMetricService.populateSharedServiceInstanceMetrics();
@@ -100,7 +100,6 @@ class SharedServiceInstanceMetricServiceTest {
         assertThat(gauge).isPresent();
         assertThat(gauge.get().value()).isEqualTo(2);
     }
-
 
     @Test
     void shouldSumMetricValues_givenMultipleServiceInstances_whenReportingSameMetric() {
@@ -188,26 +187,29 @@ class SharedServiceInstanceMetricServiceTest {
 
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithTags(String metricName, Map<String, String> tags) {
         return this.metricRegistry.find(metricName).gauges().stream()
-            .filter(gauge ->
-                tags.entrySet().stream().allMatch(entry -> Objects.equals(gauge.getId().getTag(entry.getKey()), entry.getValue()))
+            .filter(
+                gauge -> tags.entrySet().stream().allMatch(entry -> Objects.equals(gauge.getId().getTag(entry.getKey()), entry.getValue()))
             ).findFirst();
     }
 
     private Optional<io.micrometer.core.instrument.Gauge> getGaugeWithTagKeys(String metricName, List<String> tagKeys) {
         return this.metricRegistry.find(metricName).gauges().stream()
-            .filter(gauge -> {
-                    List<String> gaugeTagKeys = gauge.getId().getTags().stream().map(Tag::getKey).toList();
-                    return gaugeTagKeys.containsAll(tagKeys) && tagKeys.containsAll(gaugeTagKeys);
-                }
+            .filter(gauge ->
+            {
+                List<String> gaugeTagKeys = gauge.getId().getTags().stream().map(Tag::getKey).toList();
+                return gaugeTagKeys.containsAll(tagKeys) && tagKeys.containsAll(gaugeTagKeys);
+            }
             ).findFirst();
     }
 
     private void mockServiceInstance(List<ServiceInstance> serviceInstances) {
-        Mockito.when(serviceInstanceRepositoryInterface.find(
-            Mockito.eq(Pageable.unpaged()),
-            Mockito.eq(Service.ServiceState.allRunningStates()),
-            Mockito.eq(metricConfig.getSharedServiceInstanceMetrics().keySet())
-        )).thenReturn(new ArrayListTotal<>(serviceInstances, serviceInstances.size()));
+        Mockito.when(
+            serviceInstanceRepositoryInterface.find(
+                Mockito.eq(Pageable.unpaged()),
+                Mockito.eq(Service.ServiceState.allRunningStates()),
+                Mockito.eq(metricConfig.getSharedServiceInstanceMetrics().keySet())
+            )
+        ).thenReturn(new ArrayListTotal<>(serviceInstances, serviceInstances.size()));
     }
 
     private ServiceInstance buildServiceInstanceWithMetric(Metric... metrics) {

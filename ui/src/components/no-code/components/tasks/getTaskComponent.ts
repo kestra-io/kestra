@@ -34,7 +34,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         }
 
         if (property.$ref.includes("tasks.runners.TaskRunner")) {
-            return "task-runner"
+            return "task"
         }
 
         if (property.$ref.includes("io.kestra.preload")) {
@@ -58,7 +58,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         }
 
         // for dag tasks
-        if (property.anyOf.length > 10) {
+        if (property.anyOf.length > 10 || key === "taskRunner") {
             return "task"
         }
         return "any-of";

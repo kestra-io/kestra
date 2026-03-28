@@ -1,13 +1,14 @@
 package io.kestra.core.runners.pebble;
 
+import java.util.function.Function;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import io.pebbletemplates.pebble.cache.PebbleCache;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.function.Function;
 
 public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {
     private final Cache<Object, PebbleTemplate> cache;

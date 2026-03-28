@@ -1,12 +1,13 @@
 package io.kestra.core.server;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.kestra.core.utils.Enums;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import io.kestra.core.utils.Enums;
 
 /**
  * Interface for Kestra's Service
@@ -56,7 +57,7 @@ public interface Service extends AutoCloseable {
      * Returns this service for the expected type.
      * If a service acts as a decorator that method must return the original service instance.
      *
-     * @return  the expected service type.
+     * @return the expected service type.
      * @param <T> the service type.
      */
     @SuppressWarnings("unchecked")
@@ -113,23 +114,23 @@ public interface Service extends AutoCloseable {
      * </pre>
      */
     enum ServiceState {
-        CREATED(1, 2, 3, 4, 9),         // 0
-        RUNNING(2, 3, 4, 9),            // 1
-        ERROR(4),                       // 2
-        DISCONNECTED(4, 7),             // 3
-        TERMINATING(5, 6, 7),           // 4
-        TERMINATED_GRACEFULLY(7),       // 5
-        TERMINATED_FORCED(7),           // 6
-        NOT_RUNNING(8),                 // 7
-        INACTIVE(),                                   // 8 FINAL STATE
-        MAINTENANCE(1, 2, 3, 4);        // 9
+        CREATED(1, 2, 3, 4, 9), // 0
+        RUNNING(2, 3, 4, 9), // 1
+        ERROR(4), // 2
+        DISCONNECTED(4, 7), // 3
+        TERMINATING(5, 6, 7), // 4
+        TERMINATED_GRACEFULLY(7), // 5
+        TERMINATED_FORCED(7), // 6
+        NOT_RUNNING(8), // 7
+        INACTIVE(), // 8 FINAL STATE
+        MAINTENANCE(1, 2, 3, 4); // 9
 
         private final Set<Integer> validTransitions = new HashSet<>();
 
         ServiceState(final Integer... validTransitions) {
             this.validTransitions.addAll(Arrays.asList(validTransitions));
         }
-        
+
         @JsonCreator
         public static ServiceState fromString(final String value) {
             try {

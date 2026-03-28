@@ -1,14 +1,16 @@
 package io.kestra.core.killswitch;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

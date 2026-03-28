@@ -1,16 +1,15 @@
 package io.kestra.core.server;
 
-import io.micrometer.core.instrument.Meter;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+
+import io.micrometer.core.instrument.Meter;
 
 /**
  * A serializable representation of a metric.
  *
- * @param name        The name of the metric.
+ * @param name The name of the metric.
  * @param description A human-readable description to include in the metric. This is optional
  */
 public record Metric(
@@ -19,8 +18,7 @@ public record Metric(
     String description,
     String baseUnit,
     List<Tag> tags,
-    Number value
-) {
+    Number value) {
 
     /**
      * Static method for constructing a new {@link Metric} from a given {@link Meter}.
@@ -36,12 +34,20 @@ public record Metric(
             gauge -> value.set(gauge.value()),
             counter -> value.set(counter.count()),
             timer -> value.set(timer.count()),
-            distributionSummary -> {},
-            longTaskTimer -> {},
+            distributionSummary ->
+            {
+            },
+            longTaskTimer ->
+            {
+            },
             timeGauge -> value.set(timeGauge.value()),
             functionCounter -> value.set(functionCounter.count()),
-            functionTimer -> {},
-            any -> {}
+            functionTimer ->
+            {
+            },
+            any ->
+            {
+            }
         );
 
         return new Metric(

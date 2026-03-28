@@ -1,9 +1,9 @@
 package io.kestra.cli.services;
 
-import io.micronaut.context.env.Environment;
-
 import java.util.Arrays;
 import java.util.stream.Stream;
+
+import io.micronaut.context.env.Environment;
 
 public class DefaultEnvironmentProvider implements EnvironmentProvider {
     @Override

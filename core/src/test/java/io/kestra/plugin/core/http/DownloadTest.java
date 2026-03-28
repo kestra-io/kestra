@@ -1,6 +1,15 @@
 package io.kestra.plugin.core.http;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
@@ -9,6 +18,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
@@ -16,15 +26,8 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,7 +58,8 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8));
+        assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8))
+            .isEqualTo(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8));
         assertThat(output.getUri().toString()).endsWith(".csv");
     }
 
@@ -155,7 +159,6 @@ class DownloadTest {
 
         assertThat(output.getUri().toString()).endsWith("filename.jpg");
     }
-
 
     @Test
     void fileNameShouldOverrideContentDisposition() throws Exception {
@@ -285,10 +288,10 @@ class DownloadTest {
             return HttpResponse.noContent();
         }
 
-
         @Get("chunked")
         public Flux<byte[]> chunked() {
-            return Flux.create(sink -> {
+            return Flux.create(sink ->
+            {
                 for (int i = 0; i < 10000; i++) {
                     sink.next("Hello World\n".getBytes());
                 }
@@ -319,6 +322,7 @@ class DownloadTest {
             return HttpResponse.ok("Hello World".getBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"file.with spaces.txt\"");
         }
+
         @Get("content-disposition-with-brackets")
         public HttpResponse<byte[]> contentDispositionWithBrackets() {
             return HttpResponse.ok("Hello World".getBytes())

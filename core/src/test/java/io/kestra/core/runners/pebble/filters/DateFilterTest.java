@@ -1,11 +1,5 @@
 package io.kestra.core.runners.pebble.filters;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.junit.annotations.KestraTest;
-import org.junit.jupiter.api.Test;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -13,9 +7,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.runners.VariableRenderer;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -197,8 +199,7 @@ class DateFilterTest {
 
     @Test
     void timestampDateFormat() throws IllegalVariableEvaluationException {
-    String render =
-        variableRenderer.render(
+        String render = variableRenderer.render(
             """
                 {{ 1378653552 | date(format="iso_sec", timeZone="Europe/Paris") }}
                 {{ 1378653552123 | date(format="iso_milli", timeZone="Europe/Paris") }}
@@ -213,7 +214,8 @@ class DateFilterTest {
                 {{ 1378653552123 | date(format="sql_milli", timeZone="UTC") }}
                 {{ "1378653552123" | number | date(format="sql_milli", timeZone="UTC") }}
                 """,
-            Map.of());
+            Map.of()
+        );
 
         assertThat(render).isEqualTo("""
             2013-09-08T17:19:12+02:00

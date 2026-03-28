@@ -1,9 +1,5 @@
 package io.kestra.core.runners;
 
-import io.micronaut.context.annotation.Value;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +9,10 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
+
+import io.micronaut.context.annotation.Value;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class LocalPathFactory {
@@ -102,9 +102,12 @@ public class LocalPathFactory {
                 // if not globally allowed, we check if it's allowed for this specific plugin
                 List<String> pluginAllowedPaths = (List<String>) runContext.pluginConfiguration("allowed-paths").orElse(Collections.emptyList());
                 if (pluginAllowedPaths.stream().noneMatch(path::startsWith)) {
-                    throw new SecurityException("The path " + path + " is not authorized. " +
-                        "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `" + LocalPath.ALLOWED_PATHS_CONFIG + "` property, " +
-                        "or by plugin using the `allowed-paths` plugin configuration.");
+                    throw new SecurityException(
+                        "The path " + path + " is not authorized. " +
+                            "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `"
+                            + LocalPath.ALLOWED_PATHS_CONFIG + "` property, " +
+                            "or by plugin using the `allowed-paths` plugin configuration."
+                    );
                 }
             }
 
@@ -124,8 +127,10 @@ public class LocalPathFactory {
             Path path = Path.of(uri).toRealPath(); // toRealPath() will protect about path traversal issues
             // we only allow globally allowed as we don't have a run context to get the working directory nor the plugin configuration
             if (globalAllowedPaths.stream().noneMatch(path::startsWith)) {
-                throw new SecurityException("The path " + path + " is not authorized. " +
-                    "Path must be allowed either globally inside the Kestra configuration using the `" + LocalPath.ALLOWED_PATHS_CONFIG + "` property.");
+                throw new SecurityException(
+                    "The path " + path + " is not authorized. " +
+                        "Path must be allowed either globally inside the Kestra configuration using the `" + LocalPath.ALLOWED_PATHS_CONFIG + "` property."
+                );
             }
 
             return path;

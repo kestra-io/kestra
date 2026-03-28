@@ -9,11 +9,6 @@ export const inputsToFormData = (submitor, inputsList, values) => {
         if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === "") {
             delete inputValuesCloned[input.id];
         }
-
-        // Required to have "undefined" value for boolean
-        if (input.type === "BOOLEAN" && inputValuesCloned[input.id] === "undefined") {
-            inputValuesCloned[input.id] = undefined;
-        }
     }
 
     if (Object.keys(inputValuesCloned).length === 0) {
@@ -64,7 +59,8 @@ export const executeTask = (submitor, flow, values, options) => {
                             id: response.data.id,
                             tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
-                        }
+                        },
+                        query: options.query,
                     })
                     window.open(resolved.href, "_blank")
                 } else {
@@ -76,7 +72,8 @@ export const executeTask = (submitor, flow, values, options) => {
                             id: response.data.id,
                             tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
-                        }
+                        },
+                        query: options.query,
                     })
                 }
             }

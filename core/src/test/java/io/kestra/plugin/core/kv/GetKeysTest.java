@@ -1,5 +1,9 @@
 package io.kestra.plugin.core.kv;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -7,10 +11,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,8 +50,10 @@ class GetKeysTest {
     void shouldGetKeysGivenMatchingPrefix() throws Exception {
         // Given
         String namespace = IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespace,
-            Map.of("inputs", Map.of("prefix", TEST_KEY_PREFIX_TEST)));
+        RunContext runContext = this.runContextFactory.of(
+            namespace,
+            Map.of("inputs", Map.of("prefix", TEST_KEY_PREFIX_TEST))
+        );
 
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
@@ -73,8 +77,10 @@ class GetKeysTest {
     void shouldGetNoKeysGivenEmptyKeyStore() throws Exception {
         // Given
         String namespace = IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespace,
-            Map.of("inputs", Map.of("prefix", TEST_KEY_PREFIX_TEST)));
+        RunContext runContext = this.runContextFactory.of(
+            namespace,
+            Map.of("inputs", Map.of("prefix", TEST_KEY_PREFIX_TEST))
+        );
 
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())

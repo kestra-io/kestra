@@ -1,5 +1,5 @@
 plugins {
-    id("com.gradle.develocity") version "4.3.2"
+    id("com.gradle.develocity") version "4.4.0"
     id("com.gradle.common-custom-user-data-gradle-plugin") version "2.4.0"
 }
 def isCI = System.getenv('CI') != null
@@ -49,10 +49,15 @@ include 'jdbc-h2'
 include 'jdbc-mysql'
 include 'jdbc-postgres'
 
+include 'queue'
+include 'queue-jdbc'
+
 include 'webserver'
 include 'executor'
 include 'scheduler'
 include 'worker'
+include 'worker-controller'
+include 'indexer'
 
 include 'ui'
 include 'model'

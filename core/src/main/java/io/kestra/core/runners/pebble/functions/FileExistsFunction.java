@@ -1,16 +1,17 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.StorageContext;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import jakarta.inject.Singleton;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
+
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.storages.StorageContext;
+
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class FileExistsFunction extends AbstractFileFunction {
@@ -21,7 +22,7 @@ public class FileExistsFunction extends AbstractFileFunction {
         return switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> storageInterface.exists(tenantId, namespace, path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().exists(path);
-            case Namespace.NAMESPACE_FILE_SCHEME  -> {
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
                 Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
                 yield namespaceStorage.exists(NamespaceFile.normalize(Path.of(path.getPath())));
             }

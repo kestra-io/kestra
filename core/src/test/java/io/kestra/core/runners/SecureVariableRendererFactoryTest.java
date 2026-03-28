@@ -1,15 +1,17 @@
 package io.kestra.core.runners;
 
+import java.io.IOException;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretService;
+
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,7 +30,7 @@ class SecureVariableRendererFactoryTest {
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
-    
+
     @Inject
     private VariableRenderer renderer;
 
@@ -95,7 +97,7 @@ class SecureVariableRendererFactoryTest {
 
         // When
         String result = debugRenderer.render(
-            "API: {{ secret('API_KEY') }}, DB: {{ secret('DB_PASSWORD') }}, Token: {{ secret('TOKEN') }}", 
+            "API: {{ secret('API_KEY') }}, DB: {{ secret('DB_PASSWORD') }}, Token: {{ secret('TOKEN') }}",
             context
         );
 
@@ -118,7 +120,7 @@ class SecureVariableRendererFactoryTest {
 
         // When
         String result = debugRenderer.render(
-            "User: {{ username }}, Email: {{ email }}, Count: {{ count }}", 
+            "User: {{ username }}, Email: {{ email }}, Count: {{ count }}",
             context
         );
 
@@ -138,7 +140,7 @@ class SecureVariableRendererFactoryTest {
 
         // When
         String result = debugRenderer.render(
-            "User: {{ username }}, Env: {{ environment }}, Secret: {{ secret('MY_SECRET') }}", 
+            "User: {{ username }}, Env: {{ environment }}, Secret: {{ secret('MY_SECRET') }}",
             context
         );
 
@@ -173,7 +175,7 @@ class SecureVariableRendererFactoryTest {
 
         // When
         String result = debugRenderer.render(
-            "{{ 'API Key: ' ~ secret('API_KEY') }}", 
+            "{{ 'API Key: ' ~ secret('API_KEY') }}",
             context
         );
 
@@ -192,7 +194,7 @@ class SecureVariableRendererFactoryTest {
 
         // When
         String result = debugRenderer.render(
-            "{{ secret('MY_SECRET') is defined ? 'Secret exists' : 'No secret' }}", 
+            "{{ secret('MY_SECRET') is defined ? 'Secret exists' : 'No secret' }}",
             context
         );
 
@@ -211,7 +213,7 @@ class SecureVariableRendererFactoryTest {
 
         // When
         String result = debugRenderer.render(
-            "{{ secret('JSON_SECRET', subkey='api_key') }}", 
+            "{{ secret('JSON_SECRET', subkey='api_key') }}",
             context
         );
 
@@ -219,7 +221,7 @@ class SecureVariableRendererFactoryTest {
         assertThat(result).isEqualTo("******");
         assertThat(result).doesNotContain("secret123");
     }
-    
+
     @Test
     void shouldCreateDebugRendererThatHandlesEmptyContext() throws IllegalVariableEvaluationException {
         // Given
@@ -258,7 +260,7 @@ class SecureVariableRendererFactoryTest {
 
         // When - Using concatenation to avoid immediate evaluation
         String result = debugRenderer.render(
-            "{{ render('{{s'~'ecret(\"MY_SECRET\")}}') }}", 
+            "{{ render('{{s'~'ecret(\"MY_SECRET\")}}') }}",
             context
         );
 
@@ -267,4 +269,3 @@ class SecureVariableRendererFactoryTest {
         assertThat(result).doesNotContain("my-secret-value-12345");
     }
 }
-

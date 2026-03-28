@@ -1,13 +1,14 @@
 package io.kestra.plugin.scripts.runner.docker;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.property.Property;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Map;
 
 @SuperBuilder
 @NoArgsConstructor

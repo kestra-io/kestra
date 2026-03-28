@@ -1,11 +1,12 @@
 package io.kestra.core.plugins;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

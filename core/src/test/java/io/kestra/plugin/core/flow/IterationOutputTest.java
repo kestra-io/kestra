@@ -1,78 +1,56 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
-import org.junit.jupiter.api.Test;
+import io.kestra.core.services.TaskOutputService;
 
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 public class IterationOutputTest {
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @ExecuteFlow("flows/valids/iteration-output.yaml")
-    void iterationOutputPrefixSum(Execution execution){
-        var innerSumOutput = (Map<?,?>) execution.outputs().get("inner_even_indices_sum");
-        var firstOuterIteration = (Map<?,?>) innerSumOutput.get("100");
-        var lastInnerOutput1 = (Map<?,?>) firstOuterIteration.get("14");
-
+    void iterationOutputPrefixSum(Execution execution) throws InternalException {
+        var lastInnerOutput1 = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("inner_even_indices_sum", List.of("100", "14")));
         assertThat(lastInnerOutput1.get("value").toString().trim()).isEqualTo("318");
 
-        var secondOuterIteration = (Map<?,?>) innerSumOutput.get("200");
-        var lastInnerOutput2 = (Map<?,?>) secondOuterIteration.get("14");
-
+        var lastInnerOutput2 = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("inner_even_indices_sum", List.of("200", "14")));
         assertThat(lastInnerOutput2.get("value").toString().trim()).isEqualTo("618");
 
-        var thirdOuterIteration = (Map<?,?>) innerSumOutput.get("300");
-        var lastInnerOutput3 = (Map<?,?>) thirdOuterIteration.get("14");
-
+        var lastInnerOutput3 = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("inner_even_indices_sum", List.of("300", "14")));
         assertThat(lastInnerOutput3.get("value").toString().trim()).isEqualTo("918");
 
-
-        var iteration_output_sibling = (Map<?,?>) execution.outputs().get("iteration_output_sibling");
-        var firstSiblingOutput = (Map<?,?>) iteration_output_sibling.get("100");
-        var lastSiblingOutput1 = (Map<?,?>) firstSiblingOutput.get("14");
-
+        var lastSiblingOutput1 = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("iteration_output_sibling", List.of("100", "14")));
         assertThat(lastSiblingOutput1.get("value").toString().trim()).isEqualTo("206");
 
-
-        var secondSiblingOutput = (Map<?,?>) iteration_output_sibling.get("200");
-        var lastSiblingOutput2 = (Map<?,?>) secondSiblingOutput.get("14");
-
+        var lastSiblingOutput2 = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("iteration_output_sibling", List.of("200", "14")));
         assertThat(lastSiblingOutput2.get("value").toString().trim()).isEqualTo("406");
 
-
-        var thirdSiblingOutput = (Map<?,?>) iteration_output_sibling.get("300");
-        var lastSiblingOutput3 = (Map<?,?>) thirdSiblingOutput.get("14");
-
+        var lastSiblingOutput3 = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("iteration_output_sibling", List.of("300", "14")));
         assertThat(lastSiblingOutput3.get("value").toString().trim()).isEqualTo("606");
 
-
-        var outerSumOutput = (Map<?,?>) execution.outputs().get("outer_prefix_sum");
-        var outerOutput = (Map<?,?>) outerSumOutput.get("300");
-
+        var outerOutput = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("outer_prefix_sum", List.of("300")));
         assertThat(outerOutput.get("value").toString().trim()).isEqualTo("600");
 
-
-        var defaultSumOutput = (Map<?,?>) execution.outputs().get("default_all_prefix_sum");
-        var allDefaultOutput = (Map<?,?>) defaultSumOutput.get("300");
-
+        var allDefaultOutput = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("default_all_prefix_sum", List.of("300")));
         assertThat(allDefaultOutput.get("value").toString().trim()).isEqualTo("1100");
 
-
-        var iterationDefaultSumOutput = (Map<?,?>) execution.outputs().get("default_iteration_prefix_sum");
-        var iterationDefaultOutput = (Map<?,?>) iterationDefaultSumOutput.get("300");
-
+        var iterationDefaultOutput = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("default_iteration_prefix_sum", List.of("300")));
         assertThat(iterationDefaultOutput.get("value").toString().trim()).isEqualTo("600");
 
-
-        var taskIdDefaultSumOutput = (Map<?,?>) execution.outputs().get("default_task_id_prefix_sum");
-        var taskIdDefaultOutput = (Map<?,?>) taskIdDefaultSumOutput.get("300");
-
+        var taskIdDefaultOutput = taskOutputService.getOutputs(execution.findTaskRunByTaskIdAndValue("default_task_id_prefix_sum", List.of("300")));
         assertThat(taskIdDefaultOutput.get("value").toString().trim()).isEqualTo("600");
-
     }
 }

@@ -1,32 +1,33 @@
 package io.kestra.cli.commands.flows;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.AbstractApiCommand;
-import io.kestra.cli.services.TenantIdSelectorService;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.cli.StandAloneRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.io.FileUtils;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.cli.AbstractApiCommand;
+import io.kestra.cli.StandAloneRunner;
+import io.kestra.cli.services.TenantIdSelectorService;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.FlowInputOutput;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
 
 import static org.awaitility.Awaitility.await;
 
@@ -80,20 +81,20 @@ public class FlowTestCommand extends AbstractApiCommand {
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
-        TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
-        QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
+        TenantIdSelectorService tenantService = applicationContext.getBean(TenantIdSelectorService.class);
+        DispatchQueueInterface<Execution> executionQueue = applicationContext.getBean(DispatchQueueInterface.class, Qualifiers.byTypeArguments(Execution.class));
 
         Map<String, Object> inputs = new HashMap<>();
 
-        for (int i = 0; i < this.inputs.size(); i=i+2) {
+        for (int i = 0; i < this.inputs.size(); i = i + 2) {
             if (this.inputs.size() <= i + 1) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid key pair value for inputs");
             }
 
-            inputs.put(this.inputs.get(i), this.inputs.get(i+1));
+            inputs.put(this.inputs.get(i), this.inputs.get(i + 1));
         }
 
-        try (StandAloneRunner runner = applicationContext.createBean(StandAloneRunner.class);){
+        try (StandAloneRunner runner = applicationContext.createBean(StandAloneRunner.class);) {
             runner.run();
             repositoryLoader.load(tenantService.getTenantId(tenantId), file.toFile());
 
@@ -115,7 +116,8 @@ public class FlowTestCommand extends AbstractApiCommand {
             throw new IllegalStateException(e);
         } finally {
             applicationContext.getProperty("kestra.storage.local.base-path", Path.class)
-                .ifPresent(path -> {
+                .ifPresent(path ->
+                {
                     try {
                         FileUtils.deleteDirectory(path.toFile());
                     } catch (IOException ignored) {

@@ -1,10 +1,5 @@
 package io.kestra.core.services;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.StorageSplitInterface;
-import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,6 +15,12 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.StorageSplitInterface;
+
+import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -45,15 +46,21 @@ public abstract class StorageService {
                 Number convert = readableBytesTypeConverter.convert(runContext.render(storageSplitInterface.getBytes()).as(String.class).orElseThrow(), Number.class)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
 
-                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
-                    bufferedReader, (bytes, size) -> bytes >= convert.longValue());
+                splited = StorageService.split(
+                    runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                    bufferedReader, (bytes, size) -> bytes >= convert.longValue()
+                );
             } else if (storageSplitInterface.getPartitions() != null) {
-                splited = StorageService.partition(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
-                    bufferedReader, runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow());
+                splited = StorageService.partition(
+                    runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                    bufferedReader, runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow()
+                );
             } else if (storageSplitInterface.getRows() != null) {
                 Integer renderedRows = runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow();
-                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
-                    bufferedReader, (bytes, size) -> size >= renderedRows);
+                splited = StorageService.split(
+                    runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                    bufferedReader, (bytes, size) -> size >= renderedRows
+                );
             } else {
                 throw new IllegalArgumentException("Invalid configuration with no size, count, rows, nor regexPattern");
             }
@@ -65,7 +72,8 @@ public abstract class StorageService {
         }
     }
 
-    private static List<Path> split(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, BiFunction<Integer, Integer, Boolean> predicate) throws IOException {
+    private static List<Path> split(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, BiFunction<Integer, Integer, Boolean> predicate)
+        throws IOException {
         List<Path> files = new ArrayList<>();
         RandomAccessFile write = null;
         int totalBytes = 0;
@@ -104,7 +112,7 @@ public abstract class StorageService {
     private static List<Path> partition(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, int partition) throws IOException {
         List<Path> files = new ArrayList<>();
         List<RandomAccessFile> writers = new ArrayList<>();
-        
+
         try {
             for (int i = 0; i < partition; i++) {
                 Path path = runContext.workingDir().createTempFile(extension);
@@ -137,14 +145,14 @@ public abstract class StorageService {
         List<Path> files = new ArrayList<>();
         Map<String, RandomAccessFile> writers = new HashMap<>();
         Pattern pattern = Pattern.compile(regexPattern);
-        
+
         String row;
         while ((row = bufferedReader.readLine()) != null) {
             Matcher matcher = pattern.matcher(row);
-            
+
             if (matcher.find() && matcher.groupCount() > 0) {
                 String routingKey = matcher.group(1);
-                
+
                 // Get or create writer for this routing key
                 RandomAccessFile writer = writers.get(routingKey);
                 if (writer == null) {
@@ -153,15 +161,15 @@ public abstract class StorageService {
                     writer = new RandomAccessFile(path.toFile(), "rw");
                     writers.put(routingKey, writer);
                 }
-                
+
                 byte[] bytes = (row + separator).getBytes(StandardCharsets.UTF_8);
                 writer.getChannel().write(ByteBuffer.wrap(bytes));
             }
             // Lines that don't match the pattern are ignored
         }
-        
+
         writers.values().forEach(throwConsumer(RandomAccessFile::close));
-        
+
         return files.stream().filter(p -> p.toFile().length() > 0).toList();
     }
 

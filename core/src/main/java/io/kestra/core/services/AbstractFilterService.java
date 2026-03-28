@@ -1,10 +1,10 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.dashboards.filters.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+
+import io.kestra.core.models.dashboards.filters.*;
 
 public abstract class AbstractFilterService<Q> {
     public <F extends Enum<F>> Q addFilters(Q query, Map<F, String> fieldsMapping, List<AbstractFilter<F>> filters) {
@@ -13,8 +13,8 @@ public abstract class AbstractFilterService<Q> {
         }
 
         AtomicReference<Q> finalQuery = new AtomicReference<>(query);
-        filters.forEach(filter ->
-            finalQuery.set(
+        filters.forEach(
+            filter -> finalQuery.set(
                 switch (filter) {
                     case Contains<F> f -> contains(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     case EndsWith<F> f -> endsWith(finalQuery.get(), fieldsMapping.get(f.getField()), f);
@@ -33,9 +33,11 @@ public abstract class AbstractFilterService<Q> {
                     case Or<F> f -> or(finalQuery.get(), fieldsMapping, f);
                     case Regex<F> f -> regex(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     case StartsWith<F> f -> startsWith(finalQuery.get(), fieldsMapping.get(f.getField()), f);
+                    case Prefix<F> f -> prefix(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     default ->
                         throw new UnsupportedOperationException(filter.getClass().getName() + " is not implemented.");
-                })
+                }
+            )
         );
 
         return finalQuery.get();
@@ -74,4 +76,6 @@ public abstract class AbstractFilterService<Q> {
     protected abstract <F extends Enum<F>> Q regex(Q query, String field, Regex<F> filter);
 
     protected abstract <F extends Enum<F>> Q startsWith(Q query, String field, StartsWith<F> filter);
+
+    protected abstract <F extends Enum<F>> Q prefix(Q query, String field, Prefix<F> filter);
 }

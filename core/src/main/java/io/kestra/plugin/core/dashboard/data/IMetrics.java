@@ -1,15 +1,16 @@
 package io.kestra.plugin.core.dashboard.data;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.dashboards.filters.*;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.filters.*;
+
 public interface IMetrics extends IData<IMetrics.Fields> {
 
-    default List<AbstractFilter<IMetrics.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<IMetrics.Fields>> where) {
+    default List<AbstractFilter<IMetrics.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate,
+        List<AbstractFilter<IMetrics.Fields>> where) {
         List<AbstractFilter<IMetrics.Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
 
         if (filters == null) {

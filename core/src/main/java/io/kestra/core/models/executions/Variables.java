@@ -1,5 +1,11 @@
 package io.kestra.core.models.executions;
 
+import java.io.*;
+import java.net.URI;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -10,18 +16,13 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.ReadOnlyDelegatingMap;
-
-import java.io.*;
-import java.net.URI;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwBiConsumer;
 
@@ -85,7 +86,8 @@ public sealed interface Variables extends Map<String, Object> {
         return new InStorageVariables(storageContext, uri);
     }
 
-    record StorageContext(String tenantId, String namespace) {}
+    record StorageContext(String tenantId, String namespace) {
+    }
 
     final class InMemoryVariables extends ReadOnlyDelegatingMap<String, Object> implements Variables {
         private final Map<String, Object> delegate;
@@ -179,7 +181,8 @@ public sealed interface Variables extends Map<String, Object> {
 
             return variables.entrySet()
                 .stream()
-                .map(entry -> {
+                .map(entry ->
+                {
                     if (entry.getValue() instanceof InStorageVariables var) {
                         return Map.entry(entry.getKey(), (Object) expand(var.loadFromStorage()));
                     } else if (entry.getValue() instanceof Map<?, ?> map) {
@@ -194,8 +197,7 @@ public sealed interface Variables extends Map<String, Object> {
                             }
                             InStorageVariables inStorage = new InStorageVariables((StorageContext) null, null);
                             return Map.entry(entry.getKey(), (Object) inStorage.loadFromStorage());
-                        }
-                        else {
+                        } else {
                             return Map.entry(entry.getKey(), (Object) expand((Map<String, Object>) map));
                         }
                     } else {
@@ -205,7 +207,10 @@ public sealed interface Variables extends Map<String, Object> {
                 .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
         }
 
-        enum State { INIT, DEFLATED }
+        enum State {
+            INIT,
+            DEFLATED
+        }
     }
 
     class Serializer extends StdSerializer<Variables> {
@@ -268,4 +273,3 @@ public sealed interface Variables extends Map<String, Object> {
         }
     }
 }
-

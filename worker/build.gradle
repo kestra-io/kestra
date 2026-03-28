@@ -1,12 +1,16 @@
 configurations {
+    tests
     implementation.extendsFrom(micronaut)
 }
 
 dependencies {
+    // Kestra
     annotationProcessor project(':processor')
     implementation project(":core")
+    implementation project(":worker-controller")
 
     implementation group: 'dev.failsafe', name: 'failsafe'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
     // test
     testAnnotationProcessor project(':processor')
@@ -16,6 +20,12 @@ dependencies {
     testImplementation project(':tests')
     testImplementation project(':jdbc')
     testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':queue').sourceSets.test.output
+
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
+    
+    // gRPC
+    implementation("io.micronaut.grpc:micronaut-grpc-server-runtime")
+    implementation("io.micronaut.grpc:micronaut-grpc-client-runtime")
 }

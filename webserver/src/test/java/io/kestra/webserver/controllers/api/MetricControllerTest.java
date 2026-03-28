@@ -1,10 +1,13 @@
 package io.kestra.webserver.controllers.api;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -12,7 +15,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +28,7 @@ class MetricControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/minimal.yaml"})
+    @LoadFlows({ "flows/valids/minimal.yaml" })
     void searchByExecution() {
         Execution result = triggerExecution(TESTS_FLOW_NS, "minimal", null, true);
         assertThat(result).isNotNull();

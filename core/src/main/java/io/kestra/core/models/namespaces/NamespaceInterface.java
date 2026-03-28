@@ -1,10 +1,10 @@
 package io.kestra.core.models.namespaces;
 
-import io.kestra.core.models.HasUID;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import io.kestra.core.models.HasUID;
 
 public interface NamespaceInterface extends HasUID {
     String getId();

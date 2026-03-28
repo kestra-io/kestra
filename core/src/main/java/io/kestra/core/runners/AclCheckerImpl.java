@@ -1,10 +1,11 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.services.NamespaceService;
-import io.micronaut.context.ApplicationContext;
-
 import java.util.List;
 import java.util.Objects;
+
+import io.kestra.core.services.NamespaceService;
+
+import io.micronaut.context.ApplicationContext;
 
 class AclCheckerImpl implements AclChecker {
     private final NamespaceService namespaceService;
@@ -29,7 +30,6 @@ class AclCheckerImpl implements AclChecker {
     public AllowedResources allowNamespaces(List<String> namespaces) {
         return new AllowNamespaces(flowInfo, namespaceService, namespaces);
     }
-
 
     static class AllowAllNamespaces implements AllowedResources {
         private final RunContext.FlowInfo flowInfo;

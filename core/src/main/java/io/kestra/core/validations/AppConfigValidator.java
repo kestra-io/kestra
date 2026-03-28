@@ -1,16 +1,16 @@
 package io.kestra.core.validations;
 
-import io.micronaut.context.annotation.Context;
-import io.micronaut.context.env.Environment;
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.Serial;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
+
+import io.micronaut.context.annotation.Context;
+import io.micronaut.context.env.Environment;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Enforces validation rules upon the application configuration.

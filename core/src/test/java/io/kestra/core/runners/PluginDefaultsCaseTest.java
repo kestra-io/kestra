@@ -1,6 +1,12 @@
 package io.kestra.core.runners;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
@@ -11,18 +17,15 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.GraphUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,24 +35,27 @@ public class PluginDefaultsCaseTest {
     @Inject
     private TestRunnerUtils runnerUtils;
 
-    public void taskDefaults() throws TimeoutException, QueueException {
+    @Inject
+    private TaskOutputService taskOutputService;
+
+    public void pluginDefaults() throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(8);
 
         assertThat(execution.getTaskRunList().getFirst().getTaskId()).isEqualTo("first");
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("def")).isEqualTo("1");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("def")).isEqualTo("1");
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("second");
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("def")).isEqualTo("2");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(1)).get("def")).isEqualTo("2");
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("third");
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("def")).isEqualTo("3");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(2)).get("def")).isEqualTo("3");
 
         assertThat(execution.getTaskRunList().get(4).getTaskId()).isEqualTo("err-first");
-        assertThat(execution.getTaskRunList().get(4).getOutputs().get("def")).isEqualTo("1");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(4)).get("def")).isEqualTo("1");
         assertThat(execution.getTaskRunList().get(5).getTaskId()).isEqualTo("err-second");
-        assertThat(execution.getTaskRunList().get(5).getOutputs().get("def")).isEqualTo("2");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(5)).get("def")).isEqualTo("2");
         assertThat(execution.getTaskRunList().get(6).getTaskId()).isEqualTo("err-third");
-        assertThat(execution.getTaskRunList().get(6).getOutputs().get("def")).isEqualTo("3");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(6)).get("def")).isEqualTo("3");
     }
 
     @SuperBuilder

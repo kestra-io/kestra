@@ -1,13 +1,14 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.util.Map;
+
+import io.kestra.core.runners.pebble.AbstractDate;
+import io.kestra.core.utils.Slugify;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import io.kestra.core.runners.pebble.AbstractDate;
-import io.kestra.core.utils.Slugify;
-
-import java.util.Map;
 
 public class SlugifyFilter extends AbstractDate implements Filter {
     @Override

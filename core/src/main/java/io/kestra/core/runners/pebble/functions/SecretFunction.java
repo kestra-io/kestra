@@ -1,15 +1,21 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.runners.RunVariables;
 import io.kestra.core.secret.SecretException;
 import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretService;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.NamespaceService;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -17,11 +23,6 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 @Slf4j
 @Singleton
@@ -74,11 +75,13 @@ public class SecretFunction implements Function {
                         secret = jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString();
                     }
                 } catch (JsonProcessingException e) {
-                    throw new SecretException(String.format(
-                        "Failed to read secret sub-key '%s' from secret '%s'. Ensure the secret contains valid JSON value.",
-                        subkey,
-                        key
-                    ));
+                    throw new SecretException(
+                        String.format(
+                            "Failed to read secret sub-key '%s' from secret '%s'. Ensure the secret contains valid JSON value.",
+                            subkey,
+                            key
+                        )
+                    );
                 }
             }
 

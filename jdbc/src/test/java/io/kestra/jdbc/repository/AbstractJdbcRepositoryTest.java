@@ -24,7 +24,6 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.UPDATED,
         QueryFilter.Field.CREATED,
         QueryFilter.Field.EXPIRATION_DATE,
-        QueryFilter.Field.EXPIRATION_DATE,
         QueryFilter.Field.SCOPE,
         QueryFilter.Field.LABELS,
         QueryFilter.Field.TRIGGER_STATE,
@@ -69,8 +68,8 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
                 DSL.field(columnName).likeRegex(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.PREFIX, null)).isEqualTo(
-                DSL.field(columnName).like(assertValue + ".%")
-                    .or(DSL.field(columnName).eq(assertValue))
+                DSL.field(columnName).eq(assertValue)
+                    .or(DSL.field(columnName).startsWith(assertValue + "."))
             );
         });
     }

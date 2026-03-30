@@ -473,6 +473,14 @@ public record QueryFilter(
                 );
             }
         },
+        PLUGIN {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY
+                );
+            }
+        },
         ASSET {
             @Override
             public List<Field> supportedField() {

@@ -18,6 +18,7 @@ export interface Schema{
     const?: string;
     format?: string;
     $language: string;
+    $secret?: boolean;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
@@ -26,6 +27,10 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
 
     if (property.enum !== undefined) {
         return "enum";
+    }
+
+    if (property.$secret === true) {
+        return "secret";
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "$ref")) {

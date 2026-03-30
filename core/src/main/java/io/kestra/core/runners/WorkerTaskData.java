@@ -30,7 +30,7 @@ public record WorkerTaskData(
      * Keys excluded from the wire format — the worker reconstructs them locally.
      */
     static final Set<String> WORKER_RECONSTRUCTED_KEYS = Stream.concat(
-        Stream.of("task", "taskrun"),
+        Stream.of("task", "taskrun", "outputs"),
         COMMON_RECONSTRUCTED_KEYS.stream()
     ).collect(Collectors.toUnmodifiableSet());
 

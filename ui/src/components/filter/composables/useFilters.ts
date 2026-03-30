@@ -533,6 +533,7 @@ export function useFilters(
         if (legacyQuery) {
             clearLegacyParams(currentQuery);
         }
+        delete currentQuery.page;
 
         const query = {...currentQuery, ...defaultQuery};
         router.replace({query}).then(() => appliedFilters.value = resetFilters);

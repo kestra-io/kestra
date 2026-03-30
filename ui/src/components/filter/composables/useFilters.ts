@@ -19,7 +19,6 @@ import {
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
 import {applyDefaultFilters, useDefaultFilter} from "./useDefaultFilter";
 
-
 export function useFilters(
     configuration: FilterConfiguration,
     showSearchInput = true,
@@ -368,7 +367,6 @@ export function useFilters(
         return Array.from(filtersMap.values());
     };
 
-
         /**
         * Initialize default visible filters. These filters are marked with visibleByDefault: true
         * and are automatically added to the filter list when the page loads, even if no value
@@ -528,17 +526,13 @@ export function useFilters(
             }
         }
 
-        // Append default filters
         resetFilters.push(...createDefaultVisibleFilters(new Set(), dismissedDefaultVisibleKeys.value));
 
-        // Preserve non-filter query params and
-        // remove page number to reset to first page
         const currentQuery = {...route.query};
         clearFilterQueryParams(currentQuery);
         if (legacyQuery) {
             clearLegacyParams(currentQuery);
         }
-        delete currentQuery.page;
 
         const query = {...currentQuery, ...defaultQuery};
         router.replace({query}).then(() => appliedFilters.value = resetFilters);
@@ -561,3 +555,4 @@ export function useFilters(
         getPreApplied,
     };
 }
+

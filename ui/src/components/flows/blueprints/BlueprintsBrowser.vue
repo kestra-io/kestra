@@ -3,7 +3,15 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
+            <ks-data-table
+                ref="dataTable"
+                class="blueprints"
+                :load-data="loadData"
+                :total="total"
+                divider
+                @ready="ready = true"
+                @page-changed="onPageChanged"
+            >
                 <template #navbar>
                     <div v-if="ready && !system && !embed">
                         <div class="tags-selection">
@@ -90,19 +98,18 @@
                         </ks-card>
                     </div>
                 </template>
-            </DataTable>
+            </ks-data-table>
             <slot name="bottom-bar" />
         </slot>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onActivated, watch} from "vue";
+    import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import DataTable from "../../../components/layout/DataTable.vue";
-    import Errors from "../../../components/errors/Errors.vue";
+import Errors from "../../../components/errors/Errors.vue";
     import KSFilter from "../../../components/filter/components/KSFilter.vue";
     import {editorViewTypes} from "../../../utils/constants";
     import Utils from "../../../utils/utils";
@@ -112,7 +119,6 @@
     import {useCoreStore} from "../../../stores/core";
     import {useDocStore} from "../../../stores/doc";
     import {canCreate} from "override/composables/blueprintsPermissions";
-    import {useDataTableActions} from "../../../composables/useDataTableActions";
     import {useBlueprintFilter} from "../../filter/configurations";
 
     const blueprintFilter = useBlueprintFilter();
@@ -131,12 +137,13 @@
         tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
     });
 
-    const {onPageChanged, onDataLoaded, load, ready, internalPageNumber, internalPageSize} = useDataTableActions({loadData});
-
     const emit = defineEmits(["goToDetail", "loaded"]);
 
     const route = useRoute();
     const router = useRouter();
+
+    const dataTable = useTemplateRef("dataTable");
+    const ready = ref(false);
 
     const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]";
 
@@ -161,6 +168,10 @@
 
     const handleSearch = (query: string) => {
         searchText.value = query;
+    };
+
+    const onPageChanged = (page: number) => {
+        router.push({query: {...route.query, page}});
     };
 
     const pluginsStore = usePluginsStore();
@@ -234,10 +245,10 @@
         }
     };
 
-    async function loadBlueprints (beforeLoadBlueprintType: string) {
+    async function loadBlueprints (beforeLoadBlueprintType: string, page: number, size: number) {
         const query: Record<string, any> = {};
-        if (route.query.page || internalPageNumber.value) query.page = parseInt((route.query.page || internalPageNumber.value) as string);
-        if (route.query.size || internalPageSize.value) query.size = parseInt((route.query.size || internalPageSize.value) as string);
+        if (page) query.page = page;
+        if (size) query.size = size;
         if (route.query["filters[q][EQUALS]"] || searchText.value) query.q = route.query["filters[q][EQUALS]"] || searchText.value;
         if (props.system) {
             query.tags = "system";
@@ -260,19 +271,17 @@
         }
     };
 
-    async function loadData() {
+    async function loadData({page, size}: {page: number; size: number; sort?: string}) {
         const beforeLoadBlueprintType = props.blueprintType;
         try {
             await Promise.all([
                 loadTags(beforeLoadBlueprintType),
-                loadBlueprints(beforeLoadBlueprintType)
+                loadBlueprints(beforeLoadBlueprintType, page, size)
             ]);
             emit("loaded");
-            onDataLoaded();
         } catch {
             if (props.embed) error.value = true;
             else coreStore.error = 404;
-            onDataLoaded();
         }
     };
 
@@ -295,25 +304,24 @@
 
     onMounted(() => {
         syncFromRoute();
-        load(onDataLoaded);
         docStore.docId = `blueprints.${props.blueprintType}`;
     });
 
     onActivated(() => {
         syncFromRoute();
-        load(onDataLoaded);
+        dataTable.value?.resetAndReload();
     });
 
     watch(
         () => [route.query[SELECTED_TAG_QUERY_KEY], route.query["filters[q][EQUALS]"]],
         () => {
             syncFromRoute();
-            load(onDataLoaded);
+            dataTable.value?.resetAndReload();
         }
     );
 
     watch(searchText, () => {
-        load(onDataLoaded);
+        dataTable.value?.resetAndReload();
     });
 
     watch(selectedTags, (newTags) => {
@@ -326,7 +334,7 @@
             }
             router.push({query});
         } else {
-            load(onDataLoaded);
+            dataTable.value?.resetAndReload();
         }
     });
 
@@ -340,11 +348,11 @@
     })
 
     watch([() => props.blueprintType, () => props.blueprintKind], () => {
-        loadData();
+        dataTable.value?.resetAndReload();
     });
 
     defineExpose({
-        reload: () => load(onDataLoaded),
+        reload: () => dataTable.value?.reload(),
     });
 </script>
 

@@ -50,6 +50,8 @@
         clearSelection: () => tableRef.value?.clearSelection(),
         toggleRowSelection: (row: any, selected?: boolean) => tableRef.value?.toggleRowSelection(row, selected),
         toggleAllSelection: () => tableRef.value?.toggleAllSelection(),
+        getSelectionRows: () => tableRef.value?.getSelectionRows() ?? [],
+        toggleRowExpansion: (row: any, expanded?: boolean) => tableRef.value?.toggleRowExpansion(row, expanded),
         setCurrentRow: (row: any) => tableRef.value?.setCurrentRow(row),
         clearSort: () => tableRef.value?.clearSort(),
         sort: (prop: string, order: string) => tableRef.value?.sort(prop, order),

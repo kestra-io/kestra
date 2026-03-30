@@ -49,13 +49,21 @@ public final class Searcheable<T> {
             });
         }
 
-        if (searched.queryFilters() != null) {
+        if (searched.queryFilters() != null && !searched.queryFilters().isEmpty()) {
             results = results.filter((item) ->
-                    searched.queryFilters().stream().anyMatch(queryFilter ->
-                        searched.queryFilterPredicateMap.get(
+                    searched.queryFilters().stream().anyMatch(queryFilter -> {
+                        BiPredicate<T, Object> filterPredicate = searched.queryFilterPredicateMap.get(
                             new Searched.Builder.QueryFilterPredicateKey(queryFilter.field(), queryFilter.operation())
-                        ).test(item, queryFilter.value()
-                    )
+                        );
+
+                        if (filterPredicate == null) {
+                            throw new io.kestra.core.exceptions.InvalidQueryFiltersException(
+                                "Unsupported operation for " + queryFilter.field() + ": " + queryFilter.operation()
+                            );
+                        }
+
+                        return filterPredicate.test(item, queryFilter.value());
+                    }
                 )
             );
         }

@@ -560,6 +560,12 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(Field.STATE, Field.TYPE, Field.CREATED);
             }
+        },
+        TENANT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY);
+            }
         };
 
         public abstract List<Field> supportedField();

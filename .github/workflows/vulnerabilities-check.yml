@@ -69,9 +69,9 @@ jobs:
           java-enabled: false
           node-enabled: false
 
-      # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        # https://github.com/aquasecurity/trivy-action/releases/tag/v0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           image-ref: kestra/kestra:develop
           format: 'template'
@@ -106,9 +106,9 @@ jobs:
           java-enabled: false
           node-enabled: false
 
-      # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        # https://github.com/aquasecurity/trivy-action/releases/tag/v0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           image-ref: kestra/kestra:latest
           format: table

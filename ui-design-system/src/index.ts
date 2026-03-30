@@ -30,6 +30,7 @@ import KsDatePicker from "./components/Form/KsDatePicker.vue"
 import KsDialog from "./components/Feedback/KsDialog.vue"
 import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
+import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
 import KsDropdown from "./components/Navigation/KsDropdown/KsDropdown.vue"
 import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vue"
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
@@ -114,6 +115,7 @@ export {
     KsDialog,
     KsDivider,
     KsDrawer,
+    KsDurationPicker,
     KsDropdown,
     KsDropdownItem,
     KsDropdownMenu,
@@ -195,6 +197,7 @@ const KestraDesignSystem = {
         app.component("KsDialog", KsDialog)
         app.component("KsDivider", KsDivider)
         app.component("KsDrawer", KsDrawer)
+        app.component("KsDurationPicker", KsDurationPicker)
         app.component("KsDropdown", KsDropdown)
         app.component("KsDropdownItem", KsDropdownItem)
         app.component("KsDropdownMenu", KsDropdownMenu)
@@ -276,6 +279,7 @@ declare module "vue" {
         KsDialog: typeof KsDialog
         KsDivider: typeof KsDivider
         KsDrawer: typeof KsDrawer
+        KsDurationPicker: typeof KsDurationPicker
         KsDropdown: typeof KsDropdown
         KsDropdownItem: typeof KsDropdownItem
         KsDropdownMenu: typeof KsDropdownMenu

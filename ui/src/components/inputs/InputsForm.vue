@@ -226,7 +226,7 @@
                 :modelValue="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-            <DurationPicker
+            <ks-duration-picker
                 v-if="input.type === 'DURATION'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
@@ -259,7 +259,7 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import {normalize, type InputType} from "../../utils/inputs";
-    import DurationPicker from "./DurationPicker.vue";
+
     // @ts-expect-error no types for it yet
     import {inputsToFormData} from "../../utils/submitTask";
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue";

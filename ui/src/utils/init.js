@@ -40,7 +40,7 @@ import Toast from "./toast";
 import filters from "./filters";
 import ElementPlus from "element-plus";
 import KestraDesignSystem from "../../../ui-design-system/src";
-import {setDesignSystemLocale} from "@kestra-io/ui-design-system/src/i18n";
+import {setDesignSystemLocale} from "@kestra-io/ui-design-system";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"

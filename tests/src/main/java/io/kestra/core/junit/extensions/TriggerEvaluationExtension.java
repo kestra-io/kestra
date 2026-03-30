@@ -20,6 +20,7 @@ import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.serializers.YamlParser;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 import lombok.SneakyThrows;
 
 /**
@@ -63,12 +64,20 @@ public class TriggerEvaluationExtension implements ParameterResolver {
 
     private void ensureContext(ExtensionContext extensionContext) {
         if (context == null) {
+            // Try KestraTestExtension namespace (used by @KestraTest)
             context = extensionContext.getRoot()
                 .getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get()))
                 .get(ApplicationContext.class, ApplicationContext.class);
 
+            // Fallback to MicronautJunit5Extension namespace (used by @MicronautTest)
             if (context == null) {
-                throw new IllegalStateException("No ApplicationContext found. Add @KestraTest to the test class.");
+                context = extensionContext.getRoot()
+                    .getStore(ExtensionContext.Namespace.create(MicronautJunit5Extension.class))
+                    .get(ApplicationContext.class, ApplicationContext.class);
+            }
+
+            if (context == null) {
+                throw new IllegalStateException("No ApplicationContext found. Add @KestraTest or @MicronautTest to the test class.");
             }
             runContextFactory = context.getBean(RunContextFactory.class);
             runContextInitializer = context.getBean(RunContextInitializer.class);

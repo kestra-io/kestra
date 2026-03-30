@@ -1,12 +1,14 @@
 <template>
     <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <section class="container" v-if="ready">
+    <section class="container">
         <div>
-            <DataTable
-                @page-changed="onPageChanged"
+            <ks-data-table
+                ref="dataTable"
+                :load-data="loadData"
+                @ready="ready = true"
+                @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 striped
                 hover
-                ref="dataTable"
                 :total="flowStore.total"
             >
                 <template #navbar>
@@ -18,7 +20,7 @@
                             v-if="$route.name !== 'flows/update'"
                             data-type="flow"
                             v-model="namespace"
-                            @update:model-value="onDataTableValue('namespace', $event)"
+                            @update:model-value="onNamespaceChange"
                         />
                     </ks-form-item>
                 </template>
@@ -41,29 +43,30 @@
 
                     <NoData v-if="flowStore.search === undefined || flowStore.search.length === 0" />
                 </template>
-            </DataTable>
+            </ks-data-table>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {ref, computed, watch, useTemplateRef} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import _escape from "lodash/escape";
     import NoData from "../layout/NoData.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import DataTable from "../layout/DataTable.vue";
-    import SearchField from "../layout/SearchField.vue";
+import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import useRouteContext from "../../composables/useRouteContext";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
 
     import {useFlowStore} from "../../stores/flow";
 
     const {t} = useI18n();
     const route = useRoute();
+    const router = useRouter();
     const flowStore = useFlowStore();
+    const dataTable = useTemplateRef("dataTable");
+    const ready = ref(false);
 
     const routeInfo = computed(() => ({
         title: (route.meta?.title as string) ?? t("source search"),
@@ -77,25 +80,40 @@
 
     useRouteContext(routeInfo);
 
-    const {onPageChanged, onDataTableValue, queryWithFilter, ready} = useDataTableActions({
-        loadData
-    });
-
     const namespace = computed({
         get: () => route.query?.namespace as [],
-        set: (val) => onDataTableValue("namespace", val)
+        set: (val) => onNamespaceChange(val)
     });
 
-    function loadData(callback?: () => void) {
-        const params = queryWithFilter();
-        flowStore.searchFlows(params).finally(() => {
+    function onNamespaceChange(val: any) {
+        const query = {...route.query};
+        if (val === undefined || val === "" || val === null || (Array.isArray(val) && val.length === 0)) {
+            delete query["namespace"];
+        } else {
+            query["namespace"] = val;
+        }
+        delete query["page"];
+        router.push({query});
+    }
+
+    async function loadData({page, size}: {page: number; size: number; sort?: string}) {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        const params = {page, size, ...filters};
+        await flowStore.searchFlows(params).finally(() => {
             if (!params.q) {
                 flowStore.total = 0;
                 flowStore.search = undefined;
             }
-            callback?.();
         });
     }
+
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return filters
+    })
+    watch(filterQuery, () => {
+        dataTable.value?.resetAndReload()
+    }, {deep: true})
 
     function sanitize(content: string) {
         return _escape(content)

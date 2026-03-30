@@ -13,6 +13,7 @@ import KsBreadcrumbItem from "./components/Navigation/KsBreadcrumb/KsBreadcrumbI
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
+import KsDataTable from "./components/Data/KsDataTable/KsDataTable.vue"
 import KsCascaderPanel from "./components/Form/KsCascaderPanel.vue"
 import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
 import KsCheckboxButton from "./components/Form/KsCheckbox/KsCheckboxButton.vue"
@@ -74,6 +75,9 @@ import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import {vKsLoading} from "./components/Feedback/KsLoading"
 
+// ─── i18n ───────────────────────────────────────────────────────────────────
+export {designSystemLocale, setDesignSystemLocale} from "./i18n"
+
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {
     KsAlert,
@@ -88,6 +92,7 @@ export {
     KsButton,
     KsButtonGroup,
     KsCard,
+    KsDataTable,
     KsCascaderPanel,
     KsCheckbox,
     KsCheckboxButton,
@@ -166,6 +171,7 @@ const KestraDesignSystem = {
         app.component("KsButton", KsButton)
         app.component("KsButtonGroup", KsButtonGroup)
         app.component("KsCard", KsCard)
+        app.component("KsDataTable", KsDataTable)
         app.component("KsCascaderPanel", KsCascaderPanel)
         app.component("KsCheckbox", KsCheckbox)
         app.component("KsCheckboxButton", KsCheckboxButton)
@@ -244,6 +250,7 @@ declare module "vue" {
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup
         KsCard: typeof KsCard
+        KsDataTable: typeof KsDataTable
         KsCascaderPanel: typeof KsCascaderPanel
         KsCheckbox: typeof KsCheckbox
         KsCheckboxButton: typeof KsCheckboxButton

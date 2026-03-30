@@ -6,12 +6,21 @@
             </ks-button>
         </template>
     </TopNavBar>
-    <section class="container" v-if="ready">
+    <section class="container">
         <div>
-            <DataTable
-                @page-changed="onPageChanged"
+            <ks-data-table
                 ref="dataTable"
+                :load-data="loadData"
+                :data="triggersMerged"
                 :total="total"
+                @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @sort-change="({prop, order}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+                @ready="ready = true"
+                :defaultSort="{prop: 'flowId', order: 'ascending'}"
+                expandable
+                :rowClassName="getClasses"
+                :no-data-text="$t('no_results.triggers')"
+                :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
             >
                 <template #navbar>
                     <KSFilter
@@ -20,7 +29,7 @@
                         @update-properties="updateDisplayColumns"
                         :tableOptions="{
                             chart: {shown: false},
-                            refresh: {shown: true, callback: () => load()}
+                            refresh: {shown: true, callback: () => dataTable.value?.reload()}
                         }"
                         :properties="{
                             displayColumns,
@@ -32,20 +41,6 @@
                         :defaultTimeRange="false"
                     />
                 </template>
-                <template #table>
-                    <SelectTable
-                        :data="triggersMerged"
-                        ref="selectTable"
-                        :defaultSort="{prop: 'flowId', order: 'ascending'}"
-                        tableLayout="auto"
-                        fixed
-                        @sort-change="onSort"
-                        @selection-change="onSelectionChange"
-                        expandable
-                        :rowClassName="getClasses"
-                        :no-data-text="$t('no_results.triggers')"
-                        :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
-                    >
                         <template #expand>
                             <ks-table-column type="expand">
                                 <template #default="props">
@@ -59,36 +54,28 @@
                                 </template>
                             </ks-table-column>
                         </template>
-                        <template #select-actions>
-                            <BulkSelect
-                                :selectAll="queryBulkAction"
-                                :selections="selection"
-                                :total="total"
-                                @update:select-all="toggleAllSelection"
-                                @unselect="toggleAllUnselected"
-                            >
-                                <ks-button @click="setDisabledTriggers(false)">
-                                    {{ $t("enable") }}
-                                </ks-button>
-                                <ks-button @click="setDisabledTriggers(true)">
-                                    {{ $t("disable") }}
-                                </ks-button>
-                                <ks-button @click="unlockTriggers()">
-                                    {{ $t("unlock") }}
-                                </ks-button>
-                                <ks-button @click="pauseBackfills()">
-                                    {{ $t("pause backfills") }}
-                                </ks-button>
-                                <ks-button @click="unpauseBackfills()">
-                                    {{ $t("continue backfills") }}
-                                </ks-button>
-                                <ks-button @click="deleteBackfills()">
-                                    {{ $t("delete backfills") }}
-                                </ks-button>
-                                <ks-button @click="deleteTriggers()">
-                                    {{ $t("delete triggers") }}
-                                </ks-button>
-                            </BulkSelect>
+                        <template #bulk-actions>
+                            <ks-button @click="setDisabledTriggers(false)">
+                                {{ $t("enable") }}
+                            </ks-button>
+                            <ks-button @click="setDisabledTriggers(true)">
+                                {{ $t("disable") }}
+                            </ks-button>
+                            <ks-button @click="unlockTriggers()">
+                                {{ $t("unlock") }}
+                            </ks-button>
+                            <ks-button @click="pauseBackfills()">
+                                {{ $t("pause backfills") }}
+                            </ks-button>
+                            <ks-button @click="unpauseBackfills()">
+                                {{ $t("continue backfills") }}
+                            </ks-button>
+                            <ks-button @click="deleteBackfills()">
+                                {{ $t("delete backfills") }}
+                            </ks-button>
+                            <ks-button @click="deleteTriggers()">
+                                {{ $t("delete triggers") }}
+                            </ks-button>
                         </template>
                         <ks-table-column
                             prop="triggerId"
@@ -260,9 +247,7 @@
                                 </ks-tooltip>
                             </template>
                         </ks-table-column>
-                    </SelectTable>
-                </template>
-            </DataTable>
+            </ks-data-table>
 
             <ks-dialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
                 <template #header>
@@ -326,10 +311,10 @@
 </template>
 <script setup lang="ts">
     import _merge from "lodash/merge";
-    import {ref, computed, watch} from "vue";
+    import {ref, computed, watch, useTemplateRef} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {KsMessage} from "@kestra-io/ui-design-system";
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
@@ -339,8 +324,6 @@
     import {TriggerDeleteOptions, useTriggerStore} from "../../stores/trigger";
     import {useExecutionsStore} from "../../stores/executions";
     import {useTriggerFilter} from "../filter/configurations";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
-    import {useSelectTableActions} from "../../composables/useSelectTableActions";
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns";
 
     import action from "../../models/action";
@@ -358,11 +341,9 @@
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";
     import DateAgo from "../layout/DateAgo.vue";
-    import DataTable from "../layout/DataTable.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import BulkSelect from "../layout/BulkSelect.vue";
+
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import SelectTable from "../layout/SelectTable.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
@@ -372,6 +353,7 @@
 
 
     const route = useRoute();
+    const router = useRouter();
     const toast = useToast();
     const {t} = useI18n({useScope: "global"});
 
@@ -380,8 +362,7 @@
     const triggerStore = useTriggerStore();
     const executionsStore = useExecutionsStore();
 
-    const dataTable = ref();
-    const selectTable = ref();
+    const dataTable = useTemplateRef("dataTable");
 
     const total = ref();
     const triggers = ref<any[]>([]);
@@ -453,43 +434,39 @@
             .filter(Boolean) as ColumnConfig[]
     );
 
-    const loadData = (callback?: () => void) => {
+    const ready = ref(false);
+
+    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         const query = loadQuery({
-            size: parseInt(String(route.query?.size ?? "25")),
-            page: parseInt(String(route.query?.page ?? "1")),
-            sort: String(route.query?.sort ?? "triggerId:asc")
+            size,
+            page,
+            sort: sort ?? String(route.query.sort ?? "triggerId:asc")
         });
 
         const previousSelection = selection.value;
-        triggerStore.search(query).then(async triggersData => {
+        await triggerStore.search(query).then(async triggersData => {
             triggers.value = triggersData?.results;
             total.value = triggersData?.total;
 
-            if (previousSelection && selectTable.value) {
-                await selectTable.value.waitTableRender();
-                selectTable.value.setSelection(previousSelection);
-            }
-
-            if (callback) {
-                callback();
+            if (previousSelection && dataTable.value) {
+                await dataTable.value.waitTableRender();
+                dataTable.value.setSelection(previousSelection);
             }
         });
     };
 
-    const {ready, onSort, onPageChanged, queryWithFilter, load} = useDataTableActions({
-        dataTableRef: dataTable,
-        loadData
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return filters;
     });
+    watch(filterQuery, () => {
+        dataTable.value?.resetAndReload();
+    }, {deep: true});
 
-    const {
-        queryBulkAction,
-        selection,
-        handleSelectionChange,
-        toggleAllUnselected,
-        toggleAllSelection
-    } = useSelectTableActions({
-        dataTableRef: selectTable
-    });
+    const selection = computed(() => dataTable.value?.selection ?? []);
+    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
+
 
     const routeInfo = computed(() => ({
         title: t("triggers")
@@ -500,8 +477,6 @@
     const updateDisplayColumns = (newColumns: string[]) => {
         updateVisibleColumns(newColumns);
     };
-
-    const onSelectionChange = handleSelectionChange;
 
     const setBackfillModal = (trigger: any, bool: boolean) => {
         if (!trigger) {
@@ -563,10 +538,10 @@
     };
 
     const triggerLoadDataAfterBulkEditAction = () => {
-        loadData();
-        setTimeout(() => loadData(), 200);
-        setTimeout(() => loadData(), 1000);
-        setTimeout(() => loadData(), 5000);
+        dataTable.value?.reload();
+        setTimeout(() => dataTable.value?.reload(), 200);
+        setTimeout(() => dataTable.value?.reload(), 1000);
+        setTimeout(() => dataTable.value?.reload(), 5000);
     };
 
     const unlock = async () => {
@@ -627,7 +602,7 @@
                 triggerId: trigger.triggerId
             }).then(() => {
                 toast.success(t("delete trigger success", {id: trigger.id}));
-                loadData();
+                dataTable.value?.reload();
             }).catch(error => {
                 toast.error(t("delete trigger error", {id: trigger.id}));
                 console.error(error);
@@ -750,7 +725,7 @@
     };
 
     const loadQuery = (base: any) => {
-        const queryFilter = queryWithFilter();
+        const {page: _p, size: _s, sort: _so, ...queryFilter} = route.query as Record<string, any>;
 
         const timeRange = queryFilter["filters[timeRange][EQUALS]"];
         if (timeRange) {
@@ -805,12 +780,6 @@
         }) ?? [];
 
         return all;
-    });
-
-    watch(ready, (newReady: any) => {
-        if (newReady) {
-            loadData(load);
-        }
     });
 
     async function exportTriggersAsStream() {

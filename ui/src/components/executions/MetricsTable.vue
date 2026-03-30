@@ -1,90 +1,80 @@
 <template>
-    <DataTable
-        @page-changed="onPageChanged"
+    <ks-data-table
         ref="dataTable"
+        :load-data="loadData"
+        :data="metrics"
         :total="metricsTotal"
-        :embed="true"
+        :defaultSort="{prop: 'name', order: 'ascending'}"
     >
         <template #navbar>
             <slot name="navbar" />
         </template>
-        <template #table>
-            <ks-table
-                :data="metrics"
-                :defaultSort="{prop: 'name', order: 'ascending'}"
-                tableLayout="auto"
-                fixed
-                @sort-change="onSort"
-            >
-                <template v-for="col in displayColumns" :key="col">
-                    <ks-table-column v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
-                        <template #default="scope">
-                            <p class="m-0">
-                                {{ scope.row.taskId }}
-                            </p>
-                        </template>
-                    </ks-table-column>
 
-                    <ks-table-column v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
-                        <template #default="scope">
-                            <template v-if="scope.row.type === 'timer'">
-                                <Kicon><Timer /></Kicon>
-                            </template>
-                            <template v-else>
-                                <Kicon><Counter /></Kicon>
-                            </template>
-                            &nbsp;<code>{{ scope.row.name }}</code>
-                        </template>
-                    </ks-table-column>
-
-                    <ks-table-column v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
-                        <template #default="scope">
-                            <span v-if="scope.row.type === 'timer'">
-                                {{ humanizeDuration((scope.row.value / 1000).toString()) }}
-                            </span>
-                            <span v-else>
-                                {{ humanizeNumber(scope.row.value) }}
-                            </span>
-                        </template>
-                    </ks-table-column>
-
-                    <ks-table-column v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
-                        <template #default="scope">
-                            <ks-tag
-                                v-for="(value, key) in scope.row.tags"
-                                :key="key"
-                                class="tag"
-                                type="info"
-                                size="small"
-                                disableTransitions
-                            >
-                                {{ key }}: <strong>{{ value }}</strong>
-                            </ks-tag>
-                        </template>
-                    </ks-table-column>
+        <template v-for="col in displayColumns" :key="col">
+            <ks-table-column v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
+                <template #default="scope">
+                    <p class="m-0">
+                        {{ scope.row.taskId }}
+                    </p>
                 </template>
-            </ks-table>
+            </ks-table-column>
+
+            <ks-table-column v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
+                <template #default="scope">
+                    <template v-if="scope.row.type === 'timer'">
+                        <Kicon><Timer /></Kicon>
+                    </template>
+                    <template v-else>
+                        <Kicon><Counter /></Kicon>
+                    </template>
+                    &nbsp;<code>{{ scope.row.name }}</code>
+                </template>
+            </ks-table-column>
+
+            <ks-table-column v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
+                <template #default="scope">
+                    <span v-if="scope.row.type === 'timer'">
+                        {{ humanizeDuration((scope.row.value / 1000).toString()) }}
+                    </span>
+                    <span v-else>
+                        {{ humanizeNumber(scope.row.value) }}
+                    </span>
+                </template>
+            </ks-table-column>
+
+            <ks-table-column v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
+                <template #default="scope">
+                    <ks-tag
+                        v-for="(value, key) in scope.row.tags"
+                        :key="key"
+                        class="tag"
+                        type="info"
+                        size="small"
+                        disableTransitions
+                    >
+                        {{ key }}: <strong>{{ value }}</strong>
+                    </ks-tag>
+                </template>
+            </ks-table-column>
         </template>
-    </DataTable>
+    </ks-data-table>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {ref, useTemplateRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
 
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
 
     import Kicon from "../Kicon.vue";
-    import DataTable from "../layout/DataTable.vue";
 
     import type {Execution} from "../../stores/executions";
     import {humanizeDuration, humanizeNumber} from "../../utils/filters";
 
     import {useExecutionsStore} from "../../stores/executions";
-    
+
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
 
     const {t} = useI18n();
 
@@ -114,67 +104,45 @@
         storageKey: "execution-metrics"
     });
 
-    const dataTable = ref();
-
     const executionsStore = useExecutionsStore();
 
     const metrics = ref<any[] | undefined>(undefined);
     const metricsTotal = ref<number>(0);
 
-    const loadData = (callback?: () => void) => {
+    const dataTable = useTemplateRef("dataTable");
+
+    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         let params: Record<string, any> = {};
 
         if (props.taskRunId) {
             params.taskRunId = props.taskRunId;
         }
 
-        if (internalPageNumber.value) {
-            params.page = internalPageNumber.value;
+        if (page) {
+            params.page = page;
         }
 
-        if (internalPageSize.value) {
-            params.size = internalPageSize.value;
+        if (size) {
+            params.size = size;
         }
 
-        if (internalSort.value) {
-            params.sort = internalSort.value;
-        } else {
-            params.sort = "name:asc";
-        }
+        params.sort = sort ?? "name:asc";
 
-        executionsStore.loadMetrics({
+        const response: any = await executionsStore.loadMetrics({
             executionId: props.execution?.id ?? "",
             params: params,
             store: false
-        }).then((response: any) => {
-            metrics.value = response.results;
-            metricsTotal.value = response.total;
-            if (callback) {
-                callback();
-            }
         });
+        metrics.value = response.results;
+        metricsTotal.value = response.total;
     };
 
-    const {
-        internalPageNumber,
-        internalPageSize,
-        internalSort,
-        onPageChanged,
-        onSort,
-        onDataLoaded
-    } = useDataTableActions({
-        embed: props.embed,
-        dataTableRef: dataTable,
-        loadData: loadData
-    });
-
     watch(() => props.taskRunId, () => {
-        loadData(onDataLoaded);
+        dataTable.value?.resetAndReload();
     });
 
     defineExpose({
         loadData,
-        onDataLoaded,
         updateDisplayColumns
     });
 </script>

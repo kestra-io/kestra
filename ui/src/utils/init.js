@@ -40,6 +40,7 @@ import Toast from "./toast";
 import filters from "./filters";
 import ElementPlus from "element-plus";
 import KestraDesignSystem from "../../../ui-design-system/src";
+import {setDesignSystemLocale} from "@kestra-io/ui-design-system/src/i18n";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
@@ -133,6 +134,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
         await loadLocaleMessages(i18n, locale, additionalTranslations);
         await setI18nLanguage(i18n, locale);
     }
+    setDesignSystemLocale(locale);
     app.use(i18n);
 
     // moment

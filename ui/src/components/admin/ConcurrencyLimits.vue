@@ -2,18 +2,16 @@
     <TopNavBar :title="routeInfo.title" />
     
     <section class="container">
-        <DataTable
-            striped
-            :total="data?.total ?? 0"
-        >
+        <ks-data-table :total="data?.total ?? 0">
             <template #table>
                 <NoData v-if="data?.results === undefined || data?.results.length === 0" />
                 <ks-table
                     v-else
                     :data="data?.results"
+                    stripe
                 >
-                    <ks-table-column 
-                        v-for="k in KEYS" 
+                    <ks-table-column
+                        v-for="k in KEYS"
                         :key="k"
                         :prop="k"
                         :label="k"
@@ -30,7 +28,7 @@
                     </ks-table-column>
                 </ks-table>
             </template>
-        </DataTable>
+        </ks-data-table>
         <ks-dialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
             <ks-alert type="warning" :closable="false" showIcon>
                 {{ $t("concurrency_limit.warning") }}
@@ -57,7 +55,6 @@
     import {useAxios} from "../../utils/axios";
     import IconEdit from "vue-material-design-icons/Pencil.vue";
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
-    import DataTable from "../layout/DataTable.vue";
     import NoData from "../layout/NoData.vue";
 
     const {t} = useI18n();

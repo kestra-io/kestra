@@ -34,12 +34,21 @@
             </ul>
         </template>
     </TopNavBar>
-    <section :class="{'container padding-bottom': topbar}" v-if="ready">
-        <DataTable
-            @page-changed="onPageChanged"
+    <section :class="{'container padding-bottom': topbar}">
+        <ks-data-table
             ref="dataTable"
+            :load-data="loadData"
+            :data="executionsStore.executions"
             :total="executionsStore.total"
-            :embed="embed"
+            @page-changed="({page, size}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
+            @sort-change="({prop, order}: {prop: string; order: string}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
+            @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
+            :selectionMapper="selectionMapper"
+            @ready="ready = true"
+            :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+            :selectable="!hidden?.includes('selection') && canCheck"
+            :no-data-text="$t('no_results.executions')"
+            :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
                 <KSFilter
@@ -64,29 +73,7 @@
                 <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
             </template>
 
-            <template #table>
-                <SelectTable
-                    ref="selectTable"
-                    :data="executionsStore.executions"
-                    :defaultSort="{prop: 'state.startDate', order: 'descending'}"
-                    tableLayout="auto"
-                    fixed
-                    @row-dblclick="(row: any) => onRowDoubleClick(executionParams(row))"
-                    @sort-change="onSort"
-                    @selection-change="handleSelectionChange"
-                    :selectable="!hidden?.includes('selection') && canCheck"
-                    :no-data-text="$t('no_results.executions')"
-                    :rowKey="(row: any) => row.id"
-                >
-                    <template #select-actions>
-                        <BulkSelect
-                            :selectAll="queryBulkAction"
-                            :selections="selection"
-                            :total="executionsStore.total"
-                            @update:select-all="toggleAllSelection"
-                            @unselect="toggleAllUnselected"
-                        >
-                            <!-- Always visible buttons -->
+            <template #bulk-actions>
                             <ks-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                                 {{ $t("change state") }}
                             </ks-button>
@@ -127,7 +114,6 @@
                                     </ks-dropdown-menu>
                                 </template>
                             </ks-dropdown>
-                        </BulkSelect>
                         <ks-dialog
                             v-if="isOpenLabelsModal"
                             v-model="isOpenLabelsModal"
@@ -154,9 +140,9 @@
                                 </ElFormItem>
                             </ks-form>
                         </ks-dialog>
-                    </template>
-                    <template #default>
-                        <ks-table-column
+            </template>
+
+            <ks-table-column
                             prop="id"
                             sortable="custom"
                             :sortOrders="['ascending', 'descending']"
@@ -289,10 +275,7 @@
                                 </IconButton>
                             </template>
                         </ks-table-column>
-                    </template>
-                </SelectTable>
-            </template>
-        </DataTable>
+        </ks-data-table>
     </section>
 
     <ks-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
@@ -428,9 +411,7 @@
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
-    import DataTable from "../layout/DataTable.vue";
-    import BulkSelect from "../layout/BulkSelect.vue";
-    import SelectTable from "../layout/SelectTable.vue";
+
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
@@ -451,8 +432,6 @@
 
     import useRouteContext from "../../composables/useRouteContext";
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
-    import {useSelectTableActions} from "../../composables/useSelectTableActions";
 
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -626,52 +605,42 @@
         return execution.id;
     };
 
-    const loadData = (callback?: () => void) => {
+    const ready = ref(false);
+    const dataTable = useTemplateRef("dataTable");
+
+    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         lastRefreshDate.value = new Date();
 
-        executionsStore.findExecutions(loadQuery({
-            size: parseInt(route.query?.size as string ?? "25"),
-            page: parseInt(route.query?.page as string ?? "1"),
-            sort: route.query?.sort as string ?? "state.startDate:desc",
+        await executionsStore.findExecutions(loadQuery({
+            size,
+            page,
+            sort: sort ?? String(route.query.sort ?? "state.startDate:desc"),
             state: route.query?.state ? [route.query?.state] : props.statuses
-        })).then(() => {
-            if (props.isConcurrency) {
-                emitStateCount();
-            }
-        }).finally(callback);
+        }));
+
+        if (props.isConcurrency) {
+            emitStateCount();
+        }
     };
+
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return filters;
+    });
+
+    watch(filterQuery, () => {
+        if (!props.embed) {
+            dataTable.value?.resetAndReload();
+        }
+    }, {deep: true});
 
     const routeInfo = computed(() => ({title: t("executions")}));
     useRouteContext(routeInfo, props.embed);
 
-    const dataTableRef = ref(null);
-    const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
+    const selection = computed(() => dataTable.value?.selection ?? []);
+    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
 
-    const {
-        ready,
-        onSort,
-        onRowDoubleClick,
-        onPageChanged,
-        queryWithFilter,
-        load,
-        onDataLoaded
-    } = useDataTableActions({
-        dblClickRouteName: dblClickRouteName.value,
-        embed: props.embed,
-        dataTableRef,
-        loadData: loadData
-    });
-
-    const {
-        queryBulkAction,
-        selection,
-        handleSelectionChange,
-        toggleAllUnselected,
-        toggleAllSelection
-    } = useSelectTableActions({
-        dataTableRef: selectTableRef,
-        selectionMapper: selectionMapper
-    });
 
     const displayButtons = computed(() => {
         return (route.name === "flows/update") || (route.name === "executions/list");
@@ -756,15 +725,12 @@
 
     const refresh = () => {
         recomputeInterval.value = !recomputeInterval.value;
-        const dashboardComponent = selectTableRef.value?.$refs?.dashboardComponent;
-        if (dashboardComponent) {
-            dashboardComponent.refreshCharts();
-        }
-        load(onDataLoaded);
+        dataTable.value?.reload();
     };
 
     const loadQuery = (base: any) => {
-        let queryFilter = queryWithFilter();
+        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query;
+        let queryFilter: Record<string, any> = {...restQuery};
 
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = props.namespace;
@@ -828,7 +794,7 @@
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
                     toggleAllUnselected();
-                    loadData();
+                    dataTable.value?.reload();
                 });
         } else {
             const selectionData = {executionsId: selection.value};
@@ -842,7 +808,7 @@
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
                     toggleAllUnselected();
-                    loadData();
+                    dataTable.value?.reload();
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
                         return {message: t(exec.message, {executionId: exec.invalidValue})};
@@ -1022,7 +988,7 @@
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
                         toggleAllUnselected();
-                        loadData();
+                        dataTable.value?.reload();
                     });
             } else {
                 return executionsStore
@@ -1033,7 +999,7 @@
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
                         toggleAllUnselected();
-                        loadData();
+                        dataTable.value?.reload();
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
                         return {message: t(exec.message, {executionId: exec.invalidValue})};
                     }), t(e.message)));

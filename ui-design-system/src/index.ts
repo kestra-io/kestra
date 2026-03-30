@@ -34,6 +34,7 @@ import KsDropdown from "./components/Navigation/KsDropdown/KsDropdown.vue"
 import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vue"
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
 import KsEmpty from "./components/Data/KsEmpty.vue"
+import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
 import KsId from "./components/Data/KsId.vue"
@@ -79,6 +80,9 @@ import {vKsLoading} from "./components/Feedback/KsLoading"
 // ─── i18n ───────────────────────────────────────────────────────────────────
 export {designSystemLocale, setDesignSystemLocale} from "./i18n"
 
+// ─── Types ──────────────────────────────────────────────────────────────────
+export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
+
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {
     KsAlert,
@@ -114,6 +118,7 @@ export {
     KsDropdownItem,
     KsDropdownMenu,
     KsEmpty,
+    KsExecutionStatus,
     KsForm,
     KsFormItem,
     KsId,
@@ -194,6 +199,7 @@ const KestraDesignSystem = {
         app.component("KsDropdownItem", KsDropdownItem)
         app.component("KsDropdownMenu", KsDropdownMenu)
         app.component("KsEmpty", KsEmpty)
+        app.component("KsExecutionStatus", KsExecutionStatus)
         app.component("KsForm", KsForm)
         app.component("KsFormItem", KsFormItem)
         app.component("KsId", KsId)
@@ -274,6 +280,7 @@ declare module "vue" {
         KsDropdownItem: typeof KsDropdownItem
         KsDropdownMenu: typeof KsDropdownMenu
         KsEmpty: typeof KsEmpty
+        KsExecutionStatus: typeof KsExecutionStatus
         KsForm: typeof KsForm
         KsFormItem: typeof KsFormItem
         KsId: typeof KsId

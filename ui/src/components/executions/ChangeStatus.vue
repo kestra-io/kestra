@@ -16,7 +16,7 @@
                 <p v-html="$t('change state confirm', {id: execution.id, task: taskRun.taskId})" />
 
                 <p>
-                    {{ $t('change state current state') }} <Status size="small" class="me-1" :status="taskRun.state.current" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
                 </p>
 
                 <ks-select
@@ -30,7 +30,7 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <Status size="small" :label="true" class="me-1" :status="item.code" />
+                            <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                             <span v-html="item.label" />
                         </template>
                     </ks-option>
@@ -67,7 +67,8 @@
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {State, Status} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/ui-libs"
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system"
     import * as ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef, ref} from "vue";
     import {useAuthStore} from "override/stores/auth"
@@ -77,7 +78,7 @@
     import {useI18n} from "vue-i18n";
 
     export default {
-        components: {StateMachine, Status},
+        components: {StateMachine, KsExecutionStatus},
         props: {
             component: {
                 type: String,

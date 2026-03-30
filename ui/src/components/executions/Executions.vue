@@ -200,7 +200,7 @@
                                     <Labels :labels="filteredLabels(scope.row?.labels)" />
                                 </template>
                                 <template v-else-if="col.prop === 'state.current'">
-                                    <Status :status="scope.row?.state?.current" size="small" />
+                                    <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
                                 </template>
                                 <template v-else-if="col.prop === 'flowRevision'">
                                     <code class="code-text">{{ scope.row?.flowRevision }}</code>
@@ -296,7 +296,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="false" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </ks-option>
@@ -334,7 +334,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="false" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </ks-option>
@@ -408,7 +408,8 @@
 
     import {KsId} from "@kestra-io/ui-design-system";
     import IconButton from "../IconButton.vue";
-    import {State, Status} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
 

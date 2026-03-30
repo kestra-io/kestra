@@ -202,7 +202,7 @@
                                     }"
                                     class="table-link"
                                 >
-                                    <Status :status="getLastExecution(scope.row).status" size="small" />
+                                    <KsExecutionStatus :status="getLastExecution(scope.row).status" size="small" />
                                 </router-link>
                             </div>
                         </template>
@@ -304,7 +304,7 @@
     import Play from "vue-material-design-icons/Play.vue";
 
     import IconButton from "../IconButton.vue";
-    import {Status} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";

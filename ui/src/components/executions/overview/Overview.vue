@@ -16,7 +16,7 @@
                             />
                         </template>
                     </Row>
-                    <Status :status="execution.state.current" />
+                    <KsExecutionStatus :status="execution.state.current" />
                     <Timeline :histories="execution.state.histories || []" />
                 </div>
 
@@ -189,7 +189,8 @@
     import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
-    import {Status, State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
 
     import Row from "./components/sidebar/Row.vue";
     import Labels from "./components/sidebar/Labels.vue";

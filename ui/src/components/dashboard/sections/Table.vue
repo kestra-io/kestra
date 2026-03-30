@@ -43,7 +43,7 @@
     import Duration from "./table/columns/Duration.vue";
     import Link from "./table/columns/Link.vue";
     import Namespace from "./table/columns/Namespace.vue";
-    import {Status} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
 
     import Pagination from "../../layout/Pagination.vue";
     import NoData from "../../layout/NoData.vue";
@@ -65,7 +65,7 @@
         case "NAMESPACE":
             return Namespace;
         case "STATE":
-            return Status;
+            return KsExecutionStatus;
         case "DURATION":
             return Duration;
         default:

@@ -7,7 +7,7 @@
                         <h5 class="m-3">RUNNING</h5> {{ runningCount }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
                     </span>
                     <span class="col d-flex justify-content-end align-items-center">
-                        {{ $t('behavior') }}: <Status class="mx-2" :status="flowStore.flow?.concurrency?.behavior" size="small" />
+                        {{ $t('behavior') }}: <KsExecutionStatus class="mx-2" :status="flowStore.flow?.concurrency?.behavior" size="small" />
                     </span>
                 </div>
                 <div class="progressbar mb-3">
@@ -44,7 +44,7 @@
     import {ref, computed, watch, onMounted} from "vue";
     import Executions from "../executions/Executions.vue";
     import Empty from "../layout/empty/Empty.vue";
-    import {Status} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import {useFlowStore} from "../../stores/flow";
     import {useAxios} from "../../utils/axios";
     import {apiUrl} from "override/utils/route";

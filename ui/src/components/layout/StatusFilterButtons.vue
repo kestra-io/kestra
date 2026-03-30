@@ -14,15 +14,16 @@
             :label="item.name"
             :value="item.key"
         >
-            <Status :status="item.key" size="small" />
+            <KsExecutionStatus :status="item.key" size="small" />
         </ks-option>
     </ks-select>
 </template>
 <script>
-    import {State, Status} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/ui-libs"
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system"
 
     export default {
-        components: {Status},
+        components: {KsExecutionStatus},
         props: {
             value: {
                 type: Array,

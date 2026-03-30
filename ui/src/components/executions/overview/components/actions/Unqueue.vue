@@ -25,7 +25,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="true" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </ks-option>
@@ -45,7 +45,8 @@
     import {useExecutionsStore} from "../../../../../stores/executions";
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
-    import {State, Status} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/ui-libs"
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system"
     import {useAuthStore} from "override/stores/auth"
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../../../../utils/toast";

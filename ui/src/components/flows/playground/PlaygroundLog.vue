@@ -11,14 +11,14 @@
                 {{ humanizeDuration(execution.state.duration) }}
             </p>
             <div class="playground-status">
-                <Status :status="execution.state.current" size="small" />
+                <KsExecutionStatus :status="execution.state.current" size="small" />
             </div>
         </button>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {Status} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import {date, humanizeDuration} from "../../../utils/filters";
     import {Execution, useExecutionsStore} from "../../../stores/executions";
 

@@ -1,12 +1,12 @@
 package io.kestra.core.plugins;
 
-import org.junit.jupiter.api.Test;
-
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

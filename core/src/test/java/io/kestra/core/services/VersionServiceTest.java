@@ -1,8 +1,7 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.Setting;
-import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.core.utils.VersionProvider;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,11 +10,13 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
+import io.kestra.core.models.Setting;
+import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.utils.VersionProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -180,5 +181,24 @@ class VersionServiceTest {
         Setting savedSetting = settingCaptor.getValue();
         assertThat(savedSetting.getKey()).isEqualTo(Setting.INSTANCE_VERSION);
         assertThat(savedSetting.getValue()).isEqualTo(releaseVersion);
+    }
+
+    @Test
+    void shouldThrowForTooOldVersion() {
+        // Given
+        String oldVersion = "0.22.3";
+        String newVersion = "2.0.0";
+        Setting existingSetting = Setting.builder()
+            .key(Setting.INSTANCE_VERSION)
+            .value(oldVersion)
+            .build();
+        when(settingRepository.findByKey(Setting.INSTANCE_VERSION)).thenReturn(Optional.of(existingSetting));
+        when(versionProvider.getVersion()).thenReturn(newVersion);
+
+        // When
+        var exception = assertThrows(IllegalStateException.class, () -> versionService.maybeSaveOrUpdateInstanceVersion());
+
+        // Then
+        assertThat(exception.getMessage()).isEqualTo("Instance version 0.22.3 is too old and cannot be migrated to 2.0.0, please upgrade to at least 1.0.0 first");
     }
 }

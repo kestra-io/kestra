@@ -2,6 +2,7 @@ package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.validations.ConstantRetryValidation;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -19,7 +20,7 @@ public class ConstantRetryValidator implements ConstraintValidator<ConstantRetry
 
         if (value.getMaxDuration() != null && value.getInterval() != null && value.getMaxDuration().compareTo(value.getInterval()) <= 0) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate( "'interval' must be less than 'maxDuration' but is " + value.getInterval())
+            context.buildConstraintViolationWithTemplate("'interval' must be less than 'maxDuration' but is " + value.getInterval())
                 .addConstraintViolation();
             return false;
         }

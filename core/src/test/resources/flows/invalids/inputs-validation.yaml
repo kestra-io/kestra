@@ -22,11 +22,6 @@ inputs:
     type: ARRAY
     itemType: SELECT
 
-  - id: array5
-    type: ARRAY
-    itemType: ENUM
-
-
   - id: multiselect1
     type: MULTISELECT
     itemType: ARRAY
@@ -42,10 +37,6 @@ inputs:
   - id: multiselect4
     type: MULTISELECT
     itemType: SELECT
-
-  - id: multiselect5
-    type: MULTISELECT
-    itemType: ENUM
 
 tasks:
   - id: hello

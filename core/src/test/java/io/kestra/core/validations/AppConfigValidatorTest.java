@@ -1,10 +1,11 @@
 package io.kestra.core.validations;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.exceptions.BeanInstantiationException;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.exceptions.BeanInstantiationException;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,7 +14,8 @@ class AppConfigValidatorTest {
 
     @Test
     void validateNoKestraUrl() {
-        assertThatCode(() -> {
+        assertThatCode(() ->
+        {
             try (ApplicationContext context = ApplicationContext.run()) {
                 context.getBean(AppConfigValidator.class);
             }
@@ -24,13 +26,15 @@ class AppConfigValidatorTest {
 
     @Test
     void validateValidKestraUrl() {
-        assertThatCode(() -> {
-            try (ApplicationContext context = ApplicationContext.builder()
-                .deduceEnvironment(false)
-                .properties(
-                    Map.of("kestra.url", "https://postgres-oss.preview.dev.kestra.io")
-                )
-                .start()
+        assertThatCode(() ->
+        {
+            try (
+                ApplicationContext context = ApplicationContext.builder()
+                    .deduceEnvironment(false)
+                    .properties(
+                        Map.of("kestra.url", "https://postgres-oss.preview.dev.kestra.io")
+                    )
+                    .start()
             ) {
                 context.getBean(AppConfigValidator.class);
             }
@@ -41,13 +45,15 @@ class AppConfigValidatorTest {
 
     @Test
     void validateInvalidKestraUrl() {
-        assertThatThrownBy(() -> {
-            try (ApplicationContext context = ApplicationContext.builder()
-                .deduceEnvironment(false)
-                .properties(
-                    Map.of("kestra.url", "postgres-oss.preview.dev.kestra.io")
-                )
-                .start()
+        assertThatThrownBy(() ->
+        {
+            try (
+                ApplicationContext context = ApplicationContext.builder()
+                    .deduceEnvironment(false)
+                    .properties(
+                        Map.of("kestra.url", "postgres-oss.preview.dev.kestra.io")
+                    )
+                    .start()
             ) {
                 context.getBean(AppConfigValidator.class);
             }
@@ -59,13 +65,15 @@ class AppConfigValidatorTest {
 
     @Test
     void validateNonHttpKestraUrl() {
-        assertThatThrownBy(() -> {
-            try (ApplicationContext context = ApplicationContext.builder()
-                .deduceEnvironment(false)
-                .properties(
-                    Map.of("kestra.url", "ftp://postgres-oss.preview.dev.kestra.io")
-                )
-                .start()
+        assertThatThrownBy(() ->
+        {
+            try (
+                ApplicationContext context = ApplicationContext.builder()
+                    .deduceEnvironment(false)
+                    .properties(
+                        Map.of("kestra.url", "ftp://postgres-oss.preview.dev.kestra.io")
+                    )
+                    .start()
             ) {
                 context.getBean(AppConfigValidator.class);
             }

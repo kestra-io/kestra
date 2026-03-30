@@ -4,7 +4,7 @@ namespace: io.kestra.tests
 tasks:
   - id: t1
     type: io.kestra.plugin.core.debug.Return
-    format: "{{task.id}} > {{taskrun.startDate}}"
+    format: "{{task.id}}"
   - id: 2_each
     type: io.kestra.plugin.core.flow.ForEach
     values: '["a", "b"]'
@@ -38,7 +38,7 @@ tasks:
                   2:
                     - id: 2-1-1_switch-number-2
                       type: io.kestra.plugin.core.debug.Return
-                      format: "{{parents[0].taskrun.value}} {{parents[1].taskrun.value}}"
+                      format: "{{parents[0].taskrun.value}} {{parents[2].taskrun.value}}"
   - id: 2_end
     type: io.kestra.plugin.core.debug.Return
-    format: "{{task.id}} > {{taskrun.startDate}}"
+    format: "{{task.id}}"

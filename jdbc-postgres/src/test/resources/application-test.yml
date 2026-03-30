@@ -25,6 +25,9 @@ kestra:
   server-type: STANDALONE
   queue:
     type: postgres
+    message-protection:
+      enabled: true
+      limit: 1048576
   repository:
     type: postgres
   storage:
@@ -36,9 +39,6 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
-      message-protection:
-        enabled: true
-        limit: 1048576
   tasks:
     subflow:
       allow-parameter-outputs: true
@@ -51,3 +51,21 @@ kestra:
         initial-delay: 1h
         fixed-delay: 1d
         retention: 30d
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+  controller:
+    port: ${random.port}
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

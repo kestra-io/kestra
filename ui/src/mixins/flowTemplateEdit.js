@@ -10,7 +10,6 @@ import permission from "../models/permission";
 import {apiUrl} from "override/utils/route";
 import {mapStores} from "pinia";
 import {usePluginsStore} from "../stores/plugins";
-import {useTemplateStore} from "../stores/template";
 import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
 import {useAxios} from "../utils/axios";
@@ -32,7 +31,7 @@ export default {
         };
     },
     computed: {
-        ...mapStores(usePluginsStore, useTemplateStore, useFlowStore, useAuthStore),
+        ...mapStores(usePluginsStore, useFlowStore, useAuthStore),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -126,12 +125,6 @@ export default {
             }
         },
         deleteConfirmMessage() {
-            if (this.dataType === "template") {
-                return new Promise((resolve) => {
-                    resolve(this.$t("delete confirm", {name: this.item.id}));
-                });
-            }
-
             return this.$http
                 .get(`${apiUrl()}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {

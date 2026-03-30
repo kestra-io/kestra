@@ -1,11 +1,9 @@
 package io.kestra.webserver.services;
 
-
 public record BasicAuthCredentials(
     String uid,
     String username,
-    String password
-) {
+    String password) {
     public String getUsername() {
         return username;
     }

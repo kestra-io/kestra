@@ -1,5 +1,13 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
@@ -10,6 +18,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -19,13 +28,6 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
 
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,14 +49,15 @@ class LogControllerTest {
     ReactorHttpClient client;
 
     @MockBean(TenantService.class)
-    public TenantService getTenantService(){
+    public TenantService getTenantService() {
         return mock(TenantService.class);
     }
+
     @Inject
     private TenantService tenantService;
 
     @MockBean(TenantValidationFilter.class)
-    public TenantValidationFilter getTenantValidationFilter(){
+    public TenantValidationFilter getTenantValidationFilter() {
         return mock(TenantValidationFilter.class);
     }
 
@@ -88,7 +91,6 @@ class LogControllerTest {
             Argument.of(PagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
-
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
@@ -131,26 +133,32 @@ class LogControllerTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);
         LogEntry log1 = logEntry(tenant, Level.INFO);
-        executionRepository.save(Execution.builder()
-            .id(log1.getExecutionId())
-            .namespace("io.kestra.unittest")
-            .tenantId(tenant)
-            .flowId("full")
-            .flowRevision(1)
-            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-            .taskRunList(Collections.singletonList(
-                TaskRun.builder()
-                    .id(IdUtils.create())
-                    .namespace("io.kestra.unittest")
-                    .flowId("full")
-                    .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-                    .attempts(Collections.singletonList(
-                        TaskRunAttempt.builder()
+        executionRepository.save(
+            Execution.builder()
+                .id(log1.getExecutionId())
+                .namespace("io.kestra.unittest")
+                .tenantId(tenant)
+                .flowId("full")
+                .flowRevision(1)
+                .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+                .taskRunList(
+                    Collections.singletonList(
+                        TaskRun.builder()
+                            .id(IdUtils.create())
+                            .namespace("io.kestra.unittest")
+                            .flowId("full")
+                            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+                            .attempts(
+                                Collections.singletonList(
+                                    TaskRunAttempt.builder()
+                                        .build()
+                                )
+                            )
                             .build()
-                    ))
-                    .build()
-            ))
-            .build());
+                    )
+                )
+                .build()
+        );
         LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(tenant, Level.DEBUG);
         logRepository.save(log1);
@@ -222,7 +230,6 @@ class LogControllerTest {
         logRepository.save(log1);
         logRepository.save(log2);
         logRepository.save(log3);
-
 
         PagedResults<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search?filters[timeRange][EQUALS]=PT25H"),

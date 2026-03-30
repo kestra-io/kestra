@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.OffsetTime;
+import java.util.Map;
+
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
@@ -10,13 +13,11 @@ import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.OffsetTime;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -55,7 +56,7 @@ import java.util.Map;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.TimeBetweenCondition", "io.kestra.plugin.core.condition.TimeBetweenCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.TimeBetweenCondition", "io.kestra.plugin.core.condition.TimeBetweenCondition" }
 )
 public class TimeBetween extends Condition implements ScheduleCondition {
     @NotNull
@@ -89,22 +90,22 @@ public class TimeBetween extends Condition implements ScheduleCondition {
 
         OffsetTime beforeRendered = runContext.render(before).as(OffsetTime.class, variables).orElse(null);
         OffsetTime afterRendered = runContext.render(after).as(OffsetTime.class, variables).orElse(null);
-        
+
         if (beforeRendered != null && afterRendered != null) {
             // Case 1: Normal range (e.g., 16:00 -> 20:00)
             if (afterRendered.isBefore(beforeRendered)) {
                 return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
-            // Case 2: Cross-midnight range (e.g., 22:00 -> 02:00)
+                // Case 2: Cross-midnight range (e.g., 22:00 -> 02:00)
             } else {
                 return currentDate.isAfter(afterRendered) || currentDate.isBefore(beforeRendered);
             }
-            
+
         } else if (beforeRendered != null) {
             return currentDate.isBefore(beforeRendered);
-            
+
         } else if (afterRendered != null) {
             return currentDate.isAfter(afterRendered);
-            
+
         } else {
             throw new IllegalConditionEvaluation("Invalid condition: no 'before' or 'after' value defined");
         }

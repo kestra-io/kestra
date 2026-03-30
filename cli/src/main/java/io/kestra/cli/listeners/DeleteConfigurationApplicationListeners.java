@@ -1,17 +1,17 @@
 package io.kestra.cli.listeners;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.runtime.event.annotation.EventListener;
-import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -25,7 +25,8 @@ public class DeleteConfigurationApplicationListeners {
     @EventListener
     public void onStartupEvent(StartupEvent event) throws IOException {
         environment.getPropertySources()
-            .forEach(throwConsumer(source -> {
+            .forEach(throwConsumer(source ->
+            {
                 Path path = Path.of(source.getName());
 
                 boolean exists = Files.exists(path);
@@ -36,4 +37,3 @@ public class DeleteConfigurationApplicationListeners {
             }));
     }
 }
-

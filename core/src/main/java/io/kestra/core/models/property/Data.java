@@ -1,20 +1,5 @@
 package io.kestra.core.models.property;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.annotation.Nullable;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,6 +7,23 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -88,7 +90,7 @@ public class Data {
         }
 
         if (from instanceof List<?> fromList) {
-            if (!fromList.isEmpty() && clazz.isAssignableFrom(fromList.getFirst().getClass())){
+            if (!fromList.isEmpty() && clazz.isAssignableFrom(fromList.getFirst().getClass())) {
                 // it could be the case in tests so we handle it for dev experience
                 return Flux.fromIterable((List<T>) fromList);
             }
@@ -104,7 +106,8 @@ public class Data {
                     var reader = new BufferedReader(new InputStreamReader(uri.fetch(runContext)), FileSerde.BUFFER_SIZE);
                     return FileSerde.readAll(reader, clazz)
                         .publishOn(Schedulers.boundedElastic())
-                        .doFinally(signalType -> {
+                        .doFinally(signalType ->
+                        {
                             try {
                                 reader.close();
                             } catch (IOException e) {
@@ -133,16 +136,16 @@ public class Data {
     public interface From {
         String TITLE = "Structured data items, either as a map, a list of map, a URI, or a JSON string.";
         String DESCRIPTION = """
-                Structured data items can be defined in the following ways:
-                - A single item as a map (a document).
-                - A list of items as a list of maps (a list of documents).
-                - A URI, supported schemes are `kestra` for internal storage files, `file` for host local files, and `nsfile` for namespace files.
-                - A JSON String that will then be serialized either as a single item or a list of items.""";
+            Structured data items can be defined in the following ways:
+            - A single item as a map (a document).
+            - A list of items as a list of maps (a list of documents).
+            - A URI, supported schemes are `kestra` for internal storage files, `file` for host local files, and `nsfile` for namespace files.
+            - A JSON String that will then be serialized either as a single item or a list of items.""";
 
         @Schema(
             title = TITLE,
             description = DESCRIPTION,
-            anyOf = {String.class, List.class, Map.class}
+            anyOf = { String.class, List.class, Map.class }
         )
         @PluginProperty(dynamic = true)
         Object getFrom();

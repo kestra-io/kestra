@@ -1,10 +1,10 @@
 package io.kestra.core.utils;
 
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 

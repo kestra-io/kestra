@@ -1,16 +1,17 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.List;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.validations.ArrayInputValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @SuperBuilder
 @Getter

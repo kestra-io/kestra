@@ -1,10 +1,10 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.assets.Asset;
-import io.kestra.core.models.assets.AssetIdentifier;
-
 import java.util.Collections;
 import java.util.List;
+
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
 
 public record AssetEmit(List<AssetIdentifier> inputs, List<Asset> outputs) {
     public AssetEmit {

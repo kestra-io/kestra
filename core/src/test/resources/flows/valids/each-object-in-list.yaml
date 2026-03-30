@@ -28,4 +28,4 @@ tasks:
 
   - id: 2_end
     type: io.kestra.plugin.core.debug.Return
-    format: "{{task.id}} > {{taskrun.startDate}}"
+    format: "{{task.id}}"

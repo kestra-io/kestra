@@ -8,4 +8,5 @@ dependencies {
 
     testAnnotationProcessor project(":processor")
     testImplementation project(':tests')
+    testImplementation project(':runner-memory')
 }

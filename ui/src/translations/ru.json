@@ -697,6 +697,10 @@
       "drag to reorder columns": "Перетащите, чтобы изменить порядок столбцов",
       "edit filter": "Редактировать фильтр",
       "empty": "У вас еще нет сохраненных фильтров.",
+      "enabled": {
+        "description": "Фильтр по включенным",
+        "label": "Включено"
+      },
       "end_date": "Дата окончания",
       "enter description": "Введите описание фильтра",
       "enter label": "Введите фильтр label",
@@ -756,7 +760,10 @@
         "description": "Фильтр по типу метрики",
         "label": "Метрика"
       },
-      "name": "Имя",
+      "name": {
+        "description": "Фильтр по имени",
+        "label": "Имя"
+      },
       "namespace": {
         "description": "Фильтр по namespace",
         "label": "Namespace"
@@ -947,6 +954,10 @@
         "disabled": "Отключено",
         "enabled": "Включено",
         "label": "Состояние Trigger"
+      },
+      "type": {
+        "description": "Фильтр по типу",
+        "label": "Тип"
       },
       "update": "Обновить",
       "username": {

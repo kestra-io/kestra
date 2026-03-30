@@ -1,16 +1,17 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
+
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.With;
-
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @Builder
@@ -29,10 +30,10 @@ public class WorkerTask extends WorkerJob {
     private Task task;
 
     @NotNull
-    private RunContext runContext;
+    private WorkerTaskData data;
 
     @Nullable
-    private ExecutionKind  executionKind;
+    private ExecutionKind executionKind;
 
     /**
      * {@inheritDoc}

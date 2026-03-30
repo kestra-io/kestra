@@ -91,7 +91,7 @@
 <script setup lang="ts">
     import {ref, inject, nextTick, computed} from "vue";
     import {useDebounceFn} from "@vueuse/core";
-    
+
     import {FilterOutline} from "../utils/icons";
 
     import FilterChip from "./layout/FilterChip.vue";
@@ -117,8 +117,8 @@
         return filter.configuration.value.keys?.find((key: any) => key.key === appliedFilter.key) ?? null;
     };
 
-    const setChipRef = (filterId: string, el: any) => el 
-        ? chipRefs.value[filterId] = el 
+    const setChipRef = (filterId: string, el: any) => el
+        ? chipRefs.value[filterId] = el
         : delete chipRefs.value[filterId];
 
     const handleAddFilter = (newFilter: AppliedFilter) => {
@@ -130,7 +130,7 @@
     };
 
     const handleReset = () => {
-        filter.resetToPreApplied();
+        filter.resetToDefaults();
     };
 
     const debouncedUpdateSearch = useDebounceFn((value: string) => {

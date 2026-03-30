@@ -1,10 +1,11 @@
 package io.kestra.webserver;
 
-import io.micronaut.core.io.ResourceResolver;
-import org.junit.jupiter.api.Test;
-
 import java.net.URL;
 import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.core.io.ResourceResolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

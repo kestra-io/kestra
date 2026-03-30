@@ -103,6 +103,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
+        TAGS("tags") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.CONTAINS, Op.IN);
+            }
+        },
         METADATA("metadata") {
             @Override
             public List<Op> supportedOp() {
@@ -565,6 +571,12 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY);
+            }
+        },
+        APP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID);
             }
         };
 

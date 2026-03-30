@@ -533,6 +533,10 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.FLOW_ID,
+                    Field.EXECUTION_ID,
+                    Field.ID,
                     Field.USER_ID,
                     Field.TYPE,
                     Field.RESOURCES,

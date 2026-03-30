@@ -1,9 +1,12 @@
 package io.kestra.webserver.utils;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
 
 import io.micronaut.data.model.Pageable;
@@ -28,27 +31,35 @@ public final class Searcheable<T> {
 
     public ArrayListTotal<T> search(final Searched<T> searched) {
 
-        List<T> results = items;
+        Stream<T> results = items.stream();
 
         // Quick and naive query search
         if (searched.query() != null && searched.searchableExtractors() != null) {
             final String query = searched.query().toLowerCase();
-            results = items.stream()
-                .filter(item ->
-                {
-                    String search = searched.searchableExtractors()
-                        .values()
-                        .stream()
-                        .map(extractor -> extractor.apply(item))
-                        .filter(Objects::nonNull)
-                        .map(Objects::toString)
-                        .collect(Collectors.joining())
-                        .toLowerCase();
-                    return search.contains(query);
-                }).collect(Collectors.toCollection(ArrayList::new));
-        } else {
-            results = new ArrayList<>(items);
+            results = results.filter(item -> {
+                String search = searched.searchableExtractors()
+                    .values()
+                    .stream()
+                    .map(extractor -> extractor.apply(item))
+                    .filter(Objects::nonNull)
+                    .map(Objects::toString)
+                    .collect(Collectors.joining())
+                    .toLowerCase();
+                return search.contains(query);
+            });
         }
+
+        if (searched.queryFilters() != null) {
+            results = results.filter((item) ->
+                    searched.queryFilters().stream().anyMatch(queryFilter ->
+                        searched.queryFilterPredicateMap.get(
+                            new Searched.Builder.QueryFilterPredicateKey(queryFilter.field(), queryFilter.operation())
+                        ).test(item, queryFilter.value()
+                    )
+                )
+            );
+        }
+
 
         Pageable pageable = PageableUtils.from(searched.page(), searched.size(), searched.sort(), null);
 
@@ -72,9 +83,11 @@ public final class Searcheable<T> {
                     }
                 }
             }
-            results.sort(comparing);
+            if (comparing != null) {
+                results = results.sorted(comparing);
+            }
         }
-        return ArrayListTotal.of(pageable, results);
+        return ArrayListTotal.of(pageable, results.toList());
     }
 
     /**
@@ -93,9 +106,10 @@ public final class Searcheable<T> {
         int size,
         List<String> sort,
         String query,
+        List<QueryFilter> queryFilters,
         Map<String, Function<? super T, Object>> searchableExtractors,
-        Map<String, Function<? super T, Comparable<Object>>> sortableExtractors) {
-
+        Map<String, Function<? super T, Comparable<Object>>> sortableExtractors,
+        Map<Builder.QueryFilterPredicateKey, BiPredicate<T, Object>> queryFilterPredicateMap) {
         /**
          * Creates a new {@link Searched} instance.
          *
@@ -110,9 +124,16 @@ public final class Searcheable<T> {
             private int page = 1;
             private int size = 100;
             private List<String> sort = List.of();
+            private List<QueryFilter> queryFilters;
             private String query;
             private final Map<String, Function<? super T, Object>> searchableExtractors = new HashMap<>();
             private final Map<String, Function<? super T, Comparable<Object>>> sortableExtractors = new HashMap<>();
+            private final Map<QueryFilterPredicateKey, BiPredicate<T, Object>> queryFilterPredicateMap = new HashMap<>();
+
+            public Builder<T> queryFilters(List<QueryFilter> queryFilters) {
+                this.queryFilters = queryFilters;
+                return this;
+            }
 
             public Builder<T> page(int page) {
                 this.page = page;
@@ -141,6 +162,11 @@ public final class Searcheable<T> {
                 return this;
             }
 
+            public <F extends QueryFilter.Field, O extends QueryFilter.Op> Builder<T> searchableQueryFilterExtractor(F field, O operator, BiPredicate<T, Object> itemPredicate) {
+                this.queryFilterPredicateMap.put(new QueryFilterPredicateKey(field, operator), itemPredicate);
+                return this;
+            }
+
             @SuppressWarnings("unchecked")
             public <U extends Comparable<? super U>> Builder<T> sortableExtractor(
                 String key,
@@ -155,10 +181,16 @@ public final class Searcheable<T> {
                     size,
                     sort,
                     query,
+                    queryFilters,
                     searchableExtractors,
-                    sortableExtractors
+                    sortableExtractors,
+                    queryFilterPredicateMap
                 );
             }
+
+            private record QueryFilterPredicateKey(
+                QueryFilter.Field field, QueryFilter.Op operator
+            ) {}
         }
     }
 }

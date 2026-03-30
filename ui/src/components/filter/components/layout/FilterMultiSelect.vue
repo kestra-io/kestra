@@ -39,7 +39,7 @@
                 @click="handleOptionChange(option.value, !modelValue.includes(option.value))"
             >
                 <div class="option-content">
-                    <Status
+                    <KsExecutionStatus
                         v-if="props.filterKey === 'state'"
                         :status="option.value"
                         size="small"
@@ -71,7 +71,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue";
     import {Magnify, InformationOutline} from "../../utils/icons";
-    import {Status} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Checkbox from "../../../layout/Checkbox.vue";
 
     const props = defineProps<{

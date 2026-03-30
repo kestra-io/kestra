@@ -53,7 +53,7 @@
         </div>
 
         <div class="task-status">
-            <Status size="small" :status="currentTaskRun.state.current" />
+            <KsExecutionStatus size="small" :status="currentTaskRun.state.current" />
         </div>
 
         <slot name="buttons" />
@@ -161,7 +161,7 @@
         </ks-select>
 
         <div class="task-status">
-            <Status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
+            <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
         <div class="task-duration d-none d-md-inline-block">
@@ -175,7 +175,8 @@
 <script>
     import Restart from "./overview/components/actions/Restart.vue";
     import Metrics from "./Metrics.vue";
-    import {State, Status} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";

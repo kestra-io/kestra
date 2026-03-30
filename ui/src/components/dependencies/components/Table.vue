@@ -48,7 +48,7 @@
                     </section>
 
                     <section id="right">
-                        <Status
+                        <KsExecutionStatus
                             v-if="row.data.metadata.subtype === EXECUTION && row.data.metadata.state"
                             :status="row.data.metadata.state"
                             size="small"
@@ -79,7 +79,7 @@
     import type cytoscape from "cytoscape";
 
     import Link from "./Link.vue";
-    import {Status} from "@kestra-io/ui-libs";
+    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 

@@ -16,7 +16,7 @@
             <p v-html="$t('change execution state confirm', {id: execution.id})" />
 
             <p>
-                {{ $t("change state current state") }} <Status size="small" class="me-1" :status="execution.state.current" />
+                {{ $t("change state current state") }} <KsExecutionStatus size="small" class="me-1" :status="execution.state.current" />
             </p>
 
             <ks-select
@@ -30,7 +30,7 @@
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <Status size="small" :label="true" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </ks-option>
@@ -58,7 +58,7 @@
 
     import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue";
 
-    import {State, Status} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-libs";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useToast} from "../../utils/toast";

@@ -1,7 +1,6 @@
 package io.kestra.core.models.flows.input;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,7 +24,6 @@ import lombok.experimental.SuperBuilder;
 public class JsonInput extends Input<Object> {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final SchemaRegistry SCHEMA_REGISTRY = SchemaRegistry.withDialect(Dialects.getDraft202012());
-    private static final ConcurrentHashMap<String, Schema> SCHEMA_CACHE = new ConcurrentHashMap<>();
 
     @io.swagger.v3.oas.annotations.media.Schema(title = "A JSON schema used to validate the input value.")
     String jsonSchema;
@@ -38,7 +36,7 @@ public class JsonInput extends Input<Object> {
 
         try {
             JsonNode schemaNode = MAPPER.readTree(jsonSchema);
-            Schema schema = getOrCreateSchema(schemaNode);
+            Schema schema = SCHEMA_REGISTRY.getSchema(schemaNode);
 
             JsonNode inputNode = (input instanceof String s) ? MAPPER.readTree(s) : MAPPER.valueToTree(input);
             List<Error> errors = schema.validate(inputNode);
@@ -69,10 +67,5 @@ public class JsonInput extends Input<Object> {
                 jsonSchema
             );
         }
-    }
-
-    private static Schema getOrCreateSchema(JsonNode schemaNode) {
-        String cacheKey = schemaNode.has("$id") ? schemaNode.get("$id").asText() : Integer.toString(schemaNode.hashCode());
-        return SCHEMA_CACHE.computeIfAbsent(cacheKey, key -> SCHEMA_REGISTRY.getSchema(schemaNode));
     }
 }

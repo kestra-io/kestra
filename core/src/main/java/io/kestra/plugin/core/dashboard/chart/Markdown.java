@@ -49,12 +49,5 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Markdown extends Chart<ChartOption> {
-    @Deprecated(forRemoval = true)
-    @Schema(
-        title = "[DEPRECATED]Markdown content to display",
-        description = "Use the String source instead"
-    )
-    private String content;
-
     private MarkdownSource source;
 }

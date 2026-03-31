@@ -21,6 +21,8 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.TriggerStateService;
@@ -58,8 +60,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
@@ -87,7 +87,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = { "Triggers" }, summary = "Search for triggers")
-    public PagedResults<Triggers> searchTriggers(
+    public PagedResults<ApiTriggerAndState> searchTriggers(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(
@@ -125,34 +125,13 @@ public class TriggerController {
 
         );
 
-        List<Triggers> triggers = new ArrayList<>();
+        List<ApiTriggerAndState> triggers = new ArrayList<>();
         triggerContexts.forEach(tc ->
         {
-            Optional<Flow> flow = flowRepository.findById(tc.getTenantId(), tc.getNamespace(), tc.getFlowId());
-            if (flow.isEmpty()) {
-                // Warn instead of throwing to avoid blocking the trigger UI
-                log.warn("Flow not found for trigger: {}", TriggerId.of(tc));
-
-                return;
+            ApiTriggerAndState result = toApiTriggerAndState(tc);
+            if (result != null) {
+                triggers.add(result);
             }
-
-            if (flow.get().getTriggers() == null) {
-                // a trigger was removed from the flow but still in the trigger table
-                return;
-            }
-
-            AbstractTrigger abstractTrigger = flow.get().getTriggers().stream().filter(t -> t.getId().equals(tc.getTriggerId())).findFirst().orElse(null);
-            if (abstractTrigger == null) {
-                // Warn instead of throwing to avoid blocking the trigger UI
-                log.warn("Flow {} has no trigger {}", tc.getFlowId(), tc.getTriggerId());
-            }
-
-            triggers.add(
-                Triggers.builder()
-                    .abstractTrigger(abstractTrigger)
-                    .triggerContext(tc)
-                    .build()
-            );
         });
 
         return PagedResults.of(new ArrayListTotal<>(triggers, triggerContexts.getTotal()));
@@ -161,32 +140,29 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{namespace}/{flowId}")
     @Operation(tags = { "Triggers" }, summary = "Get all triggers for a flow")
-    public PagedResults<TriggerState> searchTriggersForFlow(
+    public PagedResults<ApiTriggerState> searchTriggersForFlow(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId) throws HttpStatusException {
-        return PagedResults.of(
-            triggerRepository.find(
-                PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
-                query,
-                tenantService.resolveTenant(),
-                namespace,
-                flowId,
-                null
-            )
+        ArrayListTotal<TriggerState> triggerStates = triggerRepository.find(
+            PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
+            query,
+            tenantService.resolveTenant(),
+            namespace,
+            flowId,
+            null
         );
+
+        List<ApiTriggerState> triggers = triggerStates.stream()
+            .map(ApiTriggerState::from)
+            .toList();
+
+        return PagedResults.of(new ArrayListTotal<>(triggers, triggerStates.getTotal()));
     }
     // endregion
-
-    @Builder
-    @Getter
-    public static class Triggers {
-        AbstractTrigger abstractTrigger;
-        TriggerState triggerContext;
-    }
 
     // region [Trigger Lock APIs]
     // -----------------------------------------------------------------------------------------------------------------
@@ -294,7 +270,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/backfill/unpause")
     @Operation(tags = { "Triggers" }, summary = "Unpause a backfill")
-    public HttpResponse<TriggerState> unpauseBackfill(
+    public HttpResponse<Void> unpauseBackfill(
         @Parameter(description = "The trigger that need the backfill to be resume") @Body ApiTriggerId trigger) {
         triggerStateService.setBackfillPaused(trigger.toTriggerId(tenantService.resolveTenant()), false);
         return HttpResponse.noContent();
@@ -403,9 +379,9 @@ public class TriggerController {
     public MutableHttpResponse<?> disabledTriggersByIds(
         @Parameter(description = "The triggers you want to set the disabled state") @Body @Valid SetDisabledRequest request) {
         request.triggers().forEach(
-            trigger -> triggerStateService.toggleTriggerById(trigger.toTriggerId(tenantService.resolveTenant()), request.disabled)
+            trigger -> triggerStateService.toggleTriggerById(trigger.toTriggerId(tenantService.resolveTenant()), request.disabled())
         );
-        return HttpResponse.ok(BulkResponse.builder().count(request.triggers.size()).build());
+        return HttpResponse.ok(BulkResponse.builder().count(request.triggers().size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -451,7 +427,7 @@ public class TriggerController {
         @Parameter(description = "The namespace.") String namespace,
         @Parameter(description = "The ID of the flow.") String flowId,
         @Parameter(description = "The ID of the trigger.") String triggerId,
-        @Parameter(description = "Specifies whether trigger should be disabled") Backfill backfill) {
+        @Parameter(description = "The backfill configuration") Backfill backfill) {
 
         public record Backfill(
             ZonedDateTime start,
@@ -477,6 +453,32 @@ public class TriggerController {
         public TriggerId toTriggerId(final String tenant) {
             return TriggerId.of(tenant, namespace, flowId, triggerId);
         }
+    }
+
+    private ApiTriggerAndState toApiTriggerAndState(TriggerState tc) {
+        Optional<Flow> flow = flowRepository.findById(tc.getTenantId(), tc.getNamespace(), tc.getFlowId());
+        if (flow.isEmpty()) {
+            log.warn("Flow not found for trigger: {}", TriggerId.of(tc));
+            return null;
+        }
+
+        if (flow.get().getTriggers() == null) {
+            return null;
+        }
+
+        AbstractTrigger trigger = flow.get().getTriggers().stream()
+            .filter(t -> t.getId().equals(tc.getTriggerId()))
+            .findFirst()
+            .orElse(null);
+
+        if (trigger == null) {
+            log.warn("Flow {} has no trigger {}", tc.getFlowId(), tc.getTriggerId());
+        }
+
+        return ApiTriggerAndState.builder()
+            .trigger(trigger)
+            .state(ApiTriggerState.from(tc))
+            .build();
     }
 
     private static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(List<QueryFilter> filters, String query, String namespace) {

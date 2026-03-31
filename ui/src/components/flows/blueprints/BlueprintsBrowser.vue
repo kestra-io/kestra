@@ -358,7 +358,6 @@
 </script>
 
 <style scoped lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .blueprints {

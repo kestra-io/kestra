@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue";
-    import {ElTree} from "element-plus";
+    import {KsTree} from "@kestra-io/ui-design-system";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
 
@@ -247,7 +247,7 @@
             });
     };
 
-    const cascader = ref<InstanceType<typeof ElTree> | null>(null);
+    const cascader = ref<InstanceType<typeof KsTree> | null>(null);
     const scrollRight = () =>
         setTimeout(
             () =>

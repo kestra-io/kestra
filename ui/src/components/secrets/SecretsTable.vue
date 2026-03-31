@@ -214,7 +214,7 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import type {FormInstance} from "element-plus";
+    import type {FormInstance} from "@kestra-io/ui-design-system";
     import {ref, computed, watch, onMounted, useTemplateRef} from "vue";
     import _merge from "lodash/merge";
 

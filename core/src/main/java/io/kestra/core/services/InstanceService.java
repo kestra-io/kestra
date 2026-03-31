@@ -8,6 +8,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+
 @Singleton
 @Slf4j
 public class InstanceService {
@@ -15,8 +17,8 @@ public class InstanceService {
     private final SettingRepositoryInterface settingRepository;
 
     @Inject
-    public InstanceService(SettingRepositoryInterface settingRepository) {
-        this.settingRepository = settingRepository;
+    public InstanceService(Optional<SettingRepositoryInterface> settingRepository) {
+        this.settingRepository = settingRepository.orElse(null);
     }
 
     private volatile Setting instanceIdSetting;
@@ -33,6 +35,12 @@ public class InstanceService {
     }
 
     private Setting fetchInstanceUuid() {
+        if (settingRepository == null) {
+            return Setting.builder()
+                .key(Setting.INSTANCE_UUID)
+                .value(IdUtils.create())
+                .build();
+        }
         return settingRepository
             .findByKey(Setting.INSTANCE_UUID)
             .orElseGet(

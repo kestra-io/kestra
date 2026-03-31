@@ -64,7 +64,7 @@ a:hover {
 .kel-card {
     background-color: var(--ks-background-card);
     border-color: var(--ks-border-primary);
-    box-shadow: var(--el-box-shadow);
+    box-shadow: var(--kel-box-shadow);
     position: relative;
     min-width: 250px;
     flex: 1;
@@ -87,7 +87,7 @@ a:hover {
         margin: 3px 0 10px;
         padding-left: 20px;
         font-weight: 600;
-        font-size: var(--el-font-size-small);
+        font-size: var(--kel-font-size-small);
     }
 
     .cat_description {

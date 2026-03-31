@@ -81,10 +81,10 @@
 
 <style scoped lang="scss">
     .el-collapse {
-        --el-collapse-header-font-size: 14px;
+        --kel-collapse-header-font-size: 14px;
 
         > * {
-            font-size: var(--el-collapse-header-font-size);
+            font-size: var(--kel-collapse-header-font-size);
         }
 
         :deep(> .el-collapse-item) {
@@ -119,5 +119,5 @@
     .depth-2 {
         padding-left: 30px;
     }
-    
+
 </style>

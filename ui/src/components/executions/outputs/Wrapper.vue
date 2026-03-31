@@ -550,7 +550,7 @@
     & .kel-cascader-node {
         height: 36px;
         line-height: 36px;
-        font-size: var(--el-font-size-small);
+        font-size: var(--kel-font-size-small);
         color: var(--ks-content-primary);
 
         &[aria-haspopup="false"] {
@@ -592,8 +592,8 @@
 
         .task .wrapper {
             align-self: center;
-            height: var(--el-font-size-small);
-            width: var(--el-font-size-small);
+            height: var(--kel-font-size-small);
+            width: var(--kel-font-size-small);
         }
 
         code span.regular {

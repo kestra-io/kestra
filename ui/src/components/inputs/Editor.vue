@@ -807,17 +807,17 @@
         }
 
         &.single-line {
-            min-height: var(--el-component-size);
+            min-height: var(--kel-component-size);
             padding: 7px 11px;
             background-color: var(
-                --el-input-bg-color,
-                var(--el-fill-color-blank)
+                --kel-input-bg-color,
+                var(--kel-fill-color-blank)
             );
             border-radius: var(
-                --el-input-border-radius,
-                var(--el-border-radius-base)
+                --kel-input-border-radius,
+                var(--kel-border-radius-base)
             );
-            transition: var(--el-transition-box-shadow);
+            transition: var(--kel-transition-box-shadow);
             box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
 
             &.custom-dark-vs-theme {

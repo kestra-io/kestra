@@ -68,11 +68,11 @@
 .empty-state-title {
     color: var(--ks-content-primary);
     font-weight: 700;
-    font-size: var(--el-font-size-large);
+    font-size: var(--kel-font-size-large);
 }
 
 .empty-state-description {
-    font-size: var(--el-font-size-small);
+    font-size: var(--kel-font-size-small);
     color: var(--ks-content-primary);
 }
 

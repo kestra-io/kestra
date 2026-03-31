@@ -14,9 +14,9 @@
                 <h4>{{ $t('setup.survey.company_size') }}</h4>
                 <div class="company-size-options">
                     <ks-radio-group v-model="companySize">
-                        <ks-radio 
-                            v-for="option in companySizeOptions" 
-                            :key="option.value" 
+                        <ks-radio
+                            v-for="option in companySizeOptions"
+                            :key="option.value"
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
@@ -26,14 +26,14 @@
             </div>
 
             <ks-divider />
-            
+
             <div class="question-section">
                 <h4>{{ $t('setup.survey.use_case') }}</h4>
                 <div class="use-case-options">
                     <ks-checkbox-group v-model="useCases">
-                        <ks-checkbox 
-                            v-for="option in useCaseOptions" 
-                            :key="option.value" 
+                        <ks-checkbox
+                            v-for="option in useCaseOptions"
+                            :key="option.value"
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
@@ -44,14 +44,14 @@
 
             <ks-divider />
 
-            
+
             <div class="newsletter-section">
                 <ks-checkbox v-model="subscribeNewsletter">
                     <span v-html="$t('setup.survey.newsletter')" />
                 </ks-checkbox>
             </div>
         </div>
-        
+
         <template #footer>
             <div class="dialog-footer">
                 <ks-button @click="handleSkip">
@@ -138,20 +138,20 @@
             useCases: useCases.value,
             subscribeNewsletter: subscribeNewsletter.value
         }
-        
+
         trackSurveyEvent("survey_submitted", {
             company_size: surveyData.companySize,
             use_cases: surveyData.useCases,
             newsletter_subscribed: surveyData.subscribeNewsletter
         })
-        
+
         emit("submit", surveyData)
         emit("close")
     }
 
     const trackSurveyEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
         const configs = miscStore.configs
-        
+
         apiStore.posthogEvents({
             type: eventName,
             instance_id: configs?.uuid,
@@ -165,28 +165,28 @@
 :deep(.hello-survey-dialog) {
     border-radius: 8px;
     border: 1px solid var(--ks-dialog-border, #404559);
-    
+
     .el-dialog {
         border-radius: 8px;
     }
-    
+
     .el-dialog__header {
         background-color: var(--ks-background-card, #2c2f36);
         border-bottom: 1px solid var(--ks-border-primary, #404559);
         padding: 20px 24px;
-        
+
         .el-dialog__title {
             color: var(--ks-content-primary, #ffffff);
             font-size: 18px;
             font-weight: 600;
         }
     }
-    
+
     .el-dialog__body {
         padding: 24px;
         background-color: var(--ks-background-card, #2c2f36);
     }
-    
+
     .el-dialog__footer {
         background-color: var(--ks-background-card, #2c2f36);
         border-top: 1px solid var(--ks-border-primary, #404559);
@@ -199,7 +199,7 @@
 
     .question-section {
         margin-bottom: 32px;
-        
+
         h4 {
             color: var(--ks-content-primary, #ffffff);
             font-size: 16px;
@@ -207,17 +207,17 @@
             margin: 0 0 16px 0;
         }
     }
-    
+
     .company-size-options {
         :deep(.el-radio-group) {
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
-            
+
             .el-radio {
                 margin-right: 0;
                 margin-bottom: 0;
-                
+
                 .el-radio__input {
                     .el-radio__inner {
                         background-color: transparent;
@@ -225,17 +225,17 @@
                         border-width: 2px;
                         width: 24px;
                         height: 24px;
-                        
+
                         &::after {
                             display: none;
                         }
                     }
-                    
+
                     &.is-checked .el-radio__inner {
                         background-color: transparent;
                         border-color: #8405FF;
                         border-width: 2px;
-                        
+
                         &::after {
                             display: block;
                             content: '';
@@ -250,7 +250,7 @@
                         }
                     }
                 }
-                
+
                 .el-radio__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 8px;
@@ -259,17 +259,17 @@
             }
         }
     }
-    
+
     .use-case-options {
         :deep(.el-checkbox-group) {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px 24px;
-            
+
             .el-checkbox {
                 margin-right: 0;
                 margin-bottom: 0;
-                
+
                 .el-checkbox__input {
                     .el-checkbox__inner {
                         background-color: transparent;
@@ -277,7 +277,7 @@
                         width: 18px;
                         height: 18px;
                         border-radius: 2px;
-                        
+
                         &::after {
                             border-color: #ffffff;
                             width: 6px;
@@ -286,13 +286,13 @@
                             top: 1px;
                         }
                     }
-                    
+
                     &.is-checked .el-checkbox__inner {
-                        background-color: var(--el-color-primary, #7c3aed);
-                        border-color: var(--el-color-primary, #7c3aed);
+                        background-color: var(--kel-color-primary, #7c3aed);
+                        border-color: var(--kel-color-primary, #7c3aed);
                     }
                 }
-                
+
                 .el-checkbox__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 10px;
@@ -302,10 +302,10 @@
             }
         }
     }
-    
+
     .newsletter-section {
         padding-top: 4px;
-        
+
         :deep(.el-checkbox) {
             .el-checkbox__input {
                 .el-checkbox__inner {
@@ -314,7 +314,7 @@
                     width: 18px;
                     height: 18px;
                     border-radius: 2px;
-                    
+
                     &::after {
                         border-color: #ffffff;
                         width: 6px;
@@ -323,13 +323,13 @@
                         top: 1px;
                     }
                 }
-                
+
                 &.is-checked .el-checkbox__inner {
-                    background-color: var(--el-color-primary, #7c3aed);
-                    border-color: var(--el-color-primary, #7c3aed);
+                    background-color: var(--kel-color-primary, #7c3aed);
+                    border-color: var(--kel-color-primary, #7c3aed);
                 }
             }
-            
+
             .el-checkbox__label {
                 color: var(--ks-content-secondary, #9ca3af);
                 font-size: 14px;

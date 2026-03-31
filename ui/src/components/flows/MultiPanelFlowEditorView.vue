@@ -198,7 +198,7 @@
     @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
     .playgroundMode :deep(.tabs-wrapper) {
-        #{--el-color-primary}: colorPalette.$base-blue-500;
+        #{--kel-color-primary}: colorPalette.$base-blue-500;
         color: colorPalette.$base-white;
         background-position: 10% 0;
     }

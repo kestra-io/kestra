@@ -39,7 +39,7 @@ import {createPinia} from "pinia";
 import Toast from "./toast";
 import filters from "./filters";
 import ElementPlus from "element-plus";
-import KestraDesignSystem from "../../../ui-design-system/src";
+import KestraDesignSystem from "@kestra-io/ui-design-system";
 import {setDesignSystemLocale} from "@kestra-io/ui-design-system";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";

@@ -574,8 +574,8 @@
                 }
 
                 & :deep(.kel-alert__icon) {
-                    font-size: var(--el-alert-icon-size);
-                    width: var(--el-alert-icon-size);
+                    font-size: var(--kel-alert-icon-size);
+                    width: var(--kel-alert-icon-size);
                     margin-right: calc($spacer * 1.5);
                 }
             }
@@ -584,7 +584,7 @@
         #chart {
             > div {
                 padding: calc($spacer * 2);
-                border: 1px solid var(--el-border-color-light);
+                border: 1px solid var(--kel-border-color-light);
                 border-radius: calc($spacer / 2);
                 background-color: var(--ks-background-card);
 

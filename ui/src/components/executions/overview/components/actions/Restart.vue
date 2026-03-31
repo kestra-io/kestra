@@ -361,14 +361,14 @@
             &::after {
                 width: 8px;
                 height: 8px;
-                background-color: var(--el-color-primary);
+                background-color: var(--kel-color-primary);
             }
         }
     }
 
     :deep(.el-radio__label) {
         font-size: 13px;
-        color: var(--el-text-color-regular);
+        color: var(--kel-text-color-regular);
         padding-left: 8px;
     }
 
@@ -376,8 +376,8 @@
     &.is-checked {
         :deep(.el-radio__input) {
             .el-radio__inner {
-                border-color: var(--el-color-primary);
-                background-color: var(--el-color-primary);
+                border-color: var(--kel-color-primary);
+                background-color: var(--kel-color-primary);
 
                 &::after {
                     background-color: white;
@@ -386,7 +386,7 @@
         }
 
         :deep(.el-radio__label) {
-            color: var(--el-text-color-regular) !important;
+            color: var(--kel-text-color-regular) !important;
         }
     }
 }

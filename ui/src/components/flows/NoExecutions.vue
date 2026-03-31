@@ -56,15 +56,15 @@
     margin: 4rem auto;
 
     .title {
-        line-height: var(--el-font-line-height-primary);
+        line-height: var(--kel-font-line-height-primary);
         text-align: center;
-        font-size: var(--el-font-size-extra-large);
+        font-size: var(--kel-font-size-extra-large);
         font-weight: 600;
         color: var(--ks-content-primary);
     }
 
     .desc {
-        line-height: var(--el-font-line-height-primary);
+        line-height: var(--kel-font-line-height-primary);
         font-weight: 300;
         font-size: 16px;
         line-height: 28px;
@@ -88,7 +88,7 @@
 :deep(.kel-divider__text) {
     color: var(--ks-content-secondary);
     white-space: nowrap;
-    font-size: var(--el-font-size-extra-small);
+    font-size: var(--kel-font-size-extra-small);
 }
 
 .bottom {

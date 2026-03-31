@@ -37,7 +37,7 @@
     <section :class="{'container padding-bottom': topbar}">
         <ks-data-table
             ref="dataTable"
-            :load-data="loadData"
+            :loadData="loadData"
             :data="executionsStore.executions"
             :total="executionsStore.total"
             @page-changed="({page, size}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
@@ -74,207 +74,207 @@
             </template>
 
             <template #bulk-actions>
-                            <ks-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                                {{ $t("change state") }}
-                            </ks-button>
-                            <ks-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
-                                {{ $t("restart") }}
-                            </ks-button>
-                            <ks-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
-                                {{ $t("replay") }}
-                            </ks-button>
-                            <ks-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
-                                {{ $t("kill") }}
-                            </ks-button>
-                            <ks-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
-                                {{ $t("delete") }}
-                            </ks-button>
+                <ks-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                    {{ $t("change state") }}
+                </ks-button>
+                <ks-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                    {{ $t("restart") }}
+                </ks-button>
+                <ks-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
+                    {{ $t("replay") }}
+                </ks-button>
+                <ks-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                    {{ $t("kill") }}
+                </ks-button>
+                <ks-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
+                    {{ $t("delete") }}
+                </ks-button>
 
-                            <ks-dropdown>
-                                <ks-button>
-                                    <DotsVertical />
-                                </ks-button>
-                                <template #dropdown>
-                                    <ks-dropdown-menu>
-                                        <ks-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
-                                            {{ $t("Set labels") }}
-                                        </ks-dropdown-item>
-                                        <ks-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
-                                            {{ $t("resume") }}
-                                        </ks-dropdown-item>
-                                        <ks-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
-                                            {{ $t("pause") }}
-                                        </ks-dropdown-item>
-                                        <ks-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
-                                            {{ $t("unqueue") }}
-                                        </ks-dropdown-item>
-                                        <ks-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
-                                            {{ $t("force run") }}
-                                        </ks-dropdown-item>
-                                    </ks-dropdown-menu>
-                                </template>
-                            </ks-dropdown>
-                        <ks-dialog
-                            v-if="isOpenLabelsModal"
-                            v-model="isOpenLabelsModal"
-                            destroyOnClose
-                            :appendToBody="true"
-                            alignCenter
-                        >
-                            <template #header>
-                                <h5>{{ $t("Set labels") }}</h5>
-                            </template>
+                <ks-dropdown>
+                    <ks-button>
+                        <DotsVertical />
+                    </ks-button>
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
+                                {{ $t("Set labels") }}
+                            </ks-dropdown-item>
+                            <ks-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                                {{ $t("resume") }}
+                            </ks-dropdown-item>
+                            <ks-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                                {{ $t("pause") }}
+                            </ks-dropdown-item>
+                            <ks-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                                {{ $t("unqueue") }}
+                            </ks-dropdown-item>
+                            <ks-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                                {{ $t("force run") }}
+                            </ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+                <ks-dialog
+                    v-if="isOpenLabelsModal"
+                    v-model="isOpenLabelsModal"
+                    destroyOnClose
+                    :appendToBody="true"
+                    alignCenter
+                >
+                    <template #header>
+                        <h5>{{ $t("Set labels") }}</h5>
+                    </template>
 
-                            <template #footer>
-                                <ks-button @click="isOpenLabelsModal = false">
-                                    {{ $t("cancel") }}
-                                </ks-button>
-                                <ks-button type="primary" @click="setLabels()">
-                                    {{ $t("ok") }}
-                                </ks-button>
-                            </template>
+                    <template #footer>
+                        <ks-button @click="isOpenLabelsModal = false">
+                            {{ $t("cancel") }}
+                        </ks-button>
+                        <ks-button type="primary" @click="setLabels()">
+                            {{ $t("ok") }}
+                        </ks-button>
+                    </template>
 
-                            <ks-form labelPosition="top">
-                                <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput v-model:labels="executionLabels" />
-                                </ElFormItem>
-                            </ks-form>
-                        </ks-dialog>
+                    <ks-form labelPosition="top">
+                        <ks-form-item :label="$t('execution labels')">
+                            <LabelInput v-model:labels="executionLabels" />
+                        </ks-form-item>
+                    </ks-form>
+                </ks-dialog>
             </template>
 
             <ks-table-column
-                            prop="id"
-                            sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
-                            :label="$t('id')"
-                        >
-                            <template #default="scope">
-                                <RouterLink
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            namespace: scope.row?.namespace,
-                                            flowId: scope.row?.flowId,
-                                            id: scope.row?.id
-                                        }
-                                    }"
-                                    class="execution-id"
-                                >
-                                    <KsId :value="scope.row?.id" :shrink="true" />
-                                </RouterLink>
-                            </template>
-                        </ks-table-column>
+                prop="id"
+                sortable="custom"
+                :sortOrders="['ascending', 'descending']"
+                :label="$t('id')"
+            >
+                <template #default="scope">
+                    <RouterLink
+                        :to="{
+                            name: 'executions/update',
+                            params: {
+                                namespace: scope.row?.namespace,
+                                flowId: scope.row?.flowId,
+                                id: scope.row?.id
+                            }
+                        }"
+                        class="execution-id"
+                    >
+                        <KsId :value="scope.row?.id" :shrink="true" />
+                    </RouterLink>
+                </template>
+            </ks-table-column>
 
-                        <ks-table-column
-                            v-for="col in visibleColumns"
-                            :key="col.prop"
-                            :prop="col.prop"
-                            :label="col.label"
-                            :class="col.prop === 'flowRevision' ? 'shrink' : ''"
-                            :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
-                            :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => invisibleSpace(cellValue)) : undefined"
-                            :sortable="isColumnSortable(col.prop) ? 'custom' : false"
-                            :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
+            <ks-table-column
+                v-for="col in visibleColumns"
+                :key="col.prop"
+                :prop="col.prop"
+                :label="col.label"
+                :class="col.prop === 'flowRevision' ? 'shrink' : ''"
+                :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
+                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => invisibleSpace(cellValue)) : undefined"
+                :sortable="isColumnSortable(col.prop) ? 'custom' : false"
+                :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
+            >
+                <template #default="scope">
+                    <template v-if="col.prop === 'state.startDate'">
+                        <DateAgo :inverted="true" :date="scope.row?.state?.startDate" />
+                    </template>
+                    <template v-else-if="col.prop === 'state.endDate'">
+                        <DateAgo :inverted="true" :date="scope.row?.state?.endDate" />
+                    </template>
+                    <template v-else-if="col.prop === 'state.duration'">
+                        <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
+                    </template>
+                    <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
+                        <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
+                    </template>
+                    <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
+                        <router-link
+                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
                         >
-                            <template #default="scope">
-                                <template v-if="col.prop === 'state.startDate'">
-                                    <DateAgo :inverted="true" :date="scope.row?.state?.startDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'state.endDate'">
-                                    <DateAgo :inverted="true" :date="scope.row?.state?.endDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'state.duration'">
-                                    <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
-                                    <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
-                                </template>
-                                <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
-                                    <router-link
-                                        :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
-                                    >
-                                        {{ invisibleSpace(scope.row?.flowId) }}
-                                    </router-link>
-                                </template>
-                                <template v-else-if="col.prop === 'labels'">
-                                    <Labels :labels="filteredLabels(scope.row?.labels)" />
-                                </template>
-                                <template v-else-if="col.prop === 'state.current'">
-                                    <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
-                                </template>
-                                <template v-else-if="col.prop === 'flowRevision'">
-                                    <code class="code-text">{{ scope.row?.flowRevision }}</code>
-                                </template>
-                                <template v-else-if="col.prop === 'inputs'">
-                                    <ks-tooltip>
-                                        <template #content>
-                                            <pre class="mb-0">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
-                                        </template>
-                                        <div>
-                                            <Import v-if="scope.row?.inputs" class="fs-5" />
-                                        </div>
-                                    </ks-tooltip>
-                                </template>
-                                <template v-else-if="col.prop === 'outputs'">
-                                    <ks-tooltip>
-                                        <template #content>
-                                            <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
-                                        </template>
-                                        <div>
-                                            <Export v-if="scope.row?.outputs" class="fs-5" />
-                                        </div>
-                                    </ks-tooltip>
-                                </template>
-                                <template v-else-if="col.prop === 'taskRunList.taskId'">
-                                    <code class="code-text">
-                                        {{ scope.row?.taskRunList?.slice(-1)[0]?.taskId }}
-                                        {{
-                                            scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length > 1 ? `(${scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length})` : ""
-                                        }}
-                                    </code>
-                                </template>
-                                <template v-else-if="col.prop === 'trigger'">
-                                    <TriggerAvatar :execution="scope.row" />
-                                </template>
-                                <template v-else-if="col.prop === 'trigger.variables.executionId'">
-                                    <RouterLink
-                                        v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
-                                        :to="{
-                                            name: 'executions/update',
-                                            params: {
-                                                namespace: scope.row?.namespace,
-                                                flowId: scope.row?.flowId,
-                                                id: scope.row?.trigger?.variables?.executionId
-                                            }
-                                        }"
-                                        class="execution-id"
-                                    >
-                                        <KsId :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
-                                    </RouterLink>
-                                    <span v-else>-</span>
-                                </template>
+                            {{ invisibleSpace(scope.row?.flowId) }}
+                        </router-link>
+                    </template>
+                    <template v-else-if="col.prop === 'labels'">
+                        <Labels :labels="filteredLabels(scope.row?.labels)" />
+                    </template>
+                    <template v-else-if="col.prop === 'state.current'">
+                        <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
+                    </template>
+                    <template v-else-if="col.prop === 'flowRevision'">
+                        <code class="code-text">{{ scope.row?.flowRevision }}</code>
+                    </template>
+                    <template v-else-if="col.prop === 'inputs'">
+                        <ks-tooltip>
+                            <template #content>
+                                <pre class="mb-0">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
                             </template>
-                            <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
-                                <ks-tooltip :content="$t('taskid column details')">
-                                    {{ scope.column.label }}
-                                </ks-tooltip>
+                            <div>
+                                <Import v-if="scope.row?.inputs" class="fs-5" />
+                            </div>
+                        </ks-tooltip>
+                    </template>
+                    <template v-else-if="col.prop === 'outputs'">
+                        <ks-tooltip>
+                            <template #content>
+                                <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
                             </template>
-                        </ks-table-column>
+                            <div>
+                                <Export v-if="scope.row?.outputs" class="fs-5" />
+                            </div>
+                        </ks-tooltip>
+                    </template>
+                    <template v-else-if="col.prop === 'taskRunList.taskId'">
+                        <code class="code-text">
+                            {{ scope.row?.taskRunList?.slice(-1)[0]?.taskId }}
+                            {{
+                                scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length > 1 ? `(${scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length})` : ""
+                            }}
+                        </code>
+                    </template>
+                    <template v-else-if="col.prop === 'trigger'">
+                        <TriggerAvatar :execution="scope.row" />
+                    </template>
+                    <template v-else-if="col.prop === 'trigger.variables.executionId'">
+                        <RouterLink
+                            v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
+                            :to="{
+                                name: 'executions/update',
+                                params: {
+                                    namespace: scope.row?.namespace,
+                                    flowId: scope.row?.flowId,
+                                    id: scope.row?.trigger?.variables?.executionId
+                                }
+                            }"
+                            class="execution-id"
+                        >
+                            <KsId :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                        </RouterLink>
+                        <span v-else>-</span>
+                    </template>
+                </template>
+                <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
+                    <ks-tooltip :content="$t('taskid column details')">
+                        {{ scope.column.label }}
+                    </ks-tooltip>
+                </template>
+            </ks-table-column>
 
-                        <ks-table-column
-                            columnKey="action"
-                            className="row-action"
-                            :label="$t('actions')"
-                        >
-                            <template #default="scope">
-                                <KsIconButton
-                                    :tooltip="$t('details')"
-                                    :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
-                                >
-                                    <TextSearch />
-                                </KsIconButton>
-                            </template>
-                        </ks-table-column>
+            <ks-table-column
+                columnKey="action"
+                className="row-action"
+                :label="$t('actions')"
+            >
+                <template #default="scope">
+                    <KsIconButton
+                        :tooltip="$t('details')"
+                        :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
+                    >
+                        <TextSearch />
+                    </KsIconButton>
+                </template>
+            </ks-table-column>
         </ks-data-table>
     </section>
 

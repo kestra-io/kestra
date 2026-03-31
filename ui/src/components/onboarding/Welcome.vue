@@ -2,16 +2,16 @@
     <TopNavBar :title="routeInfo.title">
         <template #additional-right>
             <router-link v-if="canCreateFlow" :to="{name: 'flows/create'}">
-                <el-button type="primary">
+                <ks-button type="primary">
                     {{ $t("welcome_copilot.button_cta") }}
-                </el-button>
+                </ks-button>
             </router-link>
         </template>
     </TopNavBar>
 
     <section id="welcome" class="container mt-0">
-        <el-row justify="center">
-            <el-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
+        <ks-row justify="center">
+            <ks-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
                 <AiCopilot
                     :flow="activeExample.flow"
                     :conversationId="conversationId"
@@ -28,7 +28,7 @@
                 />
 
                 <div class="mt-2 welcome-copilot-tags">
-                    <el-tag
+                    <ks-tag
                         v-for="label in visibleLabels"
                         :key="label"
                         round
@@ -37,9 +37,9 @@
                         @click="selectLabel(label)"
                     >
                         {{ t(flowExamples[label].labelKey) }}
-                    </el-tag>
+                    </ks-tag>
 
-                    <el-tag
+                    <ks-tag
                         v-if="labels.length > 5"
                         round
                         effect="plain"
@@ -51,7 +51,7 @@
                                 ? $t("welcome_copilot.show_less")
                                 : $t("welcome_copilot.show_more")
                         }}
-                    </el-tag>
+                    </ks-tag>
                 </div>
 
                 <div class="welcome-help-section">
@@ -61,8 +61,8 @@
 
                     <OnboardingResourceList :items="welcomeResources" />
                 </div>
-            </el-col>
-        </el-row>
+            </ks-col>
+        </ks-row>
     </section>
 </template>
 
@@ -193,8 +193,8 @@
             }
 
             &.el-tag--primary {
-                border-color: var(--el-color-primary);
-                background-color: var(--el-color-primary);
+                border-color: var(--kel-color-primary);
+                background-color: var(--kel-color-primary);
                 color: white;
             }
         }

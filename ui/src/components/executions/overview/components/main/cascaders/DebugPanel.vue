@@ -138,7 +138,7 @@
     height: 100%;
     margin-top: calc($spacer / 2);
     padding: calc($spacer / 2) $spacer;
-    border: 1px solid var(--el-border-color-light);
+    border: 1px solid var(--kel-border-color-light);
 
     :deep(.ks-editor) {
         &.expression {

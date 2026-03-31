@@ -17,6 +17,8 @@ export class FlowsApi extends BaseApi {
     async generateFlowViaApi(fileName: string, fileFlowId: string) {
         const flowId = `test-flow-${uuid()}`;
 
+        const data = this.getFlowYaml(fileName, fileFlowId, flowId)
+
         // Create flow via API
         const response = this.request.post(`${this.apiUrl}/flows`, {
             headers: {
@@ -24,13 +26,13 @@ export class FlowsApi extends BaseApi {
                 "Accept": "application/json",
                 "Authorization": FlowsApi.AUTH
             },
-            data: this.getFlowYaml(fileName, fileFlowId, flowId)
+            data
         });
 
         const status = (await response).status();
 
         if (status !== 200) {
-            throw new Error(`Flow creation failed with HTTP ${status}`);
+            throw new Error(`Flow creation failed with HTTP ${status}: \n\n${data}`);
         }
 
         this.flowIds.push(flowId);

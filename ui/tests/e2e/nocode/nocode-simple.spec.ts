@@ -1,7 +1,8 @@
-import {expect, test} from "@playwright/test";
+import {test} from "@playwright/test";
 import {FlowsApi} from "../api/flows.api";
 import {NoCodePage} from "../pages/nocode.page";
 import {shared} from "../fixtures/shared";
+// import {v4 as uuidv4} from "uuid";
 
 /**
  * E2E tests for the no-code editor — simple tasks.
@@ -21,21 +22,27 @@ test.describe("No-code editor — Simple tasks (Log)", () => {
     let flowId: string;
     let flowsApi: FlowsApi;
     let noCodePage: NoCodePage;
+    // let testUUID = "";
 
     test.beforeEach(async ({page, request, baseURL}) => {
         flowsApi = new FlowsApi(request, baseURL);
+
+        await page.goto("/ui");
+
         // Each test starts with a blank flow so it can freely create what it needs.
-        flowId = await flowsApi.generateFlowViaApi("nocode-empty.yaml", "nocode-empty");
         noCodePage = new NoCodePage(page);
+        
+        flowId = await flowsApi.generateFlowViaApi("nocode-simple.yaml", "nocode-simple");
         await noCodePage.gotoFlowEdit(shared.namespace, flowId);
         await noCodePage.openNoCodePanel();
+        // testUUID = uuidv4().replace(/-/g, "_");
     });
 
     test.afterEach(async () => {
         await flowsApi.removeFlowsViaApi();
     });
 
-    test("should create a Log task and verify the YAML is updated", async ({page}) => {
+    test("should create a Log task and verify the YAML is updated", async () => {
         await test.step("add a Log task in the tasks section", async () => {
             await noCodePage.addEntry("tasks", "io.kestra.plugin.core.log.Log", "my_log");
         });
@@ -50,7 +57,7 @@ test.describe("No-code editor — Simple tasks (Log)", () => {
         });
     });
 
-    test("should edit an existing Log task via the no-code editor", async ({page}) => {
+    test("should edit an existing Log task via the no-code editor", async () => {
         await test.step("create a Log task first", async () => {
             await noCodePage.addEntry("tasks", "io.kestra.plugin.core.log.Log", "my_log");
         });
@@ -74,7 +81,7 @@ test.describe("No-code editor — Simple tasks (Log)", () => {
         });
     });
 
-    test("should create a trigger via the no-code editor", async ({page}) => {
+    test("should create a trigger via the no-code editor", async () => {
         await test.step("add a Schedule trigger in the triggers section", async () => {
             await noCodePage.addEntry(
                 "triggers",
@@ -97,7 +104,7 @@ test.describe("No-code editor — Simple tasks (Log)", () => {
         });
     });
 
-    test("should create a pluginDefault via the no-code editor", async ({page}) => {
+    test("should create a pluginDefault via the no-code editor", async () => {
         await test.step("add a pluginDefault for Log", async () => {
             await noCodePage.addEntry(
                 "pluginDefaults",
@@ -115,7 +122,7 @@ test.describe("No-code editor — Simple tasks (Log)", () => {
         });
     });
 
-    test("should be able to add and edit tasks in a second flow", async ({page, request, baseURL}) => {
+    test("should be able to add and edit tasks in a second flow", async ({request, baseURL}) => {
         // Create a second flow for cross-flow testing
         const secondFlowsApi = new FlowsApi(request, baseURL);
         const secondFlowId = await secondFlowsApi.generateFlowViaApi(

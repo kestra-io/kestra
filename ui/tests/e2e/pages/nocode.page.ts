@@ -1,7 +1,6 @@
-import type {Page, Locator} from "@playwright/test";
+import type {Page} from "@playwright/test";
 import {expect} from "@playwright/test";
 import {BasePage} from "./base.page";
-import {shared} from "../fixtures/shared";
 
 /**
  * Page Object Model for the No-Code flow editor.
@@ -41,7 +40,7 @@ export class NoCodePage extends BasePage {
         if (!isActive) {
             await btn.click();
         }
-        await expect(this.page.locator(".no-code").first()).toBeVisible();
+        await expect(this.page.locator(".no-code label").first()).toBeVisible();
     }
 
     /**

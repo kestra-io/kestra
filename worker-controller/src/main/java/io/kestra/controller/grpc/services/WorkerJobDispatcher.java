@@ -671,6 +671,7 @@ public class WorkerJobDispatcher {
         groupStates.clear();
         workerIdsByGroup.clear();
         activeStreams.clear();
+        killedExecutionIds.invalidateAll();
     }
 
     /**

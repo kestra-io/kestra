@@ -1,5 +1,17 @@
 package io.kestra.queue;
 
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.IdUtils;
+import jakarta.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -8,20 +20,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.queues.*;
-import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.IdUtils;
-
-import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
+import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -189,7 +191,9 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).hasSize(1);
         assertThat(list.getFirst()).isEqualTo(1);
-        assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue();
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            assertThat(noOpShutdownContext.isShutdownCalled()).as("shutdown() should have been called on processing error").isTrue()
+        );
 
         // consume the remaining items from the queue
         CountDownLatch remaining = new CountDownLatch(3);

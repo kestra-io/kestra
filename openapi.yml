@@ -10592,6 +10592,10 @@ components:
       - CHILD_FILTER
       - WORKER_ID
       - EXISTING_ONLY
+      - USER_ID
+      - ACTION
+      - RESOURCES
+      - DETAILS
       - MIN_LEVEL
       - PATH
       - PARENT_PATH

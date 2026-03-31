@@ -5,6 +5,7 @@
             :shouldFocus="false"
             :navbar="false"
             input
+            lang="yaml-pebble"
             class="expression"
         />
 
@@ -53,6 +54,7 @@
     import VarValue from "../../../../VarValue.vue";
 
     import {Execution} from "../../../../../../stores/executions";
+    import {useFlowStore} from "../../../../../../stores/flow";
 
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
@@ -61,11 +63,35 @@
     import {apiUrl} from "override/utils/route";
     import {useAxios} from "../../../../../../utils/axios";
 
+    const flowStore = useFlowStore();
+
     const props = defineProps<{
         property?: "outputs" | "trigger";
         execution: Execution;
         path?: string;
     }>();
+
+    // Fetch the flow source and populate flowStore.flowYaml so pebble
+    // autocompletion works identically to the flow editor.
+    watch(
+        () => [props.execution?.namespace, props.execution?.flowId, props.execution?.flowRevision],
+        async ([namespace, flowId, revision]) => {
+            if (namespace && flowId && !flowStore.flowYaml) {
+                try {
+                    const flow = await flowStore.loadFlow({namespace: namespace as string, id: flowId as string, revision: revision as string | undefined, store: false});
+                    if (flow?.source) {
+                        flowStore.flowYaml = flow.source;
+                        flowStore.flowYamlOrigin = flow.source;
+                    }
+                } catch {
+                    // Autocompletion is best-effort; don't block the UI
+                }
+            }
+        },
+        {immediate: true},
+    );
+
+    const axios = useAxios();
 
     const result = ref<{ value: string; type: string } | undefined>(undefined);
     const error = ref<string | undefined>(undefined);
@@ -89,7 +115,6 @@
         {immediate: true},
     );
 
-    const axios = useAxios();
     const onRender = () => {
         if (!props.execution) return;
 

@@ -7581,10 +7581,6 @@ paths:
       responses:
         "200":
           description: unpauseBackfill 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TriggerState"
   /api/v1/{tenant}/triggers/backfill/unpause/by-query:
     post:
       tags:
@@ -7841,7 +7837,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedResults_TriggerController.Triggers_"
+                $ref: "#/components/schemas/PagedResults_ApiTriggerAndState_"
   /api/v1/{tenant}/triggers/set-disabled:
     put:
       tags:
@@ -8079,7 +8075,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedResults_TriggerState_"
+                $ref: "#/components/schemas/PagedResults_ApiTriggerState_"
   /api/v1/{tenant}/triggers/{namespace}/{flowId}/{triggerId}:
     delete:
       tags:
@@ -8429,6 +8425,52 @@ components:
       properties:
         key:
           type: string
+    ApiTriggerAndState:
+      type: object
+      properties:
+        trigger:
+          $ref: "#/components/schemas/AbstractTrigger"
+        state:
+          $ref: "#/components/schemas/ApiTriggerState"
+      description: API DTO combining a trigger definition with its runtime state.
+    ApiTriggerState:
+      type: object
+      properties:
+        namespace:
+          type: string
+        flowId:
+          type: string
+        triggerId:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        evaluatedAt:
+          type: string
+          format: date-time
+        nextEvaluationDate:
+          type: string
+          format: date-time
+        backfill:
+          $ref: "#/components/schemas/Backfill"
+        stopAfter:
+          type: array
+          items:
+            $ref: "#/components/schemas/State.Type"
+        disabled:
+          type: boolean
+        locked:
+          type: boolean
+        workerId:
+          type: string
+        lastTriggeredDate:
+          type: string
+          format: date-time
+      description: |-
+        API DTO for exposing trigger state to the UI.
+
+
+        Excludes internal scheduler fields (`tenantId`, `vnode`, `lastEventId`, `type`).
     Asset:
       required:
       - id
@@ -8894,12 +8936,6 @@ components:
       enum:
       - OSS
       - EE
-    EventId:
-      type: object
-      properties:
-        value:
-          type: string
-          format: uuid
     Event_ExecutionStatusEvent_:
       type: object
       properties:
@@ -10057,6 +10093,32 @@ components:
           type: string
         required:
           type: boolean
+    PagedResults_ApiTriggerAndState_:
+      required:
+      - results
+      - total
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiTriggerAndState"
+        total:
+          type: integer
+          format: int64
+    PagedResults_ApiTriggerState_:
+      required:
+      - results
+      - total
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiTriggerState"
+        total:
+          type: integer
+          format: int64
     PagedResults_BlueprintController.ApiBlueprintItem_:
       required:
       - results
@@ -10199,32 +10261,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SearchResult_Flow_"
-        total:
-          type: integer
-          format: int64
-    PagedResults_TriggerController.Triggers_:
-      required:
-      - results
-      - total
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/TriggerController.Triggers"
-        total:
-          type: integer
-          format: int64
-    PagedResults_TriggerState_:
-      required:
-      - results
-      - total
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/TriggerState"
         total:
           type: integer
           format: int64
@@ -11082,61 +11118,6 @@ components:
             $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         disabled:
           type: boolean
-    TriggerController.Triggers:
-      type: object
-      properties:
-        abstractTrigger:
-          $ref: "#/components/schemas/AbstractTrigger"
-        triggerContext:
-          $ref: "#/components/schemas/TriggerState"
-    TriggerState:
-      type: object
-      properties:
-        nextEvaluationEpoch:
-          type: integer
-          format: int64
-        tenantId:
-          type: string
-        namespace:
-          type: string
-        flowId:
-          type: string
-        triggerId:
-          type: string
-        updatedAt:
-          type: string
-          format: date-time
-        evaluatedAt:
-          type: string
-          format: date-time
-        nextEvaluationDate:
-          type: string
-          format: date-time
-        backfill:
-          $ref: "#/components/schemas/Backfill"
-        stopAfter:
-          type: array
-          items:
-            $ref: "#/components/schemas/State.Type"
-        disabled:
-          type: boolean
-        vnode:
-          type: integer
-          format: int32
-        locked:
-          type: boolean
-        workerId:
-          type: string
-        type:
-          $ref: "#/components/schemas/TriggerType"
-        lastEventId:
-          $ref: "#/components/schemas/EventId"
-    TriggerType:
-      type: string
-      enum:
-      - SCHEDULE
-      - POLLING
-      - REALTIME
     Type:
       type: string
       enum:

@@ -10,6 +10,7 @@ import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.runners.pebble.PebbleContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.IdUtils;
@@ -37,6 +38,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final FlowAiCopilot<Flow> flowAiCopilot;
     private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
     private final NamespaceContextTool namespaceContextTool;
+    private final PebbleContext pebbleContext;
     private final String instanceUid;
     private final String aiProvider;
     private final String displayName;
@@ -97,7 +99,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final String aiProvider,
         final String displayName,
         final List<ChatModelListener> listeners,
-        final T aiConfiguration) {
+        final T aiConfiguration,
+        final PebbleContext pebbleContext) {
         this.pluginRegistry = pluginRegistry;
         this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.instanceUid = instanceService.fetch();
@@ -107,6 +110,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
         this.namespaceContextTool = namespaceContextTool;
+        this.pebbleContext = pebbleContext;
 
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
         this.dashboardAiCopilot = new DashboardAiCopilot<>(Dashboard.class);
@@ -128,7 +132,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
             allPluginsMetadata(),
             flowGenerationPrompt,
-            tenantId
+            tenantId,
+            pebbleContext.filtersString(),
+            pebbleContext.functionsString()
         );
 
         return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
@@ -148,7 +154,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
             (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
             allPluginsMetadata(),
-            dashboardGenerationPrompt
+            dashboardGenerationPrompt,
+            pebbleContext.filtersString(),
+            pebbleContext.functionsString()
         );
 
         return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
@@ -156,6 +164,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     public String displayName() {
         return displayName;
+    }
+
+    public PebbleContext pebbleContext() {
+        return pebbleContext;
     }
 
     public PluginFinder pluginFinderForConversation(String conversationId) {

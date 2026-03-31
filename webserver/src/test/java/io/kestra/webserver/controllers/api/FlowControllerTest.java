@@ -66,6 +66,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.nullValue;
@@ -1504,6 +1505,94 @@ class FlowControllerTest {
         assertThat(revisions.get(0).getRevision()).isEqualTo(1);
         assertThat(revisions.get(1).getRevision()).isEqualTo(2);
         assertThat(revisions.get(2).getRevision()).isEqualTo(4);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void expressions() {
+        // Given
+        String flowYaml = """
+            id: test-expressions
+            namespace: io.kestra.tests
+            inputs:
+              - id: myInput
+                type: STRING
+            variables:
+              myVar: hello
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.core.debug.Return
+                format: first
+              - id: t2
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ outputs.t1.value }}"
+            """;
+
+        // When
+        @SuppressWarnings("unchecked")
+        Map<String, List<String>> result = (Map<String, List<String>>) (Map<?, ?>) client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH + "/expressions", flowYaml)
+                .contentType("application/x-yaml"),
+            Argument.mapOf(String.class, List.class)
+        );
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).containsKeys(
+            "Task Outputs", "Execution Context", "Inputs", "Variables",
+            "Filters", "Other"
+        );
+        assertThat(result.get("Inputs")).contains("inputs.myInput");
+        assertThat(result.get("Variables")).contains("vars.myVar");
+        assertThat(result.get("Execution Context")).contains("flow.id", "execution.id");
+        assertThat(result.get("Task Outputs")).anyMatch(e -> e.toString().startsWith("outputs.t1."));
+        assertThat(result.get("Filters")).isNotEmpty();
+        assertThat(result.get("Other")).isNotEmpty();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void expressionsWithTaskIdFilter() {
+        // Given
+        String flowYaml = """
+            id: test-expressions-filter
+            namespace: io.kestra.tests
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.core.debug.Return
+                format: first
+              - id: t2
+                type: io.kestra.plugin.core.debug.Return
+                format: second
+            """;
+
+        // When
+        @SuppressWarnings("unchecked")
+        Map<String, List<String>> result = (Map<String, List<String>>) (Map<?, ?>) client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH + "/expressions?taskId=t2", flowYaml)
+                .contentType("application/x-yaml"),
+            Argument.mapOf(String.class, List.class)
+        );
+
+        // Then — only t1 outputs should be present, not t2
+        List<?> outputs = result.get("Task Outputs");
+        assertThat(outputs).anyMatch(e -> e.toString().startsWith("outputs.t1."));
+        assertThat(outputs).noneMatch(e -> e.toString().startsWith("outputs.t2."));
+    }
+
+    @Test
+    void expressionsWithInvalidYaml() {
+        // Given — invalid YAML that cannot be parsed as a flow
+        String invalidYaml = "this is not valid flow yaml: [[[";
+
+        // When / Then — should return a client error
+        assertThatThrownBy(() ->
+            client.toBlocking().retrieve(
+                HttpRequest.POST(FLOW_PATH + "/expressions", invalidYaml)
+                    .contentType("application/x-yaml"),
+                Argument.mapOf(String.class, List.class)
+            )
+        ).isInstanceOf(HttpClientResponseException.class);
     }
 
     @Test

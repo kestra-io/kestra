@@ -7,6 +7,8 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.runners.pebble.PebbleContext;
+import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
@@ -31,6 +33,7 @@ public class AiServiceManager {
     private String defaultProviderId;
     private boolean hasConfiguredProvider = false;
     protected final NamespaceContextTool namespaceContextTool;
+    protected final PebbleContext pebbleContext;
 
     public AiServiceManager(
         @Client("api") HttpClient apiHttpClient,
@@ -43,9 +46,11 @@ public class AiServiceManager {
         InstanceService instanceService,
         PosthogService posthogService,
         List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
-        NamespaceContextTool namespaceContextTool) {
+        NamespaceContextTool namespaceContextTool,
+        PebbleExpressionService pebbleExpressionService) {
         this.providersConfiguration = providersConfiguration;
         this.namespaceContextTool = namespaceContextTool;
+        this.pebbleContext = PebbleContext.of(pebbleExpressionService.filters(), pebbleExpressionService.functions());
 
         List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
@@ -78,7 +83,8 @@ public class AiServiceManager {
                     versionProvider,
                     instanceService,
                     posthogService,
-                    listeners
+                    listeners,
+                    pebbleContext
                 );
                 if (aiService == null) {
                     log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
@@ -107,7 +113,8 @@ public class AiServiceManager {
         VersionProvider versionProvider,
         InstanceService instanceService,
         PosthogService posthogService,
-        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners) {
+        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        PebbleContext pebbleContext) {
         String type = provider.type();
         Map<String, Object> configMap = provider.configuration();
         if (configMap == null) {
@@ -128,7 +135,7 @@ public class AiServiceManager {
 
             GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
             return new GeminiAiService(
-                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig, pebbleContext
             );
         } catch (Exception e) {
             log.error("Failed to create AI service for provider {}: {}", provider.id(), e.getMessage());

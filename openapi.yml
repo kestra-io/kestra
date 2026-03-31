@@ -5780,6 +5780,68 @@ paths:
             application/json:
               schema:
                 type: boolean
+  /api/v1/{tenant}/namespaces/{namespace}/secrets:
+    get:
+      tags:
+      - Namespaces
+      summary: Get secrets for a namespace
+      operationId: listNamespaceSecrets
+      parameters:
+      - name: namespace
+        in: path
+        description: The namespace id
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: The current page
+        required: true
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: size
+        in: query
+        description: The current page size
+        required: true
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: sort
+        in: query
+        description: The sort of current page
+        explode: false
+        schema:
+          type: array
+          nullable: true
+          items:
+            type: string
+      - name: filters
+        in: query
+        description: Filters
+        required: true
+        explode: false
+        schema:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryFilter"
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: listNamespaceSecrets 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiSecretListResponse_ApiSecretMeta_"
+      deprecated: true
   /api/v1/{tenant}/outputs/{executionId}:
     get:
       tags:

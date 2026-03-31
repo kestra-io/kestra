@@ -4,6 +4,8 @@ ARG KESTRA_PLUGINS=""
 ARG APT_PACKAGES=""
 ARG PYTHON_LIBRARIES=""
 
+ENV PATH="/app/.venv/bin:$PATH"
+
 WORKDIR /app
 
 RUN groupadd kestra && \
@@ -19,7 +21,7 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
     curl -LsSf https://astral.sh/uv/0.6.17/install.sh | sh && mv /root/.local/bin/uv /bin && mv /root/.local/bin/uvx /bin && \
     if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi && \
-    if [ -n "${PYTHON_LIBRARIES}" ]; then uv pip install --system ${PYTHON_LIBRARIES}; fi && \
+    if [ -n "${PYTHON_LIBRARIES}" ]; then uv venv /app/.venv && uv pip install --python /app/.venv/bin/python ${PYTHON_LIBRARIES}; fi && \
     chown -R kestra:kestra /app
 
 USER kestra

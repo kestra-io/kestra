@@ -40,7 +40,7 @@ plugins {
     id "org.owasp.dependencycheck" version "12.2.0" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.0.3"
+    id "io.kestra.gradle.spotless-conventions" version "1.0.4"
 }
 
 idea {

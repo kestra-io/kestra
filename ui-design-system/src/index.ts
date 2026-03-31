@@ -84,6 +84,7 @@ export {designSystemLocale, setDesignSystemLocale} from "./i18n"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
+export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
 
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {

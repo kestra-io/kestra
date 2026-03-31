@@ -15,7 +15,7 @@
                 viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
-            <ElLoading v-else-if="loading" />
+            <div v-else-if="loading" v-ks-loading="true" style="height:100%;position:relative" />
             <ks-alert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}
             </ks-alert>
@@ -23,7 +23,6 @@
     </ks-card>
 </template>
 <script>
-    import {ElLoading} from "element-plus"
     import throttle from "lodash/throttle";
     import {mapStores} from "pinia";
     import {Utils, State} from "@kestra-io/ui-libs";
@@ -33,7 +32,6 @@
     export default {
         emits: ["follow"],
         components: {
-            ElLoading,
             LowCodeEditor
         },
         computed: {

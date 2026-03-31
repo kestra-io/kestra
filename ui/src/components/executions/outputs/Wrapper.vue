@@ -1,9 +1,10 @@
 <template>
     <div class="outputs">
-        <ks-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
-            <ks-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
+        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
+            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
                 <div class="d-flex flex-column overflow-auto left">
-                    <ks-cascader-panel
+                    <ElCascaderPanel
+                        v-if="tasksWithOutputs"
                         ref="cascader"
                         v-model="selected"
                         :props="cascaderProps"
@@ -51,10 +52,10 @@
                                 </code>
                             </div>
                         </template>
-                    </ks-cascader-panel>
+                    </ElCascaderPanel>
                 </div>
-            </ks-splitter-panel>
-            <ks-splitter-panel>
+            </el-splitter-panel>
+            <el-splitter-panel>
                 <div class="right wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
@@ -66,11 +67,11 @@
                             </code>
                         </div>
 
-                        <ks-collapse
+                        <el-collapse
                             v-model="debugCollapse"
                             class="mb-3 debug bordered"
                         >
-                            <ks-collapse-item name="debug">
+                            <el-collapse-item name="debug">
                                 <template #title>
                                     <span>{{ $t("eval.title") }}</span>
                                 </template>
@@ -88,17 +89,17 @@
                                         class="w-100"
                                     />
 
-                                    <ks-button
+                                    <el-button
                                         type="primary"
                                         @click="
                                             onDebugExpression(
                                                 editorValue.length > 0 ? editorValue : computedDebugValue,
                                             )
                                         "
-                                        class="mt-3 button-wrap"
+                                        class="mt-3 el-button--wrap"
                                     >
                                         {{ $t("eval.title") }}
-                                    </ks-button>
+                                    </el-button>
 
                                     <Editor
                                         v-if="debugExpression"
@@ -113,10 +114,10 @@
                                         class="mt-3"
                                     />
                                 </div>
-                            </ks-collapse-item>
-                        </ks-collapse>
+                            </el-collapse-item>
+                        </el-collapse>
 
-                        <ks-alert
+                        <el-alert
                             v-if="debugError"
                             type="error"
                             :closable="false"
@@ -135,7 +136,7 @@
                             <pre class="mb-0" style="overflow: scroll">{{
                                 debugStackTrace
                             }}</pre>
-                        </ks-alert>
+                        </el-alert>
 
                         <VarValue
                             v-if="displayVarValue()"
@@ -148,8 +149,8 @@
                         />
                     </div>
                 </div>
-            </ks-splitter-panel>
-        </ks-splitter>
+            </el-splitter-panel>
+        </el-splitter>
     </div>
 </template>
 
@@ -624,10 +625,10 @@
         height: 100%;
     }
 
-    & .kel-cascader-node {
+    & .el-cascader-node {
         height: 36px;
         line-height: 36px;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--el-font-size-small);
         color: var(--ks-content-primary);
 
         &[aria-haspopup="false"] {
@@ -669,8 +670,8 @@
 
         .task .wrapper {
             align-self: center;
-            height: var(--kel-font-size-small);
-            width: var(--kel-font-size-small);
+            height: var(--el-font-size-small);
+            width: var(--el-font-size-small);
         }
 
         code span.regular {
@@ -695,7 +696,7 @@
         max-height: none !important;
     }
 
-    .kel-collapse-item__content {
+    .el-collapse-item__content {
         word-wrap: break-word;
         word-break: break-word;
     }

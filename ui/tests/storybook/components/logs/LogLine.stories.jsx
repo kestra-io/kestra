@@ -7,7 +7,6 @@ import {
     waitFor
 } from "storybook/test";
 import LogLine from "../../../../src/components/logs/LogLine.vue";
-import {ElCard} from "element-plus";
 
 const ALLOWED_LEVELS = [
     "TRACE",

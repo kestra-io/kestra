@@ -67,7 +67,7 @@ const GraphWrapper = defineComponent({
             <div style="display:flex; gap:12px; height:680px;">
                 <div style="flex:1; position:relative; min-width:480px;">
                     <div
-                        v-loading={isRendering.value}
+                        v-ks-loading={isRendering.value}
                         ref={container}
                         style="height:100%; overflow:hidden; background:transparent;"
                     />

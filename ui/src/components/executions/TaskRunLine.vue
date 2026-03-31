@@ -210,7 +210,6 @@
             SubFlowLink,
             TaskEdit,
             ChangeStatus,
-            Status,
             Metrics,
             Restart,
             Duration,

@@ -11,8 +11,7 @@
 <script setup lang="ts">
     import {computed, ref, h} from "vue";
 
-    import {ElCheckbox} from "element-plus";
-    import {KsMessageBox} from "@kestra-io/ui-design-system";
+    import {KsMessageBox, KsCheckbox} from "@kestra-io/ui-design-system";
 
     import {
         Execution,
@@ -94,19 +93,19 @@
             message: () =>
                 h("div", null, [
                     h("p", {class: "pb-3"}, [h("span", {innerHTML: message})]),
-                    h(ElCheckbox, {
+                    h(KsCheckbox, {
                         modelValue: deleteLogs.value,
                         label: t("execution_deletion.logs"),
                         "onUpdate:modelValue": (val) =>
                             (deleteLogs.value = Boolean(val)),
                     }),
-                    h(ElCheckbox, {
+                    h(KsCheckbox, {
                         modelValue: deleteMetrics.value,
                         label: t("execution_deletion.metrics"),
                         "onUpdate:modelValue": (val) =>
                             (deleteMetrics.value = Boolean(val)),
                     }),
-                    h(ElCheckbox, {
+                    h(KsCheckbox, {
                         modelValue: deleteStorage.value,
                         label: t("execution_deletion.storage"),
                         "onUpdate:modelValue": (val) =>

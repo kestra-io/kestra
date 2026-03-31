@@ -1,5 +1,4 @@
-import {ElTable, ElTableColumn} from "element-plus"
-import {KsMessageBox, KsNotification} from "@kestra-io/ui-design-system"
+import {KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/ui-design-system"
 import {App, h} from "vue"
 import {useI18n} from "vue-i18n"
 
@@ -10,7 +9,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
     _wrap: function(message:string) {
         if(Array.isArray(message) && message.length > 0){
             return h(
-                ElTable,
+                KsTable,
                 {
                     stripe: true,
                     tableLayout: "auto",
@@ -20,7 +19,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     size: "small",
                 },
                 [
-                    h(ElTableColumn, {label: "Message", formatter: (row) => { return h("span",{innerHTML:row.message})}})
+                    h(KsTableColumn, {label: "Message", formatter: (row) => { return h("span",{innerHTML:row.message})}})
                 ]
             )
         } else {

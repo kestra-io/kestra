@@ -135,7 +135,7 @@
 
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
-    import {ElDatePicker} from "element-plus";
+    import {KsDatePicker} from "@kestra-io/ui-design-system";
     import moment, {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
     import Utils from "../../utils/utils";
@@ -454,7 +454,7 @@
 
     const selectedDate = ref<Date>(nowMoment.toDate());
     const datePickerWrapper = ref<HTMLElement>();
-    const datePicker = ref<typeof ElDatePicker>();
+    const datePicker = ref<typeof KsDatePicker>();
     const datePickerShown = ref(false);
     let datePickerWidget: editor.IContentWidget;
 

@@ -250,7 +250,7 @@
 
 <script setup lang="ts">
     import {KsMessage} from "@kestra-io/ui-design-system";
-    import type {FormItemRule} from "element-plus";
+    import type {FormItemRule} from "@kestra-io/ui-design-system";
     import ValidationError from "../flows/ValidationError.vue";
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue";
     import {Execution, useExecutionsStore} from "../../stores/executions";

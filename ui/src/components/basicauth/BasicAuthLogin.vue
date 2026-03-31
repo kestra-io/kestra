@@ -78,7 +78,7 @@
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {KsMessage} from "@kestra-io/ui-design-system"
-    import type {FormInstance} from "element-plus"
+    import type {FormInstance} from "@kestra-io/ui-design-system"
     import axios from "axios"
     import MailChecker from "mailchecker"
 

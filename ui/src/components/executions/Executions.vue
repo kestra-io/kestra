@@ -373,8 +373,7 @@
     import {useRoute, useRouter} from "vue-router";
     import {ref, computed, watch, h, useTemplateRef} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
-    import {KsMessageBox} from "@kestra-io/ui-design-system";
+    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/ui-design-system";
 
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -893,35 +892,35 @@
                 "p",
                 {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})}
             ),
-            h(ElFormItem, {
+            h(KsFormItem, {
                 class: "mt-3",
                 label: t("execution-include-non-terminated")
             }, [
-                h(ElSwitch, {
+                h(KsSwitch, {
                     modelValue: includeNonTerminated.value,
                     "onUpdate:modelValue": (val: any) => {
                         includeNonTerminated.value = Boolean(val);
                     },
                 }),
             ]),
-            includeNonTerminated.value ? h(ElAlert, {
+            includeNonTerminated.value ? h(KsAlert, {
                 title: t("execution-warn-title"),
                 description: t("execution-warn-deleting-still-running"),
                 type: "warning",
                 showIcon: true,
                 closable: false,
             }) : null,
-            h(ElCheckbox, {
+            h(KsCheckbox, {
                 modelValue: deleteLogs.value,
                 label: t("execution_deletion.logs"),
                 "onUpdate:modelValue": (val: any) => (deleteLogs.value = Boolean(val)),
             }),
-            h(ElCheckbox, {
+            h(KsCheckbox, {
                 modelValue: deleteMetrics.value,
                 label: t("execution_deletion.metrics"),
                 "onUpdate:modelValue": (val: any) => (deleteMetrics.value = Boolean(val)),
             }),
-            h(ElCheckbox, {
+            h(KsCheckbox, {
                 modelValue: deleteStorage.value,
                 label: t("execution_deletion.storage"),
                 "onUpdate:modelValue": (val: any) => (deleteStorage.value = Boolean(val)),

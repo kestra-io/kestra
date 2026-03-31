@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
     import {computed, h, ref} from "vue";
-    import {ElTag} from "element-plus";
+    import {KsTag} from "@kestra-io/ui-design-system";
     import {useValues} from "../../composables/useValues";
     import {Close} from "../../utils/icons";
     import {AppliedFilter, FilterKeyConfig, Comparators} from "../../utils/filterTypes";
@@ -67,7 +67,7 @@
         case Array.isArray(value):
             return value.length === 1
                 ? value[0]
-                : [value[0], h(ElTag, {size: "small"}, () => `+${value.length - 1}`)];
+                : [value[0], h(KsTag, {size: "small"}, () => `+${value.length - 1}`)];
         case value instanceof Date:
             return value.toLocaleDateString();
         case value && typeof value === "object" && "startDate" in value:

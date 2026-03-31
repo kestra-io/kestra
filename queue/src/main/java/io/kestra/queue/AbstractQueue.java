@@ -13,6 +13,7 @@ import com.google.common.base.CaseFormat;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.GenericQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.utils.ExecutorsUtils;
 
@@ -27,6 +28,7 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
     protected final ExecutorService asyncPoolExecutor;
     protected final Counter emitCounter;
     private final List<Consumer<T>> listeners = new CopyOnWriteArrayList<>();
+    private final List<QueueSubscriber<?>> subscribers = new CopyOnWriteArrayList<>();
 
     AbstractQueue(Class<T> cls, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         this.cls = cls;
@@ -86,8 +88,31 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
         return listeners;
     }
 
+    /**
+     * Tracks a subscriber so it can be closed when the queue is closed.
+     * Subclasses should call this method when creating subscribers.
+     *
+     * @param subscriber the subscriber to track
+     * @return the subscriber, for fluent chaining
+     */
+    protected <S extends QueueSubscriber<T>> S trackSubscriber(S subscriber) {
+        subscribers.add(subscriber);
+        return subscriber;
+    }
+
     @Override
     public void close() {
+        for (QueueSubscriber<?> subscriber : subscribers) {
+            if (subscriber instanceof AbstractSubscriber<?> abs && abs.isActive()) {
+                LOG.warn("{} closing subscriber that was not closed by its caller", queueName());
+                try {
+                    subscriber.close();
+                } catch (Exception e) {
+                    LOG.error("{} error closing subscriber", queueName(), e);
+                }
+            }
+        }
+        subscribers.clear();
         this.asyncPoolExecutor.shutdown();
     }
 }

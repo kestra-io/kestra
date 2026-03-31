@@ -14,7 +14,7 @@
 .toggle{
     margin-right: 1rem;
     &.is-active{
-        --el-switch-border-color: #FFFFFF;
+        --kel-switch-border-color: #FFFFFF;
         ::v-deep(.el-switch__label){
             color: white;
         }

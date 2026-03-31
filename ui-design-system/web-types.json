@@ -72,8 +72,15 @@
                 {"name": "KsTimelineItem", "source": {"symbol": "KsTimelineItem"}},
                 {"name": "KsTimePicker", "source": {"symbol": "KsTimePicker"}},
                 {"name": "KsTooltip", "source": {"symbol": "KsTooltip"}},
+                {"name": "KsTopNavBar", "source": {"symbol": "KsTopNavBar"}},
                 {"name": "KsTree", "source": {"symbol": "KsTree"}},
-                {"name": "KsUpload", "source": {"symbol": "KsUpload"}}
+                {"name": "KsUpload", "source": {"symbol": "KsUpload"}},
+                {"name": "KsBulkSelect", "source": {"symbol": "KsBulkSelect"}},
+                {"name": "KsDataTable", "source": {"symbol": "KsDataTable"}},
+                {"name": "KsDurationPicker", "source": {"symbol": "KsDurationPicker"}},
+                {"name": "KsExecutionStatus", "source": {"symbol": "KsExecutionStatus"}},
+                {"name": "KsIconButton", "source": {"symbol": "KsIconButton"}},
+                {"name": "KsId", "source": {"symbol": "KsId"}}
             ]
         }
     }

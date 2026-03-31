@@ -79,13 +79,13 @@
 
 <style scoped lang="scss">
     .el-collapse {
-        --el-collapse-header-font-size: 14px;
+        --kel-collapse-header-font-size: 14px;
         --el-collapse-header-height: auto;
         border-top: none;
         border-bottom: none;
 
         > * {
-            font-size: var(--el-collapse-header-font-size);
+            font-size: var(--kel-collapse-header-font-size);
         }
 
         :deep(> .el-collapse-item) {

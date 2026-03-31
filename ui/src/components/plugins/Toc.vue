@@ -245,7 +245,7 @@
         h6,
         a {
             word-break: break-all;
-            color: var(--el-collapse-header-text-color);
+            color: var(--kel-collapse-header-text-color);
         }
 
         .toc-h3 {

@@ -21,7 +21,7 @@
 
 <style scoped lang="scss">
 :deep(.kel-empty__description) {
-    font-size: var(--el-font-size-small);
+    font-size: var(--kel-font-size-small);
     color: var(--ks-content-secondary);
 }
 </style>

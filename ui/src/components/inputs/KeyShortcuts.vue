@@ -104,7 +104,7 @@
 .kel-tag {
     background-color: var(--ks-tag-background);
     color: var(--ks-tag-content);
-    font-size: var(--el-tag-font-size);
+    font-size: var(--kel-tag-font-size);
     text-transform: capitalize;
     font-weight: 500;
     border: 1px solid var(--ks-border-primary);

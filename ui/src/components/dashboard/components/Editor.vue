@@ -287,7 +287,7 @@
         background-color: transparent;
 
         .kel-empty__description {
-            font-size: var(--el-font-size-small);
+            font-size: var(--kel-font-size-small);
         }
     }
 

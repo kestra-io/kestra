@@ -2,7 +2,7 @@
     <div>
         <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
-            <ElDatePicker
+            <ks-date-picker
                 ref="datePicker"
                 type="datetime"
                 v-model="selectedDate"

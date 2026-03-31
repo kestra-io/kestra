@@ -83,9 +83,9 @@
             & span {
                 display: flex;
                 justify-content: space-between;
-                font-size: var(--el-alert-title-font-size);
+                font-size: var(--kel-alert-title-font-size);
                 line-height: 24px;
-                color: var(--el-color-error);
+                color: var(--kel-color-error);
 
             }
         }

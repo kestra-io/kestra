@@ -1,7 +1,7 @@
 <template>
     <section id="welcome-success" class="container">
-        <el-row justify="center">
-            <el-col :xs="24" :sm="22" :md="18" :lg="16" :xl="14">
+        <ks-row justify="center">
+            <ks-col :xs="24" :sm="22" :md="18" :lg="16" :xl="14">
                 <div class="welcome-success-hero">
                     <div class="welcome-success-icon">
                         <svg viewBox="0 0 109 109" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -96,8 +96,8 @@
                         {{ $t("welcome_copilot.success_page.restart") }}
                     </router-link>
                 </div>
-            </el-col>
-        </el-row>
+            </ks-col>
+        </ks-row>
     </section>
 </template>
 

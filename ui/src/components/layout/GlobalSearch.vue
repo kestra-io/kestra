@@ -348,7 +348,7 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: var(--el-overlay-color-lighter);
+        background: var(--kel-overlay-color-lighter);
         z-index: 10000;
         display: flex;
         justify-content: center;
@@ -365,7 +365,7 @@
 
             background: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);
-            border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
+            border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
             box-shadow:
                 0 8px 24px rgba(0,0,0,0.35);
             overflow: hidden;
@@ -380,7 +380,7 @@
                 border: 0;
                 box-shadow: none;
                 background: var(--ks-background-card);
-                border-radius: var(--el-input-border-radius, var(--el-border-radius-base)) var(--el-input-border-radius, var(--el-border-radius-base)) 0 0;
+                border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base)) var(--kel-input-border-radius, var(--kel-border-radius-base)) 0 0;
 
                 input {
                     color: var(--ks-content-primary);

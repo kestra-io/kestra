@@ -96,7 +96,7 @@
                     ? {data: [] as number[], label: "", backgroundColor: ""}
                     : {
                         label: `${t(aggregationLabel)} ${t("of")} ${route.query.metric}`,
-                        backgroundColor: cssVariable("--el-color-success"),
+                        backgroundColor: cssVariable("--kel-color-success"),
                         borderRadius: 4,
                         data: aggregations.map(
                             (e: MetricAggregation) => (e.value ? e.value : 0),

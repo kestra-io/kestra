@@ -109,7 +109,7 @@
                 />
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
-            <el-switch
+            <ks-switch
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"

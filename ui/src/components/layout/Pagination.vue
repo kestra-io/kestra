@@ -153,7 +153,7 @@
         .total {
             padding: 0 4px;
             line-height: 1.85;
-            font-size: var(--el-font-size-extra-small);
+            font-size: var(--kel-font-size-extra-small);
             color: var(--ks-content-secondary);
             white-space: nowrap;
         }

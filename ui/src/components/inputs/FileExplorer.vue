@@ -383,7 +383,7 @@
     import {
         ElTreeNode,
         getFileNameWithExtension,
-        isDirectory, 
+        isDirectory,
         TreeNode,
         TreeNodeFile,
         useFileExplorerStore
@@ -539,7 +539,7 @@
             if (selectedNodes.value.length == 1){
                 tree.value?.setCurrentKey(selectedNodes.value[0]);
             }
-            
+
             syncTreeCurrentKey();
             return;
         }
@@ -581,7 +581,7 @@
         }
         const isCtrl = event.ctrlKey || event.metaKey;
         const isShift = event.shiftKey;
-        
+
         if (selectionMode.value && !isShift && !isCtrl) {
             selectedNodes.value = [node.data.id];
 
@@ -913,7 +913,7 @@
             path: filesStore.getPath(node.id) ?? "",
             namespace: namespaceId.value,
         });
-        if(!content?.length) 
+        if(!content?.length)
             throw new Error("File is empty or undefined");
         const blob = new Blob([content], {type: "text/plain"});
         Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
@@ -947,7 +947,7 @@
 
     :deep(.revision-history-dialog-body) {
         // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--el-dialog-margin-top) * 2) - 78px);
+        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
     }
 
     .filter{
@@ -996,7 +996,7 @@
     }
 
     .filename {
-        font-size: var(--el-font-size-small);
+        font-size: var(--kel-font-size-small);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1011,7 +1011,7 @@
         & li {
             height: 30px;
             padding: 16px;
-            font-size: var(--el-font-size-small);
+            font-size: var(--kel-font-size-small);
             color: var(--ks-content-primary);
 
             &:hover {
@@ -1030,7 +1030,7 @@
         }
 
         .node {
-            --el-tree-node-hover-bg-color: transparent;
+            --kel-tree-node-hover-bg-color: transparent;
         }
 
         .kel-tree-node__content {
@@ -1084,7 +1084,7 @@
     }
 
     .item-line{
-        display: flex;  
+        display: flex;
         align-items: center;
     }
 }

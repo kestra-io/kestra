@@ -201,7 +201,7 @@ section#filtering {
         background-color: var(--ks-tag-background);
 
         &:hover {
-            --el-table-row-hover-bg-color: var(--ks-tag-background-hover);
+            --kel-table-row-hover-bg-color: var(--ks-tag-background-hover);
         }
     }
 }

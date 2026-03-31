@@ -627,7 +627,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacer, 1rem);
-  border-radius: var(--el-border-radius-base);
+  border-radius: var(--kel-border-radius-base);
   color: var(--ks-content-primary);
 }
 
@@ -652,7 +652,7 @@
     background: var(--ks-background-input);
     box-shadow: none;
     border: 1px solid var(--ks-border-primary);
-    border-radius: var(--el-border-radius-base);
+    border-radius: var(--kel-border-radius-base);
   }
   :deep(.kel-input__inner) {
     font-size: var(--font-size-sm);
@@ -694,7 +694,7 @@
 :deep(.doc-section) {
   background: var(--ks-background-panel);
   border: 1px solid var(--ks-border-primary);
-  border-radius: var(--el-border-radius-base);
+  border-radius: var(--kel-border-radius-base);
   padding: 1rem 1.25rem;
   box-shadow: none;
 }
@@ -703,7 +703,7 @@
 :deep(details.doc-collapsible) {
   background: var(--ks-background-card);
   border: 1px solid var(--ks-border-primary);
-  border-radius: var(--el-border-radius-base);
+  border-radius: var(--kel-border-radius-base);
   margin-top: 0.75rem;
   overflow-x: scroll;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -762,7 +762,7 @@
 :deep(.doc-card) {
   background: var(--ks-background-panel);
   border: 1px solid var(--ks-border-primary);
-  border-radius: var(--el-border-radius-base);
+  border-radius: var(--kel-border-radius-base);
   padding: 1rem;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   display: flex;
@@ -848,7 +848,7 @@
 :deep(.doc-example) {
   margin-top: 1rem;
   border: 1px solid var(--ks-border-primary);
-  border-radius: var(--el-border-radius-base);
+  border-radius: var(--kel-border-radius-base);
   background: var(--ks-background-card);
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
   overflow: hidden;
@@ -926,7 +926,7 @@
 :deep(.doc-card__item) {
   background: var(--ks-background-panel);
   border: 1px solid var(--ks-border-tertiary, rgba(148, 163, 184, 0.2));
-  border-radius: var(--el-border-radius-sm);
+  border-radius: var(--kel-border-radius-sm);
   padding: 0.5rem 0.75rem;
   display: flex;
   flex-direction: column;
@@ -948,7 +948,7 @@
 :deep(.doc-code-block) {
   background: var(--ks-background-panel);
   border: 1px solid var(--ks-border-primary);
-  border-radius: var(--el-border-radius-lg);
+  border-radius: var(--kel-border-radius-lg);
   overflow: hidden;
   position: relative;
   display: flex;
@@ -976,7 +976,7 @@
   border: 1px solid transparent;
   background: var(--ks-button-background-secondary, transparent);
   color: var(--ks-content-secondary);
-  border-radius: var(--el-border-radius-sm);
+  border-radius: var(--kel-border-radius-sm);
   padding: 0.25rem 0.5rem;
   font-size: var(--font-size-xs);
   text-transform: uppercase;
@@ -996,7 +996,7 @@
 }
 :deep(.doc-code-block pre) {
   margin: 0;
-  border-radius: 0 0 var(--el-border-radius-lg) var(--el-border-radius-lg);
+  border-radius: 0 0 var(--kel-border-radius-lg) var(--kel-border-radius-lg);
 }
 :deep(.doc-code-block code) {
   font-family: "Source Code Pro", monospace;

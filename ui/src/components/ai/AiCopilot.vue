@@ -36,10 +36,10 @@
             <div class="ai-onboarding-composer-wrap">
                 <div v-if="apiFeedback" class="ai-onboarding-info" :role="error ? 'alert' : 'status'">
                     <span class="ai-onboarding-info-content">
-                        <el-icon class="ai-onboarding-info-icon">
+                        <ks-icon class="ai-onboarding-info-icon">
                             <AlertBox v-if="error" />
                             <InformationOutline v-else />
-                        </el-icon>
+                        </ks-icon>
                         <span>{{ error ?? $t("welcome_copilot.remaining_quota", {count: remainingQuota}) }}</span>
                     </span>
                 </div>
@@ -61,7 +61,7 @@
                     </template>
 
                     <div v-else class="ai-input-container ai-input-container-onboarding">
-                        <el-input
+                        <ks-input
                             ref="promptInput"
                             v-if="configured || props.onboarding"
                             v-model="prompt"
@@ -79,77 +79,77 @@
                             <div class="mt-2" v-html="highlightedAiConfiguration" />
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
-                        <el-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
+                        <ks-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
                             {{ error }}
-                        </el-text>
+                        </ks-text>
                     </div>
 
                     <div v-if="configured" class="ai-footer ai-footer-onboarding">
-                        <el-select
+                        <ks-select
                             v-if="providers.length > 1"
                             class="ai-provider-select"
                             :modelValue="selectedProvider"
                             @update:model-value="onProviderChange"
                             :placeholder="$t('ai.flow.select_provider')"
                         >
-                            <el-option
+                            <ks-option
                                 v-for="p in providers"
                                 :key="p.id"
                                 :label="p.displayName"
                                 :value="p.id"
                             />
-                        </el-select>
+                        </ks-select>
 
                         <div class="footer-right">
                             <template v-if="waitingForReply">
                                 <template v-if="props.onboarding">
-                                    <el-button
+                                    <ks-button
                                         type="primary"
                                         class="send-btn send-btn-onboarding"
                                         disabled
                                     >
-                                        <el-icon class="is-loading">
+                                        <ks-icon class="is-loading">
                                             <Loading />
-                                        </el-icon>
-                                    </el-button>
+                                        </ks-icon>
+                                    </ks-button>
                                 </template>
                                 <template v-else>
                                     <span class="generating-label">
-                                        <el-icon class="is-loading"><Loading /></el-icon>
+                                        <ks-icon class="is-loading"><Loading /></ks-icon>
                                         {{ $t(`ai.flow.generating.${generationType}`) }}
                                     </span>
                                 </template>
                             </template>
                             <template v-else-if="isListening">
-                                <el-button
+                                <ks-button
                                     class="no-bg-btn"
                                     @click="cancelVoice"
                                 >
                                     <Close />
-                                </el-button>
-                                <el-button
+                                </ks-button>
+                                <ks-button
                                     class="no-bg-btn"
                                     @click="stopAndValidateVoice"
                                 >
                                     <Check />
-                                </el-button>
+                                </ks-button>
                             </template>
                             <template v-else>
-                                <el-button
+                                <ks-button
                                     class="no-bg-btn"
                                     @click="toggleVoiceInput"
                                 >
                                     <Microphone />
-                                </el-button>
+                                </ks-button>
 
-                                <el-button
+                                <ks-button
                                     type="primary"
                                     class="send-btn send-btn-onboarding"
                                     :disabled="!prompt.trim()"
                                     @click="submitPrompt"
                                 >
                                     <ArrowUp />
-                                </el-button>
+                                </ks-button>
                             </template>
                         </div>
                     </div>
@@ -805,9 +805,9 @@
     width: 100%;
     display: flex;
     align-items: center;
-    background: var(--el-input-bg-color, var(--el-fill-color-blank));
-    border: 1px solid var(--el-input-border-color, var(--el-border-color));
-    border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
+    background: var(--kel-input-bg-color, var(--kel-fill-color-blank));
+    border: 1px solid var(--kel-input-border-color, var(--kel-border-color));
+    border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
     padding: 8px 12px;
     min-height: 58px;
 }
@@ -882,16 +882,16 @@
 
 .ai-custom-textarea-onboarding {
     flex: 1;
-    --el-disabled-bg-color: transparent;
-    --el-disabled-text-color: var(--ks-content-primary);
-    --el-fill-color-light: transparent;
-    --el-fill-color-blank: transparent;
-    --el-input-border-color: transparent;
-    --el-input-hover-border-color: transparent;
-    --el-input-focus-border-color: transparent;
-    --el-border-color: transparent;
-    --el-input-focus-border: transparent;
-    --el-input-box-shadow: none;
+    --kel-disabled-bg-color: transparent;
+    --kel-disabled-text-color: var(--ks-content-primary);
+    --kel-fill-color-light: transparent;
+    --kel-fill-color-blank: transparent;
+    --kel-input-border-color: transparent;
+    --kel-input-hover-border-color: transparent;
+    --kel-input-focus-border-color: transparent;
+    --kel-border-color: transparent;
+    --kel-input-focus-border: transparent;
+    --kel-input-box-shadow: none;
 
     :deep(.el-textarea) {
         height: 100%;

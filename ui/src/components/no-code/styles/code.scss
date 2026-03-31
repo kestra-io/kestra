@@ -6,7 +6,7 @@ $code-card-color: var(--ks-background-card);
 $code-border-color: var(--ks-border-primary);
 
 // Typography
-$code-font-sm: var(--el-font-size-small);
+$code-font-sm: var(--kel-font-size-small);
 
 .collapse {
     & * {
@@ -14,9 +14,9 @@ $code-font-sm: var(--el-font-size-small);
     }
 
     :deep(*) {
-        --el-collapse-header-bg-color: initial;
-        --el-collapse-header-text-color: #{--ks-content-secondary};
-        --el-collapse-content-bg-color: initial;
+        --kel-collapse-header-bg-color: initial;
+        --kel-collapse-header-text-color: #{--ks-content-secondary};
+        --kel-collapse-content-bg-color: initial;
 
         .kel-collapse-item__header,
         .kel-collapse-item__content {
@@ -46,7 +46,7 @@ $code-font-sm: var(--el-font-size-small);
 
 .wrapper {
     :deep(*) {
-        --el-disabled-text-color: #{$code-gray};
+        --kel-disabled-text-color: #{$code-gray};
 
         .kel-input__inner,
         .kel-textarea__inner {

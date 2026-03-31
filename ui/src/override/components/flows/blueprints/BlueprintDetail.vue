@@ -352,7 +352,7 @@
             padding: 15px 10px;
             color: var(--ks-content-primary);
             text-transform: capitalize;
-            font-size: var(--el-font-size-small);
+            font-size: var(--kel-font-size-small);
             border: 1px solid var(--ks-border-primary);
         }
 

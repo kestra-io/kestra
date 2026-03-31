@@ -6,7 +6,7 @@
             <ks-data-table
                 ref="dataTable"
                 class="blueprints"
-                :load-data="loadData"
+                :loadData="loadData"
                 :total="total"
                 divider
                 @ready="ready = true"
@@ -109,7 +109,7 @@
     import {useRoute, useRouter} from "vue-router";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-import Errors from "../../../components/errors/Errors.vue";
+    import Errors from "../../../components/errors/Errors.vue";
     import KSFilter from "../../../components/filter/components/KSFilter.vue";
     import {editorViewTypes} from "../../../utils/constants";
     import Utils from "../../../utils/utils";
@@ -375,7 +375,7 @@ import Errors from "../../../components/errors/Errors.vue";
             width: 100%;
             gap: .5rem;
             flex-wrap: wrap;
-            --el-button-bg-color: var(--ks-background-card);
+            --kel-button-bg-color: var(--ks-background-card);
 
             & > * {
                 max-width: 50%;
@@ -384,7 +384,7 @@ import Errors from "../../../components/errors/Errors.vue";
                     border-radius: $border-radius !important;
                     border: 1px solid var(--ks-border-primary);
                     width: 100%;
-                    font-size: var(--el-font-size-extra-small);
+                    font-size: var(--kel-font-size-extra-small);
                     box-shadow: none;
                     text-overflow: ellipsis;
                     overflow: hidden;

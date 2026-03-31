@@ -7624,6 +7624,7 @@ components:
       - NAMESPACE
       - KIND
       - LABELS
+      - TAGS
       - METADATA
       - FLOW_ID
       - FLOW_REVISION

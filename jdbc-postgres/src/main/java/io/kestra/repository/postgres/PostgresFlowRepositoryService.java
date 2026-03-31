@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.models.QueryFilter;

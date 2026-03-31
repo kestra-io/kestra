@@ -24,7 +24,7 @@ public abstract class MysqlFlowRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
+                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val(value, String.class));
                 conditions.add(valueField.eq(value != null));
             });
         }
@@ -42,7 +42,7 @@ public abstract class MysqlFlowRepositoryService {
         if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
-                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
+                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val((String) value, String.class));
                 if (operation.equals(EQUALS))
                     conditions.add(valueField.eq(value != null));
                 else if (operation.equals(NOT_EQUALS)) {

@@ -12,7 +12,7 @@ javaPlatform {
 dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.17"
-    def protobufVersion = "3.25.8" // Orc still uses 3 see https://github.com/apache/orc/blob/main/java/pom.xml
+    def protobufVersion = "3.25.9" // Orc still uses 3 see https://github.com/apache/orc/blob/main/java/pom.xml
     def bouncycastleVersion = "1.83"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "1.5.6"
@@ -131,15 +131,15 @@ dependencies {
         api group: 'de.siegmar', name: 'fastcsv', version: '4.1.1'
         // Json Diff
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
-        api 'com.rabbitmq:amqp-client:5.26.0'
-        api 'org.apache.commons:commons-pool2:2.12.1'
-        api 'io.lettuce:lettuce-core:6.8.1.RELEASE'
+        api 'com.rabbitmq:amqp-client:5.29.0'
+        api 'org.apache.commons:commons-pool2:2.13.1'
+        api 'io.lettuce:lettuce-core:7.5.0.RELEASE'
 
         // force transitive version to fix CVE
-        api 'org.codehaus.plexus:plexus-utils:3.0.24' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
+        api 'org.codehaus.plexus:plexus-utils:4.0.3' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.20.11")
+        api ("org.jooq:jooq:3.21.0")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"
@@ -163,6 +163,6 @@ dependencies {
         api "io.kestra:storage-local:$version"
         api "io.kestra:scheduler:$version"
         api "io.kestra:worker:$version"
-        api "io.kestra.libs:copilot:0.2.1"
+        api "io.kestra.libs:copilot:0.2.3"
     }
 }

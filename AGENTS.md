@@ -87,7 +87,7 @@ npm install
 npm run dev
 
 # Type checking
-npm run check:types
+npm run test:types
 
 # Build for production
 npm run build

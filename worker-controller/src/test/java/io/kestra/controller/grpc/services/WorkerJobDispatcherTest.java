@@ -117,6 +117,7 @@ class WorkerJobDispatcherTest {
         if (dispatcher != null) {
             dispatcher.close();
         }
+        KestraContext.setContext(null);
     }
 
     private WorkerStreamContext<WorkerJobResponse> createWorkerContext(String workerId, String workerGroup, int maxConcurrency) {
@@ -497,25 +498,27 @@ class WorkerJobDispatcherTest {
             CountDownLatch latch = new CountDownLatch(numWorkers);
             ExecutorService executor = Executors.newFixedThreadPool(numWorkers);
 
-            // When
-            for (int i = 0; i < numWorkers; i++) {
-                final int workerId = i;
-                executor.submit(() ->
-                {
-                    try {
-                        barrier.await(); // Sync start
-                        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-" + workerId, WORKER_GROUP_A, 10);
-                        dispatcher.registerWorker(context);
-                    } catch (Exception e) {
-                        // Ignore
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+            try {
+                // When
+                for (int i = 0; i < numWorkers; i++) {
+                    final int workerId = i;
+                    executor.submit(() ->
+                    {
+                        try {
+                            barrier.await(); // Sync start
+                            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-" + workerId, WORKER_GROUP_A, 10);
+                            dispatcher.registerWorker(context);
+                        } catch (Exception e) {
+                            // Ignore
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+                latch.await(10, TimeUnit.SECONDS);
+            } finally {
+                executor.shutdownNow();
             }
-
-            latch.await(10, TimeUnit.SECONDS);
-            executor.shutdownNow();
 
             // Then
             assertThat(dispatcher.getActiveWorkerCount(WORKER_GROUP_A)).isEqualTo(numWorkers);
@@ -535,36 +538,38 @@ class WorkerJobDispatcherTest {
             ExecutorService executor = Executors.newFixedThreadPool(10);
             AtomicInteger errors = new AtomicInteger(0);
 
-            // When
-            for (int i = 0; i < numIterations; i++) {
-                final String workerId = "worker-" + i;
+            try {
+                // When
+                for (int i = 0; i < numIterations; i++) {
+                    final String workerId = "worker-" + i;
+                    executor.submit(() ->
+                        {
+                            try {
+                                WorkerStreamContext<WorkerJobResponse> context = createWorkerContext(workerId, WORKER_GROUP_A, 10);
+                                dispatcher.registerWorker(context);
+                            } catch (Exception e) {
+                                errors.incrementAndGet();
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
 
-                executor.submit(() ->
-                {
-                    try {
-                        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext(workerId, WORKER_GROUP_A, 10);
-                        dispatcher.registerWorker(context);
-                    } catch (Exception e) {
-                        errors.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                    executor.submit(() ->
+                    {
+                        try {
+                            dispatcher.unregisterWorker(workerId);
+                        } catch (Exception e) {
+                            errors.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
 
-                executor.submit(() ->
-                {
-                    try {
-                        dispatcher.unregisterWorker(workerId);
-                    } catch (Exception e) {
-                        errors.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                latch.await(10, TimeUnit.SECONDS);
+            } finally {
+                executor.shutdownNow();
             }
-
-            latch.await(10, TimeUnit.SECONDS);
-            executor.shutdownNow();
 
             // Then - no exceptions
             assertThat(errors.get()).isEqualTo(0);
@@ -580,21 +585,23 @@ class WorkerJobDispatcherTest {
             CountDownLatch latch = new CountDownLatch(numUpdates);
             ExecutorService executor = Executors.newFixedThreadPool(10);
 
-            // When - permits are SET (not added), so concurrent updates with increasing values
-            for (int i = 0; i < numUpdates; i++) {
-                final int permits = i + 1;
-                executor.submit(() ->
-                {
-                    try {
-                        dispatcher.onPermitsReceived(context, permits);
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+            try {
+                // When - permits are SET (not added), so concurrent updates with increasing values
+                for (int i = 0; i < numUpdates; i++) {
+                    final int permits = i + 1;
+                    executor.submit(() ->
+                    {
+                        try {
+                            dispatcher.onPermitsReceived(context, permits);
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+                latch.await(10, TimeUnit.SECONDS);
+            } finally {
+                executor.shutdownNow();
             }
-
-            latch.await(10, TimeUnit.SECONDS);
-            executor.shutdownNow();
 
             // Then - with SET semantics, permits should be one of the values sent (no race condition crashes)
             // The final value depends on thread scheduling, but should be between 1 and numUpdates

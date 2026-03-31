@@ -35,12 +35,6 @@ public class InstanceService {
     }
 
     private Setting fetchInstanceUuid() {
-        if (settingRepository == null) {
-            return Setting.builder()
-                .key(Setting.INSTANCE_UUID)
-                .value(IdUtils.create())
-                .build();
-        }
         return settingRepository
             .findByKey(Setting.INSTANCE_UUID)
             .orElseGet(

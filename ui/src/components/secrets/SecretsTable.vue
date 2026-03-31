@@ -87,13 +87,13 @@
 
             <ks-table-column columnKey="copy" className="row-action">
                 <template #default="scope">
-                    <IconButton
+                    <KsIconButton
                         :tooltip="$t('copy_to_clipboard')"
                         placement="left"
                         @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
                     >
                         <ContentCopy />
-                    </IconButton>
+                    </KsIconButton>
                 </template>
             </ks-table-column>
 
@@ -103,14 +103,14 @@
                 className="row-action"
             >
                 <template #default="scope">
-                    <IconButton
+                    <KsIconButton
                         v-if="canUpdate(scope.row)"
                         :tooltip="$t('update')"
                         placement="left"
                         @click="updateSecretModal(scope.row)"
                     >
                         <FileDocumentEdit />
-                    </IconButton>
+                    </KsIconButton>
                 </template>
             </ks-table-column>
 
@@ -120,14 +120,14 @@
                 className="row-action"
             >
                 <template #default="scope">
-                    <IconButton
+                    <KsIconButton
                         v-if="canDelete(scope.row)"
                         :tooltip="$t('delete')"
                         placement="left"
                         @click="removeSecret(scope.row)"
                     >
                         <Delete />
-                    </IconButton>
+                    </KsIconButton>
                 </template>
             </ks-table-column>
         </ks-data-table>
@@ -229,8 +229,7 @@
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import {KsId} from "@kestra-io/ui-design-system";
-    import IconButton from "../IconButton.vue";
+    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MultilineSecret from "./MultilineSecret.vue";

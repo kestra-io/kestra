@@ -236,13 +236,13 @@
                 <ks-table-column columnKey="action" className="row-action" :label="$t('actions')">
                     <template #default="scope">
                         <div class="flow-actions-cell">
-                            <IconButton
+                            <KsIconButton
                                 v-if="canExecute(scope.row)"
                                 :tooltip="t('execute')"
                                 @click="openExecuteModal(scope.row)"
                             >
                                 <Play />
-                            </IconButton>
+                            </KsIconButton>
                         </div>
                     </template>
                 </ks-table-column>
@@ -286,8 +286,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import Play from "vue-material-design-icons/Play.vue";
 
-    import IconButton from "../IconButton.vue";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {KsExecutionStatus, KsIconButton} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";

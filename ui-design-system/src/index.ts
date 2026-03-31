@@ -40,6 +40,7 @@ import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
 import KsId from "./components/Data/KsId.vue"
 import KsIcon from "./components/Basic/KsIcon.vue"
+import KsIconButton from "./components/Basic/KsIconButton/KsIconButton.vue"
 import KsInput from "./components/Form/KsInput.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
@@ -125,6 +126,7 @@ export {
     KsFormItem,
     KsId,
     KsIcon,
+    KsIconButton,
     KsInput,
     KsInputNumber,
     KsLink,
@@ -207,6 +209,7 @@ const KestraDesignSystem = {
         app.component("KsFormItem", KsFormItem)
         app.component("KsId", KsId)
         app.component("KsIcon", KsIcon)
+        app.component("KsIconButton", KsIconButton)
         app.component("KsInput", KsInput)
         app.component("KsInputNumber", KsInputNumber)
         app.component("KsLink", KsLink)
@@ -289,6 +292,7 @@ declare module "vue" {
         KsFormItem: typeof KsFormItem
         KsId: typeof KsId
         KsIcon: typeof KsIcon
+        KsIconButton: typeof KsIconButton
         KsInput: typeof KsInput
         KsInputNumber: typeof KsInputNumber
         KsLink: typeof KsLink

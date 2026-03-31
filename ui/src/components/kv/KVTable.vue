@@ -90,40 +90,40 @@
 
         <ks-table-column columnKey="copy" className="row-action">
             <template #default="scope">
-                <IconButton
+                <KsIconButton
                     v-if="scope.row.key !== undefined"
                     :tooltip="$t('copy_to_clipboard')"
                     placement="left"
                     @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
                 >
                     <ContentCopy />
-                </IconButton>
+                </KsIconButton>
             </template>
         </ks-table-column>
 
         <ks-table-column v-if="!paneView" columnKey="update" className="row-action">
             <template #default="scope">
-                <IconButton
+                <KsIconButton
                     v-if="canUpdate(scope.row)"
                     :tooltip="$t('update')"
                     placement="left"
                     @click="updateKvModal(scope.row)"
                 >
                     <FileDocumentEdit />
-                </IconButton>
+                </KsIconButton>
             </template>
         </ks-table-column>
 
         <ks-table-column v-if="!paneView" columnKey="delete" className="row-action">
             <template #default="scope">
-                <IconButton
+                <KsIconButton
                     v-if="canDelete(scope.row)"
                     :tooltip="$t('delete')"
                     placement="left"
                     @click="removeKv(scope.row.namespace, scope.row.key)"
                 >
                     <Delete />
-                </IconButton>
+                </KsIconButton>
             </template>
         </ks-table-column>
     </ks-data-table>
@@ -247,8 +247,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import {KsId} from "@kestra-io/ui-design-system";
-    import IconButton from "../IconButton.vue";
+    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
 

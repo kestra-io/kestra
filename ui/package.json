@@ -153,6 +153,7 @@
         "lightningcss-linux-x64-gnu": "^1.32.0"
     },
     "overrides": {
+        "axios": "1.13.6",
         "bootstrap": {
             "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
         },

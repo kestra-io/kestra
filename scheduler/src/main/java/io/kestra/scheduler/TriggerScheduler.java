@@ -374,7 +374,9 @@ public class TriggerScheduler {
         {
             try {
                 this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext());
-                state = state.locked(clock, mustBeLocked);
+                state = state
+                    .lastTriggeredDate(clock)
+                    .locked(clock, mustBeLocked);
                 triggerStateStore.save(state);
             } catch (Exception e) {
                 Logs.logTrigger(

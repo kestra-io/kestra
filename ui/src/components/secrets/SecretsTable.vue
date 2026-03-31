@@ -498,7 +498,7 @@
             hasData.value = (allSecrets.length ?? 0) !== 0;
             areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
             secrets.value = allSecrets;
-            total.value = allSecrets.length;
+            total.value = secretsResponse.total ?? 0;
         } finally {
             if (callback) callback();
         }

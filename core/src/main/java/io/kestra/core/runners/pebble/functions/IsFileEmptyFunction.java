@@ -17,6 +17,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class IsFileEmptyFunction extends AbstractFileFunction {
+    public static final String NAME = "isFileEmpty";
     private static final String ERROR_MESSAGE = "The 'isFileEmpty' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
 
     @Override

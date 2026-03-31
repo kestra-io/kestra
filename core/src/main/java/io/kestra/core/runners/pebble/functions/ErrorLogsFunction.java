@@ -13,14 +13,14 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class ErrorLogsFunction implements Function {
+public class ErrorLogsFunction implements KestraFunction {
+    public static final String NAME = "errorLogs";
     @Inject
     private ExecutionLogMetaStore executionLogMetaStore;
 
@@ -30,6 +30,11 @@ public class ErrorLogsFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of();
     }
 
     @Override

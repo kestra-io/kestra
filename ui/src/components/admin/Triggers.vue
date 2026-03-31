@@ -179,21 +179,21 @@
                         >
                             <template #default="scope">
                                 <div class="action-container">
-                                    <IconButton
+                                    <KsIconButton
                                         v-if="scope.row.locked"
                                         :tooltip="$t('unlock trigger.tooltip.evaluation')"
                                         placement="left"
                                         @click="triggerToUnlock = scope.row"
                                     >
                                         <LockOff />
-                                    </IconButton>
-                                    <IconButton
+                                    </KsIconButton>
+                                    <KsIconButton
                                         :tooltip="$t('delete trigger')"
                                         placement="left"
                                         @click="confirmDeleteTrigger(scope.row)"
                                     >
                                         <Delete />
-                                    </IconButton>
+                                    </KsIconButton>
                                 </div>
                             </template>
                         </ks-table-column>
@@ -336,8 +336,7 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import {KsId} from "@kestra-io/ui-design-system";
-    import IconButton from "../IconButton.vue";
+    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";
     import DateAgo from "../layout/DateAgo.vue";

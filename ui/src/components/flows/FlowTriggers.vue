@@ -93,18 +93,18 @@
                             />
                         </div>
                         <template v-if="!scope.row.backfill.paused">
-                            <IconButton size="small" :tooltip="$t('pause backfill')" @click="pauseBackfill(scope.row)">
+                            <KsIconButton size="small" :tooltip="$t('pause backfill')" @click="pauseBackfill(scope.row)">
                                 <Pause />
-                            </IconButton>
+                            </KsIconButton>
                         </template>
                         <template v-else-if="userCan(action.UPDATE)">
-                            <IconButton size="small" :tooltip="$t('continue backfill')" @click="unpauseBackfill(scope.row)">
+                            <KsIconButton size="small" :tooltip="$t('continue backfill')" @click="unpauseBackfill(scope.row)">
                                 <Play />
-                            </IconButton>
+                            </KsIconButton>
 
-                            <IconButton size="small" :tooltip="$t('delete backfill')" @click="deleteBackfill(scope.row)">
+                            <KsIconButton size="small" :tooltip="$t('delete backfill')" @click="deleteBackfill(scope.row)">
                                 <Delete />
-                            </IconButton>
+                            </KsIconButton>
                         </template>
                     </div>
                 </template>
@@ -133,7 +133,7 @@
 
         <ks-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <IconButton
+                <KsIconButton
                     v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('restart trigger.button')"
@@ -141,13 +141,13 @@
                     @click="restart(scope.row)"
                 >
                     <Restart />
-                </IconButton>
+                </KsIconButton>
             </template>
         </ks-table-column>
 
         <ks-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <IconButton
+                <KsIconButton
                     v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('unlock trigger.button')"
@@ -155,7 +155,7 @@
                     @click="unlock(scope.row)"
                 >
                     <LockOff />
-                </IconButton>
+                </KsIconButton>
             </template>
         </ks-table-column>
 
@@ -167,9 +167,9 @@
 
         <ks-table-column columnKey="action" className="row-action">
             <template #default="scope">
-                <IconButton size="small" :tooltip="$t('details')" @click="triggerId = scope.row.id; isOpen = true">
+                <KsIconButton size="small" :tooltip="$t('details')" @click="triggerId = scope.row.id; isOpen = true">
                     <TextSearch />
-                </IconButton>
+                </KsIconButton>
             </template>
         </ks-table-column>
     </ks-table>
@@ -276,8 +276,7 @@
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
 
-    import {KsId} from "@kestra-io/ui-design-system";
-    import IconButton from "../IconButton.vue";
+    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
     import Vars from "../executions/Vars.vue";

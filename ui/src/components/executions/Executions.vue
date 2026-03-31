@@ -267,12 +267,12 @@
                             :label="$t('actions')"
                         >
                             <template #default="scope">
-                                <IconButton
+                                <KsIconButton
                                     :tooltip="$t('details')"
                                     :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
                                 >
                                     <TextSearch />
-                                </IconButton>
+                                </KsIconButton>
                             </template>
                         </ks-table-column>
         </ks-data-table>
@@ -406,8 +406,7 @@
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import {KsId} from "@kestra-io/ui-design-system";
-    import IconButton from "../IconButton.vue";
+    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
     import {State} from "@kestra-io/ui-libs";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";

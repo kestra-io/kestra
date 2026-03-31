@@ -1,3 +1,40 @@
+<script setup lang="ts">
+    import {computed, useAttrs} from "vue"
+    import KsButton from "../KsButton/KsButton.vue"
+    import KsTooltip from "../../Feedback/KsTooltip.vue"
+
+    defineOptions({inheritAttrs: false})
+
+    const props = withDefaults(defineProps<{
+        tooltip?: string
+        placement?: string
+        ariaLabel?: string
+        disabled?: boolean
+        to?: string | Record<string, unknown>
+        replace?: boolean
+    }>(), {
+        tooltip: "",
+        placement: "left",
+        ariaLabel: "",
+        disabled: false,
+        to: undefined,
+        replace: false,
+    })
+
+    const attrs = useAttrs()
+    const buttonAttrs = computed(() => ({
+        ...attrs,
+        class: [attrs.class],
+    }))
+
+    const buttonTag = computed(() => (props.to ? "router-link" : undefined))
+    const nativeType = computed(() => (props.to ? undefined : "button" as const))
+
+    defineSlots<{
+        default?(): unknown
+    }>()
+</script>
+
 <template>
     <ks-tooltip
         v-if="tooltip"
@@ -33,38 +70,6 @@
         <slot />
     </ks-button>
 </template>
-
-<script setup lang="ts">
-    import {computed, useAttrs} from "vue";
-    import {type RouteLocationRaw} from "vue-router";
-
-    defineOptions({inheritAttrs: false});
-
-    const props = withDefaults(defineProps<{
-        tooltip?: string;
-        placement?: string;
-        ariaLabel?: string;
-        disabled?: boolean;
-        to?: RouteLocationRaw;
-        replace?: boolean;
-    }>(), {
-        tooltip: "",
-        placement: "left",
-        ariaLabel: "",
-        disabled: false,
-        to: undefined,
-        replace: false,
-    });
-
-    const attrs = useAttrs();
-    const buttonAttrs = computed(() => ({
-        ...attrs,
-        class: [attrs.class],
-    }));
-
-    const buttonTag = computed(() => (props.to ? "router-link" : undefined));
-    const nativeType = computed(() => (props.to ? undefined : "button"));
-</script>
 
 <style scoped lang="scss">
     .ks-icon-button {

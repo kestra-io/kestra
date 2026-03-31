@@ -39,15 +39,15 @@
             <ks-form-item>
                 <ks-button-group class="ks-b-group">
                     <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="forwardEvent('follow', $event)" />
-                    <IconButton :tooltip="$t('download logs')" @click="downloadContent()">
+                    <KsIconButton :tooltip="$t('download logs')" @click="downloadContent()">
                         <Download />
-                    </IconButton>
-                    <IconButton :tooltip="$t('copy logs')" @click="copyAllLogs()">
+                    </KsIconButton>
+                    <KsIconButton :tooltip="$t('copy logs')" @click="copyAllLogs()">
                         <ContentCopy />
-                    </IconButton>
-                    <IconButton :tooltip="$t('refresh')" @click="loadLogs()">
+                    </KsIconButton>
+                    <KsIconButton :tooltip="$t('refresh')" @click="loadLogs()">
                         <Refresh />
-                    </IconButton>
+                    </KsIconButton>
                 </ks-button-group>
             </ks-form-item>
         </Collapse>
@@ -111,7 +111,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import ViewList from "vue-material-design-icons/ViewList.vue";
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
-    import IconButton from "../IconButton.vue";
+    import {KsIconButton} from "@kestra-io/ui-design-system";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -138,7 +138,7 @@
             LogLine,
             TaskRunDetails,
             LogLevelNavigator,
-            IconButton,
+            KsIconButton,
             Download,
             ContentCopy,
             Collapse,

@@ -14,7 +14,7 @@
                     v-for="section in groupSections"
                     :key="section.key"
                     :name="section.key"
-                    :title="$te(`no_code.sections.${section.key}`) ? $t(`no_code.sections.${section.key}`) : section.key"
+                    :title="groupTitle(section.key)"
                 >
                     <template v-for="[fieldKey, fieldSchema] in section.properties" :key="fieldKey">
                         <Wrapper>
@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
+    import {useI18n} from "vue-i18n";
     import TaskDict from "./TaskDict.vue";
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
@@ -70,6 +71,8 @@
     defineOptions({
         inheritAttrs: false,
     });
+
+    const {t, te} = useI18n();
 
     type Model = Record<string, any> | undefined;
     type Schema = { required?: string[]; [k: string]: any } | undefined;
@@ -88,6 +91,13 @@
     const emit = defineEmits<{
         (e: "update:modelValue", value: Model): void;
     }>();
+
+    function groupTitle(key: string): string {
+        const i18nKey = `no_code.sections.${key}`;
+        if (te(i18nKey)) return t(i18nKey);
+        // Free-form group: title-case, replace _ and - with spaces
+        return key.replace(/[_-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    }
 
     // Recommended group ordering — not exhaustive, unknown groups are appended alphabetically
     const GROUP_ORDER = ["connection", "source", "processing", "execution", "destination", "reliability", "advanced"];

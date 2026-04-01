@@ -71,11 +71,12 @@
                     :defaultSort="{prop: 'state.startDate', order: 'descending'}"
                     tableLayout="auto"
                     fixed
-                    @row-dblclick="(row: any) => onRowDoubleClick(executionParams(row))"
+                    @row-click="(row: any) => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
+                    class="executions-table"
                     :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
@@ -162,20 +163,8 @@
                             :sortOrders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
-                            <template #default="scope">
-                                <RouterLink
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            namespace: scope.row?.namespace,
-                                            flowId: scope.row?.flowId,
-                                            id: scope.row?.id
-                                        }
-                                    }"
-                                    class="execution-id"
-                                >
-                                    <Id :value="scope.row?.id" :shrink="true" />
-                                </RouterLink>
+                            <template #default="scope">                              
+                                <Id :value="scope.row?.id" :shrink="true" />
                             </template>
                         </el-table-column>
 
@@ -205,7 +194,13 @@
                                 </template>
                                 <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
                                     <router-link
-                                        :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
+                                        :to="{
+                                            name: 'flows/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                id: scope.row?.flowId
+                                            }
+                                        }"
                                     >
                                         {{ invisibleSpace(scope.row?.flowId) }}
                                     </router-link>
@@ -261,7 +256,6 @@
                                                 id: scope.row?.trigger?.variables?.executionId
                                             }
                                         }"
-                                        class="execution-id"
                                     >
                                         <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
                                     </RouterLink>
@@ -1095,12 +1089,7 @@
     color: var(--ks-content-primary);
 }
 
-a.execution-id {
-    display: block;
+:deep(.executions-table) .el-table__row {
     cursor: pointer;
-}
-
-:deep(a.execution-id) code {
-    color: var(--bs-code-color) !important;
 }
 </style>

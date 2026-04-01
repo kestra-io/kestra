@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.migrations;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.App;
+import io.kestra.cli.Kestra;
 import io.kestra.cli.commands.migrations.metadata.MetadataMigrationCommand;
 
 import lombok.SneakyThrows;
@@ -26,6 +26,6 @@ public class MigrationCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.runCli(new String[] { "migrate", "--help" });
+        return Kestra.runCli(new String[] { "migrate", "--help" });
     }
 }

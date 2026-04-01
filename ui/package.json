@@ -9,6 +9,8 @@
         "build": "vite build --emptyOutDir",
         "preview": "vite preview",
         "precheck:types": "openapi-ts",
+        "pretest:types": "openapi-ts",
+        "test:types": "vue-tsc --noEmit",
         "check:types": "vue-tsc --noEmit",
         "test:lint": "eslint",
         "test:all": "vitest run --coverage",

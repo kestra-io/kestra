@@ -83,6 +83,43 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
     }
 
+    @Test
+    void givenFlowWithTriggerWhenFindingFlowWithGivenTriggerClassShouldFindFlowWithTriggerClass() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        UnitTest trigger = UnitTest.builder()
+            .id("trigger")
+            .type(UnitTest.class.getName())
+            .build();
+
+        FlowWithSource flowWithTrigger = builder(tenant, "flow-with-trigger", TEST_FLOW_ID)
+            .triggers(List.of(trigger))
+            .build();
+        FlowWithSource flowWithoutTrigger = builder(tenant, "flow-without-trigger", TEST_FLOW_ID)
+            .build();
+
+        flowWithTrigger = flowRepository.create(GenericFlow.of(flowWithTrigger));
+        flowWithoutTrigger = flowRepository.create(GenericFlow.of(flowWithoutTrigger));
+
+        try {
+            // When
+            ArrayListTotal<Flow> results = flowRepository.find(
+                Pageable.UNPAGED,
+                tenant,
+                TEST_NAMESPACE,
+                UnitTest.class
+            );
+
+            // Then
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("flow-with-trigger");
+        } finally {
+            deleteFlow(flowWithTrigger);
+            deleteFlow(flowWithoutTrigger);
+        }
+    }
+
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter) {

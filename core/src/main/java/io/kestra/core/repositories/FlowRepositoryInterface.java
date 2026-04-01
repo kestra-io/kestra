@@ -15,6 +15,7 @@ import io.kestra.plugin.core.dashboard.data.Flows;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
 
 public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fields> {
@@ -160,6 +161,12 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         Pageable pageable,
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
+
+    ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
 
     ArrayListTotal<FlowWithSource> findWithSource(
         Pageable pageable,

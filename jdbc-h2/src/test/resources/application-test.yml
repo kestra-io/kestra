@@ -27,6 +27,10 @@ kestra:
         retention: 30d
   queue:
     type: h2
+    message-protection:
+      enabled: true
+      limit: 1048576
+
   repository:
     type: h2
   storage:
@@ -38,9 +42,22 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
-      message-protection:
-        enabled: true
-        limit: 1048576
+
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+  controller:
+    port: ${random.port}
   worker:
-    liveness:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
       enabled: false

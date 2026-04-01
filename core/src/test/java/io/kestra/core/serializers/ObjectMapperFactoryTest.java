@@ -1,17 +1,18 @@
 package io.kestra.core.serializers;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.junit.annotations.KestraTest;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,7 +97,6 @@ class ObjectMapperFactoryTest {
         assertThat(s).contains("\"duration\":\"PT5M\"");
         assertThat(s).contains("\"zonedDateTime\":\"2013-09-08T16:19:12+02:00\"");
     }
-
 
     @Test
     void deserialize() throws JsonProcessingException {

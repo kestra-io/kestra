@@ -15,6 +15,6 @@ public class PropertyValueExtractor implements ValueExtractor<Property<@Extracte
     @Override
     public void extractValues(Property<?> originalValue, ValueReceiver receiver) {
         // this will disable validation at save time but enable it at runtime when the value would be populated
-        receiver.value( null, originalValue.getValue());
+        receiver.value(null, originalValue.getValue());
     }
 }

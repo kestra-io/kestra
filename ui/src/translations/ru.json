@@ -697,6 +697,10 @@
       "drag to reorder columns": "Перетащите, чтобы изменить порядок столбцов",
       "edit filter": "Редактировать фильтр",
       "empty": "У вас еще нет сохраненных фильтров.",
+      "enabled": {
+        "description": "Фильтр по включенным",
+        "label": "Включено"
+      },
       "end_date": "Дата окончания",
       "enter description": "Введите описание фильтра",
       "enter label": "Введите фильтр label",
@@ -756,7 +760,10 @@
         "description": "Фильтр по типу метрики",
         "label": "Метрика"
       },
-      "name": "Имя",
+      "name": {
+        "description": "Фильтр по имени",
+        "label": "Имя"
+      },
       "namespace": {
         "description": "Фильтр по namespace",
         "label": "Namespace"
@@ -948,6 +955,10 @@
         "enabled": "Включено",
         "label": "Состояние Trigger"
       },
+      "type": {
+        "description": "Фильтр по типу",
+        "label": "Тип"
+      },
       "update": "Обновить",
       "username": {
         "description": "Фильтр по имени пользователя",
@@ -1121,6 +1132,7 @@
     "labels": "Метки",
     "last 48 hours": "последние 48 часов",
     "last X days count": "{count} за последние {days} дней",
+    "last evaluation date": "Дата последней оценки",
     "last execution date": "Дата последнего выполнения",
     "last execution state": "Последнее состояние",
     "last execution status": "Последний статус выполнения",
@@ -1898,6 +1910,7 @@
     "start datetime": "Дата и время начала",
     "started date": "Дата начала",
     "state": "Состояние",
+    "state updated date": "Дата обновления состояния",
     "state_history": "История состояния",
     "stats": "Статистика",
     "steps": "Шаги",

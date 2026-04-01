@@ -697,6 +697,10 @@
       "drag to reorder columns": "Arraste para reordenar colunas",
       "edit filter": "Editar filtro",
       "empty": "Você ainda não tem nenhum filtro salvo.",
+      "enabled": {
+        "description": "Filtrar por habilitado",
+        "label": "Habilitado"
+      },
       "end_date": "Data de Término",
       "enter description": "Insira a descrição do filtro",
       "enter label": "Insira o filtro {label}",
@@ -756,7 +760,10 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
-      "name": "Nome",
+      "name": {
+        "description": "Filtrar por nome",
+        "label": "Nome"
+      },
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -948,6 +955,10 @@
         "enabled": "Habilitado",
         "label": "Estado do Trigger"
       },
+      "type": {
+        "description": "Filtrar por tipo",
+        "label": "Tipo"
+      },
       "update": "Atualizar",
       "username": {
         "description": "Filtrar por nome de usuário",
@@ -1121,6 +1132,7 @@
     "labels": "Labels",
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} nos últimos {days} dias",
+    "last evaluation date": "Data da última avaliação",
     "last execution date": "Data da última execução",
     "last execution state": "Último estado",
     "last execution status": "Último status de execução",
@@ -1898,6 +1910,7 @@
     "start datetime": "Data e hora de início",
     "started date": "Data de início",
     "state": "Estado",
+    "state updated date": "Data de atualização do estado",
     "state_history": "Histórico de estado",
     "stats": "Estatísticas",
     "steps": "Passos",

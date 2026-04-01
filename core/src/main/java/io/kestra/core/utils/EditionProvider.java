@@ -1,12 +1,13 @@
 package io.kestra.core.utils;
 
+import java.util.Optional;
+
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.Optional;
 
 @Singleton
 public class EditionProvider {
@@ -26,10 +27,11 @@ public class EditionProvider {
     private void persistEdition(SettingRepositoryInterface settingRepositoryInterface, Edition edition) {
         Optional<Setting> versionSetting = settingRepositoryInterface.findByKey(Setting.INSTANCE_EDITION);
         if (versionSetting.isEmpty() || !versionSetting.get().getValue().equals(edition)) {
-            settingRepositoryInterface.save(Setting.builder()
-                .key(Setting.INSTANCE_EDITION)
-                .value(edition)
-                .build()
+            settingRepositoryInterface.save(
+                Setting.builder()
+                    .key(Setting.INSTANCE_EDITION)
+                    .value(edition)
+                    .build()
             );
         }
     }

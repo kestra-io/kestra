@@ -697,6 +697,10 @@
       "drag to reorder columns": "Przeciągnij, aby zmienić kolejność kolumn",
       "edit filter": "Edytuj filtr",
       "empty": "Nie masz jeszcze żadnego zapisanego filtra.",
+      "enabled": {
+        "description": "Filtruj według enabled",
+        "label": "Włączone"
+      },
       "end_date": "Data zakończenia",
       "enter description": "Wprowadź opis filtra",
       "enter label": "Wprowadź filtr label",
@@ -756,7 +760,10 @@
         "description": "Filtruj według typu metryki",
         "label": "Metryka"
       },
-      "name": "Nazwa",
+      "name": {
+        "description": "Filtruj według nazwy",
+        "label": "Nazwa"
+      },
       "namespace": {
         "description": "Filtruj według namespace",
         "label": "Namespace"
@@ -948,6 +955,10 @@
         "enabled": "Włączone",
         "label": "Stan Trigger"
       },
+      "type": {
+        "description": "Filtruj według typu",
+        "label": "Typ"
+      },
       "update": "Aktualizuj",
       "username": {
         "description": "Filtruj według nazwy użytkownika",
@@ -1121,6 +1132,7 @@
     "labels": "Etykiety",
     "last 48 hours": "ostatnie 48 godzin",
     "last X days count": "{count} w ostatnich {days} dniach",
+    "last evaluation date": "Data ostatniej oceny",
     "last execution date": "Data ostatniego wykonania",
     "last execution state": "Ostatni stan",
     "last execution status": "Ostatni status wykonania",
@@ -1898,6 +1910,7 @@
     "start datetime": "Data i godzina rozpoczęcia",
     "started date": "Data rozpoczęcia",
     "state": "Stan",
+    "state updated date": "Data aktualizacji stanu",
     "state_history": "Historia stanu",
     "stats": "Statystyki",
     "steps": "Kroki",

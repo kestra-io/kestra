@@ -1,5 +1,13 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -14,14 +22,6 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.ListUtils;
-
-import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Factory class for constructing a new {@link Execution} from a {@link Schedulable} trigger.
@@ -43,7 +43,8 @@ final class SchedulableExecutionFactory {
             .build();
     }
 
-    static Execution createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables, ZonedDateTime scheduleDate) throws IllegalVariableEvaluationException {
+    static Execution createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables, ZonedDateTime scheduleDate)
+        throws IllegalVariableEvaluationException {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
 

@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.4.0"
+    id "com.gradleup.shadow" version "9.4.1"
     id "application"
 
     // test
@@ -38,6 +38,9 @@ plugins {
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.0" apply false
+
+    // Formatting
+    id "io.kestra.gradle.spotless-conventions" version "1.0.4"
 }
 
 idea {
@@ -50,7 +53,7 @@ idea {
 /**********************************************************************************************************************\
  * Main
  **********************************************************************************************************************/
-final mainClassName = "io.kestra.cli.App"
+final mainClassName = "io.kestra.cli.Kestra"
 
 application {
     mainClass = mainClassName
@@ -60,10 +63,6 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
-}
-compileJava {
-    // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-    options.release = 21
 }
 
 
@@ -95,14 +94,13 @@ allprojects {
     if (it.name != 'platform') {
         group = "io.kestra"
 
+        // Formatting
+        apply plugin: "io.kestra.gradle.spotless-conventions"
+
         java {
             toolchain {
                 languageVersion = JavaLanguageVersion.of(25)
             }
-        }
-        compileJava {
-            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-            options.release = 21
         }
 
         repositories {
@@ -202,10 +200,6 @@ subprojects {subProj ->
                 languageVersion = JavaLanguageVersion.of(25)
             }
         }
-        compileJava {
-            // We use 21 release (target) level temporary, will be switched to 25 for 2.0
-            options.release = 21
-        }
 
         configurations {
             agent {
@@ -245,6 +239,9 @@ subprojects {subProj ->
             //assertj
             testImplementation 'org.assertj:assertj-core'
 
+            // awaitility
+            testImplementation 'org.awaitility:awaitility'
+
             agent "org.aspectj:aspectjweaver:1.9.25.1"
 
             testImplementation platform("io.qameta.allure:allure-bom")
@@ -256,6 +253,7 @@ subprojects {subProj ->
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")
+                project.develocity.buildScan.value("${t.path}#maxHeapSize", t.maxHeapSize)
             }
             t.doLast {
                 logger.lifecycle("[TASK END]   ${t.path}")

@@ -697,6 +697,10 @@
       "drag to reorder columns": "列をドラッグして並べ替え",
       "edit filter": "フィルターを編集",
       "empty": "まだ保存されたフィルターがありません。",
+      "enabled": {
+        "description": "有効でフィルター",
+        "label": "有効"
+      },
       "end_date": "終了日",
       "enter description": "フィルターの説明を入力してください",
       "enter label": "フィルターラベルを入力してください",
@@ -756,7 +760,10 @@
         "description": "メトリックタイプでフィルター",
         "label": "メトリック"
       },
-      "name": "名前",
+      "name": {
+        "description": "名前でフィルター",
+        "label": "名前"
+      },
       "namespace": {
         "description": "namespaceでフィルター",
         "label": "Namespace"
@@ -948,6 +955,10 @@
         "enabled": "有効",
         "label": "トリガー状態"
       },
+      "type": {
+        "description": "タイプでフィルター",
+        "label": "タイプ"
+      },
       "update": "更新",
       "username": {
         "description": "ユーザー名でフィルター",
@@ -1121,6 +1132,7 @@
     "labels": "ラベル",
     "last 48 hours": "過去48時間",
     "last X days count": "過去{days}日間に{count}",
+    "last evaluation date": "最終評価日",
     "last execution date": "最後の実行日",
     "last execution state": "最終状態",
     "last execution status": "最後の実行ステータス",
@@ -1898,6 +1910,7 @@
     "start datetime": "開始日時",
     "started date": "開始日",
     "state": "状態",
+    "state updated date": "状態更新日",
     "state_history": "状態履歴",
     "stats": "統計",
     "steps": "ステップ",

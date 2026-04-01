@@ -1,9 +1,10 @@
 package io.kestra.core.runners.pebble.functions;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import java.util.Map;
 
 import io.kestra.core.utils.IdUtils;
-import java.util.Map;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 public class FunctionTestUtils {
 
@@ -22,7 +23,8 @@ public class FunctionTestUtils {
             "flow", Map.of(
                 "id", "kv",
                 "tenantId", tenantId,
-                "namespace", namespace)
+                "namespace", namespace
+            )
         );
     }
 
@@ -35,7 +37,8 @@ public class FunctionTestUtils {
             "flow", Map.of(
                 "id", "flow",
                 "namespace", namespace,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId)
         );
     }

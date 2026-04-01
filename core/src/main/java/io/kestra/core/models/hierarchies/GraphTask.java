@@ -1,10 +1,11 @@
 package io.kestra.core.models.hierarchies;
 
+import java.util.List;
+
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
-import lombok.Getter;
 
-import java.util.List;
+import lombok.Getter;
 
 @Getter
 public class GraphTask extends AbstractGraphTask {

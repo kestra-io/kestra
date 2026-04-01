@@ -1,16 +1,16 @@
 package io.kestra.core.docs;
 
-import io.kestra.core.plugins.PluginClassAndMetadata;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+
+import io.kestra.core.plugins.PluginClassAndMetadata;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @EqualsAndHashCode
@@ -43,7 +43,9 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
             replacement = cls.getName();
         }
 
-        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length() && cls.getPackageName().charAt(this.group.length()) == '.') {
+        if (
+            this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length() && cls.getPackageName().charAt(this.group.length()) == '.'
+        ) {
             this.subGroup = cls.getPackageName().substring(this.group.length() + 1);
         }
 
@@ -67,12 +69,14 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
 
             this.docMetrics = metrics
                 .stream()
-                .map(r -> new MetricDoc(
-                    (String) r.get("name"),
-                    (String) r.get("type"),
-                    (String) r.get("unit"),
-                    (String) r.get("description")
-                ))
+                .map(
+                    r -> new MetricDoc(
+                        (String) r.get("name"),
+                        (String) r.get("type"),
+                        (String) r.get("unit"),
+                        (String) r.get("description")
+                    )
+                )
                 .toList();
         }
 
@@ -104,4 +108,3 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
         }
     }
 }
-

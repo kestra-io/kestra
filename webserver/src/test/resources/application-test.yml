@@ -28,8 +28,20 @@ jackson:
   serialization-inclusion: non_null
   deserialization:
     FAIL_ON_UNKNOWN_PROPERTIES: false
-
 kestra:
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+  controller:
+    port: ${random.port}
+    maxConnectionAgeGrace: 0s
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
   ai:
     type: gemini
     gemini:
@@ -197,3 +209,9 @@ flyway:
         - classpath:migrations/h2
       ignore-migration-patterns: "*:missing,*:future"
       out-of-order: true
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

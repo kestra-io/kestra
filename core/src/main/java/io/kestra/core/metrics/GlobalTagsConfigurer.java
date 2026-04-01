@@ -1,12 +1,12 @@
 package io.kestra.core.metrics;
 
+import java.util.stream.Stream;
+
 import io.kestra.core.models.ServerType;
+
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.configuration.metrics.aggregator.MeterRegistryConfigurer;
 import io.micronaut.context.annotation.Requires;
-
-import java.util.stream.Stream;
-
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;

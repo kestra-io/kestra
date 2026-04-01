@@ -1,12 +1,13 @@
 package io.kestra.webserver.utils;
 
-import io.kestra.core.repositories.ArrayListTotal;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import io.kestra.core.repositories.ArrayListTotal;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 
 /**
  * Utility class for searching over a collection of elements.
@@ -33,7 +34,8 @@ public final class Searcheable<T> {
         if (searched.query() != null && searched.searchableExtractors() != null) {
             final String query = searched.query().toLowerCase();
             results = items.stream()
-                .filter(item -> {
+                .filter(item ->
+                {
                     String search = searched.searchableExtractors()
                         .values()
                         .stream()
@@ -78,13 +80,13 @@ public final class Searcheable<T> {
     /**
      * Searched.
      *
-     * @param page  the current page.
-     * @param size  the number of element per page.
-     * @param sort  the sort
+     * @param page the current page.
+     * @param size the number of element per page.
+     * @param sort the sort
      * @param query the search query.
      * @param searchableExtractors the extractor function for each searchable property.
-     * @param sortableExtractors  the extractor function for each sortable property.
-     * @param <T>   type of searched element.
+     * @param sortableExtractors the extractor function for each sortable property.
+     * @param <T> type of searched element.
      */
     public record Searched<T>(
         int page,
@@ -92,8 +94,7 @@ public final class Searcheable<T> {
         List<String> sort,
         String query,
         Map<String, Function<? super T, Object>> searchableExtractors,
-        Map<String, Function<? super T, Comparable<Object>>> sortableExtractors
-    ) {
+        Map<String, Function<? super T, Comparable<Object>>> sortableExtractors) {
 
         /**
          * Creates a new {@link Searched} instance.
@@ -135,8 +136,7 @@ public final class Searcheable<T> {
 
             public Builder<T> searchableExtractor(
                 final String key,
-                final Function<? super T, Object> keyExtractor
-            ) {
+                final Function<? super T, Object> keyExtractor) {
                 this.searchableExtractors.put(key, keyExtractor);
                 return this;
             }
@@ -144,8 +144,7 @@ public final class Searcheable<T> {
             @SuppressWarnings("unchecked")
             public <U extends Comparable<? super U>> Builder<T> sortableExtractor(
                 String key,
-                Function<? super T, ? extends U> keyExtractor
-            ) {
+                Function<? super T, ? extends U> keyExtractor) {
                 this.sortableExtractors.put(key, (Function<? super T, Comparable<Object>>) keyExtractor);
                 return this;
             }

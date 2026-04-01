@@ -1,10 +1,10 @@
 package io.kestra.core.utils;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class Slugify {
     private static final Pattern NONLATIN = Pattern.compile("[^\\w-]");

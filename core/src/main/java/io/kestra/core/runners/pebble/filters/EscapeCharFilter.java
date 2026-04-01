@@ -1,15 +1,16 @@
 package io.kestra.core.runners.pebble.filters;
 
-import io.kestra.core.utils.Enums;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Filter;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.kestra.core.utils.Enums;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.Filter;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class EscapeCharFilter implements Filter {
     private static final String ARG_NAME = "type";
@@ -83,6 +84,7 @@ public class EscapeCharFilter implements Filter {
             case DOUBLE -> escape(input, "\"", "\\\"");
         };
     }
+
     private FilterType argsToType(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
         if (!args.containsKey(ARG_NAME)) {
             throw new PebbleException(null, "The 'escapeChar' filter expects an argument '" + ARG_NAME + "'.", lineNumber, self.getName());

@@ -697,6 +697,10 @@
       "drag to reorder columns": "拖动以重新排序列",
       "edit filter": "编辑过滤器",
       "empty": "您还没有保存任何过滤器。",
+      "enabled": {
+        "description": "按启用筛选",
+        "label": "启用"
+      },
       "end_date": "结束日期",
       "enter description": "输入筛选器描述",
       "enter label": "输入过滤器标签",
@@ -756,7 +760,10 @@
         "description": "按指标类型筛选",
         "label": "指标"
       },
-      "name": "名称",
+      "name": {
+        "description": "按名称筛选",
+        "label": "名称"
+      },
       "namespace": {
         "description": "按namespace筛选",
         "label": "命名空间"
@@ -948,6 +955,10 @@
         "enabled": "启用",
         "label": "触发状态"
       },
+      "type": {
+        "description": "按类型筛选",
+        "label": "类型"
+      },
       "update": "更新",
       "username": {
         "description": "按用户名筛选",
@@ -1121,6 +1132,7 @@
     "labels": "标签",
     "last 48 hours": "最近48小时",
     "last X days count": "{days}天内的{count}",
+    "last evaluation date": "上次评估日期",
     "last execution date": "最后执行日期",
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",
@@ -1898,6 +1910,7 @@
     "start datetime": "开始日期时间",
     "started date": "开始日期",
     "state": "状态",
+    "state updated date": "状态更新日期",
     "state_history": "状态历史",
     "stats": "统计",
     "steps": "步骤",

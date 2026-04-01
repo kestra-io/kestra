@@ -1,13 +1,17 @@
 package io.kestra.core.models.namespaces.files;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.utils.IdUtils;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -15,8 +19,6 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Instant;
 
 @Builder(toBuilder = true)
 @Slf4j
@@ -56,7 +58,8 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
     private boolean deleted;
 
     @JsonCreator
-    public NamespaceFileMetadata(String tenantId, String namespace, String path, String parentPath, Integer version, boolean last, Long size, Instant created, @Nullable Instant updated, boolean deleted) {
+    public NamespaceFileMetadata(String tenantId, String namespace, String path, String parentPath, Integer version, boolean last, Long size, Instant created, @Nullable Instant updated,
+        boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
         this.path = path;
@@ -85,9 +88,7 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
     public static String parentPath(String path) {
         String withoutTrailingSlash = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
         // The parent path can't be set, it's always computed
-        return withoutTrailingSlash.contains("/") ?
-            withoutTrailingSlash.substring(0, withoutTrailingSlash.lastIndexOf("/") + 1) :
-            null;
+        return withoutTrailingSlash.contains("/") ? withoutTrailingSlash.substring(0, withoutTrailingSlash.lastIndexOf("/") + 1) : null;
     }
 
     public static NamespaceFileMetadata of(String tenantId, NamespaceFile namespaceFile) {

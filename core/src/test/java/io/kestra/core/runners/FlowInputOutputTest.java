@@ -1,42 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.encryption.EncryptionService;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.*;
-import io.kestra.core.models.flows.input.FileInput;
-import io.kestra.core.models.flows.input.InputAndValue;
-import io.kestra.core.models.flows.input.IntInput;
-import io.kestra.core.models.flows.input.MultiselectInput;
-import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.models.flows.input.URIInput;
-import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.repositories.KvMetadataRepositoryInterface;
-import io.kestra.core.secret.SecretNotFoundException;
-import io.kestra.core.secret.SecretService;
-import io.kestra.core.services.KVStoreService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVValue;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.multipart.CompletedFileUpload;
-import io.micronaut.http.multipart.CompletedPart;
-import io.micronaut.test.annotation.MockBean;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import io.kestra.core.exceptions.InputOutputValidationException;
-import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Mono;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -47,6 +10,43 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.reactivestreams.Publisher;
+
+import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.exceptions.InputOutputValidationException;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.FileInput;
+import io.kestra.core.models.flows.input.InputAndValue;
+import io.kestra.core.models.flows.input.IntInput;
+import io.kestra.core.models.flows.input.MultiselectInput;
+import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.secret.SecretNotFoundException;
+import io.kestra.core.secret.SecretService;
+import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.context.annotation.Value;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import reactor.core.publisher.Mono;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,7 +71,7 @@ class FlowInputOutputTest {
     StorageInterface storageInterface;
 
     @Inject
-    KvMetadataRepositoryInterface kvMetadataRepository;
+    KVMetadataStateStore kvMetadataStateStore;
 
     @Value("${kestra.encryption.secret-key}")
     String secretKey;
@@ -91,7 +91,7 @@ class FlowInputOutputTest {
         return new KVStoreService() {
             @Override
             public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository) {
+                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore) {
                     @Override
                     public Optional<KVValue> getValue(String key) {
                         return Optional.of(new KVValue(TEST_KV_VALUE));
@@ -110,9 +110,12 @@ class FlowInputOutputTest {
             .build();
         StringInput input2 = StringInput.builder()
             .id("input2")
-            .dependsOn(new DependsOn(
-                List.of("input1"),
-                "{{ inputs.input1 equals 'value1' }}"))
+            .dependsOn(
+                new DependsOn(
+                    List.of("input1"),
+                    "{{ inputs.input1 equals 'value1' }}"
+                )
+            )
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -126,7 +129,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "value1", true, false, null),
-                new InputAndValue(input2, "value2", true, false, null)),
+                new InputAndValue(input2, "value2", true, false, null)
+            ),
             values
         );
     }
@@ -160,7 +164,8 @@ class FlowInputOutputTest {
             List.of(
                 new InputAndValue(input1, "v1", true, false, null),
                 new InputAndValue(input2, "v2", true, false, null),
-                new InputAndValue(input3, "v3", true, false, null)),
+                new InputAndValue(input3, "v3", true, false, null)
+            ),
             values
         );
     }
@@ -194,7 +199,8 @@ class FlowInputOutputTest {
             List.of(
                 new InputAndValue(input1, "v1", true, false, null),
                 new InputAndValue(input2, "v2", false, false, null),
-                new InputAndValue(input3, "v3", false, false, null)),
+                new InputAndValue(input3, "v3", false, false, null)
+            ),
             values
         );
     }
@@ -207,9 +213,12 @@ class FlowInputOutputTest {
             .build();
         StringInput input2 = StringInput.builder()
             .id("input2")
-            .dependsOn(new DependsOn(
-                List.of("input1"),
-                "{{ inputs.input1 equals 'dummy' }}"))
+            .dependsOn(
+                new DependsOn(
+                    List.of("input1"),
+                    "{{ inputs.input1 equals 'dummy' }}"
+                )
+            )
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -223,7 +232,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "value1", true, false, null),
-                new InputAndValue(input2, "value2", false, false, null)),
+                new InputAndValue(input2, "value2", false, false, null)
+            ),
             values
         );
     }
@@ -236,9 +246,12 @@ class FlowInputOutputTest {
             .build();
         StringInput input2 = StringInput.builder()
             .id("input2")
-            .dependsOn(new DependsOn(
-                List.of("input1"),
-                "{{ inputs.dummy equals 'dummy' }}"))
+            .dependsOn(
+                new DependsOn(
+                    List.of("input1"),
+                    "{{ inputs.dummy equals 'dummy' }}"
+                )
+            )
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -301,7 +314,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "0", true, true, null),
-                new InputAndValue(input2, 0, true, true, null)),
+                new InputAndValue(input2, 0, true, true, null)
+            ),
             values
         );
     }
@@ -320,7 +334,7 @@ class FlowInputOutputTest {
             .type(Type.STRING)
             .defaults(Property.ofExpression("{{ inputs.input1 }}_world"))
             .required(false)
-            .dependsOn(new DependsOn(List.of("input1"),null))
+            .dependsOn(new DependsOn(List.of("input1"), null))
             .build();
 
         List<Input<?>> inputs = List.of(input1, input2);
@@ -334,7 +348,8 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "hello", true, true, null),
-                new InputAndValue(input2, "hello_world", true, true, null)),
+                new InputAndValue(input2, "hello_world", true, true, null)
+            ),
             values
         );
     }
@@ -370,7 +385,7 @@ class FlowInputOutputTest {
         List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
 
         // Then
-        Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput)results.getFirst().input()).getValues().getFirst());
+        Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput) results.getFirst().input()).getValues().getFirst());
     }
 
     @Test
@@ -458,20 +473,24 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
-        "jdbc:duckdb:",
-        "file:///tmp/myfile.csv",
-        "http://localhost:8080/api",
-        "nsfile:///file.txt"
-    })
+    @ValueSource(
+        strings = {
+            "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
+            "jdbc:duckdb:",
+            "file:///tmp/myfile.csv",
+            "http://localhost:8080/api",
+            "nsfile:///file.txt"
+        }
+    )
     void shouldAcceptValidUriInputs(String validUri) {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                URIInput.builder().id("uri").type(Type.URI).required(true).build()
-            ))
+            .inputs(
+                List.of(
+                    URIInput.builder().id("uri").type(Type.URI).required(true).build()
+                )
+            )
             .build();
 
         Map<String, Object> result = flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("uri", validUri));
@@ -480,18 +499,22 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "justastring",
-        "not a uri",
-        ""
-    })
+    @ValueSource(
+        strings = {
+            "justastring",
+            "not a uri",
+            ""
+        }
+    )
     void shouldRejectInvalidUriInputs(String invalidUri) {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                URIInput.builder().id("uri").type(Type.URI).required(true).build()
-            ))
+            .inputs(
+                List.of(
+                    URIInput.builder().id("uri").type(Type.URI).required(true).build()
+                )
+            )
             .build();
 
         Assertions.assertThrows(
@@ -501,20 +524,24 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
-        "jdbc:duckdb:",
-        "file:///tmp/myfile.csv",
-        "http://localhost:8080/api",
-        "nsfile:///file.txt"
-    })
+    @ValueSource(
+        strings = {
+            "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
+            "jdbc:duckdb:",
+            "file:///tmp/myfile.csv",
+            "http://localhost:8080/api",
+            "nsfile:///file.txt"
+        }
+    )
     void shouldAcceptValidUriOutputs(String validUri) {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .outputs(List.of(
-                Output.builder().id("duck").type(Type.URI).build()
-            ))
+            .outputs(
+                List.of(
+                    Output.builder().id("duck").type(Type.URI).build()
+                )
+            )
             .build();
 
         Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("duck", validUri));
@@ -523,18 +550,22 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "justastring",
-        "not a uri",
-        ""
-    })
+    @ValueSource(
+        strings = {
+            "justastring",
+            "not a uri",
+            ""
+        }
+    )
     void shouldRejectInvalidUriOutputs(String invalidUri) {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .outputs(List.of(
-                Output.builder().id("duck").type(Type.URI).build()
-            ))
+            .outputs(
+                List.of(
+                    Output.builder().id("duck").type(Type.URI).build()
+                )
+            )
             .build();
 
         Assertions.assertThrows(
@@ -549,9 +580,11 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .outputs(List.of(
-                Output.builder().id("secret").type(Type.SECRET).build()
-            ))
+            .outputs(
+                List.of(
+                    Output.builder().id("secret").type(Type.SECRET).build()
+                )
+            )
             .build();
 
         Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("secret", TEST_SECRET_VALUE));

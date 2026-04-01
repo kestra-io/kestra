@@ -1,23 +1,24 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.models.triggers.Trigger;
+import java.util.Date;
+
+import org.jooq.Field;
+
+import io.kestra.core.repositories.RepositoryBean;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 
-import java.util.Date;
-
-@Singleton
+@RepositoryBean
 @H2RepositoryEnabled
 public class H2TriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject
-    public H2TriggerRepository(@Named("triggers") H2Repository<Trigger> repository,
-                               JdbcFilterService filterService) {
+    public H2TriggerRepository(@Named("triggers") H2Repository<TriggerState> repository,
+        JdbcFilterService filterService) {
         super(repository, filterService);
     }
 

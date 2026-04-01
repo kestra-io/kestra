@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks.runners;
 
 import io.kestra.core.models.property.Property;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface RemoteRunnerInterface {

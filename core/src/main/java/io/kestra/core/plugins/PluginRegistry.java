@@ -1,8 +1,5 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.models.Plugin;
-
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
@@ -10,6 +7,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
+
+import io.kestra.core.models.Plugin;
 
 /**
  * Registry for managing all Kestra's {@link Plugin}.
@@ -19,8 +18,8 @@ public interface PluginRegistry {
     /**
      * Gets all versions for a given plugin type.
      *
-     * @param type  The plugin type.
-     * @return      The list of supported versions,or an empty list if the type is unknown.
+     * @param type The plugin type.
+     * @return The list of supported versions,or an empty list if the type is unknown.
      */
     List<String> getAllVersionsForType(final String type);
 
@@ -53,8 +52,8 @@ public interface PluginRegistry {
      * Any plugin class registered through this method will be then accessible from
      * the method {@link #findClassByIdentifier(PluginIdentifier)}.
      *
-     * @param identifier  The plugin identifier.
-     * @param plugin      The class for the register.
+     * @param identifier The plugin identifier.
+     * @param plugin The class for the register.
      */
     void registerClassForIdentifier(PluginIdentifier identifier, PluginClassAndMetadata<? extends Plugin> plugin);
 
@@ -127,7 +126,7 @@ public interface PluginRegistry {
      * @return {@code true} if supported. Otherwise {@code false}.
      */
     boolean isVersioningSupported();
-    
+
     /**
      * Computes a CRC32 hash value representing the current content of the plugin registry.
      *
@@ -136,11 +135,12 @@ public interface PluginRegistry {
      */
     default long hash() {
         Checksum crc32 = new CRC32();
-        
+
         for (RegisteredPlugin plugin : plugins()) {
             Optional.ofNullable(plugin.getExternalPlugin())
                 .map(ExternalPlugin::getCrc32)
-                .ifPresent(checksum -> {
+                .ifPresent(checksum ->
+                {
                     byte[] bytes = ByteBuffer.allocate(Long.BYTES).putLong(checksum).array();
                     crc32.update(bytes, 0, bytes.length);
                 });

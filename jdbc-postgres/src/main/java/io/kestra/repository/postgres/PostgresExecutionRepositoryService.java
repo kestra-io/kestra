@@ -1,15 +1,16 @@
 package io.kestra.repository.postgres;
 
+import java.util.*;
+
+import org.jooq.Condition;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.AbstractJdbcRepository;
-import org.jooq.Condition;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
-
-import java.util.*;
 
 public abstract class PostgresExecutionRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Execution> jdbcRepository, String query, Map<String, String> labels) {
@@ -19,10 +20,10 @@ public abstract class PostgresExecutionRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
         }
 
-        if (labels != null)  {
-            labels.forEach((key, value) -> {
-                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
-                conditions.add(DSL.condition(sql));
+        if (labels != null) {
+            labels.forEach((key, value) ->
+            {
+                conditions.add(DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)));
             });
         }
 
@@ -46,12 +47,13 @@ public abstract class PostgresExecutionRepositoryService {
             }
         } else {
             var labels = input.getLeft();
-            labels.forEach((key, value) -> {
-                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
+            labels.forEach((key, value) ->
+            {
+                Condition labelCondition = DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val((String) key, String.class), DSL.val((String) value, String.class));
                 switch (operation) {
-                    case EQUALS -> conditions.add(DSL.condition(sql));
-                    case NOT_EQUALS, NOT_IN -> conditions.add(DSL.not(DSL.condition(sql)));
-                    case IN -> inConditions.add(DSL.condition(sql));
+                    case EQUALS -> conditions.add(labelCondition);
+                    case NOT_EQUALS, NOT_IN -> conditions.add(DSL.not(labelCondition));
+                    case IN -> inConditions.add(labelCondition);
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             });
@@ -64,13 +66,17 @@ public abstract class PostgresExecutionRepositoryService {
     }
 
     public static Condition statesFilter(List<State.Type> state) {
-        return DSL.or(state
-            .stream()
-            .map(Enum::name)
-            .map(s -> DSL.field("state_current")
-                .eq(DSL.field("CAST(? AS state_type)", SQLDataType.VARCHAR(50).getArrayType(), s)
-                ))
-            .toList()
+        return DSL.or(
+            state
+                .stream()
+                .map(Enum::name)
+                .map(
+                    s -> DSL.field("state_current")
+                        .eq(
+                            DSL.field("CAST(? AS state_type)", SQLDataType.VARCHAR(50).getArrayType(), s)
+                        )
+                )
+                .toList()
         );
     }
 

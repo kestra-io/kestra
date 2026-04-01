@@ -1,14 +1,16 @@
 package io.kestra.plugin.core.trigger;
 
+import java.net.URI;
+import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.WebhookService;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.net.URI;
-import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

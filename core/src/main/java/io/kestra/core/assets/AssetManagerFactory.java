@@ -1,11 +1,12 @@
 package io.kestra.core.assets;
 
-import io.kestra.core.runners.AssetEmit;
-import io.kestra.core.runners.AssetEmitter;
-import jakarta.inject.Singleton;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import io.kestra.core.runners.AssetEmit;
+import io.kestra.core.runners.AssetEmitter;
+
+import jakarta.inject.Singleton;
 
 @Singleton
 public class AssetManagerFactory {

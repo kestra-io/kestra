@@ -1349,17 +1349,8 @@
         "variable": "Variable"
       },
       "sections": {
-        "main": "Main",
-        "connection": "Connection",
-        "source": "Source",
-        "processing": "Processing",
-        "execution": "Execution",
-        "destination": "Destination",
-        "reliability": "Reliability",
-        "advanced": "Advanced",
-        "optional": "Optional",
         "general": "General properties",
-        "deprecated": "Deprecated",
+        "deprecated": "Deprecated properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Error Handlers",

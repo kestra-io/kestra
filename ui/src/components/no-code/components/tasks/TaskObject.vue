@@ -24,7 +24,7 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item name="general" v-if="generalProperties?.length" :title="$t('no_code.sections.general')">
+                <el-collapse-item name="general" v-if="generalProperties?.length" :title="groupTitle('general')">
                     <template v-for="[fieldKey, fieldSchema] in generalProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -33,7 +33,7 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
+                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="groupTitle('deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>

@@ -1648,6 +1648,7 @@
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
     "replay inputs": "Входные данные",
+    "replay inputs new required": "Эта редакция имеет inputs. Вам будет предложено их заполнить.",
     "replay latest revision": "Повтор с использованием последней редакции",
     "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
     "replay using": "Повторное воспроизведение с использованием",
@@ -1658,6 +1659,7 @@
     "restart": "Перезапуск",
     "restart change revision": "Вы можете изменить редакцию, которая будет использоваться для нового выполнения.",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение <code>{id}</code>?",
+    "restart execution title": "Перезапустить выполнение",
     "restart latest revision": "Перезапустить последнюю редакцию",
     "restart tooltip": "Перезапустить выполнение с <code>{state}</code> task",
     "restart trigger": {

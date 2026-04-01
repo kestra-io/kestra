@@ -44,7 +44,7 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
     @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     protected String version;
 
     @JsonIgnore

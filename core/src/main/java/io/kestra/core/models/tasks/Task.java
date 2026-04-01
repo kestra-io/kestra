@@ -39,51 +39,51 @@ abstract public class Task implements TaskInterface {
 
     protected String type;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     protected String version;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private String description;
 
     @Valid
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     protected AbstractRetry retry;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     protected Property<Duration> timeout;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     protected Boolean disabled = false;
 
     @Valid
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private WorkerGroup workerGroup;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private Level logLevel;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private boolean allowFailure = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private boolean logToFile = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private String runIf = "true";
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private boolean allowWarning = false;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     @Valid
     private Cache taskCache;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     @Valid
     @Nullable
     private AssetsDeclaration assets;

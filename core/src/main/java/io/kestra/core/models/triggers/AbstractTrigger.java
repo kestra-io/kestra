@@ -38,13 +38,13 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     protected String type;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     protected String version;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private String description;
 
-    @PluginProperty(group = PluginProperty.CORE_GROUP)
+    @PluginProperty(group = "core")
     @Schema(
         title = "List of conditions in order to limit the flow trigger."
     )
@@ -52,15 +52,15 @@ abstract public class AbstractTrigger implements TriggerInterface {
     protected List<@Valid @NotNull Condition> conditions;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     @Schema(defaultValue = "false")
     private boolean disabled = false;
 
     @Valid
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private WorkerGroup workerGroup;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private Level logLevel;
 
     @Schema(
@@ -69,29 +69,29 @@ abstract public class AbstractTrigger implements TriggerInterface {
     )
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private List<@NoSystemLabelValidation Label> labels;
 
-    @PluginProperty(group = PluginProperty.CORE_GROUP)
+    @PluginProperty(group = "core")
     @Schema(
         title = "List of execution states after which a trigger should be stopped (a.k.a. disabled)."
     )
     private List<State.Type> stopAfter;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private boolean logToFile = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private boolean failOnTriggerError = false;
 
-    @PluginProperty(group = PluginProperty.CORE_GROUP)
+    @PluginProperty(group = "core")
     @Schema(
         title = "Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress."
     )
     private boolean allowConcurrent = false;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "core")
     private AssetsDeclaration assets;
 }

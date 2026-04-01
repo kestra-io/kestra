@@ -1,13 +1,14 @@
 package io.kestra.cli.commands.migrations.metadata;
 
-import io.kestra.cli.App;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
+import io.kestra.cli.Kestra;
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,7 +22,7 @@ public class SecretsMetadataMigrationCommandTest {
             String[] secretMetadataMigrationCommand = {
                 "migrate", "metadata", "secrets"
             };
-            PicocliRunner.call(App.class, ctx, secretMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, secretMetadataMigrationCommand);
 
             assertThat(err.toString()).contains("❌ Secrets Metadata migration failed: Secret migration is not needed in the OSS version");
         }

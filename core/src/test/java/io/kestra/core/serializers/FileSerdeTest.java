@@ -1,13 +1,5 @@
 package io.kestra.core.serializers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,10 +7,19 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import reactor.core.publisher.Flux;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.in;
 
 class FileSerdeTest {
     static Stream<Arguments> source() {
@@ -40,7 +41,7 @@ class FileSerdeTest {
         );
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes", "deprecated"})
+    @SuppressWarnings({ "unchecked", "rawtypes", "deprecated" })
     @ParameterizedTest
     @MethodSource("source")
     void ion(Object value, Object resultValue) throws IOException {
@@ -54,8 +55,7 @@ class FileSerdeTest {
 
         BufferedReader inputStream = new BufferedReader(new FileReader(tempFile));
 
-        Map<String, Object> result = Flux
-            .create(FileSerde.reader(inputStream), FluxSink.OverflowStrategy.BUFFER)
+        Map<String, Object> result = FileSerde.readAll(inputStream)
             .map(o -> (Map<String, Object>) o)
             .blockFirst();
 
@@ -101,7 +101,8 @@ class FileSerdeTest {
         final List<String> inputLines = List.of("{id:1,value:\"value1\"}");
         Files.write(inputTempFilePath, inputLines);
 
-        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
+        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath), new TypeReference<SimpleEntry>() {
+        }).collectList().block();
         assertThat(outputValues).hasSize(1);
         assertThat(outputValues.getFirst()).isEqualTo(new SimpleEntry(1, "value1"));
     }
@@ -113,7 +114,8 @@ class FileSerdeTest {
         final List<String> inputLines = List.of("{id:1,value:\"value1\"}", "{id:2,value:\"value2\"}", "{id:3,value:\"value3\"}");
         Files.write(inputTempFilePath, inputLines);
 
-        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
+        final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newBufferedReader(inputTempFilePath), new TypeReference<SimpleEntry>() {
+        }).collectList().block();
         assertThat(outputValues).hasSize(3);
         assertThat(outputValues.getFirst()).isEqualTo(new SimpleEntry(1, "value1"));
         assertThat(outputValues.get(1)).isEqualTo(new SimpleEntry(2, "value2"));
@@ -176,5 +178,6 @@ class FileSerdeTest {
         return Files.createTempFile(FileSerdeTest.class.getSimpleName().toLowerCase() + "_", ".ion");
     }
 
-    private record SimpleEntry(long id, String value) {}
+    private record SimpleEntry(long id, String value) {
+    }
 }

@@ -1,14 +1,12 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.List;
+import java.util.Map;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public class CurrentEachOutputFunction implements Function {
 
@@ -29,7 +27,7 @@ public class CurrentEachOutputFunction implements Function {
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {
-                    if(outputs.get(taskrun.get("value")) == null) {
+                    if (outputs.get(taskrun.get("value")) == null) {
                         return null;
                     }
                     outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));

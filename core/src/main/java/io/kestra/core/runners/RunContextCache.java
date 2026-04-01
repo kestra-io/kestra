@@ -1,17 +1,17 @@
 package io.kestra.core.runners;
 
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Singleton
 public class RunContextCache {
@@ -38,7 +38,7 @@ public class RunContextCache {
             .orElseGet(Map::of);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private Map<String, String> envVariables(String envPrefix) {
         Map<String, String> result = new HashMap<>(System.getenv());
         result.putAll((Map) System.getProperties());
@@ -47,10 +47,12 @@ public class RunContextCache {
             .entrySet()
             .stream()
             .filter(e -> !redactedEnvVar.contains(e.getKey()) && e.getKey().startsWith(envPrefix))
-            .map(e -> new AbstractMap.SimpleEntry<>(
-                e.getKey().substring(envPrefix.length()).toLowerCase(),
-                e.getValue()
-            ))
+            .map(
+                e -> new AbstractMap.SimpleEntry<>(
+                    e.getKey().substring(envPrefix.length()).toLowerCase(),
+                    e.getValue()
+                )
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

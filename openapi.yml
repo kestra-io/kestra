@@ -4,7 +4,7 @@ info:
   license:
     name: Apache 2.0
     url: https://raw.githubusercontent.com/kestra-io/kestra/master/LICENSE
-  version: 1.4.0-SNAPSHOT
+  version: 2.0.0-SNAPSHOT
 tags:
 - name: Flows
   description: Flows API
@@ -3649,7 +3649,39 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiAsyncEvent"
+  /api/v1/{tenant}/executions/{executionId}/eval:
+    post:
+      tags:
+      - Executions
+      summary: Evaluate a variable expression for this execution
+      operationId: evalExpression
+      parameters:
+      - name: executionId
+        in: path
+        description: The execution id
+        required: true
+        schema:
+          type: string
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: The Pebble expression that should be evaluated
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+      responses:
+        "200":
+          description: evalExpression 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionController.EvalResult"
   /api/v1/{tenant}/executions/{executionId}/eval/{taskRunId}:
     post:
       tags:
@@ -3927,7 +3959,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiAsyncEvent"
   /api/v1/{tenant}/executions/{executionId}/graph:
     get:
       tags:
@@ -4105,7 +4137,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiAsyncEvent"
   /api/v1/{tenant}/executions/{executionId}/replay-with-inputs:
     post:
       tags:
@@ -4165,7 +4197,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiAsyncEvent"
       x-sdk-customization:
         x-multipart: "true"
   /api/v1/{tenant}/executions/{executionId}/restart:
@@ -4200,7 +4232,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiAsyncEvent"
   /api/v1/{tenant}/executions/{executionId}/resume:
     post:
       tags:
@@ -4330,7 +4362,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiAsyncEvent"
   /api/v1/{tenant}/executions/{executionId}/unqueue:
     post:
       tags:
@@ -4363,7 +4395,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiAsyncEvent"
   /api/v1/{tenant}/executions/{namespace}/{id}:
     post:
       tags:
@@ -5805,52 +5837,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Task"
-  /api/v1/{tenant}/flows/{namespace}/{id}/{taskId}:
-    patch:
-      tags:
-      - Flows
-      summary: Update a single task on a flow
-      operationId: updateTask
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: taskId
-        in: path
-        description: The task id
-        required: true
-        schema:
-          type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: The task
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Task"
-        required: true
-      responses:
-        "200":
-          description: updateTask 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Flow"
-      deprecated: true
-      x-deprecated-message: should not be used anymore
   /api/v1/{tenant}/kv:
     get:
       tags:
@@ -6224,7 +6210,7 @@ paths:
           content:
             text/event-stream:
               schema:
-                $ref: "#/components/schemas/Event_LogEntry_"
+                $ref: "#/components/schemas/Event_FollowLogEvent_"
   /api/v1/{tenant}/logs/{namespace}/{flowId}:
     delete:
       tags:
@@ -7313,6 +7299,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiSecretListResponse_ApiSecretMeta_"
       deprecated: true
+  /api/v1/{tenant}/outputs/{executionId}/{taskRunId}:
+    get:
+      tags:
+      - Outputs
+      summary: Get task run outputs
+      operationId: getTaskRunOutputs
+      parameters:
+      - name: executionId
+        in: path
+        description: The execution id
+        required: true
+        schema:
+          type: string
+      - name: taskRunId
+        in: path
+        description: The task run id
+        required: true
+        schema:
+          type: string
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: getTaskRunOutputs 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskOutput"
   /api/v1/{tenant}/secrets:
     get:
       tags:
@@ -7368,12 +7385,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiSecretListResponse_ApiSecretMeta_"
-  /api/v1/{tenant}/triggers:
+  /api/v1/{tenant}/triggers/backfill/create:
     put:
       tags:
       - Triggers
-      summary: Update a trigger
-      operationId: updateTrigger
+      summary: Create a backfill
+      operationId: createBackfill
       parameters:
       - name: tenant
         in: path
@@ -7384,15 +7401,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Trigger"
+              $ref: "#/components/schemas/TriggerController.ApiCreateBackfillRequest"
         required: true
       responses:
         "200":
-          description: updateTrigger 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Trigger"
+          description: createBackfill 200 response
   /api/v1/{tenant}/triggers/backfill/delete:
     post:
       tags:
@@ -7409,15 +7422,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Trigger"
+              $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
           description: deleteBackfill 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Trigger"
   /api/v1/{tenant}/triggers/backfill/delete/by-query:
     post:
       tags:
@@ -7481,7 +7490,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Trigger"
+                $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
@@ -7506,15 +7515,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Trigger"
+              $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
           description: pauseBackfill 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Trigger"
   /api/v1/{tenant}/triggers/backfill/pause/by-query:
     post:
       tags:
@@ -7578,7 +7583,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Trigger"
+                $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
@@ -7603,15 +7608,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Trigger"
+              $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
           description: unpauseBackfill 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Trigger"
   /api/v1/{tenant}/triggers/backfill/unpause/by-query:
     post:
       tags:
@@ -7675,7 +7676,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Trigger"
+                $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
@@ -7734,7 +7735,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Trigger"
+                $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
@@ -7868,7 +7869,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedResults_TriggerController.Triggers_"
+                $ref: "#/components/schemas/PagedResults_ApiTriggerAndState_"
+  /api/v1/{tenant}/triggers/set-disabled:
+    put:
+      tags:
+      - Triggers
+      summary: Disable/enable a trigger
+      operationId: disableTriggerById
+      parameters:
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriggerController.ApiDisableTriggerRequest"
+        required: true
+      responses:
+        "200":
+          description: disableTriggerById 200 response
   /api/v1/{tenant}/triggers/set-disabled/by-query:
     post:
       tags:
@@ -8010,7 +8032,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Trigger"
+                $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         required: true
       responses:
         "200":
@@ -8055,11 +8077,6 @@ paths:
           nullable: true
           items:
             type: string
-        examples:
-          Sort by timestamp in ascending order:
-            value: timestamp:asc
-          Sort by trigger ID in descending order:
-            value: triggerId:desc
       - name: q
         in: query
         description: A string filter
@@ -8090,7 +8107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedResults_Trigger_"
+                $ref: "#/components/schemas/PagedResults_ApiTriggerState_"
   /api/v1/{tenant}/triggers/{namespace}/{flowId}/{triggerId}:
     delete:
       tags:
@@ -8124,10 +8141,6 @@ paths:
       responses:
         "200":
           description: deleteTrigger 200 response
-          content:
-            application/json:
-              schema:
-                type: object
   /api/v1/{tenant}/triggers/{namespace}/{flowId}/{triggerId}/restart:
     post:
       tags:
@@ -8169,7 +8182,7 @@ paths:
     post:
       tags:
       - Triggers
-      summary: Unlock a trigger
+      summary: Unlock a trigger. Trigger will be unlocked asynchronously
       operationId: unlockTrigger
       parameters:
       - name: namespace
@@ -8201,7 +8214,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Trigger"
+                type: object
   /api/v1/{tenant}/usages/all:
     get:
       tags:
@@ -8288,26 +8301,6 @@ components:
       - ERROR
       - FINALLY
       - AFTER_EXECUTION
-    AbstractMetricEntry_Object_:
-      required:
-      - name
-      type: object
-      properties:
-        type:
-          type: string
-        value:
-          type: object
-        name:
-          type: string
-        description:
-          type: string
-        tags:
-          type: object
-          additionalProperties:
-            type: string
-        timestamp:
-          type: string
-          format: date-time
     AbstractRetry:
       type: object
     AbstractTrigger:
@@ -8316,10 +8309,6 @@ components:
       - type
       type: object
       properties:
-        minLogLevel:
-          deprecated: true
-          allOf:
-          - $ref: "#/components/schemas/Level"
         id:
           title: A unique ID for the whole flow.
           minLength: 1
@@ -8428,6 +8417,11 @@ components:
         properties:
           providerId:
             type: string
+    ApiAsyncEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
     ApiAutocomplete:
       type: object
       properties:
@@ -8463,6 +8457,52 @@ components:
       properties:
         key:
           type: string
+    ApiTriggerAndState:
+      type: object
+      properties:
+        trigger:
+          $ref: "#/components/schemas/AbstractTrigger"
+        state:
+          $ref: "#/components/schemas/ApiTriggerState"
+      description: API DTO combining a trigger definition with its runtime state.
+    ApiTriggerState:
+      type: object
+      properties:
+        namespace:
+          type: string
+        flowId:
+          type: string
+        triggerId:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        evaluatedAt:
+          type: string
+          format: date-time
+        nextEvaluationDate:
+          type: string
+          format: date-time
+        backfill:
+          $ref: "#/components/schemas/Backfill"
+        stopAfter:
+          type: array
+          items:
+            $ref: "#/components/schemas/State.Type"
+        disabled:
+          type: boolean
+        locked:
+          type: boolean
+        workerId:
+          type: string
+        lastTriggeredDate:
+          type: string
+          format: date-time
+      description: |-
+        API DTO for exposing trigger state to the UI.
+
+
+        Excludes internal scheduler fields (`tenantId`, `vnode`, `lastEventId`, `type`).
     Asset:
       required:
       - id
@@ -8954,11 +8994,11 @@ components:
           type: string
         retry:
           type: string
-    Event_LogEntry_:
+    Event_FollowLogEvent_:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/LogEntry"
+          $ref: "#/components/schemas/FollowLogEvent"
         id:
           type: string
         name:
@@ -9290,11 +9330,6 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/Task"
-          taskDefaults:
-            type: array
-            deprecated: true
-            items:
-              $ref: "#/components/schemas/PluginDefault"
           variables:
             type: object
             additionalProperties: false
@@ -9308,11 +9343,6 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/Task"
-          listeners:
-            type: array
-            deprecated: true
-            items:
-              $ref: "#/components/schemas/Listener"
           afterExecution:
             type: array
             items:
@@ -9686,6 +9716,37 @@ components:
               $ref: "#/components/schemas/SLA"
           source:
             type: string
+    FollowLogEvent:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        namespace:
+          type: string
+        flowId:
+          type: string
+        taskId:
+          type: string
+        executionId:
+          type: string
+        taskRunId:
+          type: string
+        attemptNumber:
+          type: integer
+          format: int32
+        triggerId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          $ref: "#/components/schemas/Level"
+        thread:
+          type: string
+        message:
+          type: string
+        executionKind:
+          $ref: "#/components/schemas/ExecutionKind"
     IdWithNamespace:
       type: object
       properties:
@@ -9706,9 +9767,6 @@ components:
       - type
       type: object
       properties:
-        name:
-          type: string
-          deprecated: true
         id:
           title: The ID of the input.
           minLength: 1
@@ -9828,22 +9886,6 @@ components:
       - INFO
       - DEBUG
       - TRACE
-    Listener:
-      required:
-      - tasks
-      type: object
-      properties:
-        description:
-          type: string
-        conditions:
-          type: array
-          items:
-            $ref: "#/components/schemas/Condition"
-        tasks:
-          minItems: 1
-          type: array
-          items:
-            $ref: "#/components/schemas/Task"
     LogEntry:
       required:
       - flowId
@@ -10009,8 +10051,6 @@ components:
           type: boolean
         isUiAnonymousUsageEnabled:
           type: boolean
-        isTemplateEnabled:
-          type: boolean
         environment:
           $ref: "#/components/schemas/MiscController.Environment"
         url:
@@ -10085,6 +10125,32 @@ components:
           type: string
         required:
           type: boolean
+    PagedResults_ApiTriggerAndState_:
+      required:
+      - results
+      - total
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiTriggerAndState"
+        total:
+          type: integer
+          format: int64
+    PagedResults_ApiTriggerState_:
+      required:
+      - results
+      - total
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiTriggerState"
+        total:
+          type: integer
+          format: int64
     PagedResults_BlueprintController.ApiBlueprintItem_:
       required:
       - results
@@ -10227,32 +10293,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SearchResult_Flow_"
-        total:
-          type: integer
-          format: int64
-    PagedResults_TriggerController.Triggers_:
-      required:
-      - results
-      - total
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/TriggerController.Triggers"
-        total:
-          type: integer
-          format: int64
-    PagedResults_Trigger_:
-      required:
-      - results
-      - total
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/Trigger"
         total:
           type: integer
           format: int64
@@ -10628,7 +10668,6 @@ components:
       type: string
       enum:
       - FLOW
-      - TEMPLATE
       - TASK
       - TRIGGER
       - PLUGINDEFAULT
@@ -10780,6 +10819,7 @@ components:
       - SCHEDULER
       - WEBSERVER
       - WORKER
+      - CONTROLLER
       - INVALID
     SoftDeletable_FlowInterface_:
       type: object
@@ -10952,6 +10992,20 @@ components:
             $ref: "#/components/schemas/Input_Object_"
         subflowId:
           $ref: "#/components/schemas/ExecutableTask.SubflowId"
+    TaskOutput:
+      type: object
+      properties:
+        taskRunId:
+          type: string
+        tenantId:
+          type: string
+        executionId:
+          type: string
+        value:
+          type: string
+          format: byte
+        uri:
+          type: string
     TaskRun:
       required:
       - executionId
@@ -10962,9 +11016,6 @@ components:
       - taskId
       type: object
       properties:
-        items:
-          type: string
-          deprecated: true
         id:
           type: string
         executionId:
@@ -10983,9 +11034,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskRunAttempt"
-        outputs:
-          type: object
-          nullable: true
         assets:
           nullable: true
           allOf:
@@ -11004,11 +11052,6 @@ components:
       - state
       type: object
       properties:
-        metrics:
-          type: array
-          deprecated: true
-          items:
-            $ref: "#/components/schemas/AbstractMetricEntry_Object_"
         state:
           $ref: "#/components/schemas/State"
         workerId:
@@ -11046,62 +11089,54 @@ components:
           type: string
         max:
           type: string
-    Trigger:
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/TriggerContext"
-      - type: object
-        properties:
-          executionId:
-            type: string
-            nullable: true
-          updatedDate:
-            type: string
-            format: date-time
-            nullable: true
-          evaluateRunningDate:
-            type: string
-            format: date-time
-            nullable: true
-          workerId:
-            type: string
-            nullable: true
-    TriggerContext:
-      required:
-      - date
-      - flowId
-      - namespace
-      - triggerId
+    TriggerController.ApiCreateBackfillRequest:
       type: object
       properties:
-        disabled:
-          type: boolean
-          default: false
-        tenantId:
-          pattern: "^[a-z0-9][a-z0-9_-]"
-          type: string
         namespace:
           type: string
         flowId:
           type: string
         triggerId:
           type: string
-        date:
-          type: string
-          format: date-time
-        nextExecutionDate:
-          type: string
-          format: date-time
-          nullable: true
         backfill:
-          nullable: true
-          allOf:
-          - $ref: "#/components/schemas/Backfill"
-        stopAfter:
+          $ref: "#/components/schemas/TriggerController.ApiCreateBackfillRequest.Backfill"
+    TriggerController.ApiCreateBackfillRequest.Backfill:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        inputs:
+          type: object
+          additionalProperties:
+            type: object
+        labels:
           type: array
-          nullable: true
           items:
-            $ref: "#/components/schemas/State.Type"
+            $ref: "#/components/schemas/Label"
+    TriggerController.ApiDisableTriggerRequest:
+      type: object
+      properties:
+        namespace:
+          type: string
+        flowId:
+          type: string
+        triggerId:
+          type: string
+        disabled:
+          type: boolean
+    TriggerController.ApiTriggerId:
+      type: object
+      properties:
+        namespace:
+          type: string
+        flowId:
+          type: string
+        triggerId:
+          type: string
     TriggerController.SetDisabledRequest:
       required:
       - disabled
@@ -11112,25 +11147,16 @@ components:
           minItems: 1
           type: array
           items:
-            $ref: "#/components/schemas/Trigger"
+            $ref: "#/components/schemas/TriggerController.ApiTriggerId"
         disabled:
           type: boolean
-    TriggerController.Triggers:
-      type: object
-      properties:
-        abstractTrigger:
-          $ref: "#/components/schemas/AbstractTrigger"
-        triggerContext:
-          $ref: "#/components/schemas/Trigger"
     Type:
       type: string
       enum:
       - STRING
-      - ENUM
       - SELECT
       - INT
       - FLOAT
-      - BOOLEAN
       - BOOL
       - DATETIME
       - DATE

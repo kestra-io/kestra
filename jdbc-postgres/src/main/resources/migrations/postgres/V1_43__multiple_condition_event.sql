@@ -1,1 +1,0 @@
-ALTER TYPE queue_type ADD VALUE IF NOT EXISTS 'io.kestra.core.runners.MultipleConditionEvent';

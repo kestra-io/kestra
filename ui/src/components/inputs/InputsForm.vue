@@ -26,7 +26,7 @@
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
-                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
+                v-if="input.type === 'SELECT' && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
@@ -44,7 +44,7 @@
                 </el-option>
             </el-select>
             <el-radio-group
-                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
+                v-if="input.type === 'SELECT' && input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
@@ -109,17 +109,6 @@
                 />
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
-            <el-radio-group
-                :data-testid="`input-form-${input.id}`"
-                v-if="input.type === 'BOOLEAN'"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                class="w-100 boolean-inputs"
-            >
-                <el-radio-button :label="$t('true')" :value="true" />
-                <el-radio-button :label="$t('false')" :value="false" />
-                <el-radio-button :label="$t('undefined')" value="undefined" />
-            </el-radio-group>
             <el-switch
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"

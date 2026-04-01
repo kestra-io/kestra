@@ -1,22 +1,5 @@
 package io.kestra.jdbc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.models.HasUID;
-import io.kestra.core.models.executions.metrics.MetricAggregation;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.Sort.Order;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
-
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
@@ -27,6 +10,26 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.HasUID;
+import io.kestra.core.models.executions.metrics.MetricAggregation;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.Sort.Order;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 
 import static io.kestra.core.utils.CaseUtils.camelToSnake;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
@@ -75,12 +78,13 @@ public abstract class AbstractJdbcRepository<T> {
 
     public int count(Condition condition) {
         return getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectCount()
-                .from(getTable())
-                .where(condition)
-                .fetchOne(0, Integer.class)
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .selectCount()
+                    .from(getTable())
+                    .where(condition)
+                    .fetchOne(0, Integer.class)
             );
     }
 
@@ -89,8 +93,8 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public void persist(T entity, Map<Field<Object>, Object> fields) {
-        dslContextWrapper.transaction(configuration ->
-            this.persist(entity, DSL.using(configuration), fields)
+        dslContextWrapper.transaction(
+            configuration -> this.persist(entity, DSL.using(configuration), fields)
         );
     }
 
@@ -107,7 +111,8 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public int persistBatch(List<T> items) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             DSLContext dslContext = DSL.using(configuration);
             var inserts = items.stream()
                 .map(item -> buildInsertRequest(item, this.persistFields(item), dslContext))
@@ -118,7 +123,8 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public int persistBatch(Map<T, Map<Field<Object>, Object>> itemWithFields) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             DSLContext dslContext = DSL.using(configuration);
             var inserts = itemWithFields.entrySet()
                 .stream().map(entry -> buildInsertRequest(entry.getKey(), entry.getValue(), dslContext))
@@ -129,7 +135,7 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     protected InsertOnDuplicateSetMoreStep<Record> buildInsertRequest(T entity, Map<Field<Object>, Object> fields,
-            DSLContext dslContext) {
+        DSLContext dslContext) {
 
         return dslContext
             .insertInto(table)
@@ -140,7 +146,8 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public int delete(T entity) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             return this.delete(DSL.using(configuration), entity);
         });
     }
@@ -230,11 +237,12 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField){
+    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField) {
         return (Select<R>) context.select(DSL.asterisk())
-            .from(this
-                .sort(select, Pageable.from(Sort.of(Order.asc(orderField))))
-                .asTable("page")
+            .from(
+                this
+                    .sort(select, Pageable.from(Sort.of(Order.asc(orderField))))
+                    .asTable("page")
             )
             .where(DSL.trueCondition());
     }
@@ -254,7 +262,8 @@ public abstract class AbstractJdbcRepository<T> {
         List<String> fragments = split
             .subList(min, max)
             .stream()
-            .map(r -> {
+            .map(r ->
+            {
                 int i = StringUtils.indexOfIgnoreCase(r, query);
 
                 if (i < 0) {
@@ -273,7 +282,8 @@ public abstract class AbstractJdbcRepository<T> {
             pageable
                 .getSort()
                 .getOrderBy()
-                .forEach(order -> {
+                .forEach(order ->
+                {
                     String column = camelToSnake(order.getProperty());
                     Field<Object> field = DSL.field(DSL.name(column));
 

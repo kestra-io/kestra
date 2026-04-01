@@ -1,12 +1,12 @@
 package io.kestra.core.runners;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Output;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * InputAndOutput could be used to work with flow execution inputs and outputs.

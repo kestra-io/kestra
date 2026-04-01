@@ -1,18 +1,19 @@
 package io.kestra.plugin.scripts.exec.scripts.models;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.plugin.scripts.runner.docker.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Map;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
@@ -27,7 +28,7 @@ public class DockerOptions {
     @Schema(
         title = "Docker configuration file.",
         description = "Docker configuration file that can set access credentials to private container registries. Usually located in `~/.docker/config.json`.",
-        anyOf = {String.class, Map.class}
+        anyOf = { String.class, Map.class }
     )
     @PluginProperty(dynamic = true)
     private Object config;
@@ -73,7 +74,7 @@ public class DockerOptions {
     @Schema(
         title = "List of volumes to mount.",
         description = "Must be a valid mount expression as string, example : `/home/user:/app`.\n\n" +
-            "Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`."
+            "Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting the `volume-enabled` plugin configuration to `true`."
     )
     @PluginProperty(dynamic = true)
     protected List<String> volumes;

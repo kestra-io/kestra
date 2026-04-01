@@ -1,5 +1,13 @@
 package io.kestra.webserver.utils;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.flows.FlowScope;
@@ -7,16 +15,10 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceType;
+
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.annotation.Nullable;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RequestUtils {
     private static final String QUERY_STRING_SEPARATOR = ":";
@@ -29,11 +31,13 @@ public class RequestUtils {
      * @throws HttpStatusException when items can't be reliably split by the separator or there are duplicate keys
      */
     public static Map<String, String> toMap(List<String> queryString) {
-        if (queryString == null) return Map.of();
+        if (queryString == null)
+            return Map.of();
 
         Stream<AbstractMap.SimpleEntry<String, String>> entryStream = queryString
             .stream()
-            .map(s -> {
+            .map(s ->
+            {
                 String[] split = s.split(QUERY_STRING_SEPARATOR, 2);
                 if (split.length < 2 || split[0] == null || split[0].isEmpty()) {
                     throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Can't split the queryString parameter by ':'");
@@ -62,7 +66,9 @@ public class RequestUtils {
 
     /**
      * if filters is defined, use that, otherwise map all legacy params to the new filter API
-     * if you are manipulating an entity queryable by date, use {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)} instead
+     * if you are manipulating an entity queryable by date, use
+     * {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * instead
      *
      * @return the new filter list
      */
@@ -74,7 +80,9 @@ public class RequestUtils {
 
     /**
      * if filters is defined, use that, otherwise map all legacy params to the new filter API
-     * if you are manipulating an entity queryable by date, use {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)} instead
+     * if you are manipulating an entity queryable by date, use
+     * {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * instead
      *
      * @return the new filter list
      */
@@ -90,8 +98,7 @@ public class RequestUtils {
         ExecutionRepositoryInterface.ChildFilter childFilter,
         List<State.Type> state,
         String workerId,
-        String triggerExecutionId
-    ) {
+        String triggerExecutionId) {
         if (filters != null && !filters.isEmpty()) {
             return filters;
         }
@@ -134,8 +141,7 @@ public class RequestUtils {
         ExecutionRepositoryInterface.ChildFilter childFilter,
         List<State.Type> state,
         String workerId,
-        String triggerExecutionId
-    ) {
+        String triggerExecutionId) {
         if (filters != null && !filters.isEmpty()) {
             return QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters);
         }
@@ -173,113 +179,140 @@ public class RequestUtils {
         ExecutionRepositoryInterface.ChildFilter childFilter,
         List<State.Type> state,
         String workerId,
-        String triggerExecutionId
-    ) {
+        String triggerExecutionId) {
         List<QueryFilter> filters = new ArrayList<>();
 
         if (query != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.QUERY)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(query)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.QUERY)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(query)
+                    .build()
+            );
         }
 
         if (namespace != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.NAMESPACE)
-                .operation(QueryFilter.Op.PREFIX)
-                .value(namespace)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.PREFIX)
+                    .value(namespace)
+                    .build()
+            );
         }
 
         if (flowId != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.FLOW_ID)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(flowId)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.FLOW_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(flowId)
+                    .build()
+            );
         }
 
         if (triggerId != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.TRIGGER_ID)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(triggerId)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.TRIGGER_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(triggerId)
+                    .build()
+            );
         }
 
         if (minLevel != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.MIN_LEVEL)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(minLevel.name())
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.MIN_LEVEL)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(minLevel.name())
+                    .build()
+            );
         }
 
         if (startDate != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.START_DATE)
-                .operation(QueryFilter.Op.GREATER_THAN)
-                .value(startDate.toString())
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.START_DATE)
+                    .operation(QueryFilter.Op.GREATER_THAN)
+                    .value(startDate.toString())
+                    .build()
+            );
         }
 
         if (endDate != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.END_DATE)
-                .operation(QueryFilter.Op.LESS_THAN)
-                .value(endDate.toString())
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.END_DATE)
+                    .operation(QueryFilter.Op.LESS_THAN)
+                    .value(endDate.toString())
+                    .build()
+            );
         }
         if (scope != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.SCOPE)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(scope)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.SCOPE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(scope)
+                    .build()
+            );
         }
         if (labels != null && !labels.isEmpty()) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.LABELS)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(RequestUtils.toMap(labels))
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(RequestUtils.toMap(labels))
+                    .build()
+            );
         }
         if (timeRange != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.TIME_RANGE)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(timeRange)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.TIME_RANGE)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(timeRange)
+                    .build()
+            );
         }
         if (childFilter != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.CHILD_FILTER)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(childFilter)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.CHILD_FILTER)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(childFilter)
+                    .build()
+            );
         }
         if (state != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.STATE)
-                .operation(QueryFilter.Op.IN)
-                .value(state)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.STATE)
+                    .operation(QueryFilter.Op.IN)
+                    .value(state)
+                    .build()
+            );
         }
         if (workerId != null) {
-            filters.add(QueryFilter.builder()
-                .field(QueryFilter.Field.WORKER_ID)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(workerId)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.WORKER_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(workerId)
+                    .build()
+            );
         }
         if (triggerExecutionId != null) {
-            filters.add(QueryFilter.builder()
-                .field(Field.TRIGGER_EXECUTION_ID)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(triggerExecutionId)
-                .build());
+            filters.add(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_EXECUTION_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(triggerExecutionId)
+                    .build()
+            );
         }
 
         return filters;
@@ -290,39 +323,43 @@ public class RequestUtils {
      * {@code state} / {@code type} params to an equivalent {@link QueryFilter} list.
      *
      * @param filters the new filter list (may be null/empty)
-     * @param states  legacy state filter (may be null)
-     * @param types   legacy type filter (may be null)
+     * @param states legacy state filter (may be null)
+     * @param types legacy type filter (may be null)
      * @return the resolved filter list
      */
     public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
         @Nullable List<QueryFilter> filters,
         @Nullable Set<Service.ServiceState> states,
-        @Nullable Set<ServiceType> types
-    ) {
+        @Nullable Set<ServiceType> types) {
         if (filters != null && !filters.isEmpty()) {
             return filters;
         }
         List<QueryFilter> result = new ArrayList<>();
         if (states != null && !states.isEmpty()) {
-            result.add(QueryFilter.builder()
-                .field(QueryFilter.Field.STATE)
-                .operation(QueryFilter.Op.IN)
-                .value(states.stream().map(Enum::name).toList())
-                .build());
+            result.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.STATE)
+                    .operation(QueryFilter.Op.IN)
+                    .value(states.stream().map(Enum::name).toList())
+                    .build()
+            );
         }
         if (types != null && !types.isEmpty()) {
-            result.add(QueryFilter.builder()
-                .field(QueryFilter.Field.TYPE)
-                .operation(QueryFilter.Op.IN)
-                .value(types.stream().map(Enum::name).toList())
-                .build());
+            result.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.TYPE)
+                    .operation(QueryFilter.Op.IN)
+                    .value(types.stream().map(Enum::name).toList())
+                    .build()
+            );
         }
         return result;
     }
 
     public static List<FlowScope> toFlowScopes(String value) {
         return Arrays.stream(value.split(","))
-            .map(valueStr -> {
+            .map(valueStr ->
+            {
                 try {
                     return FlowScope.valueOf(valueStr.toUpperCase());
                 } catch (IllegalArgumentException e) {

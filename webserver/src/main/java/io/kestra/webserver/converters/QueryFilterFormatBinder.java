@@ -1,18 +1,20 @@
 package io.kestra.webserver.converters;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.webserver.utils.RequestUtils;
-import io.micronaut.core.convert.ArgumentConversionContext;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
-import jakarta.inject.Singleton;
-
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.webserver.utils.RequestUtils;
+
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<QueryFilterFormat, List<QueryFilter>> {
@@ -37,13 +39,16 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
             }
         }
         // Add a QueryFilter for each operation's labels
-        labelsByOperation.forEach((operation, labels) -> {
+        labelsByOperation.forEach((operation, labels) ->
+        {
             if (!labels.isEmpty()) {
-                filters.add(QueryFilter.builder()
-                    .field(QueryFilter.Field.LABELS)
-                    .operation(operation)
-                    .value(labels)
-                    .build());
+                filters.add(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LABELS)
+                        .operation(operation)
+                        .value(labels)
+                        .build()
+                );
             }
         });
 
@@ -76,11 +81,15 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
             labelsByOperation.computeIfAbsent(operation, k -> new HashMap<>()).put(nestedKey, values.getFirst());
         } else {
             List<Object> parsedValues = nestedKey != null ? List.of(Map.of(nestedKey, values.getFirst())) : parseValues(values, field, operation);
-            filters.addAll(parsedValues.stream().map(parsedValue -> QueryFilter.builder()
-                .field(field)
-                .operation(operation)
-                .value(parsedValue)
-                .build()).toList());
+            filters.addAll(
+                parsedValues.stream().map(
+                    parsedValue -> QueryFilter.builder()
+                        .field(field)
+                        .operation(operation)
+                        .value(parsedValue)
+                        .build()
+                ).toList()
+            );
         }
     }
 

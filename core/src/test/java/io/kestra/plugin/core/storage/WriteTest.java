@@ -1,14 +1,16 @@
 package io.kestra.plugin.core.storage;
 
+import java.io.InputStream;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.io.InputStream;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;

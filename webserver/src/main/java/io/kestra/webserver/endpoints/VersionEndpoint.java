@@ -1,13 +1,15 @@
 package io.kestra.webserver.endpoints;
 
+import org.reactivestreams.Publisher;
+
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.controllers.domain.ServerInfo;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.management.endpoint.annotation.Read;
 import jakarta.inject.Inject;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
@@ -38,11 +40,13 @@ public class VersionEndpoint {
     @Read
     @SingleResult
     public Publisher<ServerInfo> version() {
-        return Mono.just(new ServerInfo(
-            version.getVersion() + VERSION_SUFFIX,
-            version.getRevision(),
-            version.getDate(),
-            serverType
-        ));
+        return Mono.just(
+            new ServerInfo(
+                version.getVersion() + VERSION_SUFFIX,
+                version.getRevision(),
+                version.getDate(),
+                serverType
+            )
+        );
     }
 }

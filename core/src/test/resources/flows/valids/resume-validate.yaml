@@ -10,7 +10,7 @@ tasks:
     onResume:
       - id: approved
         description: Whether to approve the request
-        type: BOOLEAN
+        type: BOOL
         defaults: true
   - id: last
     type: io.kestra.plugin.core.debug.Return
@@ -18,6 +18,6 @@ tasks:
 
 errors:
   - id: failed-echo
-    type: io.kestra.plugin.core.debug.Echo
+    type: io.kestra.plugin.core.log.Log
     description: "Log the error"
-    format: I'm failing {{task.id}}
+    message: I'm failing {{task.id}}

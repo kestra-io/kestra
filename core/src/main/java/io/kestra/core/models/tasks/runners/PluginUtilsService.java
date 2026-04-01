@@ -1,17 +1,5 @@
 package io.kestra.core.models.tasks.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.property.URIFetcher;
-import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import jakarta.validation.constraints.NotNull;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,17 +7,32 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.property.URIFetcher;
+import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import jakarta.validation.constraints.NotNull;
+
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
 
-    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
+    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {
+    };
 
     public static Map<String, String> createOutputFiles(
         Path tempDirectory,
         List<String> outputFiles,
-        Map<String, Object> additionalVars
-    ) throws IOException {
+        Map<String, Object> additionalVars) throws IOException {
         return PluginUtilsService.createOutputFiles(tempDirectory, outputFiles, additionalVars, false);
     }
 
@@ -37,8 +40,7 @@ abstract public class PluginUtilsService {
         Path tempDirectory,
         List<String> outputFiles,
         Map<String, Object> additionalVars,
-        Boolean isDir
-    ) throws IOException {
+        Boolean isDir) throws IOException {
         List<String> outputs = new ArrayList<>();
 
         if (outputFiles != null && !outputFiles.isEmpty()) {
@@ -48,7 +50,8 @@ abstract public class PluginUtilsService {
         Map<String, String> result = new HashMap<>();
         if (!outputs.isEmpty()) {
             outputs
-                .forEach(throwConsumer(s -> {
+                .forEach(throwConsumer(s ->
+                {
                     PluginUtilsService.validFilename(s);
                     File tempFile;
 
@@ -65,7 +68,7 @@ abstract public class PluginUtilsService {
             if (!isDir) {
                 additionalVars.put("temp", result);
             }
-            additionalVars.put(isDir ? "outputDirs": "outputFiles", result);
+            additionalVars.put(isDir ? "outputDirs" : "outputFiles", result);
         }
 
         return result;
@@ -73,8 +76,9 @@ abstract public class PluginUtilsService {
 
     private static void validFilename(String s) {
         if (s.startsWith("./") || s.startsWith("..") || s.startsWith("/")) {
-            throw new IllegalArgumentException("Invalid outputFile (only relative path is supported) " +
-                "for path '" + s + "'"
+            throw new IllegalArgumentException(
+                "Invalid outputFile (only relative path is supported) " +
+                    "for path '" + s + "'"
             );
         }
     }
@@ -84,11 +88,13 @@ abstract public class PluginUtilsService {
     }
 
     @SuppressWarnings("unchecked")
-    public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
+    public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles)
+        throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
             Map<String, String> castedInputFiles = (Map<String, String>) inputFiles;
             Map<String, String> nullFilteredInputFiles = new HashMap<>();
-            castedInputFiles.forEach((key, val) -> {
+            castedInputFiles.forEach((key, val) ->
+            {
                 if (val != null) {
                     nullFilteredInputFiles.put(key, val);
                 }
@@ -107,7 +113,7 @@ abstract public class PluginUtilsService {
 
     public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
 
-        TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).getApplicationContext().getBean(TaskLogLineMatcher.class);
+        TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).services().taskLogLineMatcher();
 
         Map<String, Object> outputs = new HashMap<>();
         try {
@@ -174,7 +180,8 @@ abstract public class PluginUtilsService {
     /**
      * @param render whether to render file contents using Pebble expressions.
      */
-    private static void createInputFilesInternal(RunContext runContext, Path workingDirectory, Map<String, String> inputFiles, Map<String, Object> additionalVars, boolean render) throws Exception {
+    private static void createInputFilesInternal(RunContext runContext, Path workingDirectory, Map<String, String> inputFiles, Map<String, Object> additionalVars, boolean render)
+        throws Exception {
         if (inputFiles != null && !inputFiles.isEmpty()) {
             for (String fileName : inputFiles.keySet()) {
                 String finalFileName = runContext.render(fileName);
@@ -239,5 +246,6 @@ abstract public class PluginUtilsService {
         createInputFilesInternal(runContext, workingDirectory, inputFiles, Map.of(), false);
     }
 
-    public record ExecutionInfo(String tenantId, String namespace, String flowId, String id) {}
+    public record ExecutionInfo(String tenantId, String namespace, String flowId, String id) {
+    }
 }

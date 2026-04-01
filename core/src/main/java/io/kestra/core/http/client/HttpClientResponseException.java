@@ -1,11 +1,12 @@
 package io.kestra.core.http.client;
 
+import java.io.Serial;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+
 import jakarta.annotation.Nullable;
 import lombok.Getter;
-
-import java.io.Serial;
 
 @Getter
 public class HttpClientResponseException extends HttpClientException {

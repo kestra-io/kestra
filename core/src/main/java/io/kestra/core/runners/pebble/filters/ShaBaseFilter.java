@@ -1,15 +1,14 @@
 package io.kestra.core.runners.pebble.filters;
 
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Filter;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.Map;
 
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.Filter;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 abstract class ShaBaseFilter implements Filter {
     private final String algorithm;
@@ -25,7 +24,7 @@ abstract class ShaBaseFilter implements Filter {
 
     @Override
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self,
-                        EvaluationContext context, int lineNumber) throws PebbleException {
+        EvaluationContext context, int lineNumber) throws PebbleException {
         if (input == null) {
             return null;
         }
@@ -33,7 +32,7 @@ abstract class ShaBaseFilter implements Filter {
         if (input instanceof String str) {
             try {
                 MessageDigest digest = MessageDigest.getInstance(algorithm);
-                byte[]encodedHash = digest.digest((str).getBytes(StandardCharsets.UTF_8));
+                byte[] encodedHash = digest.digest((str).getBytes(StandardCharsets.UTF_8));
                 return bytesToHex(encodedHash);
             } catch (Exception e) {
                 throw new PebbleException(e, "Hashing exception encountered\n", lineNumber, self.getName());

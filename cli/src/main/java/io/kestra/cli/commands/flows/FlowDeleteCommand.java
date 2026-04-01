@@ -3,6 +3,7 @@ package io.kestra.cli.commands.flows;
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -28,12 +29,11 @@ public class FlowDeleteCommand extends AbstractApiCommand {
     @Inject
     private TenantIdSelectorService tenantService;
 
-    @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        try(DefaultHttpClient client = client()) {
+        try (DefaultHttpClient client = client()) {
             MutableHttpRequest<String> request = HttpRequest
                 .DELETE(apiUri("/flows/" + namespace + "/" + id, tenantService.getTenantId(tenantId)));
 
@@ -42,7 +42,7 @@ public class FlowDeleteCommand extends AbstractApiCommand {
             );
 
             stdOut("Flow successfully deleted !");
-        } catch (HttpClientResponseException e){
+        } catch (HttpClientResponseException e) {
             AbstractValidateCommand.handleHttpException(e, "flow");
             return 1;
         }

@@ -1,5 +1,11 @@
 package io.kestra.core.models.property;
 
+import java.io.IOException;
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,28 +14,23 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextProperty;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.PebbleUtil;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
-
-import java.io.IOException;
-import java.io.Serial;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
- * Define a plugin properties that will be rendered and converted to a target type at use time.
+ * Define a plugin property that will be rendered and converted to a target type at use time.
  *
  * @param <T> the target type of the property
  */
@@ -55,32 +56,13 @@ public class Property<T> {
     private String expression;
     private T value;
 
-    /**
-     * @deprecated use {@link #ofExpression(String)} instead.
-     */
-    @Deprecated
-    // Note: when not used, this constructor would not be deleted but made private so it can only be used by ofExpression(String) and the deserializer
-    public Property(String expression) {
+    private Property(String expression) {
         this(expression, false);
     }
 
     private Property(String expression, boolean skipCache) {
         this.expression = expression;
         this.skipCache = skipCache;
-    }
-
-    /**
-     * @deprecated use {@link #ofValue(Object)} instead.
-     */
-    @VisibleForTesting
-    @Deprecated
-    public Property(Map<?, ?> map) {
-        try {
-            expression = MAPPER.writeValueAsString(map);
-            this.skipCache = false;
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e);
-        }
     }
 
     String getExpression() {
@@ -129,14 +111,6 @@ public class Property<T> {
         Property<V> p = new Property<>(expression);
         p.value = value;
         return p;
-    }
-
-    /**
-     * @deprecated use {@link #ofValue(Object)} instead.
-     */
-    @Deprecated
-    public static <V> Property<V> of(V value) {
-        return ofValue(value);
     }
 
     /**
@@ -238,14 +212,15 @@ public class Property<T> {
             String trimmedExpression = property.expression.trim();
             // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
             // Doing that allows us to, if it's an expression, first render then read it as a list.
-            if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+            if (PebbleUtil.startsWithOpeningBlockDelimiter(trimmedExpression) && PebbleUtil.endsWithClosingBlockDelimiter(trimmedExpression)) {
                 property.value = deserialize(context.render(property.expression, variables), type);
             }
             // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
             else {
                 List<?> asRawList = deserialize(property.expression, List.class);
                 property.value = (T) asRawList.stream()
-                    .map(throwFunction(item -> {
+                    .map(throwFunction(item ->
+                    {
                         Object rendered = null;
                         if (item instanceof String str) {
                             rendered = context.render(str, variables);
@@ -285,8 +260,9 @@ public class Property<T> {
      *
      * @see RunContextProperty#asMap(Class, Class, Map)
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables)
+        throws IllegalVariableEvaluationException {
         if (property.skipCache || property.value == null) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
 
@@ -294,7 +270,7 @@ public class Property<T> {
                 String trimmedExpression = property.expression.trim();
                 // We need to detect if the expression is already a map or if it's a pebble expression (for eg. referencing a variable containing a map).
                 // Doing that allows us to, if it's an expression, first render then read it as a map.
-                if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+                if (PebbleUtil.startsWithOpeningBlockDelimiter(trimmedExpression) && PebbleUtil.endsWithClosingBlockDelimiter(trimmedExpression)) {
                     property.value = deserialize(runContext.render(property.expression, variables), targetMapType);
                 }
                 // Otherwise if it's already a map we read it as a map first then render it from run context which handle map rendering by rendering each entry of the map (otherwise it will fail with nested expressions in values for eg.)
@@ -317,7 +293,8 @@ public class Property<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Property<?> property = (Property<?>) o;
         return Objects.equals(expression, property.expression);
     }

@@ -1,10 +1,10 @@
 package io.kestra.core.utils;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import java.net.URI;
 import java.util.Optional;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Utility methods for manipulating files.
@@ -28,7 +28,8 @@ public final class FileUtils {
      * @return the file extension prefixed with the '.' or {@code null}.
      */
     public static String getExtension(final String file) {
-        if (file == null) return null;
+        if (file == null)
+            return null;
         String extension = FilenameUtils.getExtension(file);
         return StringUtils.isEmpty(extension) ? null : "." + extension;
     }
@@ -40,7 +41,8 @@ public final class FileUtils {
      * @return an optional URI, or {@link Optional#empty()} if the given path represent an invalid URI.
      */
     public static Optional<URI> getURI(final String path) {
-        if (path == null) return Optional.empty();
+        if (path == null)
+            return Optional.empty();
         try {
             return Optional.of(URI.create(path));
         } catch (IllegalArgumentException e) {

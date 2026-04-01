@@ -1,12 +1,13 @@
 package io.kestra.repository.h2;
 
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 
-@Singleton
+@RepositoryBean
 @H2RepositoryEnabled
 public class H2FlowTopologyRepository extends AbstractJdbcFlowTopologyRepository {
     @Inject

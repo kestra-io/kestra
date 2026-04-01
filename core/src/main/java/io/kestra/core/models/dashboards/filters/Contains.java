@@ -1,6 +1,7 @@
 package io.kestra.core.models.dashboards.filters;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -21,6 +22,6 @@ public class Contains<F extends Enum<F>> extends AbstractFilter<F> {
     protected FilterType type = FilterType.CONTAINS;
 
     @NotNull
-    @Schema(anyOf = {Number.class, String.class})
+    @Schema(anyOf = { Number.class, String.class })
     private Object value;
 }

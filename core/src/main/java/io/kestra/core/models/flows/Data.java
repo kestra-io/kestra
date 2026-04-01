@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-
 /**
  * Interface for defining an identifiable and typed data.
  */

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class RegexFilterTest {
@@ -85,8 +86,8 @@ class RegexFilterTest {
 
     @Test
     void regexExtractCaptureGroup() throws IllegalVariableEvaluationException {
-        String result = variableRenderer.render("{{ 'order-12345-done' | regexExtract(regex='order-(\\d+)', group=1) }}", Map.of());
-        assertThat(result).isEqualTo("12345");
+        String result = variableRenderer.render("{{ 'order-12345-6789-done' | regexExtract(regex='order-(\\d+)-(\\d+)', group=2) }}", Map.of());
+        assertThat(result).isEqualTo("6789");
     }
 
     @Test
@@ -106,5 +107,12 @@ class RegexFilterTest {
     void regexExtractNullInput() throws IllegalVariableEvaluationException {
         String result = variableRenderer.render("{{ null | regexExtract(regex='\\d+') }}", Map.of());
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void regexExtractGroupOutOfBounds() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'order-12345' | regexExtract(regex='order-(\\d+)', group=5) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Group index 5 is out of bounds");
     }
 }

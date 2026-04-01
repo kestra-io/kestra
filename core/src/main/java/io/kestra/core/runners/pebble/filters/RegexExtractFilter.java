@@ -60,6 +60,14 @@ public class RegexExtractFilter implements Filter {
 
         Matcher matcher = Pattern.compile(regex).matcher(input.toString());
         if (matcher.find()) {
+            if (group > matcher.groupCount()) {
+                throw new PebbleException(
+                    null,
+                    MessageFormat.format("Group index {0} is out of bounds: the pattern has only {1} capture group(s).", group, matcher.groupCount()),
+                    lineNumber,
+                    self.getName()
+                );
+            }
             return matcher.group(group);
         }
         return null;

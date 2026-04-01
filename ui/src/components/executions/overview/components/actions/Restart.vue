@@ -90,20 +90,22 @@
                 </el-form-item>
             </el-form>
 
-            <template v-if="hasInputs && !taskRun">
-                <h4 class="section-title">
-                    {{ t("replay inputs") }}:
-                </h4>
+            <template v-if="hasInputs">
+                <template v-if="!taskRun">
+                    <h4 class="section-title">
+                        {{ t("replay inputs") }}:
+                    </h4>
 
-                <el-radio-group v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
-                    <el-radio label="reuse" class="radio-item">
-                        {{ t("reuse original inputs") }}
-                    </el-radio>
-                    <el-radio label="modify" class="radio-item">
-                        {{ t("modify inputs") }}
-                    </el-radio>
-                </el-radio-group>
-                <p v-else class="execution-description mt-2 mb-0">
+                    <el-radio-group v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
+                        <el-radio label="reuse" class="radio-item">
+                            {{ t("reuse original inputs") }}
+                        </el-radio>
+                        <el-radio label="modify" class="radio-item">
+                            {{ t("modify inputs") }}
+                        </el-radio>
+                    </el-radio-group>
+                </template>
+                <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
                     {{ t("replay inputs new required") }}
                 </p>
             </template>
@@ -297,7 +299,7 @@
     const handleReplayExecute = () => {
         isOpen.value = false
 
-        if (!props.taskRun && hasInputs.value && (!canReuseInputs.value || inputMode.value === "modify")) {
+        if (hasInputs.value && (!canReuseInputs.value || (!props.taskRun && inputMode.value === "modify"))) {
             openReplayWithInputsDialog()
             return
         }

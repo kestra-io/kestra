@@ -24,15 +24,6 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item name="general" v-if="generalProperties?.length" :title="groupTitle('general')">
-                    <template v-for="[fieldKey, fieldSchema] in generalProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
                 <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="groupTitle('deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
@@ -241,7 +232,7 @@
             if (!v || isRequired(p) || isPartOfGroup(v, ["main"]) || isDeprecated(v)) continue;
 
             const group = getGroup(v);
-            if (group === "main" || group === "core") continue;
+            if (group === "main") continue;
 
             if (!buckets.has(group)) buckets.set(group, []);
             buckets.get(group)!.push(entry);
@@ -258,17 +249,13 @@
         return [...known, ...unknown, ...ungrouped];
     });
 
-    const generalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["core"]));
-    });
-
     const deprecatedProperties = computed<Entry[]>(() => {
         const obj = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>) : {};
         return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined);
     });
 
     const hasGroupedProperties = computed<boolean>(() => {
-        return groupSections.value.length > 0 || generalProperties.value.length > 0 || deprecatedProperties.value.length > 0;
+        return groupSections.value.length > 0 || deprecatedProperties.value.length > 0;
     });
 
 

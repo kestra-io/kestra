@@ -11,8 +11,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD })
 public @interface PluginProperty {
-    String CORE_GROUP = "core";
-
     /**
      * @return whether the property is renderer
      */

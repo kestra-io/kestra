@@ -1349,7 +1349,6 @@
         "variable": "Variable"
       },
       "sections": {
-        "general": "General properties",
         "deprecated": "Deprecated properties",
         "tasks": "Tasks",
         "triggers": "Triggers",

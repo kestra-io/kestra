@@ -228,6 +228,7 @@
       ]
     },
     "replay execution title": "Replay execution",
+    "restart execution title": "Restart execution",
     "replay execution description": "This will create a new execution based on the selected execution.",
     "replay using": "Replay using",
     "flow revision original": "Original flow revision",
@@ -236,6 +237,7 @@
     "replay inputs": "Inputs",
     "reuse original inputs": "Reuse original inputs",
     "modify inputs": "Modify inputs",
+    "replay inputs new required": "This revision has inputs. You will be prompted to fill them in.",
     "change state tooltip": "Change the execution state",
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",

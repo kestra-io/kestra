@@ -1648,6 +1648,7 @@
     "replay from beginning tooltip": "Crear una ejecución similar comenzando desde el principio",
     "replay from task tooltip": "Crear una ejecución similar comenzando desde la tarea <code>{taskId}</code>",
     "replay inputs": "Entradas",
+    "replay inputs new required": "Esta revisión tiene inputs. Se le pedirá que los complete.",
     "replay latest revision": "Repetir usando la última revisión",
     "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
@@ -1658,6 +1659,7 @@
     "restart": "Reiniciar",
     "restart change revision": "Puedes cambiar la revisión que se usará para la nueva ejecución.",
     "restart confirm": "¿Estás seguro de reiniciar la ejecución <code>{id}</code>?",
+    "restart execution title": "Reiniciar ejecución",
     "restart latest revision": "Reiniciar última revisión",
     "restart tooltip": "Reiniciar la ejecución desde la tarea <code>{state}</code>",
     "restart trigger": {

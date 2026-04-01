@@ -1648,6 +1648,7 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay from task tooltip": "<code>{taskId}</code> Task에서 재실행",
     "replay inputs": "입력",
+    "replay inputs new required": "이 수정본에는 input이 있습니다. 입력하라는 메시지가 표시됩니다.",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "replay using": "사용하여 재실행",
@@ -1658,6 +1659,7 @@
     "restart": "재시작",
     "restart change revision": "선택하시는 수정본으로 재실행 할 수 있습니다.",
     "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
+    "restart execution title": "실행 재시작",
     "restart latest revision": "최신 수정본으로 재시작",
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
     "restart trigger": {

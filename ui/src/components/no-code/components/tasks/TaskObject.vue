@@ -10,71 +10,13 @@
             </template>
 
             <el-collapse v-model="activeNames" v-if="mainProperties.length && hasGroupedProperties" class="collapse">
-                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
-                    <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="source" v-if="sourceProperties?.length" :title="$t('no_code.sections.source')">
-                    <template v-for="[fieldKey, fieldSchema] in sourceProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="processing" v-if="processingProperties?.length" :title="$t('no_code.sections.processing')">
-                    <template v-for="[fieldKey, fieldSchema] in processingProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="execution" v-if="executionProperties?.length" :title="$t('no_code.sections.execution')">
-                    <template v-for="[fieldKey, fieldSchema] in executionProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="destination" v-if="destinationProperties?.length" :title="$t('no_code.sections.destination')">
-                    <template v-for="[fieldKey, fieldSchema] in destinationProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="reliability" v-if="reliabilityProperties?.length" :title="$t('no_code.sections.reliability')">
-                    <template v-for="[fieldKey, fieldSchema] in reliabilityProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="advanced" v-if="advancedProperties?.length" :title="$t('no_code.sections.advanced')">
-                    <template v-for="[fieldKey, fieldSchema] in advancedProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
-                    <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
+                <el-collapse-item
+                    v-for="section in groupSections"
+                    :key="section.key"
+                    :name="section.key"
+                    :title="$te(`no_code.sections.${section.key}`) ? $t(`no_code.sections.${section.key}`) : section.key"
+                >
+                    <template v-for="[fieldKey, fieldSchema] in section.properties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -147,7 +89,12 @@
         (e: "update:modelValue", value: Model): void;
     }>();
 
-    const activeNames = ref<string[]>(["connection", "source", "destination", "optional"]);
+    // Recommended group ordering — not exhaustive, unknown groups are appended alphabetically
+    const GROUP_ORDER = ["connection", "source", "processing", "execution", "destination", "reliability", "advanced"];
+    // Groups expanded by default
+    const GROUPS_EXPANDED_BY_DEFAULT = new Set(["connection", "source", "destination"]);
+
+    const activeNames = ref<string[]>([...GROUPS_EXPANDED_BY_DEFAULT, "optional"]);
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
 
@@ -198,10 +145,20 @@
         return value?.$group && groups.includes(value.$group);
     }
 
-    function hasGroup(value: any): boolean {
-        if (value?.allOf) return value.allOf.some(hasGroup);
-        if (value?.anyOf) return value.anyOf.some(hasGroup);
-        return Boolean(value?.$group);
+    function getGroup(value: any): string | null {
+        if (value?.allOf) {
+            for (const item of value.allOf) {
+                const g = getGroup(item);
+                if (g) return g;
+            }
+        }
+        if (value?.anyOf) {
+            for (const item of value.anyOf) {
+                const g = getGroup(item);
+                if (g) return g;
+            }
+        }
+        return value?.$group ?? null;
     }
 
     const filteredProperties = computed<Entry[]>(() => {
@@ -238,39 +195,35 @@
         return mainProperties.value.length ? mainProperties.value : sortedProperties.value;
     });
 
-    const connectionProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["connection"]));
-    });
+    type GroupEntry = { key: string; properties: Entry[] };
 
-    const sourceProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["source"]));
-    });
+    // Dynamically build ordered group sections from whatever $group values are present.
+    // Known groups follow GROUP_ORDER; unknown groups are appended alphabetically.
+    // Ungrouped non-required properties (null group) land in an "optional" fallback section.
+    const groupSections = computed<GroupEntry[]>(() => {
+        if (props.merge) return [];
 
-    const processingProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["processing"]));
-    });
+        const buckets = new Map<string | null, Entry[]>();
 
-    const executionProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["execution"]));
-    });
+        for (const entry of sortedProperties.value) {
+            const [p, v] = entry;
+            if (!v || isRequired(p) || isPartOfGroup(v, ["main"]) || isDeprecated(v)) continue;
 
-    const destinationProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["destination"]));
-    });
+            const group = getGroup(v);
+            if (group === "main") continue;
 
-    const reliabilityProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["reliability"]));
-    });
+            if (!buckets.has(group)) buckets.set(group, []);
+            buckets.get(group)!.push(entry);
+        }
 
-    const advancedProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["advanced"]));
-    });
+        const known = GROUP_ORDER.filter(g => buckets.has(g)).map(g => ({key: g, properties: buckets.get(g)!}));
+        const unknown = [...buckets.keys()]
+            .filter((g): g is string => g !== null && !GROUP_ORDER.includes(g))
+            .sort()
+            .map(g => ({key: g, properties: buckets.get(g)!}));
+        const ungrouped = buckets.has(null) ? [{key: "optional", properties: buckets.get(null)!}] : [];
 
-    // Migration fallback: ungrouped non-required properties until all plugin PRs land
-    const optionalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) =>
-            v && !isRequired(p) && !isDeprecated(v) && !hasGroup(v)
-        );
+        return [...known, ...unknown, ...ungrouped];
     });
 
     const generalProperties = computed<Entry[]>(() => {
@@ -283,11 +236,7 @@
     });
 
     const hasGroupedProperties = computed<boolean>(() => {
-        return [
-            connectionProperties, sourceProperties, processingProperties,
-            executionProperties, destinationProperties, reliabilityProperties,
-            advancedProperties, optionalProperties, generalProperties, deprecatedProperties,
-        ].some(g => g.value.length > 0);
+        return groupSections.value.length > 0 || generalProperties.value.length > 0 || deprecatedProperties.value.length > 0;
     });
 
 

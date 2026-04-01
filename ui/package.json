@@ -8,7 +8,7 @@
     "dev": "vite --host",
     "build": "vite build --emptyOutDir",
     "preview": "vite preview",
-    "test:types": "echo 'skipping, not explicit type checking on this release version'",
+    "check:types": "echo \"Skipping: No explicit type checking in this release version.\"",
     "test:unit": "vitest run",
     "test:lint": "eslint",
     "test:cicd": "vitest run --coverage --exclude=\"**/translation.spec.js\"",

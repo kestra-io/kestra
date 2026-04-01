@@ -2224,6 +2224,46 @@ class ExecutionControllerRunnerTest {
         assertThat(evalResult.getResult()).isEqualTo("******");
     }
 
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldEvalExpressionWithExecutionContext(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval", "{{ execution.id }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getResult(), org.hamcrest.Matchers.is(execution.getId()));
+        assertThat(evalResult.getError(), org.hamcrest.Matchers.nullValue());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldEvalExpressionReturnErrorForInvalidExpression(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval", "{{ invalid_variable }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getResult(), org.hamcrest.Matchers.nullValue());
+        assertThat(evalResult.getError(), org.hamcrest.Matchers.notNullValue());
+        assertThat(evalResult.getStackTrace(), org.hamcrest.Matchers.notNullValue());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldMaskSensitiveFunctionsWhenEvalExpression(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval", "{{ secret('MY_SECRET') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getError(), org.hamcrest.Matchers.nullValue());
+        assertThat(evalResult.getResult(), org.hamcrest.Matchers.is("******"));
+    }
+
     private ExecutionController.EvalResult evalTaskRunExpression(Execution execution, String expression, int index) {
         return client.toBlocking().retrieve(
             HttpRequest

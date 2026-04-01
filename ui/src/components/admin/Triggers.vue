@@ -108,10 +108,10 @@
                             :key="col.prop"
                             :prop="col.prop"
                             :label="col.label"
-                            :sortable="['flowId', 'namespace', 'nextExecutionDate'].includes(col.prop) ? 'custom' : false"
-                            :sortOrders="['flowId', 'namespace', 'nextExecutionDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
+                            :sortable="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? 'custom' : false"
+                            :sortOrders="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
                         >
-                            <template #header v-if="col.prop === 'date'">
+                            <template #header v-if="col.prop === 'lastTriggeredDate'">
                                 <el-tooltip
                                     :content="$t('last trigger date tooltip')"
                                     placement="top"
@@ -121,7 +121,7 @@
                                     <span>{{ col.label }}</span>
                                 </el-tooltip>
                             </template>
-                            <template #header v-else-if="col.prop === 'updatedDate'">
+                            <template #header v-else-if="col.prop === 'updatedAt'">
                                 <el-tooltip
                                     :content="$t('context updated date tooltip')"
                                     placement="top"
@@ -160,31 +160,20 @@
                                 <template v-else-if="col.prop === 'namespace'">
                                     {{ invisibleSpace(scope.row.namespace) }}
                                 </template>
-                                <template v-else-if="col.prop === 'executionId'">
-                                    <router-link
-                                        v-if="scope.row.executionId"
-                                        :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
-                                    >
-                                        <Id :value="scope.row.executionId" :shrink="true" />
-                                    </router-link>
-                                </template>
                                 <template v-else-if="col.prop === 'workerId'">
                                     <Id
                                         :value="scope.row.workerId"
                                         :shrink="true"
                                     />
                                 </template>
-                                <template v-else-if="col.prop === 'date'">
-                                    <DateAgo :inverted="true" :date="scope.row.date" />
+                                <template v-else-if="col.prop === 'lastTriggeredDate'">
+                                    <DateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
                                 </template>
-                                <template v-else-if="col.prop === 'updatedDate'">
-                                    <DateAgo :inverted="true" :date="scope.row.updatedDate" />
+                                <template v-else-if="col.prop === 'updatedAt'">
+                                    <DateAgo :inverted="true" :date="scope.row.updatedAt" />
                                 </template>
-                                <template v-else-if="col.prop === 'nextExecutionDate'">
-                                    <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'evaluateRunningDate'">
-                                    <DateAgo :inverted="true" :date="scope.row.evaluateRunningDate" />
+                                <template v-else-if="col.prop === 'nextEvaluationDate'">
+                                    <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
                                 </template>
                             </template>
                         </el-table-column>
@@ -192,6 +181,7 @@
                         <el-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar
+                                    v-if="!scope.row.missingSource"
                                     :flow="{id: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
                                     :triggerId="scope.row.id"
                                 />
@@ -206,8 +196,8 @@
                             <template #default="scope">
                                 <div class="action-container">
                                     <IconButton
-                                        v-if="scope.row.executionId || scope.row.evaluateRunningDate"
-                                        :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
+                                        v-if="scope.row.locked"
+                                        :tooltip="$t('unlock trigger.tooltip.evaluation')"
                                         placement="left"
                                         @click="triggerToUnlock = scope.row"
                                     >
@@ -429,12 +419,6 @@
             description: t("filter.table_column.triggers.namespace")
         },
         {
-            label: t("current execution"),
-            prop: "executionId",
-            default: false,
-            description: t("filter.table_column.triggers.current execution")
-        },
-        {
             label: t("workerId"),
             prop: "workerId",
             default: false,
@@ -442,27 +426,21 @@
         },
         {
             label: t("last trigger date"),
-            prop: "date",
+            prop: "lastTriggeredDate",
             default: true,
             description: t("filter.table_column.triggers.last trigger date")
         },
         {
-            label: t("context updated date"),
-            prop: "updatedDate",
+            label: t("state updated date"),
+            prop: "updatedAt",
             default: false,
             description: t("filter.table_column.triggers.context updated date")
         },
         {
             label: t("next evaluation date"),
-            prop: "nextExecutionDate",
+            prop: "nextEvaluationDate",
             default: false,
             description: t("filter.table_column.triggers.next evaluation date")
-        },
-        {
-            label: t("evaluation lock date"),
-            prop: "evaluateRunningDate",
-            default: false,
-            description: t("filter.table_column.triggers.evaluation lock date")
         }
     ]);
 
@@ -547,22 +525,21 @@
         });
     };
 
+    const cleanBackfill = computed(() => {
+        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value);
+        return {...backfill.value, labels: labels?.length ? labels : null};
+    });
+
     const postBackfill = () => {
         const trigger = selectedTrigger.value as any;
         triggerStore.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: backfill.value
+            backfill: cleanBackfill.value
         })
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
-                triggers.value = triggers.value?.map((t: any) => {
-                    if (t.id === newTrigger.triggerId) {
-                        return newTrigger;
-                    }
-                    return t;
-                });
+            .then(() => {
+                toast.saved(trigger?.triggerId);
                 setBackfillModal(null, false);
                 backfill.value = {
                     start: null,
@@ -570,6 +547,7 @@
                     inputs: null,
                     labels: []
                 };
+                triggerLoadDataAfterBulkEditAction();
             });
     };
 
@@ -824,10 +802,10 @@
     const triggersMerged = computed(() => {
         const all = triggers.value?.map((t: any) => {
             return {
-                ...t?.abstractTrigger,
-                ...t?.triggerContext,
-                codeDisabled: t?.abstractTrigger?.disabled,
-                missingSource: !t?.abstractTrigger
+                ...t?.trigger,
+                ...t?.state,
+                codeDisabled: t?.trigger?.disabled,
+                missingSource: !t?.trigger
             };
         }) ?? [];
 

@@ -23,7 +23,7 @@ public abstract class H2FlowRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | select(.key == \"" + key + "\") | .value')", String.class);
+                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(key, String.class));
                 if (value == null) {
                     conditions.add(valueField.isNull());
                 } else {
@@ -45,7 +45,7 @@ public abstract class H2FlowRepositoryService {
         if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | select(.key == \"" + key + "\") | .value')", String.class);
+                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(key, String.class));
                 Condition condition = switch (operation) {
                     case EQUALS -> value == null ? valueField.isNull() : valueField.eq((String) value);
                     case NOT_EQUALS -> value == null ? valueField.isNotNull() : valueField.isNull().or(valueField.ne((String) value));

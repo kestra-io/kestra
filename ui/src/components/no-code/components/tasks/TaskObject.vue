@@ -210,7 +210,7 @@
             if (!v || isRequired(p) || isPartOfGroup(v, ["main"]) || isDeprecated(v)) continue;
 
             const group = getGroup(v);
-            if (group === "main") continue;
+            if (group === "main" || group === "core") continue;
 
             if (!buckets.has(group)) buckets.set(group, []);
             buckets.get(group)!.push(entry);

@@ -11,7 +11,16 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD })
 public @interface PluginProperty {
-    String CORE_GROUP = "core";
+    String CORE_GROUP        = "core";
+    String MAIN_GROUP        = "main";
+    String CONNECTION_GROUP  = "connection";
+    String SOURCE_GROUP      = "source";
+    String PROCESSING_GROUP  = "processing";
+    String EXECUTION_GROUP   = "execution";
+    String DESTINATION_GROUP = "destination";
+    String RELIABILITY_GROUP = "reliability";
+    String ADVANCED_GROUP    = "advanced";
+    String DEPRECATED_GROUP  = "deprecated";
 
     /**
      * @return whether the property is renderer
@@ -54,4 +63,9 @@ public @interface PluginProperty {
      * not as a plain-text value. Kestra will reject flows that supply a literal value for this property.
      */
     boolean secret() default false;
+
+    /**
+     * @return ordering index within the group (lower value = shown first). -1 means unordered.
+     */
+    int index() default -1;
 }

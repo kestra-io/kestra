@@ -1,7 +1,7 @@
 <template>
     <el-form labelPosition="top" class="w-100">
         <template v-if="sortedProperties">
-            <template v-for="[fieldKey, fieldSchema] in protectedRequiredProperties" :key="fieldKey">
+            <template v-for="[fieldKey, fieldSchema] in protectedMainProperties" :key="fieldKey">
                 <Wrapper :merge>
                     <template #tasks>
                         <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -9,9 +9,63 @@
                 </Wrapper>
             </template>
 
-            <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
+            <el-collapse v-model="activeNames" v-if="mainProperties.length && hasGroupedProperties" class="collapse">
                 <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
                     <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="source" v-if="sourceProperties?.length" :title="$t('no_code.sections.source')">
+                    <template v-for="[fieldKey, fieldSchema] in sourceProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="processing" v-if="processingProperties?.length" :title="$t('no_code.sections.processing')">
+                    <template v-for="[fieldKey, fieldSchema] in processingProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="execution" v-if="executionProperties?.length" :title="$t('no_code.sections.execution')">
+                    <template v-for="[fieldKey, fieldSchema] in executionProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="destination" v-if="destinationProperties?.length" :title="$t('no_code.sections.destination')">
+                    <template v-for="[fieldKey, fieldSchema] in destinationProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="reliability" v-if="reliabilityProperties?.length" :title="$t('no_code.sections.reliability')">
+                    <template v-for="[fieldKey, fieldSchema] in reliabilityProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="advanced" v-if="advancedProperties?.length" :title="$t('no_code.sections.advanced')">
+                    <template v-for="[fieldKey, fieldSchema] in advancedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -93,7 +147,7 @@
         (e: "update:modelValue", value: Model): void;
     }>();
 
-    const activeNames = ref<string[]>([]);
+    const activeNames = ref<string[]>(["connection", "source", "destination", "optional"]);
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
 
@@ -144,6 +198,12 @@
         return value?.$group && groups.includes(value.$group);
     }
 
+    function hasGroup(value: any): boolean {
+        if (value?.allOf) return value.allOf.some(hasGroup);
+        if (value?.anyOf) return value.anyOf.some(hasGroup);
+        return Boolean(value?.$group);
+    }
+
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
         return propertiesProc
@@ -159,10 +219,12 @@
 
     const dataTypesMap = inject(DATA_TYPES_MAP_INJECTION_KEY, ref<Record<string, string[] | undefined>>({}));
 
-    const requiredProperties = computed<Entry[]>(() => {
-        const properties =  props.merge ? sortedProperties.value : sortedProperties.value.filter(([p, v]) => v && isRequired(p));
-        const dataTypes = dataTypesMap.value[props.root ?? ""]
-        if(dataTypes){
+    const mainProperties = computed<Entry[]>(() => {
+        const properties = props.merge
+            ? sortedProperties.value
+            : sortedProperties.value.filter(([p, v]) => v && (isRequired(p) || isPartOfGroup(v, ["main"])) && !isDeprecated(v));
+        const dataTypes = dataTypesMap.value[props.root ?? ""];
+        if (dataTypes) {
             properties.unshift(["type", {
                 type: "string",
                 enum: dataTypes,
@@ -172,16 +234,43 @@
         return properties;
     });
 
-    const protectedRequiredProperties = computed<Entry[]>(() => {
-        return requiredProperties.value.length ? requiredProperties.value : sortedProperties.value;
-    });
-    
-    const connectionProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && isPartOfGroup(v, ["connection"]));
+    const protectedMainProperties = computed<Entry[]>(() => {
+        return mainProperties.value.length ? mainProperties.value : sortedProperties.value;
     });
 
+    const connectionProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["connection"]));
+    });
+
+    const sourceProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["source"]));
+    });
+
+    const processingProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["processing"]));
+    });
+
+    const executionProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["execution"]));
+    });
+
+    const destinationProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["destination"]));
+    });
+
+    const reliabilityProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["reliability"]));
+    });
+
+    const advancedProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["advanced"]));
+    });
+
+    // Migration fallback: ungrouped non-required properties until all plugin PRs land
     const optionalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && !isPartOfGroup(v, ["core","connection"]));
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) =>
+            v && !isRequired(p) && !isDeprecated(v) && !hasGroup(v)
+        );
     });
 
     const generalProperties = computed<Entry[]>(() => {
@@ -191,6 +280,14 @@
     const deprecatedProperties = computed<Entry[]>(() => {
         const obj = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>) : {};
         return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined);
+    });
+
+    const hasGroupedProperties = computed<boolean>(() => {
+        return [
+            connectionProperties, sourceProperties, processingProperties,
+            executionProperties, destinationProperties, reliabilityProperties,
+            advancedProperties, optionalProperties, generalProperties, deprecatedProperties,
+        ].some(g => g.value.length > 0);
     });
 
 

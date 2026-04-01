@@ -20,6 +20,11 @@
             <span class="header-title align-self-center">
                 {{ $t('blueprints.title') }}
             </span>
+            <router-link v-if="userCanCreate" :to="editorRoute" class="ms-auto">
+                <el-button type="primary" @click="trackBlueprintUse('detail')">
+                    {{ $t('use') }}
+                </el-button>
+            </router-link>
         </div>
         <div>
             <h2 class="blueprint-title align-self-center">
@@ -168,7 +173,7 @@
     const editorRoute = computed(() => {
         let additionalQuery: Record<string, any> = {};
         if (props.kind === "flow") {
-            additionalQuery.blueprintSource = route.params?.tab;
+            additionalQuery.blueprintSource = props.combinedView ? props.blueprintType : route.params?.tab;
         } else if (props.kind === "dashboard") {
             additionalQuery = {
                 name: "home",
@@ -226,10 +231,11 @@
 
         await loadTags();
 
+        const blueprintTab = props.combinedView ? props.blueprintType : route.params?.tab;
         if (props.kind === "flow") {
-            flowGraph.value = route.params?.tab === "community"
+            flowGraph.value = blueprintTab === "community"
                 ? await blueprintsStore.getBlueprintGraph({
-                    type: route.params?.tab as any,
+                    type: blueprintTab as any,
                     kind: props.kind as any,
                     id: props.blueprintId
                 })

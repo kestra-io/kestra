@@ -295,7 +295,8 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+            .with(Option.ALLOF_CLEANUP_AT_THE_END)
+            .without(Option.FLATTENED_OPTIONALS);
 
         // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule
         // to be able to return an CustomDefinition with an empty node when the ResolvedType can't be found.
@@ -397,6 +398,11 @@ public class JsonSchemaGenerator {
                 TypeContext context = target.getContext();
                 return List.of(
                     context.resolve(String.class)
+                );
+            } else if (javaType.isInstanceOf(Optional.class) && !javaType.getTypeParameters().isEmpty()) {
+                // Unwrap Optional<T> to T to avoid null type in schema
+                return List.of(
+                    javaType.getTypeParameters().getFirst()
                 );
             }
 

@@ -1648,6 +1648,7 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
     "replay inputs": "输入",
+    "replay inputs new required": "此修订版有inputs。系统将提示您填写它们。",
     "replay latest revision": "使用最新修订版重放",
     "replay the execution": "重放 flow <code>{flowId}</code> 的执行 <code>{executionId}</code>",
     "replay using": "使用重播",
@@ -1658,6 +1659,7 @@
     "restart": "重新开始",
     "restart change revision": "你可以更改用于新执行的修订版。",
     "restart confirm": "确定要重新开始执行 <code>{id}</code> 吗？",
+    "restart execution title": "重新启动执行",
     "restart latest revision": "重新开始最新修订版",
     "restart tooltip": "从 <code>{state}</code> 任务重新开始执行",
     "restart trigger": {

@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.SecretUtils;
 import io.kestra.core.validations.FlowValidation;
 
 import io.micronaut.core.annotation.AnnotationValue;
@@ -169,6 +170,12 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                     " [" + String.join(", ", invalidOutputs) + "]"
             );
         }
+
+        // Validate that @PluginProperty(secret=true) fields use Pebble expressions
+        allTasks.forEach(task -> SecretUtils.validateSecretFields(task)
+            .forEach(msg -> violations.add("Task '" + task.getId() + "': " + msg)));
+        ListUtils.emptyOnNull(value.getTriggers()).forEach(trigger -> SecretUtils.validateSecretFields(trigger)
+            .forEach(msg -> violations.add("Trigger '" + trigger.getId() + "': " + msg)));
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();

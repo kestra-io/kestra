@@ -77,6 +77,10 @@ public class AiServiceManager {
                     posthogService,
                     listeners
                 );
+                if (aiService == null) {
+                    log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
+                    continue;
+                }
                 if (provider.isDefault()) {
                     defaultProviderId = provider.id();
                 }
@@ -103,18 +107,21 @@ public class AiServiceManager {
             return null;
         }
 
+        if (!"gemini".equals(type)) {
+            throw new IllegalArgumentException(
+                "Unsupported AI provider type '" + type + "' for Kestra OSS. Only 'gemini' is supported. " +
+                "Other providers (openai, anthropic, ollama, etc.) require Kestra Enterprise Edition."
+            );
+        }
+
         try {
             ObjectMapper mapper = JacksonMapper.ofJson().copy()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            if (type.equals("gemini")) {
-                GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
-                return new GeminiAiService(
-                    pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig
-                );
-            }
-            log.warn("Unknown AI type: {}", type);
-            return null;
+            GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
+            return new GeminiAiService(
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig
+            );
         } catch (Exception e) {
             log.error("Failed to create AI service for provider {}: {}", provider.id(), e.getMessage());
             return null;

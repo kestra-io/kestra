@@ -138,12 +138,12 @@ export const useTriggerStore = defineStore("trigger", () => {
     }
 
     async function createBackfill(options: CreateBackfillOptions) {
-        const response = await axios.put(`${apiUrl()}/triggers/backfill/`, options);
+        const response = await axios.put(`${apiUrl()}/triggers/backfill/create`, options);
         return response.data;
     }
 
     async function setDisabled(options: TriggerDisabledOptions) {
-        const response = await axios.put(`${apiUrl()}/set-disabled`, options);
+        const response = await axios.put(`${apiUrl()}/triggers/set-disabled`, options);
         return response.data;
     }
 

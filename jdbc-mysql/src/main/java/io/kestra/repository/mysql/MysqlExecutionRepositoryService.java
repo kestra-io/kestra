@@ -24,7 +24,7 @@ public abstract class MysqlExecutionRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
+                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val(value, String.class));
                 conditions.add(valueField.eq(value != null));
             });
         }
@@ -55,14 +55,14 @@ public abstract class MysqlExecutionRepositoryService {
             var labels = input.getLeft();
             labels.forEach((key, value) ->
             {
-                String sql = "JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')";
+                Condition labelCondition = DSL.condition("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", DSL.val((String) key, String.class), DSL.val((String) value, String.class));
                 switch (operation) {
                     case EQUALS ->
-                        conditions.add(DSL.condition(sql));
+                        conditions.add(labelCondition);
                     case NOT_EQUALS, NOT_IN ->
-                        conditions.add(DSL.not(DSL.condition(sql)));
+                        conditions.add(DSL.not(labelCondition));
                     case IN ->
-                        inConditions.add(DSL.condition(sql));
+                        inConditions.add(labelCondition);
                 }
             });
         }

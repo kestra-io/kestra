@@ -189,7 +189,7 @@
                     />
                 </el-form-item>
                 <el-form-item :label="$t('secret.tags')" prop="tags">
-                    <el-row :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
+                    <el-row class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
                         <el-col :span="8">
                             <el-input required v-model="tag.key" :placeholder="$t('key')" />
                         </el-col>
@@ -498,7 +498,7 @@
             hasData.value = (allSecrets.length ?? 0) !== 0;
             areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
             secrets.value = allSecrets;
-            total.value = allSecrets.length;
+            total.value = secretsResponse.total ?? 0;
         } finally {
             if (callback) callback();
         }
@@ -620,5 +620,9 @@
             align-items: center;
             gap: 4px;
         }
+    }
+
+    .secret-tag-row {
+        margin-bottom: 0.5rem;
     }
 </style>

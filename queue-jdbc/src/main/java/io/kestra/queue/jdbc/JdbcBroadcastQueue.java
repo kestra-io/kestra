@@ -32,7 +32,7 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
     }
 
     @Override
-    public QueueSubscriber<T> subscriber() {
+    protected QueueSubscriber<T> doSubscriber() {
         return new JdbcBroadcastSubscriber<>(
             cls,
             queueService,

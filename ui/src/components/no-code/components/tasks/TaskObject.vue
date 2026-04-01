@@ -161,6 +161,27 @@
         return value?.$group ?? null;
     }
 
+    function getIndex(value: any): number {
+        if (value?.allOf) {
+            for (const item of value.allOf) {
+                const i = getIndex(item);
+                if (i !== -1) return i;
+            }
+        }
+        return value?.$index ?? -1;
+    }
+
+    function sortByIndex(properties: Entry[]): Entry[] {
+        return properties.slice().sort((a, b) => {
+            const ai = getIndex(a[1]);
+            const bi = getIndex(b[1]);
+            if (ai !== -1 && bi !== -1) return ai - bi;
+            if (ai !== -1) return -1;
+            if (bi !== -1) return 1;
+            return 0;
+        });
+    }
+
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
         return propertiesProc
@@ -216,12 +237,13 @@
             buckets.get(group)!.push(entry);
         }
 
-        const known = GROUP_ORDER.filter(g => buckets.has(g)).map(g => ({key: g, properties: buckets.get(g)!}));
+        const sorted = (g: string | null) => sortByIndex(buckets.get(g)!);
+        const known = GROUP_ORDER.filter(g => buckets.has(g)).map(g => ({key: g, properties: sorted(g)}));
         const unknown = [...buckets.keys()]
             .filter((g): g is string => g !== null && !GROUP_ORDER.includes(g))
             .sort()
-            .map(g => ({key: g, properties: buckets.get(g)!}));
-        const ungrouped = buckets.has(null) ? [{key: "optional", properties: buckets.get(null)!}] : [];
+            .map(g => ({key: g, properties: sorted(g)}));
+        const ungrouped = buckets.has(null) ? [{key: "optional", properties: sorted(null)}] : [];
 
         return [...known, ...unknown, ...ungrouped];
     });

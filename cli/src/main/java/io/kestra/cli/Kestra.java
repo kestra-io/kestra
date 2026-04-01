@@ -7,12 +7,12 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
+import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
 import io.kestra.cli.commands.migrations.MigrationCommand;
-import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
@@ -41,14 +41,14 @@ import picocli.CommandLine.Command;
         MigrationCommand.class
     }
 )
-public class App implements Callable<Integer> {
+public class Kestra implements Callable<Integer> {
 
     public static void main(String[] args) {
         System.exit(runCli(args));
     }
 
     public static int runCli(String[] args, String... extraEnvironments) {
-        return runCli(App.class, args, extraEnvironments);
+        return runCli(Kestra.class, args, extraEnvironments);
     }
 
     public static int runCli(Class<?> cls, String[] args, String... extraEnvironments) {
@@ -77,7 +77,7 @@ public class App implements Callable<Integer> {
         // Init ApplicationContext
         CommandLine commandLine = getCommandLine(cls, args);
 
-        ApplicationContext applicationContext = App.applicationContext(cls, commandLine, environments);
+        ApplicationContext applicationContext = Kestra.applicationContext(cls, commandLine, environments);
 
         Class<?> targetCommand = commandLine.getCommandSpec().userObject().getClass();
 
@@ -114,7 +114,7 @@ public class App implements Callable<Integer> {
     public static ApplicationContext applicationContext(Class<?> mainClass,
         String[] environments,
         String... args) {
-        return App.applicationContext(mainClass, getCommandLine(mainClass, args), environments);
+        return Kestra.applicationContext(mainClass, getCommandLine(mainClass, args), environments);
     }
 
     /**

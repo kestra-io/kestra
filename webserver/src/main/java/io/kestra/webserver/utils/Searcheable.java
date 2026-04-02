@@ -19,6 +19,8 @@ import io.micronaut.data.model.Sort;
  */
 public final class Searcheable<T> {
 
+    public record QueryFilterPredicateKey(QueryFilter.Field field, QueryFilter.Op operator) {}
+
     private final List<T> items;
 
     public Searcheable(List<T> items) {
@@ -53,7 +55,7 @@ public final class Searcheable<T> {
             results = results.filter((item) ->
                     searched.queryFilters().stream().allMatch(queryFilter -> {
                         BiPredicate<T, Object> filterPredicate = searched.queryFilterPredicateMap.get(
-                            new Searched.Builder.QueryFilterPredicateKey(queryFilter.field(), queryFilter.operation())
+                            new QueryFilterPredicateKey(queryFilter.field(), queryFilter.operation())
                         );
 
                         if (filterPredicate == null) {
@@ -117,7 +119,7 @@ public final class Searcheable<T> {
         List<QueryFilter> queryFilters,
         Map<String, Function<? super T, Object>> searchableExtractors,
         Map<String, Function<? super T, Comparable<Object>>> sortableExtractors,
-        Map<Builder.QueryFilterPredicateKey, BiPredicate<T, Object>> queryFilterPredicateMap) {
+        Map<QueryFilterPredicateKey, BiPredicate<T, Object>> queryFilterPredicateMap) {
         /**
          * Creates a new {@link Searched} instance.
          *
@@ -136,7 +138,7 @@ public final class Searcheable<T> {
             private String query;
             private final Map<String, Function<? super T, Object>> searchableExtractors = new HashMap<>();
             private final Map<String, Function<? super T, Comparable<Object>>> sortableExtractors = new HashMap<>();
-            private final Map<QueryFilterPredicateKey, BiPredicate<T, Object>> queryFilterPredicateMap = new HashMap<>();
+            private final Map<Searcheable.QueryFilterPredicateKey, BiPredicate<T, Object>> queryFilterPredicateMap = new HashMap<>();
 
             public Builder<T> queryFilters(List<QueryFilter> queryFilters) {
                 this.queryFilters = queryFilters;
@@ -171,7 +173,7 @@ public final class Searcheable<T> {
             }
 
             public <F extends QueryFilter.Field, O extends QueryFilter.Op> Builder<T> searchableQueryFilterExtractor(F field, O operator, BiPredicate<T, Object> itemPredicate) {
-                this.queryFilterPredicateMap.put(new QueryFilterPredicateKey(field, operator), itemPredicate);
+                this.queryFilterPredicateMap.put(new Searcheable.QueryFilterPredicateKey(field, operator), itemPredicate);
                 return this;
             }
 
@@ -196,9 +198,6 @@ public final class Searcheable<T> {
                 );
             }
 
-            private record QueryFilterPredicateKey(
-                QueryFilter.Field field, QueryFilter.Op operator
-            ) {}
         }
     }
 }

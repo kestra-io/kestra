@@ -63,13 +63,13 @@
             </h4>
 
             <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
-                <el-radio label="original" class="radio-item">
+                <el-radio value="original" class="radio-item">
                     {{ t("flow revision original") }}
                 </el-radio>
-                <el-radio label="latest" class="radio-item">
+                <el-radio value="latest" class="radio-item">
                     {{ t("flow revision latest") }}
                 </el-radio>
-                <el-radio label="specific" class="radio-item">
+                <el-radio value="specific" class="radio-item">
                     {{ t("flow revision specific") }}
                 </el-radio>
             </el-radio-group>
@@ -97,10 +97,10 @@
                     </h4>
 
                     <el-radio-group v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
-                        <el-radio label="reuse" class="radio-item">
+                        <el-radio value="reuse" class="radio-item">
                             {{ t("reuse original inputs") }}
                         </el-radio>
-                        <el-radio label="modify" class="radio-item">
+                        <el-radio value="modify" class="radio-item">
                             {{ t("modify inputs") }}
                         </el-radio>
                     </el-radio-group>

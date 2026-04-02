@@ -1,0 +1,67 @@
+# Kestra ETL Pipeline in OSOP Format
+osop_version: "1.0"
+id: kestra-etl-pipeline
+name: Kestra ETL Pipeline
+description: A data ingestion pipeline with validation, transformation, and multi-destination loading — defined in portable OSOP format.
+tags: [kestra, etl, data-pipeline, orchestration]
+
+nodes:
+  - id: extract-csv
+    type: data
+    name: Extract CSV
+    description: Read CSV files from cloud storage (S3/GCS).
+
+  - id: validate
+    type: system
+    name: Validate Schema
+    description: Check data against expected schema, reject malformed rows.
+
+  - id: transform
+    type: cli
+    name: Transform Data
+    description: Clean, normalize, and enrich data using Python scripts.
+    runtime:
+      command: python transform.py
+
+  - id: load-postgres
+    type: db
+    name: Load to PostgreSQL
+    description: Insert transformed data into the analytics database.
+
+  - id: load-bigquery
+    type: db
+    name: Load to BigQuery
+    description: Replicate data to BigQuery for data warehouse queries.
+
+  - id: notify-success
+    type: api
+    name: Notify Success
+    description: Send Slack notification on successful pipeline completion.
+
+  - id: notify-failure
+    type: api
+    name: Notify Failure
+    description: Send PagerDuty alert on pipeline failure.
+
+edges:
+  - from: extract-csv
+    to: validate
+    mode: sequential
+  - from: validate
+    to: transform
+    mode: sequential
+  - from: transform
+    to: load-postgres
+    mode: parallel
+  - from: transform
+    to: load-bigquery
+    mode: parallel
+  - from: load-postgres
+    to: notify-success
+    mode: sequential
+  - from: extract-csv
+    to: notify-failure
+    mode: error
+  - from: transform
+    to: notify-failure
+    mode: error

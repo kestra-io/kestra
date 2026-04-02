@@ -208,7 +208,6 @@ class FlowControllerTest {
         assertThat(flows.getTotal()).isEqualTo(0L);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void searchFlowsByNamespacePrefix() {
         assertThat(
@@ -1077,7 +1076,7 @@ class FlowControllerTest {
         assertThat(body.getFirst().getDeprecationPaths()).hasSize(2);
         assertThat(body.getFirst().getDeprecationPaths().getFirst()).isEqualTo("tasks[0]", "tasks[0].additionalProperty");
         assertThat(body.getFirst().getInfos().size()).isEqualTo(1);
-        assertThat(body.getFirst().getInfos().getFirst()).isEqualTo("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log");
+        assertThat(body.getFirst().getInfos().getFirst()).isEqualTo("io.kestra.core.runners.test.task.Alias is replaced by io.kestra.core.runners.test.TaskWithAlias");
     }
 
     @Test
@@ -1249,7 +1248,7 @@ class FlowControllerTest {
         assertEquals(2, violations.getFirst().getDeprecationPaths().size());
         assertEquals("tasks[0]", violations.getFirst().getDeprecationPaths().getFirst());
         assertEquals(1, violations.getFirst().getInfos().size());
-        assertEquals("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log", violations.getFirst().getInfos().getFirst());
+        assertEquals("io.kestra.core.runners.test.task.Alias is replaced by io.kestra.core.runners.test.TaskWithAlias", violations.getFirst().getInfos().getFirst());
     }
 
     @Test

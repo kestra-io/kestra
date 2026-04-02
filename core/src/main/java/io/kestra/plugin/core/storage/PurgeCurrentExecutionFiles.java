@@ -41,8 +41,7 @@ import lombok.experimental.SuperBuilder;
                         type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
                 """
         )
-    },
-    aliases = { "io.kestra.core.tasks.storages.PurgeExecution", "io.kestra.plugin.core.storage.PurgeExecution" }
+    }
 )
 public class PurgeCurrentExecutionFiles extends Task implements RunnableTask<PurgeCurrentExecutionFiles.Output> {
     @Override

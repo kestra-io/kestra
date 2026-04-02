@@ -42,8 +42,7 @@ import lombok.experimental.SuperBuilder;
                   {{ task.property }}: {{ task.value }}
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.templating.TemplatedTask"
+    }
 )
 public class TemplatedTask extends Task implements RunnableTask<Output> {
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml();

@@ -247,6 +247,30 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
         },
+        USER_ID("userId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        ACTION("action") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.IN);
+            }
+        },
+        RESOURCES("resources") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.CONTAINS, Op.IN);
+            }
+        },
+        DETAILS("details") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
         MIN_LEVEL("level") {
             @Override
             public List<Op> supportedOp() {
@@ -501,6 +525,25 @@ public record QueryFilter(
                     Field.ID,
                     Field.NAMESPACE,
                     Field.TYPE
+                );
+            }
+        },
+        AUDIT_LOG {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.FLOW_ID,
+                    Field.EXECUTION_ID,
+                    Field.ID,
+                    Field.USER_ID,
+                    Field.TYPE,
+                    Field.RESOURCES,
+                    Field.ACTION,
+                    Field.DETAILS,
+                    Field.START_DATE,
+                    Field.END_DATE
                 );
             }
         },

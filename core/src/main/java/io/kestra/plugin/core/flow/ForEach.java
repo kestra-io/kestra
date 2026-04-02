@@ -245,7 +245,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
-        Optional<State.Type> state = FlowableUtils.resolveSequentialState(
+        return FlowableUtils.resolveSequentialState(
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
@@ -255,21 +255,6 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             this.isAllowFailure(),
             this.isAllowWarning()
         );
-
-        // When failFast killed siblings due to a child failure, guessFinalState returns KILLED
-        // because it prioritizes KILLED over FAILED. Override to FAILED since the root cause
-        // is a task failure, not a manual kill.
-        if (state.isPresent() && state.get() == State.Type.KILLED) {
-            boolean isFailFast = runContext.render(this.failFast).as(Boolean.class).orElse(true);
-            if (isFailFast && execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
-                if (this.isAllowFailure()) {
-                    return Optional.of(this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING);
-                }
-                return Optional.of(State.Type.FAILED);
-            }
-        }
-
-        return state;
     }
 
     @Override

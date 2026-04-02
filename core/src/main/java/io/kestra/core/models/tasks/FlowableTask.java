@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraph;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 
@@ -69,6 +70,14 @@ public interface FlowableTask<T extends Output> {
      * Whether the task is allowed to be in warning state.
      */
     boolean isAllowWarning();
+
+    /**
+     * Whether to cancel remaining child tasks when one fails.
+     * Defaults to {@code false}; parallel flowable tasks (Parallel, Dag, ForEach) override to {@code true}.
+     */
+    default Property<Boolean> getFailFast() {
+        return Property.ofValue(false);
+    }
 
     /**
      * Resolve the state of a flowable task.

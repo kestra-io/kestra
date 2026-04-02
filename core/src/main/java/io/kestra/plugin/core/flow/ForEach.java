@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -208,6 +209,15 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @PluginProperty
     private final Integer concurrencyLimit = 1;
 
+    @Builder.Default
+    @Schema(
+        title = "Cancel remaining concurrent task groups on first failure.",
+        description = "When true and concurrencyLimit allows parallel execution, if any task group fails, "
+            + "all still-running groups are killed before transitioning to the errors handler. "
+            + "Has no effect when concurrencyLimit is 1 (serial execution). Defaults to true."
+    )
+    private final Property<Boolean> failFast = Property.ofValue(true);
+
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.DYNAMIC);
@@ -235,7 +245,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
-        return FlowableUtils.resolveSequentialState(
+        Optional<State.Type> state = FlowableUtils.resolveSequentialState(
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
@@ -245,6 +255,21 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             this.isAllowFailure(),
             this.isAllowWarning()
         );
+
+        // When failFast killed siblings due to a child failure, guessFinalState returns KILLED
+        // because it prioritizes KILLED over FAILED. Override to FAILED since the root cause
+        // is a task failure, not a manual kill.
+        if (state.isPresent() && state.get() == State.Type.KILLED) {
+            boolean isFailFast = runContext.render(this.failFast).as(Boolean.class).orElse(true);
+            if (isFailFast && execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
+                if (this.isAllowFailure()) {
+                    return Optional.of(this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING);
+                }
+                return Optional.of(State.Type.FAILED);
+            }
+        }
+
+        return state;
     }
 
     @Override
@@ -265,7 +290,8 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
-            this.concurrencyLimit
+            this.concurrencyLimit,
+            runContext.render(this.failFast).as(Boolean.class).orElse(true)
         );
     }
 }

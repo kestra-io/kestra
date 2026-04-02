@@ -126,7 +126,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             + "siblings are killed before transitioning to the errors handler. "
             + "Defaults to false (current behavior: wait for all tasks to finish)."
     )
-    private final Property<Boolean> failFast = Property.ofValue(false);
+    private final Property<Boolean> failFast = Property.ofValue(true);
 
     @Valid
     @PluginProperty

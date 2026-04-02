@@ -595,17 +595,6 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
-    public Optional<TaskRun> findFirstRunning() {
-        if (this.taskRunList == null) {
-            return Optional.empty();
-        }
-
-        return this.taskRunList
-            .stream()
-            .filter(t -> t.getState().isRunning())
-            .findFirst();
-    }
-
     /*
      * Using reversed().findFirst() is intended for better performance,
      * as these methods are used heavily.
@@ -656,30 +645,10 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return terminatedCount == resolvedTasks.size();
     }
 
-    public boolean hasWarning() {
-        return this.taskRunList != null && this.taskRunList
-            .stream()
-            .anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.WARNING);
-    }
-
-    public boolean hasWarning(List<ResolvedTask> resolvedTasks) {
-        return this.hasWarning(resolvedTasks, null);
-    }
-
-    public boolean hasWarning(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
-            .stream()
-            .anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.WARNING);
-    }
-
     public boolean hasFailed() {
         return this.taskRunList != null && this.taskRunList
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
-    }
-
-    public boolean hasFailed(List<ResolvedTask> resolvedTasks) {
-        return this.hasFailed(resolvedTasks, null);
     }
 
     public boolean hasFailed(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
@@ -707,32 +676,6 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return false;
         }
         return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry());
-    }
-
-    public boolean hasCreated() {
-        return this.taskRunList != null && this.taskRunList
-            .stream()
-            .anyMatch(taskRun -> taskRun.getState().isCreated());
-    }
-
-    public boolean hasCreated(List<ResolvedTask> resolvedTasks) {
-        return this.hasCreated(resolvedTasks, null);
-    }
-
-    public boolean hasCreated(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
-            .stream()
-            .anyMatch(taskRun -> taskRun.getState().isCreated());
-    }
-
-    public boolean hasRunning(List<ResolvedTask> resolvedTasks) {
-        return this.hasRunning(resolvedTasks, null);
-    }
-
-    public boolean hasRunning(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
-            .stream()
-            .anyMatch(taskRun -> taskRun.getState().isRunning());
     }
 
     public State.Type guessFinalState(Flow flow) {

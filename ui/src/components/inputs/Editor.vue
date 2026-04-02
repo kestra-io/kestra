@@ -775,12 +775,12 @@
     .top-nav {
         background-color: var(--ks-background-card);
         padding: 0.5rem;
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: var(--kel-border-radius-round);
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
 
         html.dark & {
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-gray-100);
         }
     }
 
@@ -846,9 +846,9 @@
 
             .monaco-hover-content {
                 h4 {
-                    font-size: var(--font-size-base);
+                    font-size: var(--kel-font-size-base);
                     font-weight: bold;
-                    line-height: var(--bs-body-line-height);
+                    line-height: var(--kbs-body-line-height);
                 }
 
                 p {

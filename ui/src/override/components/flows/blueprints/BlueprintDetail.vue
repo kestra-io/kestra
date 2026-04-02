@@ -308,7 +308,7 @@
             flex-wrap: wrap;
             > div {
                 background: var(--ks-background-card);
-                border-radius: var(--bs-border-radius);
+                border-radius: var(--kel-border-radius-base);
                 min-width : 100px;
                 width: 100px;
                 height : 100px;
@@ -329,7 +329,7 @@
                         position: static;
                         background: none;
                         border-top: 0;
-                        font-size: var(--font-size-sm);
+                        font-size: var(--kel-font-size-small);
                     }
 
                 }

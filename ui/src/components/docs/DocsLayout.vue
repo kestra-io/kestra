@@ -1,11 +1,11 @@
 <template>
     <div class="d-flex full-height docs-layout-container">
-        <div 
-            v-if="mobileMenuOpen && $slots.menu" 
+        <div
+            v-if="mobileMenuOpen && $slots.menu"
             class="mobile-backdrop"
             @click="mobileMenuOpen = false"
         />
-        
+
         <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar d-flex flex-column gap-3">
             <ks-button
                 v-if="isPluginsRoute"
@@ -51,7 +51,7 @@
     const mobileMenuOpen = ref(false);
     const route = useRoute();
     const scrollKey = computed(() => `docs:${route.fullPath}`);
-    
+
     const isPluginsRoute = computed(() => {
         return route.path.startsWith("/main/plugins") ||
             (typeof route.name === "string" && route.name.startsWith("plugins/"));
@@ -67,7 +67,7 @@
 
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
-    
+
     .sidebar {
         background: var(--ks-background-card);
         padding: 2rem;
@@ -98,7 +98,7 @@
         height: 100%;
         overflow-y: auto;
     }
-    
+
     .secondary-header {
         background-color: var(--ks-background-panel);
         display: flex;
@@ -108,7 +108,7 @@
         position: sticky;
         top: 0;
         z-index: 100;
-        
+
         .mobile-menu-toggle {
             display: none;
         }
@@ -129,14 +129,6 @@
 
         h1 {
             margin-bottom: 0.5rem;
-        }
-
-        #{--bs-link-color}: #8405FF;
-        #{--bs-link-color-rgb}: to-rgb(#8405FF);
-
-        html.dark & {
-            #{--bs-link-color}: #BBBBFF;
-            #{--bs-link-color-rgb}: to-rgb(#BBBBFF);
         }
 
         :deep(h2) {
@@ -239,8 +231,6 @@
         }
 
         :deep(.card) {
-            --bs-card-spacer-y: 1rem;
-            --bs-card-spacer-x: 1rem;
             border: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
             display: flex;
@@ -250,7 +240,7 @@
             word-wrap: break-word;
             background-clip: border-box;
             background-color: var(--ks-background-card);
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: var(--kel-border-radius-round);
 
             .card-body {
                 color: var(--ks-content-primary);
@@ -293,7 +283,7 @@
     .mobile-menu-toggle {
         display: none;
     }
-    
+
     .mobile-close-toggle {
         display: none;
     }
@@ -302,10 +292,10 @@
         display: none;
     }
 
-    @media (max-width: 991px) {        
+    @media (max-width: 991px) {
         .secondary-header {
             border-bottom: 1px solid var(--ks-border-primary);
-            
+
             .mobile-menu-toggle {
                 display: flex;
                 align-items: center;
@@ -331,7 +321,7 @@
                 }
             }
         }
-        
+
         .mobile-close-toggle {
             display: flex;
             align-items: center;
@@ -396,7 +386,7 @@
             &.mobile-open {
                 left: 0;
             }
-            
+
             > div {
                 flex: 1;
                 overflow: hidden;
@@ -430,7 +420,7 @@
         .mobile-menu-toggle {
             display: none;
         }
-        
+
         .mobile-close-toggle {
             display: none;
         }
@@ -447,7 +437,7 @@
             width: auto;
             box-shadow: none;
             padding: 2rem;
-            
+
             &.mobile-open {
                 left: auto;
             }

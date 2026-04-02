@@ -614,8 +614,8 @@
 
         :deep(.kks-card__header) {
             padding: 0;
-            font-size: var(--font-size-sm);
-            background-color: var(--bs-gray-200);
+            font-size: var(--kel-font-size-small);
+            background-color: var(--ks-gray-200);
 
             > div {
                 > * {
@@ -624,7 +624,7 @@
                 }
 
                 > .th {
-                    background-color: var(--bs-gray-100-darken-5);
+                    background-color: var(--ks-gray-100-darken-5);
                 }
 
                 > :not(.th) {
@@ -640,7 +640,7 @@
                     font-weight: normal;
 
                     .timeline-start, .timeline-end {
-                        font-size: var(--font-size-sm);
+                        font-size: var(--kel-font-size-small);
                         color: var(--ks-content-primary);
                     }
                 }
@@ -685,12 +685,12 @@
 
                     small {
                         margin-left: 5px;
-                        font-family: var(--bs-font-monospace);
-                        font-size: var(--font-size-xs);
+                        font-family: var(--kel-font-family-monospace);
+                        font-size: var(--kel-font-size-extra-small);
                     }
 
                     code {
-                        font-size: var(--font-size-sm);
+                        font-size: var(--kel-font-size-small);
                         color: var(--ks-content-primary);
                     }
                 }
@@ -703,14 +703,14 @@
                     text-overflow: ellipsis;
 
                     code {
-                        font-size: var(--font-size-sm);
+                        font-size: var(--kel-font-size-small);
                         color: var(--ks-content-primary);
                     }
 
                     small {
                         margin-left: 5px;
-                        font-family: var(--bs-font-monospace);
-                        font-size: var(--font-size-xs);
+                        font-family: var(--kel-font-family-monospace);
+                        font-size: var(--kel-font-size-extra-small);
                     }
                 }
 
@@ -726,8 +726,8 @@
 
                     .progress {
                         height: 25px;
-                        border-radius: var(--bs-border-radius-sm);
-                        background-color: var(--bs-gray-200);
+                        border-radius: var(--kel-border-radius-base-sm);
+                        background-color: var(--ks-gray-200);
                         cursor: pointer;
 
                         .progress-bar {
@@ -765,7 +765,7 @@
 
     :deep(.log-wrapper) {
         > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: var(--kel-border-radius-round);
         }
     }
 </style>

@@ -1076,6 +1076,6 @@
 }
 
 :deep(a.execution-id) code {
-    color: var(--bs-code-color) !important;
+    color: var(--ks-code-color) !important;
 }
 </style>

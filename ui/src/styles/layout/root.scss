@@ -11,7 +11,7 @@
 :root {
     --el-bg-color: var(--ks-background-body);
     --el-bg-color-page: var(--ks-background-body);
-    --el-bg-color-overlay: var(--bs-white);
+    --el-bg-color-overlay: var(--ks-white);
 
     --el-text-color-primary: var(--ks-content-link);
     --el-text-color-regular: var(--ks-content-primary);
@@ -39,12 +39,9 @@
         #{--el-color-alert-#{$type}}: var(--ks-content-#{$type});
     }
 
-    #{--bs-code-color}: $base-purple-600;
-
     #{--card-bg}: var(--ks-background-card);
     #{--input-bg}: var(--ks-background-input);
 
-    #{--bs-border-color}: var(--ks-border-primary);
     #{--bs-border-secondary-color}: var(--ks-border-secondary);
 
     #{--bs-card-bg}: var(--ks-background-card);

@@ -49,7 +49,7 @@
     .kel-checkbox {
         --kel-checkbox-text-color: var(--ks-content-primary);
         --kel-checkbox-checked-text-color: var(--ks-content-primary);
-        --kel-checkbox-font-size: var(--font-size-base);
+        --kel-checkbox-font-size: var(--kel-font-size-base);
 
         html.dark & {
             --kel-checkbox-bg-color: var(--ks-background-input);

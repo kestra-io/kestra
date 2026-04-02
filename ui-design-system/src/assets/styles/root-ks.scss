@@ -207,9 +207,10 @@
     /* tooltip */
     #{--ks-tooltip-background}: global-var.$white;
     #{--ks-tooltip-border}: global-var.$gray-300;
+
+    /* typography */
+    #{--ks-code-color}: global-var.$purple-600;
 }
-
-
 
 html.dark {
     /* background */

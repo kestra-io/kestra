@@ -228,3 +228,9 @@ html.dark {
         color: var(--ks-content-primary);
     }
 }
+
+// overlay
+.kel-overlay {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}

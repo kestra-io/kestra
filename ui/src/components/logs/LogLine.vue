@@ -238,7 +238,7 @@ div.line {
 
         span:first-child {
             margin-right: 6px;
-            font-family: var(--bs-font-sans-serif);
+            font-family: var(--kbs-body-font-family);
             user-select: none;
 
             &::after {
@@ -247,7 +247,7 @@ div.line {
         }
 
         & a {
-            border-radius: var(--bs-border-radius);
+            border-radius: var(--kel-border-radius-base);
         }
 
         &.log-level {

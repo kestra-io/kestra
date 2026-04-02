@@ -279,7 +279,7 @@
         }
 
         html.dark & {
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-gray-100);
         }
     }
 
@@ -332,7 +332,7 @@
 
         &.enhance-readability {
             padding: calc(var(--spacer) * 1.5);
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-gray-100);
         }
     }
 

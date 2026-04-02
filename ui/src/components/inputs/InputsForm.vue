@@ -771,14 +771,14 @@
 }
 
 .hint {
-    font-size: var(--font-size-xs);
-    color: var(--bs-gray-700);
+    font-size: var(--kel-font-size-extra-small);
+    color: var(--ks-gray-700);
 }
 
 .text-description {
     width: 100%;
-    font-size: var(--font-size-xs);
-    color: var(--bs-gray-700);
+    font-size: var(--kel-font-size-extra-small);
+    color: var(--ks-gray-700);
 }
 
 :deep(.boolean-inputs) {
@@ -789,7 +789,7 @@
         &.is-active {
             .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
                 color: var(--ks-content-primary);
-                background-color: var(--bs-gray-100);
+                background-color: var(--ks-gray-100);
                 box-shadow: 0 0 0 0 var(--ks-border-active);
             }
         }
@@ -865,7 +865,7 @@
 
             :deep(.kel-input__inner) {
                 color: #eeae7e !important;
-                font-size: var(--font-size-sm) !important;
+                font-size: var(--kel-font-size-small) !important;
 
                 html.light & {
                     color: #dd5f00 !important;
@@ -903,7 +903,7 @@
     .add-new {
         padding: 5px 8px;
         color: var(--ks-content-tertiary);
-        font-size: var(--font-size-sm);
+        font-size: var(--kel-font-size-small);
         background: none;
 
         &:hover {

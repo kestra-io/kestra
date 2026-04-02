@@ -53,7 +53,7 @@
             }
 
             .collapse-button {
-                font-size: var(--font-size-lg);
+                font-size: var(--kel-font-size-large);
                 line-height: 1.5rem;
             }
 
@@ -84,7 +84,7 @@
 	            &:last-child {
 	                border-bottom: 0;
 	            }
-                
+
                 .property-detail {
 	                background-color: var(--ks-background-body);
 	                padding: 1rem 0;
@@ -134,12 +134,12 @@
         border: 1px solid var(--ks-border-info);
         font-family: 'Courier New', Courier, monospace;
         white-space: nowrap;
-        
+
         .material-design-icon {
             position: absolute;
             bottom: 0;
         }
-        
+
         @media (max-width: 576px) {
             padding: 6px 12px;
             font-size: 0.875rem;

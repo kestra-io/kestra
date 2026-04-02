@@ -35,7 +35,7 @@
     p {
         margin: 0;
         line-height: 1.6;
-        color: var(--bs-body-color);
+        color: var(--kbs-body-color);
         font-size: 14px;
     }
 }
@@ -47,29 +47,29 @@
 }
 
 :deep(.kel-dialog) {
-    background-color: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
+    background-color: var(--kbs-body-bg);
+    border: 1px solid var(--ks-border-primary);
 }
 
 :deep(.kel-dialog__header) {
     padding: 20px 20px 10px;
-    border-bottom: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid var(--ks-border-primary);
 }
 
 :deep(.kel-dialog__title) {
-    color: var(--bs-body-color);
+    color: var(--kbs-body-color);
     font-size: 18px;
     font-weight: 600;
 }
 
 :deep(.kel-dialog__body) {
     padding: 20px;
-    color: var(--bs-body-color);
+    color: var(--kbs-body-color);
 }
 
 :deep(.kel-dialog__footer) {
     padding: 10px 20px 20px;
-    border-top: 1px solid var(--bs-border-color);
+    border-top: 1px solid var(--ks-border-primary);
 }
 
 :deep(.el-button) {

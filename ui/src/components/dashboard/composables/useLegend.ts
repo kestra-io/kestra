@@ -93,7 +93,7 @@ export const barLegend = defineChartPlugin<"bar" | "pie" | "doughnut">({
             textContainer.style.color =
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
-                    : cssVariable("--bs-gray-700") ?? "#000000";
+                    : cssVariable("--ks-gray-700") ?? "#000000";
             textContainer.style.margin = "0";
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
@@ -162,7 +162,7 @@ export const customBarLegend = defineChartPlugin<"bar">({
             textContainer.style.color =
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
-                    : cssVariable("--bs-gray-700") ?? "#000000";
+                    : cssVariable("--ks-gray-700") ?? "#000000";
             textContainer.style.margin = "0";
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
@@ -240,7 +240,7 @@ const generateTotalsLegend = (isDuration: boolean) => (defineChartPlugin<"bar" |
             textContainer.style.color =
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
-                    : cssVariable("--bs-gray-700") ?? "#000000";
+                    : cssVariable("--ks-gray-700") ?? "#000000";
             textContainer.style.margin = "0";
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
@@ -255,7 +255,7 @@ const generateTotalsLegend = (isDuration: boolean) => (defineChartPlugin<"bar" |
             executionsText.style.color =
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
-                    : cssVariable("--bs-gray-700") ?? "#000000";
+                    : cssVariable("--ks-gray-700") ?? "#000000";
             const durationNumber = dataset.data[item.index ?? -1]
             const durationString = typeof durationNumber === "number" ? durationNumber : (durationNumber && durationNumber[0] ? durationNumber[0] : 0);
             executionsText.textContent = isDuration

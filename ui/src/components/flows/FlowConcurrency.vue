@@ -128,7 +128,7 @@
 
     :deep(.kel-progress) {
         .kel-progress-bar, .kel-progress-bar__outer, .kel-progress-bar__inner {
-            border-radius: var(--bs-border-radius);
+            border-radius: var(--kel-border-radius-base);
         }
     }
 

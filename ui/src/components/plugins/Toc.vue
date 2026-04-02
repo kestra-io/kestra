@@ -225,7 +225,7 @@
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-gray-100);
         }
 
         .kel-collapse-item__header {
@@ -236,7 +236,7 @@
             list-style: none;
             padding-inline-start: 0;
             margin-bottom: 0;
-            font-size: var(--font-size-xs);
+            font-size: var(--kel-font-size-extra-small);
             margin-left: .5rem;
         }
 
@@ -248,8 +248,8 @@
 
         .toc-h3 {
             .icon {
-                width: var(--font-size-sm);
-                height: var(--font-size-sm);
+                width: var(--kel-font-size-small);
+                height: var(--kel-font-size-small);
                 display: inline-block;
                 position: relative;
             }
@@ -262,7 +262,7 @@
                 margin-left: .5rem;
 
                 h6 {
-                    font-size: var(--font-size-sm);
+                    font-size: var(--kel-font-size-small);
                     margin-bottom: .5rem;
                 }
 

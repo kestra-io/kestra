@@ -119,7 +119,7 @@
         margin-bottom: 1rem;
 
         :deep(.kel-form-item__label) {
-            font-size: var(--font-size-sm);
+            font-size: var(--kel-font-size-small);
             color: var(--ks-content-secondary);
         }
 

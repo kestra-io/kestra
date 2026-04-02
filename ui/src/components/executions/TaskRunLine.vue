@@ -425,8 +425,8 @@
         }
 
         small {
-            font-family: var(--bs-font-monospace);
-            font-size: var(--font-size-xs)
+            font-family: var(--kel-font-family-monospace);
+            font-size: var(--kel-font-size-extra-small)
         }
 
         .task-duration small {
@@ -486,7 +486,7 @@
         }
 
         .attempt-number {
-            background: var(--bs-gray-400);
+            background: var(--ks-gray-400);
             padding: .375rem .75rem;
             white-space: nowrap;
         }

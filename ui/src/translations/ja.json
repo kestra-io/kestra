@@ -1648,6 +1648,7 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay from task tooltip": "Task <code>{taskId}</code>から開始する同様の実行を作成",
     "replay inputs": "入力",
+    "replay inputs new required": "このリビジョンにはinputがあります。入力を求められます。",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
     "replay using": "を使用してリプレイ",
@@ -1658,6 +1659,7 @@
     "restart": "再起動",
     "restart change revision": "新しい実行に使用されるリビジョンを変更できます。",
     "restart confirm": "実行<code>{id}</code>を再起動してもよろしいですか？",
+    "restart execution title": "実行の再起動",
     "restart latest revision": "最新のリビジョンを再起動",
     "restart tooltip": "<code>{state}</code>タスクから実行を再起動",
     "restart trigger": {

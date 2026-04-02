@@ -407,7 +407,10 @@ class TriggerControllerTest {
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
             .until(() -> jdbcTriggerRepository.findById(triggerNotDisabled).isPresent());
 
-        List<TriggerController.ApiTriggerId> triggers = Stream.of(triggerDisabled, jdbcTriggerRepository.save(triggerDisabled))
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(
+            jdbcTriggerRepository.save(triggerDisabled),
+                jdbcTriggerRepository.save(triggerNotDisabled)
+            )
             .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 

@@ -15,20 +15,20 @@ import io.micronaut.context.env.Environment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AppTest {
+class KestraTest {
     @Test
     void testHelp() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
         // No arg will print help
-        assertThat(App.runCli(new String[0])).isZero();
+        assertThat(Kestra.runCli(new String[0])).isZero();
         assertThat(out.toString()).contains("kestra");
 
         out.reset();
 
         // Explicit help command
-        assertThat(App.runCli(new String[] { "--help" })).isZero();
+        assertThat(Kestra.runCli(new String[] { "--help" })).isZero();
         assertThat(out.toString()).contains("kestra");
     }
 
@@ -40,11 +40,11 @@ class AppTest {
 
         final String[] args = new String[] { "server", serverType, "--help" };
 
-        try (ApplicationContext ctx = App.applicationContext(App.class, new String[] { Environment.CLI }, args)) {
+        try (ApplicationContext ctx = Kestra.applicationContext(Kestra.class, new String[] { Environment.CLI }, args)) {
             assertTrue(ctx.getProperty("kestra.server-type", ServerType.class).isEmpty());
         }
 
-        assertThat(App.runCli(args)).isZero();
+        assertThat(Kestra.runCli(args)).isZero();
 
         assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
     }
@@ -56,7 +56,7 @@ class AppTest {
 
         final String[] argsWithMissingParams = new String[] { "flow", "delete" };
 
-        assertThat(App.runCli(argsWithMissingParams)).isEqualTo(2);
+        assertThat(Kestra.runCli(argsWithMissingParams)).isEqualTo(2);
 
         assertThat(out.toString()).contains("Missing required parameters: ");
         assertThat(out.toString()).contains("Usage: kestra flow delete ");

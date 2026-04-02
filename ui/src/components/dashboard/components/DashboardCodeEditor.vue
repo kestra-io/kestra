@@ -1,35 +1,35 @@
 <template>
-    <AiCopilot
-        v-if="aiCopilotOpened"
-        class="position-absolute prompt ai-copilot-popup"
-        @close="closeAiCopilot"
+    <AiCopilotWrapper
+        ref="copilotWrapper"
         :flow="editorContent"
-        :conversationId="conversationId"
         :generationType="aiGenerationTypes.DASHBOARD"
-        @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
-    />
-    <Editor
-        v-model="editorContent"
-        schemaType="dashboard"
-        lang="yaml"
-        :navbar="false"
-        @cursor="cursor"
-        :original="hasDraft ? dashboardStore.sourceCode : undefined"
-        :diffOverviewBar="false"
-        :diffSideBySide="false"
+        @generated-yaml="(yaml: string) => { draftSource = yaml }"
     >
-        <template #absolute>
-            <AITriggerButton
-                v-if="aiCopilotAllowed"
-                :show="true"
-                :opened="aiCopilotOpened"
-                @click="openAi"
-            />
+        <template #default="{aiCopilotAllowed, aiCopilotOpened, openAiCopilot}">
+            <Editor
+                v-model="editorContent"
+                schemaType="dashboard"
+                lang="yaml"
+                :navbar="false"
+                @cursor="cursor"
+                :original="hasDraft ? dashboardStore.sourceCode : undefined"
+                :diffOverviewBar="false"
+                :diffSideBySide="false"
+            >
+                <template #absolute>
+                    <AITriggerButton
+                        v-if="aiCopilotAllowed"
+                        :show="true"
+                        :opened="aiCopilotOpened"
+                        @click="() => { draftSource = undefined; openAiCopilot(); }"
+                    />
+                </template>
+                <template #footer-row>
+                    <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
+                </template>
+            </Editor>
         </template>
-        <template #footer-row>
-            <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
-        </template>
-    </Editor>
+    </AiCopilotWrapper>
 </template>
 
 <script lang="ts" setup>
@@ -38,11 +38,8 @@
     import Editor from "../../inputs/Editor.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {usePluginsStore} from "../../../stores/plugins";
-    import AiCopilot from "../../ai/AiCopilot.vue";
+    import AiCopilotWrapper from "../../ai/AiCopilotWrapper.vue";
     import AITriggerButton from "../../ai/AITriggerButton.vue";
-    import {useAuthStore} from "override/stores/auth";
-    import permission from "../../../models/permission";
-    import action from "../../../models/action";
     import {aiGenerationTypes} from "../../../utils/constants";
     import AcceptDecline from "../../inputs/AcceptDecline.vue";
 
@@ -97,12 +94,8 @@
         loadPlugins();
     });
 
-    const authStore = useAuthStore();
-    const aiCopilotOpened = ref(false);
+    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>();
     const draftSource = ref<string | undefined>(undefined);
-    const conversationId = ref<string>(Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
-
-    const aiCopilotAllowed = computed(() => !!authStore.user?.hasAnyActionOnAnyNamespace(permission.AI_COPILOT, action.READ));
 
     const editorContent = computed<string>({
         get: () => draftSource.value ?? (dashboardStore.sourceCode as unknown as string),
@@ -117,19 +110,10 @@
 
     const hasDraft = computed(() => draftSource.value !== undefined);
 
-    function closeAiCopilot() {
-        aiCopilotOpened.value = false;
-    }
-
-    function openAi() {
-        draftSource.value = undefined;
-        aiCopilotOpened.value = true;
-    }
-
     function acceptDraft() {
         const accepted = draftSource.value;
         draftSource.value = undefined;
-        conversationId.value = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        copilotWrapper.value?.resetConversation();
         if (accepted !== undefined) {
             dashboardStore.sourceCode = accepted;
         }
@@ -137,26 +121,7 @@
 
     function declineDraft() {
         draftSource.value = undefined;
-        aiCopilotOpened.value = true;
+        copilotWrapper.value?.openAiCopilot();
     }
 </script>
 
-
-<style scoped lang="scss">
-
-    .prompt {
-        bottom: 10%;
-        width: calc(100% - 5rem);
-        left: 3rem;
-        max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
-    }
-
-
-    .ai-copilot-popup {
-        z-index: 1001;
-        transform-origin: center bottom;
-    }
-
-</style>

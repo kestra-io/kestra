@@ -1,20 +1,20 @@
 package io.kestra.plugin.core.condition;
 
+import java.util.function.BiPredicate;
+
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-
-import java.util.function.BiPredicate;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -22,7 +22,11 @@ import java.util.function.BiPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for an execution namespace."
+    title = "Match executions by namespace.",
+    description = """
+        Compares the triggering execution’s namespace against a target string using `EQUALS`, `PREFIX`, or `SUFFIX`. The `prefix` boolean is a shorthand for `comparison: PREFIX`.
+
+        If no comparison is set, it defaults to strict equality unless `prefix` is true."""
 )
 @Plugin(
     examples = {
@@ -50,7 +54,7 @@ import java.util.function.BiPredicate;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.ExecutionNamespaceCondition", "io.kestra.plugin.core.condition.ExecutionNamespaceCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.ExecutionNamespaceCondition", "io.kestra.plugin.core.condition.ExecutionNamespaceCondition" }
 )
 public class ExecutionNamespace extends Condition {
     @NotNull
@@ -90,8 +94,8 @@ public class ExecutionNamespace extends Condition {
         EQUALS(String::equals),
         PREFIX(String::startsWith),
         SUFFIX(String::endsWith);
-        private final BiPredicate<String, String> checker;
 
+        private final BiPredicate<String, String> checker;
 
         Comparison(BiPredicate<String, String> checker) {
             this.checker = checker;

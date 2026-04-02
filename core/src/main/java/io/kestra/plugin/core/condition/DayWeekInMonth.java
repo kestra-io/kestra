@@ -1,25 +1,24 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Map;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
-import java.util.Map;
-
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -27,7 +26,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to execute tasks on a specific day of the week relative to the current month (first, last, ...)"
+    title = "Allow events on an nth weekday within the month.",
+    description = """
+        Renders a date (defaults to the trigger timestamp) and checks whether it matches the requested weekday and position in the month (`FIRST`, `SECOND`, `THIRD`, `FOURTH`, or `LAST`).
+
+        Useful for patterns like “first Monday” or “last Friday”. Dates must be valid ISO-8601 strings."""
 )
 @Plugin(
     examples = {
@@ -54,7 +57,7 @@ import jakarta.validation.constraints.NotNull;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.DayWeekInMonthCondition", "io.kestra.plugin.core.condition.DayWeekInMonthCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.DayWeekInMonthCondition", "io.kestra.plugin.core.condition.DayWeekInMonthCondition" }
 )
 public class DayWeekInMonth extends Condition implements ScheduleCondition {
     @NotNull
@@ -63,8 +66,7 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = Property.ofExpression("{{ trigger.date }}");
 
     @NotNull
     @Schema(title = "The day of week.")
@@ -79,23 +81,26 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         Map<String, Object> vars = conditionContext.getVariables();
         RunContext runContext = conditionContext.getRunContext();
 
-        String render = runContext.render(date, vars);
+        String render = runContext.render(this.date).as(String.class, vars).orElseThrow();
         LocalDate currentDate = DateUtils.parseLocalDate(render);
         LocalDate computed;
 
         DayOfWeek renderedDayOfWeek = runContext.render(this.dayOfWeek).as(DayOfWeek.class, vars).orElseThrow();
         DayWeekInMonth.DayInMonth renderedDayInMonth = runContext.render(this.dayInMonth).as(DayWeekInMonth.DayInMonth.class, vars).orElseThrow();
 
-        if (renderedDayInMonth.equals(DayInMonth.FIRST)) {
+        if (renderedDayInMonth == DayInMonth.FIRST) {
             computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.LAST)) {
+        } else if (renderedDayInMonth == DayInMonth.SECOND) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                .plusWeeks(1);
+        } else if (renderedDayInMonth == DayInMonth.THIRD) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                .plusWeeks(2);
+        } else if (renderedDayInMonth == DayInMonth.FOURTH) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                .plusWeeks(3);
+        } else if (renderedDayInMonth == DayInMonth.LAST) {
             computed = currentDate.with(TemporalAdjusters.lastInMonth(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.SECOND)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.THIRD)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.FOURTH)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
         } else {
             throw new IllegalArgumentException("Invalid dayInMonth");
         }

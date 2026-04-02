@@ -1,6 +1,11 @@
 package io.kestra.core.runners;
 
+import java.security.GeneralSecurityException;
+import java.util.*;
+import java.util.function.Consumer;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -14,16 +19,10 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.core.utils.MapUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.With;
-
-import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Class for building {@link RunContext} variables.
@@ -31,6 +30,7 @@ import java.util.function.Consumer;
 public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
     public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
+    public static final String ENVS = "envs";
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -45,6 +45,21 @@ public final class RunVariables {
         );
     }
 
+    public static Map<String, Object> executionFormattedOutputMap(TaskRun taskRun, Map<String, Object> outputs) {
+        return Optional.ofNullable(outputs)
+            .map(
+                o -> Map.of(
+                    "outputs",
+                    (Object) Map.of(
+                        taskRun.getTaskId(),
+                        Optional.ofNullable(taskRun.getValue())
+                            .map(v -> Map.of(v, (Object) o))
+                            .orElse(o)
+                    )
+                )
+            ).orElse(Collections.emptyMap());
+    }
+
     /**
      * Creates an immutable map representation of the given {@link TaskRun}.
      *
@@ -52,7 +67,7 @@ public final class RunVariables {
      * @return a new immutable {@link Map}.
      */
     static Map<String, Object> of(final TaskRun taskRun) {
-        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object> builder()
             .put("id", taskRun.getId())
             .put("startDate", taskRun.getState().getStartDate())
             .put("attemptsCount", taskRun.getAttempts() == null ? 0 : taskRun.getAttempts().size());
@@ -84,10 +99,10 @@ public final class RunVariables {
             .put("namespace", flow.getNamespace());
 
         Optional.ofNullable(flow.getRevision())
-            .ifPresent(revision ->  builder.put("revision", revision));
+            .ifPresent(revision -> builder.put("revision", revision));
 
         Optional.ofNullable(flow.getTenantId())
-            .ifPresent(tenantId ->  builder.put("tenantId", tenantId));
+            .ifPresent(tenantId -> builder.put("tenantId", tenantId));
 
         return builder.build();
     }
@@ -114,6 +129,8 @@ public final class RunVariables {
 
         Builder withInputs(Map<String, Object> inputs);
 
+        Builder withOutputs(Map<String, Object> outputs);
+
         Builder withTask(Task task);
 
         Builder withExecution(Execution execution);
@@ -137,13 +154,14 @@ public final class RunVariables {
         /**
          * Builds the immutable map of run variables.
          *
-         * @param logger    The {@link RunContextLogger logger}
-         * @return          The immutable map of variables.
+         * @param logger The {@link RunContextLogger logger}
+         * @return The immutable map of variables.
          */
         Map<String, Object> build(RunContextLogger logger, PropertyContext propertyContext);
     }
 
-    public record KestraConfiguration(String environment, String url) { }
+    public record KestraConfiguration(String environment, String url) {
+    }
 
     /**
      * Default builder class for constructing variables.
@@ -160,6 +178,7 @@ public final class RunVariables {
         protected boolean decryptVariables = true;
         protected Map<String, Object> variables;
         protected Map<String, Object> inputs;
+        protected Map<String, Object> outputs;
         protected Map<String, ?> envs;
         protected Map<?, ?> globals;
         private final Optional<String> secretKey;
@@ -179,7 +198,7 @@ public final class RunVariables {
         public Map<String, Object> build(final RunContextLogger logger, final PropertyContext propertyContext) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
-            builder.put("envs", envs != null ? envs : Map.of());
+            builder.put(ENVS, envs != null ? envs : Map.of());
             builder.put("globals", globals != null ? globals : Map.of());
 
             // Flow
@@ -204,7 +223,7 @@ public final class RunVariables {
 
             // Parents
             if (taskRun != null && execution != null) {
-                List<Map<String, Object>> parents = execution.parents(taskRun);
+                List<Map<String, Object>> parents = parents(execution, taskRun);
                 builder.put("parents", parents);
                 if (!parents.isEmpty()) {
                     builder.put("parent", parents.getFirst());
@@ -234,16 +253,21 @@ public final class RunVariables {
                 builder.put("execution", executionMap.build());
 
                 if (execution.getTaskRunList() != null) {
-                    Map<String, Object> outputs = execution.outputs();
-                    if (decryptVariables) {
-                        final Secret secret = new Secret(secretKey, logger);
-                        outputs = secret.decrypt(outputs);
+                    if (!MapUtils.isEmpty(outputs)) {
+                        if (decryptVariables) {
+                            final Secret secret = new Secret(secretKey, logger);
+                            builder.put("outputs", secret.decrypt(outputs));
+                        } else {
+                            builder.put("outputs", outputs);
+                        }
+                    } else {
+                        builder.put("outputs", Collections.emptyMap());
                     }
-                    builder.put("outputs", outputs);
 
                     Map<String, Object> tasksMap = new HashMap<>();
 
-                    execution.getTaskRunList().forEach(taskRun -> {
+                    execution.getTaskRunList().forEach(taskRun ->
+                    {
                         if (taskRun.getState() != null) {
                             if (taskRun.getValue() == null) {
                                 tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
@@ -264,7 +288,6 @@ public final class RunVariables {
 
                     builder.put("tasks", tasksMap);
                 }
-
                 // Inputs
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (execution.getInputs() != null) {
@@ -287,7 +310,8 @@ public final class RunVariables {
                     // we add default inputs value from the flow if not already set, this will be useful for triggers
                     flow.getInputs().stream()
                         .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
-                        .forEach(input -> {
+                        .forEach(input ->
+                        {
                             try {
                                 inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
                             } catch (IllegalVariableEvaluationException e) {
@@ -302,23 +326,30 @@ public final class RunVariables {
                     // if a secret input is used, add it to the list of secrets to mask on the logger
                     if (logger != null && !ListUtils.isEmpty(secretInputs)) {
                         for (String secretInput : secretInputs) {
-                            String secret = (String) inputs.get(secretInput);
-                            if (secret != null) {
-                                logger.usedSecret(secret);
+                            Object secretValue = inputs.get(secretInput);
+                            if (secretValue != null) {
+                                String secret;
+                                // if decryption is disabled, secret input would be still a map of type and encrypted value
+                                if (!decryptVariables) {
+                                    secret = ((Map<String, String>) secretValue).get("value");
+                                } else {
+                                    secret = (String) secretValue;
+                                }
+                                if (secret != null) {
+                                    logger.usedSecret(secret);
+                                }
                             }
                         }
                     }
                 }
 
                 if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
-                    builder.put("trigger", execution.getTrigger().getVariables());
-
-                    // temporal hack to add back the `schedule`variables
-                    // will be removed in 2.0
-                    if (Schedule.class.getName().equals(execution.getTrigger().getType())) {
-                        // add back its variables inside the `schedule` variables
-                        builder.put("schedule", execution.getTrigger().getVariables());
+                    Map<String, Object> outputs = execution.getTrigger().getVariables();
+                    if (decryptVariables) {
+                        final Secret secret = new Secret(secretKey, logger);
+                        outputs = secret.decrypt(outputs);
                     }
+                    builder.put("trigger", outputs);
                 }
 
                 if (execution.getLabels() != null) {
@@ -334,6 +365,10 @@ public final class RunVariables {
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
+            } else if (flow != null) {
+                // if the execution is null, we should add flow labels
+                // this is useful for triggers that don't have an execution
+                builder.put("labels", Label.toNestedMap(flow.getLabels()));
             }
 
             // variables
@@ -341,7 +376,8 @@ public final class RunVariables {
                 .map(Execution::getVariables)
                 .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
                 .map(HashMap::new)
-                .ifPresent(variables -> {
+                .ifPresent(variables ->
+                {
                     Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
                     builder.put("vars", ImmutableMap.copyOf(variables));
 
@@ -383,8 +419,11 @@ public final class RunVariables {
                 decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
             } else if (inputs.containsKey(id)) {
                 try {
-                    String decoded = secret.decrypt(((String) inputs.get(id)));
-                    inputs.put(id, decoded);
+                    Map<String, String> encryptedString = (Map<String, String>) inputs.get(id);
+                    if (encryptedString != null) {
+                        String decoded = secret.decrypt(encryptedString.get("value"));
+                        inputs.put(id, decoded);
+                    }
                 } catch (GeneralSecurityException e) {
                     throw new RuntimeException(e);
                 }
@@ -392,12 +431,32 @@ public final class RunVariables {
         }
     }
 
-    private RunVariables(){}
+    private static List<Map<String, Object>> parents(Execution execution, TaskRun taskRun) {
+        List<TaskRun> parents = execution.findParents(taskRun);
+        Collections.reverse(parents);
+
+        List<Map<String, Object>> result = new ArrayList<>(parents.size());
+        for (TaskRun parent : parents) {
+            Map<String, Object> current = HashMap.newHashMap(2);
+
+            current.put("task", Map.of("id", parent.getTaskId()));
+
+            if (parent.getValue() != null) {
+                current.put("taskrun", Map.of("value", parent.getValue()));
+            }
+
+            result.add(current);
+        }
+
+        return result;
+    }
+
+    private RunVariables() {
+    }
 
     private record PropertyContextWithVariables(
         PropertyContext delegate,
-        Map<String, Object> variables
-    ) implements PropertyContext {
+        Map<String, Object> variables) implements PropertyContext {
 
         @Override
         public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {

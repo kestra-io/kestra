@@ -1,16 +1,5 @@
 package io.kestra.core.models.property;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.*;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,11 +13,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import io.kestra.core.runners.*;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest
 class URIFetcherTest {
     @Inject
     private StorageInterface storage;
@@ -51,7 +52,7 @@ class URIFetcherTest {
         URI uri = storageUpload();
         RunContext runContext = buildRunContext();
 
-        try(var fetched = URIFetcher.of(uri).fetch(runContext)) {
+        try (var fetched = URIFetcher.of(uri).fetch(runContext)) {
             String str = new String(fetched.readAllBytes());
             assertThat(str).isEqualTo("Hello World");
         }
@@ -62,8 +63,10 @@ class URIFetcherTest {
         URI uri = createFile();
         RunContext runContext = buildRunContext();
 
-        assertThrows(SecurityException.class, () -> {
-            try(var ignored = URIFetcher.of(uri).fetch(runContext)) {}
+        assertThrows(SecurityException.class, () ->
+        {
+            try (var ignored = URIFetcher.of(uri).fetch(runContext)) {
+            }
         });
     }
 

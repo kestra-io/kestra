@@ -1,12 +1,17 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.runners.ExecutionLogMetaStore;
 import io.kestra.core.runners.pebble.PebbleUtils;
-import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
-import io.micronaut.context.annotation.Requires;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -14,16 +19,10 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 @Singleton
-@Requires(property = "kestra.repository.type")
-public class ErrorLogsFunction  implements Function {
+public class ErrorLogsFunction implements Function {
     @Inject
-    private ExecutionLogService logService;
+    private ExecutionLogMetaStore executionLogMetaStore;
 
     @Inject
     private PebbleUtils pebbleUtils;
@@ -43,16 +42,18 @@ public class ErrorLogsFunction  implements Function {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         Map<String, String> execution = (Map<String, String>) context.getVariable("execution");
 
-        RetryUtils.Instance<List<LogEntry>, Throwable> retry = RetryUtils.of(Exponential.builder()
-            .delayFactor(2.0)
-            .interval(Duration.ofMillis(100))
-            .maxInterval(Duration.ofSeconds(1))
-            .maxAttempts(-1)
-            .maxDuration(Duration.ofSeconds(5))
-            .build());
+        RetryUtils.Instance<List<LogEntry>, Throwable> retry = RetryUtils.of(
+            Exponential.builder()
+                .delayFactor(2.0)
+                .interval(Duration.ofMillis(100))
+                .maxInterval(Duration.ofSeconds(1))
+                .maxAttempts(-1)
+                .maxDuration(Duration.ofSeconds(5))
+                .build()
+        );
 
         try {
-            return retry.run( logs -> ListUtils.isEmpty(logs), () -> logService.errorLogs(flow.get("tenantId"), execution.get("id")));
+            return retry.run(logs -> ListUtils.isEmpty(logs), () -> executionLogMetaStore.errorLogs(flow.get("tenantId"), execution.get("id")));
         } catch (RetryUtils.RetryFailed e) {
             return Collections.emptyList();
         } catch (Throwable e) {

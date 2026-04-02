@@ -1,5 +1,4 @@
 import {createApp} from "vue"
-import VueAxios from "vue-axios";
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -10,7 +9,6 @@ import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
 import {useMiscStore} from "override/stores/misc";
 
-import {shouldShowWelcome, isDashboardRoute} from "./utils/welcomeGuard";
 
 const app = createApp(App)
 
@@ -76,13 +74,6 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
                 return next({name: "setup"})
             }
 
-            if (isDashboardRoute(to.name) && await shouldShowWelcome()) {
-                return next({
-                    name: "welcome",
-                    params: {tenant: to.params.tenant}
-                });
-            } 
-
             return next();
         } catch (error) {
             console.error("Error during authentication check:", error);
@@ -95,8 +86,6 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
 
     // axios
     configureAxios((instance) => {
-        app.use(VueAxios, instance);
-        app.provide("axios", instance);
         piniaStore.use(({store: piniaStoreLocal}) => {
             piniaStoreLocal.$http = instance;
         });
@@ -105,4 +94,3 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
     // mount
     router.isReady().then(() => app.mount("#app"))
 });
-

@@ -1,19 +1,47 @@
 <template>
-    <Editor
-        v-model="dashboardStore.sourceCode"
-        schemaType="dashboard"
-        lang="yaml"
-        :navbar="false"
-        @cursor="cursor"
-    />
+    <AiCopilotWrapper
+        ref="copilotWrapper"
+        :flow="editorContent"
+        :generationType="aiGenerationTypes.DASHBOARD"
+        @generated-yaml="(yaml: string) => { draftSource = yaml }"
+    >
+        <template #default="{aiCopilotAllowed, aiCopilotOpened, openAiCopilot}">
+            <Editor
+                v-model="editorContent"
+                schemaType="dashboard"
+                lang="yaml"
+                :navbar="false"
+                @cursor="cursor"
+                :original="hasDraft ? dashboardStore.sourceCode : undefined"
+                :diffOverviewBar="false"
+                :diffSideBySide="false"
+            >
+                <template #absolute>
+                    <AITriggerButton
+                        v-if="aiCopilotAllowed"
+                        :show="true"
+                        :opened="aiCopilotOpened"
+                        @click="() => { draftSource = undefined; openAiCopilot(); }"
+                    />
+                </template>
+                <template #footer-row>
+                    <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
+                </template>
+            </Editor>
+        </template>
+    </AiCopilotWrapper>
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, ref} from "vue";
+    import {onMounted, ref, computed} from "vue";
     import {useDashboardStore} from "../../../stores/dashboard";
     import Editor from "../../inputs/Editor.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {usePluginsStore} from "../../../stores/plugins";
+    import AiCopilotWrapper from "../../ai/AiCopilotWrapper.vue";
+    import AITriggerButton from "../../ai/AITriggerButton.vue";
+    import {aiGenerationTypes} from "../../../utils/constants";
+    import AcceptDecline from "../../inputs/AcceptDecline.vue";
 
     const dashboardStore = useDashboardStore();
 
@@ -65,4 +93,35 @@
     onMounted(() => {
         loadPlugins();
     });
+
+    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>();
+    const draftSource = ref<string | undefined>(undefined);
+
+    const editorContent = computed<string>({
+        get: () => draftSource.value ?? (dashboardStore.sourceCode as unknown as string),
+        set: (value: string) => {
+            if (draftSource.value !== undefined) {
+                draftSource.value = value;
+            } else {
+                dashboardStore.sourceCode = value;
+            }
+        }
+    });
+
+    const hasDraft = computed(() => draftSource.value !== undefined);
+
+    function acceptDraft() {
+        const accepted = draftSource.value;
+        draftSource.value = undefined;
+        copilotWrapper.value?.resetConversation();
+        if (accepted !== undefined) {
+            dashboardStore.sourceCode = accepted;
+        }
+    }
+
+    function declineDraft() {
+        draftSource.value = undefined;
+        copilotWrapper.value?.openAiCopilot();
+    }
 </script>
+

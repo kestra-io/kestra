@@ -13,7 +13,7 @@
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
                     :key="plugin.group"
-                    :ref="(el) => pluginRefs[plugin.group] = el"                
+                    :ref="(el: any) => pluginRefs[plugin.group] = el"
                 >
                     <ul class="toc-h3">
                         <li v-for="(types, namespace) in group(plugin)" :key="namespace">
@@ -70,7 +70,7 @@
     const route = useRoute();
     const pluginsStore = usePluginsStore();
 
-    const pluginRefs = reactive({});
+    const pluginRefs = reactive<Record<string, any>>({});
     const activeNames = ref<string[]>([]);
     const searchInput = ref<string>("");
 
@@ -87,12 +87,30 @@
             );
     };
 
+    const getScrollableParent = (el: HTMLElement): HTMLElement | null => {
+        let parent = el.parentElement;
+        while (parent) {
+            const style = getComputedStyle(parent);
+            if (style.overflowY === "auto" || style.overflowY === "scroll") {
+                return parent;
+            }
+            parent = parent.parentElement;
+        }
+        return null;
+    };
+
     const scrollToActivePlugin = () => {
         const activePlugin = localStorage.getItem("activePlugin");
         if (activePlugin) {
             const pluginElement = pluginRefs[activePlugin];
             if (pluginElement) {
-                pluginElement.$el.scrollIntoView({behavior: "smooth", block: "start"});
+                const el = pluginElement.$el as HTMLElement;
+                const scrollContainer = getScrollableParent(el);
+                if (scrollContainer) {
+                    const elRect = el.getBoundingClientRect();
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    scrollContainer.scrollBy({top: elRect.top - containerRect.top, behavior: "smooth"});
+                }
             }
         }
     };
@@ -124,16 +142,19 @@
             });
     });
 
-    watch(route, () => {
+    watch(() => route.params.cls, (cls) => {
+        if (!cls) return;
         props.plugins.forEach(plugin => {
             if (Object.entries(plugin).some(([key, value]) => {
                 if (isEntryAPluginElementPredicate(key, value)) {
-                    return (value as PluginElement[]).some(({cls}) => cls === route.params.cls);
+                    return (value as PluginElement[]).some(({cls: c}) => c === cls);
                 }
                 return false;
             })) {
-                activeNames.value = [plugin.group];
-                localStorage.setItem("activePlugin", plugin.group);
+                if (activeNames.value[0] !== plugin.group) {
+                    activeNames.value = [plugin.group];
+                    localStorage.setItem("activePlugin", plugin.group);
+                }
             }
         });
         nextTick(() => {
@@ -191,17 +212,17 @@
     .plugins-list {
         display: flex;
         flex-direction: column;
-        
+
         .search {
             flex-shrink: 0;
             background-color: var(--ks-background-panel);
             padding-bottom: 0.5rem;
         }
-        
+
         .el-collapse {
             flex: 1;
         }
-        
+
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
@@ -255,7 +276,7 @@
     .selected {
         color: var(--ks-content-link);
     }
-    
+
     @media (max-width: 991px) {
         .plugins-list {
             .search {
@@ -263,7 +284,7 @@
                 top: 0;
                 z-index: 10;
             }
-            
+
             .el-collapse {
                 overflow-y: auto;
             }

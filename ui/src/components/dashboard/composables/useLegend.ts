@@ -46,7 +46,7 @@ export const barLegend = defineChartPlugin<"bar" | "pie" | "doughnut">({
             ul.firstChild.remove();
         }
 
-        const items = chart.options.plugins?.legend?.labels?.generateLabels?.(chart) ?? [];
+        const items = chart.options.plugins?.legend?.labels?.generateLabels?.(chart as any) ?? [];
 
         items.forEach((item) => {
             const dataset = chart.data.datasets[item.datasetIndex ?? -1];
@@ -98,8 +98,6 @@ export const barLegend = defineChartPlugin<"bar" | "pie" | "doughnut">({
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
-
-            if (!options.uppercase) item.text = item.text.toLowerCase();
 
             const text = document.createTextNode(item.text);
             textContainer.appendChild(text);
@@ -266,7 +264,7 @@ const generateTotalsLegend = (isDuration: boolean) => (defineChartPlugin<"bar" |
 
             const labelText = document.createElement("p");
             labelText.style.margin = "0";
-            labelText.textContent = item.text.toLowerCase();
+            labelText.textContent = item.text;
 
             textContainer.appendChild(executionsText);
             textContainer.appendChild(labelText);

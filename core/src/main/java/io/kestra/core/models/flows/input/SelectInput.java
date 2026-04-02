@@ -1,24 +1,24 @@
 package io.kestra.core.models.flows.input;
 
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.RenderableInput;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.validations.Regex;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.RenderableInput;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.validations.Regex;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
@@ -28,7 +28,6 @@ public class SelectInput extends Input<String> implements RenderableInput {
     @Schema(
         title = "List of values."
     )
-    @Size(min = 2)
     List<@Regex String> values;
 
     @Schema(
@@ -125,7 +124,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
 
         String type = Optional.ofNullable(result).map(Object::getClass).map(Class::getSimpleName).orElse("<null>");
         throw ManualConstraintViolation.toConstraintViolationException(
-            "Invalid expression result. Expected a list of strings, but received " + type,
+            "Invalid expression result. Expected a list of strings",
             this,
             SelectInput.class,
             getId(),

@@ -1,32 +1,44 @@
 package io.kestra.core.junit.extensions;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.commons.support.AnnotationSupport;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.TestRunner;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.test.annotation.MicronautTestValue;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.platform.commons.support.AnnotationSupport;
 
 public class KestraTestExtension extends MicronautJunit5Extension {
     @Override
     protected MicronautTestValue buildMicronautTestValue(Class<?> testClass) {
-        testProperties.put("kestra.jdbc.executor.thread-count", Runtime.getRuntime().availableProcessors() * 4);
         return AnnotationSupport
             .findAnnotation(testClass, KestraTest.class)
-            .map(kestraTestAnnotation -> new MicronautTestValue(
-                kestraTestAnnotation.application(),
-                kestraTestAnnotation.environments(),
-                kestraTestAnnotation.packages(),
-                kestraTestAnnotation.propertySources(),
-                kestraTestAnnotation.rollback(),
-                kestraTestAnnotation.transactional(),
-                kestraTestAnnotation.rebuildContext(),
-                kestraTestAnnotation.contextBuilder(),
-                kestraTestAnnotation.transactionMode(),
-                kestraTestAnnotation.startApplication(),
-                kestraTestAnnotation.resolveParameters()
-            ))
+            .map(kestraTestAnnotation ->
+            {
+                // "test" first so DB-specific configs override test defaults
+                var envs = new java.util.ArrayList<String>();
+                envs.add("test");
+                for (String env : kestraTestAnnotation.environments()) {
+                    if (!"test".equals(env)) {
+                        envs.add(env);
+                    }
+                }
+                return new MicronautTestValue(
+                    kestraTestAnnotation.application(),
+                    envs.toArray(new String[0]),
+                    kestraTestAnnotation.packages(),
+                    kestraTestAnnotation.propertySources(),
+                    kestraTestAnnotation.rollback(),
+                    kestraTestAnnotation.transactional(),
+                    kestraTestAnnotation.rebuildContext(),
+                    kestraTestAnnotation.contextBuilder(),
+                    kestraTestAnnotation.transactionMode(),
+                    kestraTestAnnotation.startApplication(),
+                    kestraTestAnnotation.resolveParameters()
+                );
+            })
             .orElse(null);
     }
 
@@ -46,11 +58,12 @@ public class KestraTestExtension extends MicronautJunit5Extension {
         KestraTest kestraTest = extensionContext.getTestClass()
             .orElseThrow()
             .getAnnotation(KestraTest.class);
-        if (kestraTest.startRunner()){
+        if (kestraTest.startRunner()) {
             TestRunner runner = applicationContext.getBean(TestRunner.class);
-            if (!runner.isRunning()){
+            if (!runner.isRunning()) {
                 runner.setSchedulerEnabled(kestraTest.startScheduler());
                 runner.setWorkerEnabled(kestraTest.startWorker());
+                runner.setWorkerControllerEnabled(kestraTest.startWorkerController());
                 runner.run();
             }
         }

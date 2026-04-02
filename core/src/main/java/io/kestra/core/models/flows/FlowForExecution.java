@@ -1,18 +1,20 @@
 package io.kestra.core.models.flows;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.utils.ListUtils;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -57,5 +59,10 @@ public class FlowForExecution extends AbstractFlow {
     @Override
     public String getSource() {
         return null;
+    }
+
+    @Override
+    public FlowForExecution toDeleted() {
+        throw new UnsupportedOperationException("Can't delete a FlowForExecution");
     }
 }

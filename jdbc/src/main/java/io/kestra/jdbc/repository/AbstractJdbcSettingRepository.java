@@ -1,19 +1,20 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
-import io.kestra.core.models.Setting;
-import io.kestra.core.queues.QueueService;
-import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.event.ApplicationEventPublisher;
-import lombok.SneakyThrows;
-import org.jooq.*;
-import org.jooq.impl.DSL;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.jooq.*;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.Setting;
+import io.kestra.core.repositories.SettingRepositoryInterface;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import lombok.SneakyThrows;
 
 public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepository<Setting> implements SettingRepositoryInterface {
     private final ApplicationEventPublisher<CrudEvent<Setting>> eventPublisher;
@@ -21,10 +22,8 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
     @SuppressWarnings("unchecked")
     public AbstractJdbcSettingRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Setting> jdbcRepository,
-        QueueService queueService,
-        ApplicationContext applicationContext
-    ) {
-        super(jdbcRepository, queueService);
+        ApplicationContext applicationContext) {
+        super(jdbcRepository);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
     }
 
@@ -34,7 +33,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<Setting> findByKey(String key) {
-        return findOne(DSL.trueCondition(), field("key").eq(key));
+        return findOne(DSL.trueCondition(), KEY_FIELD.eq(key));
     }
 
     @Override
@@ -44,9 +43,15 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Setting save(Setting setting) {
+        this.eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
+
+        return internalSave(setting);
+    }
+
+    @Override
+    public Setting internalSave(Setting setting) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(setting);
         this.jdbcRepository.persist(setting, fields);
-        this.eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
 
         return setting;
     }

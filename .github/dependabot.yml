@@ -43,7 +43,8 @@ updates:
     groups:
       build:
         applies-to: version-updates
-        patterns: ["@esbuild/*", "@rollup/*", "@swc/*"]
+        patterns:
+          ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*"]
 
       types:
         applies-to: version-updates
@@ -51,7 +52,7 @@ updates:
 
       storybook:
         applies-to: version-updates
-        patterns: ["storybook*", "@storybook/*"]
+        patterns: ["storybook*", "@storybook/*", "eslint-plugin-storybook"]
 
       vitest:
         applies-to: version-updates
@@ -63,14 +64,16 @@ updates:
         exclude-patterns: [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",
+            "eslint-plugin-storybook",
             "vitest",
             "@vitest/*",
             # Temporary exclusion of these packages from major updates
-            "eslint-plugin-storybook",
             "eslint-plugin-vue",
           ]
 
@@ -80,10 +83,13 @@ updates:
         exclude-patterns: [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",
+            "eslint-plugin-storybook",
             "vitest",
             "@vitest/*",
             # Temporary exclusion of these packages from minor updates
@@ -98,19 +104,38 @@ updates:
           [
             "@esbuild/*",
             "@rollup/*",
+            "@rolldown/*",
             "@swc/*",
+            "lightningcss-*",
             "@types/*",
             "storybook*",
             "@storybook/*",
+            "eslint-plugin-storybook",
             "vitest",
             "@vitest/*",
           ]
 
     ignore:
+      # Ignore TypeScript major updates (v6 currently conflicts with @typescript-eslint which requires <6.0.0)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+      # Ignore eslint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
+      # Ignore @eslint/js major updates (v10 requires eslint ^10 but project is on eslint ^9)
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+
+      # Ignore vue-router major updates (v5 conflicts with @kestra-io/ui-libs peer requirement ^4.5.0)
+      - dependency-name: "vue-router"
+        update-types: ["version-update:semver-major"]
+
       # Ignore updates to monaco-yaml; version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
         versions: [">=5.3.2"]
-
-      # Ignore updates of version 1.x for vue-virtual-scroller, as the project uses the beta of 2.x
-      - dependency-name: "vue-virtual-scroller"
-        versions: ["1.x"]
+      
+      # Temporarily ignore all axios updates due to recent supply chain vulnerability, see https://github.com/axios/axios/issues/10604
+      - dependency-name: "axios"
+        versions: ["*"]

@@ -1,7 +1,9 @@
 package io.kestra.core.app;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import io.kestra.core.models.annotations.Plugin;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

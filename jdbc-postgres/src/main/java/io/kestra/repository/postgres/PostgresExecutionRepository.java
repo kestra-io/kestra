@@ -1,35 +1,31 @@
 package io.kestra.repository.postgres;
 
+import java.util.*;
+
+import org.jooq.Condition;
+import org.jooq.Field;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueService;
+import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
-import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.services.JdbcFilterService;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
 
-import java.util.*;
-
-@Singleton
+@RepositoryBean
 @PostgresRepositoryEnabled
 public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public PostgresExecutionRepository(@Named("executions") PostgresRepository<Execution> repository,
-                                       QueueService queueService,
-                                       ApplicationContext applicationContext,
-                                       AbstractJdbcExecutorStateStorage executorStateStorage,
-                                       JdbcFilterService filterService) {
-        super(repository, queueService, applicationContext, executorStateStorage, filterService);
+        ApplicationContext applicationContext,
+        JdbcFilterService filterService) {
+        super(repository, applicationContext, filterService);
     }
 
     @Override
@@ -43,7 +39,7 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     }
 
     @Override
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
         return PostgresExecutionRepositoryService.findLabelCondition(input, operation);
     }
 

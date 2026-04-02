@@ -1,15 +1,31 @@
 package io.kestra.core.repositories;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
+
 import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.dashboards.AggregationType;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.*;
@@ -23,33 +39,24 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.dashboard.data.Flows;
+import io.kestra.plugin.core.dashboard.data.FlowsKPI;
 import io.kestra.plugin.core.debug.Return;
+
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
-import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@KestraTest
+@MicronautTest(transactional = false)
 public abstract class AbstractFlowRepositoryTest {
     public static final String TEST_NAMESPACE = "io.kestra.unittest";
     public static final String TEST_FLOW_ID = "test";
@@ -78,11 +85,11 @@ public abstract class AbstractFlowRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all(QueryFilter filter){
+    void should_find_all(QueryFilter filter) {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
-            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
             .tenantId(tenant)
             .labels(Label.from(Map.of("key", "value")))
             .build();
@@ -98,11 +105,11 @@ public abstract class AbstractFlowRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
-    void should_find_all_with_source(QueryFilter filter){
+    void should_find_all_with_source(QueryFilter filter) {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
-            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
             .tenantId(tenant)
             .labels(Label.from(Map.of("key", "value")))
             .build();
@@ -120,7 +127,7 @@ public abstract class AbstractFlowRepositoryTest {
         return Stream.of(
             QueryFilter.builder().field(Field.QUERY).value("filterFlowId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.EQUALS).build(),
-            QueryFilter.builder().field(Field.NAMESPACE).value(SYSTEM_FLOWS_DEFAULT_NAMESPACE).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.FLOW_ID).value("filterFlowId").operation(Op.EQUALS).build()
         );
@@ -128,19 +135,21 @@ public abstract class AbstractFlowRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all(QueryFilter filter){
+    void should_fail_to_find_all(QueryFilter filter) {
         assertThrows(
             InvalidQueryFiltersException.class,
-            () -> flowRepository.find(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter)));
+            () -> flowRepository.find(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter))
+        );
 
     }
 
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
-    void should_fail_to_find_all_with_source(QueryFilter filter){
+    void should_fail_to_find_all_with_source(QueryFilter filter) {
         assertThrows(
             InvalidQueryFiltersException.class,
-            () -> flowRepository.findWithSource(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter)));
+            () -> flowRepository.findWithSource(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter))
+        );
 
     }
 
@@ -180,6 +189,51 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void shouldFilterFlowsWithNotEqualsLabelOperator() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flowWithLabel = builder(tenant)
+            .id("flow-with-label")
+            .labels(Label.from(Map.of("foo", "bar")))
+            .build();
+
+        FlowWithSource flowWithoutLabel = builder(tenant)
+            .id("flow-without-label")
+            .build();
+
+        FlowWithSource flowWithDifferentLabel = builder(tenant)
+            .id("flow-with-different-label")
+            .labels(Label.from(Map.of("foo", "baz")))
+            .build();
+
+        try {
+            flowWithLabel = flowRepository.create(GenericFlow.of(flowWithLabel));
+            flowWithoutLabel = flowRepository.create(GenericFlow.of(flowWithoutLabel));
+            flowWithDifferentLabel = flowRepository.create(GenericFlow.of(flowWithDifferentLabel));
+
+            // Filter: Labels NOT_EQUALS foo:bar
+            // Should return: flow-without-label and flow-with-different-label
+            QueryFilter filter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_EQUALS)
+                .value(Map.of("foo", "bar"))
+                .build();
+
+            ArrayListTotal<Flow> results = flowRepository.find(Pageable.UNPAGED, tenant, List.of(filter));
+
+            assertThat(results).hasSize(2);
+            assertThat(results)
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
+
+        } finally {
+            deleteFlow(flowWithLabel);
+            deleteFlow(flowWithoutLabel);
+            deleteFlow(flowWithDifferentLabel);
+        }
+    }
+
+    @Test
     void findByIdWithoutAcl() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = builder(tenant)
@@ -213,7 +267,8 @@ public abstract class AbstractFlowRepositoryTest {
             Optional<FlowWithSource> full = flowRepository.findByIdWithSource(tenant, flow.getNamespace(), flow.getId());
             assertThat(full.isPresent()).isTrue();
 
-            full.ifPresent(current -> {
+            full.ifPresent(current ->
+            {
                 assertThat(full.get().getRevision()).isEqualTo(1);
                 assertThat(full.get().getSource()).contains("# comment");
                 assertThat(full.get().getSource()).doesNotContain("revision:");
@@ -288,8 +343,35 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(tenant, flow.getNamespace(), flow.getId()).isPresent()).isFalse();
         assertThat(flowRepository.findById(tenant, flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent()).isTrue();
 
-        List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, flow.getNamespace(), flow.getId(), true);
         assertThat(revisions.getLast().getRevision()).isEqualTo(delete.getRevision());
+    }
+
+    @Test
+    protected void shouldDeleteRevisions() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+            toDelete.add(revision1);
+
+            FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+            toDelete.add(revision2);
+
+            FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+            toDelete.add(revision3);
+
+            flowRepository.deleteRevisions(tenant, TEST_NAMESPACE, flowId, List.of(1, 2));
+
+            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, false);
+
+            assertThat(revisions).hasSize(1);
+            assertThat(revisions.getFirst()).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision3);
+
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
     }
 
     @Test
@@ -339,10 +421,14 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tenantId(tenant)
-            .triggers(Collections.singletonList(UnitTest.builder()
-                .id("sleep")
-                .type(UnitTest.class.getName())
-                .build()))
+            .triggers(
+                Collections.singletonList(
+                    UnitTest.builder()
+                        .id("sleep")
+                        .type(UnitTest.class.getName())
+                        .build()
+                )
+            )
             .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
 
@@ -364,14 +450,23 @@ public abstract class AbstractFlowRepositoryTest {
             deleteFlow(flow);
         }
 
-        Await.until(() -> FlowListener.filterByTenant(tenant)
-            .size() == 3, Duration.ofMillis(100), Duration.ofSeconds(5));
-        assertThat(FlowListener.filterByTenant(tenant).stream()
-            .filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);
-        assertThat(FlowListener.filterByTenant(tenant).stream()
-            .filter(r -> r.getType() == CrudEventType.UPDATE).count()).isEqualTo(1L);
-        assertThat(FlowListener.filterByTenant(tenant).stream()
-            .filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
+        Await.until(
+            () -> FlowListener.filterByTenant(tenant)
+                .size() == 3,
+            Duration.ofMillis(100), Duration.ofSeconds(5)
+        );
+        assertThat(
+            FlowListener.filterByTenant(tenant).stream()
+                .filter(r -> r.getType() == CrudEventType.CREATE).count()
+        ).isEqualTo(1L);
+        assertThat(
+            FlowListener.filterByTenant(tenant).stream()
+                .filter(r -> r.getType() == CrudEventType.UPDATE).count()
+        ).isEqualTo(1L);
+        assertThat(
+            FlowListener.filterByTenant(tenant).stream()
+                .filter(r -> r.getType() == CrudEventType.DELETE).count()
+        ).isEqualTo(1L);
     }
 
     @Test
@@ -383,10 +478,14 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tenantId(tenant)
-            .triggers(Collections.singletonList(UnitTest.builder()
-                .id("sleep")
-                .type(UnitTest.class.getName())
-                .build()))
+            .triggers(
+                Collections.singletonList(
+                    UnitTest.builder()
+                        .id("sleep")
+                        .type(UnitTest.class.getName())
+                        .build()
+                )
+            )
             .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
 
@@ -397,14 +496,20 @@ public abstract class AbstractFlowRepositoryTest {
             deleteFlow(save);
         }
 
-        Await.until(() -> FlowListener.filterByTenant(tenant)
-            .size() == 2, Duration.ofMillis(100), Duration.ofSeconds(5));
-        assertThat(FlowListener.filterByTenant(tenant).stream()
-            .filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);
-        assertThat(FlowListener.filterByTenant(tenant).stream()
-            .filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
+        Await.until(
+            () -> FlowListener.filterByTenant(tenant)
+                .size() == 2,
+            Duration.ofMillis(100), Duration.ofSeconds(5)
+        );
+        assertThat(
+            FlowListener.filterByTenant(tenant).stream()
+                .filter(r -> r.getType() == CrudEventType.CREATE).count()
+        ).isEqualTo(1L);
+        assertThat(
+            FlowListener.filterByTenant(tenant).stream()
+                .filter(r -> r.getType() == CrudEventType.DELETE).count()
+        ).isEqualTo(1L);
     }
-
 
     @Test
     protected void shouldReturnNullRevisionForNonExistingFlow() {
@@ -436,13 +541,13 @@ public abstract class AbstractFlowRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         final String flowId = IdUtils.create();
         FlowWithSource created = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
-        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(1);
+        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(1);
 
         // When
         flowRepository.delete(created);
 
         // Then
-        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(2);
+        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(2);
     }
 
     @Test
@@ -461,7 +566,7 @@ public abstract class AbstractFlowRepositoryTest {
             toDelete.add(flowRepository.create(createTestingLogFlow(tenant, flowId, "second")));
 
             // Then
-            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(3);
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(3);
             assertThat(flowRepository.lastRevision(tenant, TEST_NAMESPACE, flowId)).isEqualTo(3);
         } finally {
             toDelete.forEach(this::deleteFlow);
@@ -512,7 +617,75 @@ public abstract class AbstractFlowRepositoryTest {
 
             // Then
             assertThat(flowRepository.findById(tenant, TEST_NAMESPACE, flowId, Optional.empty())).isEqualTo(Optional.empty());
-            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(3);
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(3);
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, false).size()).isEqualTo(2);
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldFindRevisions() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+            toDelete.add(revision1);
+
+            FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+            toDelete.add(revision2);
+
+            FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+            toDelete.add(revision3);
+
+            FlowWithSource revision4 = flowRepository.update(createTestingLogFlow(tenant, flowId, "fourth"), revision3);
+            toDelete.add(revision4);
+
+            List<FlowWithSource> revisions = flowRepository.findRevisions(
+                tenant, TEST_NAMESPACE,
+                flowId, null, List.of(1, 3, 4)
+            );
+
+            assertThat(revisions).hasSize(3);
+            assertThat(revisions.get(0)).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision1);
+            assertThat(revisions.get(1)).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision3);
+            assertThat(revisions.get(2)).usingRecursiveComparison().ignoringFields("triggers", "updated").isEqualTo(revision4);
+
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldReturnUpdatedInFindRevisions() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            // When: Create a flow with multiple revisions
+            FlowWithSource created = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+            toDelete.add(created);
+
+            FlowWithSource updated = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), created);
+            toDelete.add(updated);
+
+            // Then: findRevisions should return updated for each revision
+            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true);
+
+            assertThat(revisions).hasSize(2);
+
+            // Each revision should have an updated timestamp
+            for (FlowWithSource revision : revisions) {
+                assertThat(revision.getUpdated())
+                    .as("Revision %d should have updated", revision.getRevision())
+                    .isNotNull();
+            }
+
+            // Revisions should be ordered by revision number
+            assertThat(revisions.get(0).getRevision()).isEqualTo(1);
+            assertThat(revisions.get(1).getRevision()).isEqualTo(2);
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
@@ -645,18 +818,19 @@ public abstract class AbstractFlowRepositoryTest {
             // Then
             assertTrue(count > 0);
         } finally {
-            Optional.ofNullable(toDelete).ifPresent(flow -> {
+            Optional.ofNullable(toDelete).ifPresent(flow ->
+            {
                 flowRepository.delete(flow);
             });
         }
     }
 
     @Test
-    void should_exist_for_tenant(){
+    void should_exist_for_tenant() {
         String tenantFlowExist = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flowExist = FlowWithSource.builder()
             .id("flowExist")
-            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
             .tenantId(tenantFlowExist)
             .deleted(false)
             .build();
@@ -665,7 +839,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenantFlowDeleted = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flowDeleted = FlowWithSource.builder()
             .id("flowDeleted")
-            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
             .tenantId(tenantFlowDeleted)
             .deleted(true)
             .build();
@@ -720,18 +894,94 @@ public abstract class AbstractFlowRepositoryTest {
         }
     }
 
+    @Test
+    protected void dashboard_fetchData_shouldNotReturnDuplicateFlowRevisions() throws Exception {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var flowId = IdUtils.create();
 
+        // Create flow with revision 1
+        FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+        // Update to create revision 2
+        FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+        // Update to create revision 3
+        FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+
+        try {
+            var now = ZonedDateTime.now();
+            ArrayListTotal<Map<String, Object>> data = flowRepository.fetchData(
+                tenant,
+                Flows.<ColumnDescriptor<Flows.Fields>> builder()
+                    .type(Flows.class.getName())
+                    .columns(
+                        Map.of(
+                            "id", ColumnDescriptor.<Flows.Fields> builder().field(Flows.Fields.ID).build(),
+                            "namespace", ColumnDescriptor.<Flows.Fields> builder().field(Flows.Fields.NAMESPACE).build()
+                        )
+                    )
+                    .build(),
+                now.minusHours(1),
+                now,
+                null
+            );
+
+            // Should return only 1 row (latest revision), not 3
+            assertThat(data.getTotal()).isEqualTo(1L);
+            assertThat(data).hasSize(1);
+        } finally {
+            deleteFlow(revision3);
+        }
+    }
+
+    @Test
+    protected void dashboard_fetchValue_shouldNotCountDuplicateFlowRevisions() throws Exception {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var flowId = IdUtils.create();
+
+        // Create flow with revision 1
+        FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+        // Update to create revision 2
+        FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+        // Update to create revision 3
+        FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+
+        try {
+            var now = ZonedDateTime.now();
+            Double value = flowRepository.fetchValue(
+                tenant,
+                FlowsKPI.<ColumnDescriptor<FlowsKPI.Fields>> builder()
+                    .type(FlowsKPI.class.getName())
+                    .columns(
+                        ColumnDescriptor.<FlowsKPI.Fields> builder()
+                            .field(FlowsKPI.Fields.ID)
+                            .agg(AggregationType.COUNT)
+                            .build()
+                    )
+                    .build(),
+                now.minusHours(1),
+                now,
+                false
+            );
+
+            // Should count only 1 flow (latest revision), not 3
+            assertEquals(1.0, value);
+        } finally {
+            deleteFlow(revision3);
+        }
+    }
 
     private static Flow createTestFlowForNamespace(String tenantId, String namespace) {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace(namespace)
             .tenantId(tenantId)
-            .tasks(List.of(Return.builder()
-                .id(IdUtils.create())
-                .type(Return.class.getName())
-                .build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id(IdUtils.create())
+                        .type(Return.class.getName())
+                        .build()
+                )
+            )
             .build();
     }
 
@@ -751,8 +1001,10 @@ public abstract class AbstractFlowRepositoryTest {
         @Override
         public void onApplicationEvent(CrudEvent<AbstractFlow> event) {
             //This has to be done because Micronaut may send CrudEvent<Setting> for example, and we don't want them.
-            if ((event.getModel() != null && event.getModel() instanceof AbstractFlow)||
-                (event.getPreviousModel() != null && event.getPreviousModel() instanceof AbstractFlow)) {
+            if (
+                (event.getModel() != null && event.getModel() instanceof AbstractFlow) ||
+                    (event.getPreviousModel() != null && event.getPreviousModel() instanceof AbstractFlow)
+            ) {
                 emits.add(event);
             }
         }
@@ -761,15 +1013,17 @@ public abstract class AbstractFlowRepositoryTest {
             emits = new CopyOnWriteArrayList<>();
         }
 
-        public static List<CrudEvent<AbstractFlow>> filterByTenant(String tenantId){
+        public static List<CrudEvent<AbstractFlow>> filterByTenant(String tenantId) {
             return emits.stream()
-                .filter(e -> (e.getPreviousModel() != null && e.getPreviousModel().getTenantId().equals(tenantId)) ||
-                    (e.getModel() != null && e.getModel().getTenantId().equals(tenantId)))
+                .filter(
+                    e -> (e.getPreviousModel() != null && e.getPreviousModel().getTenantId().equals(tenantId)) ||
+                        (e.getModel() != null && e.getModel().getTenantId().equals(tenantId))
+                )
                 .toList();
         }
     }
 
-    private static GenericFlow createTestingLogFlow(String tenantId, String id, String logMessage) {
+    protected static GenericFlow createTestingLogFlow(String tenantId, String id, String logMessage) {
         String source = """
                id: %s
                namespace: %s
@@ -809,14 +1063,17 @@ public abstract class AbstractFlowRepositoryTest {
                     .flowId(context.getFlowId())
                     .flowRevision(conditionContext.getFlow().getRevision())
                     .state(new State())
-                    .trigger(ExecutionTrigger.builder()
-                        .id(this.getId())
-                        .type(this.getType())
-                        .variables(ImmutableMap.of(
-                            "counter", COUNTER,
-                            "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
-                        ))
-                        .build()
+                    .trigger(
+                        ExecutionTrigger.builder()
+                            .id(this.getId())
+                            .type(this.getType())
+                            .variables(
+                                ImmutableMap.of(
+                                    "counter", COUNTER,
+                                    "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
+                                )
+                            )
+                            .build()
                     )
                     .build();
 

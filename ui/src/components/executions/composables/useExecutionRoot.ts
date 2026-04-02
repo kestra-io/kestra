@@ -7,12 +7,12 @@ import {useExecutionsStore} from "../../../stores/executions";
 
 //@ts-expect-error no declaration file
 import Logs from "../Logs.vue";
-//@ts-expect-error no declaration file
 import Gantt from "../Gantt.vue";
 //@ts-expect-error no declaration file
 import Topology from "../Topology.vue";
 import Overview from "../overview/Overview.vue";
 import DemoAuditLogs from "../../demo/AuditLogs.vue";
+import DemoAssets from "../../demo/Assets.vue";
 import ExecutionMetric from "../ExecutionMetric.vue";
 import ExecutionOutput from "../outputs/Wrapper.vue";
 import Dependencies from "../../dependencies/Dependencies.vue";
@@ -98,7 +98,8 @@ export function useExecutionRoot() {
                 name: "outputs",
                 component: ExecutionOutput,
                 title: t("outputs"),
-                maximized: true
+                maximized: true,
+                noOverflow: true
             },
             {
                 name: "metrics",
@@ -109,7 +110,8 @@ export function useExecutionRoot() {
                 name: "dependencies",
                 component: Dependencies,
                 title: t("dependencies"),
-                count: dependenciesCount.value,
+                count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
+                disabled: !dependenciesCount.value,
                 maximized: true,
                 props: {
                     isReadOnly: true,
@@ -121,6 +123,16 @@ export function useExecutionRoot() {
                 title: t("auditlogs"),
                 maximized: true,
                 locked: true
+            },
+            {
+                name: "assets",
+                component: DemoAssets,
+                title: t("assets.title"),
+                maximized: true,
+                locked: true,
+                props: {
+                    topbar: false
+                }
             }
         ];
     };

@@ -2,6 +2,7 @@ package io.kestra.plugin.core.templating;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -11,6 +12,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -25,8 +27,11 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Templatize task properties using Kestra’s Pebble templating.",
-    description = "This task's `spec` property allows you to fully templatize all task properties using Kestra's Pebble templating. This way, all task properties and their values can be dynamically rendered based on your custom inputs, variables, and outputs from other tasks."
+    title = "Render and run a task from a templated spec.",
+    description = """
+        Renders a YAML task definition from `spec` using Pebble and executes it. The rendered task must be a RunnableTask and cannot itself be `TemplatedTask`.
+
+        Useful for highly dynamic task definitions driven by inputs or previous outputs."""
 )
 @Plugin(
     examples = {

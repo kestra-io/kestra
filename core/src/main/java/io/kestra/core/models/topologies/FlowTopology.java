@@ -1,11 +1,12 @@
 package io.kestra.core.models.topologies;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.kestra.core.models.HasUID;
-import lombok.Builder;
-import lombok.Value;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Value;
 
 @Value
 @Builder
@@ -18,7 +19,6 @@ public class FlowTopology implements HasUID {
 
     @NotNull
     FlowNode destination;
-
 
     /** {@inheritDoc **/
     @Override

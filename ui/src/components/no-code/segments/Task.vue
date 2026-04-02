@@ -16,7 +16,7 @@
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        UPDATE_TASK_FUNCTION_INJECTION_KEY,
+        UPDATE_YAML_FUNCTION_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
@@ -37,7 +37,7 @@
 
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
-    const updateTask = inject(UPDATE_TASK_FUNCTION_INJECTION_KEY, () => {})
+    const updateTask = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
 
     const closeTaskAddition = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,

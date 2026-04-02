@@ -1,32 +1,43 @@
 <template>
     <div class="no-code" ref="scrollContainer">
-        <div class="p-4">
-            <Task
-                v-if="creatingTask || editingTask"
-            />
+        <AiCopilotWrapper
+            ref="copilotWrapper"
+            sticky
+            :flow="flowYaml"
+            :generationType="aiGenerationTypes.FLOW"
+            :namespace="namespace"
+            @generated-yaml="onGeneratedYaml"
+        >
+            <template #default="{aiCopilotAllowed}">
+                <div class="p-4" :class="{'no-code-content-with-ai': aiCopilotAllowed}">
+                    <Task
+                        v-if="creatingTask || editingTask"
+                    />
 
-            <el-form v-else labelPosition="top">
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
-                    <template #tasks>
-                        <TaskObjectField
-                            v-bind="v"
-                            @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
-                        />
-                    </template>
-                </Wrapper>
+                    <el-form v-else labelPosition="top">
+                        <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
+                            <template #tasks>
+                                <TaskObjectField
+                                    v-bind="v"
+                                    @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                                />
+                            </template>
+                        </Wrapper>
 
-                <hr class="my-4">
+                        <hr class="my-4">
 
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
-                    <template #tasks>
-                        <TaskObjectField
-                            v-bind="v"
-                            @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
-                        />
-                    </template>
-                </Wrapper>
-            </el-form>
-        </div>
+                        <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="LIST_FIELDS.includes(v.fieldKey)">
+                            <template #tasks>
+                                <TaskObjectField
+                                    v-bind="v"
+                                    @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                                />
+                            </template>
+                        </Wrapper>
+                    </el-form>
+                </div>
+            </template>
+        </AiCopilotWrapper>
     </div>
 </template>
 
@@ -43,7 +54,9 @@
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
         CREATE_TASK_FUNCTION_INJECTION_KEY,
+        CREATING_FLOW_INJECTION_KEY,
         CREATING_TASK_INJECTION_KEY,
+        DEFAULT_NAMESPACE_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY,
@@ -55,9 +68,9 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        UPDATE_TASK_FUNCTION_INJECTION_KEY,
+        UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys";
-    import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
+    import {useFlowFields} from "./utils/useFlowFields";
     import debounce from "lodash/debounce";
     import {NoCodeProps} from "../flows/noCodeTypes";
     import {useFlowStore} from "../../stores/flow";
@@ -65,9 +78,19 @@
     import {useKeyboardSave} from "./utils/useKeyboardSave";
     import {deepEqual} from "../../utils/utils";
     import {useScrollMemory} from "../../composables/useScrollMemory";
-
-
+    import {defaultNamespace} from "../../composables/useNamespaces";
+    import {LIST_FIELDS} from "./components/tasks/getTaskComponent";
+    import {aiGenerationTypes} from "../../utils/constants";
+    import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue";
     const props = defineProps<NoCodeProps>();
+
+    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>();
+    const namespace = computed(() => flowStore.flow?.namespace);
+
+    function onGeneratedYaml(yaml: string) {
+        editorUpdate(yaml);
+        copilotWrapper.value?.resetConversation();
+    }
 
     function shouldMerge(schema: any): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
@@ -85,7 +108,7 @@
         
 
         editorUpdate(YAML_UTILS.replaceBlockWithPath({
-            source: flowStore.flowYaml ?? "",
+            source: flowYaml.value,
             path: key,
             newContent: YAML_UTILS.stringify(realValue),
         }));
@@ -166,6 +189,8 @@
     provide(REF_PATH_INJECTION_KEY, props.refPath);
     provide(PANEL_INJECTION_KEY, panel)
     provide(POSITION_INJECTION_KEY, props.position ?? "after");
+    provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false);
+    provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? "company.team"));
     provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
     provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
     provide(FIELDNAME_INJECTION_KEY, props.fieldName);
@@ -184,7 +209,7 @@
         emit("closeTask")
     })
 
-    provide(UPDATE_TASK_FUNCTION_INJECTION_KEY, (yaml) => {
+    provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
         editorUpdate(yaml)
     })
 

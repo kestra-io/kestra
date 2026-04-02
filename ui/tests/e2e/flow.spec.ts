@@ -35,7 +35,7 @@ test.describe("Flow Page", () => {
         await page.goto("/ui/flows");
 
         await test.step("create the example Flow", async () => {
-            await page.waitForURL("**/flows?filters*");
+            await page.waitForURL("**/flows");
 
             await page.getByRole("button", {name: "Create", exact: true}).click();
 
@@ -67,7 +67,7 @@ test.describe("Flow Page", () => {
 
         await test.step("create a the flow by pasting the YAML", async () => {
             await page.locator("#side-menu .sidebar-toggle").click();
-            await page.waitForURL("**/flows?filters*");
+            await page.waitForURL("**/flows");
             await page.getByRole("button", {name: "Create", exact: true}).click();
             await page.waitForURL("**/flows/new");
             await page.getByTestId("monaco-editor").getByText("Hello World").isVisible();
@@ -90,7 +90,7 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("button", {name: "Execute"}).first().click();
 
-            await expect(page.getByRole("dialog").getByText("INPUT_A")).toBeVisible();
+            await expect(page.getByRole("dialog").getByText("INPUT_A", {exact: true})).toBeVisible();
             await page.getByRole("dialog").getByTestId("monaco-editor").getByRole("textbox").fill(inputValue);
             await page.waitForTimeout(2100);
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();

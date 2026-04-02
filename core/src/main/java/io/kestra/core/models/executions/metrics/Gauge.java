@@ -1,16 +1,18 @@
 package io.kestra.core.models.executions.metrics;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.AbstractMetricEntry;
+
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.AbstractMetricEntry;
-
-import jakarta.validation.constraints.NotNull;
-import java.util.Map;
 
 @ToString
 @EqualsAndHashCode
@@ -68,7 +70,7 @@ public class Gauge extends AbstractMetricEntry<Double> {
     @Override
     public void register(MetricRegistry meterRegistry, String name, String description, Map<String, String> tags) {
         meterRegistry
-                .gauge(this.metricName(name), description, this.value, this.tagsAsArray(tags));
+            .gauge(this.metricName(name), description, this.value, this.tagsAsArray(tags));
     }
 
     @Override

@@ -1,21 +1,5 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.TestRunnerUtils;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
-import io.micronaut.data.model.Pageable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,9 +16,29 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
+
+import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.storages.StorageInterface;
+
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
@@ -57,16 +61,24 @@ public class ForEachItemCaseTest {
     @Inject
     private ExecutionRepositoryInterface executionRepository;
 
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @SuppressWarnings("unchecked")
-    public void forEachItem() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItem(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
+        Execution execution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow");
 
         // assert that iteration starts at 0
         Execution firstTriggered = triggeredExecs.stream()
@@ -82,7 +94,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -101,32 +113,38 @@ public class ForEachItemCaseTest {
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
-    public void forEachItemEmptyItems(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemEmptyItems(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = emptyItems(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item", null,
+        Execution execution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList()).hasSize(4);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs).isNull();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
+        assertThat(outputs).isEmpty();
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemNoWait() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemNoWait(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-no-wait", null,
+        Execution execution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "for-each-item-no-wait", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // assert that not all subflows ran (depending on the speed of execution, there can be some)
         // be careful that it's racy.
-        ArrayListTotal<Execution> subFlowExecs = executionRepository.findByFlowId(MAIN_TENANT,
-            TEST_NAMESPACE, "for-each-item-subflow-sleep", Pageable.UNPAGED);
+        ArrayListTotal<Execution> subFlowExecs = executionRepository.findByFlowId(
+            tenantId,
+            TEST_NAMESPACE, "for-each-item-subflow-sleep", Pageable.UNPAGED
+        );
         assertThat(subFlowExecs.size()).isLessThanOrEqualTo(26);
 
         // assert on the main flow execution
@@ -134,7 +152,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -143,7 +161,7 @@ public class ForEachItemCaseTest {
         assertThat(iterations.get("SUCCESS")).isEqualTo(26);
 
         // wait for the 26 flows to ends
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow-sleep");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow-sleep");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the last subflow execution
@@ -154,15 +172,17 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemFailed() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemFailed(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-failed", null,
+        Execution execution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "for-each-item-failed", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(60));
+            Duration.ofSeconds(60)
+        );
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow-failed");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow-failed");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the main flow execution
@@ -170,7 +190,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(FAILED);
         assertThat(execution.getState().getCurrent()).isEqualTo(FAILED);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -186,15 +206,17 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemWithSubflowOutputs() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemWithSubflowOutputs(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-outputs", null,
+        Execution execution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "for-each-item-outputs", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-outputs-subflow");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-outputs-subflow");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the main flow execution
@@ -202,7 +224,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
 
@@ -218,9 +240,9 @@ public class ForEachItemCaseTest {
         assertThat(triggered.getTaskRunList()).hasSize(1);
 
         // asserts for subflow merged outputs
-        Map<String, Object> mergeTaskOutputs = execution.getTaskRunList().get(3).getOutputs();
+        Map<String, Object> mergeTaskOutputs = taskOutputService.getOutputs(execution.getTaskRunList().get(3));
         assertThat(mergeTaskOutputs.get("subflowOutputs")).isNotNull();
-        InputStream stream = storageInterface.get(MAIN_TENANT, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
+        InputStream stream = storageInterface.get(tenantId, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
 
         try (var br = new BufferedReader(new InputStreamReader(stream))) {
             // one line per sub-flows
@@ -231,9 +253,11 @@ public class ForEachItemCaseTest {
     public void restartForEachItem(String tenantId) throws Exception {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 20);
-        final Execution failedExecution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "restart-for-each-item", null,
+        final Execution failedExecution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "restart-for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
         assertThat(failedExecution.getTaskRunList()).hasSize(3);
         assertThat(failedExecution.getState().getCurrent()).isEqualTo(FAILED);
 
@@ -241,7 +265,8 @@ public class ForEachItemCaseTest {
         List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(6, tenantId, TEST_NAMESPACE, "restart-child");
         assertThat(triggeredExecs).extracting(e -> e.getState().getCurrent()).containsOnly(FAILED);
 
-        Execution restarted = executionService.restart(failedExecution, null);
+        Flow flow = flowRepository.findByExecution(failedExecution);
+        Execution restarted = executionService.restart(failedExecution, flow, null);
         final Execution successExecution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
             restarted
@@ -251,12 +276,14 @@ public class ForEachItemCaseTest {
         assertThat(triggeredExecs).extracting(e -> e.getState().getCurrent()).containsOnly(SUCCESS);
     }
 
-    public void forEachItemInIf(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+    public void forEachItemInIf(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-in-if", null,
+        Execution execution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "for-each-item-in-if", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
         List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow");
@@ -265,7 +292,7 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(3).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(3));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
@@ -283,15 +310,17 @@ public class ForEachItemCaseTest {
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
-    public void forEachItemWithAfterExecution() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemWithAfterExecution(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException, io.kestra.core.exceptions.InternalException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-after-execution", null,
+        Execution execution = runnerUtils.runOne(
+            tenantId, TEST_NAMESPACE, "for-each-item-after-execution", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(30)
+        );
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow-after-execution");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow-after-execution");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the main flow execution
@@ -299,7 +328,7 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().get(2));
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");

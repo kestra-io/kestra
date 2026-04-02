@@ -2,9 +2,11 @@
     <el-tooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
+        :enterable="false"
         :persistent="false"
         :hideAfter="0"
         :content="tooltip"
+        popperClass="ks-restart-tooltip--no-pointer"
         rawContent
         transition=""
         effect="light"
@@ -18,7 +20,7 @@
             :class="componentClass"
             @click="isOpen = !isOpen"
         >
-            {{ t(replayOrRestart) }}
+            {{ $t(replayOrRestart) }}
         </component>
         <span v-else-if="component === 'el-dropdown-item'">
             <component
@@ -29,55 +31,114 @@
                 :class="componentClass"
                 @click="isOpen = !isOpen"
             >
-                {{ t(replayOrRestart) }}
+                {{ $t(replayOrRestart) }}
             </component>
         </span>
     </el-tooltip>
-    <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroyOnClose :appendToBody="true">
+
+    <el-dialog
+        v-if="enabled && isOpen"
+        v-model="isOpen"
+        destroyOnClose
+        :appendToBody="true"
+        width="600px"
+    >
         <template #header>
-            <h5>{{ t("confirmation") }}</h5>
+            <div class="modal-header m-0">
+                <h3 class="modal-title">
+                    {{ t(isReplay ? "replay execution title" : "restart execution title") }}
+                </h3>
+                <el-divider />
+            </div>
         </template>
+
+        <div class="p-3 pt-0">
+            <p class="mb-0">
+                {{ t("replay execution description") }}
+            </p>
+            <Id :value="execution.id" :shrink="false" />
+
+            <h4 class="section-title">
+                {{ t("replay using") }}:
+            </h4>
+
+            <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
+                <el-radio value="original" class="radio-item">
+                    {{ t("flow revision original") }}
+                </el-radio>
+                <el-radio value="latest" class="radio-item">
+                    {{ t("flow revision latest") }}
+                </el-radio>
+                <el-radio value="specific" class="radio-item">
+                    {{ t("flow revision specific") }}
+                </el-radio>
+            </el-radio-group>
+
+            <el-form
+                v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
+                class="mt-2"
+            >
+                <el-form-item>
+                    <el-select v-model="revisionsSelected">
+                        <el-option
+                            v-for="item in revisionsOptions"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+            </el-form>
+
+            <template v-if="hasInputs">
+                <template v-if="!taskRun">
+                    <h4 class="section-title">
+                        {{ t("replay inputs") }}:
+                    </h4>
+
+                    <el-radio-group v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
+                        <el-radio value="reuse" class="radio-item">
+                            {{ t("reuse original inputs") }}
+                        </el-radio>
+                        <el-radio value="modify" class="radio-item">
+                            {{ t("modify inputs") }}
+                        </el-radio>
+                    </el-radio-group>
+                </template>
+                <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
+                    {{ t("replay inputs new required") }}
+                </p>
+            </template>
+        </div>
 
         <template #footer>
             <el-button @click="isOpen = false">
-                {{ t('cancel') }}
+                {{ t("cancel") }}
             </el-button>
-            <el-button v-if="isReplay && hasInputs" @click="openReplayWithInputsDialog" type="default" :icon="PlayBoxMultiple">
-                {{ t('replay with inputs') }}
-            </el-button>
-            <el-button @click="restartLastRevision()">
-                {{ buttonText }}
-            </el-button>
-            <el-button type="primary" @click="restart()">
-                {{ t('ok') }}
+            <el-button type="primary" @click="handleReplayExecute">
+                {{ t("execute") }}
             </el-button>
         </template>
-
-        <p v-html="confirmText" />
-
-        <el-form v-if="revisionsOptions && revisionsOptions.length > 1">
-            <p class="execution-description">
-                {{ t("restart change revision") }}
-            </p>
-            <el-form-item :label="t('revisions')">
-                <el-select v-model="revisionsSelected">
-                    <el-option
-                        v-for="item in revisionsOptions"
-                        :key="item.value"
-                        :label="item.text"
-                        :value="item.value"
-                    />
-                </el-select>
-            </el-form-item>
-        </el-form>
     </el-dialog>
 
-    <el-dialog v-if="isReplayWithInputsOpen" v-model="isReplayWithInputsOpen" destroyOnClose :appendToBody="true" width="60%">
+    <el-dialog
+        v-if="isReplayWithInputsOpen"
+        v-model="isReplayWithInputsOpen"
+        destroyOnClose
+        :appendToBody="true"
+        width="60%"
+    >
         <template #header>
-            <span v-html="t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
+            <span
+                v-html="t('replay the execution', {
+                    executionId: execution.id,
+                    flowId: execution.flowId
+                })"
+            />
         </template>
+
         <ReplayWithInputs
-            :execution
+            :execution="execution"
             :taskRun="taskRun"
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
@@ -86,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, getCurrentInstance} from "vue"
+    import {ref, computed, watch} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
@@ -100,6 +161,10 @@
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
+    import Id from "../../../../Id.vue"
+    import {useAxios} from "../../../../../utils/axios"
+
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps({
         component: {type: String, default: "el-button"},
@@ -108,7 +173,7 @@
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
-        tooltipPosition: {type: String, default: "bottom"}
+        tooltipPosition: {type: String, default: "bottom"},
     })
 
     const emit = defineEmits(["follow"])
@@ -118,26 +183,46 @@
     const router = useRouter()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
-    const instance = getCurrentInstance()
     const executionsStore = useExecutionsStore()
-    const $http = instance ? (instance.proxy as any).$http : null
+    const $http = useAxios()
 
     const isOpen = ref(false)
     const isReplayWithInputsOpen = ref(false)
     const revisionsSelected = ref<number | undefined>(undefined)
 
+    const replayRevisionMode = ref<"original" | "latest" | "specific">("original")
+    const inputMode = ref<"reuse" | "modify">("reuse")
+
     const icon = computed(() => !props.isReplay ? RestartIcon : PlayBoxMultiple)
-    const hasInputs = computed(() => executionsStore.flow?.inputs?.length > 0)
-    const buttonText = computed(() => t(`${replayOrRestart.value} latest revision`))
-    const confirmText = computed(() => t(`${replayOrRestart.value} confirm`, {id: props.execution.id}))
     const componentClass = computed(() => !props.isReplay ? "restart me-1" : "")
     const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart")
+
+    const currentFlow = ref<any | undefined>(undefined)
+    const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
+    const hasOriginalInputs = computed(() => {
+        const inputs = props.execution.inputs
+        return inputs != null && Object.keys(inputs).length > 0
+    })
+    const canReuseInputs = computed(() => hasInputs.value && hasOriginalInputs.value)
+
+    const effectiveRevision = computed(() => {
+        if (replayRevisionMode.value === "original") return props.execution.flowRevision
+        if (replayRevisionMode.value === "latest") {
+            const revisions = flowStore.revisions
+            return revisions?.[revisions.length - 1]?.revision
+        }
+        return revisionsSelected.value
+    })
 
     const revisionsOptions = computed(() =>
         (flowStore.revisions || [])
             .map((revision) => ({
                 value: revision.revision,
-                text: revision.revision + (sameRevision(revision.revision) ? ` (${t("current")})` : ""),
+                text:
+                    revision.revision +
+                    (revision.revision === props.execution.flowRevision
+                        ? ` (${t("current")})`
+                        : "")
             }))
             .reverse()
     )
@@ -149,7 +234,11 @@
 
         if (!hasPermission) return false
 
-        if (props.isReplay && props.taskRun?.attempts && props.taskRun.attempts.length - 1 !== props.attemptIndex) {
+        if (
+            props.isReplay &&
+            props.taskRun?.attempts &&
+            props.taskRun.attempts.length - 1 !== props.attemptIndex
+        ) {
             return false
         }
 
@@ -159,14 +248,11 @@
 
     const tooltip = computed(() =>
         props.isReplay
-            ? (props.taskRun?.id
+            ? props.taskRun?.id
                 ? t("replay from task tooltip", {taskId: props.taskRun.taskId})
-                : t("replay from beginning tooltip"))
+                : t("replay from beginning tooltip")
             : t("restart tooltip", {state: props.execution.state.current})
     )
-
-
-    const sameRevision = (revision?: number) => revision === props.execution.flowRevision
 
     const openReplayWithInputsDialog = () => {
         isOpen.value = false
@@ -178,19 +264,28 @@
     }
 
     const loadFlowForReplay = async () => {
+        const revision = replayRevisionMode.value !== "latest" ? revisionsSelected.value : undefined
         await executionsStore.loadFlowForExecution({
             flowId: props.execution.flowId,
             namespace: props.execution.namespace,
+            revision,
             store: true
         })
         isReplayWithInputsOpen.value = true
     }
 
-    const loadRevision = () => {
+    const loadRevision = async () => {
         revisionsSelected.value = props.execution.flowRevision
+        currentFlow.value = undefined
         flowStore.loadRevisions({
             namespace: props.execution.namespace,
             id: props.execution.flowId
+        })
+        currentFlow.value = await executionsStore.loadFlowForExecution({
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId,
+            revision: props.execution.flowRevision,
+            store: true
         })
     }
 
@@ -201,19 +296,38 @@
         restart()
     }
 
-    const restart = async () => {
+    const handleReplayExecute = () => {
         isOpen.value = false
 
+        if (hasInputs.value && (!canReuseInputs.value || (!props.taskRun && inputMode.value === "modify"))) {
+            openReplayWithInputsDialog()
+            return
+        }
+
+        if (replayRevisionMode.value === "latest") {
+            restartLastRevision()
+            return
+        }
+
+        if (replayRevisionMode.value === "original") {
+            revisionsSelected.value = props.execution.flowRevision
+        }
+
+        restart()
+    }
+
+    const restart = async () => {
         const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
             taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: sameRevision(revisionsSelected.value) ? undefined : revisionsSelected.value
+            revision: revisionsSelected.value
         })
 
-        const execution = response.data.id === props.execution.id && $http
-            ? await ExecutionUtils.waitForState($http, response.data)
-            : response.data
+        const execution =
+            response.data.id === props.execution.id
+                ? await ExecutionUtils.waitForState($http, response.data)
+                : response.data
 
         executionsStore.execution = execution
 
@@ -232,14 +346,100 @@
             })
         }
 
-        toast.success(t(`${replayOrRestart.value}ed`))
+        toast.success(t("replayed"))
     }
 
     watch(isOpen, (newValue) => newValue && loadRevision())
+
+    watch(effectiveRevision, async (newRevision, oldRevision) => {
+        if (!isOpen.value || newRevision === undefined || newRevision === oldRevision) return
+        currentFlow.value = undefined
+        currentFlow.value = await executionsStore.loadFlowForExecution({
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId,
+            revision: newRevision,
+            store: false
+        })
+    })
+
+    watch(canReuseInputs, (canReuse) => {
+        inputMode.value = canReuse ? "reuse" : "modify"
+    })
 </script>
 
+<style lang="scss">
+    .ks-restart-tooltip--no-pointer {
+        pointer-events: none;
+    }
+</style>
+
 <style scoped lang="scss">
+.modal-header {
+    .modal-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--ks-color-text-primary);
+    }
+}
 .execution-description {
-    color: var(--ks-content-secondary);
+    font-size: 13px;
+    color: var(--ks-color-text-secondary);
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 20px 0 12px 0;
+    color: var(--ks-color-text-primary);
+}
+
+.radio-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.modal-header :deep(.el-divider--horizontal) {
+    margin-bottom: 8px;
+}
+
+.radio-item {
+    :deep(.el-radio__input) {
+        .el-radio__inner {
+            width: 18px;
+            height: 18px;
+
+            &::after {
+                width: 8px;
+                height: 8px;
+                background-color: var(--el-color-primary);
+            }
+        }
+    }
+
+    :deep(.el-radio__label) {
+        font-size: 13px;
+        color: var(--el-text-color-regular);
+        padding-left: 8px;
+    }
+
+
+    &.is-checked {
+        :deep(.el-radio__input) {
+            .el-radio__inner {
+                border-color: var(--el-color-primary);
+                background-color: var(--el-color-primary);
+
+                &::after {
+                    background-color: white;
+                }
+            }
+        }
+
+        :deep(.el-radio__label) {
+            color: var(--el-text-color-regular) !important;
+        }
+    }
 }
 </style>

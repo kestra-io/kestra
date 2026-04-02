@@ -1,15 +1,17 @@
 package io.kestra.core.runners;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,10 +35,10 @@ class RunContextPropertyTest {
     void asShouldRenderAProperty() throws IllegalVariableEvaluationException {
         var runContext = runContextFactory.of(Map.of("variable", "value"));
 
-        var runContextProperty = new RunContextProperty<>(Property.<String>builder().expression("{{ variable }}").build(), runContext);
+        var runContextProperty = new RunContextProperty<>(Property.<String> builder().expression("{{ variable }}").build(), runContext);
         assertThat(runContextProperty.as(String.class).orElseThrow()).isEqualTo("value");
 
-        runContextProperty = new RunContextProperty<>(Property.<String>builder().expression("{{ key }}").build(), runContext);
+        runContextProperty = new RunContextProperty<>(Property.<String> builder().expression("{{ key }}").build(), runContext);
         assertThat(runContextProperty.as(String.class, Map.of("key", "value")).orElseThrow()).isEqualTo("value");
     }
 
@@ -55,10 +57,10 @@ class RunContextPropertyTest {
     void asListShouldRenderAProperty() throws IllegalVariableEvaluationException {
         var runContext = runContextFactory.of(Map.of("variable", "value"));
 
-        var runContextProperty = new RunContextProperty<>(Property.<List<String>>builder().expression("[\"{{ variable }}\"]").build(), runContext);
+        var runContextProperty = new RunContextProperty<>(Property.<List<String>> builder().expression("[\"{{ variable }}\"]").build(), runContext);
         assertThat(runContextProperty.asList(String.class)).contains("value");
 
-        runContextProperty = new RunContextProperty<>(Property.<List<String>>builder().expression("[\"{{ key }}\"]").build(), runContext);
+        runContextProperty = new RunContextProperty<>(Property.<List<String>> builder().expression("[\"{{ key }}\"]").build(), runContext);
         assertThat(runContextProperty.asList(String.class, Map.of("key", "value"))).contains("value");
     }
 
@@ -77,10 +79,10 @@ class RunContextPropertyTest {
     void asMapShouldRenderAProperty() throws IllegalVariableEvaluationException {
         var runContext = runContextFactory.of(Map.of("variable", "value"));
 
-        var runContextProperty = new RunContextProperty<>(Property.<Map<String, String>>builder().expression("{ \"key\": \"{{ variable }}\"}").build(), runContext);
+        var runContextProperty = new RunContextProperty<>(Property.<Map<String, String>> builder().expression("{ \"key\": \"{{ variable }}\"}").build(), runContext);
         assertThat(runContextProperty.asMap(String.class, String.class)).containsEntry("key", "value");
 
-        runContextProperty = new RunContextProperty<>(Property.<Map<String, String>>builder().expression("{ \"key\": \"{{ key }}\"}").build(), runContext);
+        runContextProperty = new RunContextProperty<>(Property.<Map<String, String>> builder().expression("{ \"key\": \"{{ key }}\"}").build(), runContext);
         assertThat(runContextProperty.asMap(String.class, String.class, Map.of("key", "value"))).containsEntry("key", "value");
     }
 
@@ -88,7 +90,7 @@ class RunContextPropertyTest {
     void asShouldReturnCachedRenderedProperty() throws IllegalVariableEvaluationException {
         var runContext = runContextFactory.of();
 
-        var runContextProperty = new RunContextProperty<>(Property.<String>builder().expression("{{ variable }}").build(), runContext);
+        var runContextProperty = new RunContextProperty<>(Property.<String> builder().expression("{{ variable }}").build(), runContext);
 
         assertThat(runContextProperty.as(String.class, Map.of("variable", "value1"))).isEqualTo(Optional.of("value1"));
         assertThat(runContextProperty.as(String.class, Map.of("variable", "value2"))).isEqualTo(Optional.of("value1"));
@@ -98,7 +100,7 @@ class RunContextPropertyTest {
     void asShouldNotReturnCachedRenderedPropertyWithSkipCache() throws IllegalVariableEvaluationException {
         var runContext = runContextFactory.of();
 
-        var runContextProperty = new RunContextProperty<>(Property.<String>builder().expression("{{ variable }}").build(), runContext);
+        var runContextProperty = new RunContextProperty<>(Property.<String> builder().expression("{{ variable }}").build(), runContext);
 
         assertThat(runContextProperty.as(String.class, Map.of("variable", "value1"))).isEqualTo(Optional.of("value1"));
         var skippedCache = runContextProperty.skipCache();

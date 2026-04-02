@@ -5,16 +5,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Immutable class holding a {@link Service} and its {@link ServiceInstance}.
  *
- * @param service          The service bean.
- * @param instance         The service instance.
+ * @param service The service bean.
+ * @param instance The service instance.
  * @param isStateUpdatable Flag indicating whether the service's state is updatable or not.
  */
 public record LocalServiceState(Service service,
-                                ServiceInstance instance,
-                                AtomicBoolean isStateUpdatable) {
+    ServiceInstance instance,
+    AtomicBoolean isStateUpdatable) {
 
     public LocalServiceState(Service service,
-                             ServiceInstance instance) {
+        ServiceInstance instance) {
         this(service, instance, new AtomicBoolean(true));
     }
 

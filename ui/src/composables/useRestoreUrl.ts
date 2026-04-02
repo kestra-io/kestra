@@ -31,7 +31,7 @@ export function getRestoredQuery(route: RouteLocation) {
         };
     };
     const query = {...route.query};
-    const local = localStorageValue === null ? {} : {...localStorageValue};
+    const local = {...localStorageValue};
 
     let change = false;
 
@@ -79,6 +79,10 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
 
     const saveRestoreUrl = () => {
         if (!restoreUrl) {
+            return;
+        }
+
+        if (route.query.noRestore) {
             return;
         }
 

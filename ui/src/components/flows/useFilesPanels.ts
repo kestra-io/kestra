@@ -4,7 +4,7 @@ import TypeIcon from "../utils/icons/Type.vue";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue";
 import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
-import {useNamespacesStore} from "../../override/stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces";
 import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
 import {useFlowStore} from "../../stores/flow";
 
@@ -100,8 +100,22 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
         const uid = generateUid(tab)
         for(const panel of panels.value){
-            if(panel.tabs.some(e => e.uid === uid)){
-                panel.tabs = panel.tabs.filter(e => e.uid !== uid);
+            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid));
+            
+            if (tabIndex > -1) {
+                // if the closed tab is the active one, 
+                // we need to set a new active tab
+                panel.tabs.splice(tabIndex, 1);
+                if (panel.tabs.length === 0) {
+                    // if no tabs left, remove the panel
+                    continue
+                }
+                panel.activeTab = panel.tabs[
+                    Math.min(
+                        tabIndex, 
+                        panel.tabs.length - 1
+                    )
+                ];
             }
         }
     })

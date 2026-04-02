@@ -43,6 +43,17 @@ export default class Utils {
             Date.now().toString(16).slice(4);
     }
 
+    /**
+     * Checks whether a value is a supported file URI.
+     *
+     * @param value Value to validate.
+     * @returns `true` if the value is a string with a supported file prefix.
+     */
+    static isFile(value: unknown): boolean {
+        const PREFIXES = ["kestra:///", "file://", "nsfile://"];
+        return typeof value === "string" && PREFIXES.some(p => value.startsWith(p));
+    }
+
     static flatten(object: Record<string, any>) {
         return Object.assign({}, function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any> {
             if (child === null) {
@@ -289,12 +300,14 @@ export default class Utils {
         return obj;
     }
 
-    static getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput) {
-        if (!startDate || !endDate) {
+    static getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined) {
+        if ((!startDate || !endDate) && timeRange === undefined) {
             return "yyyy-MM-DD";
         }
 
-        const duration = moment.duration(moment(endDate).diff(moment(startDate)));
+        const duration = timeRange === undefined
+            ? moment.duration(moment(endDate).diff(moment(startDate)))
+            : moment.duration(timeRange);
 
         if (duration.asDays() > 365) {
             return "yyyy-MM";

@@ -1,21 +1,22 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.runners.FollowLogEvent;
+
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.FluxSink;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This service offers a fanout mechanism so a single consumer of the log queue can dispatch log messages to multiple consumers.
@@ -27,38 +28,43 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Singleton
 public class LogStreamingService {
-    private final Map<String, Map<String, Pair<FluxSink<Event<LogEntry>>, List<String>>>> subscribers = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Pair<FluxSink<Event<FollowLogEvent>>, List<String>>>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    protected QueueInterface<LogEntry> logQueue;
+    protected BroadcastQueueInterface<FollowLogEvent> logQueue;
 
-    private Runnable queueConsumer;
+    private QueueSubscriber<FollowLogEvent> queueSubscriber;
 
     @PostConstruct
     void startQueueConsumer() {
-        this.queueConsumer = logQueue.receive(either -> {
+        this.queueSubscriber = logQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.error("Unable to deserialize log: {}", either.getRight().getMessage());
                 return;
             }
 
-            LogEntry current = either.getLeft();
-            if (current.getExecutionId() == null) {
+            if (subscribers.isEmpty()) {
+                return;
+            }
+
+            FollowLogEvent current = either.getLeft();
+            if (current.executionId() == null) {
                 // some logs are not about any execution, we skip them
                 return;
             }
 
             // Get all subscribers for this execution
-            Map<String, Pair<FluxSink<Event<LogEntry>>, List<String>>> executionSubscribers = subscribers.get(current.getExecutionId());
+            Map<String, Pair<FluxSink<Event<FollowLogEvent>>, List<String>>> executionSubscribers = subscribers.get(current.executionId());
 
             if (executionSubscribers != null && !executionSubscribers.isEmpty()) {
-                executionSubscribers.values().forEach(pair -> {
+                executionSubscribers.values().forEach(pair ->
+                {
                     var sink = pair.getLeft();
                     var levels = pair.getRight();
 
-                    if (levels.contains(current.getLevel().name())) {
+                    if (levels.contains(current.level().name())) {
                         sink.next(Event.of(current).id("progress"));
                     }
                 });
@@ -70,7 +76,7 @@ public class LogStreamingService {
      * Register a subscriber to an execution logs.
      * All subscribers must ensure to call {@link #unregisterSubscriber(String, String)} to avoid any memory leak.
      */
-    public void registerSubscriber(String executionId, String subscriberId, FluxSink<Event<LogEntry>> sink, List<String> levels) {
+    public void registerSubscriber(String executionId, String subscriberId, FluxSink<Event<FollowLogEvent>> sink, List<String> levels) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
             subscribers.computeIfAbsent(executionId, k -> new ConcurrentHashMap<>())
@@ -85,7 +91,7 @@ public class LogStreamingService {
     public void unregisterSubscriber(String executionId, String subscriberId) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
-            Map<String, Pair<FluxSink<Event<LogEntry>>, List<String>>> executionSubscribers = subscribers.get(executionId);
+            Map<String, Pair<FluxSink<Event<FollowLogEvent>>, List<String>>> executionSubscribers = subscribers.get(executionId);
             if (executionSubscribers != null) {
                 executionSubscribers.remove(subscriberId);
                 if (executionSubscribers.isEmpty()) {
@@ -97,8 +103,8 @@ public class LogStreamingService {
 
     @PreDestroy
     void shutdown() {
-        if (queueConsumer != null) {
-            queueConsumer.run();
+        if (queueSubscriber != null) {
+            queueSubscriber.close();
         }
     }
 }

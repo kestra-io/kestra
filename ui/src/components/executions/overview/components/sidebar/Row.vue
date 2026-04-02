@@ -7,7 +7,10 @@
             </el-text>
         </el-col>
 
-        <el-col v-if="row.value" :span="10" class="value">
+        <el-col v-if="$slots.value" :span="10" class="value">
+            <slot name="value" />
+        </el-col>
+        <el-col v-else-if="row.value" :span="10" class="value">
             <el-text truncated>
                 <router-link v-if="row.to" :to="row.to">
                     {{ row.value }}
@@ -34,7 +37,7 @@
         rows: {
             icon: Component;
             label: string;
-            value?: string | number;
+            value?: string | number | Date;
             to?: RouteLocationRaw;
         }[];
     }>();
@@ -69,11 +72,7 @@
     & :deep(.value) {
         display: flex;
         align-items: center;
-
-        & .el-text {
-            width: 100%;
-            text-align: right;
-        }
+        justify-content: end;
     }
 }
 </style>

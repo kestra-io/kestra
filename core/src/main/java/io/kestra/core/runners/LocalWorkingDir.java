@@ -1,16 +1,10 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.tasks.FileExistComportment;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.PathMatcherPredicate;
-import java.nio.file.FileAlreadyExistsException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,6 +14,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+
+import org.apache.commons.io.FileUtils;
+
+import io.kestra.core.models.tasks.FileExistComportment;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.PathMatcherPredicate;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -45,7 +47,7 @@ public class LocalWorkingDir implements WorkingDir {
      * Creates a new {@link LocalWorkingDir} instance.
      *
      * @param tmpdirBasePath The base temporary directory for this working-dir.
-     * @param workingDirId   The working directory id.
+     * @param workingDirId The working directory id.
      */
     public LocalWorkingDir(final Path tmpdirBasePath, final String workingDirId) {
         this.workingDirId = workingDirId;
@@ -205,7 +207,8 @@ public class LocalWorkingDir implements WorkingDir {
                 }
                 case FAIL -> throw new FileAlreadyExistsException("File " + newFilePath + " already exist");
                 case WARN -> log.warn("File {} already exist. It will be ignore", newFilePath);
-                case IGNORE -> {}
+                case IGNORE -> {
+                }
             }
         } else {
             Files.createFile(newFilePath);
@@ -216,7 +219,7 @@ public class LocalWorkingDir implements WorkingDir {
     }
 
     private static void copyFile(InputStream inputStream, Path path) throws IOException {
-        try(inputStream) {
+        try (inputStream) {
             Files.copy(inputStream, path, REPLACE_EXISTING);
         }
     }

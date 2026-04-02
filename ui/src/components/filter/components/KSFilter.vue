@@ -69,11 +69,12 @@
 
     const {
         appliedFilters,
+        hasDismissedDefaultVisibleKeys,
         searchQuery,
         addFilter,
         removeFilter,
         updateFilter,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied
     } = useFilters(
@@ -105,8 +106,6 @@
         savedFilter.filters.forEach((filter) => {
             addFilter(filter);
         });
-
-        searchQuery.value = savedFilter.searchQuery ?? "";
     };
 
     const refreshData = () => {
@@ -122,6 +121,7 @@
         editingFilter,
         hasFilterKeys,
         hasAppliedFilters,
+        hasDismissedDefaultVisibleKeys,
         buttons: computed(() => props.buttons),
         readOnly: computed(() => props.readOnly),
         properties: computed(() => props.properties),
@@ -140,7 +140,7 @@
         toggleOptions,
         updateChart,
         refreshData,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied,
         editSavedFilter: (filter: SavedFilter) => {
@@ -187,9 +187,14 @@
         display: flex;
         align-items: flex-start;
         flex-wrap: nowrap;
+        gap: 0.5rem;
         
         &.options {
             padding-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            flex-wrap: wrap;
         }
     }
 }

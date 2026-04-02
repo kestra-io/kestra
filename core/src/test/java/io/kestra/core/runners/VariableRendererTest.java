@@ -1,20 +1,22 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class VariableRendererTest {
 
     @Inject
@@ -48,6 +50,13 @@ class VariableRendererTest {
     }
 
     @Test
+    void shouldRenderMixedTypeInString() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        Object render = renderer.renderTyped("{\"a\": {{[1,2,3 ]}} }", Map.of());
+        Assertions.assertEquals(Map.of("a", List.of(1, 2, 3)), render);
+    }
+
+    @Test
     void shouldRenderContactTypedNumberExpression() throws IllegalVariableEvaluationException {
         TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
         Object render = renderer.renderTyped("{{ prefix }}{{ suffix }}", Map.of("prefix", 10, "suffix", 42L));
@@ -58,15 +67,15 @@ class VariableRendererTest {
     void shouldRenderTypedValueExpression() throws IllegalVariableEvaluationException {
         TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
         for (Object o : List.of(
-            42,                         // Integer
-            3.14,                       // Double
-            true,                       // Boolean
-            'x',                        // Character
-            "hello",                    // String
-            List.of(1, 2, 3),           // List
-            Map.of("a", 1),      // Map
-            new Object(),               // Arbitrary object
-            new BigDecimal("123.45")  // BigDecimal
+            42, // Integer
+            3.14, // Double
+            true, // Boolean
+            'x', // Character
+            "hello", // String
+            List.of(1, 2, 3), // List
+            Map.of("a", 1), // Map
+            new Object(), // Arbitrary object
+            new BigDecimal("123.45") // BigDecimal
         )) {
             Object render = renderer.renderTyped("{{ input }}", Map.of("input", o));
             Assertions.assertEquals(o, render);
@@ -96,7 +105,7 @@ class VariableRendererTest {
     public static class TestVariableRenderer extends VariableRenderer {
 
         public TestVariableRenderer(ApplicationContext applicationContext,
-                                    VariableConfiguration variableConfiguration) {
+            VariableConfiguration variableConfiguration) {
             super(applicationContext, variableConfiguration);
         }
 
@@ -105,6 +114,5 @@ class VariableRendererTest {
             return "result";
         }
     }
-
 
 }

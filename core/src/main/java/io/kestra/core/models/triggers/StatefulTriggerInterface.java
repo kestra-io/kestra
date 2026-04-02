@@ -1,9 +1,10 @@
 package io.kestra.core.models.triggers;
 
-import io.kestra.core.models.property.Property;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.time.Duration;
+
+import io.kestra.core.models.property.Property;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface StatefulTriggerInterface {
     @Schema(

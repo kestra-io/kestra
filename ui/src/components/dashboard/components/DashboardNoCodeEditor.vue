@@ -1,25 +1,35 @@
 <template>
     <div class="no-code">
-        <div class="p-4">
-            <Task
-                v-if="creatingTask || editingTask"
-            />
+        <AiCopilotWrapper
+            ref="copilotWrapper"
+            sticky
+            :flow="dashboardStore.sourceCode"
+            :generationType="aiGenerationTypes.DASHBOARD"
+            @generated-yaml="onGeneratedYaml"
+        >
+            <template #default="{aiCopilotAllowed}">
+                <div class="p-4" :class="{'no-code-content-with-ai': aiCopilotAllowed}">
+                    <Task
+                        v-if="creatingTask || editingTask"
+                    />
 
-            <el-form v-else labelPosition="top">
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchema" :transparent="v.fieldKey === 'inputs'" :merge="shouldMerge(v.schema)">
-                    <template #tasks>
-                        <TaskObjectField
-                            v-bind="v"
-                            @update:model-value="(val: any) => onTaskUpdateField(v.fieldKey, val)"
-                        />
-                    </template>
-                </Wrapper>
-            </el-form>
-        </div>
+                    <el-form v-else labelPosition="top">
+                        <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchema" :transparent="v.fieldKey === 'inputs'" :merge="shouldMerge(v.schema)">
+                            <template #tasks>
+                                <TaskObjectField
+                                    v-bind="v"
+                                    @update:model-value="(val: any) => onTaskUpdateField(v.fieldKey, val)"
+                                />
+                            </template>
+                        </Wrapper>
+                    </el-form>
+                </div>
+            </template>
+        </AiCopilotWrapper>
     </div>
 </template>
 <script lang="ts" setup>
-    import {computed, onActivated, provide} from "vue";
+    import {computed, onActivated, provide, ref} from "vue";
     import Task from "../../no-code/segments/Task.vue";
     import Wrapper from "../../no-code/components/tasks/Wrapper.vue";
     import TaskObjectField from "../../no-code/components/tasks/TaskObjectField.vue";
@@ -27,6 +37,8 @@
     import {useDashboardStore} from "../../../stores/dashboard";
     import {usePluginsStore} from "../../../stores/plugins";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import AiCopilotWrapper from "../../ai/AiCopilotWrapper.vue";
+    import {aiGenerationTypes} from "../../../utils/constants";
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -43,12 +55,14 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        UPDATE_TASK_FUNCTION_INJECTION_KEY
+        UPDATE_YAML_FUNCTION_INJECTION_KEY
     } from "../../no-code/injectionKeys";
     import {NoCodeProps} from "../../flows/noCodeTypes";
     import {deepEqual} from "../../../utils/utils";
 
     const props = defineProps<NoCodeProps>();
+
+    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>();
 
     const {fieldsFromSchema, parsedSource} = useDashboardFields();
 
@@ -68,14 +82,19 @@
         dashboardStore.sourceCode = YAML_UTILS.stringify(app);
     }
 
-    provide(UPDATE_TASK_FUNCTION_INJECTION_KEY, (yaml) => {
+    provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
         editorUpdate(yaml)
     })
+
+    function onGeneratedYaml(yaml: string) {
+        editorUpdate(yaml);
+        copilotWrapper.value?.resetConversation();
+    }
 
     function editorUpdate(source: string) {
         // if no-code would not change the structure of the app,
         // do not trigger an update as it would remove all formatting and comments
-        if(deepEqual(YAML_UTILS.parse(source), dashboardStore.sourceCode)) {
+        if(deepEqual(YAML_UTILS.parse(source), parsedSource.value)) {
             return;
         }
         dashboardStore.sourceCode = source;
@@ -116,7 +135,7 @@
         const type = elt?.type;
         dashboardStore.loadChart(elt);
         if(type){
-            pluginsStore.updateDocumentation({type});
+            pluginsStore.updateDocumentation({cls: type});
         }else{
             pluginsStore.updateDocumentation(); 
         }

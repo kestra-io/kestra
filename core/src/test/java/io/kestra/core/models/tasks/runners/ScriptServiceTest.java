@@ -1,19 +1,5 @@
 package io.kestra.core.models.tasks.runners;
 
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -23,6 +9,22 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -30,13 +32,14 @@ import static org.hamcrest.Matchers.*;
 @KestraTest
 class ScriptServiceTest {
     public static final Pattern COMMAND_PATTERN_CAPTURE_LOCAL_PATH = Pattern.compile("my command with an internal storage file: (.*)");
-    @Inject private TestRunContextFactory runContextFactory;
+    @Inject
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void replaceInternalStorage() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
-        var command  = ScriptService.replaceInternalStorage(runContext, null, false);
+        var command = ScriptService.replaceInternalStorage(runContext, null, false);
         assertThat(command).isEqualTo("");
 
         command = ScriptService.replaceInternalStorage(runContext, "my command", false);
@@ -185,19 +188,42 @@ class ScriptServiceTest {
         var runContext = runContext(runContextFactory, "namespace");
         String jobName = ScriptService.jobName(runContext);
         assertThat(jobName).startsWith("namespace-flowid-task-");
-        assertThat(jobName.length()).isEqualTo(27);
+        // base name "namespace-flowid-task" is 21 chars. Plus 1 hyphen and 8 char suffix.
+        assertThat(jobName.length()).isEqualTo(30);
+        assertThat(jobName.substring(jobName.lastIndexOf('-') + 1).length()).isEqualTo(8);
 
         runContext = runContext(runContextFactory, "very.very.very.very.very.very.very.very.very.very.very.very.long.namespace");
         jobName = ScriptService.jobName(runContext);
-        assertThat(jobName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylongnames-");
+
+        // Assert total length is max 63
         assertThat(jobName.length()).isEqualTo(63);
+
+        // Assert the suffix is 8 chars long
+        String suffix = jobName.substring(jobName.lastIndexOf("-") + 1);
+        assertThat(suffix.length()).isEqualTo(8);
+
+        // Assert the base name part is 54 chars long (63 total - 8 suffix - 1 hyphen)
+        String baseName = jobName.substring(0, jobName.lastIndexOf("-"));
+        assertThat(baseName.length()).isEqualTo(54);
+
+        // Assert the truncated prefix is correct
+        assertThat(baseName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylong");
     }
 
     @Test
     void normalize() {
         assertThat(ScriptService.normalize(null)).isNull();
         assertThat(ScriptService.normalize("a-normal-string")).isEqualTo("a-normal-string");
-        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace")).isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace"))
+            .isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+
+        // new tests for the fix
+        assertThat(ScriptService.normalize("abc-_")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc.-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc_-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc-._")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc---")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("a-b-c-")).isEqualTo("a-b-c");
     }
 
     private RunContext runContext(RunContextFactory runContextFactory, String namespace) {

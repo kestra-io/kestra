@@ -10,8 +10,8 @@ public interface PluginIdentifier {
     /**
      * Helper method for parsing a string plugin identifier to extract a type and version.
      *
-     * @param identifier    a string type identifier.
-     * @return  a {@link Pair} of (type, version).
+     * @param identifier a string type identifier.
+     * @return a {@link Pair} of (type, version).
      */
     static Pair<String, String> parseIdentifier(final String identifier) {
         int index = identifier.indexOf(':');

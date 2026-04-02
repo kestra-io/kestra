@@ -33,6 +33,7 @@ export interface Execution{
         taskId: string,
         value?: string
         executionId?: string
+        outputs?: Record<string, any>
     }[]
     state: {
         current: string;
@@ -414,13 +415,17 @@ export const useExecutionsStore = defineStore("executions", () => {
                 coreStore.message = {
                     variant: "error",
                     title: translate("error"),
-                    message: translate("errors.404.flow or execution"),
+                    content: {
+                        message: translate("errors.404.flow or execution"),
+                    }
                 };
             } else {
                 coreStore.message = {
                     variant: "error",
-                    title: translate("error"),
-                    message: translate("something_went_wrong.loading_execution"),
+                    title: translate("something_went_wrong.connection_lost.title"),
+                    content: {
+                        message: translate("something_went_wrong.connection_lost.message"),
+                    }
                 };
             }
         }

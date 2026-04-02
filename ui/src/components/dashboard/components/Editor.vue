@@ -1,28 +1,28 @@
 <template>
     <div class="button-top">
         <el-button-group class="view-buttons">
-            <el-tooltip :content="t('source only')">
+            <el-tooltip :content="$t('source only')">
                 <el-button
                     :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
             </el-tooltip>
-            <el-tooltip :content="t('documentation.documentation')">
+            <el-tooltip :content="$t('documentation.documentation')">
                 <el-button
                     :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
             </el-tooltip>
-            <el-tooltip :content="t('chart preview')">
+            <el-tooltip :content="$t('chart preview')">
                 <el-button
                     :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
-            <el-tooltip :content="t('dashboards.preview')">
+            <el-tooltip :content="$t('dashboards.preview')">
                 <el-button
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
@@ -43,7 +43,7 @@
             :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
-            {{ t("save") }}
+            {{ $t("save") }}
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
@@ -85,7 +85,7 @@
                         <el-empty :image="EmptyVisualDashboard" :imageSize="200">
                             <template #description>
                                 <h5>
-                                    {{ t("dashboards.chart_preview") }}
+                                    {{ $t("dashboards.chart_preview") }}
                                 </h5>
                             </template>
                         </el-empty>
@@ -109,9 +109,7 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onBeforeUnmount, nextTick} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
+    import {ref, computed, onMounted, onBeforeUnmount} from "vue";
     import Editor from "../../inputs/Editor.vue";
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import Sections from "../sections/Sections.vue";
@@ -127,9 +125,7 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useDashboardStore} from "../../../stores/dashboard";
-    import {useCoreStore} from "../../../stores/core";
 
-    const {t} = useI18n();
 
     const props = defineProps<{
         allowSaveUnchanged?: boolean;
@@ -141,10 +137,8 @@
         (e: "save", source?: string): void;
     }>();
 
-    const route = useRoute();
     const pluginsStore = usePluginsStore();
     const dashboardStore = useDashboardStore();
-    const coreStore = useCoreStore();
 
     const source = ref(props.initialSource);
     const errors = ref<any>(undefined);
@@ -160,8 +154,6 @@
     const selectedChart = ref<any[]>([]);
     const charts = ref<any[]>([]);
     const chartError = ref<string | null>(null);
-
-    const dashboardId = computed<string>(() => route.params.dashboard as string);
 
     const saveButtonType = computed(() => {
         if (errors.value) return "danger";
@@ -260,32 +252,6 @@
         }
         return result;
     }
-
-    watch(source, async () => {
-        const errorsResult = await dashboardStore.validateDashboard(source.value);
-        if (errorsResult.constraints) {
-            errors.value = [errorsResult.constraints];
-        } else {
-            errors.value = undefined;
-        }
-
-        if (dashboardId.value !== undefined && YAML_UTILS.parse(source.value).id !== dashboardId.value) {
-            coreStore.message = {
-                variant: "error",
-                title: t("readonly property"),
-                message: t("dashboards.edition.id readonly"),
-            };
-
-            await nextTick();
-            if(source.value && dashboardId.value){
-                source.value = YAML_UTILS.replaceBlockWithPath({
-                    source: source.value,
-                    path: "id",
-                    newContent: dashboardId.value
-                });
-            }
-        }
-    });
 
     onMounted(() => {
         loadPlugins();

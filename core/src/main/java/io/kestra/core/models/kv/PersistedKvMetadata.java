@@ -1,10 +1,14 @@
 package io.kestra.core.models.kv;
 
-import io.kestra.core.models.DeletedInterface;
+import java.time.Instant;
+import java.util.Optional;
+
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.utils.IdUtils;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -13,16 +17,13 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Instant;
-import java.util.Optional;
-
 @Builder(toBuilder = true)
 @Slf4j
 @Getter
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @ToString
 @EqualsAndHashCode
-public class PersistedKvMetadata implements DeletedInterface, TenantInterface, HasUID {
+public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, TenantInterface, HasUID {
     @With
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
@@ -53,7 +54,8 @@ public class PersistedKvMetadata implements DeletedInterface, TenantInterface, H
 
     private boolean deleted;
 
-    public PersistedKvMetadata(String tenantId, String namespace, String name, String description, Integer version, boolean last, @Nullable Instant expirationDate, @Nullable Instant created, @Nullable Instant updated, boolean deleted) {
+    public PersistedKvMetadata(String tenantId, String namespace, String name, String description, Integer version, boolean last, @Nullable Instant expirationDate, @Nullable Instant created,
+        @Nullable Instant updated, boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
         this.name = name;
@@ -83,6 +85,7 @@ public class PersistedKvMetadata implements DeletedInterface, TenantInterface, H
         return this.toBuilder().updated(Instant.now()).last(true).build();
     }
 
+    @Override
     public PersistedKvMetadata toDeleted() {
         return this.toBuilder().updated(Instant.now()).deleted(true).build();
     }

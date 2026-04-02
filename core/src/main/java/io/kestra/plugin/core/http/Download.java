@@ -1,21 +1,5 @@
 package io.kestra.plugin.core.http;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.client.HttpClientResponseException;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Metric;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.runners.RunContext;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,6 +10,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.HttpClientResponseException;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Metric;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.runners.RunContext;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @SuperBuilder
@@ -34,8 +36,9 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Download a file from an HTTP server.",
-    description = "This task connects to a HTTP server and copies a file to Kestra's internal storage."
+    title = "Download a file over HTTP(S) to Kestra storage.",
+    description = """
+        Performs an HTTP request and streams the response body into internal storage. Validates Content-Length when present and can fail on empty responses (`failOnEmptyResponse`, unless `options.allowFailed` allows it). Filename is taken from `saveAs`, `Content-Disposition`, or derived from the URI."""
 )
 @Plugin(
     examples = {
@@ -85,7 +88,8 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
 
             HttpResponse<Void> response = client.request(
                 request,
-                throwConsumer(r -> {
+                throwConsumer(r ->
+                {
                     if (r.getBody() != null) {
                         size.set(IOUtils.copyLarge(r.getBody(), output));
                     }
@@ -95,7 +99,8 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                     }
 
                     if (r.getBody() != null) {
-                        r.getHeaders().firstValue("Content-Length").ifPresent(header -> {
+                        r.getHeaders().firstValue("Content-Length").ifPresent(header ->
+                        {
                             long length = Long.parseLong(header);
 
                             if (length != size.get()) {
@@ -207,7 +212,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         private final Integer code;
 
         @Schema(
-                title = "The content-length of the response"
+            title = "The content-length of the response"
         )
         private final Long length;
 

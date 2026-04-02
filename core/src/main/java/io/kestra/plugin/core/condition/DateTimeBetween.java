@@ -1,23 +1,22 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.ZonedDateTime;
+import java.util.Map;
+
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.ZonedDateTime;
-import java.util.Map;
-
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -25,7 +24,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events between two specific datetime values."
+    title = "Allow events only between two datetimes.",
+    description = """
+        Compares a rendered date (defaults to `{{ trigger.date }}`) against optional `after` and `before` bounds expressed as ISO-8601 datetimes with zone.
+
+        You must provide at least one bound; if both are set the date must fall strictly between them. Missing both bounds triggers an evaluation error."""
 )
 @Plugin(
     examples = {
@@ -75,7 +78,7 @@ import jakarta.validation.constraints.NotNull;
                 """
         ),
     },
-    aliases = {"io.kestra.core.models.conditions.types.DateTimeBetweenCondition", "io.kestra.plugin.core.condition.DateTimeBetweenCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.DateTimeBetweenCondition", "io.kestra.plugin.core.condition.DateTimeBetweenCondition" }
 )
 public class DateTimeBetween extends Condition implements ScheduleCondition {
     @NotNull
@@ -84,8 +87,7 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = Property.ofExpression("{{ trigger.date }}");
 
     @Schema(
         title = "The date to test must be after this one.",
@@ -102,8 +104,14 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         Map<String, Object> vars = conditionContext.getVariables();
-        String render = conditionContext.getRunContext().render(date, vars);
-        ZonedDateTime currentDate = DateUtils.parseZonedDateTime(render);
+        String renderedDate = conditionContext.getRunContext().render(this.date).as(String.class, vars).orElseThrow();
+
+        ZonedDateTime currentDate;
+        try {
+            currentDate = DateUtils.parseZonedDateTime(renderedDate);
+        } catch (InternalException e) {
+            throw new RuntimeException(e);
+        }
 
         ZonedDateTime afterRendered = conditionContext.getRunContext().render(this.after).as(ZonedDateTime.class, vars).orElse(null);
         ZonedDateTime beforeRendered = conditionContext.getRunContext().render(this.before).as(ZonedDateTime.class, vars).orElse(null);
@@ -113,7 +121,7 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
         } else if (beforeRendered != null) {
             return currentDate.isBefore(beforeRendered);
         } else if (afterRendered != null) {
-            return currentDate.isAfter(afterRendered);
+            return currentDate.isAfter(afterRendered) || currentDate.isEqual(afterRendered);
         } else {
             throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
         }

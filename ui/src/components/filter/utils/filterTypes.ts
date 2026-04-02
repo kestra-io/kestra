@@ -31,11 +31,13 @@ export interface FilterKeyConfig {
     valueProvider?: () => Promise<FilterValue[]>;
     valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
     visibleByDefault?: boolean;
+    defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
 }
 
 export interface FilterValue {
     label: string;
     value: string;
+    color?: string;
     description?: string;
 }
 
@@ -56,7 +58,6 @@ export interface SavedFilter {
     createdAt: Date;
     global?: boolean;
     description?: string;
-    searchQuery?: string;
     filters: AppliedFilter[];
 }
 
@@ -102,7 +103,7 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.ENDS_WITH]: "Ends With",
     [Comparators.CONTAINS]: "Contains",
     [Comparators.REGEX]: "Matches Pattern",
-    [Comparators.PREFIX]: "Hierarchy",
+    [Comparators.PREFIX]: "Prefix",
 };
 
 export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {

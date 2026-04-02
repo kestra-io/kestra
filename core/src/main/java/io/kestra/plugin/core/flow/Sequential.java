@@ -1,6 +1,11 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -16,16 +21,12 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.Valid;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @SuperBuilder
 @ToString
@@ -33,8 +34,8 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks sequentially in the order they are defined.",
-    description = "Used to visually group tasks."
+    title = "Run child tasks sequentially.",
+    description = "Executes the listed tasks one after another, with optional `errors` and `finally` hooks. Useful for grouping steps when mixing with parallel constructs."
 )
 @Plugin(
     examples = {

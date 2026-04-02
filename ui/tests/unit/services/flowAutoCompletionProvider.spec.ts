@@ -6,7 +6,7 @@ const defaultFlow = `inputs:
   - id: input1
     type: STRING
   - id: input2
-    type: BOOLEAN
+    type: BOOL
 labels:
   myLabel1: "myLabelValue1"
   myLabel2: "myLabelValue2"
@@ -34,6 +34,21 @@ triggers:
     cron: "* * * * *"
 id: my-flow
 namespace: my.namespace`;
+
+const flowWithOutputsAutocompleteInTask = [
+    "tasks:",
+    "  - id: download",
+    "    type: io.kestra.plugin.core.http.Download",
+    "    uri: https://example.com/file.txt",
+    "  - id: filter",
+    "    type: io.kestra.plugin.core.storage.FilterItems",
+    "    from: \"{{ outputs. }}\"",
+    "  - id: upload",
+    "    type: io.kestra.plugin.core.storage.Upload",
+    "    from: \"{{ outputs.download.uri }}\"",
+    "id: my-flow",
+    "namespace: my.namespace"
+].join("\n");
 
 const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
     schema: {
@@ -124,6 +139,7 @@ const namespacesStore = {
 
 const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
+const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse(flowWithOutputsAutocompleteInTask);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
@@ -139,12 +155,14 @@ describe("FlowAutoCompletionProvider", () => {
             "labels",
             "envs",
             "globals",
+            "parent",
             "parents",
             "error",
             "kestra",
             "secret(namespace=${1:flow.namespace}, key='${2:MY_SECRET}')",
             "kv(namespace=${1:flow.namespace}, key='${2:my_key}')",
             "currentEachOutput(outputs=${1:outputs.forEach})",
+            "iterationOutput(taskId=${1:'myTaskId'}, iteration=${2:taskrun.iteration - 1})",
             "decrypt(key=${1:secret('encryption_key')}, encrypted=${2:outputs.request.encryptedBody})",
             "encrypt(key=${1:secret('encryption_key')}, plaintext=${2:'value_to_encrypt'})",
             "errorLogs()",
@@ -166,6 +184,8 @@ describe("FlowAutoCompletionProvider", () => {
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
             "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
+            "ksuid()",
+            "parentOutput()"
         ]);
     })
 
@@ -185,6 +205,24 @@ describe("FlowAutoCompletionProvider", () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task2")).toEqual(["value"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task3")).toEqual([]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "bad")).toEqual([]);
+    })
+
+    it("outputs autocomplete excludes current task id", async () => {
+        const cursorIndex = flowWithOutputsAutocompleteInTask.indexOf("outputs.") + "outputs.".length;
+        expect(cursorIndex).toBeGreaterThan(0);
+
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithOutputsAutocompleteInTask,
+            flowWithOutputsAutocompleteInTaskParsed,
+            "outputs",
+            cursorIndex
+        )).toEqual(["download", "upload"]);
+
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithOutputsAutocompleteInTask,
+            flowWithOutputsAutocompleteInTaskParsed,
+            "outputs"
+        )).toEqual(["download", "filter", "upload"]);
     })
 
     it("value autocompletions", async () => {

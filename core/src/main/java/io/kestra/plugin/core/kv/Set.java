@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.kv;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.kv.KVType;
@@ -12,6 +15,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -19,14 +23,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.time.Duration;
-import java.time.Instant;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create or modify a Key-Value pair."
+    title = "Create or update a key-value entry.",
+    description = """
+        Renders `key`, `value`, and `namespace` (defaults to flow namespace) and writes to the KV store. Supports TTL, description, type coercion (`kvType`), and overwrite control.
+
+        If `kvType` is set, the string value is parsed/validated accordingly (number, boolean, datetime, duration, JSON, etc.)."""
 )
 @Plugin(
     examples = {
@@ -103,7 +108,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
 
         KVStore kvStore = runContext.namespaceKv(renderedNamespace);
 
-        if (kvType != null){
+        if (kvType != null) {
             KVType renderedKvType = runContext.render(kvType).as(KVType.class).orElseThrow();
             if (renderedValue instanceof String renderedValueStr) {
                 renderedValue = switch (renderedKvType) {
@@ -123,11 +128,13 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
             }
         }
 
-        kvStore.put(renderedKey, new KVValueAndMetadata(
-            new KVMetadata(
-                runContext.render(kvDescription).as(String.class).orElse(null),
-                runContext.render(ttl).as(Duration.class).orElse(null)
-            ), renderedValue),
+        kvStore.put(
+            renderedKey, new KVValueAndMetadata(
+                new KVMetadata(
+                    runContext.render(kvDescription).as(String.class).orElse(null),
+                    runContext.render(ttl).as(Duration.class).orElse(null)
+                ), renderedValue
+            ),
             runContext.render(this.overwrite).as(Boolean.class).orElseThrow()
         );
 

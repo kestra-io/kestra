@@ -1,13 +1,13 @@
 package io.kestra.webserver.utils;
 
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
 
 import static io.kestra.webserver.utils.CSVUtils.toCSV;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,9 +16,11 @@ class CSVUtilsTest {
     @Test
     void ok_oneLine() {
         List<Map<String, Object>> input = List.of(
-            new LinkedHashMap<>() {{
-                put("one-header", "one-value");
-            }}
+            new LinkedHashMap<>() {
+                {
+                    put("one-header", "one-value");
+                }
+            }
         );
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
@@ -32,9 +34,11 @@ class CSVUtilsTest {
     @Test
     void ok_oneLine_number() {
         List<Map<String, Object>> input = List.of(
-            new LinkedHashMap<>() {{
-                put("one-header", 42);
-            }}
+            new LinkedHashMap<>() {
+                {
+                    put("one-header", 42);
+                }
+            }
         );
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
@@ -49,9 +53,11 @@ class CSVUtilsTest {
     void ok_oneLine_date() {
         var instant = Instant.now();
         List<Map<String, Object>> input = List.of(
-            new LinkedHashMap<>() {{
-                put("one-header", instant);
-            }}
+            new LinkedHashMap<>() {
+                {
+                    put("one-header", instant);
+                }
+            }
         );
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
@@ -65,10 +71,12 @@ class CSVUtilsTest {
     @Test
     void ok_oneLine_multipleValues() {
         List<Map<String, Object>> input = List.of(
-            new LinkedHashMap<>() {{
-                put("one-header", "one-value");
-                put("second-header", "second-value");
-            }}
+            new LinkedHashMap<>() {
+                {
+                    put("one-header", "one-value");
+                    put("second-header", "second-value");
+                }
+            }
         );
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
@@ -82,14 +90,18 @@ class CSVUtilsTest {
     @Test
     void ok_multipleLines_multipleValues() {
         List<Map<String, Object>> input = List.of(
-            new LinkedHashMap<>() {{
-                put("a-header", "a-value-1");
-                put("b-header", "b-value-1");
-            }},
-            new LinkedHashMap<>() {{
-                put("a-header", "a-value-2");
-                put("b-header", "b-value-2");
-            }}
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-1");
+                    put("b-header", "b-value-1");
+                }
+            },
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-2");
+                    put("b-header", "b-value-2");
+                }
+            }
         );
 
         var byteArrayOutputStream = new ByteArrayOutputStream();

@@ -2,11 +2,11 @@ id: primitive-labels-flow
 namespace: io.kestra.tests
 
 inputs:
-  - name: intLabel
+  - id: intLabel
     type: INT
-  - name: floatLabel
+  - id: floatLabel
     type: FLOAT
-  - name: boolLabel
+  - id: boolLabel
     type: BOOL
 
 tasks:

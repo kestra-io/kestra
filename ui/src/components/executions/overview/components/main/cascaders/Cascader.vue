@@ -13,39 +13,10 @@
         </div>
 
         <template v-if="props.elements">
-            <el-splitter
-                v-if="props.includeDebug"
-                :layout="verticalLayout ? 'vertical' : 'horizontal'"
-                lazy
+            <el-cascader-panel
+                :options="filteredOptions"
+                @expand-change="onExpandChange"
             >
-                <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
-                    <el-cascader-panel
-                        :options="filteredOptions"
-                        @expand-change="(p: string[]) => (path = p.join('.'))"
-                        class="debug"
-                    >
-                        <template #default="{data}">
-                            <div class="node">
-                                <div :title="data.label">
-                                    {{ data.label }}
-                                </div>
-                                <div v-if="data.value && data.children">
-                                    <code>{{ itemsCount(data) }}</code>
-                                </div>
-                            </div>
-                        </template>
-                    </el-cascader-panel>
-                </el-splitter-panel>
-                <el-splitter-panel>
-                    <DebugPanel
-                        :property="props.includeDebug"
-                        :execution
-                        :path
-                    />
-                </el-splitter-panel>
-            </el-splitter>
-
-            <el-cascader-panel v-else :options="filteredOptions">
                 <template #default="{data}">
                     <div class="node">
                         <div :title="data.label">
@@ -54,6 +25,9 @@
                         <div v-if="data.value && data.children">
                             <code>{{ itemsCount(data) }}</code>
                         </div>
+                    </div>
+                    <div v-if="isFile(data.value)" class="node buttons">
+                        <VarValue :value="data.value" :execution />
                     </div>
                 </template>
             </el-cascader-panel>
@@ -66,11 +40,9 @@
 <script setup lang="ts">
     import {onMounted, nextTick, computed, ref} from "vue";
 
-    import DebugPanel from "./DebugPanel.vue";
+    import VarValue from "../../../../VarValue.vue";
 
     import {Execution} from "../../../../../../stores/executions";
-
-    import {verticalLayout} from "../../../utils/layout";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -83,15 +55,50 @@
         children?: Node[];
     }
 
-    const props = defineProps<{
+    type DebugTypes = "outputs" | "trigger";
+
+    export type Element = {
         title: string;
         empty: string;
         elements?: Record<string, any>;
-        includeDebug?: "outputs" | "trigger";
-        execution: Execution;
+        includeDebug?: DebugTypes | undefined;
+    }
+
+    const props = defineProps<
+        Element & {
+            execution: Execution;
+        }
+    >();
+
+    const emits = defineEmits<{
+        (e: "debugPath", property: string, path: string): void;
     }>();
 
     const path = ref<string>("");
+
+    const onExpandChange = (p: string[]) => {
+        path.value = p.join(".");
+        if (props.includeDebug) {
+            let debugPath = path.value;
+            if (props.includeDebug === "trigger") {
+                // id and type are metadata, not Pebble-accessible — map to just "trigger"
+                if (debugPath === "id" || debugPath === "type") {
+                    debugPath = "";
+                }
+                // variables.<name> maps to trigger.<name> in Pebble
+                else if (debugPath.startsWith("variables.")) {
+                    debugPath = debugPath.substring("variables.".length);
+                } else if (debugPath === "variables") {
+                    debugPath = "";
+                }
+            }
+            emits("debugPath", props.includeDebug, debugPath);
+        }
+    };
+
+    const isFile = (value: unknown): value is string => {
+        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+    };
 
     const formatted = ref<Node[]>([]);
     const format = (obj: Record<string, any>): Node[] => {
@@ -180,12 +187,7 @@
 
     .el-cascader-panel {
         overflow: auto;
-
-        &.debug {
-            min-height: -webkit-fill-available;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
+        width: 100%;
     }
 
     .empty {
@@ -196,6 +198,10 @@
     :deep(.el-cascader-menu) {
         min-width: 300px;
         max-width: 300px;
+
+        &:last-child {
+            max-width: none;
+        }
 
         .el-cascader-menu__list {
             padding: 0;
@@ -209,10 +215,18 @@
             width: 100%;
             display: flex;
             justify-content: space-between;
+
+            &.buttons {
+                margin: 0.75rem 0;
+            }
+
+            & > div {
+                overflow-x: auto;
+            }
         }
 
         & .el-cascader-node {
-            height: 36px;
+            height: min-content;
             line-height: 36px;
             font-size: $font-size-sm;
             color: var(--ks-content-primary);

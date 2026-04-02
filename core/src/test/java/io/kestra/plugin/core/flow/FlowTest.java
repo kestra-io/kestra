@@ -1,8 +1,9 @@
 package io.kestra.plugin.core.flow;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
-import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
 
@@ -12,41 +13,45 @@ class FlowTest {
     FlowCaseTest flowCaseTest;
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml",
-        "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"})
+    @LoadFlows(
+        value = { "flows/valids/task-flow.yaml",
+            "flows/valids/task-flow-inherited-labels.yaml",
+            "flows/valids/switch.yaml" },
+        tenantId = "waitsuccess"
+    )
     void waitSuccess() throws Exception {
-        flowCaseTest.waitSuccess();
+        flowCaseTest.waitSuccess("waitsuccess");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/task-flow.yaml",
-        "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant1")
+    @LoadFlows(
+        value = { "flows/valids/task-flow.yaml",
+            "flows/valids/task-flow-inherited-labels.yaml",
+            "flows/valids/switch.yaml" },
+        tenantId = "waitfailed"
+    )
     void waitFailed() throws Exception {
-        flowCaseTest.waitFailed("tenant1");
+        flowCaseTest.waitFailed("waitfailed");
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/task-flow.yaml",
-        "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant2")
-    void invalidOutputs() throws Exception {
-        flowCaseTest.invalidOutputs("tenant2");
-    }
-
-    @Test
-    @LoadFlows(value = {"flows/valids/task-flow.yaml",
-        "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant3")
+    @LoadFlows(
+        value = { "flows/valids/task-flow.yaml",
+            "flows/valids/task-flow-inherited-labels.yaml",
+            "flows/valids/switch.yaml" },
+        tenantId = "nolabels"
+    )
     void noLabels() throws Exception {
-        flowCaseTest.noLabels("tenant3");
+        flowCaseTest.noLabels("nolabels");
     }
 
     @Test
-    @LoadFlows({"flows/valids/subflow-old-task-name.yaml",
-        "flows/valids/minimal.yaml"})
+    @LoadFlows(
+        value = { "flows/valids/subflow-old-task-name.yaml",
+            "flows/valids/minimal.yaml" },
+        tenantId = "oldtaskname"
+    )
     void oldTaskName() throws Exception {
-        flowCaseTest.oldTaskName();
+        flowCaseTest.oldTaskName("oldtaskname");
     }
 }

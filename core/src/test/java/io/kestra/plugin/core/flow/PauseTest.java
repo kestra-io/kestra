@@ -1,6 +1,18 @@
 package io.kestra.plugin.core.flow;
 
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
 import com.google.common.io.CharStreams;
+
+import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -12,7 +24,9 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
+
 import io.micronaut.http.MediaType;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.HttpServerConfiguration;
@@ -23,18 +37,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.multipart.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +53,7 @@ public class PauseTest {
     Suite suite;
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
     void run() throws Exception {
         suite.run(runnerUtils);
     }
@@ -70,67 +74,67 @@ public class PauseTest {
 
     @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
     @Test
-    @LoadFlows("flows/valids/each-parallel-pause.yml")
+    @LoadFlows("flows/valids/foreach-concurrent-pause.yaml")
     void parallelDelay() throws Exception {
         suite.runParallelDelay(runnerUtils);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-timeout.yaml"})
+    @LoadFlows({ "flows/valids/pause-timeout.yaml" })
     void timeout() throws Exception {
         suite.runTimeout(runnerUtils);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-timeout-allow-failure.yaml"})
+    @LoadFlows({ "flows/valids/pause-timeout-allow-failure.yaml" })
     void timeoutAllowFailure() throws Exception {
         suite.runTimeoutAllowFailure(runnerUtils);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause_no_tasks.yaml"})
+    @LoadFlows({ "flows/valids/pause_no_tasks.yaml" })
     void runEmptyTasks() throws Exception {
         suite.runEmptyTasks(runnerUtils);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
+    @LoadFlows({ "flows/valids/pause_on_resume.yaml" })
     void runOnResume() throws Exception {
         suite.runOnResume(runnerUtils);
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/pause_on_resume.yaml"}, tenantId = "tenant1")
+    @LoadFlows(value = { "flows/valids/pause_on_resume.yaml" }, tenantId = "tenant1")
     void runOnResumeMissingInputs() throws Exception {
         suite.runOnResumeMissingInputs("tenant1", runnerUtils);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause_on_resume_optional.yaml"})
+    @LoadFlows({ "flows/valids/pause_on_resume_optional.yaml" })
     void runOnResumeOptionalInputs() throws Exception {
         suite.runOnResumeOptionalInputs(runnerUtils);
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "resume")
+    @LoadFlows(value = { "flows/valids/pause-behavior.yaml" }, tenantId = "resume")
     void runDurationWithCONTINUEBehavior() throws Exception {
         suite.runDurationWithBehavior("resume", runnerUtils, Pause.Behavior.RESUME);
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "fail")
+    @LoadFlows(value = { "flows/valids/pause-behavior.yaml" }, tenantId = "fail")
     void runDurationWithFAILBehavior() throws Exception {
         suite.runDurationWithBehavior("fail", runnerUtils, Pause.Behavior.FAIL);
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "warn")
+    @LoadFlows(value = { "flows/valids/pause-behavior.yaml" }, tenantId = "warn")
     void runDurationWithWARNBehavior() throws Exception {
         suite.runDurationWithBehavior("warn", runnerUtils, Pause.Behavior.WARN);
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "cancel")
+    @LoadFlows(value = { "flows/valids/pause-behavior.yaml" }, tenantId = "cancel")
     void runDurationWithCANCELBehavior() throws Exception {
         suite.runDurationWithBehavior("cancel", runnerUtils, Pause.Behavior.CANCEL);
     }
@@ -157,6 +161,9 @@ public class PauseTest {
 
         @Inject
         StorageInterface storageInterface;
+
+        @Inject
+        TaskOutputService taskOutputService;
 
         public void run(TestRunnerUtils runnerUtils) throws Exception {
             Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test", null, null, Duration.ofSeconds(30));
@@ -190,14 +197,13 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
 
             execution = runnerUtils.awaitExecution(
-                e ->
-                    e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
                 execution
             );
 
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(2L);
-            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList()).hasSize(2);
         }
 
         public void runDurationFromInput(TestRunnerUtils runnerUtils) throws Exception {
@@ -208,21 +214,20 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
 
             execution = runnerUtils.awaitExecution(
-                e ->
-                    e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
+                e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
                 execution
             );
 
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(2L);
-            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList()).hasSize(2);
         }
 
         public void runParallelDelay(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
-            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-parallel-pause", Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "foreach-concurrent-pause", Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-            assertThat(execution.getTaskRunList()).hasSize(7);
+            assertThat(execution.getTaskRunList()).hasSize(4);
         }
 
         public void runTimeout(TestRunnerUtils runnerUtils) throws Exception {
@@ -237,8 +242,9 @@ public class PauseTest {
                 execution
             );
 
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).as("Task runs were: " + execution.getTaskRunList().toString()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(2L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count())
+                .as("Task runs were: " + execution.getTaskRunList().toString()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList()).hasSize(1);
         }
@@ -255,10 +261,11 @@ public class PauseTest {
                 execution
             );
 
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).as("Task runs were: " + execution.getTaskRunList().toString()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(2L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count())
+                .as("Task runs were: " + execution.getTaskRunList().toString()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.WARNING).count()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getTaskRunList()).hasSize(2);
         }
 
         public void runEmptyTasks(TestRunnerUtils runnerUtils) throws Exception {
@@ -296,18 +303,18 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
 
             CompletedPart part1 = new NettyCompletedAttribute(new MemoryAttribute("asked", "restarted"));
+            CompletedPart part2 = new NettyCompletedAttribute(new MemoryAttribute("secret_pause", "secret_value"));
             byte[] data = executionId.getBytes();
             HttpDataFactory httpDataFactory = new MicronautHttpData.Factory(new HttpServerConfiguration.MultipartConfiguration(), null);
             FileUpload fileUpload = httpDataFactory.createFileUpload(null, "files", "data", MediaType.TEXT_PLAIN, null, Charset.defaultCharset(), data.length);
             fileUpload.addContent(Unpooled.copiedBuffer(data), true);
-            CompletedPart part2 = new NettyCompletedFileUpload(fileUpload);
-            Execution restarted = executionService.resume(
+            CompletedPart part3 = new NettyCompletedFileUpload(fileUpload);
+            Map<String, Object> resumeOutputs = executionService.readInputs(
                 execution,
                 flow,
-                State.Type.RUNNING,
-                Flux.just(part1, part2),
-                null
+                Flux.just(part1, part2, part3)
             ).block();
+            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, resumeOutputs, Pause.Resumed.now());
 
             execution = runnerUtils.emitAndAwaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
@@ -316,8 +323,9 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
+            Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("last").getFirst()).get("values");
             assertThat(outputs.get("asked")).isEqualTo("restarted");
+            assertThat(outputs.get("secret_pause")).isEqualTo("secret_value");
             assertThat((String) outputs.get("data")).startsWith("kestra://");
             assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, URI.create((String) outputs.get("data")))))).isEqualTo(executionId);
         }
@@ -328,12 +336,12 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-            ConstraintViolationException e = assertThrows(
-                ConstraintViolationException.class,
-                () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty(), Pause.Resumed.now()).block()
+            InputOutputValidationException e = assertThrows(
+                InputOutputValidationException.class,
+                () -> executionService.readInputs(execution, flow, Mono.empty()).block()
             );
 
-            assertThat(e.getMessage()).contains("Invalid input for `asked`, missing required input, but received `null`");
+            assertThat(e.getMessage()).contains("Missing required input:asked");
         }
 
         @SuppressWarnings("unchecked")
@@ -353,7 +361,7 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
+            Map<String, Object> outputs = (Map<String, Object>) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("last").getFirst()).get("values");
             assertThat(outputs.get("asked")).isEqualTo("MISSING");
         }
 

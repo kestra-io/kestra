@@ -1,31 +1,31 @@
 package io.kestra.core.test;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.kestra.core.models.DeletedInterface;
+
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TestSuiteValidation;
-import io.micronaut.core.annotation.Introspected;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Introspected
 @ToString
 @EqualsAndHashCode
 @TestSuiteValidation
-public class TestSuite implements HasUID, TenantInterface, DeletedInterface, HasSource {
+public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSuite>, HasSource {
 
     @NotNull
     @NotBlank
@@ -82,11 +82,7 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
             newTestSuite.getTestCases(),
             newTestSuite.isDeleted(),
             newTestSuite.isDisabled()
-            );
-    }
-
-    public TestSuite delete() {
-        return this.toBuilder().deleted(true).build();
+        );
     }
 
     public TestSuite disable() {
@@ -119,5 +115,10 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
         }
 
         return yamlSource + String.format("\ndisabled: %s", disabled);
+    }
+
+    @Override
+    public TestSuite toDeleted() {
+        return toBuilder().deleted(true).build();
     }
 }

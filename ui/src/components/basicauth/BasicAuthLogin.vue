@@ -12,7 +12,7 @@
                     size="large"
                     id="input-username"
                     v-model="credentials.username"
-                    :placeholder="t('email')"
+                    :placeholder="$t('email')"
                     required
                 >
                     <template #prepend>
@@ -31,7 +31,7 @@
                     size="large"
                     name="password"
                     id="input-password"
-                    :placeholder="t('password')"
+                    :placeholder="$t('password')"
                     type="password"
                     showPassword
                     required
@@ -56,7 +56,7 @@
                     :disabled="isLoginDisabled"
                     :loading="isLoading"
                 >
-                    {{ t("setup.login") }}
+                    {{ $t("setup.login") }}
                 </el-button>
             </el-form-item>
             <el-form-item>
@@ -66,7 +66,7 @@
                     size="large"
                     @click="openTroubleshootingGuide"
                 >
-                    {{ t("setup.troubleshooting") }}
+                    {{ $t("setup.troubleshooting") }}
                 </el-button>
             </el-form-item>
         </el-form>
@@ -88,10 +88,13 @@
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
+    import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";
+    import {shouldShowWelcome} from "../../utils/welcomeGuard";
+    import {identifyPosthogUser} from "../../utils/posthog";
 
     interface Credentials {
         username: string
@@ -102,6 +105,7 @@
     const route = useRoute()
     const {t} = useI18n()
     const coreStore = useCoreStore()
+    const apiStore = useApiStore()
     const miscStore = useMiscStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
@@ -145,7 +149,7 @@
         return field?.validateState === "error" ? field.validateMessage : null
     }
 
-    const redirectPath = computed(() => (route.query.from as string) ?? "/welcome")
+    const redirectPath = computed(() => route.query.from as string | undefined)
 
     const isLoginDisabled = computed(() =>
         !credentials.value.username?.trim() ||
@@ -236,13 +240,22 @@
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
 
+            const configs = await miscStore.loadConfigs()
+            await identifyPosthogUser(configs, {email: trimmedUsername})
+
             credentials.value = {username: "", password: ""}
 
             if (shouldShowHelloDialog()) {
                 localStorage.setItem("showSurveyDialogAfterLogin", "true")
             }
 
-            router.push(redirectPath.value)
+            if (await shouldShowWelcome()) {
+                router.push({name: "welcome"});
+            } else if (redirectPath.value) {
+                router.push(redirectPath.value);
+            } else {
+                router.push({name: "home", params: {tenant: route.params.tenant}});
+            }
         } catch (error: any) {
             if (handleNetworkError(error)) {
                 router.push({name: "setup"})
@@ -262,7 +275,11 @@
     }
 
     const openTroubleshootingGuide = () => {
-        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
+        apiStore.posthogEvents({
+            type: "ossauth",
+            action: "forgot_password_click",
+        })
+        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting?utm_source=app&utm_medium=referral&utm_campaign=login&utm_content=lost-password", "_blank")
     }
 </script>
 
@@ -271,7 +288,9 @@
         width: 100%;
         max-width: 400px;
         padding: 1rem;
-
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         .logo {
             width: 250px;
             margin-bottom: 40px;

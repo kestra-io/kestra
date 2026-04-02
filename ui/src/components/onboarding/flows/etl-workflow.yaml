@@ -1,0 +1,32 @@
+id: dinosaur_606392
+namespace: company.team
+
+tasks:
+  - id: download_json
+    type: io.kestra.plugin.core.http.Download
+    uri: https://jsonplaceholder.typicode.com/posts/1
+    saveAs: data.json
+  - id: process_python
+    type: io.kestra.plugin.scripts.python.Script
+    inputFiles:
+      data.json: "{{ outputs.download_json.uri }}"
+    outputFiles:
+      - processed_data.json
+    script: |
+      import json
+
+      with open('data.json', 'r') as f:
+          data = json.load(f)
+          print("Downloaded JSON data:", data)
+
+      processed_data = {"processed": True, "original_id": data.get("id"), "title_length": len(data.get("title", ""))}
+      with open('processed_data.json', 'w') as f:
+          json.dump(processed_data, f)
+  - id: process_duckdb
+    type: io.kestra.plugin.jdbc.duckdb.Queries
+    url: "jdbc:duckdb:"
+    inputFiles:
+      processed_data.json: "{{ outputs.process_python.outputFiles['processed_data.json'] }}"
+    sql: |
+      SELECT * FROM read_json_auto('processed_data.json');
+    fetchType: FETCH

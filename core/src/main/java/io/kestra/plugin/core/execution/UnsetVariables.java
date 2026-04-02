@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
@@ -7,13 +10,11 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -21,7 +22,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Unset execution variables."
+    title = "Remove execution variables.",
+    description = """
+        Renders a list of keys and deletes them from `vars`. Supports dotted paths for nested maps. If `ignoreMissing` is false (default), missing keys cause an error.
+
+        Useful for cleaning sensitive or transient data mid-flow."""
 )
 @Plugin(
     examples = {
@@ -61,7 +66,6 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
     @NotNull
     @Builder.Default
     private Property<Boolean> ignoreMissing = Property.ofValue(false);
-
 
     @Override
     public Execution update(Execution execution, RunContext runContext) throws Exception {

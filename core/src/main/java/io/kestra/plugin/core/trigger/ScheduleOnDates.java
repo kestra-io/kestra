@@ -1,5 +1,15 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.Plugin;
@@ -10,21 +20,14 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.LabelService;
-import io.kestra.core.validations.TimezoneId;
+import io.kestra.core.scheduler.SchedulerClock;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.function.Predicate;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -35,7 +38,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Schedule a flow on specific dates."
+    title = "Schedule a Flow on specific dates.",
+    description = """
+        Triggers on an explicit list of `dates` (ZonedDateTime). Timezone defaults to server but can be overridden. Honors backfill/recover logic like other schedulables.
+
+        Use when a cron can’t express required occurrences (e.g., ad-hoc or irregular calendars)."""
 )
 @Plugin
 public class ScheduleOnDates extends AbstractTrigger implements Schedulable, TriggerOutput<VoidOutput> {
@@ -46,16 +53,8 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     @Null
     private final Duration interval = null;
 
-    @Schema(
-        title = "The inputs to pass to the scheduled flow"
-    )
-    @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
 
-    @TimezoneId
-    @Schema(
-        title = "The [time zone identifier](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (i.e. the second column in [the Wikipedia table](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)) to use for evaluating the cron expression. Default value is the server default zone ID."
-    )
     @PluginProperty(dynamic = true)
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
@@ -63,31 +62,24 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     @NotNull
     private Property<List<ZonedDateTime>> dates;
 
-    @Schema(
-        title = "Action to take in the case of missed schedules",
-        description = "`ALL` will recover all missed schedules, `LAST`  will only recovered the last missing one, `NONE` will not recover any missing schedule.\n" +
-            "The default is `ALL` unless a different value is configured using the global plugin configuration."
-    )
-    @PluginProperty
     private RecoverMissedSchedules recoverMissedSchedules;
 
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
+
         ZonedDateTime lastEvaluation = triggerContext.getDate();
         Optional<ZonedDateTime> nextDate = nextDate(runContext, date -> date.isEqual(lastEvaluation) || date.isAfter(lastEvaluation));
 
         if (nextDate.isPresent()) {
             log.info("Schedule execution on {}", nextDate.get());
 
-            Execution execution = TriggerService.generateScheduledExecution(
+            Execution execution = SchedulableExecutionFactory.createExecution(
                 this,
                 conditionContext,
                 triggerContext,
-                LabelService.fromTrigger(runContext, conditionContext.getFlow(), this),
-                this.inputs != null ? runContext.render(this.inputs) : Collections.emptyMap(),
                 Collections.emptyMap(),
-                nextDate
+                nextDate.orElse(null)
             );
 
             return Optional.of(execution);
@@ -97,33 +89,27 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     }
 
     @Override
-    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
-        try {
-            return last
-                .map(throwFunction(context ->
-                    nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
-                        .orElse(ZonedDateTime.now().plusYears(1))
-                ))
-                .orElse(conditionContext.getRunContext()
-                    .render(dates)
-                    .asList(ZonedDateTime.class)
-                    .stream()
-                    .sorted()
-                    .findFirst()
-                    .orElse(ZonedDateTime.now()))
-                .truncatedTo(ChronoUnit.SECONDS);
-        } catch (IllegalVariableEvaluationException e) {
-            log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
-            return ZonedDateTime.now().plusYears(1);
-        }
+    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> triggerContext) {
+        ZonedDateTime now = SchedulerClock.now();
+        return triggerContext
+            .map(ctx -> ctx.getBackfill() != null ? ctx.getBackfill().getCurrentDate() : ctx.getDate())
+            .map(this::withTimeZone)
+            .or(() -> Optional.of(now))
+            .flatMap(dt ->
+            {
+                try {
+                    return nextDate(conditionContext.getRunContext(), date -> date.isAfter(dt));
+                } catch (IllegalVariableEvaluationException e) {
+                    log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
+                    throw new InvalidTriggerConfigurationException("Failed to evaluate schedule 'dates'. Cause: " + e.getMessage());
+                }
+            }).orElseGet(() -> now.plusYears(1));
     }
-
-
 
     @Override
     public ZonedDateTime nextEvaluationDate() {
         // TODO this may be the next date from now?
-        return ZonedDateTime.now();
+        return SchedulerClock.now();
     }
 
     @Override
@@ -139,9 +125,17 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
         return previousDates.isEmpty() ? ZonedDateTime.now() : previousDates.getFirst();
     }
 
-    private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> filter) throws IllegalVariableEvaluationException {
-        return runContext.render(dates).asList(ZonedDateTime.class).stream().sorted()
-            .filter(date -> filter.test(date))
+    private ZonedDateTime withTimeZone(ZonedDateTime date) {
+        if (this.timezone == null) {
+            return date;
+        }
+        return date.withZoneSameInstant(ZoneId.of(this.timezone));
+    }
+
+    private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> predicate) throws IllegalVariableEvaluationException {
+        return runContext.render(dates)
+            .asList(ZonedDateTime.class).stream().sorted()
+            .filter(predicate)
             .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
             .findFirst()
             .map(date -> date.truncatedTo(ChronoUnit.SECONDS));

@@ -1,7 +1,10 @@
 package io.kestra.plugin.core.flow;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -11,12 +14,11 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import jakarta.inject.Inject;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class ParallelTest {
@@ -39,7 +41,7 @@ class ParallelTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-parallel.yaml"})
+    @LoadFlows({ "flows/valids/finally-parallel.yaml" })
     void errors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -55,8 +57,10 @@ class ParallelTest {
         assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("a1").getFirst().getState().getEndDate().orElseThrow())).isTrue();
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("e1").getFirst().getState().getEndDate().orElseThrow())).isTrue();
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("a1").getFirst().getState().getEndDate().orElseThrow()))
+            .isTrue();
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("e1").getFirst().getState().getEndDate().orElseThrow()))
+            .isTrue();
     }
 
     @Test
@@ -68,5 +72,12 @@ class ParallelTest {
         execution.getTaskRunList().stream()
             .filter(taskRun -> !"sleep".equals(taskRun.getTaskId()))
             .forEach(run -> assertThat(run.getState().isTerminated()).isTrue());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/parallel-disabled-tasks.yaml")
+    void parallelDisabledTasks(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(7);
     }
 }

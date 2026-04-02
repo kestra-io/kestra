@@ -18,8 +18,8 @@ tasks:
               format: "{{ parents[1].taskrun.value }}-{{ parents[0].taskrun.value }}-{{ taskrun.value }}"
             - id: 1-1-1_return
               type: io.kestra.plugin.core.debug.Return
-              #format: "return-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}"
-              format: "return-{{ currentEachOutput(outputs['1-1-1_output']).value }}"
+              #format: "return-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}"
+              format: "return-{{ currentEachOutput(outputs['1-1-1_output']).value }}-{{ currentEachOutput(outputs['1-1-1_output']).value }}"
   - id: 2_each
     type: io.kestra.plugin.core.flow.ForEach
     values: '["v41", "v42"]'

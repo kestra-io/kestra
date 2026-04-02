@@ -1,6 +1,11 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -19,6 +24,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -26,18 +32,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks in parallel.",
-    description = "This task runs all child tasks in parallel."
+    title = "Run child tasks in parallel.",
+    description = """
+        Starts all child tasks concurrently, bounded by `concurrent` if set (0 = no cap). Each branch can contain its own sequences or nested flows.
+
+        Use when independent steps can run at the same time to shorten wall-clock duration."""
 )
 @Plugin(
     examples = {

@@ -66,7 +66,6 @@
     import {useRoute} from "vue-router";
     // @ts-expect-error types to be done
     import DateRange from "../../layout/DateRange.vue";
-    // @ts-expect-error types to be done
     import TimeSelect from "./TimeSelect.vue";
     import moment from "moment";
 
@@ -119,7 +118,7 @@
     });
 
     const timeRange = computed<string>(() => {
-        return normalizedQuery.value.timeRange ? String(normalizedQuery.value.timeRange) : "P30D";
+        return normalizedQuery.value.timeRange ? String(normalizedQuery.value.timeRange) : "PT24H";
     });
 
     const startDate = computed<string | undefined>(() => {

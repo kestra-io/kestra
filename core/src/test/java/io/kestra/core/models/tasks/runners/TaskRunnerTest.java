@@ -1,19 +1,21 @@
 package io.kestra.core.models.tasks.runners;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.micronaut.context.ApplicationContext;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,33 +48,39 @@ public class TaskRunnerTest {
         );
         RunContext runContext = runContextFactory.of(contextVariables);
 
-        assertThat(taskRunner.additionalVars(runContext, taskCommands)).isEqualTo(Map.of(
-            ScriptService.VAR_BUCKET_PATH, contextVariables.get("runnerBucketPath"),
-            ScriptService.VAR_WORKING_DIR, TaskRunnerAdditional.RUNNER_WORKING_DIR,
-            ScriptService.VAR_OUTPUT_DIR, TaskRunnerAdditional.RUNNER_OUTPUT_DIR,
-            contextVariables.get("runnerAdditionalVarKey"), contextVariables.get("runnerAdditionalVarValue"),
-            contextVariables.get("scriptCommandsAdditionalVarKey"), contextVariables.get("scriptCommandsAdditionalVarValue"),
-            ADDITIONAL_VAR_KEY, TaskRunnerAdditional.ADDITIONAL_VAR_VALUE
-        ));
+        assertThat(taskRunner.additionalVars(runContext, taskCommands)).isEqualTo(
+            Map.of(
+                ScriptService.VAR_BUCKET_PATH, contextVariables.get("runnerBucketPath"),
+                ScriptService.VAR_WORKING_DIR, TaskRunnerAdditional.RUNNER_WORKING_DIR,
+                ScriptService.VAR_OUTPUT_DIR, TaskRunnerAdditional.RUNNER_OUTPUT_DIR,
+                contextVariables.get("runnerAdditionalVarKey"), contextVariables.get("runnerAdditionalVarValue"),
+                contextVariables.get("scriptCommandsAdditionalVarKey"), contextVariables.get("scriptCommandsAdditionalVarValue"),
+                ADDITIONAL_VAR_KEY, TaskRunnerAdditional.ADDITIONAL_VAR_VALUE
+            )
+        );
 
-        assertThat(taskRunner.env(runContext, taskCommands)).isEqualTo(Map.of(
-            ScriptService.ENV_BUCKET_PATH, TaskRunnerAdditional.OVERRIDEN_ENV_BUCKET_PATH,
-            ScriptService.ENV_WORKING_DIR, TaskRunnerAdditional.OVERRIDEN_ENV_WORKING_DIR,
-            ScriptService.ENV_OUTPUT_DIR, TaskRunnerAdditional.OVERRIDEN_ENV_OUTPUT_DIR,
-            contextVariables.get("runnerAdditionalEnvKey"), contextVariables.get("runnerAdditionalEnvValue"),
-            contextVariables.get("scriptCommandsAdditionalEnvKey"), contextVariables.get("scriptCommandsAdditionalEnvValue"),
-            ADDITIONAL_ENV_KEY, TaskRunnerAdditional.ADDITIONAL_ENV_VALUE
-        ));
+        assertThat(taskRunner.env(runContext, taskCommands)).isEqualTo(
+            Map.of(
+                ScriptService.ENV_BUCKET_PATH, TaskRunnerAdditional.OVERRIDEN_ENV_BUCKET_PATH,
+                ScriptService.ENV_WORKING_DIR, TaskRunnerAdditional.OVERRIDEN_ENV_WORKING_DIR,
+                ScriptService.ENV_OUTPUT_DIR, TaskRunnerAdditional.OVERRIDEN_ENV_OUTPUT_DIR,
+                contextVariables.get("runnerAdditionalEnvKey"), contextVariables.get("runnerAdditionalEnvValue"),
+                contextVariables.get("scriptCommandsAdditionalEnvKey"), contextVariables.get("scriptCommandsAdditionalEnvValue"),
+                ADDITIONAL_ENV_KEY, TaskRunnerAdditional.ADDITIONAL_ENV_VALUE
+            )
+        );
 
         taskRunner = new TaskRunnerAdditional(false);
-        assertThat(taskRunner.env(runContext, taskCommands)).isEqualTo(Map.of(
-            ScriptService.ENV_BUCKET_PATH, contextVariables.get("runnerBucketPath"),
-            ScriptService.ENV_WORKING_DIR, TaskRunnerAdditional.RUNNER_WORKING_DIR,
-            ScriptService.ENV_OUTPUT_DIR, TaskRunnerAdditional.RUNNER_OUTPUT_DIR,
-            contextVariables.get("runnerAdditionalEnvKey"), contextVariables.get("runnerAdditionalEnvValue"),
-            contextVariables.get("scriptCommandsAdditionalEnvKey"), contextVariables.get("scriptCommandsAdditionalEnvValue"),
-            ADDITIONAL_ENV_KEY, TaskRunnerAdditional.ADDITIONAL_ENV_VALUE
-        ));
+        assertThat(taskRunner.env(runContext, taskCommands)).isEqualTo(
+            Map.of(
+                ScriptService.ENV_BUCKET_PATH, contextVariables.get("runnerBucketPath"),
+                ScriptService.ENV_WORKING_DIR, TaskRunnerAdditional.RUNNER_WORKING_DIR,
+                ScriptService.ENV_OUTPUT_DIR, TaskRunnerAdditional.RUNNER_OUTPUT_DIR,
+                contextVariables.get("runnerAdditionalEnvKey"), contextVariables.get("runnerAdditionalEnvValue"),
+                contextVariables.get("scriptCommandsAdditionalEnvKey"), contextVariables.get("scriptCommandsAdditionalEnvValue"),
+                ADDITIONAL_ENV_KEY, TaskRunnerAdditional.ADDITIONAL_ENV_VALUE
+            )
+        );
     }
 
     private static class TaskRunnerAdditional extends TaskRunner<TaskRunnerDetailResult> {
@@ -114,10 +122,12 @@ public class TaskRunnerTest {
 
         @Override
         protected Map<String, String> runnerEnv(RunContext runContext, TaskCommands taskCommands) {
-            Map<String, String> env = new HashMap<>(Map.of(
-                RUNNER_ADDITIONAL_ENV_KEY, RUNNER_ADDITIONAL_ENV_VALUE,
-                ADDITIONAL_ENV_KEY, ADDITIONAL_ENV_VALUE
-            ));
+            Map<String, String> env = new HashMap<>(
+                Map.of(
+                    RUNNER_ADDITIONAL_ENV_KEY, RUNNER_ADDITIONAL_ENV_VALUE,
+                    ADDITIONAL_ENV_KEY, ADDITIONAL_ENV_VALUE
+                )
+            );
 
             if (overrideEnvValues) {
                 env.put(ScriptService.ENV_WORKING_DIR, OVERRIDEN_ENV_WORKING_DIR);

@@ -1,23 +1,25 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.encryption.EncryptionService;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.property.PropertyContext;
-import io.kestra.core.storages.StateStore;
-import io.kestra.core.storages.Storage;
-import io.kestra.core.storages.kv.KVStore;
-import org.slf4j.Logger;
-
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Plugin;
+import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.property.PropertyContext;
+import io.kestra.core.storages.Storage;
+import io.kestra.core.storages.kv.KVStore;
 
 public abstract class RunContext implements PropertyContext {
 
@@ -104,10 +106,6 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract URI logFileURI();
 
-    // for serialization backward-compatibility
-    @JsonIgnore
-    public abstract URI getStorageOutputPrefix();
-
     /**
      * Gets access to the Kestra's internal storage.
      *
@@ -136,11 +134,7 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract void cleanup();
 
-    /**
-     * @deprecated use flowInfo().tenantId() instead
-     */
-    @Deprecated(forRemoval = true)
-    public abstract String tenantId();
+    public abstract TaskRunInfo taskRunInfo();
 
     public abstract FlowInfo flowInfo();
 
@@ -149,7 +143,7 @@ public abstract class RunContext implements PropertyContext {
      * associated to the current task or trigger.
      *
      * @param name the configuration property name.
-     * @param <T>  the type of the configuration property value.
+     * @param <T> the type of the configuration property value.
      * @return the {@link Optional} configuration property value.
      */
     public abstract <T> Optional<T> pluginConfiguration(String name);
@@ -177,26 +171,23 @@ public abstract class RunContext implements PropertyContext {
     public abstract KVStore namespaceKv(String namespace);
 
     /**
-     * @deprecated use #namespaceKv(String) instead
-     */
-    @Deprecated(since = "1.1.0", forRemoval = true)
-    public StateStore stateStore() {
-        return new StateStore(this, true);
-    }
-
-    /**
      * Get access to local paths of the host machine.
      */
     public abstract LocalPath localPath();
 
-    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+    public record TaskRunInfo(String executionId, String taskId, String taskRunId, Object value) {
     }
 
-    /**
-     * @deprecated there is no legitimate use case of this method outside the run context internal self-usage, so it should not be part of the interface
-     */
-    @Deprecated(since = "1.2.0", forRemoval = true)
-    public abstract boolean isInitialized();
+    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+        public static FlowInfo from(Map<String, Object> flowInfoMap) {
+            return new FlowInfo(
+                (String) flowInfoMap.get("tenantId"),
+                (String) flowInfoMap.get("namespace"),
+                (String) flowInfoMap.get("id"),
+                (Integer) flowInfoMap.get("revision")
+            );
+        }
+    }
 
     /**
      * Get access to the ACL checker.
@@ -204,4 +195,33 @@ public abstract class RunContext implements PropertyContext {
      * when Namespace ACLs are used (EE).
      */
     public abstract AclChecker acl();
+
+    /**
+     * Get access to the Assets handler.
+     */
+    public abstract AssetEmitter assets() throws IllegalVariableEvaluationException;
+
+    /**
+     * Clone this run context for a specific plugin.
+     * 
+     * @return a new run context with the plugin configuration of the given plugin.
+     */
+    public abstract RunContext cloneForPlugin(Plugin plugin);
+
+    /**
+     * @return an InputAndOutput that can be used to work with inputs and outputs.
+     */
+    public abstract InputAndOutput inputAndOutput();
+
+    /**
+     * Get access to the SDK handler which allows interacting easily with the Kestra API via the SDK.
+     */
+    public abstract SDK sdk();
+
+    /**
+     * Retrieves the current task run output.
+     * WARNING: as the run context is created before running a task, this is not available for most task run.
+     * This is available only for flowable tasks as they are called multiple times, and for retried tasks (attempt > 1)
+     */
+    public abstract Map<String, Object> currentOutput();
 }

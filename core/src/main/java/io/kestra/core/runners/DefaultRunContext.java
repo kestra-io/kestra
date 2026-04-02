@@ -1,32 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.google.common.base.CaseFormat;
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.services.KVStoreService;
-import io.kestra.core.storages.Storage;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.VersionProvider;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.Introspected;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validator;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.With;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,13 +11,45 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.google.common.base.CaseFormat;
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.assets.AssetManagerFactory;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Plugin;
+import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.Storage;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.VersionProvider;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.With;
+
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
  * Default and mutable implementation of {@link RunContext}.
  */
-@Introspected
 public class DefaultRunContext extends RunContext {
     // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
@@ -52,10 +57,12 @@ public class DefaultRunContext extends RunContext {
     private MetricRegistry meterRegistry;
     private VersionProvider version;
     private KVStoreService kvStoreService;
+    private AssetManagerFactory assetManagerFactory;
     private Optional<String> secretKey;
     private WorkingDir workingDir;
     private Validator validator;
     private LocalPath localPath;
+    private SDK sdk;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -71,13 +78,15 @@ public class DefaultRunContext extends RunContext {
     private Task task;
     private AbstractTrigger trigger;
 
-    private final AtomicBoolean isInitialized = new AtomicBoolean(false);
+    private volatile AssetEmitter assetEmitter;
 
+    private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
     /**
      * Creates a new {@link DefaultRunContext} instance.
      */
-    public DefaultRunContext() {}
+    public DefaultRunContext() {
+    }
 
     /**
      * {@inheritDoc}
@@ -123,16 +132,6 @@ public class DefaultRunContext extends RunContext {
         this.traceParent = traceParent;
     }
 
-    /**
-     * @deprecated Plugin should not use the ApplicationContext anymore, and neither should they cast to this implementation.
-     *             Plugin should instead rely on supported API only.
-     */
-    @JsonIgnore
-    @Deprecated(since = "1.2.0", forRemoval = true)
-    public ApplicationContext getApplicationContext() {
-        return applicationContext;
-    }
-
     @JsonIgnore
     Task getTask() {
         return task;
@@ -159,6 +158,8 @@ public class DefaultRunContext extends RunContext {
             this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
             this.validator = applicationContext.getBean(Validator.class);
             this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
+            this.assetManagerFactory = applicationContext.getBean(AssetManagerFactory.class);
+            this.sdk = applicationContext.getBean(RunContextSDKFactory.class).create(applicationContext, this);
         }
     }
 
@@ -228,10 +229,18 @@ public class DefaultRunContext extends RunContext {
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretInputs = this.secretInputs;
-        if (this.isInitialized()) {
+        if (isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);
         }
+        return runContext;
+    }
+
+    @Override
+    public RunContext cloneForPlugin(Plugin plugin) {
+        PluginConfigurations pluginConfigurations = applicationContext.getBean(PluginConfigurations.class);
+        DefaultRunContext runContext = clone();
+        runContext.pluginConfiguration = pluginConfigurations.getConfigurationByPluginTypeOrAliases(plugin.getType(), plugin.getClass());
         return runContext;
     }
 
@@ -326,10 +335,14 @@ public class DefaultRunContext extends RunContext {
         return inline
             .entrySet()
             .stream()
-            .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), allVariables),
-                this.render(entry.getValue(), allVariables)
-            )))
+            .map(
+                throwFunction(
+                    entry -> new AbstractMap.SimpleEntry<>(
+                        this.render(entry.getKey(), allVariables),
+                        this.render(entry.getValue(), allVariables)
+                    )
+                )
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -390,13 +403,6 @@ public class DefaultRunContext extends RunContext {
             }
         }
         return null;
-    }
-
-    // for serialization backward-compatibility
-    @Override
-    @JsonIgnore
-    public URI getStorageOutputPrefix() {
-        return storage.getContextBaseURI();
     }
 
     /**
@@ -511,7 +517,7 @@ public class DefaultRunContext extends RunContext {
             logger().warn("Unable to cleanup worker task", ex);
         }
 
-        if (logger != null){
+        if (logger != null) {
             logger.resetMDC();
         }
     }
@@ -521,10 +527,19 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public String tenantId() {
-        Map<String, String> flow = (Map<String, String>) this.getVariables().get("flow");
-        // normally only tests should not have the flow variable
-        return flow != null ? flow.get("tenantId") : null;
+    public TaskRunInfo taskRunInfo() {
+        Optional<Map<String, Object>> maybeTaskRunMap = Optional.ofNullable(this.getVariables().get("taskrun"))
+            .map(Map.class::cast);
+        Optional<Map<String, Object>> maybeTaskMap = Optional.ofNullable(this.getVariables().get("task"))
+            .map(Map.class::cast);
+        Optional<Map<String, Object>> maybeExecutionMap = Optional.ofNullable(this.getVariables().get("execution"))
+            .map(Map.class::cast);
+        return new TaskRunInfo(
+            maybeExecutionMap.map(m -> (String) m.get("id")).orElse(null),
+            maybeTaskMap.map(m -> (String) m.get("id")).orElse(null),
+            maybeTaskRunMap.map(m -> (String) m.get("id")).orElse(null),
+            maybeTaskRunMap.map(m -> (String) m.get("value")).orElse(null)
+        );
     }
 
     /**
@@ -535,12 +550,7 @@ public class DefaultRunContext extends RunContext {
     public FlowInfo flowInfo() {
         Map<String, Object> flow = (Map<String, Object>) this.getVariables().get("flow");
         // normally only tests should not have the flow variable
-        return flow == null ? new FlowInfo(null, null, null, null) : new FlowInfo(
-            (String) flow.get("tenantId"),
-            (String) flow.get("namespace"),
-            (String) flow.get("id"),
-            (Integer) flow.get("revision")
-        );
+        return flow == null ? new FlowInfo(null, null, null, null) : FlowInfo.from(flow);
     }
 
     /**
@@ -549,8 +559,8 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Optional<T> pluginConfiguration(final String name) {
-        Objects.requireNonNull(name,"Cannot get plugin configuration from null name");
-        return Optional.ofNullable((T)pluginConfiguration.get(name));
+        Objects.requireNonNull(name, "Cannot get plugin configuration from null name");
+        return Optional.ofNullable((T) pluginConfiguration.get(name));
     }
 
     /**
@@ -566,7 +576,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public String version() {
-        return this.isInitialized() ? version.getVersion() : null;
+        return isInitialized.get() ? version.getVersion() : null;
     }
 
     @Override
@@ -575,18 +585,69 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
-    public boolean isInitialized() {
-        return isInitialized.get();
-    }
-
-    @Override
     public AclChecker acl() {
         return new AclCheckerImpl(this.applicationContext, flowInfo());
     }
 
     @Override
+    public AssetEmitter assets() throws IllegalVariableEvaluationException {
+        if (this.assetEmitter == null) {
+            synchronized (this) {
+                if (this.assetEmitter == null) {
+                    this.assetEmitter = assetManagerFactory.of(
+                        Optional.ofNullable(task).map(Task::getAssets)
+                            .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
+                            .flatMap(throwFunction(assets -> render(assets.getEnableAuto()).as(Boolean.class)))
+                            .orElse(false)
+                    );
+                }
+            }
+        }
+
+        return this.assetEmitter;
+    }
+
+    @Override
     public LocalPath localPath() {
         return localPath;
+    }
+
+    @Override
+    public InputAndOutput inputAndOutput() {
+        return new InputAndOutputImpl(this.applicationContext, this);
+    }
+
+    @Override
+    public SDK sdk() {
+        return this.sdk;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Map<String, Object> currentOutput() {
+        Map<?, ?> allOutputs = (Map<?, ?>) variables.get("outputs");
+        Map<?, ?> outputs = (Map<?, ?>) MapUtils.emptyOnNull(allOutputs).get(taskRunInfo().taskId());
+        List<Map<?, ?>> parents = (List<Map<?, ?>>) variables.get("parents");
+        if (!ListUtils.isEmpty(parents) && !MapUtils.isEmpty(outputs)) {
+            Collections.reverse(parents);
+            for (Map<?, ?> parent : parents) {
+                Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
+                if (taskrun != null) {
+                    outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
+                }
+            }
+        }
+        Map<?, ?> taskrun = (Map<?, ?>) variables.get("taskrun");
+
+        return taskrun.get("value") == null ? (Map<String, Object>) outputs : (Map<String, Object>) outputs.get(taskrun.get("value"));
+    }
+
+    /**
+     * Get access to Kestra internal services.
+     * WARNING: this should only be used for very specific needs, plugins should try to avoid using an Kestra internal service.
+     */
+    public Services services() {
+        return new Services(this.applicationContext);
     }
 
     /**
@@ -609,6 +670,7 @@ public class DefaultRunContext extends RunContext {
         private String triggerExecutionId;
         private RunContextLogger logger;
         private KVStoreService kvStoreService;
+        private AssetManagerFactory assetManagerFactory;
         private List<String> secretInputs;
         private Task task;
         private AbstractTrigger trigger;
@@ -631,6 +693,7 @@ public class DefaultRunContext extends RunContext {
             context.storage = storage;
             context.triggerExecutionId = triggerExecutionId;
             context.kvStoreService = kvStoreService;
+            context.assetManagerFactory = assetManagerFactory;
             context.secretInputs = secretInputs;
             context.task = task;
             context.trigger = trigger;

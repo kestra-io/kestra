@@ -5,7 +5,7 @@
                 <template v-if="$route.name === 'executions/list'">
                     <li>
                         <el-button :icon="Download" @click="exportExecutionsAsStream()">
-                            {{ t('export_csv') }}
+                            {{ $t('export_csv') }}
                         </el-button>
                     </li>
                     <li>
@@ -71,11 +71,12 @@
                     :defaultSort="{prop: 'state.startDate', order: 'descending'}"
                     tableLayout="auto"
                     fixed
-                    @row-dblclick="(row: any) => onRowDoubleClick(executionParams(row))"
+                    @row-click="(row: any) => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
+                    class="executions-table"
                     :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
@@ -148,7 +149,7 @@
                                 </el-button>
                             </template>
 
-                            <el-form>
+                            <el-form labelPosition="top">
                                 <ElFormItem :label="$t('execution labels')">
                                     <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>
@@ -162,20 +163,8 @@
                             :sortOrders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
-                            <template #default="scope">
-                                <RouterLink
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            namespace: scope.row?.namespace,
-                                            flowId: scope.row?.flowId,
-                                            id: scope.row?.id
-                                        }
-                                    }"
-                                    class="execution-id"
-                                >
-                                    <Id :value="scope.row?.id" :shrink="true" />
-                                </RouterLink>
+                            <template #default="scope">                              
+                                <Id :value="scope.row?.id" :shrink="true" />
                             </template>
                         </el-table-column>
 
@@ -205,7 +194,13 @@
                                 </template>
                                 <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
                                     <router-link
-                                        :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
+                                        :to="{
+                                            name: 'flows/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                id: scope.row?.flowId
+                                            }
+                                        }"
                                     >
                                         {{ invisibleSpace(scope.row?.flowId) }}
                                     </router-link>
@@ -250,27 +245,27 @@
                                 <template v-else-if="col.prop === 'trigger'">
                                     <TriggerAvatar :execution="scope.row" />
                                 </template>
+                                <template v-else-if="col.prop === 'trigger.variables.executionId'">
+                                    <RouterLink
+                                        v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
+                                        :to="{
+                                            name: 'executions/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                flowId: scope.row?.flowId,
+                                                id: scope.row?.trigger?.variables?.executionId
+                                            }
+                                        }"
+                                    >
+                                        <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                                    </RouterLink>
+                                    <span v-else>-</span>
+                                </template>
                             </template>
                             <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
                                 <el-tooltip :content="$t('taskid column details')" effect="light">
                                     {{ scope.column.label }}
                                 </el-tooltip>
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column
-                            columnKey="action"
-                            className="row-action"
-                            :label="$t('actions')"
-                        >
-                            <template #default="scope">
-                                <router-link
-                                    :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
-                                >
-                                    <Kicon :tooltip="$t('details')" placement="left">
-                                        <TextSearch />
-                                    </Kicon>
-                                </router-link>
                             </template>
                         </el-table-column>
                     </template>
@@ -399,7 +394,6 @@
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
@@ -409,7 +403,6 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -478,7 +471,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
-        defaultScopeFilter: undefined
+        defaultScopeFilter: false
     });
 
     const emit = defineEmits<{
@@ -573,10 +566,16 @@
             description: t("filter.table_column.executions.task-id")
         },
         {
-            label: t("triggers"), 
-            prop: "trigger", 
-            default: true, 
+            label: t("triggers"),
+            prop: "trigger",
+            default: true,
             description: t("filter.table_column.executions.trigger")
+        },
+        {
+            label: t("parent execution"),
+            prop: "trigger.variables.executionId",
+            default: false,
+            description: t("filter.table_column.executions.parent-execution")
         }
     ]);
 
@@ -598,7 +597,7 @@
     );
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger"].includes(prop);
+        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop);
     };
 
     const selectionMapper = (execution: any) => {
@@ -987,7 +986,8 @@
 
         ElMessageBox.confirm(
             t("bulk set labels", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
-            t("confirmation")
+            t("confirmation"),
+            {dangerouslyUseHTMLString: true}
         ).then(() => {
             if (queryBulkAction.value) {
                 return executionsStore
@@ -1089,7 +1089,7 @@
     color: var(--ks-content-primary);
 }
 
-:deep(a.execution-id) code {
-    color: var(--bs-code-color) !important;
+:deep(.executions-table) .el-table__row {
+    cursor: pointer;
 }
 </style>

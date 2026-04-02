@@ -1,25 +1,27 @@
 <template>
     <div class="button-wrapper">
-        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled" />
+        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled && !onboardingStore.isGuidedActive" />
 
         <ValidationError
             class="validation"
             tooltipPlacement="bottom-start"
-            :errors="flowErrors"
+            :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
-            :infos="flowInfos"
+            :infos="flowStore.flowInfos"
         />
 
         <EditorButtons
             :isCreating="flowStore.isCreating"
-            :isReadOnly="isReadOnly"
+            :isReadOnly="flowStore.isReadOnly"
             :canDelete="true"
-            :isAllowedEdit="isAllowedEdit"
+            :isAllowedEdit="flowStore.isAllowedEdit"
             :haveChange="haveChange"
-            :flowHaveTasks="Boolean(flowHaveTasks)"
-            :errors="flowErrors"
+            :flowHaveTasks="Boolean(flowStore.flowHaveTasks)"
+            :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
+            :showSaveAndExecute="showSaveAndExecute"
             @save="save"
+            @save-and-execute="saveAndExecute"
             @copy="
                 () =>
                     router.push({
@@ -49,12 +51,14 @@
     import ValidationError from "../flows/ValidationError.vue";
 
     import localUtils from "../../utils/utils";
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {useFlowStore} from "../../stores/flow";
+    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
+    import {useExecutionsStore} from "../../stores/executions";
     import {useToast} from "../../utils/toast";
 
     defineProps<{
         haveChange: boolean;
+        showSaveAndExecute?: boolean;
     }>();
 
     const {t} = useI18n();
@@ -69,26 +73,19 @@
     };
 
     const flowStore = useFlowStore();
+    const executionsStore = useExecutionsStore();
+    const onboardingStore = useOnboardingV2Store();
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
-
-    const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
-
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
 
-    const isReadOnly = computed(() => flowStore.isReadOnly)
-    const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
-    const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
-    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
-    const flowInfos = computed(() => flowStore.flowInfos)
     const toast = useToast();
     const flowWarnings = computed(() => {
-
         const outdatedWarning =
             flowStore.flowValidation?.outdated && !flowStore.isCreating
-                ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
+                ? flowStore.flowValidation?.constraints?.split(", ") ?? []
                 : [];
 
         const deprecationWarnings =
@@ -113,10 +110,13 @@
         try {
             // Save the isCreating before saving.
             // saveAll can change its value.
-            const isCreating = flowStore.isCreating
-            await flowStore.saveAll()
+            const isCreating = flowStore.isCreating;
+            const outcome = await flowStore.saveAll();
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                onboardingStore.recordSave();
+            }
 
-            if(isCreating){
+            if (isCreating && outcome === "redirect_to_update") {
                 await router.push({
                     name: "flows/update",
                     params: {
@@ -125,6 +125,7 @@
                         tab: "edit",
                         tenant: routeParams.value.tenant,
                     },
+                    query: route.query,
                 });
             }
 
@@ -133,6 +134,78 @@
             if (error?.status === 401) {
                 toast.error("401 Unauthorized", undefined, {duration: 2000});
                 return;
+            }
+        }
+    }
+
+    async function saveAndExecute() {
+        try {
+            const isCreating = flowStore.isCreating;
+            const outcome = await flowStore.saveAll();
+            const hasInputs = Array.isArray(flowStore.flowParsed?.inputs) && flowStore.flowParsed.inputs.length > 0;
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                onboardingStore.recordSave();
+            }
+
+            if (
+                isSuccessfulFlowSaveOutcome(outcome) &&
+                !hasInputs &&
+                flowStore.flow?.id &&
+                flowStore.flow?.namespace
+            ) {
+                const response = await executionsStore.triggerExecution({
+                    namespace: flowStore.flow.namespace,
+                    id: flowStore.flow.id,
+                    formData: undefined,
+                    kind: "NORMAL",
+                    labels: ["system.from:ui"],
+                });
+
+                executionsStore.execution = response.data;
+                onboardingStore.recordExecution();
+
+                await router.push({
+                    name: "executions/update",
+                    params: {
+                        namespace: response.data.namespace,
+                        flowId: response.data.flowId,
+                        id: response.data.id,
+                        tab: "gantt",
+                        tenant: routeParams.value.tenant,
+                    },
+                    query: {
+                        autoExpandGantt: "true",
+                        onboardingSuccess: "true",
+                    },
+                });
+
+                onSaveAll?.();
+                return;
+            }
+
+            if (isCreating && outcome === "redirect_to_update") {
+                await router.push({
+                    name: "flows/update",
+                    params: {
+                        id: flowStore.flow?.id,
+                        namespace: flowStore.flow?.namespace,
+                        tab: "edit",
+                        tenant: routeParams.value.tenant,
+                    },
+                    query: route.query,
+                });
+            }
+
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                window.setTimeout(() => {
+                    flowStore.executeFlow = true;
+                }, 300);
+            }
+
+            onSaveAll?.();
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000});
             }
         }
     }

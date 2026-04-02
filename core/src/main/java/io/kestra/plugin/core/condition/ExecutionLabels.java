@@ -1,7 +1,11 @@
 package io.kestra.plugin.core.condition;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -12,6 +16,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -20,16 +25,17 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-import java.util.Map;
-
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition that checks labels of an execution."
+    title = "Match executions by label set.",
+    description = """
+        Evaluates true only if the execution carries all provided labels. Labels can be declared as a map or list; system-reserved labels are rejected.
+
+        Useful for filtering Flow triggers to specific environments, owners, or any custom tagging strategy."""
 )
 @Plugin(
     examples = {
@@ -44,7 +50,7 @@ import java.util.Map;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: "This flow will execute when flow with specified labels enters FAILED state."
-                
+
                 triggers:
                   - id: flow_trigger
                     type: io.kestra.plugin.core.trigger.Flow
@@ -58,7 +64,7 @@ import java.util.Map;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.ExecutionLabelsCondition", "io.kestra.plugin.core.condition.ExecutionLabelsCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.ExecutionLabelsCondition", "io.kestra.plugin.core.condition.ExecutionLabelsCondition" }
 )
 public class ExecutionLabels extends Condition {
 
@@ -67,7 +73,7 @@ public class ExecutionLabels extends Condition {
     @NotNull
     @Schema(
         description = "List of labels to match in the execution.",
-        implementation = Object.class, oneOf = {List.class, Map.class}
+        implementation = Object.class, oneOf = { List.class, Map.class }
     )
     @PluginProperty
     List<@NoSystemLabelValidation Label> labels;

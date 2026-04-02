@@ -1,11 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
-import io.kestra.core.services.NamespaceService;
-import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,12 +12,20 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+
+import io.kestra.core.services.NamespaceService;
+
+import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
+
+import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
+
 /**
  * The default {@link Storage} implementation acting as a facade to the {@link StorageInterface}.
  */
+@Slf4j
 public class InternalStorage implements Storage {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InternalStorage.class);
 
     private static final String PATH_SEPARATOR = "/";
 
@@ -40,13 +42,13 @@ public class InternalStorage implements Storage {
      * @param storage The storage to delegate operations.
      */
     public InternalStorage(StorageContext context, StorageInterface storage, NamespaceFactory namespaceFactory) {
-        this(LOG, context, storage, null, namespaceFactory);
+        this(log, context, storage, null, namespaceFactory);
     }
 
     /**
      * Creates a new {@link InternalStorage} instance.
      *
-     * @param logger  The logger to be used by this class.
+     * @param logger The logger to be used by this class.
      * @param context The storage context.
      * @param storage The storage to delegate operations.
      */
@@ -156,7 +158,7 @@ public class InternalStorage implements Storage {
     @Override
     public URI putFile(InputStream inputStream, String name) throws IOException {
         URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
+        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + toLogicalPath(name));
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream));
     }
 
@@ -199,13 +201,14 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public Optional<InputStream> getCacheFile(final String cacheId,
-                                              final @Nullable String objectId,
-                                              final @Nullable Duration ttl) throws IOException {
+        final @Nullable String objectId,
+        final @Nullable Duration ttl) throws IOException {
         if (ttl != null) {
             var maybeLastModifiedTime = getCacheFileLastModifiedTime(cacheId, objectId);
             if (maybeLastModifiedTime.isPresent()) {
                 if (Instant.now().isAfter(Instant.ofEpochMilli(maybeLastModifiedTime.get()).plus(ttl))) {
-                    logger.debug("Cache is expired for cache-id={}, object-id={}, and ttl={}, deleting it",
+                    logger.debug(
+                        "Cache is expired for cache-id={}, object-id={}, and ttl={}, deleting it",
                         cacheId,
                         objectId,
                         ttl.toMillis()
@@ -216,16 +219,12 @@ public class InternalStorage implements Storage {
             }
         }
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ?
-            Optional.of(storage.get(context.getTenantId(), context.getNamespace(), uri)) :
-            Optional.empty();
+        return isFileExist(uri) ? Optional.of(storage.get(context.getTenantId(), context.getNamespace(), uri)) : Optional.empty();
     }
 
     private Optional<Long> getCacheFileLastModifiedTime(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ?
-            Optional.of(this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri).getLastModifiedTime()) :
-            Optional.empty();
+        return isFileExist(uri) ? Optional.of(this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri).getLastModifiedTime()) : Optional.empty();
     }
 
     /**
@@ -243,9 +242,7 @@ public class InternalStorage implements Storage {
     @Override
     public Optional<Boolean> deleteCacheFile(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
-        return isFileExist(uri) ?
-            Optional.of(this.storage.delete(context.getTenantId(), context.getNamespace(), uri)) :
-            Optional.empty();
+        return isFileExist(uri) ? Optional.of(this.storage.delete(context.getTenantId(), context.getNamespace(), uri)) : Optional.empty();
     }
 
     private URI putFileAndDelete(File file, URI uri) throws IOException {
@@ -272,7 +269,13 @@ public class InternalStorage implements Storage {
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream));
     }
 
+    @Override
     public Optional<StorageContext.Task> getTaskStorageContext() {
         return Optional.ofNullable((context instanceof StorageContext.Task task) ? task : null);
+    }
+
+    @Override
+    public List<FileAttributes> list(URI uri) throws IOException {
+        return this.storage.list(context.getTenantId(), context.getNamespace(), uri);
     }
 }

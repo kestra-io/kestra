@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.kv;
 
+import java.util.*;
+import java.util.function.Predicate;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -7,6 +10,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.kv.KVEntry;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -15,15 +19,14 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
-import java.util.function.Predicate;
-
 @Slf4j
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Fetch all keys matching a given KV pair prefix."
+    title = "List keys in the KV store by prefix.",
+    description = """
+        Renders `namespace` (defaults to flow namespace) and returns all keys, optionally filtered by the `prefix` value. Requires namespace ACL if targeting another namespace."""
 )
 @Plugin(
     examples = {
@@ -55,7 +58,6 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
-
 
     @Override
     public Output run(RunContext runContext) throws Exception {

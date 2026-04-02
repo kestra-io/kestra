@@ -50,7 +50,7 @@
                 <div class="metadata">
                     <Row :rows="[property]" v-for="property in metadata" :key="property.label">
                         <template v-if="property.value instanceof Date" #value>
-                            <DateAgo :date="property.value" format="L LTS" />
+                            <ks-date-ago :date="property.value" format="L LTS" />
                         </template>
                     </Row>
                 </div>
@@ -196,7 +196,6 @@
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
 
-    import DateAgo from "../../layout/DateAgo.vue";
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import {KsId} from "@kestra-io/ui-design-system";
     import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";

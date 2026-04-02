@@ -9,7 +9,7 @@
         <ks-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.date">
-                    <DateAgo :inverted="true" :date="scope.row.value" />
+                    <ks-date-ago :inverted="true" :date="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.subflow">
                     {{ scope.row.value }}
@@ -24,10 +24,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"; 
+    import {computed} from "vue";
     import Utils from "../../utils/utils";
     import VarValue from "./VarValue.vue";
-    import DateAgo from "../../components/layout/DateAgo.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import {useExecutionsStore} from "../../stores/executions";
 
@@ -54,7 +53,7 @@
     const variables = computed<VariableRow[]>(() => {
         return Utils.executionVars(props.data);
     });
-    
+
 </script>
 <style>
     .key-col {

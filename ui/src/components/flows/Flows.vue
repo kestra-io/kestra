@@ -176,7 +176,7 @@
                                 }"
                                 class="table-link"
                             >
-                                <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
+                                <ks-date-ago :date="getLastExecution(scope.row)?.startDate" inverted />
                             </router-link>
                         </template>
                     </ks-table-column>
@@ -305,7 +305,6 @@
 
     import {KsExecutionStatus, KsIconButton} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
-    import DateAgo from "../layout/DateAgo.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
 
     //@ts-expect-error no declaration file

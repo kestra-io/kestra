@@ -151,13 +151,13 @@
                             />
                         </template>
                         <template v-else-if="col.prop === 'lastTriggeredDate'">
-                            <DateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
+                            <ks-date-ago :inverted="true" :date="scope.row.lastTriggeredDate" />
                         </template>
                         <template v-else-if="col.prop === 'updatedAt'">
-                            <DateAgo :inverted="true" :date="scope.row.updatedAt" />
+                            <ks-date-ago :inverted="true" :date="scope.row.updatedAt" />
                         </template>
                         <template v-else-if="col.prop === 'nextEvaluationDate'">
-                            <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
+                            <ks-date-ago :inverted="true" :date="scope.row.nextEvaluationDate" />
                         </template>
                     </template>
                 </ks-table-column>
@@ -339,7 +339,6 @@
     import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";
-    import DateAgo from "../layout/DateAgo.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
 
     import LogsWrapper from "../logs/LogsWrapper.vue";

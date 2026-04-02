@@ -178,10 +178,10 @@
             >
                 <template #default="scope">
                     <template v-if="col.prop === 'state.startDate'">
-                        <DateAgo :inverted="true" :date="scope.row?.state?.startDate" />
+                        <ks-date-ago :inverted="true" :date="scope.row?.state?.startDate" />
                     </template>
                     <template v-else-if="col.prop === 'state.endDate'">
-                        <DateAgo :inverted="true" :date="scope.row?.state?.endDate" />
+                        <ks-date-ago :inverted="true" :date="scope.row?.state?.endDate" />
                     </template>
                     <template v-else-if="col.prop === 'state.duration'">
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
@@ -409,7 +409,6 @@
     import {State} from "@kestra-io/ui-libs";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
-    import DateAgo from "../layout/DateAgo.vue";
 
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";

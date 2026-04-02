@@ -754,7 +754,7 @@
         font-size: .8rem;
     }
 
-    :deep(.el-dropdown-menu__item.is-disabled) {
+    :deep(.kel-dropdown-menu__item.is-disabled) {
         color: var(--ks-border-inactive);
     }
 
@@ -837,13 +837,13 @@
     }
 
     .default-theme{
-        :deep(.el-splitter-panel) {
+        :deep(.kel-splitter-panel) {
             background-color: var(--ks-background-panel);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
-        :deep(.el-splitter__splitter){
+        :deep(.kel-splitter__splitter){
             border-left-color: var(--ks-border-primary);
             background-color: var(--ks-background-panel);
             &:before, &:after{
@@ -862,7 +862,7 @@
         overflow: auto;
     }
 
-    .el-splitter-panel{
+    .kel-splitter-panel{
         transition: none;
         &.dragging {
             opacity: 0.5;

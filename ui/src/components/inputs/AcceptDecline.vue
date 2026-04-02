@@ -70,7 +70,7 @@
     transform: translateY(10px) scale(.98);
 }
 
-.el-button {
+.kel-button {
     padding: 4px 12px;
 }
 </style>

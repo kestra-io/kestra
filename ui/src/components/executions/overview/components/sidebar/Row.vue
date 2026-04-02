@@ -46,13 +46,13 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-.el-row:not(:last-child) {
+.kel-row:not(:last-child) {
     margin-bottom: calc($spacer / 2);
 }
 
-.el-row {
+.kel-row {
     & :deep(.kel-text),
-    & :deep(.el-button) {
+    & :deep(.kel-button) {
         font-size: $font-size-sm;
     }
 

@@ -72,7 +72,7 @@
     border-top: 1px solid var(--ks-border-primary);
 }
 
-:deep(.el-button) {
+:deep(.kel-button) {
     border-radius: 4px;
 }
 </style>

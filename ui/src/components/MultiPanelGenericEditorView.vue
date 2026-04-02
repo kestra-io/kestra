@@ -132,16 +132,16 @@
     :deep(.editor-panels){
         position: absolute;
     }
-    :deep(.el-splitter-bar){
+    :deep(.kel-splitter-bar){
         width: 2px !important;
     }
 
     .default-theme{
-        :deep(.el-splitter-panel) {
+        :deep(.kel-splitter-panel) {
             background-color: var(--ks-background-panel);
         }
 
-        :deep(.el-splitter__splitter){
+        :deep(.kel-splitter__splitter){
             border-top-color: var(--ks-border-primary);
             background-color: var(--ks-background-panel);
             &:before, &:after{

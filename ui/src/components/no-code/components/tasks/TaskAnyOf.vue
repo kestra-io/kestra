@@ -343,23 +343,23 @@
 </script>
 
 <style scoped lang="scss">
-.el-form {
+.kel-form {
     width: 100%;
 }
 
 .radio-wrapper {
-    :deep(.el-radio-group) {
+    :deep(.kel-radio-group) {
         display: flex;
         flex-wrap: wrap;
         gap: 1rem;
         margin-bottom: .5rem;
     }
 
-    :deep(.el-radio) {
+    :deep(.kel-radio) {
         margin-right: 0;
         height: 40px;
 
-        .el-radio__inner {
+        .kel-radio__inner {
             width: 24px;
             height: 24px;
             border: 2px solid var(--ks-content-link);
@@ -373,20 +373,20 @@
         }
 
         &.is-checked {
-            .el-radio__label {
+            .kel-radio__label {
                 color: var(--ks-content-link);
             }
-            .el-radio__inner {
+            .kel-radio__inner {
                 border-color: var(--ks-content-link);
                 background: transparent;
             }
         }
 
         &:hover {
-            .el-radio__label {
+            .kel-radio__label {
                 color: var(--ks-content-link-hover);
             }
-            .el-radio__inner {
+            .kel-radio__inner {
                 border-color: var(--ks-content-link-hover);
             }
         }

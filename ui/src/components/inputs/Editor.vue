@@ -738,7 +738,6 @@
 
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-@import "../../styles/layout/root-dark.scss";
 
 .highlight-lines{
     background-color: rgba($base-blue-400, .2);
@@ -749,12 +748,12 @@
     align-items: center;
     justify-content: center;
 
-    .el-button-group {
+    .kel-button-group {
         display: inline-flex;
     }
 }
 
-:not(.namespace-defaults, .el-drawer__body) > .ks-editor {
+:not(.namespace-defaults, .kel-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
     z-index: 1001;
@@ -764,7 +763,7 @@
     z-index: 1;
 }
 
-.el-form .ks-editor {
+.kel-form .ks-editor {
     display: flex;
     width: 100%;
 }

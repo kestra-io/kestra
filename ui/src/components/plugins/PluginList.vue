@@ -355,16 +355,16 @@
         }
     }
 
-    .el-breadcrumb {
-        :deep(.el-breadcrumb__separator) {
+    .kel-breadcrumb {
+        :deep(.kel-breadcrumb__separator) {
             font-size: 1.375rem;
         }
 
-        :deep(.el-breadcrumb__item .el-breadcrumb__inner) {
+        :deep(.kel-breadcrumb__item .kel-breadcrumb__inner) {
             text-transform: none !important;
         }
 
-        :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner) {
             font-weight: 700 !important;
         }
     }

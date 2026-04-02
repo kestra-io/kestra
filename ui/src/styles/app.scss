@@ -1,16 +1,10 @@
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
-@use "@kestra-io/ui-libs/style.css";
 @use "@kestra-io/ui-design-system/src/assets/styles/index.scss" as *;
 
 // element-plus
 @use "layout/element-plus-overload";
-
-// layout
-@use "layout/root";
-@use "layout/root-dark";
-@use "layout/html-tag" as *;
 
 // components
 @use "layout/charts";
@@ -113,7 +107,7 @@ main {
         background-color: $value;
     }
 
-    .el-button.status-#{$key} {
+    .kel-button.status-#{$key} {
         cursor: default;
         border: 0.5px solid $value;
         background: var(--ks-background-card);

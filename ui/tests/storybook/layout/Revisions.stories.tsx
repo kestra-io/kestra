@@ -114,7 +114,7 @@ export const Default: Story = {
         const htmlElement = await canvas.findByTestId("restore-right");
         htmlElement.click();
         await waitFor(async () => {
-            const confirmButton = document.querySelector("[role='dialog'][aria-label='Confirmation'] button.el-button--primary") as HTMLElement;
+            const confirmButton = document.querySelector("[role='dialog'][aria-label='Confirmation'] button.kel-button--primary") as HTMLElement;
             await expect(confirmButton).not.toBeNull();
             confirmButton.click();
         });

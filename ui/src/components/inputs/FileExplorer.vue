@@ -27,7 +27,6 @@
             <ks-button-group class="d-flex">
                 <ks-tooltip
                     :content="$t('namespace files.create.file')"
-                    popperClass="text-base"
                 >
                     <ks-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
@@ -35,7 +34,6 @@
                 </ks-tooltip>
                 <ks-tooltip
                     :content="$t('namespace files.create.folder')"
-                    popperClass="text-base"
                 >
                     <ks-button
                         class="px-2"
@@ -81,7 +79,6 @@
                 </ks-dropdown>
                 <ks-tooltip
                     :content="$t('namespace files.export')"
-                    popperClass="text-base"
                 >
                     <ks-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
@@ -978,7 +975,7 @@
         }
     }
 
-    :deep(.el-button):not(.el-dialog .el-button) {
+    :deep(.kel-button):not(.kel-dialog .kel-button) {
         border: 0;
         background: none;
         outline: none;
@@ -986,7 +983,7 @@
         padding-left: .5rem;
         padding-right: .5rem;
 
-        &.el-button--primary {
+        &.kel-button--primary {
             opacity: 1;
         }
     }

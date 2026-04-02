@@ -18,10 +18,10 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-.el-row {
+.kel-row {
     margin-bottom: calc($spacer / 1.5) !important;
 
-    .el-col {
+    .kel-col {
         display: flex;
         align-items: center;
         gap: 6px;

@@ -62,7 +62,7 @@ export class ExecutionsPage extends BasePage {
         if (rowNumber < 0) {
             throw new Error("Negative row number is not allowed");
         }
-        const checkbox = this.page.getByRole("row").nth(rowNumber).locator("label.el-checkbox");
+        const checkbox = this.page.getByRole("row").nth(rowNumber).locator("label.kel-checkbox");
 
         await checkbox.waitFor({state: "visible"});
         await checkbox.click();
@@ -75,12 +75,12 @@ export class ExecutionsPage extends BasePage {
     }
 
     async clickOnSetLabels() {
-        await this.page.locator(".bulk-select").locator(".el-button-group").locator(".el-dropdown").click();
+        await this.page.locator(".bulk-select").locator(".kel-button-group").locator(".kel-dropdown").click();
         await this.page.getByRole("menuitem", {name: "Set labels"}).click();
     }
 
     async clickOnResume() {
-        await this.page.locator(".bulk-select").locator(".el-button-group").locator(".el-dropdown").click();
+        await this.page.locator(".bulk-select").locator(".kel-button-group").locator(".kel-dropdown").click();
         await this.page.getByRole("menuitem", {name: "Resume"}).click();
         // Confirm
         await this.page.getByRole("button", {name: "OK"}).click();

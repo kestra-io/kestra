@@ -101,7 +101,7 @@
         height: 5px;
     }
 
-    .el-button {
+    .kel-button {
         padding: 0.5rem 1rem;
         &:hover {
             html.dark & {

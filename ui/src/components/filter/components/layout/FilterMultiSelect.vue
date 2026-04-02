@@ -52,11 +52,11 @@
                     @click.stop
                 />
             </div>
-            <ks-alert 
-                v-if="filteredOptions.length === 0" 
-                type="info" 
-                showIcon 
-                :closable="false" 
+            <ks-alert
+                v-if="filteredOptions.length === 0"
+                type="info"
+                showIcon
+                :closable="false"
                 class="no-options"
             >
                 {{ $t('filter.no options found') }}
@@ -170,12 +170,12 @@
                 padding: 0 12px;
                 width: calc(50% - 0.5rem);
 
-                :deep(.el-checkbox__label) {
+                :deep(.kel-checkbox__label) {
                     font-size: 12px;
                     color: var(--ks-content-secondary);
                 }
 
-                :deep(.el-checkbox.is-checked .el-checkbox__label) {
+                :deep(.kel-checkbox.is-checked .kel-checkbox__label) {
                     color: var(--ks-content-primary);
                 }
             }

@@ -419,4 +419,7 @@ html.dark {
     /* tooltip */
     #{--ks-tooltip-background}: global-var.$gray-700;
     #{--ks-tooltip-border}: global-var.$gray-400;
+
+    /* typography */
+    #{--ks-code-color}: global-var.$purple-100;
 }

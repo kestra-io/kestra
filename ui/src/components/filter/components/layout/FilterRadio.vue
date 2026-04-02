@@ -75,11 +75,11 @@
             background-color: var(--ks-dropdown-background-hover);
         }
 
-        :deep(.el-radio) {
+        :deep(.kel-radio) {
             margin-right: 0;
             height: 2.5rem;
 
-            .el-radio__inner {
+            .kel-radio__inner {
                 width: 1.15rem;
                 height: 1.15rem;
                 border: 0.125rem solid var(--ks-content-link);
@@ -93,22 +93,22 @@
             }
 
             &.is-checked {
-                .el-radio__label {
+                .kel-radio__label {
                     color: var(--ks-content-link);
                 }
 
-                .el-radio__inner {
+                .kel-radio__inner {
                     border-color: var(--ks-content-link);
                     background: transparent;
                 }
             }
 
             &:hover {
-                .el-radio__label {
+                .kel-radio__label {
                     color: var(--ks-content-link-hover);
                 }
 
-                .el-radio__inner {
+                .kel-radio__inner {
                     border-color: var(--ks-content-link-hover);
                 }
             }

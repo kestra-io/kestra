@@ -209,7 +209,7 @@ section.container.mt-4:has(> section.empty) {
 .editor-splitter {
     height: 100%;
 
-    :deep(.el-splitter-panel) {
+    :deep(.kel-splitter-panel) {
         display: flex;
         flex-direction: column;
     }

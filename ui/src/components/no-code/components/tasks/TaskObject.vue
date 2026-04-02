@@ -294,7 +294,7 @@
         }
     }
 
-    .el-popper.singleton-tooltip {
+    .kel-popper.singleton-tooltip {
         max-width: 300px !important;
         background: var(--ks-tooltip-background);
     }

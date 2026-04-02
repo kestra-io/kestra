@@ -40,7 +40,7 @@
         <div>
             <ks-data-table
                 ref="dataTable"
-                :load-data="loadData"
+                :loadData="loadData"
                 :data="flowStore.flows"
                 :total="flowStore.total"
                 :defaultSort="{prop: 'id', order: 'ascending'}"
@@ -715,7 +715,7 @@
     cursor: pointer;
 }
 
-:deep(.flows-table) .el-scrollbar__thumb {
+:deep(.flows-table) .kel-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
 }
 .header-actions-list {

@@ -296,13 +296,13 @@
             margin-bottom: 40px;
         }
 
-        .el-button.el-button--default {
+        .kel-button.kel-button--default {
             background: var(--ks-gray-200);
 
             html.dark & {
                 background: var(--ks-background-input);
 
-                &.el-button {
+                &.kel-button {
                     border: 0;
                 }
             }

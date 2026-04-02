@@ -1,7 +1,7 @@
 <template>
     <div class="panel-footer">
         <div class="selection-display">
-            <small 
+            <small
                 v-if="footerText && timeRangeMode !== 'custom'"
             >
                 {{ footerText }}
@@ -62,7 +62,7 @@
         display: flex;
         gap: 0.5rem;
 
-        :deep(.el-button) {
+        :deep(.kel-button) {
             margin: 0;
         }
     }

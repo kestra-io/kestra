@@ -171,7 +171,7 @@
     .buttons {
         display: inline-flex;
 
-        & :deep(.el-button) {
+        & :deep(.kel-button) {
             margin-bottom: $spacer;
             padding: $spacer;
             font-size: $font-size-sm;
@@ -186,7 +186,7 @@
             }
         }
 
-        & :deep(.el-button:nth-of-type(2)) {
+        & :deep(.kel-button:nth-of-type(2)) {
             width: calc($spacer * 4);
         }
     }

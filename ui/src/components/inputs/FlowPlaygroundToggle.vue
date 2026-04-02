@@ -15,7 +15,7 @@
     margin-right: 1rem;
     &.is-active{
         --kel-switch-border-color: #FFFFFF;
-        ::v-deep(.el-switch__label){
+        ::v-deep(.kel-switch__label){
             color: white;
         }
     }

@@ -28,3 +28,50 @@ html, body {
     color: var(--ks-content-primary);
     margin: 0;
 }
+
+a {
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+b {
+    font-weight: 600;
+}
+
+button {
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+[placeholder] {
+    text-overflow: ellipsis;
+}
+
+pre {
+    overflow: hidden;
+    background: var(--ks-gray-200);
+    color: var(--ks-content-primary);
+    padding: 1rem;
+}
+
+blockquote {
+    border-left: 5px solid var(--ks-gray-400);
+    margin-top: 2rem;
+    padding: .25rem  0 .25rem 1rem;
+    color: var(--ks-gray-600);
+    p {
+        margin-bottom: 0;
+    }
+
+    html.dark & {
+        color: var(--ks-gray-700);
+    }
+}
+
+hr {
+    border-color: var(--ks-border-primary);
+    opacity: 1;
+}

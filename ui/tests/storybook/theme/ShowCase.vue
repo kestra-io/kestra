@@ -355,7 +355,7 @@
 </script>
 
 <style scoped>
-.demo-tabs > :deep( .el-tabs__content) {
+.demo-tabs > :deep( .kel-tabs__content) {
   padding: 32px;
   color: #6b778c;
   font-size: 32px;

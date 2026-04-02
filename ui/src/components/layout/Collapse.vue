@@ -22,20 +22,20 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     @include res(sm) {
-        :deep(.el-form--inline) {
+        :deep(.kel-form--inline) {
             .kel-form-item {
                 margin-right: 5px;
 
-                .el-radio-group {
+                .kel-radio-group {
                     margin-right: 5px;
                 }
 
                 .kel-form-item__content {
-                    > *:not(.el-button-group) {
+                    > *:not(.kel-button-group) {
                         width: 200px;
                     }
 
-                    > .el-button-group {
+                    > .kel-button-group {
                         max-width: 200px;
                     }
                 }
@@ -44,7 +44,7 @@
     }
 
     @include res(xs) {
-        :deep(.el-form--inline) {
+        :deep(.kel-form--inline) {
             .kel-form-item {
                 display: block;
                 margin-right: 0;
@@ -73,7 +73,7 @@
         }
 
         @include res(xs) {
-            .el-form--inline {
+            .kel-form--inline {
                 display: none;
             }
         }

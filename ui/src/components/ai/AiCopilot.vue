@@ -673,7 +673,7 @@
     background: transparent;
     overflow: visible;
 
-    :deep(.el-card__body) {
+    :deep(.kel-card__body) {
         padding: 0;
         overflow: visible;
     }
@@ -893,7 +893,7 @@
     --kel-input-focus-border: transparent;
     --kel-input-box-shadow: none;
 
-    :deep(.el-textarea) {
+    :deep(.kel-textarea) {
         height: 100%;
         box-shadow: none !important;
         outline: none !important;
@@ -901,21 +901,21 @@
         background: transparent !important;
     }
 
-    :deep(.el-textarea:focus-within) {
+    :deep(.kel-textarea:focus-within) {
         box-shadow: none !important;
         outline: none !important;
         border: none !important;
         background: transparent !important;
     }
 
-    :deep(.el-textarea.is-disabled) {
+    :deep(.kel-textarea.is-disabled) {
         box-shadow: none !important;
         outline: none !important;
         border: none !important;
         background: transparent !important;
     }
 
-    :deep(.el-textarea__inner) {
+    :deep(.kel-textarea__inner) {
         min-height: 100% !important;
         height: 100% !important;
         padding: 16px 14px 8px;
@@ -949,7 +949,7 @@
         }
     }
 
-    :deep(.el-textarea.is-disabled .el-textarea__inner) {
+    :deep(.kel-textarea.is-disabled .kel-textarea__inner) {
         background: transparent !important;
         background-color: transparent !important;
         color: var(--ks-content-primary) !important;
@@ -959,13 +959,13 @@
         border: none !important;
     }
 
-    :deep(.el-textarea__inner:hover) {
+    :deep(.kel-textarea__inner:hover) {
         box-shadow: none !important;
         border: none !important;
         outline: none !important;
     }
 
-    :deep(.el-textarea__inner::-webkit-focus-inner) {
+    :deep(.kel-textarea__inner::-webkit-focus-inner) {
         border: 0;
     }
 }
@@ -1079,7 +1079,7 @@
     }
 
     .ai-custom-textarea-onboarding {
-        :deep(.el-textarea__inner) {
+        :deep(.kel-textarea__inner) {
             font-size: $font-size-md;
 
             &::placeholder {

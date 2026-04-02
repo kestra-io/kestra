@@ -178,7 +178,7 @@
         height: 100%;
         flex-shrink: 0;
 
-        :deep(.el-splitter-panel) {
+        :deep(.kel-splitter-panel) {
             min-width: 0;
         }
 
@@ -187,11 +187,11 @@
             pointer-events: none;
         }
 
-        :deep(.el-splitter-bar) {
+        :deep(.kel-splitter-bar) {
             background-color: transparent;
         }
 
-        :deep(.el-splitter__splitter) {
+        :deep(.kel-splitter__splitter) {
             width: 5px;
             background-color: transparent;
             transition: background-color .1s;

@@ -78,7 +78,7 @@
 </script>
 
 <style scoped lang="scss">
-    .el-collapse {
+    .kel-collapse {
         --kel-collapse-header-font-size: 14px;
         --el-collapse-header-height: auto;
         border-top: none;
@@ -88,7 +88,7 @@
             font-size: var(--kel-collapse-header-font-size);
         }
 
-        :deep(> .el-collapse-item) {
+        :deep(> .kel-collapse-item) {
             > .kel-collapse-item__header {
                 padding: 0;
                 border-bottom: none;

@@ -136,7 +136,7 @@
     .error-notification {
         max-height: 90svh;
 
-        .el-notification__title {
+        .kel-notification__title {
             max-width: calc(100% - 15ch);
         }
 
@@ -147,7 +147,7 @@
             gap: .5rem;
         }
 
-        .el-notification__content {
+        .kel-notification__content {
             overflow-y: auto;
             max-height: 100%;
         }

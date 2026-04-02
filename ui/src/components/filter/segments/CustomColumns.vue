@@ -58,12 +58,12 @@
     display: flex;
     flex-direction: column;
     border-radius: 0.5rem;
-    
+
     small {
         font-size: 0.75rem;
         color: var(--ks-content-tertiary);
     }
-    
+
     .header {
         display: flex;
         justify-content: space-between;
@@ -124,7 +124,7 @@
     line-height: 1.375rem;
 }
 
-:deep(.el-button.selected) {
+:deep(.kel-button.selected) {
     color: var(--ks-chart-success);
 
     &:hover {
@@ -132,7 +132,7 @@
     }
 }
 
-:deep(.el-button.unselected) {
+:deep(.kel-button.unselected) {
     color: var(--ks-content-tertiary);
 
     &:hover {

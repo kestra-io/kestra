@@ -221,7 +221,7 @@
             padding-bottom: 0.5rem;
         }
 
-        .el-collapse {
+        .kel-collapse {
             flex: 1;
         }
 
@@ -287,7 +287,7 @@
                 z-index: 10;
             }
 
-            .el-collapse {
+            .kel-collapse {
                 overflow-y: auto;
             }
 

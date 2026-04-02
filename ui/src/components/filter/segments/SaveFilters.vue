@@ -89,7 +89,7 @@
         editingFilter?: SavedFilter;
         appliedFilters: AppliedFilter[];
     }>();
-    
+
     const emits = defineEmits<{
         "close-edit": [];
         save: [name: string, description: string];
@@ -203,12 +203,12 @@
     box-shadow: 0 2px 4px var(--ks-card-shadow);
 }
 
-.el-button.is-disabled {
+.kel-button.is-disabled {
     color: var(--ks-content-tertiary) !important;
     cursor: not-allowed !important;
 }
 
-.el-button-group .el-button--primary:last-child {
+.kel-button-group .kel-button--primary:last-child {
     border: none;
 }
 
@@ -218,7 +218,7 @@
     font-size: 0.875rem;
 }
 
-:deep(footer.el-dialog__footer) {
+:deep(footer.kel-dialog__footer) {
     padding-top: 0 !important;
 }
 </style>

@@ -122,6 +122,13 @@
                     :key="cIdx"
                     v-bind="cascader"
                     :execution
+                    @debug-path="onDebugPath"
+                />
+
+                <DebugPanel
+                    :property="debugProperty"
+                    :execution
+                    :path="debugPath"
                 />
 
                 <div id="chart">
@@ -199,6 +206,7 @@
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
     import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
+    import DebugPanel from "./components/main/cascaders/DebugPanel.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";
 
@@ -408,6 +416,13 @@
                 (label) => label.key === key && String(label.value) === "true",
             ) ?? false
         );
+    };
+
+    const debugProperty = ref<"outputs" | "trigger" | undefined>(undefined);
+    const debugPath = ref<string | undefined>(undefined);
+    const onDebugPath = (property: string, path: string) => {
+        debugProperty.value = property as "outputs" | "trigger";
+        debugPath.value = path;
     };
 
     const cascaders: Element[] = [

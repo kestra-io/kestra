@@ -314,7 +314,9 @@ class TriggerEventHandlerTest {
         // GIVEN
         triggerStateStore.save(triggerState);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
-        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(ZonedDateTime.now(), ZonedDateTime.now(), null, null));
+        ZonedDateTime backfillStart = ZonedDateTime.now(CLOCK).minusDays(1);
+        ZonedDateTime backfillEnd = ZonedDateTime.now(CLOCK).plusDays(1);
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(backfillStart, backfillEnd, null, null));
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -323,6 +325,31 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
+        assertThat(updated.get().getBackfill().getStart()).isEqualTo(backfillStart);
+        assertThat(updated.get().getBackfill().getEnd()).isEqualTo(backfillEnd);
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(backfillStart.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldClearBackfillWhenBackfillRangeIsAlreadyComplete() {
+        // GIVEN
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        // Backfill with start == end == now: the next cron tick is after end, so backfill completes immediately
+        ZonedDateTime now = ZonedDateTime.now(CLOCK);
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(now, now, null, null));
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        // Backfill is cleared because the next evaluation date is after the backfill end
+        assertThat(updated.get().getBackfill()).isNull();
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
@@ -331,7 +358,7 @@ class TriggerEventHandlerTest {
         // GIVEN
         handler = newTriggerEventHandler(List.of());
         triggerStateStore.save(triggerState);
-        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(ZonedDateTime.now(), ZonedDateTime.now(), null, null));
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(ZonedDateTime.now(CLOCK), ZonedDateTime.now(CLOCK), null, null));
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);

@@ -7,6 +7,7 @@ import java.util.Optional;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageInterfaceFactory;
@@ -40,8 +41,8 @@ public class KestraBeansFactory {
     protected Optional<String> storageType;
 
     @Singleton
-    public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient) {
-        return new PluginCatalogService(httpClient, false, true);
+    public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient, ExecutorsUtils executorsUtils) {
+        return new PluginCatalogService(httpClient, false, true, executorsUtils);
     }
 
     @Requires(missingBeans = PluginRegistry.class)

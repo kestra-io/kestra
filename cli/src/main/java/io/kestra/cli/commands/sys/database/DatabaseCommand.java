@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.sys.database;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.App;
+import io.kestra.cli.Kestra;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine;
@@ -20,6 +20,6 @@ public class DatabaseCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.runCli(new String[] { "sys", "database", "--help" });
+        return Kestra.runCli(new String[] { "sys", "database", "--help" });
     }
 }

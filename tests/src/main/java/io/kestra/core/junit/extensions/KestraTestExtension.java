@@ -1,7 +1,5 @@
 package io.kestra.core.junit.extensions;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
@@ -15,16 +13,21 @@ import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 public class KestraTestExtension extends MicronautJunit5Extension {
     @Override
     protected MicronautTestValue buildMicronautTestValue(Class<?> testClass) {
-        testProperties.put("kestra.jdbc.executor.thread-count", Runtime.getRuntime().availableProcessors() * 4);
         return AnnotationSupport
             .findAnnotation(testClass, KestraTest.class)
             .map(kestraTestAnnotation ->
             {
-                var envsSet = new java.util.HashSet<>(Set.of(kestraTestAnnotation.environments()));
-                envsSet.add("test");// add test env if not already present
+                // "test" first so DB-specific configs override test defaults
+                var envs = new java.util.ArrayList<String>();
+                envs.add("test");
+                for (String env : kestraTestAnnotation.environments()) {
+                    if (!"test".equals(env)) {
+                        envs.add(env);
+                    }
+                }
                 return new MicronautTestValue(
                     kestraTestAnnotation.application(),
-                    envsSet.toArray(new String[0]),
+                    envs.toArray(new String[0]),
                     kestraTestAnnotation.packages(),
                     kestraTestAnnotation.propertySources(),
                     kestraTestAnnotation.rollback(),

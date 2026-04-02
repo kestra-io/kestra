@@ -320,6 +320,31 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/eval", consumes = MediaType.TEXT_PLAIN)
+    @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this execution")
+    public EvalResult evalExpression(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @RequestBody(description = "The Pebble expression that should be evaluated") @Body String expression) {
+        Execution execution = executionRepository
+            .findById(tenantService.resolveTenant(), executionId)
+            .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionId + "'"));
+
+        Flow flow = flowRepository
+            .findByExecution(execution);
+
+        try {
+            return EvalResult.builder()
+                .result(runContextRender(flow, execution, expression))
+                .build();
+        } catch (IllegalVariableEvaluationException e) {
+            return EvalResult.builder()
+                .error(e.getMessage())
+                .stackTrace(ExceptionUtils.getStackTrace(e))
+                .build();
+        }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/eval/{taskRunId}", consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this taskrun")
     public EvalResult evalTaskRunExpression(
@@ -348,6 +373,14 @@ public class ExecutionController {
                 .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
+    }
+
+    private String runContextRender(Flow flow, Execution execution, String expression) throws IllegalVariableEvaluationException {
+        return runContextFactory.of(
+            flow,
+            execution,
+            false
+        ).render(expression);
     }
 
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {

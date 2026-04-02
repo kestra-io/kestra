@@ -44,6 +44,7 @@ class GrpcChannelManagerTest {
             channelManager.close();
             channelManager = null;
         }
+        KestraContext.setContext(null);
     }
 
     @Test

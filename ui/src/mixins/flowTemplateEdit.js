@@ -31,7 +31,7 @@ export default {
         };
     },
     computed: {
-        ...mapStores(usePluginsStore, useTemplateStore, useFlowStore, useAuthStore),
+        ...mapStores(usePluginsStore, useFlowStore, useAuthStore),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&

@@ -80,7 +80,7 @@
                                             />
                                         </el-tooltip>
                                         <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                            <el-button v-if="!embed && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                            <el-button v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                                 {{ $t('use') }}
                                             </el-button>
                                         </slot>
@@ -214,7 +214,7 @@
                 params: {
                     tenant: route.params.tenant,
                     kind: props.blueprintKind,
-                    tab: route.params.tab,
+                    tab: props.blueprintType,
                     blueprintId: blueprintId
                 }
             });

@@ -18,6 +18,15 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class JooqDSLContextWrapper {
+    private static final Random RETRY_POLICY = Random.builder()
+        .minInterval(Duration.ofMillis(50))
+        .maxAttempts(-1)
+        .maxDuration(Duration.ofSeconds(60))
+        .maxInterval(Duration.ofMillis(1000))
+        .build();
+
+    private static final DeadlockPredicate DEADLOCK_PREDICATE = new DeadlockPredicate();
+
     private final DSLContext dslContext;
 
     /**
@@ -30,25 +39,37 @@ public class JooqDSLContextWrapper {
         this.dslContext = dslContext;
     }
 
-    private <T> RetryUtils.Instance<T, RuntimeException> retryer() {
-        return RetryUtils.of(
-            Random.builder()
-                .minInterval(Duration.ofMillis(50))
-                .maxAttempts(-1)
-                .maxDuration(Duration.ofSeconds(60))
-                .maxInterval(Duration.ofMillis(1000))
-                .build()
+    private static <T> RetryUtils.Instance<T, RuntimeException> retryer() {
+        return RetryUtils.of(RETRY_POLICY);
+    }
+
+    public void transaction(TransactionalRunnable transactional) {
+        JooqDSLContextWrapper.<Void>retryer().runRetryIf(
+            DEADLOCK_PREDICATE,
+            () ->
+            {
+                dslContext.transaction(transactional);
+                return null;
+            }
         );
     }
 
-    private static <E extends Throwable> Predicate<E> predicate() {
-        return (e) ->
-        {
-            if (!(e.getCause() instanceof SQLException)) {
+    public <T> T transactionResult(TransactionalCallable<T> transactional) {
+        return JooqDSLContextWrapper.<T>retryer().runRetryIf(
+            DEADLOCK_PREDICATE,
+            () -> dslContext.transactionResult(transactional)
+        );
+    }
+
+    /**
+     * Predicate that matches retryable database deadlock exceptions.
+     */
+    static final class DeadlockPredicate implements Predicate<Throwable> {
+        @Override
+        public boolean test(Throwable e) {
+            if (!(e.getCause() instanceof SQLException cause)) {
                 return false;
             }
-
-            SQLException cause = (SQLException) e.getCause();
 
             // MySQL/MariaDB vendor codes:
             // 1213 = ER_LOCK_DEADLOCK
@@ -59,28 +80,10 @@ public class JooqDSLContextWrapper {
             }
 
             return
-            // standard deadlock
-            cause.getSQLState().equals("40001") ||
-            // postgres deadlock
-                cause.getSQLState().equals("40P01");
-        };
-    }
-
-    public void transaction(TransactionalRunnable transactional) {
-        this.<Void> retryer().runRetryIf(
-            predicate(),
-            () ->
-            {
-                dslContext.transaction(transactional);
-                return null;
-            }
-        );
-    }
-
-    public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        return this.<T> retryer().runRetryIf(
-            predicate(),
-            () -> dslContext.transactionResult(transactional)
-        );
+                // standard deadlock
+                "40001".equals(cause.getSQLState()) ||
+                // postgres deadlock
+                "40P01".equals(cause.getSQLState());
+        }
     }
 }

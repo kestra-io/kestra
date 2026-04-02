@@ -34,7 +34,7 @@
                     </div>
                 </template>
                 <template #default>
-                    <TypedDynamicScroller
+                    <DynamicScroller
                         :items="filteredSeries"
                         :minItemSize="40"
                         keyField="id"
@@ -113,7 +113,7 @@
                                 </div>
                             </DynamicScrollerItem>
                         </template>
-                    </TypedDynamicScroller>
+                    </DynamicScroller>
                 </template>
             </el-card>
         </div>
@@ -206,12 +206,6 @@
         parentEndPercent?: number;
     }
 
-    type DynamicScrollerSlotProps = {
-        item: SeriesItem;
-        index: number;
-        active: boolean;
-    };
-
     // Props
     withDefaults(defineProps<{
         namespace?: string;
@@ -234,11 +228,6 @@
     const executionsStore = useExecutionsStore();
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
     const ganttExecutionFilter = useGanttExecutionFilter();
-    const TypedDynamicScroller = DynamicScroller as typeof DynamicScroller & (new () => {
-        $slots: {
-            default(props: DynamicScrollerSlotProps): unknown;
-        };
-    });
     // Constants
     const TASKRUN_THRESHOLD = 50;
     const ts = (date: string | Date): number => new Date(date).getTime();

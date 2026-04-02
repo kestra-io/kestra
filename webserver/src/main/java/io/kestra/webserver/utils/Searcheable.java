@@ -51,7 +51,7 @@ public final class Searcheable<T> {
 
         if (searched.queryFilters() != null && !searched.queryFilters().isEmpty()) {
             results = results.filter((item) ->
-                    searched.queryFilters().stream().anyMatch(queryFilter -> {
+                    searched.queryFilters().stream().allMatch(queryFilter -> {
                         BiPredicate<T, Object> filterPredicate = searched.queryFilterPredicateMap.get(
                             new Searched.Builder.QueryFilterPredicateKey(queryFilter.field(), queryFilter.operation())
                         );

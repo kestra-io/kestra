@@ -119,6 +119,15 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     )
     private final Property<Integer> concurrent = Property.ofValue(0);
 
+    @Builder.Default
+    @Schema(
+        title = "Cancel remaining parallel tasks on first failure.",
+        description = "When true, if any child task fails, all still-running "
+            + "siblings are killed before transitioning to the errors handler. "
+            + "Defaults to false (current behavior: wait for all tasks to finish)."
+    )
+    private final Property<Boolean> failFast = Property.ofValue(false);
+
     @Valid
     @PluginProperty
     @NotEmpty
@@ -179,7 +188,8 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
-            runContext.render(this.concurrent).as(Integer.class).orElseThrow()
+            runContext.render(this.concurrent).as(Integer.class).orElseThrow(),
+            runContext.render(this.failFast).as(Boolean.class).orElse(false)
         );
     }
 
@@ -187,7 +197,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
-        return FlowableUtils.resolveSequentialState(
+        Optional<State.Type> state = FlowableUtils.resolveSequentialState(
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
@@ -197,5 +207,20 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             this.isAllowFailure(),
             this.isAllowWarning()
         );
+
+        // When failFast killed siblings due to a child failure, guessFinalState returns KILLED
+        // because it prioritizes KILLED over FAILED. Override to FAILED since the root cause
+        // is a task failure, not a manual kill.
+        if (state.isPresent() && state.get() == State.Type.KILLED) {
+            boolean isFailFast = runContext.render(this.failFast).as(Boolean.class).orElse(false);
+            if (isFailFast && execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
+                if (this.isAllowFailure()) {
+                    return Optional.of(this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING);
+                }
+                return Optional.of(State.Type.FAILED);
+            }
+        }
+
+        return state;
     }
 }

@@ -1,0 +1,19 @@
+id: parallel-failfast
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    failFast: true
+    concurrent: 0
+    tasks:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail
+
+      - id: slow1
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT10S
+
+      - id: slow2
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT10S

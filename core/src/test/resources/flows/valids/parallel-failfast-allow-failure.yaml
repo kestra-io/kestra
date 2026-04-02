@@ -1,0 +1,15 @@
+id: parallel-failfast-allow-failure
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    failFast: true
+    tasks:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail
+        allowFailure: true
+
+      - id: normal
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ task.id }}"

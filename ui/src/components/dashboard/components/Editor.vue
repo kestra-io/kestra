@@ -294,10 +294,10 @@
     .custom {
         padding: 24px 32px;
 
-        &.el-row {
+        &.kel-row {
             width: 100%;
 
-            & .el-col {
+            & .kel-col {
                 padding-bottom: $spacing;
 
                 &:nth-of-type(even) > div {
@@ -360,8 +360,8 @@
     }
 
     .view-buttons {
-        .el-button {
-            &.el-button--primary {
+        .kel-button {
+            &.kel-button--primary {
                 color: var(--ks-content-link);
                 opacity: 1;
             }

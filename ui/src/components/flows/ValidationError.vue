@@ -113,7 +113,7 @@
         if(rootContainer.value === undefined) {
             return;
         }
-        const buttonLabels = rootContainer.value.querySelectorAll(".el-button span.label");
+        const buttonLabels = rootContainer.value.querySelectorAll(".kel-button span.label");
 
         buttonLabels.forEach(el => el.classList.remove("d-none"))
         nextTick(() => {
@@ -132,10 +132,10 @@
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
-    .el-button.el-button--default {
+    .kel-button.kel-button--default {
         transition: none;
 
-        &.el-button--small {
+        &.kel-button--small {
             padding: 5px;
             height: fit-content;
         }
@@ -178,7 +178,7 @@
             margin: 0;
         }
 
-        .el-header {
+        .kel-header {
             padding: $spacer;
             background-color: var(--ks-background-table-header);
             border-radius: $border-radius-lg $border-radius-lg 0 0;
@@ -191,7 +191,7 @@
             }
         }
 
-        .el-main {
+        .kel-main {
             padding: 1.5rem 1rem !important;
             font-family: $font-family-monospace;
             background-color: var(--ks-background-card);

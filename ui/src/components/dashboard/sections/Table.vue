@@ -146,7 +146,7 @@
 </script>
 
 <style lang="scss" scoped>
-section#table :deep(.el-scrollbar__thumb) {
+section#table :deep(.kel-scrollbar__thumb) {
     background-color: var(--ks-button-background-primary) !important;
 }
 </style>

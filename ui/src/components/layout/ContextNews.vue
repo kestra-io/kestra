@@ -112,7 +112,7 @@
             opacity: 0.7;
         }
 
-        a.el-button {
+        a.kel-button {
             font-weight: bold;
         }
 

@@ -84,7 +84,7 @@
             background-color: var(--ks-button-background-secondary-hover);
         }
 
-        .el-tooltip__trigger {
+        .kel-tooltip__trigger {
             display: flex;
         }
 
@@ -173,7 +173,7 @@
         border-radius: 0 var(--kel-border-radius-base) var(--kel-border-radius-base) 0;
     }
 
-    .el-tooltip__trigger .lock-icon.material-design-icon>.material-design-icon__svg {
+    .kel-tooltip__trigger .lock-icon.material-design-icon>.material-design-icon__svg {
         bottom: 0 !important;
         margin-left: 5px;
     }

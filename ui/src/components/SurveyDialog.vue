@@ -166,28 +166,28 @@
     border-radius: 8px;
     border: 1px solid var(--ks-dialog-border, #404559);
 
-    .el-dialog {
+    .kel-dialog {
         border-radius: 8px;
     }
 
-    .el-dialog__header {
+    .kel-dialog__header {
         background-color: var(--ks-background-card, #2c2f36);
         border-bottom: 1px solid var(--ks-border-primary, #404559);
         padding: 20px 24px;
 
-        .el-dialog__title {
+        .kel-dialog__title {
             color: var(--ks-content-primary, #ffffff);
             font-size: 18px;
             font-weight: 600;
         }
     }
 
-    .el-dialog__body {
+    .kel-dialog__body {
         padding: 24px;
         background-color: var(--ks-background-card, #2c2f36);
     }
 
-    .el-dialog__footer {
+    .kel-dialog__footer {
         background-color: var(--ks-background-card, #2c2f36);
         border-top: 1px solid var(--ks-border-primary, #404559);
         padding: 20px 24px;
@@ -209,17 +209,17 @@
     }
 
     .company-size-options {
-        :deep(.el-radio-group) {
+        :deep(.kel-radio-group) {
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
 
-            .el-radio {
+            .kel-radio {
                 margin-right: 0;
                 margin-bottom: 0;
 
-                .el-radio__input {
-                    .el-radio__inner {
+                .kel-radio__input {
+                    .kel-radio__inner {
                         background-color: transparent;
                         border-color: #918BA9;
                         border-width: 2px;
@@ -231,7 +231,7 @@
                         }
                     }
 
-                    &.is-checked .el-radio__inner {
+                    &.is-checked .kel-radio__inner {
                         background-color: transparent;
                         border-color: #8405FF;
                         border-width: 2px;
@@ -251,7 +251,7 @@
                     }
                 }
 
-                .el-radio__label {
+                .kel-radio__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 8px;
                     font-size: 14px;
@@ -261,17 +261,17 @@
     }
 
     .use-case-options {
-        :deep(.el-checkbox-group) {
+        :deep(.kel-checkbox-group) {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px 24px;
 
-            .el-checkbox {
+            .kel-checkbox {
                 margin-right: 0;
                 margin-bottom: 0;
 
-                .el-checkbox__input {
-                    .el-checkbox__inner {
+                .kel-checkbox__input {
+                    .kel-checkbox__inner {
                         background-color: transparent;
                         border-color: #918BA9;
                         width: 18px;
@@ -287,13 +287,13 @@
                         }
                     }
 
-                    &.is-checked .el-checkbox__inner {
+                    &.is-checked .kel-checkbox__inner {
                         background-color: var(--kel-color-primary, #7c3aed);
                         border-color: var(--kel-color-primary, #7c3aed);
                     }
                 }
 
-                .el-checkbox__label {
+                .kel-checkbox__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 10px;
                     font-size: 14px;
@@ -306,9 +306,9 @@
     .newsletter-section {
         padding-top: 4px;
 
-        :deep(.el-checkbox) {
-            .el-checkbox__input {
-                .el-checkbox__inner {
+        :deep(.kel-checkbox) {
+            .kel-checkbox__input {
+                .kel-checkbox__inner {
                     background-color: transparent;
                     border-color: #918BA9;
                     width: 18px;
@@ -324,13 +324,13 @@
                     }
                 }
 
-                &.is-checked .el-checkbox__inner {
+                &.is-checked .kel-checkbox__inner {
                     background-color: var(--kel-color-primary, #7c3aed);
                     border-color: var(--kel-color-primary, #7c3aed);
                 }
             }
 
-            .el-checkbox__label {
+            .kel-checkbox__label {
                 color: var(--ks-content-secondary, #9ca3af);
                 font-size: 14px;
                 line-height: 22px;

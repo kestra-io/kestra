@@ -279,7 +279,7 @@
     .flow-execution-checks-alerts {
         margin-bottom: 1rem;
     }
-    :deep(.el-collapse) {
+    :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);
         border: 1px solid var(--ks-border-primary);
         background: var(--ks-gray-100);

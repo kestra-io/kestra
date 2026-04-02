@@ -63,7 +63,7 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-.el-collapse {
+.kel-collapse {
     margin-top: $spacer;
 
     & :deep(.kel-collapse-item__header),
@@ -91,7 +91,7 @@
     }
 }
 
-.el-timeline {
+.kel-timeline {
     padding-left: 50%;
     margin-top: $spacer;
 

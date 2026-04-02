@@ -81,7 +81,7 @@
     .m-dropdown-menu {
         width: fit-content !important;
 
-        :deep(.el-dropdown-menu__item:hover) {
+        :deep(.kel-dropdown-menu__item:hover) {
             background-color: var(--ks-log-background-error) !important;
             color: var(--ks-content-error) !important;
         }

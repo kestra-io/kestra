@@ -52,7 +52,7 @@ section {
             display: flex;
             align-items: center;
 
-            & > span.el-tooltip__trigger {
+            & > span.kel-tooltip__trigger {
                 cursor: pointer;
                 margin-right: calc($spacer / 2);
             }

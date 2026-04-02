@@ -177,7 +177,7 @@ export const PanelResizeTest: Story = {
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Find the resize handle
-        const resizeHandle = canvasElement.querySelector(".el-splitter__splitter");
+        const resizeHandle = canvasElement.querySelector(".kel-splitter__splitter");
 
         if (resizeHandle) {
             // Click on the tab to ensure it's visible

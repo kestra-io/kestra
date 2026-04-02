@@ -110,7 +110,7 @@
             margin-bottom: 0.25rem;
         }
 
-        :deep(.el-button) {
+        :deep(.kel-button) {
             color: var(--ks-content-tertiary);
             font-size: 1rem;
             cursor: pointer;
@@ -160,7 +160,7 @@
                 display: flex;
                 gap: 0.5rem;
 
-                :deep(.el-button) {
+                :deep(.kel-button) {
                     color: var(--ks-content-tertiary);
                     margin: 0;
                     padding: 0;
@@ -181,7 +181,7 @@
             }
         }
 
-        :deep(.el-alert) {
+        :deep(.kel-alert) {
             text-align: center;
             color: var(--ks-content-tertiary);
             padding: 0.875rem;

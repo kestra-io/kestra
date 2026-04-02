@@ -175,7 +175,7 @@
     const protectedRequiredProperties = computed<Entry[]>(() => {
         return requiredProperties.value.length ? requiredProperties.value : sortedProperties.value;
     });
-    
+
     const connectionProperties = computed<Entry[]>(() => {
         return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && isPartOfGroup(v, ["connection"]));
     });
@@ -226,7 +226,7 @@
         }
     }
 
-    .el-popper.singleton-tooltip {
+    .kel-popper.singleton-tooltip {
         max-width: 300px !important;
         background: var(--ks-tooltip-background);
     }

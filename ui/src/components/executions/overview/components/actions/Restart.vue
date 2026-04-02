@@ -348,13 +348,13 @@
     align-items: flex-start;
 }
 
-.modal-header :deep(.el-divider--horizontal) {
+.modal-header :deep(.kel-divider--horizontal) {
     margin-bottom: 8px;
 }
 
 .radio-item {
-    :deep(.el-radio__input) {
-        .el-radio__inner {
+    :deep(.kel-radio__input) {
+        .kel-radio__inner {
             width: 18px;
             height: 18px;
 
@@ -366,7 +366,7 @@
         }
     }
 
-    :deep(.el-radio__label) {
+    :deep(.kel-radio__label) {
         font-size: 13px;
         color: var(--kel-text-color-regular);
         padding-left: 8px;
@@ -374,8 +374,8 @@
 
 
     &.is-checked {
-        :deep(.el-radio__input) {
-            .el-radio__inner {
+        :deep(.kel-radio__input) {
+            .kel-radio__inner {
                 border-color: var(--kel-color-primary);
                 background-color: var(--kel-color-primary);
 
@@ -385,7 +385,7 @@
             }
         }
 
-        :deep(.el-radio__label) {
+        :deep(.kel-radio__label) {
             color: var(--kel-text-color-regular) !important;
         }
     }

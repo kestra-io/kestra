@@ -393,7 +393,7 @@
         max-width: max-content !important;
     }
 
-    :deep(.el-form) {
+    :deep(.kel-form) {
         padding: 1rem 1rem 0.5rem 1rem;
         margin-bottom: 1rem;
         border: 1px solid var(--ks-border-primary);

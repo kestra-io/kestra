@@ -219,7 +219,7 @@
         flex: 1;
     }
 
-    :deep(.el-checkbox-button__inner) {
+    :deep(.kel-checkbox-button__inner) {
         padding: 4px;
         border: none;
     }

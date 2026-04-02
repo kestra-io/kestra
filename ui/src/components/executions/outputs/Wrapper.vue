@@ -463,18 +463,18 @@
     overflow: hidden;
 }
 
-:deep(.el-splitter) {
+:deep(.kel-splitter) {
     height: 100%;
     min-height: 0;
 }
 
-:deep(.el-splitter-panel) {
+:deep(.kel-splitter-panel) {
     display: flex;
     min-height: 0;
     overflow: hidden;
 }
 
-:deep(.el-splitter-bar) {
+:deep(.kel-splitter-bar) {
     width: 3px !important;
     background-color: var(--ks-border-primary);
 
@@ -483,20 +483,20 @@
     }
 }
 
-:deep(.el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
+:deep(.kel-scrollbar.kel-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
 .values {
     pointer-events: none;
     margin: 0.75rem 0 1.25rem 0;
 }
 
-:deep(.el-cascader-menu__list) {
+:deep(.kel-cascader-menu__list) {
     /* Let the cascader list be constrained by its parent container
        so it can scroll independently instead of forcing page height */
     min-height: 0;
     height: 100%;
 }
 
-:deep(.el-cascader-panel) {
+:deep(.kel-cascader-panel) {
     height: 100%;
 }
 
@@ -508,7 +508,7 @@
     border: 1px solid var(--ks-border-primary);
 }
 
-.bordered > :deep(.el-collapse-item) {
+.bordered > :deep(.kel-collapse-item) {
     margin-bottom: 0px !important;
 }
 
@@ -535,7 +535,7 @@
     overflow: hidden;
 }
 
-:deep(.el-cascader-menu) {
+:deep(.kel-cascader-menu) {
     min-width: 300px;
     max-width: 300px;
 
@@ -543,7 +543,7 @@
         border-right: 1px solid var(--ks-border-primary);
     }
 
-    .el-cascader-menu__wrap {
+    .kel-cascader-menu__wrap {
         height: 100%;
     }
 
@@ -567,7 +567,7 @@
             font-weight: normal;
         }
 
-        .el-cascader-node__prefix {
+        .kel-cascader-node__prefix {
             display: none;
         }
 
@@ -613,8 +613,8 @@
     z-index: 0;
 }
 
-:deep(.el-collapse) {
-    .el-collapse-item__wrap {
+:deep(.kel-collapse) {
+    .kel-collapse-item__wrap {
         max-height: none !important;
     }
 
@@ -645,7 +645,7 @@
 
 //Mobile Version
 @media (max-width: 768px) {
-    :deep(.el-splitter) {
+    :deep(.kel-splitter) {
         .outputs-top {
             margin: 10px;
             border: 2px solid var(--ks-border-primary);
@@ -655,7 +655,7 @@
             min-height: 0 !important;
         }
     }
-    :deep(.el-splitter-bar){
+    :deep(.kel-splitter-bar){
         height: 4px !important;
         width: auto !important;
 

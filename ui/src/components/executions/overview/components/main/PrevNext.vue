@@ -95,7 +95,7 @@
     align-items: center;
     margin-bottom: $spacer;
 
-    .el-button {
+    .kel-button {
         font-size: $font-size-sm;
     }
 }

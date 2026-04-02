@@ -232,7 +232,7 @@
         const target = event.target as HTMLElement | null;
         if (
             target?.closest(
-                "button, a, input, textarea, select, label, [role='button'], .el-button, .kel-input, .kel-select",
+                "button, a, input, textarea, select, label, [role='button'], .kel-button, .kel-input, .kel-select",
             )
         ) {
             return;
@@ -373,7 +373,7 @@
         }
 
         if (isExecuteStep.value) {
-            const dialog = document.querySelector("#execute-flow-dialog .el-dialog") as HTMLElement | null;
+            const dialog = document.querySelector("#execute-flow-dialog .kel-dialog") as HTMLElement | null;
             if (dialog) {
                 const rect = dialog.getBoundingClientRect();
                 const cardWidth = Math.min(475, window.innerWidth - 96);
@@ -783,7 +783,7 @@
         gap: 0.5rem;
     }
 
-    .onboarding-overlay .finish-footer .actions-right :deep(.el-button + .el-button) {
+    .onboarding-overlay .finish-footer .actions-right :deep(.kel-button + .kel-button) {
         margin-left: 0;
     }
 
@@ -812,8 +812,8 @@
         --onboarding-pulse-ring-2: 18px;
     }
 
-    :global(.onboarding-v2-highlight-pulse .el-button),
-    :global(.onboarding-v2-highlight-pulse.el-button) {
+    :global(.onboarding-v2-highlight-pulse .kel-button),
+    :global(.onboarding-v2-highlight-pulse.kel-button) {
         animation: onboardingButtonPulse 1s ease-in-out infinite alternate;
         will-change: transform, box-shadow;
     }

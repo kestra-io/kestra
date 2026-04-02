@@ -176,7 +176,7 @@
             }
         }
 
-        .el-tag {
+        .kel-tag {
             cursor: pointer;
             height: 30px;
             margin: calc(1rem / 4);
@@ -184,7 +184,7 @@
             background-color: var(--ks-button-background-secondary);
             color: var(--ks-content-primary);
 
-            & :deep(.el-tag__content) {
+            & :deep(.kel-tag__content) {
                 padding: 4px 13px;
             }
 
@@ -192,7 +192,7 @@
                 background-color: var(--ks-button-background-secondary-hover);
             }
 
-            &.el-tag--primary {
+            &.kel-tag--primary {
                 border-color: var(--kel-color-primary);
                 background-color: var(--kel-color-primary);
                 color: white;

@@ -2,7 +2,7 @@
     <div>
         <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
-            <ks-date-picker
+            <KsDatePicker
                 ref="datePicker"
                 type="datetime"
                 v-model="selectedDate"
@@ -1056,7 +1056,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "../../styles/layout/root-dark";
     .ks-monaco-editor {
         position: absolute;
         width: 100%;

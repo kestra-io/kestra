@@ -190,7 +190,7 @@
         &:first-child {
             padding-top: 0;
         }
-        &:last-child { 
+        &:last-child {
             padding-bottom: 0;
         }
 
@@ -227,7 +227,7 @@
             white-space: nowrap;
         }
 
-        .el-button {
+        .kel-button {
             color: var(--ks-content-primary);
             display: flex;
             align-items: center;

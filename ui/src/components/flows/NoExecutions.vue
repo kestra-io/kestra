@@ -73,14 +73,14 @@
     }
 
     .trigger {
-        :deep(.el-button) {
+        :deep(.kel-button) {
             width: 226px;
             height: 45px;
         }
     }
 }
 
-:deep(.el-divider) {
+:deep(.kel-divider) {
     max-width: 746px;
     margin: 0 auto;
 }

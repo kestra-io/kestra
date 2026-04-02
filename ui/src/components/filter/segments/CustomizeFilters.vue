@@ -205,7 +205,7 @@
     }
 }
 
-:deep(.el-button.unselected) {
+:deep(.kel-button.unselected) {
     color: var(--ks-chart-success);
     user-select: none;
     pointer-events: auto;

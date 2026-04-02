@@ -186,7 +186,7 @@
         }
     }
 
-    .el-cascader-panel {
+    .kel-cascader-panel {
         overflow: auto;
         width: 100%;
     }
@@ -196,7 +196,7 @@
         color: var(--ks-content-secondary);
     }
 
-    :deep(.el-cascader-menu) {
+    :deep(.kel-cascader-menu) {
         min-width: 300px;
         max-width: 300px;
 
@@ -204,11 +204,11 @@
             max-width: none;
         }
 
-        .el-cascader-menu__list {
+        .kel-cascader-menu__list {
             padding: 0;
         }
 
-        .el-cascader-menu__wrap {
+        .kel-cascader-menu__wrap {
             height: 100%;
         }
 
@@ -247,7 +247,7 @@
                 font-weight: normal;
             }
 
-            .el-cascader-node__prefix {
+            .kel-cascader-node__prefix {
                 display: none;
             }
 

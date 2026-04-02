@@ -169,7 +169,7 @@
         font-size: revert;
     }
 
-    :deep(li.el-dropdown-menu__item) {
+    :deep(li.kel-dropdown-menu__item) {
         &:hover,
         &:focus {
             background: var(--ks-select-hover);
@@ -180,7 +180,7 @@
 .items {
     max-height: 193.4px !important; // 5 visible items
 
-    :deep(li.el-dropdown-menu__item) {
+    :deep(li.kel-dropdown-menu__item) {
         border-radius: unset;
     }
 }

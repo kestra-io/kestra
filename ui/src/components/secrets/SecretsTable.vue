@@ -2,7 +2,7 @@
     <div class="d-flex flex-column fill-height">
         <ks-data-table
             ref="dataTable"
-            :load-data="loadData"
+            :loadData="loadData"
             :data="secrets"
             :total="total"
             :defaultSort="{prop: 'key', order: 'ascending'}"
@@ -77,7 +77,7 @@
                         <template #content>
                             <span v-html="$t('secret.isReadOnly')" />
                         </template>
-                        <ks-icon class="d-flex justify-content-center text-base">
+                        <ks-icon class="d-flex justify-content-center">
                             <Lock />
                         </ks-icon>
                     </ks-tooltip>

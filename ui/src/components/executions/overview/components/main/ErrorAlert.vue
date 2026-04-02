@@ -126,7 +126,7 @@
                     }
                 }
 
-                .el-button {
+                .kel-button {
                     color: var(--ks-log-content-error);
                 }
 

@@ -123,7 +123,7 @@
         justify-content: center;
         gap: 0.75rem;
 
-        .el-button {
+        .kel-button {
             min-width: 132px;
             margin: 0;
             text-decoration: none;

@@ -42,7 +42,7 @@ export const Toggle: Story = {
     args: {modelValue: false},
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        const switchEl = canvasElement.querySelector(".el-switch") as HTMLElement;
+        const switchEl = canvasElement.querySelector(".kel-switch") as HTMLElement;
         expect(canvas.getByTestId("result").textContent).toBe("false");
         await fireEvent.click(switchEl);
         expect(canvas.getByTestId("result").textContent).toBe("true");

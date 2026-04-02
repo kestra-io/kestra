@@ -297,10 +297,10 @@
         }
 
         .el-button.el-button--default {
-            background: var(--bs-gray-200);
+            background: var(--ks-gray-200);
 
             html.dark & {
-                background: var(--input-bg);
+                background: var(--ks-background-input);
 
                 &.el-button {
                     border: 0;

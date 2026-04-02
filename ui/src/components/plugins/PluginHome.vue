@@ -200,7 +200,7 @@
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-gray-100);
         }
     }
 

@@ -397,7 +397,7 @@
     :deep(.el-form) {
         padding: 1rem 1rem 0.5rem 1rem;
         margin-bottom: 1rem;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
         border-radius: 0.5rem;
         background-color: var(--ks-background-panel);
         box-shadow: 2px 3px 3px 0px var(--ks-card-shadow);

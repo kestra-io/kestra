@@ -206,7 +206,7 @@
     }
 
     .label {
-        font-family: var(--bs-font-monospace);
+        font-family: var(--kel-font-family-monospace);
         color: var(--ks-content-primary);
         min-width: 0;
         flex: 1;

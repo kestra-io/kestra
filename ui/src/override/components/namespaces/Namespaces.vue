@@ -208,7 +208,7 @@
 
 .namespaces {
     margin: 0.25rem 0;
-    border-radius: var(--bs-border-radius-lg);
+    border-radius: var(--kel-border-radius-round);
     border: 1px solid var(--ks-border-primary);
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
 
@@ -217,13 +217,13 @@
 
         & span.system {
             line-height: 1.5rem;
-            font-size: var(--font-size-xs);
+            font-size: var(--kel-font-size-extra-small);
             color: var(--ks-content-primary);
         }
     }
 
     .rounded-full {
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: var(--kel-border-radius-round);
         background-color: var(--ks-background-card)
     }
 
@@ -231,7 +231,7 @@
         height: 2.25rem;
         overflow: hidden;
         background: transparent;
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: var(--kel-border-radius-round);
 
         &:hover {
             background: var(--ks-background-body);

@@ -297,7 +297,7 @@
 
         .logs-wrapper {
             margin-bottom: 1rem;
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             padding: $spacer;
             padding-top: .5rem;
@@ -305,7 +305,7 @@
             border: 1px solid var(--ks-border-primary);
 
             html.dark & {
-                background-color: var(--bs-gray-100);
+                background-color: var(--ks-gray-100);
             }
 
             > * + * {

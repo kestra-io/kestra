@@ -97,7 +97,7 @@
         width: 328px;
         background: var(--ks-select-background);
         box-shadow: 2px 3px 3px var(--ks-card-shadow);
-        border-radius: var(--bs-border-radius);
+        border-radius: var(--kel-border-radius-base);
         border: 1px solid var(--ks-border-primary) !important;
         margin-bottom: -2px;
 

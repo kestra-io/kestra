@@ -83,7 +83,7 @@
 
         h5 {
             margin-bottom: 0;
-            font-size: var(--font-size-lg);
+            font-size: var(--kel-font-size-large);
         }
 
         img {
@@ -91,7 +91,7 @@
             max-width: 10rem;
             margin-right: 1rem;
             float: left;
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: var(--kel-border-radius-round);
         }
 
         .metaBlock {
@@ -104,13 +104,13 @@
         }
 
         hr {
-            border-top-color: var(--bs-gray-700);
+            border-top-color: var(--ks-gray-700);
             margin-top: .5rem;
             margin-bottom: .5rem;
         }
 
         .small {
-            font-size:  var(--font-size-sm);
+            font-size:  var(--kel-font-size-small);
             opacity: 0.7;
         }
 

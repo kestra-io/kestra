@@ -77,7 +77,7 @@
         width: 24px;
         height: 24px;
         min-width: 24px;
-        border-radius: var(--bs-border-radius);
+        border-radius: var(--kel-border-radius-base);
         text-align: center;
         display: inline-flex;
         justify-content: center;

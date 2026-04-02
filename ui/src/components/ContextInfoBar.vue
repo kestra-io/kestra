@@ -228,7 +228,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: var(--font-size-sm);
+        font-size: var(--kel-font-size-small);
         overflow-y: auto;
         &::-webkit-scrollbar {
             width: 0;
@@ -240,7 +240,7 @@
         }
 
         .kel-button {
-            font-size: var(--font-size-sm);
+            font-size: var(--kel-font-size-small);
             height: auto;
             padding: 10px 5px;
             width: 32px;
@@ -271,7 +271,6 @@
             transform: rotate(90deg);
             margin-top: 0.75rem;
             margin-bottom: 0;
-            color: var(--bs-text-opacity-5);
             opacity: .25;
         }
 

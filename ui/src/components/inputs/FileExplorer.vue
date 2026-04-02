@@ -967,14 +967,14 @@
         }
 
         & h3 {
-            font-size: var(--font-size-lg);
+            font-size: var(--kel-font-size-large);
             font-weight: 500;
             margin-bottom: 0.5rem;
             color: var(--ks-content-secondary);
         }
 
         & p {
-            font-size: var(--font-size-sm);
+            font-size: var(--kel-font-size-small);
         }
     }
 

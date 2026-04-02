@@ -120,7 +120,7 @@
 
 <style scoped lang="scss">
     pre {
-        border-radius: var(--bs-border-radius);
+        border-radius: var(--kel-border-radius-base);
     }
 
     /* Allow line-wraps */

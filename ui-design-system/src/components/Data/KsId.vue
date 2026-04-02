@@ -56,7 +56,7 @@
     code.ks-id--clickable {
         cursor: pointer;
         &:hover {
-            color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1));
+            text-decoration: underline;
         }
     }
 </style>

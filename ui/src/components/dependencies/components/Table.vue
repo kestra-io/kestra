@@ -183,7 +183,7 @@ section#filtering {
 
     :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
         margin-bottom: 0.5rem;
-        font-size: var(--font-size-sm);
+        font-size: var(--kel-font-size-small);
     }
 }
 
@@ -194,7 +194,7 @@ section#filtering {
 
     :deep(.kel-table__empty-text) {
         width: 100%;
-        font-size: var(--font-size-sm);
+        font-size: var(--kel-font-size-small);
     }
 
     & :deep(.kel-table__row.selected) {
@@ -212,7 +212,7 @@ section#row {
     align-items: center;
     max-width: 100%;
     padding: 0.75rem 0 0.75rem 0.75rem;
-    font-size: var(--font-size-xs);
+    font-size: var(--kel-font-size-extra-small);
     cursor: pointer;
 
     & section#left {

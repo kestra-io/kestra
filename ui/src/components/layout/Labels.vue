@@ -87,12 +87,12 @@
     --ks-tag-background: #ECEBEF;
     --ks-tag-content: var(--ks-content-primary);
     --ks-tag-background-active: #414557;
-    --ks-tag-content-active: var(--bs-white);
+    --ks-tag-content-active: var(--ks-white);
 
     html.dark & {
         --ks-tag-background: #5A6079;
         --ks-tag-background-active: #F2F2F2;
-        --ks-tag-content-active: var(--bs-black);
+        --ks-tag-content-active: var(--ks-black);
     }
 
     background-color: var(--ks-tag-background);

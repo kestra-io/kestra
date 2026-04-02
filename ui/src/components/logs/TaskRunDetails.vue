@@ -345,7 +345,7 @@
             },
             level: function () {
                 this.rawLogs = [];
-                if(this.followedExecution) 
+                if(this.followedExecution)
                     this.loadLogs(this.followedExecution.id);
             },
             currentTaskRuns: {
@@ -873,7 +873,7 @@
                 if (!this.showLogs) {
                     return;
                 }
-                
+
                 this.executionsStore
                     .loadLogs({
                         executionId,
@@ -1027,7 +1027,7 @@
 
     pre {
         border: 1px solid var(--light);
-        background-color: var(--bs-gray-200);
+        background-color: var(--ks-gray-200);
         padding: 10px;
         margin-top: 5px;
         margin-bottom: 20px;
@@ -1045,7 +1045,7 @@
             padding: 1rem;
 
             &.cursor {
-                background-color: var(--bs-gray-300);
+                background-color: var(--ks-gray-300);
             }
         }
     }

@@ -74,7 +74,7 @@
 <style scoped lang="scss">
 .task-list {
     .label {
-        font-family: var(--bs-font-monospace);
+        font-family: var(--kel-font-family-monospace);
         color: var(--ks-content-primary);
         font-size: 0.875rem;
         font-weight: 600;

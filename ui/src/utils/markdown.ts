@@ -34,12 +34,12 @@ export async function render(markdown: string, options: RenderOptions = {}) {
         ? markdown
             .replace(
                 /(\n)?::\s*alert\{type="(.*?)"\}\s*\n([\s\S]*?)\n::\s*(\n)?/g,
-                (_: string, newLine1: string, type: string, content: string, newLine2: string) => 
+                (_: string, newLine1: string, type: string, content: string, newLine2: string) =>
                     `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
             )
             .replace(
                 /::\s*alert\{type="(.*?)"\}\s*([^\n]*)\s*::/g,
-                (_: string, type: string, content: string) => 
+                (_: string, type: string, content: string) =>
                     `::: ${type}\n${content}\n:::`
             )
         : markdown;
@@ -48,8 +48,8 @@ export async function render(markdown: string, options: RenderOptions = {}) {
     const highlighter = await getHighlighter(createHighlighterCore as any, Object.values(langs), onigurumaEngine, githubDark, githubLight);
 
     if(githubDark["colors"] && githubLight["colors"]) {
-        githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
-        githubLight["colors"]["editor.background"] = "var(--bs-white)";
+        githubDark["colors"]["editor.background"] = "var(--ks-gray-500)";
+        githubLight["colors"]["editor.background"] = "var(--ks-white)";
     }
 
     const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;

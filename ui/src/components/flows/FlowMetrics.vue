@@ -109,12 +109,12 @@
     const options = computed(() => {
         const darken =
             miscStore.theme === "light"
-                ? cssVariable("--bs-gray-700")
-                : cssVariable("--bs-gray-800");
+                ? cssVariable("--ks-gray-700")
+                : cssVariable("--ks-gray-800");
         const lighten =
             miscStore.theme === "light"
-                ? cssVariable("--bs-gray-200")
-                : cssVariable("--bs-gray-400");
+                ? cssVariable("--ks-gray-200")
+                : cssVariable("--ks-gray-400");
 
         return defaultConfig(
             {

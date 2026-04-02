@@ -510,7 +510,7 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 #overview {
-    :deep(.el-splitter-panel:has(> .sidebar:first-child)) {
+    :deep(.kel-splitter-panel:has(> .sidebar:first-child)) {
         background-color: var(--ks-background-table-row);
     }
 
@@ -524,7 +524,7 @@
 
         & :deep(.state),
         & :deep(.labels) {
-            .el-row {
+            .kel-row {
                 margin-bottom: calc($spacer * 1.5);
             }
 
@@ -542,15 +542,15 @@
             }
         }
 
-        & .actions .el-row {
+        & .actions .kel-row {
             margin-top: calc($spacer * 1.5);
 
-            & .el-col {
+            & .kel-col {
                 &:empty {
                     display: none; // If button is not displayed for any reason, hide the whole column
                 }
 
-                & :deep(.el-button) {
+                & :deep(.kel-button) {
                     width: 100%;
                     margin-bottom: calc($spacer / 1.5);
                     padding: $spacer;
@@ -583,7 +583,7 @@
                 display: none;
             }
 
-            .el-alert {
+            .kel-alert {
                 &:not(:first-child) {
                     margin-top: $spacer;
                 }
@@ -651,7 +651,7 @@
         }
     }
 
-    div.el-divider {
+    div.kel-divider {
         margin: 0;
         padding: 0;
     }

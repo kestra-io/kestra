@@ -655,12 +655,12 @@
     border-radius: var(--kel-border-radius-base);
   }
   :deep(.kel-input__inner) {
-    font-size: var(--font-size-sm);
+    font-size: var(--kel-font-size-small);
   }
 }
 
 .doc-search__empty {
-  font-size: var(--font-size-xs);
+  font-size: var(--kel-font-size-extra-small);
   color: var(--ks-content-secondary);
   white-space: nowrap;
 }
@@ -686,7 +686,7 @@
   top: 0.35rem;
   bottom: 0.35rem;
   width: 3px;
-  background: linear-gradient(180deg, var(--bs-code-color) 0%, var(--ks-content-link) 100%);
+  background: linear-gradient(180deg, var(--ks-code-color) 0%, var(--ks-content-link) 100%);
   border-radius: 999px;
 }
 
@@ -729,7 +729,7 @@
 }
 :deep(details.doc-collapsible summary h3) {
   margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: var(--kel-font-size-large);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -785,14 +785,14 @@
   border: none;
   color: var(--ks-content-primary);
   font-weight: 600;
-  font-size: var(--font-size-base);
+  font-size: var(--kel-font-size-base);
   padding: 0;
   cursor: pointer;
   text-align: left;
   transition: color 0.2s ease;
 }
 :deep(.doc-card__header:focus-visible) {
-  outline: 2px solid var(--bs-code-color);
+  outline: 2px solid var(--ks-code-color);
   outline-offset: 2px;
 }
 :deep(.doc-card__header--static) {
@@ -865,17 +865,17 @@
   border: none;
   color: var(--ks-content-primary);
   font-weight: 600;
-  font-size: var(--font-size-base);
+  font-size: var(--kel-font-size-base);
   text-align: left;
   cursor: pointer;
   transition: color 0.2s ease, background 0.2s ease;
 }
 :deep(.doc-example__toggle:hover) {
   background: rgba(124, 58, 237, 0.08);
-  color: var(--bs-code-color);
+  color: var(--ks-code-color);
 }
 :deep(.doc-example__toggle:focus-visible) {
-  outline: 2px solid var(--bs-code-color);
+  outline: 2px solid var(--ks-code-color);
   outline-offset: 2px;
 }
 :deep(.doc-example__label) {
@@ -933,13 +933,13 @@
   gap: 0.25rem;
 }
 :deep(.doc-card__label) {
-  font-size: var(--font-size-xs);
+  font-size: var(--kel-font-size-extra-small);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ks-content-tertiary);
 }
 :deep(.doc-card__value) {
-  font-size: var(--font-size-sm);
+  font-size: var(--kel-font-size-small);
   color: var(--ks-content-primary);
   line-height: 1.5;
 }
@@ -964,7 +964,7 @@
   border-bottom: 1px solid var(--ks-border-primary);
 }
 :deep(.doc-code-language) {
-  font-size: var(--font-size-xs);
+  font-size: var(--kel-font-size-extra-small);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ks-content-secondary);
@@ -978,7 +978,7 @@
   color: var(--ks-content-secondary);
   border-radius: var(--kel-border-radius-sm);
   padding: 0.25rem 0.5rem;
-  font-size: var(--font-size-xs);
+  font-size: var(--kel-font-size-extra-small);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -986,7 +986,7 @@
 }
 :deep(.doc-copy-button:hover) {
   background: rgba(124, 58, 237, 0.12);
-  color: var(--bs-code-color);
+  color: var(--ks-code-color);
   border-color: rgba(124, 58, 237, 0.35);
 }
 :deep(.doc-copy-button.copied) {

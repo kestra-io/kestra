@@ -39,7 +39,9 @@ public interface Reportable<T extends Reportable.Event> {
     /**
      * Checks whether this reportable is enabled for scheduled reporting.
      */
-    boolean isEnabled();
+    default boolean isEnabled() {
+        return true;
+    }
 
     /**
      * Generates a report for the given timestamp and tenant.

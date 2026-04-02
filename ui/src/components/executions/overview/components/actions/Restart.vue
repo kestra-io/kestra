@@ -157,12 +157,10 @@
     import {useExecutionsStore} from "../../../../../stores/executions"
     import action from "../../../../../models/action"
     import permission from "../../../../../models/permission"
-    import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import Id from "../../../../Id.vue"
-    import {useAxios} from "../../../../../utils/axios"
 
     defineOptions({inheritAttrs: false})
 
@@ -176,15 +174,12 @@
         tooltipPosition: {type: String, default: "bottom"},
     })
 
-    const emit = defineEmits(["follow"])
-
     const {t} = useI18n()
     const toast = useToast()
     const router = useRouter()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const executionsStore = useExecutionsStore()
-    const $http = useAxios()
 
     const isOpen = ref(false)
     const isReplayWithInputsOpen = ref(false)
@@ -228,6 +223,8 @@
     )
 
     const enabled = computed(() => {
+        if (!props.execution?.state) return false
+
         const hasPermission = props.isReplay
             ? authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, props.execution.namespace)
             : authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)
@@ -251,7 +248,7 @@
             ? props.taskRun?.id
                 ? t("replay from task tooltip", {taskId: props.taskRun.taskId})
                 : t("replay from beginning tooltip")
-            : t("restart tooltip", {state: props.execution.state.current})
+            : t("restart tooltip", {state: props.execution.state?.current})
     )
 
     const openReplayWithInputsDialog = () => {
@@ -324,29 +321,24 @@
             revision: revisionsSelected.value
         })
 
-        const execution =
-            response.data.id === props.execution.id
-                ? await ExecutionUtils.waitForState($http, response.data)
-                : response.data
+        const newExecution = response.data
 
-        executionsStore.execution = execution
+        toast.success(t("replayed"))
 
-        if (execution.id === props.execution.id) {
-            emit("follow")
-        } else {
-            router.push({
+        if (newExecution.id !== props.execution.id) {
+            window.location.href = router.resolve({
                 name: "executions/update",
                 params: {
-                    namespace: execution.namespace,
-                    flowId: execution.flowId,
-                    id: execution.id,
+                    namespace: newExecution.namespace,
+                    flowId: newExecution.flowId,
+                    id: newExecution.id,
                     tab: "gantt",
                     tenant: router.currentRoute.value.params.tenant
                 }
-            })
+            }).href
+        } else {
+            window.setTimeout(() => window.location.reload(), 500)
         }
-
-        toast.success(t("replayed"))
     }
 
     watch(isOpen, (newValue) => newValue && loadRevision())

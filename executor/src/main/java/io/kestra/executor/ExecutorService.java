@@ -37,6 +37,8 @@ import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.services.*;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
+import io.kestra.plugin.core.flow.Dag;
+import io.kestra.plugin.core.flow.ForEach;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Parallel;
 import io.kestra.plugin.core.flow.Pause;
@@ -839,8 +841,9 @@ public class ExecutorService {
     }
 
     /**
-     * When a Parallel task has failFast enabled and a child has failed (with no pending retries),
-     * mark all still-running sibling task runs as KILLED so the block can transition to error/finally handling.
+     * When a parallel flowable task (Parallel, Dag, ForEach) has failFast enabled and a child has
+     * failed (with no pending retries), mark all still-running sibling task runs as KILLED so the
+     * block can transition to error/finally handling.
      */
     private ExecutorContext handleFailFastKilling(ExecutorContext executor) {
         if (executor.getExecution().getTaskRunList() == null) {
@@ -855,18 +858,30 @@ public class ExecutorService {
             }
 
             Task parent = executor.getFlow().findTaskByTaskIdOrNull(parentTaskRun.getTaskId());
-            if (!(parent instanceof Parallel parallel)) {
+            if (!(parent instanceof FlowableTask<?> flowableParent)) {
                 continue;
             }
 
             try {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), parent, execution, parentTaskRun);
-                boolean failFast = runContext.render(parallel.getFailFast()).as(Boolean.class).orElse(false);
+
+                // Resolve failFast for each supported parallel flowable task type.
+                boolean failFast;
+                if (parent instanceof Parallel parallel) {
+                    failFast = runContext.render(parallel.getFailFast()).as(Boolean.class).orElse(true);
+                } else if (parent instanceof Dag dag) {
+                    failFast = runContext.render(dag.getFailFast()).as(Boolean.class).orElse(true);
+                } else if (parent instanceof ForEach forEach && forEach.getConcurrencyLimit() != 1) {
+                    failFast = runContext.render(forEach.getFailFast()).as(Boolean.class).orElse(true);
+                } else {
+                    continue;
+                }
+
                 if (!failFast) {
                     continue;
                 }
 
-                List<ResolvedTask> childTasks = parallel.childTasks(runContext, parentTaskRun);
+                List<ResolvedTask> childTasks = flowableParent.childTasks(runContext, parentTaskRun);
                 if (!execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
                     continue;
                 }
@@ -879,7 +894,7 @@ public class ExecutorService {
                     }
                 }
             } catch (Exception e) {
-                log.warn("Unable to process failFast for Parallel task '{}': {}", parentTaskRun.getTaskId(), e.getMessage(), e);
+                log.warn("Unable to process failFast for task '{}': {}", parentTaskRun.getTaskId(), e.getMessage(), e);
             }
         }
 

@@ -315,8 +315,30 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency) {
+        return resolveConcurrentNexts(execution, tasks, errors, _finally, parentTaskRun, concurrency, false);
+    }
+
+    public static List<NextTaskRun> resolveConcurrentNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
+        TaskRun parentTaskRun,
+        Integer concurrency,
+        boolean failFast) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
+        }
+
+        // When failFast is enabled and a child has failed (no pending retries),
+        // don't start new task groups and don't transition to error/finally yet —
+        // wait for running siblings to be killed first.
+        if (failFast && execution.hasFailedNoRetry(tasks, parentTaskRun)) {
+            List<TaskRun> taskRuns = execution.findTaskRunByTasks(tasks, parentTaskRun);
+            boolean hasRunning = taskRuns.stream().anyMatch(taskRun -> taskRun.getState().isRunning());
+            if (hasRunning) {
+                return Collections.emptyList();
+            }
         }
 
         List<ResolvedTask> allTasks = execution.findTaskDependingFlowState(
@@ -387,7 +409,8 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
-        List<Dag.DagTask> taskDependencies) {
+        List<Dag.DagTask> taskDependencies,
+        boolean failFast) {
         return resolveParallelNexts(
             execution,
             tasks,
@@ -395,7 +418,7 @@ public class FlowableUtils {
             _finally,
             parentTaskRun,
             concurrency,
-            false,
+            failFast,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
                 .filter(nextTaskRun ->
                 {

@@ -10,6 +10,7 @@ inputs:
 tasks:
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
+    failFast: false
     tasks:
       - id: if-1
         type: io.kestra.plugin.core.flow.If

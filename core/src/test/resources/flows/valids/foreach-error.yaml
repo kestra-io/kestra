@@ -6,6 +6,7 @@ tasks:
     type: io.kestra.plugin.core.flow.ForEach
     values: '["1", "2", "3"]'
     concurrencyLimit: 0
+    failFast: false
     tasks:
       - id: ko
         type: io.kestra.plugin.core.execution.Fail

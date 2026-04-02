@@ -105,6 +105,18 @@ class ForEachTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/foreach-failfast.yaml")
+    void failFast(Execution execution) {
+        // Given failFast=true (default) with concurrencyLimit=0 and one value triggers a failure
+        // Then the execution should be FAILED
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // And the fail branch should be FAILED
+        assertThat(execution.findTaskRunsByTaskId("do-fail").getFirst().getState().getCurrent())
+            .isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/each-switch.yaml")
     void eachSwitch(Execution execution) throws InternalException {
         assertThat(execution.getTaskRunList()).hasSize(12);

@@ -9,6 +9,7 @@ inputs:
 tasks:
   - id: seq
     type: io.kestra.plugin.core.flow.Parallel
+    failFast: false
     tasks:
       - id: p1
         type: io.kestra.plugin.core.debug.Return

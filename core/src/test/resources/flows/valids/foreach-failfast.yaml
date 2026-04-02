@@ -1,0 +1,19 @@
+id: foreach-failfast
+namespace: io.kestra.tests
+
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["fail", "slow1", "slow2"]'
+    concurrencyLimit: 0
+    tasks:
+      - id: branching
+        type: io.kestra.plugin.core.flow.If
+        condition: '{{ taskrun.value == "fail" }}'
+        then:
+          - id: do-fail
+            type: io.kestra.plugin.core.execution.Fail
+        else:
+          - id: do-sleep
+            type: io.kestra.plugin.core.flow.Sleep
+            duration: PT10S

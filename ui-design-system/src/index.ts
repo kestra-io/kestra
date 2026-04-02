@@ -13,6 +13,7 @@ import KsBreadcrumbItem from "./components/Navigation/KsBreadcrumb/KsBreadcrumbI
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
+import KsDateAgo from "./components/Data/KsDateAgo.vue"
 import KsDataTable from "./components/Data/KsDataTable/KsDataTable.vue"
 import KsCascaderPanel from "./components/Form/KsCascaderPanel.vue"
 import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
@@ -82,6 +83,9 @@ import {vKsLoading} from "./components/Feedback/KsLoading"
 // ─── i18n ───────────────────────────────────────────────────────────────────
 export {designSystemLocale, setDesignSystemLocale} from "./i18n"
 
+// ─── Date utils ─────────────────────────────────────────────────────────────
+export {setMomentInstance, setDateFormatter} from "./date/index"
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
@@ -100,6 +104,7 @@ export {
     KsButton,
     KsButtonGroup,
     KsCard,
+    KsDateAgo,
     KsDataTable,
     KsCascaderPanel,
     KsCheckbox,
@@ -183,6 +188,7 @@ const KestraDesignSystem = {
         app.component("KsButton", KsButton)
         app.component("KsButtonGroup", KsButtonGroup)
         app.component("KsCard", KsCard)
+        app.component("KsDateAgo", KsDateAgo)
         app.component("KsDataTable", KsDataTable)
         app.component("KsCascaderPanel", KsCascaderPanel)
         app.component("KsCheckbox", KsCheckbox)
@@ -266,6 +272,7 @@ declare module "vue" {
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup
         KsCard: typeof KsCard
+        KsDateAgo: typeof KsDateAgo
         KsDataTable: typeof KsDataTable
         KsCascaderPanel: typeof KsCascaderPanel
         KsCheckbox: typeof KsCheckbox

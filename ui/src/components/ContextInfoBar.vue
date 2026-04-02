@@ -20,7 +20,7 @@
             :disabled="!miscStore.configs?.commitId"
         >
             <template #content>
-                <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                <code>{{ miscStore.configs?.commitId }}</code> <ks-date-ago v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
         </ks-tooltip>
@@ -60,7 +60,7 @@
                             :disabled="!miscStore.configs?.commitId"
                         >
                             <template #content>
-                                <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                                <code>{{ miscStore.configs?.commitId }}</code> <ks-date-ago v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
                             </template>
                             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
                         </ks-tooltip>
@@ -95,7 +95,6 @@
     import {useStorage, useWindowSize} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
-    import DateAgo from "./layout/DateAgo.vue"
 
     import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"

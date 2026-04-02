@@ -56,7 +56,7 @@
                     />
                 </template>
                 <template v-else-if="column.prop === 'nextEvaluationDate'">
-                    <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
+                    <ks-date-ago :inverted="true" :date="scope.row.nextEvaluationDate" />
                 </template>
                 <template v-else>
                     {{ scope.row[column.prop] }}
@@ -279,7 +279,6 @@
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
     import Vars from "../executions/Vars.vue";
-    import DateAgo from "../layout/DateAgo.vue";
     import Markdown from "../layout/Markdown.vue";
     import Empty from "../layout/empty/Empty.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";

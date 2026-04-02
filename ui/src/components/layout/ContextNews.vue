@@ -16,7 +16,7 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
+                <ks-date-ago className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
             <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
 
@@ -54,7 +54,6 @@
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 
     import Markdown from "./Markdown.vue";
-    import DateAgo from "./DateAgo.vue";
     import ContextInfoContent from "../ContextInfoContent.vue";
 
     import {useApiStore} from "../../stores/api";

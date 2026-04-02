@@ -39,7 +39,8 @@ import {createPinia} from "pinia";
 import Toast from "./toast";
 import filters from "./filters";
 import KestraDesignSystem from "@kestra-io/ui-design-system";
-import {setDesignSystemLocale} from "@kestra-io/ui-design-system";
+import {setDesignSystemLocale, setMomentInstance, setDateFormatter} from "@kestra-io/ui-design-system";
+import {date as dateFilter} from "./filters";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
@@ -138,7 +139,10 @@ export default async (app, routes, _stores, translations, additionalTranslations
 
     // moment
     moment.locale(locale);
-    app.config.globalProperties.$moment = extendMoment(moment);
+    const momentExtended = extendMoment(moment);
+    app.config.globalProperties.$moment = momentExtended;
+    setMomentInstance(momentExtended);
+    setDateFormatter(dateFilter);
 
     // others plugins
     app.use(VueSidebarMenu);

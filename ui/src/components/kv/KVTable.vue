@@ -72,7 +72,7 @@
                 :label="$t('last modified')"
             >
                 <template #default="scope">
-                    <DateAgo :date="convertToUserTimezone(scope.row.updateDate)" inverted />
+                    <ks-date-ago :date="convertToUserTimezone(scope.row.updateDate)" inverted />
                 </template>
             </ks-table-column>
             <ks-table-column
@@ -83,7 +83,7 @@
                 :label="$t('expiration date')"
             >
                 <template #default="scope">
-                    <DateAgo v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
+                    <ks-date-ago v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
                 </template>
             </ks-table-column>
         </template>
@@ -254,7 +254,6 @@
     import KSFilter from "../filter/components/KSFilter.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
-    import DateAgo from "../layout/DateAgo.vue";
 
     import action from "../../models/action";
     import permission from "../../models/permission";

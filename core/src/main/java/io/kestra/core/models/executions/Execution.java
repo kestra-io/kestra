@@ -690,22 +690,23 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun,
         boolean allowFailure, boolean allowWarning, State.Type terminalState) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
-        var state = this
-            .findAnyByState(taskRuns, State.Type.KILLED)
-            .map(taskRun -> taskRun.getState().getCurrent())
-            .or(() -> this
-                .findAnyByState(taskRuns, State.Type.FAILED)
-                .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .or(() -> this
-                .findAnyByState(taskRuns, State.Type.WARNING)
-                .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .or(() -> this
-                .findAnyByState(taskRuns, State.Type.PAUSED)
-                .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .orElse(terminalState);
+
+        // Single pass over taskRuns, tracking the highest-priority terminal state found.
+        // Priority order: KILLED > FAILED > WARNING > PAUSED
+        State.Type state = terminalState;
+        for (TaskRun taskRun : taskRuns) {
+            State.Type current = taskRun.getState().getCurrent();
+            if (current == State.Type.KILLED) {
+                state = State.Type.KILLED;
+                break; // highest priority, no need to continue
+            } else if (current == State.Type.FAILED && state != State.Type.KILLED) {
+                state = State.Type.FAILED;
+            } else if (current == State.Type.WARNING && state != State.Type.KILLED && state != State.Type.FAILED) {
+                state = State.Type.WARNING;
+            } else if (current == State.Type.PAUSED && state == terminalState) {
+                state = State.Type.PAUSED;
+            }
+        }
 
         if (state == State.Type.FAILED && allowFailure) {
             if (allowWarning) {
@@ -717,13 +718,6 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return State.Type.SUCCESS;
         }
         return state;
-    }
-
-    private Optional<TaskRun> findAnyByState(List<TaskRun> taskRuns, State.Type state) {
-        return taskRuns
-            .stream()
-            .filter(t -> t.getState().getCurrent() == state)
-            .findAny();
     }
 
     @JsonIgnore

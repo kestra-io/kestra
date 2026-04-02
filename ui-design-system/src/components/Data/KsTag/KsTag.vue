@@ -1,6 +1,7 @@
 <script setup lang="ts">
     import {ElTag, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import type {Component} from "vue";
 
     provideGlobalConfig({namespace: "kel"})
 
@@ -11,12 +12,12 @@
         size?: "large" | "default" | "small"
         closable?: boolean
         effect?: "dark" | "light" | "plain"
+        icon?: string | Component
         round?: boolean
-        disabled?: boolean
-        color?: string
+        label?: string;
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["icon", "label"])
 
     const emit = defineEmits<{
         close: []
@@ -24,6 +25,7 @@
 
     defineSlots<{
         default?(): unknown
+        icon?(): unknown
     }>()
 </script>
 
@@ -33,45 +35,43 @@
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @close="emit('close')"
     >
-        <template v-if="$slots.default" #default><slot /></template>
+        <template #default>
+            <el-icon v-if="icon || $slots.icon">
+                <component :is="icon" v-if="icon" />
+                <slot v-else name="icon" />
+            </el-icon>
+            <span v-if="label">{{ label }}</span>
+            <span v-else-if="$slots.default"><slot  /></span>
+        </template>
     </el-tag>
 </template>
 
 <style lang="scss">
-    @use "sass:map";
     @import "element-plus/theme-chalk/src/common/var.scss";
     @import "../../../assets/styles/variables.scss";
 
     .kel-tag {
-        --kel-tag-bg-color: var(--ks-tag-background);
-        --kel-tag-text-color: var(--ks-tag-content);
-        border: 0;
+        .kel-tag__content {
+            display: inline-flex;
+            align-items: center;
+        }
 
-        a {
-            color: var(--ks-tag-content);
+        & [class*=kel-icon] + span {
+            margin-left: 6px;
         }
 
         @each $i in ($types) {
-            &.kel-tag--#{$i} {
-                --kel-tag-text-color: #{darken(map.get($colors, $i), 45%)};
-                --kel-tag-bg-color: var(--kel-color-#{$i});
-                --kel-tag-hover-color: var(--kel-color-#{$i}-dark-2);
+            &.kel-tag--#{$i} a {
+                color: var(--kel-color-#{$i}-dark-2);
             }
         }
 
         &.kel-tag--plain {
-            border: 1px solid var(--kel-tag-border-color);
-
             @each $i in ($types) {
                 &.kel-tag--#{$i} {
-                    --kel-tag-text-color: var(--kel-color-#{$i});
-                    --kel-tag-bg-color: #FFFFFF;
-                    --kel-tag-hover-color: var(--kel-color-#{$i}-dark-2);
-                    --kel-tag-border-color: var(--kel-color-#{$i});
-
-                    html.dark & {
-                        --kel-tag-bg-color: #{darken(map.get($colors, $i), 45%)};
-                    }
+                    --kel-tag-bg-color: transparent;
+                    --kel-tag-text-color: var(--kel-color-#{$i}-dark-2);
+                    --kel-tag-border-color: var(--kel-color-#{$i}-dark-2);
                 }
             }
         }

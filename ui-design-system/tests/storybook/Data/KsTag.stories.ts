@@ -24,7 +24,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsTag},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-tag v-bind="args">My Tag</ks-tag></div>`,
+        template: `<div style="padding:24px"><ks-tag v-bind="args">My Tag <a href="#">with link</a></ks-tag></div>`,
     }),
     args: {type: ""},
 }
@@ -33,14 +33,35 @@ export const Types: Story = {
     render: () => ({
         components: {KsTag},
         template: `
-            <div style="padding:24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                <ks-tag>Default</ks-tag>
-                <ks-tag type="primary">Primary</ks-tag>
-                <ks-tag type="success">Success</ks-tag>
-                <ks-tag type="info">Info</ks-tag>
-                <ks-tag type="warning">Warning</ks-tag>
-                <ks-tag type="danger">Danger</ks-tag>
-            </div>
+            <table cellpadding="12">
+                <tr>
+                    <td>Dark</td>
+                    <td><ks-tag effect="dark">Default</ks-tag></td>
+                    <td><ks-tag effect="dark" type="primary">Primary</ks-tag></td>
+                    <td><ks-tag effect="dark" type="success">Success</ks-tag></td>
+                    <td><ks-tag effect="dark" type="info">Info</ks-tag></td>
+                    <td><ks-tag effect="dark" type="warning">Warning</ks-tag></td>
+                    <td><ks-tag effect="dark" type="danger">Danger</ks-tag></td>
+                </tr>
+                <tr>
+                    <td>Light (default)</td>
+                    <td><ks-tag effect="light">Default</ks-tag></td>
+                    <td><ks-tag effect="light" type="primary">Primary</ks-tag></td>
+                    <td><ks-tag effect="light" type="success">Success</ks-tag></td>
+                    <td><ks-tag effect="light" type="info">Info</ks-tag></td>
+                    <td><ks-tag effect="light" type="warning">Warning</ks-tag></td>
+                    <td><ks-tag effect="light" type="danger">Danger</ks-tag></td>
+                </tr>
+                <tr>
+                    <td>Plain</td>
+                    <td><ks-tag effect="plain">Default</ks-tag></td>
+                    <td><ks-tag effect="plain" type="primary">Primary</ks-tag></td>
+                    <td><ks-tag effect="plain" type="success">Success</ks-tag></td>
+                    <td><ks-tag effect="plain" type="info">Info</ks-tag></td>
+                    <td><ks-tag effect="plain" type="warning">Warning</ks-tag></td>
+                    <td><ks-tag effect="plain" type="danger">Danger</ks-tag></td>
+                </tr>
+            </table>
         `,
     }),
 }
@@ -57,6 +78,23 @@ export const Effects: Story = {
         `,
     }),
 }
+
+/** With icon slot */
+export const WithIcon: Story = {
+    render: () => ({
+        components: {KsTag},
+        template: `
+            <div style="padding:24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+                <ks-tag label="Open in new tab">
+                    <template #icon>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </template>
+                </ks-tag>
+            </div>
+        `,
+    }),
+}
+
 
 export const Closable: Story = {
     render: () => ({

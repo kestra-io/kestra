@@ -37,6 +37,11 @@ import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.services.*;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
+import io.kestra.plugin.core.flow.LoopUntil;
+import io.kestra.plugin.core.flow.Parallel;
+import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.Subflow;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micronaut.context.ApplicationContext;
 import io.opentelemetry.api.OpenTelemetry;
@@ -168,6 +173,7 @@ public class ExecutorService {
             ) {
                 executor = this.handleNext(executor);
                 executor = this.handleFlowableTasks(executor);
+                executor = this.handleFailFastKilling(executor);
             }
 
             // but keep listeners on killing
@@ -832,6 +838,58 @@ public class ExecutorService {
         return executor;
     }
 
+    /**
+     * When a Parallel task has failFast enabled and a child has failed (with no pending retries),
+     * mark all still-running sibling task runs as KILLED so the block can transition to error/finally handling.
+     */
+    private ExecutorContext handleFailFastKilling(ExecutorContext executor) {
+        if (executor.getExecution().getTaskRunList() == null) {
+            return executor;
+        }
+
+        Execution execution = executor.getExecution();
+
+        for (TaskRun parentTaskRun : execution.getTaskRunList()) {
+            if (!parentTaskRun.getState().isRunning()) {
+                continue;
+            }
+
+            Task parent = executor.getFlow().findTaskByTaskIdOrNull(parentTaskRun.getTaskId());
+            if (!(parent instanceof Parallel parallel)) {
+                continue;
+            }
+
+            try {
+                RunContext runContext = runContextFactory.of(executor.getFlow(), parent, execution, parentTaskRun);
+                boolean failFast = runContext.render(parallel.getFailFast()).as(Boolean.class).orElse(false);
+                if (!failFast) {
+                    continue;
+                }
+
+                List<ResolvedTask> childTasks = parallel.childTasks(runContext, parentTaskRun);
+                if (!execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
+                    continue;
+                }
+
+                // A child has failed with no retries left — kill all running siblings.
+                List<TaskRun> children = execution.findTaskRunByTasks(childTasks, parentTaskRun);
+                for (TaskRun child : children) {
+                    if (child.getState().isRunning() && !child.getState().isFailed()) {
+                        execution = execution.withTaskRun(child.withState(State.Type.KILLED));
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Unable to process failFast for Parallel task '{}': {}", parentTaskRun.getTaskId(), e.getMessage(), e);
+            }
+        }
+
+        if (execution != executor.getExecution()) {
+            executor.withExecution(execution, "handleFailFastKilling");
+        }
+
+        return executor;
+    }
+
     private ExecutorContext handleAfterExecution(ExecutorContext executor) {
         if (!executor.getExecution().getState().isTerminated()) {
             return executor;
@@ -1281,7 +1339,18 @@ public class ExecutorService {
             executor.withExecution(newExecution, "addDynamicTaskRun");
         }
 
+        // If the task run was already killed (e.g. by failFast), don't let a late worker result overwrite it.
         TaskRun taskRun = workerTaskResult.getTaskRun();
+        try {
+            TaskRun existing = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
+            if (existing.getState().getCurrent() == State.Type.KILLED && taskRun.getState().getCurrent() != State.Type.KILLED) {
+                // Task was already killed — skip processing this worker result entirely.
+                return;
+            }
+        } catch (InternalException ignored) {
+            // task run not found, continue normally
+        }
+
         newExecution = executor.getExecution().withTaskRun(taskRun);
         // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
         // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.

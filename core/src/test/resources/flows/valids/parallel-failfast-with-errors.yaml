@@ -1,0 +1,24 @@
+id: parallel-failfast-with-errors
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    failFast: true
+    tasks:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail
+
+      - id: slow
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT10S
+
+    errors:
+      - id: error-handler
+        type: io.kestra.plugin.core.log.Log
+        message: "error handler executed"
+
+    finally:
+      - id: finally-handler
+        type: io.kestra.plugin.core.log.Log
+        message: "finally handler executed"

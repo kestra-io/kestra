@@ -274,6 +274,32 @@ public class FlowableUtils {
             _finally,
             parentTaskRun,
             concurrency,
+            false,
+            (nextTaskRunStream, taskRuns) -> nextTaskRunStream
+        );
+    }
+
+    /**
+     * resolveParallelNexts with failFast support.
+     * When failFast is true and any child task has failed (with no pending retries),
+     * no new sibling tasks will be started.
+     */
+    public static List<NextTaskRun> resolveParallelNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
+        TaskRun parentTaskRun,
+        Integer concurrency,
+        boolean failFast) {
+        return resolveParallelNexts(
+            execution,
+            tasks,
+            errors,
+            _finally,
+            parentTaskRun,
+            concurrency,
+            failFast,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
         );
     }
@@ -369,6 +395,7 @@ public class FlowableUtils {
             _finally,
             parentTaskRun,
             concurrency,
+            false,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
                 .filter(nextTaskRun ->
                 {
@@ -405,6 +432,7 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
+        boolean failFast,
         BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
@@ -420,6 +448,20 @@ public class FlowableUtils {
         List<ResolvedTask> resolvedTasks = execution.removeDisabled(tasks);
 
         boolean isTasks = resolvedTasks.equals(currentTasks);
+
+        // When failFast is enabled and a child has failed (no pending retries),
+        // don't start new siblings and don't transition to error/finally yet —
+        // wait for running siblings to be killed first.
+        if (failFast && execution.hasFailedNoRetry(resolvedTasks, parentTaskRun)) {
+            List<TaskRun> taskRuns = execution.findTaskRunByTasks(resolvedTasks, parentTaskRun);
+            boolean hasRunning = taskRuns.stream().anyMatch(taskRun -> taskRun.getState().isRunning());
+            if (hasRunning) {
+                // Running siblings exist; the executor will mark them as KILLED.
+                // Return empty so no new tasks start and error/finally waits.
+                return Collections.emptyList();
+            }
+            // All siblings are terminal — fall through to normal error/finally handling.
+        }
 
         // errors & finally must be run as sequential tasks
         if (!isTasks) {

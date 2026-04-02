@@ -2,6 +2,7 @@ package io.kestra.runner.h2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -19,6 +20,7 @@ import net.thisptr.jackson.jq.Versions;
 
 public class H2Functions {
     private static final Scope scope = Scope.newEmptyScope();
+    private static final ConcurrentHashMap<String, JsonQuery> QUERY_CACHE = new ConcurrentHashMap<>();
 
     static {
         BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
@@ -51,7 +53,7 @@ public class H2Functions {
 
     @SneakyThrows
     private static List<JsonNode> jq(String value, String expression) {
-        JsonQuery q = JsonQuery.compile(expression, Versions.JQ_1_6);
+        JsonQuery q = QUERY_CACHE.computeIfAbsent(expression, H2Functions::compileQuery);
 
         final List<JsonNode> out = new ArrayList<>();
         JsonNode in = JacksonMapper.ofJson().readTree(value);
@@ -59,6 +61,11 @@ public class H2Functions {
         q.apply(scope, in, out::add);
 
         return out;
+    }
+
+    @SneakyThrows
+    private static JsonQuery compileQuery(String expression) {
+        return JsonQuery.compile(expression, Versions.JQ_1_6);
     }
 
     @SneakyThrows

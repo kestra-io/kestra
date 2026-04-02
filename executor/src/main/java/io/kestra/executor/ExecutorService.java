@@ -36,10 +36,7 @@ import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.services.*;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
-import io.kestra.plugin.core.flow.Dag;
-import io.kestra.plugin.core.flow.ForEach;
 import io.kestra.plugin.core.flow.LoopUntil;
-import io.kestra.plugin.core.flow.Parallel;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -270,6 +267,24 @@ public class ExecutorService {
                 runContext.logger().error("Unable to resolve state from the Flowable task: {}", e.getMessage(), e);
                 state = Optional.of(State.Type.FAILED);
             }
+            // When failFast killed siblings, guessFinalState returns KILLED because it
+            // prioritizes KILLED over FAILED. Convert to FAILED when the root cause is a
+            // child failure (not a manual execution kill).
+            if (state.isPresent() && state.get() == State.Type.KILLED
+                && execution.getState().getCurrent() != State.Type.KILLING
+                && execution.getState().getCurrent() != State.Type.KILLED) {
+                try {
+                    boolean failFast = runContext.render(flowableParent.getFailFast()).as(Boolean.class).orElse(false);
+                    if (failFast && execution.hasFailedNoRetry(flowableParent.childTasks(runContext, parentTaskRun), parentTaskRun)) {
+                        state = Optional.of(flowableParent.isAllowFailure()
+                            ? (flowableParent.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING)
+                            : State.Type.FAILED);
+                    }
+                } catch (Exception e) {
+                    runContext.logger().warn("Unable to evaluate failFast: {}", e.getMessage(), e);
+                }
+            }
+
             Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
                 state,
                 parentTaskRun
@@ -814,11 +829,6 @@ public class ExecutorService {
         return executor;
     }
 
-    /**
-     * When a parallel flowable task (Parallel, Dag, ForEach) has failFast enabled and a child has
-     * failed (with no pending retries), mark all still-running sibling task runs as KILLED so the
-     * block can transition to error/finally handling.
-     */
     private ExecutorContext handleFailFastKilling(ExecutorContext executor) {
         if (executor.getExecution().getTaskRunList() == null) {
             return executor;
@@ -838,19 +848,7 @@ public class ExecutorService {
 
             try {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), parent, execution, parentTaskRun);
-
-                // Resolve failFast for each supported parallel flowable task type.
-                boolean failFast;
-                if (parent instanceof Parallel parallel) {
-                    failFast = runContext.render(parallel.getFailFast()).as(Boolean.class).orElse(true);
-                } else if (parent instanceof Dag dag) {
-                    failFast = runContext.render(dag.getFailFast()).as(Boolean.class).orElse(true);
-                } else if (parent instanceof ForEach forEach && forEach.getConcurrencyLimit() != 1) {
-                    failFast = runContext.render(forEach.getFailFast()).as(Boolean.class).orElse(true);
-                } else {
-                    continue;
-                }
-
+                boolean failFast = runContext.render(flowableParent.getFailFast()).as(Boolean.class).orElse(false);
                 if (!failFast) {
                     continue;
                 }
@@ -860,7 +858,6 @@ public class ExecutorService {
                     continue;
                 }
 
-                // A child has failed with no retries left — kill all running siblings.
                 List<TaskRun> children = execution.findTaskRunByTasks(childTasks, parentTaskRun);
                 for (TaskRun child : children) {
                     if (child.getState().isRunning() && !child.getState().isFailed()) {
@@ -1328,16 +1325,14 @@ public class ExecutorService {
             executor.withExecution(newExecution, "addDynamicTaskRun");
         }
 
-        // If the task run was already killed (e.g. by failFast), don't let a late worker result overwrite it.
         TaskRun taskRun = workerTaskResult.getTaskRun();
         try {
             TaskRun existing = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
             if (existing.getState().getCurrent() == State.Type.KILLED && taskRun.getState().getCurrent() != State.Type.KILLED) {
-                // Task was already killed — skip processing this worker result entirely.
                 return;
             }
         } catch (InternalException ignored) {
-            // task run not found, continue normally
+            // ignored
         }
 
         newExecution = executor.getExecution().withTaskRun(taskRun);

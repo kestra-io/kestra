@@ -272,32 +272,8 @@ public class FlowableUtils {
     }
 
     /**
-     * resolveParallelNexts will resolve both concurrent values and subtasks
-     * For only concurrent values, see resolveConcurrentNexts()
-     */
-    public static List<NextTaskRun> resolveParallelNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        List<ResolvedTask> _finally,
-        TaskRun parentTaskRun,
-        Integer concurrency) {
-        return resolveParallelNexts(
-            execution,
-            tasks,
-            errors,
-            _finally,
-            parentTaskRun,
-            concurrency,
-            false,
-            (nextTaskRunStream, taskRuns) -> nextTaskRunStream
-        );
-    }
-
-    /**
-     * resolveParallelNexts with failFast support.
-     * When failFast is true and any child task has failed (with no pending retries),
-     * no new sibling tasks will be started.
+     * resolveParallelNexts will resolve both concurrent values and subtasks.
+     * For only concurrent values, see resolveConcurrentNexts().
      */
     public static List<NextTaskRun> resolveParallelNexts(
         Execution execution,
@@ -319,20 +295,6 @@ public class FlowableUtils {
         );
     }
 
-    /**
-     * resolveConcurrentNexts will resolve concurrent values
-     * For both concurrent values and subtasks, see resolveParallelNexts()
-     */
-    public static List<NextTaskRun> resolveConcurrentNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        List<ResolvedTask> _finally,
-        TaskRun parentTaskRun,
-        Integer concurrency) {
-        return resolveConcurrentNexts(execution, tasks, errors, _finally, parentTaskRun, concurrency, false);
-    }
-
     public static List<NextTaskRun> resolveConcurrentNexts(
         Execution execution,
         List<ResolvedTask> tasks,
@@ -345,9 +307,6 @@ public class FlowableUtils {
             return Collections.emptyList();
         }
 
-        // When failFast is enabled and a child has failed (no pending retries),
-        // don't start new task groups and don't transition to error/finally yet —
-        // wait for running siblings to be killed first.
         if (failFast && execution.hasFailedNoRetry(tasks, parentTaskRun)) {
             List<TaskRun> taskRuns = execution.findTaskRunByTasks(tasks, parentTaskRun);
             boolean hasRunning = taskRuns.stream().anyMatch(taskRun -> taskRun.getState().isRunning());
@@ -487,18 +446,12 @@ public class FlowableUtils {
 
         boolean isTasks = resolvedTasks.equals(currentTasks);
 
-        // When failFast is enabled and a child has failed (no pending retries),
-        // don't start new siblings and don't transition to error/finally yet —
-        // wait for running siblings to be killed first.
         if (failFast && execution.hasFailedNoRetry(resolvedTasks, parentTaskRun)) {
             List<TaskRun> taskRuns = execution.findTaskRunByTasks(resolvedTasks, parentTaskRun);
             boolean hasRunning = taskRuns.stream().anyMatch(taskRun -> taskRun.getState().isRunning());
             if (hasRunning) {
-                // Running siblings exist; the executor will mark them as KILLED.
-                // Return empty so no new tasks start and error/finally waits.
                 return Collections.emptyList();
             }
-            // All siblings are terminal — fall through to normal error/finally handling.
         }
 
         // errors & finally must be run as sequential tasks

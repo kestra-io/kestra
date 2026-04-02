@@ -628,35 +628,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
-    public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
-        return taskRuns
-            .reversed()
-            .stream()
-            .filter(t -> t.getState().getCurrent() == state)
-            .findFirst();
-    }
-
     public Optional<TaskRun> findLastCreated(List<TaskRun> taskRuns) {
         return taskRuns
             .reversed()
             .stream()
             .filter(t -> t.getState().isCreated())
-            .findFirst();
-    }
-
-    public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
-        return taskRuns
-            .reversed()
-            .stream()
-            .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
-            .findFirst();
-    }
-
-    public Optional<TaskRun> findLastRunning(List<TaskRun> taskRuns) {
-        return taskRuns
-            .reversed()
-            .stream()
-            .filter(t -> t.getState().isRunning())
             .findFirst();
     }
 
@@ -774,22 +750,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         boolean allowFailure, boolean allowWarning, State.Type terminalState) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
         var state = this
-            .findLastByState(taskRuns, State.Type.KILLED)
+            .findAnyByState(taskRuns, State.Type.KILLED)
             .map(taskRun -> taskRun.getState().getCurrent())
-            .or(
-                () -> this
-                    .findLastByState(taskRuns, State.Type.FAILED)
-                    .map(taskRun -> taskRun.getState().getCurrent())
+            .or(() -> this
+                .findAnyByState(taskRuns, State.Type.FAILED)
+                .map(taskRun -> taskRun.getState().getCurrent())
             )
-            .or(
-                () -> this
-                    .findLastByState(taskRuns, State.Type.WARNING)
-                    .map(taskRun -> taskRun.getState().getCurrent())
+            .or(() -> this
+                .findAnyByState(taskRuns, State.Type.WARNING)
+                .map(taskRun -> taskRun.getState().getCurrent())
             )
-            .or(
-                () -> this
-                    .findLastByState(taskRuns, State.Type.PAUSED)
-                    .map(taskRun -> taskRun.getState().getCurrent())
+            .or(() -> this
+                .findAnyByState(taskRuns, State.Type.PAUSED)
+                .map(taskRun -> taskRun.getState().getCurrent())
             )
             .orElse(terminalState);
 
@@ -803,6 +776,13 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             return State.Type.SUCCESS;
         }
         return state;
+    }
+
+    private Optional<TaskRun> findAnyByState(List<TaskRun> taskRuns, State.Type state) {
+        return taskRuns
+            .stream()
+            .filter(t -> t.getState().getCurrent() == state)
+            .findAny();
     }
 
     @JsonIgnore

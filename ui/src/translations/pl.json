@@ -1340,13 +1340,9 @@
       },
       "sections": {
         "afterExecution": "Po wykonaniu",
-        "connection": "Właściwości połączenia",
         "deprecated": "Właściwości przestarzałe",
         "errors": "Obsługa błędów",
         "finally": "Na koniec",
-        "general": "Właściwości ogólne",
-        "main": "Główne właściwości",
-        "optional": "Właściwości opcjonalne",
         "pluginDefaults": "Domyślne ustawienia Pluginów",
         "tasks": "Zadania",
         "triggers": "Triggery"

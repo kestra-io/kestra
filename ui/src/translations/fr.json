@@ -1340,13 +1340,9 @@
       },
       "sections": {
         "afterExecution": "Après l'Exécution",
-        "connection": "Propriétés de connexion",
         "deprecated": "Propriétés obsolètes",
         "errors": "Gestionnaires d'erreurs",
         "finally": "Enfin",
-        "general": "Propriétés générales",
-        "main": "Principales propriétés",
-        "optional": "Propriétés optionnelles",
         "pluginDefaults": "Paramètres par défaut du plugin",
         "tasks": "Tâches",
         "triggers": "Déclencheurs"

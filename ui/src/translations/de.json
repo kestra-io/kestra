@@ -1340,13 +1340,9 @@
       },
       "sections": {
         "afterExecution": "Nach Ausführung",
-        "connection": "Verbindungseigenschaften",
         "deprecated": "Veraltete Eigenschaften",
         "errors": "Fehlerbehandler",
         "finally": "Schließlich",
-        "general": "Allgemeine Eigenschaften",
-        "main": "Haupteigenschaften",
-        "optional": "Optionale Eigenschaften",
         "pluginDefaults": "Plugin-Standardeinstellungen",
         "tasks": "Aufgaben",
         "triggers": "Trigger"

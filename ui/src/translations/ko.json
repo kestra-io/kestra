@@ -1340,13 +1340,9 @@
       },
       "sections": {
         "afterExecution": "실행 후",
-        "connection": "연결 속성",
         "deprecated": "사용되지 않는 속성",
         "errors": "오류 처리기",
         "finally": "마지막으로",
-        "general": "일반 속성",
-        "main": "주요 속성",
-        "optional": "선택적 속성",
         "pluginDefaults": "플러그인 기본값",
         "tasks": "작업",
         "triggers": "트리거"

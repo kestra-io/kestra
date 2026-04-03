@@ -37,7 +37,37 @@
     </el-tooltip>
 
     <el-dialog
-        v-if="enabled && isOpen"
+        v-if="enabled && isOpen && !isReplay"
+        v-model="isOpen"
+        destroyOnClose
+        :appendToBody="true"
+        width="500px"
+    >
+        <template #header>
+            <div class="modal-header m-0">
+                <h3 class="modal-title">
+                    {{ t("restart execution title") }}
+                </h3>
+                <el-divider />
+            </div>
+        </template>
+
+        <div class="p-3 pt-0">
+            <p class="mb-0" v-html="t('restart confirm', {id: execution.id})" />
+        </div>
+
+        <template #footer>
+            <el-button @click="isOpen = false">
+                {{ t("cancel") }}
+            </el-button>
+            <el-button type="primary" @click="handleRestartExecute">
+                {{ t("restart") }}
+            </el-button>
+        </template>
+    </el-dialog>
+
+    <el-dialog
+        v-if="enabled && isOpen && isReplay"
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
@@ -46,7 +76,7 @@
         <template #header>
             <div class="modal-header m-0">
                 <h3 class="modal-title">
-                    {{ t(isReplay ? "replay execution title" : "restart execution title") }}
+                    {{ t("replay execution title") }}
                 </h3>
                 <el-divider />
             </div>
@@ -63,13 +93,13 @@
             </h4>
 
             <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
-                <el-radio label="original" class="radio-item">
+                <el-radio value="original" class="radio-item">
                     {{ t("flow revision original") }}
                 </el-radio>
-                <el-radio label="latest" class="radio-item">
+                <el-radio value="latest" class="radio-item">
                     {{ t("flow revision latest") }}
                 </el-radio>
-                <el-radio label="specific" class="radio-item">
+                <el-radio value="specific" class="radio-item">
                     {{ t("flow revision specific") }}
                 </el-radio>
             </el-radio-group>
@@ -97,10 +127,10 @@
                     </h4>
 
                     <el-radio-group v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
-                        <el-radio label="reuse" class="radio-item">
+                        <el-radio value="reuse" class="radio-item">
                             {{ t("reuse original inputs") }}
                         </el-radio>
-                        <el-radio label="modify" class="radio-item">
+                        <el-radio value="modify" class="radio-item">
                             {{ t("modify inputs") }}
                         </el-radio>
                     </el-radio-group>
@@ -296,6 +326,11 @@
         restart()
     }
 
+    const handleRestartExecute = () => {
+        isOpen.value = false
+        restart()
+    }
+
     const handleReplayExecute = () => {
         isOpen.value = false
 
@@ -349,7 +384,7 @@
         toast.success(t("replayed"))
     }
 
-    watch(isOpen, (newValue) => newValue && loadRevision())
+    watch(isOpen, (newValue) => newValue && props.isReplay && loadRevision())
 
     watch(effectiveRevision, async (newRevision, oldRevision) => {
         if (!isOpen.value || newRevision === undefined || newRevision === oldRevision) return

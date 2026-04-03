@@ -1351,11 +1351,7 @@
         "variable": "Variable"
       },
       "sections": {
-        "main": "Main properties",
-        "general": "General properties",
-        "optional": "Optional properties",
         "deprecated": "Deprecated properties",
-        "connection": "Connection properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Error Handlers",

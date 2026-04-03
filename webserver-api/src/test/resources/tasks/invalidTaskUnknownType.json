@@ -1,0 +1,4 @@
+{
+  "id": "task-two",
+  "type": "io.kestra.plugin.core.debug.UnknownTask"
+}

@@ -9,7 +9,9 @@ node {
 }
 
 tasks.register('assembleFrontend', NpmTask) {
-    dependsOn npmInstall
+    // Ensure the OpenAPI spec is generated before building the frontend so that
+    // the TypeScript client (generated via openapi-ts) is always up to date.
+    dependsOn npmInstall, ':webserver-api:generateOpenapiSpec'
     description = 'Builds the frontend'
 
     inputs.files(fileTree('node_modules'))
@@ -18,8 +20,8 @@ tasks.register('assembleFrontend', NpmTask) {
     inputs.file('package.json')
     inputs.file('vite.config.js')
     inputs.file('openapi-ts.config.ts')
-    // inputs.file('../openapi.yml')
+    inputs.file('../openapi.yml')
 
     args = ['run', 'build']
-    outputs.dir('../webserver/src/main/resources/ui')
+    outputs.dir('../webserver-browser/src/main/resources/ui')
 }

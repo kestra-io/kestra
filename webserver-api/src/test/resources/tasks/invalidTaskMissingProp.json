@@ -1,0 +1,4 @@
+{
+  "id": "task_one",
+  "type": "io.kestra.plugin.core.log.Log"
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "3",
+    "name": "Cloud",
+    "publishedAt": "2023-06-01T08:37:10.171Z"
+  },
+  {
+    "id": "1",
+    "name": "Database",
+    "publishedAt": "2023-06-01T08:37:13.844Z"
+  },
+  {
+    "id": "2",
+    "name": "ETL / ELT",
+    "publishedAt": "2023-06-01T08:37:17.344Z"
+  }
+]

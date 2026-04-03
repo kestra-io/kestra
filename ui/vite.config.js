@@ -8,7 +8,7 @@ import {codecovVitePlugin} from "@codecov/vite-plugin";
 export default defineConfig({
     base: "",
     build: {
-        outDir: "../webserver/src/main/resources/ui",
+        outDir: "../webserver-browser/src/main/resources/ui",
         rollupOptions: {
             output: {
                 advancedChunks: {

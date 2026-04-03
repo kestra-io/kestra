@@ -22,7 +22,7 @@
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks",
         "generate:openapi": "openapi-ts",
-        "postinstall": "patch-package && openapi-ts"
+        "postinstall": "patch-package && (test -f ../openapi.yml && openapi-ts || echo 'Skipping openapi-ts: ../openapi.yml not found, run ./gradlew :webserver-api:generateOpenapiSpec first')"
     },
     "dependencies": {
         "@js-joda/core": "^6.0.0",

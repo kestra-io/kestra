@@ -1,0 +1,12 @@
+id: test-flow
+# Comment changed
+namespace: io.kestra.unittest
+inputs:
+  - id: b
+    type: STRING
+tasks:
+  - id: test
+    type: io.kestra.plugin.core.debug.Return
+    format: test # Comment here too
+disabled: false
+deleted: false

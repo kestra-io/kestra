@@ -1,0 +1,12 @@
+id: test-flow
+# Comment i added
+namespace: io.kestra.unittest
+inputs:
+  - id: a
+    type: STRING
+tasks:
+  - id: test
+    type: io.kestra.plugin.core.debug.Return
+    format: test
+disabled: false
+deleted: false

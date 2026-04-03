@@ -1,0 +1,5 @@
+{
+  "id": "task-two",
+  "type": "io.kestra.plugin.core.log.Log",
+  "unknownProp": "strange---string"
+}

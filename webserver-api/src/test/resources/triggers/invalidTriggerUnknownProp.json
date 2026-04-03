@@ -1,0 +1,6 @@
+{
+  "id": "unknown-trigger",
+  "type": "io.kestra.plugin.core.trigger.Schedule",
+  "cron": "*/15 * * * *",
+  "unknownProp": "strange---string"
+}

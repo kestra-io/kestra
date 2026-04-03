@@ -53,6 +53,8 @@ include 'queue'
 include 'queue-jdbc'
 
 include 'webserver'
+include 'webserver-api'
+include 'webserver-browser'
 include 'executor'
 include 'scheduler'
 include 'worker'

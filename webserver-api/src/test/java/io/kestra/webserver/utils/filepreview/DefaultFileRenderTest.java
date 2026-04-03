@@ -1,0 +1,49 @@
+package io.kestra.webserver.utils.filepreview;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class DefaultFileRenderTest {
+    @ParameterizedTest
+    @CsvSource({ "0, false", "100, false", "101, true" })
+    void testTruncatedByLineCount(int lineCount, boolean truncated) throws IOException {
+        final String line = "foo\n";
+        final Charset charset = StandardCharsets.UTF_8;
+        StringBuilder contentBuffer = new StringBuilder(lineCount * line.length());
+
+        for (int i = 0; i < lineCount; i++) {
+            contentBuffer.append(line);
+        }
+
+        InputStream is = new ByteArrayInputStream(contentBuffer.toString().getBytes(charset));
+
+        DefaultFileRender render = new DefaultFileRender("txt", is, charset, 100);
+
+        assertThat(render.truncated).isEqualTo(truncated);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "0, false", "1024, false", "3072, true" })
+    void testTruncatedBySize(int sizeInKibiBytes, boolean truncated) throws IOException {
+        final int sizeInBytes = sizeInKibiBytes * 1024;
+        final Charset charset = StandardCharsets.UTF_8;
+        StringBuilder contentBuffer = new StringBuilder(sizeInBytes);
+
+        for (int i = 0; i < sizeInBytes; i++) {
+            contentBuffer.append("0");
+        }
+        InputStream is = new ByteArrayInputStream(contentBuffer.toString().getBytes(charset));
+
+        DefaultFileRender render = new DefaultFileRender("txt", is, charset, 100);
+
+        assertThat(render.truncated).isEqualTo(truncated);
+    }
+}

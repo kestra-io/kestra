@@ -1615,8 +1615,16 @@
     "prev_execution": "पिछला निष्पादन",
     "preview": {
       "auto-view": "स्वचालित दृश्य",
+      "collapse": "संक्षिप्त करें",
+      "expand": "विस्तार करें",
       "force-editor": "संपादक दृश्य लागू करें",
       "label": "पूर्वावलोकन",
+      "next": "अगला",
+      "page_of": "पृष्ठ {current} का {total}",
+      "pagination_info": "पंक्तियाँ {start}-{end} में से {total} दिखा रहा है।",
+      "previous": "पिछला",
+      "rows_truncated": "{total} में से {shown} पंक्तियाँ दिखा रहा है। सभी डेटा देखने के लिए फ़ाइल डाउनलोड करें।",
+      "showing_rows": "पंक्तियाँ {start}-{end} में से {total} दिखा रहा है",
       "view": "देखें"
     },
     "product_tour": "उत्पाद यात्रा",

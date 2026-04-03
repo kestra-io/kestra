@@ -1615,8 +1615,16 @@
     "prev_execution": "Предыдущее выполнение",
     "preview": {
       "auto-view": "Автоматический просмотр",
+      "collapse": "Свернуть",
+      "expand": "Развернуть",
       "force-editor": "Принудительный просмотр редактора",
       "label": "Предварительный просмотр",
+      "next": "Далее",
+      "page_of": "Страница {current} из {total}",
+      "pagination_info": "Показаны строки {start}-{end} из {total}.",
+      "previous": "Предыдущий",
+      "rows_truncated": "Показано {shown} из {total} строк. Загрузите файл, чтобы просмотреть все данные.",
+      "showing_rows": "Показаны строки {start}-{end} из {total}",
       "view": "Просмотр"
     },
     "product_tour": "Тур по продукту",

@@ -1615,8 +1615,16 @@
     "prev_execution": "이전 실행",
     "preview": {
       "auto-view": "자동 보기",
+      "collapse": "접기",
+      "expand": "확장",
       "force-editor": "편집기 보기 강제 적용",
       "label": "미리보기",
+      "next": "다음",
+      "page_of": "{total} 중 {current} 페이지",
+      "pagination_info": "{total}개 중 {start}-{end} 행 표시 중.",
+      "previous": "이전",
+      "rows_truncated": "{total}개의 행 중 {shown}개를 표시 중입니다. 모든 데이터를 보려면 파일을 다운로드하세요.",
+      "showing_rows": "{total}개 중 {start}-{end} 행 표시",
       "view": "보기"
     },
     "product_tour": "제품 둘러보기",

@@ -1615,8 +1615,16 @@
     "prev_execution": "先前执行",
     "preview": {
       "auto-view": "自动视图",
+      "collapse": "折叠",
+      "expand": "展开",
       "force-editor": "强制编辑器视图",
       "label": "预览",
+      "next": "下一步",
+      "page_of": "第 {current} 页，共 {total} 页",
+      "pagination_info": "显示第 {start}-{end} 行，共 {total} 行。",
+      "previous": "上一步",
+      "rows_truncated": "显示 {shown} 行，共 {total} 行。下载文件以查看所有数据。",
+      "showing_rows": "显示第 {start}-{end} 行，共 {total} 行",
       "view": "查看"
     },
     "product_tour": "产品导览",

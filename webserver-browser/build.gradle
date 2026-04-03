@@ -4,6 +4,7 @@ configurations {
 
 dependencies {
     implementation project(':webserver-api')
+    implementation project(':core')
     implementation "io.micronaut:micronaut-http-server-netty"
 }
 

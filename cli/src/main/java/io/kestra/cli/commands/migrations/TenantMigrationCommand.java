@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
+import java.util.List;
+
 @CommandLine.Command(
     name = "default-tenant",
     description = "migrate every elements from no tenant to the main tenant"
@@ -29,6 +31,10 @@ public class TenantMigrationCommand extends AbstractCommand {
     @Option(names = "--restore-queue", description = "Should it restore the queue after tenant migration", defaultValue = "true")
     boolean restoreQueue = true;
 
+    @Option(names = "--excludes", description = "data to exclude from migration")
+    List<String> excludes;
+
+
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -39,7 +45,7 @@ public class TenantMigrationCommand extends AbstractCommand {
 
         TenantMigrationService migrationService = this.applicationContext.getBean(TenantMigrationService.class);
         try {
-            migrationService.migrateTenant(tenantId, tenantName, dryRun, restoreQueue);
+            migrationService.migrateTenant(tenantId, tenantName, dryRun, restoreQueue, excludes);
             System.out.println("✅ Tenant migration complete.");
         } catch (Exception e) {
             System.err.println("❌ Tenant migration failed: " + e.getMessage());

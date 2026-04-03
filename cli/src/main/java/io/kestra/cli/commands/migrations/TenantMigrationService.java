@@ -1,5 +1,6 @@
 package io.kestra.cli.commands.migrations;
 
+import io.kestra.core.utils.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.github.javaparser.utils.Log;
@@ -17,6 +18,8 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @Singleton
@@ -33,13 +36,16 @@ public class TenantMigrationService {
     @Named(QueueFactoryInterface.FLOW_NAMED)
     private QueueInterface<FlowInterface> flowQueue;
 
-    public void migrateTenant(String tenantId, String tenantName, boolean dryRun, boolean restoreQueue) {
+    public void migrateTenant(String tenantId, String tenantName, boolean dryRun, boolean restoreQueue, List<String> excludes) {
         if (StringUtils.isNotBlank(tenantId) && !MAIN_TENANT.equals(tenantId)) {
             throw new KestraRuntimeException("Tenant configuration is an enterprise feature. It can only be main in OSS");
         }
 
         Log.info("🔁 Starting tenant migration...");
-        tenantMigrationInterface.migrateTenant(MAIN_TENANT, dryRun);
+        if (!ListUtils.isEmpty(excludes)) {
+            Log.info("The following data will be excluded from migration: " + excludes);
+        }
+        tenantMigrationInterface.migrateTenant(MAIN_TENANT, dryRun, excludes);
         if (restoreQueue) {
             migrateQueue(dryRun);
         }

@@ -65,7 +65,6 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
                 }
             },
             null,
-            null,
             repo,
             storage,
             Mockito.mock(KestraConfig.class)

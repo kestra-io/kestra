@@ -3,6 +3,7 @@ package io.kestra.jdbc.repository;
 import java.util.List;
 import java.util.Locale;
 
+import io.kestra.core.utils.ListUtils;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -29,11 +30,12 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
         this.dslContextWrapper = dslContextWrapper;
     }
 
-    public void migrateTenant(String tenantId, boolean dryRun) {
-        migrate(dryRun);
+    @Override
+    public void migrateTenant(String tenantId, boolean dryRun, List<String> excludes) {
+        migrate(dryRun, excludes);
     }
 
-    public void migrate(boolean dryRun) {
+    public void migrate(boolean dryRun, List<String> excludes) {
         List<Table<?>> tables = dslContextWrapper.transactionResult(configuration ->
         {
             DSLContext context = DSL.using(configuration);
@@ -43,7 +45,7 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
                 .findFirst()
                 .map(Schema::getTables)
                 .orElseGet(List::of);
-        });
+        }).stream().filter(t -> !ListUtils.emptyOnNull(excludes).contains(t.getName())).toList();
 
         log.info("📦 Found {} tables.\n", tables.size());
 

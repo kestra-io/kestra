@@ -25,7 +25,9 @@ tasks.register('runApiServer', JavaExec) {
     description = "Run Kestra backend (all components, H2 + local storage) for frontend development. Does not build the Vue frontend."
     classpath = sourceSets.main.runtimeClasspath
     mainClass = "io.kestra.cli.Kestra"
-    environment 'MICRONAUT_ENVIRONMENTS', 'override'
+    // Do not load application-override.yml: LocalCommand already provides all H2 configuration
+    // at highest priority, and the user's override file may register additional datasources
+    // (e.g. Postgres) that conflict with H2 causing a NonUniqueBeanException.
     args 'server', 'local', '--plugins', '../local/plugins'
 }
 

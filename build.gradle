@@ -583,6 +583,12 @@ tasks.register('runStandalone') {
     dependsOn ':cli:runStandalone'
 }
 
+tasks.register('runApiServer') {
+    group = "application"
+    description = "Run Kestra backend (all components, H2 + local storage) for frontend development. Does not build the Vue frontend."
+    dependsOn ':cli:runApiServer'
+}
+
 /**********************************************************************************************************************\
  * Publish
  **********************************************************************************************************************/

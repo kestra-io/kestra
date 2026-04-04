@@ -20,6 +20,15 @@ tasks.register('runStandalone', JavaExec) {
     args 'server', 'standalone', '--plugins', '../local/plugins'
 }
 
+tasks.register('runApiServer', JavaExec) {
+    group = "application"
+    description = "Run Kestra backend (all components, H2 + local storage) for frontend development. Does not build the Vue frontend."
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "io.kestra.cli.Kestra"
+    environment 'MICRONAUT_ENVIRONMENTS', 'override'
+    args 'server', 'local', '--plugins', '../local/plugins'
+}
+
 dependencies {
     // micronaut
     implementation "info.picocli:picocli"

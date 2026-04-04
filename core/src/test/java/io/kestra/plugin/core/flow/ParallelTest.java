@@ -139,13 +139,25 @@ class ParallelTest {
 
     @Test
     @ExecuteFlow("flows/valids/parallel-failfast-disabled.yaml")
-    void parallelFailFastDisabled(Execution execution) {
-        // Given failFast=false (default behavior)
-        // When the execution completes
-        // Then the execution should be FAILED
+    void parallelStop(Execution execution) {
+        // Given childFailurePolicy=STOP
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // And all sibling tasks should have completed (not killed)
+        assertThat(execution.findTaskRunsByTaskId("log1").getFirst().getState().getCurrent())
+            .isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("log2").getFirst().getState().getCurrent())
+            .isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/parallel-continue.yaml")
+    void parallelContinue(Execution execution) {
+        // Given childFailurePolicy=CONTINUE, all siblings run despite a failure
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getState().getCurrent())
+            .isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("log1").getFirst().getState().getCurrent())
             .isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("log2").getFirst().getState().getCurrent())

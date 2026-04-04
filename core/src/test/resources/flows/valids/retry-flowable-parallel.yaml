@@ -5,7 +5,7 @@ tasks:
   - id: flowable
     type: io.kestra.plugin.core.flow.ForEach
     concurrencyLimit: 0
-    failFast: false
+    childFailurePolicy: STOP
     values: [0, 1]
     retry:
       type: constant

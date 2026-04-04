@@ -10,7 +10,7 @@ inputs:
 tasks:
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
-    failFast: false
+    childFailurePolicy: STOP
     tasks:
       - id: if-1
         type: io.kestra.plugin.core.flow.If

@@ -72,11 +72,11 @@ public interface FlowableTask<T extends Output> {
     boolean isAllowWarning();
 
     /**
-     * Whether to cancel remaining child tasks when one fails.
-     * Defaults to {@code false}; parallel flowable tasks (Parallel, Dag, ForEach) override to {@code true}.
+     * Policy for handling child task failures.
+     * Defaults to {@code FAIL_FAST}; sequential flowable tasks may override to {@code STOP}.
      */
-    default Property<Boolean> getFailFast() {
-        return Property.ofValue(false);
+    default Property<ChildFailurePolicy> getChildFailurePolicy() {
+        return Property.ofValue(ChildFailurePolicy.FAIL_FAST);
     }
 
     /**

@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.ChildFailurePolicy;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -211,12 +212,13 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
     @Builder.Default
     @Schema(
-        title = "Cancel remaining concurrent task groups on first failure.",
-        description = "When true and concurrencyLimit allows parallel execution, if any task group fails, "
-            + "all still-running groups are killed before transitioning to the errors handler. "
-            + "Has no effect when concurrencyLimit is 1 (serial execution). Defaults to true."
+        title = "Policy for handling child task failures when concurrencyLimit allows parallel execution.",
+        description = "FAIL_FAST: kill running task groups immediately. "
+            + "STOP: let running groups finish but don't start new ones. "
+            + "CONTINUE: keep starting and running all groups, fail only after all complete. "
+            + "Has no effect when concurrencyLimit is 1 (serial execution)."
     )
-    private final Property<Boolean> failFast = Property.ofValue(true);
+    private final Property<ChildFailurePolicy> childFailurePolicy = Property.ofValue(ChildFailurePolicy.FAIL_FAST);
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -276,7 +278,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
             this.concurrencyLimit,
-            runContext.render(this.failFast).as(Boolean.class).orElse(true)
+            runContext.render(this.childFailurePolicy).as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST)
         );
     }
 }

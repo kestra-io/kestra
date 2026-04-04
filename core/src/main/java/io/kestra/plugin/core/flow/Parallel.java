@@ -17,6 +17,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.ChildFailurePolicy;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -121,12 +122,12 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Builder.Default
     @Schema(
-        title = "Cancel remaining parallel tasks on first failure.",
-        description = "When true, if any child task fails, all still-running "
-            + "siblings are killed before transitioning to the errors handler. "
-            + "Defaults to false (current behavior: wait for all tasks to finish)."
+        title = "Policy for handling child task failures.",
+        description = "FAIL_FAST: kill running siblings immediately. "
+            + "STOP: let running siblings finish but don't start new ones. "
+            + "CONTINUE: keep starting and running all siblings, fail only after all complete."
     )
-    private final Property<Boolean> failFast = Property.ofValue(true);
+    private final Property<ChildFailurePolicy> childFailurePolicy = Property.ofValue(ChildFailurePolicy.FAIL_FAST);
 
     @Valid
     @PluginProperty
@@ -189,7 +190,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
             runContext.render(this.concurrent).as(Integer.class).orElseThrow(),
-            runContext.render(this.failFast).as(Boolean.class).orElse(false)
+            runContext.render(this.childFailurePolicy).as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST)
         );
     }
 

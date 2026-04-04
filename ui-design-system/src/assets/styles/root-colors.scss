@@ -16,6 +16,18 @@
     #{--ks-gray-900}: global-var.$gray-900;
     #{--ks-gray-950}: global-var.$gray-950;
 
+    #{--ks-gray-inverted-50}: global-var.$gray-950;
+    #{--ks-gray-inverted-100}: global-var.$gray-900;
+    #{--ks-gray-inverted-200}: global-var.$gray-800;
+    #{--ks-gray-inverted-300}: global-var.$gray-700;
+    #{--ks-gray-inverted-400}: global-var.$gray-600;
+    #{--ks-gray-inverted-500}: global-var.$gray-500;
+    #{--ks-gray-inverted-600}: global-var.$gray-400;
+    #{--ks-gray-inverted-700}: global-var.$gray-300;
+    #{--ks-gray-inverted-800}: global-var.$gray-200;
+    #{--ks-gray-inverted-900}: global-var.$gray-100;
+    #{--ks-gray-inverted-950}: global-var.$gray-50;
+
     #{--ks-blue-50}: global-var.$blue-50;
     #{--ks-blue-100}: global-var.$blue-100;
     #{--ks-blue-200}: global-var.$blue-200;
@@ -95,4 +107,16 @@ html.dark {
     #{--ks-gray-800}: global-var.$gray-dark-200;
     #{--ks-gray-900}: global-var.$gray-dark-100;
     #{--ks-gray-950}: global-var.$gray-dark-50;
+
+    #{--ks-gray-inverted-50}: global-var.$gray-50;
+    #{--ks-gray-inverted-100}: global-var.$gray-100;
+    #{--ks-gray-inverted-200}: global-var.$gray-200;
+    #{--ks-gray-inverted-300}: global-var.$gray-300;
+    #{--ks-gray-inverted-400}: global-var.$gray-400;
+    #{--ks-gray-inverted-500}: global-var.$gray-500;
+    #{--ks-gray-inverted-600}: global-var.$gray-600;
+    #{--ks-gray-inverted-700}: global-var.$gray-700;
+    #{--ks-gray-inverted-800}: global-var.$gray-800;
+    #{--ks-gray-inverted-900}: global-var.$gray-900;
+    #{--ks-gray-inverted-950}: global-var.$gray-950;
 }

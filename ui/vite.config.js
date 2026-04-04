@@ -49,6 +49,7 @@ export default defineConfig(({mode}) => {
             }
         },
         resolve: {
+            dedupe: ["echarts", "vue-echarts"],
             alias: [
                 {find: /^@kestra-io\/ui-design-system$/, replacement: path.resolve(__dirname, "../ui-design-system/src/index.ts")},
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},

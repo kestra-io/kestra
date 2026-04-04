@@ -32,7 +32,7 @@
         <template v-if="$slots['actions']" #actions>
             <slot name="actions" />
         </template>
-        <template #badge v-if="beta || true">
+        <template #badge v-if="beta">
             <ks-button type="primary" size="small" class="beta-badge" round>
                 Beta
             </ks-button>

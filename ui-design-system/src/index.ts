@@ -2,6 +2,10 @@ import type {App} from "vue"
 import ElementPlus, {INSTALLED_KEY} from "element-plus"
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
+import KsEchart from "./components/Charts/KsEchart.vue"
+import KsLine from "./components/Charts/KsLine.vue"
+import KsBar from "./components/Charts/KsBar.vue"
+import KsPie from "./components/Charts/KsPie.vue"
 import {KsMessage} from "./components/Feedback/KsMessage"
 import {KsMessageBox} from "./components/Feedback/KsMessageBox"
 import {KsNotification} from "./components/Feedback/KsNotification"
@@ -83,16 +87,23 @@ import {vKsLoading} from "./components/Feedback/KsLoading"
 // ─── i18n ───────────────────────────────────────────────────────────────────
 export {designSystemLocale, setDesignSystemLocale} from "./i18n"
 
-// ─── Date utils ─────────────────────────────────────────────────────────────
+// ─── utils ─────────────────────────────────────────────────────────────
 export {setMomentInstance, setDateFormatter} from "./date/index"
+export {cssVar} from "./utils/css.ts"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
+export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
+export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
 export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
 
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {
     KsAlert,
+    KsEchart,
+    KsLine,
+    KsBar,
+    KsPie,
     KsMessage,
     KsMessageBox,
     KsNotification,
@@ -180,6 +191,10 @@ const KestraDesignSystem = {
         }
 
         app.component("KsAlert", KsAlert)
+        app.component("KsEchart", KsEchart)
+        app.component("KsLine", KsLine)
+        app.component("KsBar", KsBar)
+        app.component("KsPie", KsPie)
         app.component("KsAutocomplete", KsAutocomplete)
         app.component("KsAvatar", KsAvatar)
         app.component("KsBadge", KsBadge)
@@ -264,6 +279,10 @@ export default KestraDesignSystem
 declare module "vue" {
     export interface GlobalComponents {
         KsAlert: typeof KsAlert
+        KsEchart: typeof KsEchart
+        KsLine: typeof KsLine
+        KsBar: typeof KsBar
+        KsPie: typeof KsPie
         KsAutocomplete: typeof KsAutocomplete
         KsAvatar: typeof KsAvatar
         KsBadge: typeof KsBadge

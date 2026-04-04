@@ -25,7 +25,6 @@
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue";
     import "./styles/vendor.scss"
-    import "@kestra-io/ui-libs/style.css";
     import "./styles/app.scss"
     import {usePluginsStore} from "./stores/plugins";
 

@@ -31,13 +31,17 @@
     },
     "peerDependencies": {
         "bootstrap": "^5.3.8",
+        "echarts": ">=5.4.0",
         "element-plus": ">=2.13.5",
         "vue": "^3.5.0",
+        "vue-echarts": ">=7.0.0",
         "vue-i18n": "^11.3.0",
         "vue-material-design-icons": "^5.3.1"
     },
     "devDependencies": {
         "@storybook/addon-a11y": "^10.3.1",
+        "echarts": "^5.6.0",
+        "vue-echarts": "^7.0.3",
         "@storybook/addon-docs": "^10.3.1",
         "@storybook/addon-themes": "^10.3.1",
         "@storybook/addon-vitest": "^10.3.1",

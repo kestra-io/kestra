@@ -18,21 +18,6 @@ import "moment/dist/locale/zh-cn"
 import "moment/dist/locale/pt-br"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
-import {
-    ArcElement,
-    BarController,
-    BarElement,
-    CategoryScale,
-    Chart,
-    DoughnutController,
-    Filler,
-    Legend,
-    LinearScale,
-    LineController,
-    LineElement,
-    PointElement,
-    Tooltip,
-} from "chart.js";
 import VueVirtualScroller from "vue-virtual-scroller";
 import {createPinia} from "pinia";
 
@@ -53,24 +38,6 @@ import Utils from "./utils";
 
 
 export default async (app, routes, _stores, translations, additionalTranslations = {}) => {
-    // charts
-    Chart.register(
-        CategoryScale,
-        LinearScale,
-        BarElement,
-        BarController,
-        LineElement,
-        LineController,
-        PointElement,
-        Filler,
-        ArcElement,
-        DoughnutController,
-        Tooltip,
-        Legend,
-        CategoryScale,
-        LinearScale
-    );
-
     // router
     const router = createRouter({
         // make e2e tests pass in dev mode

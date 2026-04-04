@@ -8,7 +8,7 @@
 
     const props = withDefaults(defineProps<{
         content?: string
-        trigger?: "click" | "hover" | "focus" | "contextmenu"
+        trigger?: "click" | "hover" | "focus" | "contextmenu" | "manual"
         placement?: string
         effect?: "light" | "dark"
         enterable?: boolean

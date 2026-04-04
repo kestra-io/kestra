@@ -12,25 +12,15 @@
         :defaultTimeRange="false"
     />
 
-    <div v-bind="$attrs" v-ks-loading="isLoading">
+    <div v-bind="$attrs">
         <ks-card>
-            <ks-tooltip
-                placement="bottom"
-                :popperClass="
-                    tooltipContent === '' ? 'd-none' : 'tooltip-stats'
-                "
+            <KsBar
                 v-if="flowStore.aggregatedMetrics"
-            >
-                <template #content>
-                    <span v-html="tooltipContent" />
-                </template>
-                <Bar
-                    ref="chartRef"
-                    :data="chartData"
-                    :options="options"
-                    v-if="flowStore.aggregatedMetrics"
-                />
-            </ks-tooltip>
+                class="chart"
+                :data="seriesData"
+                :categories="categories"
+                :loading="isLoading"
+            />
             <span v-else>
                 <ks-alert type="info" :closable="false">
                     {{ $t("metric choice") }}
@@ -43,13 +33,13 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {Bar} from "vue-chartjs";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "override/stores/misc";
     import {useFlowStore} from "../../stores/flow";
-    import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts";
+    import {getFormat} from "../dashboard/composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
+    import {KsBar} from "@kestra-io/ui-design-system";
+    import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {useFlowMetricFilter} from "../filter/configurations";
 
@@ -63,10 +53,8 @@
     const {t} = useI18n();
 
     const flowMetricFilter = useFlowMetricFilter();
-    const miscStore = useMiscStore();
     const flowStore = useFlowStore();
 
-    const tooltipContent = ref("");
     const isLoading = ref(false);
 
     interface MetricAggregation {
@@ -78,84 +66,29 @@
         return route.query.metric && route.query.aggregation;
     });
 
-    const chartData = computed(() => {
+    const categories = computed(() => {
         const aggregations = (flowStore.aggregatedMetrics?.aggregations ?? []) as MetricAggregation[];
         const groupBy = flowStore.aggregatedMetrics?.groupBy;
+        return aggregations.map((e) => moment(e.date).format(getFormat(groupBy)));
+    });
 
+    const seriesData = computed<KsChartSeriesItem[]>(() => {
+        if (!display.value) return [];
+
+        const aggregations = (flowStore.aggregatedMetrics?.aggregations ?? []) as MetricAggregation[];
         const aggregationQuery = route.query.aggregation;
         const aggregationValue = Array.isArray(aggregationQuery)
             ? aggregationQuery[0]
             : aggregationQuery;
         const aggregationLabel = aggregationValue?.toLowerCase() ?? "";
 
-        return {
-            labels: aggregations.map((e: MetricAggregation) =>
-                moment(e.date).format(getFormat(groupBy)),
-            ),
-            datasets: [
-                !display.value
-                    ? {data: [] as number[], label: "", backgroundColor: ""}
-                    : {
-                        label: `${t(aggregationLabel)} ${t("of")} ${route.query.metric}`,
-                        backgroundColor: cssVariable("--kel-color-success"),
-                        borderRadius: 4,
-                        data: aggregations.map(
-                            (e: MetricAggregation) => (e.value ? e.value : 0),
-                        ),
-                    },
-            ],
-        };
-    });
-
-    const options = computed(() => {
-        const darken =
-            miscStore.theme === "light"
-                ? cssVariable("--ks-gray-700")
-                : cssVariable("--ks-gray-800");
-        const lighten =
-            miscStore.theme === "light"
-                ? cssVariable("--ks-gray-200")
-                : cssVariable("--ks-gray-400");
-
-        return defaultConfig(
+        return [
             {
-                plugins: {
-                    tooltip: {
-                        external: (context: { tooltip: any }) => {
-                            tooltipContent.value = tooltip(context.tooltip) ?? "";
-                        },
-                    },
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        grid: {
-                            borderColor: lighten,
-                            color: lighten,
-                            drawTicks: false,
-                        },
-                        ticks: {
-                            color: darken,
-                            autoSkip: true,
-                            minRotation: 0,
-                            maxRotation: 0,
-                        },
-                    },
-                    y: {
-                        display: true,
-                        grid: {
-                            borderColor: lighten,
-                            color: lighten,
-                            drawTicks: false,
-                        },
-                        ticks: {
-                            color: darken,
-                        },
-                    },
-                },
+                name: `${t(aggregationLabel)} ${t("of")} ${route.query.metric}`,
+                data: aggregations.map((e) => e.value ?? 0),
+                itemStyle: {color: cssVariable("--kel-color-success")},
             },
-            miscStore.theme,
-        );
+        ];
     });
 
     function loadMetrics(): void {
@@ -252,9 +185,9 @@
     loadMetrics();
 </script>
 
-<style scoped>
-.navbar-flow-metrics {
-    display: flex;
-    width: 100%;
-}
+<style scoped lang="scss">
+    .chart {
+        height: 231px;
+    }
 </style>
+

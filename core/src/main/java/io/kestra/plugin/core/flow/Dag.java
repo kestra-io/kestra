@@ -98,12 +98,12 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
 
     @Builder.Default
     @Schema(
-        title = "Cancel remaining DAG tasks on first failure.",
-        description = "When true, if any task fails, all still-running "
-            + "tasks are killed before transitioning to the errors handler. "
-            + "Defaults to true."
+        title = "Policy for handling child task failures.",
+        description = "FAIL_FAST: kill running tasks immediately. "
+            + "STOP: let running tasks finish but don't start new ones. "
+            + "CONTINUE: keep starting and running all tasks, fail only after all complete."
     )
-    private final Property<Boolean> failFast = Property.ofValue(true);
+    private final Property<ChildFailurePolicy> childFailurePolicy = Property.ofValue(ChildFailurePolicy.FAIL_FAST);
 
     @Valid
     @NotEmpty
@@ -182,7 +182,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
             parentTaskRun,
             runContext.render(this.concurrent).as(Integer.class).orElseThrow(),
             this.tasks,
-            runContext.render(this.failFast).as(Boolean.class).orElse(true)
+            runContext.render(this.childFailurePolicy).as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST)
         );
     }
 

@@ -1,15 +1,18 @@
-id: parallel-failfast-allow-failure
+id: parallel-continue
 namespace: io.kestra.tests
 
 tasks:
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
-    childFailurePolicy: FAIL_FAST
+    childFailurePolicy: CONTINUE
     tasks:
       - id: fail
         type: io.kestra.plugin.core.execution.Fail
-        allowFailure: true
 
-      - id: normal
+      - id: log1
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ task.id }}"
+
+      - id: log2
         type: io.kestra.plugin.core.log.Log
         message: "{{ task.id }}"

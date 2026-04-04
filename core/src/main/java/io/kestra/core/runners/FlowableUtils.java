@@ -20,6 +20,7 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.URIFetcher;
+import io.kestra.core.models.tasks.ChildFailurePolicy;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.FileSerde;
@@ -267,7 +268,7 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
-        boolean failFast) {
+        ChildFailurePolicy policy) {
         return resolveParallelNexts(
             execution,
             tasks,
@@ -275,7 +276,7 @@ public class FlowableUtils {
             _finally,
             parentTaskRun,
             concurrency,
-            failFast,
+            policy,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
         );
     }
@@ -287,12 +288,12 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
-        boolean failFast) {
+        ChildFailurePolicy policy) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
         }
 
-        if (failFast && execution.hasFailedNoRetry(tasks, parentTaskRun)) {
+        if (policy == ChildFailurePolicy.FAIL_FAST && execution.hasFailedNoRetry(tasks, parentTaskRun)) {
             List<TaskRun> taskRuns = execution.findTaskRunByTasks(tasks, parentTaskRun);
             boolean hasRunning = taskRuns.stream().anyMatch(taskRun -> taskRun.getState().isRunning());
             if (hasRunning) {
@@ -300,27 +301,16 @@ public class FlowableUtils {
             }
         }
 
-        List<ResolvedTask> allTasks = execution.findTaskDependingFlowState(
-            tasks,
-            errors,
-            _finally,
-            parentTaskRun
-        );
-
-        boolean isTasks = tasks.equals(allTasks);
-
-        // errors & finally must be run as sequential tasks
-        if (!isTasks) {
-            return resolveSequentialNexts(
-                execution,
-                tasks,
-                errors,
-                _finally,
-                parentTaskRun
-            );
+        List<ResolvedTask> allTasks;
+        if (policy == ChildFailurePolicy.CONTINUE) {
+            allTasks = tasks;
+        } else {
+            allTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
+            if (!tasks.equals(allTasks)) {
+                return resolveSequentialNexts(execution, tasks, errors, _finally, parentTaskRun);
+            }
         }
 
-        // all tasks run
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(allTasks, parentTaskRun);
 
         // find all non-terminated
@@ -369,7 +359,7 @@ public class FlowableUtils {
         TaskRun parentTaskRun,
         Integer concurrency,
         List<Dag.DagTask> taskDependencies,
-        boolean failFast) {
+        ChildFailurePolicy policy) {
         return resolveParallelNexts(
             execution,
             tasks,
@@ -377,7 +367,7 @@ public class FlowableUtils {
             _finally,
             parentTaskRun,
             concurrency,
-            failFast,
+            policy,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
                 .filter(nextTaskRun ->
                 {
@@ -414,24 +404,15 @@ public class FlowableUtils {
         List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
-        boolean failFast,
+        ChildFailurePolicy policy,
         BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction) {
         if (execution.getState().getCurrent() == State.Type.KILLING) {
             return Collections.emptyList();
         }
 
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
-            tasks,
-            errors,
-            _finally,
-            parentTaskRun
-        );
-
         List<ResolvedTask> resolvedTasks = execution.removeDisabled(tasks);
 
-        boolean isTasks = resolvedTasks.equals(currentTasks);
-
-        if (failFast && execution.hasFailedNoRetry(resolvedTasks, parentTaskRun)) {
+        if (policy == ChildFailurePolicy.FAIL_FAST && execution.hasFailedNoRetry(resolvedTasks, parentTaskRun)) {
             List<TaskRun> taskRuns = execution.findTaskRunByTasks(resolvedTasks, parentTaskRun);
             boolean hasRunning = taskRuns.stream().anyMatch(taskRun -> taskRun.getState().isRunning());
             if (hasRunning) {
@@ -439,18 +420,16 @@ public class FlowableUtils {
             }
         }
 
-        // errors & finally must be run as sequential tasks
-        if (!isTasks) {
-            return resolveSequentialNexts(
-                execution,
-                tasks,
-                errors,
-                _finally,
-                parentTaskRun
-            );
+        List<ResolvedTask> currentTasks;
+        if (policy == ChildFailurePolicy.CONTINUE) {
+            currentTasks = resolvedTasks;
+        } else {
+            currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
+            if (!resolvedTasks.equals(currentTasks)) {
+                return resolveSequentialNexts(execution, tasks, errors, _finally, parentTaskRun);
+            }
         }
 
-        // all tasks run
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
 
         // find all running and deal concurrency

@@ -28,6 +28,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.ChildFailurePolicy;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -268,21 +269,20 @@ public class ExecutorService {
                 runContext.logger().error("Unable to resolve state from the Flowable task: {}", e.getMessage(), e);
                 state = Optional.of(State.Type.FAILED);
             }
-            // When failFast killed siblings, guessFinalState returns KILLED because it
-            // prioritizes KILLED over FAILED. Convert to FAILED when the root cause is a
-            // child failure (not a manual execution kill).
             if (state.isPresent() && state.get() == State.Type.KILLED
                 && execution.getState().getCurrent() != State.Type.KILLING
                 && execution.getState().getCurrent() != State.Type.KILLED) {
                 try {
-                    boolean failFast = runContext.render(flowableParent.getFailFast()).as(Boolean.class).orElse(false);
-                    if (failFast && execution.hasFailedNoRetry(flowableParent.childTasks(runContext, parentTaskRun), parentTaskRun)) {
+                    var policy = runContext.render(flowableParent.getChildFailurePolicy())
+                        .as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST);
+                    if (policy == ChildFailurePolicy.FAIL_FAST
+                        && execution.hasFailedNoRetry(flowableParent.childTasks(runContext, parentTaskRun), parentTaskRun)) {
                         state = Optional.of(flowableParent.isAllowFailure()
                             ? (flowableParent.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING)
                             : State.Type.FAILED);
                     }
                 } catch (Exception e) {
-                    runContext.logger().warn("Unable to evaluate failFast: {}", e.getMessage(), e);
+                    runContext.logger().warn("Unable to evaluate childFailurePolicy: {}", e.getMessage(), e);
                 }
             }
 
@@ -874,8 +874,9 @@ public class ExecutorService {
 
             try {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), parent, execution, parentTaskRun);
-                boolean failFast = runContext.render(flowableParent.getFailFast()).as(Boolean.class).orElse(false);
-                if (!failFast) {
+                var policy = runContext.render(flowableParent.getChildFailurePolicy())
+                    .as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST);
+                if (policy != ChildFailurePolicy.FAIL_FAST) {
                     continue;
                 }
 

@@ -22,12 +22,14 @@ tasks.register('runStandalone', JavaExec) {
 
 tasks.register('runApiServer', JavaExec) {
     group = "application"
-    description = "Run Kestra backend (all components, H2 + local storage) for frontend development. Does not build the Vue frontend."
-    classpath = sourceSets.main.runtimeClasspath
+    description = "Run Kestra API server (no browser assets). Does not build the Vue frontend."
+    // Exclude webserver-browser from the classpath so that StaticFilter, RedirectController,
+    // VueStaticResourceResolver and any previously-built frontend assets are not registered.
+    classpath = sourceSets.main.runtimeClasspath.filter { !it.path.contains('webserver-browser') }
     mainClass = "io.kestra.cli.Kestra"
     // Do not load application-override.yml: LocalCommand already provides all H2 configuration
     // at highest priority, and the user's override file may register additional datasources
-    // (e.g. Postgres) that conflict with H2 causing a NonUniqueBeanException.
+    // (e.g. Postgres) that conflict with H2, causing a NonUniqueBeanException.
     args 'server', 'local', '--plugins', '../local/plugins'
 }
 

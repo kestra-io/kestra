@@ -1,15 +1,16 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.security.SecureRandom;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class NanoIDFunction implements Function {
+public class NanoIDFunction implements KestraFunction {
+    public static final String NAME = "nanoId";
 
     private static final int DEFAULT_LENGTH = 21;
     private static final char[] DEFAULT_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_".toCharArray();
@@ -50,6 +51,14 @@ public class NanoIDFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of(LENGTH, ALPHABET);
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(LENGTH, null);
+        defaults.put(ALPHABET, null);
+        return defaults;
     }
 
     String createNanoID(int length, char[] alphabet) {

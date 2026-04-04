@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,6 +17,7 @@ import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
+import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
@@ -191,8 +193,8 @@ public class MiscController {
 
     @Get("/pebble/functions")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Retrieve the list of available Pebble expression functions.")
-    public List<String> getExpressionFunctions() {
+    @Operation(tags = { "Misc" }, summary = "Retrieve the available Pebble expression functions with their arguments and defaults.")
+    public List<PebbleFunction> getExpressionFunctions() {
         return pebbleExpressionService.functions();
     }
 

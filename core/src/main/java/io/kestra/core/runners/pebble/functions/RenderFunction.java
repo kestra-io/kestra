@@ -10,7 +10,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.StringUtils;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -19,12 +18,22 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
-public class RenderFunction implements Function, RenderingFunctionInterface {
+public class RenderFunction implements KestraFunction, RenderingFunctionInterface {
+    public static final String NAME = "render";
+
     @Inject
     private ApplicationContext applicationContext;
 
     public List<String> getArgumentNames() {
         return List.of("toRender", "recursive");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of(
+            "toRender", "inputs.inputWithPebble",
+            "recursive", "true"
+        );
     }
 
     @Override

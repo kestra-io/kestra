@@ -5,11 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class IterationOutputFunction implements Function {
+public class IterationOutputFunction implements KestraFunction {
     public static final String NAME = "iterationOutput";
 
     private static final String TASK_ID_ARG = "taskId";
@@ -19,6 +18,14 @@ public class IterationOutputFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of(TASK_ID_ARG, ITERATION_ARG);
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of(
+            TASK_ID_ARG, "'myTaskId'",
+            ITERATION_ARG, "taskrun.iteration - 1"
+        );
     }
 
     @Override

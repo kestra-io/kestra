@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -17,7 +18,6 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.NamespaceService;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
-public class SecretFunction implements Function {
+public class SecretFunction implements KestraFunction {
     public static final String NAME = "secret";
 
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofJson();
@@ -96,6 +96,15 @@ public class SecretFunction implements Function {
         } catch (SecretException | IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(KEY_ARG, "'MY_SECRET'");
+        defaults.put(NAMESPACE_ARG, "flow.namespace");
+        defaults.put(SUBKEY_ARG, null);
+        return defaults;
     }
 
     protected String getSecretKey(Map<String, Object> args, PebbleTemplate self, int lineNumber) {

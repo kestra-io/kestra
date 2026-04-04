@@ -16,6 +16,7 @@ public record MetadataAppenderChatModelListener(String instanceUid, String provi
     public static final String CONVERSATION_ID = "conversationId";
     public static final String IP = "ip";
     public static final String INSTANCE_UID = "instanceUid";
+    public static final String USER_UID = "userUid";
     public static final String PROVIDER = "provider";
 
     @Override
@@ -29,7 +30,8 @@ public record MetadataAppenderChatModelListener(String instanceUid, String provi
                 CONVERSATION_ID, conversationMetadata.conversationId(),
                 PROVIDER, this.provider(),
                 IP, conversationMetadata.ip(),
-                INSTANCE_UID, this.instanceUid()
+                INSTANCE_UID, this.instanceUid(),
+                USER_UID, conversationMetadata.uid()
             )
         );
     }

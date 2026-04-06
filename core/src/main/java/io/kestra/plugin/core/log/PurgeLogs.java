@@ -156,7 +156,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
             ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
             execLogs,
             nonExecLogs,
-            runContext.render(this.batchSize).as(Integer.class).orElseThrow()
+            runContext.render(this.batchSize).as(Integer.class).orElse(1000)
         );
 
         return Output.builder()

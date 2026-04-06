@@ -372,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
+          "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
           "intro": "创建新Secret：",
           "second": "添加一个名为 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' 的环境变量，并使用上述值",
           "third": "重新启动您的Kestra实例"
@@ -453,14 +453,14 @@
       "command_palette": "显示命令面板",
       "comment": "评论",
       "comment_uncomment": "注释/取消注释",
-      "decrease_fontsize": "减少字体大小",
+      "decrease_fontsize": "减小编辑器字体大小",
       "duplicate_cursor": "复制光标",
       "execute_flow": "执行 flow",
       "fold_unfold": "折叠/展开代码",
-      "increase_fontsize": "增加字体大小",
+      "increase_fontsize": "增加编辑器字体大小",
       "label": "键盘快捷键",
       "move_line": "移动行",
-      "reset_fontsize": "重置字体大小",
+      "reset_fontsize": "重置编辑器字体大小",
       "save_flow": "保存flow",
       "toggle_ai_agent": "切换AI代理",
       "trigger_autocompletion": "触发自动完成",
@@ -486,11 +486,11 @@
         "title": "您还没有资产！"
       },
       "concurrency_executions": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executions</a></strong>的信息。",
         "title": "此 Flow 没有正在进行的 Executions。"
       },
       "concurrency_limit": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
@@ -499,15 +499,15 @@
           "title": "当前没有依赖项。"
         },
         "EXECUTION": {
-          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
         },
         "FLOW": {
-          "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
+          "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
           "title": "当前没有依赖项。"
         },
         "NAMESPACE": {
-          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
         }
       },
@@ -524,7 +524,7 @@
         "title": "您还没有插件默认值！"
       },
       "plugins": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Namespace未设置插件默认值。"
       },
       "testSuites": {
@@ -532,7 +532,7 @@
         "title": "您还没有测试套件！"
       },
       "triggers": {
-        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
       },
       "versionPlugin": {
@@ -1678,6 +1678,7 @@
       }
     },
     "save task": "保存任务",
+    "save_and_execute": "保存并执行",
     "saved": "保存成功",
     "saved done": "<em>{name}</em> 成功保存",
     "scheduleDate": "计划日期",
@@ -1932,7 +1933,7 @@
     "template export": "确定要导出 <code>{templateCount}</code> 个模板吗？",
     "templates": "模板",
     "templates deleted": "<code>{count}</code> 个模板已删除",
-    "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
+    "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
     "templates exported": "模板已导出",
     "tenant": {
       "name": "租户",
@@ -2053,9 +2054,111 @@
         "title": "开始产品导览"
       },
       "tutorial": {
-        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">视频教程</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">文档</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">视频教程</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">文档</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "教程"
       }
+    },
+    "welcome_copilot": {
+      "button_cta": "从头创建flow",
+      "execute_hint": {
+        "description": "单击以保存您的工作流并立即运行。",
+        "title": "保存并执行您的flow"
+      },
+      "flows": {
+        "buildDbtPipeline": {
+          "label": "构建一个 dbt pipeline",
+          "prompt": "创建一个Kestra flow，克隆一个dbt项目仓库，并使用DuckDB配置文件运行dbt build。"
+        },
+        "buildDockerImageAndRunIt": {
+          "label": "构建一个Docker镜像并运行它",
+          "prompt": "创建一个 Kestra flow，从内联 Dockerfile 构建 Docker 镜像并运行生成的容器。"
+        },
+        "convertCsvToExcel": {
+          "label": "将CSV转换为Excel",
+          "prompt": "创建一个flow，下载CSV文件，将其转换为Ion，并将结果导出为Excel文件。"
+        },
+        "etlWorkflow": {
+          "label": "ETL 工作流",
+          "prompt": "创建一个ETL flow，下载JSON数据，用Python处理，并使用DuckDB查询转换后的结果。"
+        },
+        "installNginxViaAnsible": {
+          "label": "通过Ansible安装Nginx",
+          "prompt": "创建一个Kestra flow，使用Ansible在目标机器上安装Nginx并验证已安装的版本。"
+        },
+        "jsonApiToDuckdb": {
+          "label": "DuckDB 的 JSON API",
+          "prompt": "创建一个flow，从公共API下载JSON文件，使用Python脚本进行转换，并通过DuckDB Queries task进行处理。"
+        },
+        "manualApproval": {
+          "label": "人工审批",
+          "prompt": "创建一个flow，包含初始处理步骤、手动审批暂停，以及审批后的最终部署步骤。"
+        },
+        "microservicesApis": {
+          "label": "微服务和API",
+          "prompt": "创建一个flow，用于检查网站API响应，并在状态码不成功时发送Slack警报。"
+        },
+        "scheduledPdfReports": {
+          "label": "计划的PDF报告",
+          "prompt": "创建一个定时flow，当PDF报告准备好时下载并发送Slack通知。"
+        },
+        "weeklySalesKpisToSlack": {
+          "label": "每周销售KPI发送到Slack",
+          "prompt": "创建一个每周定时的flow，使用DuckDB计算销售KPI，并将摘要发布到Slack。"
+        }
+      },
+      "help": {
+        "blueprints": {
+          "description": "探索可直接使用的示例和模板，以适应常见的工作流模式。",
+          "title": "蓝图"
+        },
+        "slack": {
+          "description": "加入我们，分享想法和最佳实践，并获得技术问题的帮助。",
+          "title": "Slack 社区"
+        },
+        "tutorial": {
+          "description": "了解如何通过指南步骤创建并运行您的第一个flow。",
+          "title": "开始教程"
+        }
+      },
+      "need_help": "需要帮助？",
+      "placeholder_prompt": "每天早上9点发送问候消息给我。",
+      "remaining_quota": "您还有 {count} 次 AI 生成机会",
+      "show_less": "显示更少提示",
+      "show_more": "显示更多提示",
+      "success_page": {
+        "description": "您已经了解了Kestra的基础知识。以下是一些资源，帮助您继续您的旅程。",
+        "items": {
+          "blueprints": {
+            "description": "预构建工作流模板用于常见用例",
+            "title": "蓝图"
+          },
+          "demo": {
+            "description": "通过个性化演示探索 Kestra Enterprise Edition",
+            "title": "获取演示"
+          },
+          "slack": {
+            "description": "与其他用户联系并从社区获得帮助",
+            "title": "Slack 社区"
+          },
+          "tutorial": {
+            "description": "Kestra所有功能的互动演练",
+            "title": "开始教程"
+          },
+          "videos": {
+            "description": "高级功能的逐步视频指南",
+            "title": "视频教程"
+          }
+        },
+        "restart": "重新启动教程",
+        "title": "一切准备就绪！"
+      },
+      "success_popup": {
+        "description": "您已成功执行了您的第一个flow！您正在迈向成为Kestra专家的道路上。",
+        "explore": "探索更多",
+        "title": "恭喜！",
+        "tutorial": "深入教程"
+      },
+      "title": "将您的想法转化为workflow"
     },
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",

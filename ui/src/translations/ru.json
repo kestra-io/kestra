@@ -372,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Закодируйте <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">секретное значение в Base64</a>",
+          "first": "Закодируйте <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">секретное значение в Base64</a>",
           "intro": "Чтобы создать новый Secret:",
           "second": "Добавьте переменную окружения с именем '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' с указанным выше значением",
           "third": "Перезапустите ваш экземпляр Kestra"
@@ -453,14 +453,14 @@
       "command_palette": "Показать палитру команд",
       "comment": "Комментарий",
       "comment_uncomment": "Комментарий/Раскомментировать",
-      "decrease_fontsize": "Уменьшить размер шрифта",
+      "decrease_fontsize": "Уменьшить размер шрифта редактора",
       "duplicate_cursor": "Дублировать курсор",
       "execute_flow": "Запустить flow",
       "fold_unfold": "Свернуть/Развернуть код",
-      "increase_fontsize": "Увеличить размер шрифта",
+      "increase_fontsize": "Увеличить размер шрифта редактора",
       "label": "Горячие клавиши",
       "move_line": "Переместить строку",
-      "reset_fontsize": "Сбросить размер шрифта",
+      "reset_fontsize": "Сбросить размер шрифта редактора",
       "save_flow": "Сохранить flow",
       "toggle_ai_agent": "Переключить AI agent",
       "trigger_autocompletion": "Запустить автозаполнение",
@@ -486,11 +486,11 @@
         "title": "У вас еще нет Assets!"
       },
       "concurrency_executions": {
-        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> в нашей документации.",
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executions</a></strong> в нашей документации.",
         "title": "Нет текущих выполнений для этого flow."
       },
       "concurrency_limit": {
-        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
         "title": "Для этого flow не установлены ограничения."
       },
       "dependencies": {
@@ -499,15 +499,15 @@
           "title": "В настоящее время зависимости отсутствуют."
         },
         "EXECUTION": {
-          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">зависимостях выполнения</a> в нашей документации.",
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">зависимостях выполнения</a> в нашей документации.",
           "title": "В настоящее время зависимости отсутствуют."
         },
         "FLOW": {
-          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
           "title": "В настоящее время зависимости отсутствуют."
         },
         "NAMESPACE": {
-          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> в нашей документации.",
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> в нашей документации.",
           "title": "В настоящее время зависимости отсутствуют."
         }
       },
@@ -524,7 +524,7 @@
         "title": "У вас еще нет стандартных настроек плагина!"
       },
       "plugins": {
-        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
         "title": "Для этого namespace не установлены значения по умолчанию для плагинов."
       },
       "testSuites": {
@@ -532,7 +532,7 @@
         "title": "У вас еще нет Test suites!"
       },
       "triggers": {
-        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
         "title": "Ваш flow не имеет никаких Triggers."
       },
       "versionPlugin": {
@@ -1678,6 +1678,7 @@
       }
     },
     "save task": "Сохранить задачу",
+    "save_and_execute": "Сохранить и выполнить",
     "saved": "Успешно сохранено",
     "saved done": "<em>{name}</em> успешно сохранен",
     "scheduleDate": "Дата расписания",
@@ -1932,7 +1933,7 @@
     "template export": "Вы уверены, что хотите экспортировать <code>{templateCount}</code> шаблон(ы)?",
     "templates": "Шаблоны",
     "templates deleted": "<code>{count}</code> Шаблон(ы) удалены",
-    "templates deprecated": "Шаблоны устарели. Пожалуйста, используйте subflows вместо них. См. <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">раздел миграции</a>, объясняющий, как можно мигрировать с шаблонов на subflows.",
+    "templates deprecated": "Шаблоны устарели. Пожалуйста, используйте subflows вместо них. См. <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">раздел миграции</a>, объясняющий, как можно мигрировать с шаблонов на subflows.",
     "templates exported": "Шаблоны экспортированы",
     "tenant": {
       "name": "Мандант",
@@ -2053,9 +2054,111 @@
         "title": "Пройдите экскурсию по продукту"
       },
       "tutorial": {
-        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">Видеоуроки</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">Документация</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Видеоуроки</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Документация</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "Учебник"
       }
+    },
+    "welcome_copilot": {
+      "button_cta": "Создать flow с нуля",
+      "execute_hint": {
+        "description": "Нажмите, чтобы сохранить ваш workflow и запустить его немедленно.",
+        "title": "Сохранить и выполнить ваш flow"
+      },
+      "flows": {
+        "buildDbtPipeline": {
+          "label": "Создать dbt pipeline",
+          "prompt": "Создайте flow в Kestra, который клонирует репозиторий проекта dbt и запускает dbt build с профилем DuckDB."
+        },
+        "buildDockerImageAndRunIt": {
+          "label": "Создайте Docker image и запустите его",
+          "prompt": "Создайте flow в Kestra, который собирает Docker-образ из встроенного Dockerfile и запускает полученный контейнер."
+        },
+        "convertCsvToExcel": {
+          "label": "Преобразовать CSV в Excel",
+          "prompt": "Создайте flow, который загружает CSV файл, преобразует его в Ion и экспортирует результат как Excel файл."
+        },
+        "etlWorkflow": {
+          "label": "ETL Workflow",
+          "prompt": "Создайте ETL flow, который загружает данные в формате JSON, обрабатывает их с помощью Python и выполняет запросы к преобразованному результату с помощью DuckDB."
+        },
+        "installNginxViaAnsible": {
+          "label": "Установить Nginx через Ansible",
+          "prompt": "Создайте flow Kestra, который устанавливает Nginx на целевой машине с помощью Ansible и проверяет установленную версию."
+        },
+        "jsonApiToDuckdb": {
+          "label": "JSON API в DuckDB",
+          "prompt": "Создайте flow, который загружает JSON файл из публичного API, преобразует его с помощью Python скрипта и обрабатывает с помощью DuckDB Queries task."
+        },
+        "manualApproval": {
+          "label": "Ручное одобрение",
+          "prompt": "Создайте flow с начальным этапом обработки, паузой для ручного утверждения и финальным этапом развертывания после утверждения."
+        },
+        "microservicesApis": {
+          "label": "Микросервисы и API",
+          "prompt": "Создайте flow, который проверяет ответ API веб-сайта и отправляет уведомление в Slack, если код состояния не успешен."
+        },
+        "scheduledPdfReports": {
+          "label": "Запланированные PDF отчеты",
+          "prompt": "Создайте запланированный flow, который загружает PDF отчет и отправляет уведомление в Slack, когда отчет готов."
+        },
+        "weeklySalesKpisToSlack": {
+          "label": "Еженедельные KPI продаж в Slack",
+          "prompt": "Создайте еженедельный запланированный flow, который вычисляет KPI продаж с помощью DuckDB и отправляет сводку в Slack."
+        }
+      },
+      "help": {
+        "blueprints": {
+          "description": "Исследуйте готовые примеры и шаблоны для общих паттернов workflow.",
+          "title": "Чертежи"
+        },
+        "slack": {
+          "description": "Присоединяйтесь к нам, чтобы делиться идеями и лучшими практиками, а также получать помощь с техническими вопросами.",
+          "title": "Сообщество Slack"
+        },
+        "tutorial": {
+          "description": "Узнайте, как создать и запустить ваш первый flow с пошаговыми инструкциями.",
+          "title": "Начать учебное пособие"
+        }
+      },
+      "need_help": "Нужна помощь?",
+      "placeholder_prompt": "Отправляйте мне ежедневное приветственное сообщение в 9 утра.",
+      "remaining_quota": "У вас осталось {count} AI generations",
+      "show_less": "Показать меньше подсказок",
+      "show_more": "Показать больше подсказок",
+      "success_page": {
+        "description": "Вы изучили основы Kestra. Вот некоторые ресурсы, которые помогут вам продолжить ваше путешествие.",
+        "items": {
+          "blueprints": {
+            "description": "Готовые шаблоны workflow для общих случаев использования",
+            "title": "Черновики"
+          },
+          "demo": {
+            "description": "Исследуйте Kestra Enterprise Edition с персонализированной демонстрацией",
+            "title": "Получить демо"
+          },
+          "slack": {
+            "description": "Подключитесь к другим пользователям и получите помощь от сообщества",
+            "title": "Сообщество Slack"
+          },
+          "tutorial": {
+            "description": "Интерактивное руководство по всем функциям Kestra",
+            "title": "Начать учебное пособие"
+          },
+          "videos": {
+            "description": "Пошаговые видеоинструкции по продвинутым функциям",
+            "title": "Видеоуроки"
+          }
+        },
+        "restart": "Перезапустить учебник",
+        "title": "Вы готовы!"
+      },
+      "success_popup": {
+        "description": "Вы успешно выполнили свой первый flow! Вы на пути к тому, чтобы стать профессионалом в Kestra.",
+        "explore": "Исследовать больше",
+        "title": "Поздравляем!",
+        "tutorial": "Углубленный учебник"
+      },
+      "title": "Превратите вашу идею в workflow"
     },
     "welcome_page": {
       "guide": "Нужна помощь в выполнении вашего первого flow?",

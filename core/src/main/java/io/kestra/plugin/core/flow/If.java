@@ -26,6 +26,7 @@ import lombok.experimental.SuperBuilder;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -80,6 +81,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     // Note: we can't use Property<String> here because of the cache of the property evaluation which causes issue when using If in a ForEach with concurrencyLimit > 1!
     // See https://github.com/kestra-io/kestra/issues/8697
     // At some point, if we need it, we should allow bypassing (or clearing) the property evaluation cache
+    @NotNull
     @PluginProperty(dynamic = true)
     private String condition;
 

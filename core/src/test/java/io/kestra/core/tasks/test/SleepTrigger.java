@@ -44,6 +44,6 @@ public class SleepTrigger extends AbstractTrigger implements PollingTriggerInter
 
     @Override
     public Duration getInterval() {
-        return null;
+        return Duration.ofMillis(1);
     }
 }

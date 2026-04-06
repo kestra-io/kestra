@@ -7,7 +7,6 @@ import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 import io.kestra.webserver.utils.PosthogUtil;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -110,7 +109,7 @@ class AiControllerTest {
             ))));
 
         HttpResponse<String> response = client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/main/ai/generate/flow", new FlowGenerationPrompt(IdUtils.create(), "Say 'hi'", "yaml", null, "io.kestra.tests")),
+            HttpRequest.POST("/api/v1/main/ai/generate/flow", new AiController.FlowGenerationPrompt(IdUtils.create(), "Say 'hi'", "yaml", "io.kestra.tests", null)),
             String.class
         );
 

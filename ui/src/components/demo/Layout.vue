@@ -17,7 +17,7 @@
                 />
             </div>
             <p><slot name="message" /></p>
-            <DemoButtons />
+            <DemoButtons :type="type" />
         </div>
     </EmptyTemplate>
 </template>
@@ -25,13 +25,14 @@
 <script setup lang="ts">
     import {useNetwork} from "@vueuse/core"
     const {isOnline} = useNetwork()
-    
+
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
     import DemoButtons from "./DemoButtons.vue";
     import EnterpriseTag from "../EnterpriseTag.vue";
 
     defineProps<{
         title: string;
+        type: string;
         image: {
             source: string;
             alt: string;

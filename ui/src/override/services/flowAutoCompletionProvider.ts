@@ -52,6 +52,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
             "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")",
             "currentEachOutput(outputs=${1:outputs.forEach})",
+            "iterationOutput(taskId=${1:'myTaskId'}, iteration=${2:taskrun.iteration - 1})",
             "decrypt(key=${1:secret('encryption_key')}, encrypted=${2:outputs.request.encryptedBody})",
             "encrypt(key=${1:secret('encryption_key')}, plaintext=${2:'value_to_encrypt'})",
             "errorLogs()",
@@ -87,6 +88,59 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             .filter(task => typeof task?.get === "function" && task?.get("id"));
     }
 
+    private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
+        const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1));
+        const probeIndexes = [safeCursorIndex];
+        let previousNonWhitespace = safeCursorIndex;
+        while (previousNonWhitespace > 0 && /\s/.test(source.charAt(previousNonWhitespace))) {
+            previousNonWhitespace--;
+        }
+        if (previousNonWhitespace !== safeCursorIndex) {
+            probeIndexes.push(previousNonWhitespace);
+        }
+
+        return probeIndexes;
+    }
+
+    private taskIdFromCandidates(candidates: any[]): string | undefined {
+        for (let i = candidates.length - 1; i >= 0; i--) {
+            const candidate = candidates[i];
+            if (
+                candidate && typeof candidate === "object"
+                && typeof candidate.id === "string"
+                && typeof candidate.type === "string"
+            ) {
+                return candidate.id;
+            }
+        }
+
+        return undefined;
+    }
+
+    private currentTaskIdAtCursor(source: string, cursorIndex?: number): string | undefined {
+        if (cursorIndex === undefined || source.length === 0) {
+            return undefined;
+        }
+
+        const probeIndexes = this.cursorProbeIndexes(source, cursorIndex);
+
+        try {
+            for (const probeIndex of probeIndexes) {
+                const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex);
+                const candidates = [...(localized?.parents ?? []), localized?.value];
+
+                const taskId = this.taskIdFromCandidates(candidates);
+                if (taskId) {
+                    return taskId;
+                }
+            }
+        } catch {
+            return undefined;
+        }
+
+        return undefined;
+    }
+
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
         const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
             .map(task => task.get("type"))
@@ -119,12 +173,18 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         return distinct(fetchTriggerVarsByType.flat());
     }
 
-    async nestedFieldAutoCompletion(source: string, parsed: any | undefined, parentField: string): Promise<string[]> {
+    async nestedFieldAutoCompletion(source: string, parsed: any | undefined, parentField: string, cursorIndex?: number): Promise<string[]> {
         switch (parentField) {
             case "inputs":
                 return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? []);
-            case "outputs":
-                return Promise.resolve(parsed?.tasks?.map((task: {id?: string}) => task.id).filter(Boolean) ?? []);
+            case "outputs": {
+                const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex);
+                return Promise.resolve(
+                    parsed?.tasks
+                        ?.map((task: {id?: string}) => task.id)
+                        .filter((taskId: string | undefined) => taskId && taskId !== currentTaskId) ?? []
+                );
+            }
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}));
             case "flow":

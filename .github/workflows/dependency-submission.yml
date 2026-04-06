@@ -1,0 +1,22 @@
+name: Dependency Submission
+
+on:
+  push:
+    branches: ['develop', 'kestra_wip']
+
+permissions:
+  contents: write
+
+jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 25
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4

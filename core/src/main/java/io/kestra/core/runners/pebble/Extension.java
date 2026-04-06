@@ -170,6 +170,7 @@ public class Extension extends AbstractExtension {
         functions.put("isFileEmpty", isFileEmptyFunction);
         functions.put("nanoId", new NanoIDFunction());
         functions.put("tasksWithState", new TasksWithStateFunction());
+        functions.put(IterationOutputFunction.NAME,new IterationOutputFunction());
         functions.put(HttpFunction.NAME, httpFunction);
         return functions;
     }

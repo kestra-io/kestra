@@ -1,0 +1,12 @@
+id: ibis_510494
+namespace: company.team
+
+tasks:
+  - id: initial-processing
+    type: io.kestra.plugin.core.log.Log
+    message: Initial processing step completed.
+  - id: manual-approval-pause
+    type: io.kestra.plugin.core.flow.Pause
+  - id: final-deployment
+    type: io.kestra.plugin.core.log.Log
+    message: Final deployment step completed after manual approval.

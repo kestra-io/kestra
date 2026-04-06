@@ -1615,8 +1615,16 @@
     "prev_execution": "Execução anterior",
     "preview": {
       "auto-view": "Visualização automática",
+      "collapse": "Recolher",
+      "expand": "Expandir",
       "force-editor": "Forçar visualização do editor",
       "label": "Visualizar",
+      "next": "Próximo",
+      "page_of": "Página {current} de {total}",
+      "pagination_info": "Exibindo linhas {start}-{end} de {total}.",
+      "previous": "Anterior",
+      "rows_truncated": "Mostrando {shown} de {total} linhas. Baixe o arquivo para ver todos os dados.",
+      "showing_rows": "Mostrando linhas {start}-{end} de {total}",
       "view": "Visualizar"
     },
     "product_tour": "Passeio pelo Produto",

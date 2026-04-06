@@ -1615,8 +1615,16 @@
     "prev_execution": "Vorherige Ausführung",
     "preview": {
       "auto-view": "Automatische Ansicht",
+      "collapse": "Einklappen",
+      "expand": "Ausklappen",
       "force-editor": "Editoransicht erzwingen",
       "label": "Vorschau",
+      "next": "Weiter",
+      "page_of": "Seite {current} von {total}",
+      "pagination_info": "Zeige Zeilen {start}-{end} von {total}.",
+      "previous": "Zurück",
+      "rows_truncated": "Zeige {shown} von {total} Zeilen. Laden Sie die Datei herunter, um alle Daten anzuzeigen.",
+      "showing_rows": "Zeige Zeilen {start}-{end} von {total}",
       "view": "Anzeigen"
     },
     "product_tour": "Produkteinführung",

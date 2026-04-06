@@ -1615,8 +1615,16 @@
     "prev_execution": "Poprzednia wykonanie",
     "preview": {
       "auto-view": "Widok automatyczny",
+      "collapse": "Zwiń",
+      "expand": "Rozwiń",
       "force-editor": "Wymuś widok edytora",
       "label": "Podgląd",
+      "next": "Dalej",
+      "page_of": "Strona {current} z {total}",
+      "pagination_info": "Wyświetlanie wierszy {start}-{end} z {total}.",
+      "previous": "Poprzedni",
+      "rows_truncated": "Wyświetlanie {shown} z {total} wierszy. Pobierz plik, aby zobaczyć wszystkie dane.",
+      "showing_rows": "Wyświetlanie wierszy {start}-{end} z {total}",
       "view": "Zobacz"
     },
     "product_tour": "Przewodnik po produkcie",

@@ -9,6 +9,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
@@ -63,16 +64,16 @@ class MiscControllerTest {
 
     @Test
     void getExpressionFunctions() {
-        List<String> response = client.toBlocking().retrieve(GET("/api/v1/pebble/functions"), Argument.LIST_OF_STRING);
+        List<PebbleFunction> response = client.toBlocking().retrieve(GET("/api/v1/pebble/functions"), Argument.listOf(PebbleFunction.class));
 
         assertThat(response).isNotNull();
         assertThat(response).isNotEmpty();
         // Kestra custom functions
-        assertThat(response).contains("now", "secret", "kv", "uuid", "yaml");
+        assertThat(response).extracting(PebbleFunction::name).contains("now", "secret", "kv", "uuid", "yaml");
         // Pebble core functions
-        assertThat(response).contains("max", "min", "range");
+        assertThat(response).extracting(PebbleFunction::name).contains("max", "min", "range");
         // Should be sorted
-        assertThat(response).isSorted();
+        assertThat(response).extracting(PebbleFunction::name).isSorted();
     }
 
     @Test

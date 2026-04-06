@@ -2,7 +2,7 @@ import {ComputedRef} from "vue";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import {YamlElement} from "@kestra-io/ui-libs";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-import {QUOTE, YamlAutoCompletion} from "../../services/autoCompletionProvider";
+import {QUOTE, YamlAutoCompletion, functionToSnippet} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
@@ -33,8 +33,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         this.completionSource = completionSource;
     }
 
-    rootFieldAutoCompletion(): Promise<string[]> {
-        return Promise.resolve([
+    async rootFieldAutoCompletion(): Promise<string[]> {
+        const variables = [
             "outputs",
             "inputs",
             "vars",
@@ -50,34 +50,12 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "parents",
             "error",
             "kestra",
-            "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
-            "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")",
-            "currentEachOutput(outputs=${1:outputs.forEach})",
-            "iterationOutput(taskId=${1:'myTaskId'}, iteration=${2:taskrun.iteration - 1})",
-            "decrypt(key=${1:secret('encryption_key')}, encrypted=${2:outputs.request.encryptedBody})",
-            "encrypt(key=${1:secret('encryption_key')}, plaintext=${2:'value_to_encrypt'})",
-            "errorLogs()",
-            "fetchContext()",
-            "isFileEmpty(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
-            "fileExists(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
-            "fileSize(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
-            "read(namespace=${1:flow.namespace}, path=${2:'a/namespace/file'})",
-            "render(toRender=${1:inputs.inputWithPebble}, recursive=${2:true})",
-            "renderOnce(toRender=${1:inputs.inputWithPebble})",
-            "fileURI(path=${1:'a/namespace/file'})",
-            "fromIon(ion=${1:read('ion/namespace/file')})",
-            "fromJson(json=${1:read('json/namespace/file')})",
-            "yaml(yaml=${1:inputs.yamlInput})",
-            "uuid()",
-            "id()",
-            "now()",
-            "randomInt(lower=${1:0}, upper=${2:10})",
-            "randomPort()",
-            "tasksWithState(state=${1:'FAILED'})",
-            "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
-            "ksuid()",
-            "parentOutput()",
-        ]);
+        ];
+
+        const functions = await this.functionsWithDefaults();
+        const functionSnippets = functions.map(fn => functionToSnippet(fn));
+
+        return [...variables, ...functionSnippets];
     }
 
     private tasks(source: string): any[] {

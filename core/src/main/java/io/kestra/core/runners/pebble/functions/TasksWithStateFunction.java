@@ -6,14 +6,19 @@ import java.util.List;
 import java.util.Map;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class TasksWithStateFunction implements Function {
+public class TasksWithStateFunction implements KestraFunction {
+    public static final String NAME = "tasksWithState";
     public List<String> getArgumentNames() {
         return List.of("state");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of("state", "'FAILED'");
     }
 
     @Override

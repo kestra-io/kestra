@@ -161,15 +161,15 @@
     ];
 
     const configPreviewInitialRows = (): number => {
-        return miscStore.configs?.preview.initial || 50;
+        return  miscStore.configs?.preview.initial || 500;
     };
 
     const configPreviewMaxRows = (): number => {
-        return miscStore.configs?.preview.max || 5000;
+        return  miscStore.configs?.preview.max || 5000;
     };
 
     const maxPreviewOptions = computed(() => {
-        return [10, 25, 50, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(
+        return [50, 100, 250, 500, 1000, 5000, 10000, 25000, 50000].filter(
             value => value <= configPreviewMaxRows()
         );
     });

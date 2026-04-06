@@ -1749,7 +1749,15 @@
       "label": "Preview",
       "force-editor": "Enforce editor view",
       "auto-view": "Auto view",
-      "view": "View"
+      "view": "View",
+      "rows_truncated": "Showing {shown} of {total} rows. Download the file to view all data.",
+      "pagination_info": "Showing rows {start}-{end} of {total}.",
+      "showing_rows": "Showing rows {start}-{end} of {total}",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "previous": "Previous",
+      "next": "Next",
+      "page_of": "Page {current} of {total}"
     },
     "filter": {
         "update": "Update",

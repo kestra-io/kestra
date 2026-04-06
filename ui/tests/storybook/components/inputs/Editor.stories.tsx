@@ -6,7 +6,13 @@ import Editor from "../../../../src/components/inputs/Editor.vue";
 import {fillExpressionCache} from "../../../../src/services/autoCompletionProvider";
 
 const MOCK_FILTERS = ["upper", "lower", "capitalize", "trim", "date", "number"];
-const MOCK_FUNCTIONS = ["now", "chunk", "max", "min", "range"];
+const MOCK_FUNCTIONS = [
+    {name: "chunk", arguments: []},
+    {name: "max", arguments: []},
+    {name: "min", arguments: []},
+    {name: "now", arguments: []},
+    {name: "range", arguments: []},
+];
 
 const meta: Meta<typeof Editor> = {
     title: "Components/Inputs/Editor",

@@ -1615,8 +1615,16 @@
     "prev_execution": "前回の実行",
     "preview": {
       "auto-view": "自動ビュー",
+      "collapse": "折りたたむ",
+      "expand": "展開",
       "force-editor": "エディタービューを強制する",
       "label": "プレビュー",
+      "next": "次へ",
+      "page_of": "ページ {current} / {total}",
+      "pagination_info": "{total} のうち {start}-{end} 行を表示しています。",
+      "previous": "前へ",
+      "rows_truncated": "{total} 行中 {shown} 行を表示しています。すべてのデータを表示するにはファイルをダウンロードしてください。",
+      "showing_rows": "{total}のうち{start}から{end}の行を表示中",
       "view": "表示"
     },
     "product_tour": "プロダクトツアー",

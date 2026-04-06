@@ -153,11 +153,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, KestraContext.getContext().getAllocatedCpuCores());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
-        setState(ServiceState.CREATED);
     }
 
     @PostConstruct
-    void initMetrics() {
+    void init() {
+        setState(ServiceState.CREATED);
+
         // create metrics to store thread count
         this.metricRegistry.gauge(MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT, MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION, numberOfThreads);
     }

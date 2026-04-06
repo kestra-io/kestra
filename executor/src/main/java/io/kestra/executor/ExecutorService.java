@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
@@ -70,7 +71,7 @@ public class ExecutorService {
     private WorkerGroupMetaStore workerGroupMetaStore;
 
     @Inject
-    private WorkerJobRunningStateStore workerJobRunningStateStore;
+    private Provider<WorkerJobRunningStateStore> workerJobRunningStateStore;
 
     protected FlowMetaStoreInterface flowExecutorInterface;
 
@@ -1214,7 +1215,7 @@ public class ExecutorService {
         executor.withExecution(newExecution, "addWorkerTaskResult");
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
-            workerJobRunningStateStore.deleteByKey(taskRun.getId());
+            workerJobRunningStateStore.get().deleteByKey(taskRun.getId());
             metricRegistry
                 .counter(
                     MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
@@ -1416,7 +1417,7 @@ public class ExecutorService {
     /**
      * Handle flow ExecutionChangedSLA on an executor.
      * If there are SLA violations, it will take care of updating the execution based on the SLA behavior.
-     * 
+     *
      * @see #processViolation(RunContext, ExecutorContext, Violation)
      *      <p>
      *      WARNING: ATM, only the first violation will update the execution.

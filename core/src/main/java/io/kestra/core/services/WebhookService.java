@@ -100,7 +100,6 @@ public class WebhookService {
             .namespace(context.flow().getNamespace())
             .flowId(context.flow().getId())
             .flowRevision(context.flow().getRevision())
-            .inputs(trigger.getInputs())
             .variables(context.flow().getVariables())
             .state(new State())
             .trigger(ExecutionTrigger.of(trigger, output))

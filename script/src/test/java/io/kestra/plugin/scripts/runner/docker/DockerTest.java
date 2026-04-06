@@ -1,6 +1,8 @@
 package io.kestra.plugin.scripts.runner.docker;
 
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -9,6 +11,8 @@ import java.util.regex.Pattern;
 
 import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -37,6 +41,21 @@ import static org.hamcrest.Matchers.is;
 class DockerTest extends AbstractTaskRunnerTest {
     @Inject
     DispatchQueueInterface<LogEntry> workerTaskLogQueue;
+
+    @BeforeEach
+    void assumeDockerAvailable() {
+        String dockerHost = Optional.ofNullable(System.getenv("DOCKER_HOST"))
+            .filter(host -> !host.isBlank())
+            .orElse("unix:///var/run/docker.sock");
+
+        boolean dockerAvailable = !dockerHost.startsWith("unix://") ||
+            Files.exists(Path.of(dockerHost.substring("unix://".length())));
+
+        Assumptions.assumeTrue(
+            dockerAvailable,
+            "Skipping Docker tests: Docker host not available: " + dockerHost
+        );
+    }
 
     @Override
     protected TaskRunner<?> taskRunner() {

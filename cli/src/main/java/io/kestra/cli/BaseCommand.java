@@ -1,11 +1,11 @@
 package io.kestra.cli;
 
+import java.text.MessageFormat;
+
 import ch.qos.logback.classic.LoggerContext;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-
-import java.text.MessageFormat;
 
 @Command(
     mixinStandardHelpOptions = true,
@@ -13,13 +13,13 @@ import java.text.MessageFormat;
 )
 public abstract class BaseCommand {
 
-    @Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
+    @Option(names = { "-v", "--verbose" }, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
     protected boolean[] verbose = new boolean[0];
 
-    @Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
+    @Option(names = { "-l", "--log-level" }, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
     protected LogLevel logLevel = LogLevel.INFO;
 
-    @Option(names = {"--internal-log"}, description = "Change also log level for internal log")
+    @Option(names = { "--internal-log" }, description = "Change also log level for internal log")
     private boolean internalLog = false;
 
     public enum LogLevel {
@@ -40,11 +40,10 @@ public abstract class BaseCommand {
         ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
             .getLoggerList()
             .stream()
-            .filter(logger -> (
-                this.internalLog && (
-                    logger.getName().startsWith("io.kestra") &&
-                        !logger.getName().startsWith("io.kestra.ee.runner.kafka.services"))
-            ))
+            .filter(
+                logger -> (this.internalLog && (logger.getName().startsWith("io.kestra") &&
+                    !logger.getName().startsWith("io.kestra.ee.runner.kafka.services")))
+            )
             .forEach(
                 logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))
             );

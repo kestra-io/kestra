@@ -1,19 +1,5 @@
 package io.kestra.core.models.tasks.runners;
 
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -23,6 +9,22 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -30,13 +32,14 @@ import static org.hamcrest.Matchers.*;
 @KestraTest
 class ScriptServiceTest {
     public static final Pattern COMMAND_PATTERN_CAPTURE_LOCAL_PATH = Pattern.compile("my command with an internal storage file: (.*)");
-    @Inject private TestRunContextFactory runContextFactory;
+    @Inject
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void replaceInternalStorage() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
-        var command  = ScriptService.replaceInternalStorage(runContext, null, false);
+        var command = ScriptService.replaceInternalStorage(runContext, null, false);
         assertThat(command).isEqualTo("");
 
         command = ScriptService.replaceInternalStorage(runContext, "my command", false);

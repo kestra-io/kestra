@@ -1,17 +1,19 @@
 package io.kestra.core.http.client.apache;
 
-import io.kestra.core.models.executions.metrics.Counter;
-import io.kestra.core.runners.RunContext;
-import lombok.AllArgsConstructor;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.runners.RunContext;
+
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class RunContextResponseInterceptor implements HttpResponseInterceptor {
@@ -19,8 +21,9 @@ public class RunContextResponseInterceptor implements HttpResponseInterceptor {
 
     @Override
     public void process(HttpResponse response, EntityDetails entity, HttpContext context) throws HttpException, IOException {
-        if (context instanceof HttpClientContext httpClientContext &&
-            response instanceof BasicClassicHttpResponse httpResponse
+        if (
+            context instanceof HttpClientContext httpClientContext &&
+                response instanceof BasicClassicHttpResponse httpResponse
         ) {
             try {
                 runContext.logger().debug(
@@ -36,32 +39,42 @@ public class RunContextResponseInterceptor implements HttpResponseInterceptor {
             String[] tags = this.tags(httpClientContext.getRequest(), httpResponse);
 
             if (httpResponse.getEntity() != null) {
-                runContext.metric(Counter.of(
-                    "response.length", httpResponse.getEntity().getContentLength(),
-                    tags
-                ));
+                runContext.metric(
+                    Counter.of(
+                        "response.length", httpResponse.getEntity().getContentLength(),
+                        tags
+                    )
+                );
             }
 
-            runContext.metric(Counter.of(
-                "request.count",
-                httpClientContext.getEndpointDetails().getRequestCount(),
-                tags
-            ));
-            runContext.metric(Counter.of(
-                "request.bytes",
-                httpClientContext.getEndpointDetails().getSentBytesCount(),
-                tags
-            ));
-            runContext.metric(Counter.of(
-                "response.bytes",
-                httpClientContext.getEndpointDetails().getReceivedBytesCount(),
-                tags
-            ));
-            runContext.metric(Counter.of(
-                "response.count",
-                httpClientContext.getEndpointDetails().getResponseCount(),
-                tags
-            ));
+            runContext.metric(
+                Counter.of(
+                    "request.count",
+                    httpClientContext.getEndpointDetails().getRequestCount(),
+                    tags
+                )
+            );
+            runContext.metric(
+                Counter.of(
+                    "request.bytes",
+                    httpClientContext.getEndpointDetails().getSentBytesCount(),
+                    tags
+                )
+            );
+            runContext.metric(
+                Counter.of(
+                    "response.bytes",
+                    httpClientContext.getEndpointDetails().getReceivedBytesCount(),
+                    tags
+                )
+            );
+            runContext.metric(
+                Counter.of(
+                    "response.count",
+                    httpClientContext.getEndpointDetails().getResponseCount(),
+                    tags
+                )
+            );
         } else {
             runContext.logger()
                 .warn(
@@ -73,11 +86,13 @@ public class RunContextResponseInterceptor implements HttpResponseInterceptor {
     }
 
     protected String[] tags(HttpRequest request, ClassicHttpResponse response) {
-        ArrayList<String> tags = new ArrayList<>(Arrays.asList(
-            "request.method", request.getMethod(),
-            "request.scheme", request.getScheme(),
-            "request.hostname", request.getAuthority().getHostName()
-        ));
+        ArrayList<String> tags = new ArrayList<>(
+            Arrays.asList(
+                "request.method", request.getMethod(),
+                "request.scheme", request.getScheme(),
+                "request.hostname", request.getAuthority().getHostName()
+            )
+        );
 
         if (response != null) {
             tags.addAll(

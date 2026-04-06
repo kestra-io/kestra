@@ -39,6 +39,7 @@ dependencies {
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
     testImplementation project(':worker')
+    testImplementation project(':indexer')
     testImplementation "org.wiremock:wiremock-jetty12"
     testImplementation "org.awaitility:awaitility"
     testImplementation "io.opentelemetry:opentelemetry-sdk-testing"
@@ -46,6 +47,7 @@ dependencies {
     testImplementation project(':tests')
     testImplementation project(':jdbc')
     testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':queue').sourceSets.test.output
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
@@ -74,4 +76,8 @@ tasks.named('jar', Jar) {
 
 tasks.named('compileJava') {
     outputs.file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
+}
+
+tasks.withType(Test).configureEach { Test t ->
+    maxHeapSize = '5g'
 }

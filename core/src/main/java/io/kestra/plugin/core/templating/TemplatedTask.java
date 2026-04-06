@@ -2,6 +2,7 @@ package io.kestra.plugin.core.templating;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -11,6 +12,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -35,9 +37,17 @@ import lombok.experimental.SuperBuilder;
     examples = {
         @Example(
             code = """
-                spec: |
-                  type: io.kestra.plugin.core.http.Download
-                  {{ task.property }}: {{ task.value }}
+                id: templated_task
+                namespace: company.team
+                variables:
+                  property: uri
+                  value: https://kestra.io
+                tasks:
+                  - id: templated_task
+                    type: io.kestra.plugin.core.templating.TemplatedTask
+                    spec: |
+                      type: io.kestra.plugin.core.http.Download
+                      {{ vars.property }}: {{ vars.value }}
                 """
         )
     },

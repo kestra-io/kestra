@@ -1,27 +1,30 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.not;
 
 @MicronautTest
 @WireMockTest(httpPort = 28181)
@@ -50,10 +53,13 @@ class BlueprintControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void shouldFindSearchBlueprints(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints.*"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBodyFile("blueprints.json"))
+        stubFor(
+            get(urlMatching("/v1/blueprints.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("blueprints.json")
+                )
         );
 
         PagedResults<BlueprintController.ApiBlueprintItem> blueprintsWithTotal = client.toBlocking().retrieve(
@@ -73,15 +79,20 @@ class BlueprintControllerTest {
         assertThat(blueprints.get(1).getId()).isEqualTo("2");
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_SEARCH_KIND_FLOW , KIND_FLOW, versionProvider.getVersion()) + "?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false")));
+        wireMock.verifyThat(
+            getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_SEARCH_KIND_FLOW, KIND_FLOW, versionProvider.getVersion()) + "?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false"))
+        );
     }
 
     @Test
     void shouldGetSourceForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/source.*"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBodyFile("blueprint-flow.yaml"))
+        stubFor(
+            get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/source.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("blueprint-flow.yaml")
+                )
         );
 
         String blueprintFlow = client.toBlocking().retrieve(
@@ -92,16 +103,19 @@ class BlueprintControllerTest {
         assertThat(blueprintFlow, not(emptyOrNullString()));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_SOURCE, KIND_FLOW,  "id_1", versionProvider.getVersion()))));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_SOURCE, KIND_FLOW, "id_1", versionProvider.getVersion()))));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void shouldGetGraphForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/graph.*"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBodyFile("blueprint-graph.json"))
+        stubFor(
+            get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/graph.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("blueprint-graph.json")
+                )
         );
 
         Map<String, Object> graph = client.toBlocking().retrieve(
@@ -123,10 +137,13 @@ class BlueprintControllerTest {
 
     @Test
     void shouldGetDetailsForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1.*"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBodyFile("blueprint.json"))
+        stubFor(
+            get(urlMatching("/v1/blueprints/kinds/.*/id_1.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("blueprint.json")
+                )
         );
 
         BlueprintController.ApiBlueprintItemWithSource blueprint = client.toBlocking().retrieve(
@@ -149,10 +166,13 @@ class BlueprintControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void shouldGetTags(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints/.*/tags.*"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBodyFile("blueprint-tags.json"))
+        stubFor(
+            get(urlMatching("/v1/blueprints/.*/tags.*"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("blueprint-tags.json")
+                )
         );
 
         List<BlueprintController.ApiBlueprintTagItem> blueprintTags = client.toBlocking().retrieve(

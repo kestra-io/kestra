@@ -697,6 +697,10 @@
       "drag to reorder columns": "Arrastrar para reordenar columnas",
       "edit filter": "Editar filtro",
       "empty": "Todavía no tienes ningún filtro guardado.",
+      "enabled": {
+        "description": "Filtrar por habilitado",
+        "label": "Habilitado"
+      },
       "end_date": "Fecha de finalización",
       "enter description": "Ingrese la descripción del filtro",
       "enter label": "Ingrese etiqueta de filtro",
@@ -756,7 +760,10 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
-      "name": "Nombre",
+      "name": {
+        "description": "Filtrar por nombre",
+        "label": "Nombre"
+      },
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -948,6 +955,10 @@
         "enabled": "Habilitado",
         "label": "Estado del Trigger"
       },
+      "type": {
+        "description": "Filtrar por tipo",
+        "label": "Tipo"
+      },
       "update": "Actualizar",
       "username": {
         "description": "Filtrar por nombre de usuario",
@@ -1121,6 +1132,7 @@
     "labels": "Etiquetas",
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} en los últimos {days} días",
+    "last evaluation date": "Última fecha de evaluación",
     "last execution date": "Fecha de última ejecución",
     "last execution state": "Último estado",
     "last execution status": "Último estado de ejecución",
@@ -1328,13 +1340,9 @@
       },
       "sections": {
         "afterExecution": "Después de la Ejecución",
-        "connection": "Propiedades de conexión",
         "deprecated": "Propiedades obsoletas",
         "errors": "Manejadores de Errores",
         "finally": "Finalmente",
-        "general": "Propiedades generales",
-        "main": "Propiedades principales",
-        "optional": "Propiedades opcionales",
         "pluginDefaults": "Predeterminados del Plugin",
         "tasks": "Tareas",
         "triggers": "Disparadores"
@@ -1607,8 +1615,16 @@
     "prev_execution": "Ejecución anterior",
     "preview": {
       "auto-view": "Vista automática",
+      "collapse": "Contraer",
+      "expand": "Desplegar",
       "force-editor": "Forzar vista del editor",
       "label": "Vista previa",
+      "next": "Siguiente",
+      "page_of": "Página {current} de {total}",
+      "pagination_info": "Mostrando filas {start}-{end} de {total}.",
+      "previous": "Anterior",
+      "rows_truncated": "Mostrando {shown} de {total} filas. Descargue el archivo para ver todos los datos.",
+      "showing_rows": "Mostrando filas {start}-{end} de {total}",
       "view": "Ver"
     },
     "product_tour": "Recorrido del Producto",
@@ -1636,6 +1652,7 @@
     "replay from beginning tooltip": "Crear una ejecución similar comenzando desde el principio",
     "replay from task tooltip": "Crear una ejecución similar comenzando desde la tarea <code>{taskId}</code>",
     "replay inputs": "Entradas",
+    "replay inputs new required": "Esta revisión tiene inputs. Se le pedirá que los complete.",
     "replay latest revision": "Repetir usando la última revisión",
     "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
     "replay using": "Repetir usando",
@@ -1646,6 +1663,7 @@
     "restart": "Reiniciar",
     "restart change revision": "Puedes cambiar la revisión que se usará para la nueva ejecución.",
     "restart confirm": "¿Estás seguro de reiniciar la ejecución <code>{id}</code>?",
+    "restart execution title": "Reiniciar ejecución",
     "restart latest revision": "Reiniciar última revisión",
     "restart tooltip": "Reiniciar la ejecución desde la tarea <code>{state}</code>",
     "restart trigger": {
@@ -1898,6 +1916,7 @@
     "start datetime": "Fecha y hora de inicio",
     "started date": "Fecha de inicio",
     "state": "Estado",
+    "state updated date": "Fecha de actualización del estado",
     "state_history": "Historial de estado",
     "stats": "Estadísticas",
     "steps": "Pasos",

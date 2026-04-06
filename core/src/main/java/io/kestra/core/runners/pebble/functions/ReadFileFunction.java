@@ -1,23 +1,26 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.StorageContext;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import jakarta.inject.Singleton;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.storages.StorageContext;
+
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import jakarta.inject.Singleton;
+
 @Singleton
 public class ReadFileFunction extends AbstractFileFunction {
+    public static final String NAME = "read";
     public static final String VERSION = "version";
 
     private static final String ERROR_MESSAGE = "The 'read' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
@@ -28,6 +31,15 @@ public class ReadFileFunction extends AbstractFileFunction {
             super.getArgumentNames().stream(),
             Stream.of(VERSION)
         ).toList();
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(PATH, "'a/namespace/file'");
+        defaults.put(NAMESPACE, "flow.namespace");
+        defaults.put(VERSION, null);
+        return defaults;
     }
 
     @Override
@@ -57,9 +69,9 @@ public class ReadFileFunction extends AbstractFileFunction {
 
         if (args.containsKey(VERSION)) {
             return namespaceStorage.getFileContent(
-                    NamespaceFile.normalize(Path.of(path.getPath())),
-                    Integer.parseInt(args.get(VERSION).toString())
-                );
+                NamespaceFile.normalize(Path.of(path.getPath())),
+                Integer.parseInt(args.get(VERSION).toString())
+            );
         }
 
         return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath())));

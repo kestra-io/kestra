@@ -1,18 +1,20 @@
 package io.kestra.plugin.core.kv;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVEntry;
-import io.kestra.core.storages.kv.KVStore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.util.List;
 
 @SuperBuilder
 @Getter
@@ -31,7 +33,7 @@ public class Key extends KvPurgeBehavior {
     private boolean expiredOnly = true;
 
     @Override
-    protected List<KVEntry> entriesToPurge(KVStore kvStore) throws IOException {
-        return kvStore.listAll().stream().filter(kv -> !expiredOnly || (kv.expirationDate() != null && kv.expirationDate().isBefore(Instant.now()))).toList();
+    protected List<KVEntry> entriesToPurge(String tenant, String namespace, KVStoreService service) throws IOException {
+        return service.listAll(tenant, namespace).stream().filter(kv -> !expiredOnly || (kv.expirationDate() != null && kv.expirationDate().isBefore(Instant.now()))).toList();
     }
 }

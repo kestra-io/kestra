@@ -1,14 +1,16 @@
 package io.kestra.core.models.executions;
 
+import java.time.Duration;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Gauge;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.serializers.JacksonMapper;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

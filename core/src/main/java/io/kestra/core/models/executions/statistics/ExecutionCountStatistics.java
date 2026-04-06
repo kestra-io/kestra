@@ -1,21 +1,21 @@
 package io.kestra.core.models.executions.statistics;
 
-import io.kestra.core.models.flows.State;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import io.kestra.core.models.flows.State;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * ExecutionCounts.
  *
- * @param counts    The execution counts by state.
- * @param total     The total execution count.
+ * @param counts The execution counts by state.
+ * @param total The total execution count.
  */
 public record ExecutionCountStatistics(
     @NotNull Map<State.Type, Long> counts,
-    @NotNull Long total
-) implements Comparable<ExecutionCountStatistics> {
+    @NotNull Long total) implements Comparable<ExecutionCountStatistics> {
 
     private static final Map<State.Type, Long> DEFAULT_COUNTS = Map.ofEntries(
         Map.entry(State.Type.CREATED, 0L),

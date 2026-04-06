@@ -1,5 +1,14 @@
 package io.kestra.core.docs;
 
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.Helpers;
 import io.kestra.core.models.property.DynamicPropertyExampleTask;
 import io.kestra.core.models.tasks.Task;
@@ -10,14 +19,6 @@ import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.plugin.core.trigger.Schedule;
-import org.junit.jupiter.api.Test;
-
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +27,8 @@ class ClassPluginDocumentationTest {
     @SuppressWarnings("unchecked")
     @Test
     void tasks() throws URISyntaxException {
-        Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
@@ -43,7 +45,8 @@ class ClassPluginDocumentationTest {
             assertThat(templatePlugin.getTasks().size()).isEqualTo(1);
 
             PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(
-                templatePlugin, templatePlugin.getTasks().getFirst(), Task.class, null);
+                templatePlugin, templatePlugin.getTasks().getFirst(), Task.class, null
+            );
             ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, templatePlugin.version(), false);
 
             assertThat(doc.getDocExamples().size()).isEqualTo(2);
@@ -61,7 +64,8 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getDefs().size()).isEqualTo(5);
 
             // enum
-            Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput")).get("properties")).get("childEnum");
+            Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs()
+                .get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput")).get("properties")).get("childEnum");
             assertThat(((List<String>) enumProperties.get("enum")).size()).isEqualTo(2);
             assertThat(((List<String>) enumProperties.get("enum"))).containsExactlyInAnyOrder("VALUE_1", "VALUE_2");
 
@@ -100,7 +104,8 @@ class ClassPluginDocumentationTest {
     @SuppressWarnings("unchecked")
     @Test
     void trigger() throws URISyntaxException {
-        Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
@@ -109,7 +114,7 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
-            assertThat(doc.getDefs()).hasSize(23);
+            assertThat(doc.getDefs().size()).isEqualTo(19);
             assertThat(doc.getDocLicense()).isNull();
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type")).isEqualTo("object");
@@ -119,7 +124,8 @@ class ClassPluginDocumentationTest {
 
     @Test
     void taskRunner() throws URISyntaxException {
-        Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
@@ -138,7 +144,8 @@ class ClassPluginDocumentationTest {
     @Test
     @SuppressWarnings("unchecked")
     void dynamicProperty() throws URISyntaxException {
-        Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) ->
+        {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
@@ -159,7 +166,7 @@ class ClassPluginDocumentationTest {
             assertThat(anyOf.getFirst().get("type")).isEqualTo("integer");
             assertThat((Boolean) anyOf.getFirst().get("$dynamic")).isTrue();
             assertThat(anyOf.get(1).get("type")).isEqualTo("string");
-//            assertThat(anyOf.get(1).get("pattern"), is(".*{{.*}}.*"));
+            //            assertThat(anyOf.get(1).get("pattern"), is(".*{{.*}}.*"));
 
             Map<String, Object> withDefault = (Map<String, Object>) properties.get("withDefault");
             assertThat(withDefault.get("type")).isEqualTo("string");

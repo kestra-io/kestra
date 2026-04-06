@@ -1,16 +1,16 @@
 package io.kestra.core.reporter;
 
+import java.time.Clock;
+import java.time.Instant;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Clock;
-import java.time.Instant;
-
 @Singleton
-@Requires(property = "kestra.anonymous-usage-report.enabled", value = "true")
+@Requires(property = "kestra." + UsageReportConfig.ANONYMOUS_USAGE_REPORT + ".enabled", value = "true")
 @Requires(property = "kestra.server-type")
 @Slf4j
 public class ReportableScheduler {
@@ -33,7 +33,8 @@ public class ReportableScheduler {
             if (r.isEnabled() && r.schedule().shouldRun(now)) {
                 try {
                     Object value = r.report(now);
-                    if (value != null) sender.send(now, r.type(), value);
+                    if (value != null)
+                        sender.send(now, r.type(), value);
                 } catch (Exception e) {
                     log.debug("Failed to send report for event-type '{}'", r.type(), e);
                 }

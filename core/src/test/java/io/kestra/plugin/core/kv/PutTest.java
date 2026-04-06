@@ -1,5 +1,13 @@
 package io.kestra.plugin.core.kv;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -8,14 +16,8 @@ import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,10 +31,14 @@ class PutTest {
     @Test
     void shouldReplaceStringValue() throws Exception {
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-            "key", TEST_KV_KEY,
-            "namespace", namespaceId
-        )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
         Put put = this.newPutTask(namespaceId, List.of(Map.of("value", "new-value")));
 
@@ -48,89 +54,125 @@ class PutTest {
     @Test
     void shouldMergeJsonFromEntryList() throws Exception {
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-            "key", TEST_KV_KEY,
-            "namespace", namespaceId
-        )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
-        Put put = this.newPutTask(namespaceId, List.of(
-            Map.of("key", "def", "value", 234),
-            Map.of("key", "nested.b", "value", 2)
-        ));
+        Put put = this.newPutTask(
+            namespaceId, List.of(
+                Map.of("key", "def", "value", 234),
+                Map.of("key", "nested.b", "value", 2)
+            )
+        );
 
         final KVStore kv = runContext.namespaceKv(namespaceId);
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, Map.of(
-            "abc", 123,
-            "nested", Map.of("a", 1)
-        )));
+        kv.put(
+            TEST_KV_KEY, new KVValueAndMetadata(
+                null, Map.of(
+                    "abc", 123,
+                    "nested", Map.of("a", 1)
+                )
+            )
+        );
 
         put.run(runContext);
 
-        assertThat(kv.getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo(Map.of(
-            "abc", 123,
-            "def", 234,
-            "nested", Map.of("a", 1, "b", 2)
-        ));
+        assertThat(kv.getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo(
+            Map.of(
+                "abc", 123,
+                "def", 234,
+                "nested", Map.of("a", 1, "b", 2)
+            )
+        );
     }
 
     @Test
     void shouldMergeJsonFromMap() throws Exception {
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-            "key", TEST_KV_KEY,
-            "namespace", namespaceId
-        )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
-        Put put = this.newPutTask(namespaceId, Map.of(
-            "def", 234,
-            "nested", Map.of("b", 2)
-        ));
+        Put put = this.newPutTask(
+            namespaceId, Map.of(
+                "def", 234,
+                "nested", Map.of("b", 2)
+            )
+        );
 
         final KVStore kv = runContext.namespaceKv(namespaceId);
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, Map.of(
-            "abc", 123,
-            "nested", Map.of("a", 1)
-        )));
+        kv.put(
+            TEST_KV_KEY, new KVValueAndMetadata(
+                null, Map.of(
+                    "abc", 123,
+                    "nested", Map.of("a", 1)
+                )
+            )
+        );
 
         put.run(runContext);
 
-        assertThat(kv.getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo(Map.of(
-            "abc", 123,
-            "def", 234,
-            "nested", Map.of("a", 1, "b", 2)
-        ));
+        assertThat(kv.getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo(
+            Map.of(
+                "abc", 123,
+                "def", 234,
+                "nested", Map.of("a", 1, "b", 2)
+            )
+        );
     }
 
     @Test
     void shouldCreateJsonOnMissingKeyByDefault() throws Exception {
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-            "key", TEST_KV_KEY,
-            "namespace", namespaceId
-        )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
-        Put put = this.newPutTask(namespaceId, List.of(
-            Map.of("key", "abc", "value", 123),
-            Map.of("key", "nested.def", "value", 234)
-        ));
+        Put put = this.newPutTask(
+            namespaceId, List.of(
+                Map.of("key", "abc", "value", 123),
+                Map.of("key", "nested.def", "value", 234)
+            )
+        );
 
         final KVStore kv = runContext.namespaceKv(namespaceId);
 
         put.run(runContext);
 
-        assertThat(kv.getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo(Map.of(
-            "abc", 123,
-            "nested", Map.of("def", 234)
-        ));
+        assertThat(kv.getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo(
+            Map.of(
+                "abc", 123,
+                "nested", Map.of("def", 234)
+            )
+        );
     }
 
     @Test
     void shouldFailWhenMissingKeyAndErrorOnMissing() {
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-            "key", TEST_KV_KEY,
-            "namespace", namespaceId
-        )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
         Put put = this.newPutTask(namespaceId, List.of(Map.of("value", "new-value")))
             .toBuilder()
@@ -144,14 +186,20 @@ class PutTest {
     @Test
     void shouldFailWhenApplyingKeyedUpdateOnNonJsonValue() throws Exception {
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
-            "key", TEST_KV_KEY,
-            "namespace", namespaceId
-        )));
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", namespaceId
+                )
+            )
+        );
 
-        Put put = this.newPutTask(namespaceId, List.of(
-            Map.of("key", "abc", "value", 123)
-        ));
+        Put put = this.newPutTask(
+            namespaceId, List.of(
+                Map.of("key", "abc", "value", 123)
+            )
+        );
 
         final KVStore kv = runContext.namespaceKv(namespaceId);
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, "plain-string"));

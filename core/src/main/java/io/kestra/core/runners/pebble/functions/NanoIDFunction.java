@@ -1,15 +1,16 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.security.SecureRandom;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NanoIDFunction implements Function {
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
+public class NanoIDFunction implements KestraFunction {
+    public static final String NAME = "nanoId";
 
     private static final int DEFAULT_LENGTH = 21;
     private static final char[] DEFAULT_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_".toCharArray();
@@ -36,31 +37,39 @@ public class NanoIDFunction implements Function {
 
     private static int parseLength(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
         var value = (Long) args.get(LENGTH);
-        if(value > MAX_LENGTH) {
+        if (value > MAX_LENGTH) {
             throw new PebbleException(
                 null,
                 "The 'nanoId()' function field 'length' must be lower than: " + MAX_LENGTH,
                 lineNumber,
-                self.getName());
+                self.getName()
+            );
         }
         return Math.toIntExact(value);
     }
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of(LENGTH,ALPHABET);
+        return List.of(LENGTH, ALPHABET);
     }
 
-    String createNanoID(int length, char[] alphabet){
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(LENGTH, null);
+        defaults.put(ALPHABET, null);
+        return defaults;
+    }
+
+    String createNanoID(int length, char[] alphabet) {
         final char[] data = new char[length];
         final byte[] bytes = new byte[length];
-        final int mask = alphabet.length-1;
+        final int mask = alphabet.length - 1;
         secureRandom.nextBytes(bytes);
         for (int i = 0; i < length; ++i) {
             data[i] = alphabet[bytes[i] & mask];
         }
         return String.valueOf(data);
     }
-
 
 }

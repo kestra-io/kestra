@@ -1,19 +1,20 @@
 package io.kestra.plugin.core.storage;
 
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.Optional;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.Rethrow.throwSupplier;
@@ -55,7 +56,6 @@ public class Write extends Task implements RunnableTask<Write.Output> {
 
     @Schema(title = "The file extension")
     private Property<String> extension;
-
 
     @Override
     public Write.Output run(RunContext runContext) throws Exception {

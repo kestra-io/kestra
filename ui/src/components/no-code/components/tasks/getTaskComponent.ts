@@ -18,6 +18,7 @@ export interface Schema{
     const?: string;
     format?: string;
     $language: string;
+    $secret?: boolean;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
@@ -28,13 +29,17 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         return "enum";
     }
 
+    if (property.$secret === true) {
+        return "secret";
+    }
+
     if (Object.prototype.hasOwnProperty.call(property, "$ref")) {
         if (property.$ref.includes("tasks.Task")) {
             return "task"
         }
 
         if (property.$ref.includes("tasks.runners.TaskRunner")) {
-            return "task-runner"
+            return "task"
         }
 
         if (property.$ref.includes("io.kestra.preload")) {
@@ -58,7 +63,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         }
 
         // for dag tasks
-        if (property.anyOf.length > 10) {
+        if (property.anyOf.length > 10 || key === "taskRunner") {
             return "task"
         }
         return "any-of";

@@ -1,16 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class CurrentEachOutputFunction implements Function {
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
+public class CurrentEachOutputFunction implements KestraFunction {
+    public static final String NAME = "currentEachOutput";
 
     @SuppressWarnings("unchecked")
     @Override
@@ -29,7 +27,7 @@ public class CurrentEachOutputFunction implements Function {
             for (Map<?, ?> parent : parents) {
                 Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
                 if (taskrun != null) {
-                    if(outputs.get(taskrun.get("value")) == null) {
+                    if (outputs.get(taskrun.get("value")) == null) {
                         return null;
                     }
                     outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
@@ -44,5 +42,10 @@ public class CurrentEachOutputFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of("outputs");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of("outputs", "outputs.forEach");
     }
 }

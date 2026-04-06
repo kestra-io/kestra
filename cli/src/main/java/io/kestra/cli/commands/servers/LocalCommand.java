@@ -1,14 +1,16 @@
 package io.kestra.cli.commands.servers;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.ServerType;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import picocli.CommandLine;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.models.ServerType;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "local",

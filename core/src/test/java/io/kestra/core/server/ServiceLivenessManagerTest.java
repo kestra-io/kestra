@@ -1,9 +1,12 @@
 package io.kestra.core.server;
 
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.models.ServerType;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.Network;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,19 +19,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.models.ServerType;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.Network;
 
 import static io.kestra.core.server.ServiceStateTransition.Result.ABORTED;
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
 import static org.mockito.Mockito.when;
 
-@ExtendWith({MockitoExtension.class})
+@ExtendWith({ MockitoExtension.class })
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ServiceLivenessManagerTest {
 
@@ -66,7 +67,7 @@ public class ServiceLivenessManagerTest {
         this.serviceLivenessManager = new ServiceLivenessManager(
             config,
             new ServiceRegistry(),
-            new LocalServiceStateFactory(config,  new ServerInstanceFactory(context, null)),
+            new LocalServiceStateFactory(config, new ServerInstanceFactory(context, null)),
             new ServerInstanceFactory(kestraContext, null),
             serviceLivenessUpdater,
             onStateTransitionFailureCallback
@@ -164,6 +165,7 @@ public class ServiceLivenessManagerTest {
         return new Service() {
 
             private final String id = IdUtils.create();
+
             @Override
             public String getId() {
                 return id;

@@ -1,23 +1,24 @@
 package io.kestra.core.models.flows;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.core.annotation.Introspected;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 @EqualsAndHashCode
 public class FlowWithException extends FlowWithSource {

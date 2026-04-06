@@ -335,6 +335,24 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void deleteByQueryWithBatchSize() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+        for (int i = 0; i < 5; i++) {
+            logRepository.save(logEntry(tenant, Level.INFO, executionId).build());
+        }
+
+        // When: delete with a small batchSize to exercise multiple batches
+        int deleted = logRepository.deleteByQuery(tenant, "io.kestra.unittest", "flowId", null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, 2);
+
+        // Then: all 5 entries are deleted across multiple batches
+        assertThat(deleted).isEqualTo(5);
+        var remaining = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(1, 50));
+        assertThat(remaining.size()).isZero();
+    }
+
+    @Test
     void findAllAsync() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO).build());

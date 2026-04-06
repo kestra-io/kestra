@@ -105,4 +105,17 @@ public interface LogRepositoryInterface extends IndexingRepository<LogEntry>, Qu
 
     int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs,
         boolean purgeNonExecutionLogs);
+
+    /**
+     * Deletes log entries matching the given criteria in batches of at most {@code batchSize} rows per transaction.
+     * Non-JDBC backends that do not support batching delegate to the unbatched variant.
+     *
+     * @param batchSize the maximum number of rows deleted per transaction
+     * @return the total number of deleted log entries
+     */
+    default int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean purgeExecutionLogs,
+        boolean purgeNonExecutionLogs, int batchSize) {
+        return deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
+    }
 }

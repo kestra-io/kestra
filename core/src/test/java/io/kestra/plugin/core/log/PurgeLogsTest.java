@@ -130,6 +130,31 @@ class PurgeLogsTest {
         assertThat((int) outputs.get("nonExecutionLogsCount")).isPositive();
     }
 
+    @Test
+    @LoadFlows("flows/valids/purge_logs_with_batch_size.yaml")
+    void run_with_batch_size() throws Exception {
+        // Given: multiple log entries to ensure batching is exercised across more than one batch
+        for (int i = 0; i < 5; i++) {
+            logRepository.save(
+                LogEntry.builder()
+                    .namespace("namespace")
+                    .flowId("flowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now())
+                    .level(Level.INFO)
+                    .message("Log entry " + i)
+                    .build()
+            );
+        }
+
+        // When
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_with_batch_size");
+
+        // Then: all entries are deleted across multiple small batches
+        assertTrue(execution.getState().isSuccess());
+        assertThat((int) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("count")).isGreaterThanOrEqualTo(5);
+    }
+
     @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
     @ParameterizedTest
     @MethodSource("buildArguments")

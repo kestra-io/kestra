@@ -29,6 +29,7 @@ import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudRepository<LogEntry> implements LogRepositoryInterface {
 
@@ -331,46 +332,87 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, int batchSize) {
+        Condition condition = buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
+
+        Integer deleted = Flux.<String> create(
+            emitter -> this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration ->
+                {
+                    DSLContext context = DSL.using(configuration);
+                    try (
+                        var stream = context
+                            .select(KEY_FIELD)
+                            .from(this.jdbcRepository.getTable())
+                            .where(condition)
+                            .fetchSize(FETCH_SIZE)
+                            .stream()
+                    ) {
+                        stream.map(r -> r.get(KEY_FIELD)).forEach(emitter::next);
+                    } finally {
+                        emitter.complete();
+                    }
+                }),
+            FluxSink.OverflowStrategy.BUFFER
+        )
+            .buffer(batchSize)
+            .map(
+                keys -> this.jdbcRepository
+                    .getDslContextWrapper()
+                    .transactionResult(
+                        configuration -> DSL.using(configuration)
+                            .delete(this.jdbcRepository.getTable())
+                            .where(KEY_FIELD.in(keys))
+                            .execute()
+                    )
+            )
+            .reduce(Integer::sum)
+            .block();
+
+        return deleted != null ? deleted : 0;
+    }
+
+    @Override
+    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSLContext context = DSL.using(configuration);
-
-                var delete = context
+            .transactionResult(
+                configuration -> DSL.using(configuration)
                     .delete(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
+                    .where(buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs))
+                    .execute()
+            );
+    }
 
-                if (startDate != null) {
-                    delete = delete.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
-                }
+    private Condition buildDeleteCondition(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
+        Condition condition = this.defaultFilter(tenantId)
+            .and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
 
-                if (namespace != null) {
-                    delete = delete.and(field("namespace").eq(namespace));
-                }
+        if (startDate != null) {
+            condition = condition.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
+        }
+        if (namespace != null) {
+            condition = condition.and(field("namespace").eq(namespace));
+        }
+        if (flowId != null) {
+            condition = condition.and(field("flow_id").eq(flowId));
+        }
+        if (executionId != null) {
+            condition = condition.and(field("execution_id").eq(executionId));
+        }
+        if (logLevels != null) {
+            condition = condition.and(levelsCondition(logLevels));
+        }
+        if (purgeExecutionLogs && !purgeNonExecutionLogs) {
+            condition = condition.and(field("execution_id").isNotNull());
+        } else if (purgeNonExecutionLogs && !purgeExecutionLogs) {
+            condition = condition.and(field("execution_id").isNull());
+        }
 
-                if (flowId != null) {
-                    delete = delete.and(field("flow_id").eq(flowId));
-                }
-
-                if (executionId != null) {
-                    delete = delete.and(field("execution_id").eq(executionId));
-                }
-
-                if (logLevels != null) {
-                    delete = delete.and(levelsCondition(logLevels));
-                }
-
-                if (purgeExecutionLogs && !purgeNonExecutionLogs) {
-                    delete = delete.and(field("execution_id").isNotNull());
-                } else if (purgeNonExecutionLogs && !purgeExecutionLogs) {
-                    delete = delete.and(field("execution_id").isNull());
-                }
-
-                return delete.execute();
-            });
+        return condition;
     }
 
     @Override

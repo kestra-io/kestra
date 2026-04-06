@@ -23,4 +23,6 @@ message ConnectResponse {
   RequestOrResponseHeader header = 1;
   // The resolved worker group name (may be empty if no group is resolved)
   string workerGroup = 2;
+  // Serialized JSON configuration propagated from the controller to the worker
+  bytes worker_configs = 3;
 }

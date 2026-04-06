@@ -100,7 +100,7 @@
 
             if (consolidatedType?.enum) {
                 const val = consolidatedType.enum[0];
-                    
+
                 acc.set(val, def.title ?? val);
             }
             return acc
@@ -108,9 +108,17 @@
     })
 
     const taskModels = computed(() => {
-        return (Array.from(taskModelsSets.value) as [string, string][])
-            .map(([cls, title]) => ({cls, title}))
-            .sort((a, b) => a.cls.localeCompare(b.cls));
+        const entries = blockType === "pluginDefaults"
+            ? (() => {
+                const deprecated = new Set(pluginsStore.deprecatedTypes);
+                return pluginsStore.allTypes
+                    .filter((cls: string) => !deprecated.has(cls) && rootDefinitions.value?.[cls])
+                    .map((cls: string) => ({cls, title: rootDefinitions.value?.[cls]?.title ?? cls}));
+            })()
+            : (Array.from(taskModelsSets.value) as [string, string][])
+                .map(([cls, title]) => ({cls, title}));
+
+        return entries.sort((a, b) => a.cls.localeCompare(b.cls));
     });
 
     const hasIcons = computed(() => {
@@ -187,3 +195,4 @@
     }
 
 </style>
+

@@ -111,7 +111,7 @@ class JsonSchemaGeneratorTest {
             assertThat((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
             assertThat(((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("message").get("markdownDescription")).contains("can be a string"), is(true));
             assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("type").containsKey("pattern"), is(false));
-            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("description").get("$group"), is(PluginProperty.CORE_GROUP));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("description").get("$group"), is("advanced"));
             assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("level").containsKey("$group"), is(false));
             assertThat((String) log.get("markdownDescription"), containsString("##### Examples"));
             assertThat((String) log.get("markdownDescription"), containsString("level: DEBUG"));

@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -18,6 +19,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class FileURIFunction extends AbstractFileFunction {
+    public static final String NAME = "fileURI";
     public static final String VERSION = "version";
 
     private static final String ERROR_MESSAGE = "The 'fileURI' function expects an argument 'path' that is a path to a namespace file.";
@@ -28,6 +30,15 @@ public class FileURIFunction extends AbstractFileFunction {
             super.getArgumentNames().stream(),
             Stream.of(VERSION)
         ).toList();
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(PATH, "'a/namespace/file'");
+        defaults.put(NAMESPACE, null);
+        defaults.put(VERSION, null);
+        return defaults;
     }
 
     @Override

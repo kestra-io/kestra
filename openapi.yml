@@ -129,7 +129,8 @@ paths:
     get:
       tags:
       - Misc
-      summary: Retrieve the list of available Pebble expression functions.
+      summary: Retrieve the available Pebble expression functions with their arguments
+        and defaults.
       operationId: getExpressionFunctions
       responses:
         "200":
@@ -139,7 +140,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: "#/components/schemas/PebbleFunction"
   /api/v1/plugins:
     get:
       tags:
@@ -10296,6 +10297,23 @@ components:
         total:
           type: integer
           format: int64
+    PebbleFunction:
+      type: object
+      properties:
+        name:
+          type: string
+        arguments:
+          type: array
+          items:
+            $ref: "#/components/schemas/PebbleFunction.Argument"
+    PebbleFunction.Argument:
+      type: object
+      properties:
+        name:
+          type: string
+        defaultValue:
+          type: string
+          nullable: true
     Plugin:
       type: object
       properties:

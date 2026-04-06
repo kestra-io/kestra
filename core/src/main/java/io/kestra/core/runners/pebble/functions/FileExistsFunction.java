@@ -15,6 +15,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class FileExistsFunction extends AbstractFileFunction {
+    public static final String NAME = "fileExists";
     private static final String ERROR_MESSAGE = "The 'fileExists' function expects an argument 'path' that is a path to the internal storage URI.";
 
     @Override

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.runners.pebble.functions.KestraFunction;
 import io.micronaut.context.ApplicationContext;
 import io.pebbletemplates.pebble.extension.Extension;
 import io.pebbletemplates.pebble.extension.Filter;
@@ -16,7 +17,7 @@ import jakarta.inject.Singleton;
 public class PebbleExpressionService {
 
     private final List<String> filters;
-    private final List<String> functions;
+    private final List<PebbleFunction> functions;
 
     @Inject
     public PebbleExpressionService(ApplicationContext applicationContext) {
@@ -36,14 +37,29 @@ public class PebbleExpressionService {
         }
 
         this.filters = allFilters.keySet().stream().sorted().toList();
-        this.functions = allFunctions.keySet().stream().sorted().toList();
+
+        this.functions = allFunctions.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .map(entry -> {
+                Function fn = entry.getValue();
+                List<String> argNames = fn.getArgumentNames();
+                if (argNames == null) {
+                    return new PebbleFunction(entry.getKey(), List.of());
+                }
+                Map<String, String> defaults = fn instanceof KestraFunction kf ? kf.getArgumentDefaults() : Map.of();
+                List<PebbleFunction.Argument> arguments = argNames.stream()
+                    .map(name -> new PebbleFunction.Argument(name, defaults.get(name)))
+                    .toList();
+                return new PebbleFunction(entry.getKey(), arguments);
+            })
+            .toList();
     }
 
     public List<String> filters() {
         return filters;
     }
 
-    public List<String> functions() {
+    public List<PebbleFunction> functions() {
         return functions;
     }
 }

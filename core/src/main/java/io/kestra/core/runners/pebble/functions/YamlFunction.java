@@ -11,11 +11,11 @@ import com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class YamlFunction implements Function {
+public class YamlFunction implements KestraFunction {
+    public static final String NAME = "yaml";
     final static ObjectMapper MAPPER = new ObjectMapper(
         new YAMLFactory()
     ).findAndRegisterModules();
@@ -24,6 +24,11 @@ public class YamlFunction implements Function {
 
     public List<String> getArgumentNames() {
         return List.of("yaml");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of("yaml", "inputs.yamlInput");
     }
 
     @Override

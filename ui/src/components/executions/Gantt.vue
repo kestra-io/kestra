@@ -124,7 +124,6 @@
         />
         <SaveExecuteAnimation
             :modelValue="showSaveExecuteAnimation"
-            :dialogMode="showOnboardingSuccessPopup"
             @update:model-value="showSaveExecuteAnimation = $event"
             @finished="onSaveExecuteAnimationFinished"
         />
@@ -274,7 +273,7 @@
     });
 
     const start = computed<number>(() => {
-        return execution.value ? ts(execution.value.state.histories![0].date) : 0;
+        return execution.value?.state?.histories?.[0] ? ts(execution.value.state.histories[0].date) : 0;
     });
 
     const tasks = computed<TaskWrapper[]>(() => {
@@ -382,12 +381,12 @@
     const hasValidDate = computed<boolean>(() => isFinite(delta()));
 
     const startTime = computed<string>(() => {
-        if (!execution.value) return "";
-        return moment(execution.value.state.histories![0].date).format("HH:mm:ss");
+        if (!execution.value?.state?.histories?.[0]) return "";
+        return moment(execution.value.state.histories[0].date).format("HH:mm:ss");
     });
 
     const endTime = computed<string>(() => {
-        if (!execution.value) return "";
+        if (!execution.value?.state) return "";
         const endDate = State.isRunning(execution.value.state.current)
             ? new Date()
             : new Date(stop());
@@ -400,7 +399,7 @@
     }
 
     function stop(): number {
-        if (!execution.value || State.isRunning(execution.value.state.current)) {
+        if (!execution.value?.state || State.isRunning(execution.value.state.current)) {
             return +new Date();
         }
 

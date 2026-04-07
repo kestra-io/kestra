@@ -1100,6 +1100,10 @@
     color: var(--ks-content-primary);
 }
 
+:deep(.executions-table) .el-table__row {
+    cursor: pointer;
+}
+
 :deep(a.execution-id) code {
     color: var(--ks-content-link);
 }

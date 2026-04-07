@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import java.util.Optional;
 
-import io.kestra.core.models.ServerType;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.trace.TracerFactory;
@@ -18,11 +17,9 @@ import io.micronaut.context.ApplicationContext;
  */
 public class Services {
     private final ApplicationContext applicationContext;
-    private final boolean isWorker;
 
     Services(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
-        this.isWorker = applicationContext.getProperty("kestra.server-type", String.class).map(p -> p.equals(ServerType.WORKER.name())).orElse(false);
     }
 
     /**
@@ -66,9 +63,6 @@ public class Services {
      * CRITICAL: This method may be removed in 2.0 and is considered as a transition API.
      */
     public <T> T additionalService(Class<T> clazz) {
-        if (isWorker) {
-            throw new RuntimeException("Services.additionalService() cannot be used inside the Worker");
-        }
         return this.applicationContext.getBean(clazz);
     }
 }

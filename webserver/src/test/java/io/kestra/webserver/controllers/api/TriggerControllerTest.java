@@ -363,7 +363,7 @@ class TriggerControllerTest {
         // WHEN
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
-                TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null
+                TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null
             ), BulkResponse.class
         );
 
@@ -381,7 +381,7 @@ class TriggerControllerTest {
         // WHEN
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
-                TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null
+                TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null
             ), BulkResponse.class
         );
 
@@ -494,7 +494,7 @@ class TriggerControllerTest {
         // WHEN
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
-                TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=true".formatted(namespace), null
+                TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=true".formatted(namespace), null
             ), BulkResponse.class
         );
 

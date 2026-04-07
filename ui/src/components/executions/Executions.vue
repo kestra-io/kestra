@@ -163,8 +163,20 @@
                             :sortOrders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
-                            <template #default="scope">                              
-                                <Id :value="scope.row?.id" :shrink="true" />
+                            <template #default="scope">
+                                <RouterLink
+                                    :to="{
+                                        name: 'executions/update',
+                                        params: {
+                                            namespace: scope.row?.namespace,
+                                            flowId: scope.row?.flowId,
+                                            id: scope.row?.id
+                                        }
+                                    }"
+                                    class="execution-id"
+                                >
+                                    <Id :value="scope.row?.id" :shrink="true" />
+                                </RouterLink>
                             </template>
                         </el-table-column>
 
@@ -206,7 +218,7 @@
                                     </router-link>
                                 </template>
                                 <template v-else-if="col.prop === 'labels'">
-                                    <Labels :labels="filteredLabels(scope.row?.labels)" />
+                                    <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
                                 </template>
                                 <template v-else-if="col.prop === 'state.current'">
                                     <Status :status="scope.row?.state?.current" size="small" />
@@ -1055,7 +1067,6 @@
     }
 </script>
 
-
 <style scoped lang="scss">
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
@@ -1091,5 +1102,9 @@
 
 :deep(.executions-table) .el-table__row {
     cursor: pointer;
+}
+
+:deep(a.execution-id) code {
+    color: var(--ks-content-link);
 }
 </style>

@@ -123,9 +123,10 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @Builder.Default
     @Schema(
         title = "Policy for handling child task failures.",
-        description = "FAIL_FAST: kill running siblings immediately. "
-            + "STOP: let running siblings finish but don't start new ones. "
-            + "CONTINUE: keep starting and running all siblings, fail only after all complete."
+        description = """
+            - `FAIL_FAST`: kill running siblings immediately.
+            - `STOP`: let running siblings finish but don't start new ones.
+            - `CONTINUE`: keep starting and running all siblings, fail only after all complete."""
     )
     private final Property<ChildFailurePolicy> childFailurePolicy = Property.ofValue(ChildFailurePolicy.FAIL_FAST);
 

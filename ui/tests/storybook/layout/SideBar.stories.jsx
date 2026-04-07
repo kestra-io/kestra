@@ -17,27 +17,27 @@ export default {
   component: SideBar,
   decorators: [
     vueRouter([
-        {
-            path: "/welcome",
-            name: "welcome",
-            component: {template: "<div>welcome</div>"}
-        },
-          {
-            path: "/dashboard",
-            name: "dashboard",
-            component: {template: "<div>dashboard</div>"}
-          },
-          {
-            path: "/dashboard/:menu",
-            name: "dashboard/menu",
-            component: {template: "<div>/dashboard sub</div>"}
-          },
-          {
-            path: "/:graball/:menu?",
-            name: "graball",
-            component: {template: "<div>/dashboard sub</div>"}
-          },
-        ])
+      {
+          path: "/welcome",
+          name: "welcome",
+          component: {template: "<div>welcome</div>"}
+      },
+      {
+        path: "/dashboard",
+        name: "dashboard",
+        component: {template: "<div>dashboard</div>"}
+      },
+      {
+        path: "/dashboard/:menu",
+        name: "dashboard/menu",
+        component: {template: "<div>/dashboard sub</div>"}
+      },
+      {
+        path: "/:graball/:menu?",
+        name: "graball",
+        component: {template: "<div>/dashboard sub</div>"}
+      },
+    ])
   ]
 };
 

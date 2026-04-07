@@ -13,7 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -32,9 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class VariableRendererTest {
     @Inject
     VariableRenderer variableRenderer;
-
-    @Inject
-    ApplicationContext applicationContext;
 
     @Inject
     VariableRenderer.VariableConfiguration variableConfiguration;
@@ -102,7 +98,7 @@ class VariableRendererTest {
         Mockito.when(mockEngine.getLiteralTemplate(Mockito.anyString()))
             .thenThrow(new RuntimeException("unexpected runtime exception"));
 
-        VariableRenderer renderer = new VariableRenderer(applicationContext, variableConfiguration);
+        VariableRenderer renderer = new VariableRenderer(pebbleEngineFactory, variableConfiguration);
         renderer.setPebbleEngine(mockEngine);
 
         // When / Then

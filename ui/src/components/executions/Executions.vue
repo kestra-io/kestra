@@ -1101,7 +1101,7 @@
 }
 
 :deep(a.execution-id) code {
-    color: var(--bs-code-color) !important;
+    color: var(--ks-content-link);
 }
 </style>
 

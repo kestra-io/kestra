@@ -1084,7 +1084,7 @@
             }
 
             .monaco-list-row[aria-label="_DATE_PICKER_"] {
-                padding-right: 0 !important;
+                display: none;
             }
         }
     }

@@ -33,7 +33,6 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
-import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
@@ -97,27 +96,7 @@ public class TriggerController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
-        @Deprecated @Parameter(description = "The flow identifier", deprecated = true) @Nullable @QueryValue String flowId) throws HttpStatusException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            workerId,
-            null
-        );
-
+        @QueryFilterFormat List<QueryFilter> filters) throws HttpStatusException {
         ArrayListTotal<TriggerState> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             tenantService.resolveTenant(),
@@ -196,12 +175,7 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Unlock triggers by query parameters")
     public MutableHttpResponse<?> unlockTriggersByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace) {
-        filters = getFiltersOrDefaultToLegacyMapping(filters, query, namespace);
-
+        @QueryFilterFormat List<QueryFilter> filters) {
         int count = triggerStateService.unlockAllTriggersMatching(this.tenantService.resolveTenant(), filters);
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
@@ -259,11 +233,8 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Pause backfill for given triggers")
     public MutableHttpResponse<?> pauseBackfillByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace) {
-        int count = triggerStateService.pauseAllBackfillMatching(tenantService.resolveTenant(), getFiltersOrDefaultToLegacyMapping(filters, query, namespace));
+        @QueryFilterFormat List<QueryFilter> filters) {
+        int count = triggerStateService.pauseAllBackfillMatching(tenantService.resolveTenant(), filters);
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
@@ -290,11 +261,8 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Unpause backfill for given triggers")
     public MutableHttpResponse<?> unpauseBackfillByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace) {
-        int count = triggerStateService.resumeAllBackfillMatching(tenantService.resolveTenant(), getFiltersOrDefaultToLegacyMapping(filters, query, namespace));
+        @QueryFilterFormat List<QueryFilter> filters) {
+        int count = triggerStateService.resumeAllBackfillMatching(tenantService.resolveTenant(), filters);
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
@@ -321,11 +289,8 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Delete backfill for given triggers")
     public MutableHttpResponse<?> deleteBackfillByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace) {
-        int count = triggerStateService.deleteBackfillMatching(tenantService.resolveTenant(), getFiltersOrDefaultToLegacyMapping(filters, query, namespace));
+        @QueryFilterFormat List<QueryFilter> filters) {
+        int count = triggerStateService.deleteBackfillMatching(tenantService.resolveTenant(), filters);
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
     //endregion
@@ -391,12 +356,9 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-
         @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled) {
 
-        Integer count = triggerStateService.toggleAllTriggersMatching(tenantService.resolveTenant(), getFiltersOrDefaultToLegacyMapping(filters, query, namespace), disabled);
+        Integer count = triggerStateService.toggleAllTriggersMatching(tenantService.resolveTenant(), filters, disabled);
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
     // endregion
@@ -480,9 +442,4 @@ public class TriggerController {
             .state(ApiTriggerState.from(tc))
             .build();
     }
-
-    private static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(List<QueryFilter> filters, String query, String namespace) {
-        return RequestUtils.getFiltersOrDefaultToLegacyMapping(filters, query, namespace, null, null, null, null, null, null, null, null, null);
-    }
-
 }

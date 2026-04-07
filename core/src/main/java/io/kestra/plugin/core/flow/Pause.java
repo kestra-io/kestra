@@ -153,8 +153,7 @@ import lombok.experimental.SuperBuilder;
                     format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Pause"
+    }
 )
 public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(

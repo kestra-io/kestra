@@ -26,7 +26,7 @@ public class MemoryRepositoryTest {
                namespace: some.namespace
                tasks:
                  - id: some-task
-                   type: io.kestra.core.tasks.debugs.Return
+                   type: io.kestra.plugin.core.debug.Return
                    format: "Hello, World!"
             """;
         flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, flowSource));

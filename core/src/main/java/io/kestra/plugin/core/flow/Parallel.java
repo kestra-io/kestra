@@ -108,8 +108,7 @@ import lombok.experimental.SuperBuilder;
                             format: "{{ task.id }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Parallel"
+    }
 )
 public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @NotNull

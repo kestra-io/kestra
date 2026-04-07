@@ -69,7 +69,7 @@
                         :defaultSort="{prop: 'id', order: 'ascending'}"
                         tableLayout="auto"
                         fixed
-                        @row-click="onRowDoubleClick"
+                        @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
@@ -117,7 +117,18 @@
                             >
                                 <template #default="scope">
                                     <div class="flow-id">
-                                        <span class="me-1">{{ FILTERS.invisibleSpace(scope.row.id) }}</span>
+                                        <router-link
+                                            :to="{
+                                                name: 'flows/update',
+                                                params: {
+                                                    namespace: scope.row.namespace,
+                                                    id: scope.row.id,
+                                                },
+                                            }"
+                                            class="me-1"
+                                        >
+                                            {{ FILTERS.invisibleSpace(scope.row.id) }}
+                                        </router-link>
                                         <MarkdownTooltip
                                             :id="scope.row.namespace +
                                                 '-' +
@@ -160,21 +171,20 @@
                                     :label="$t('last execution date')"
                                 >
                                     <template #default="scope">
-                                        <div @click.prevent.stop>
-                                            <router-link
-                                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
-                                                :to="{
-                                                    name: 'executions/update',
-                                                    params: {
-                                                        namespace: scope.row.namespace,
-                                                        flowId: scope.row.id,
-                                                        id: getLastExecution(scope.row).id
-                                                    }
-                                                }"
-                                            >
-                                                <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
-                                            </router-link>
-                                        </div>
+                                        <router-link
+                                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                            :to="{
+                                                name: 'executions/update',
+                                                params: {
+                                                    namespace: scope.row.namespace,
+                                                    flowId: scope.row.id,
+                                                    id: getLastExecution(scope.row).id
+                                                }
+                                            }"
+                                            class="table-link"
+                                        >
+                                            <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
+                                        </router-link>
                                     </template>
                                 </el-table-column>
 
@@ -185,7 +195,6 @@
                                 >
                                     <template #default="scope">
                                         <div
-                                            @click.prevent.stop
                                             v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
                                             class="d-flex justify-content-between align-items-center"
                                         >
@@ -198,6 +207,7 @@
                                                         id: getLastExecution(scope.row).id
                                                     }
                                                 }"
+                                                class="table-link"
                                             >
                                                 <Status :status="getLastExecution(scope.row).status" size="small" />
                                             </router-link>
@@ -237,7 +247,7 @@
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <IconButton 
+                                        <IconButton
                                             v-if="canExecute(scope.row)"
                                             :tooltip="t('execute')"
                                             @click="openExecuteModal(scope.row)"
@@ -722,10 +732,6 @@
     vertical-align: middle;
 }
 
-:deep(.flows-table) .el-table__row {
-    cursor: pointer;
-}
-
 :deep(.flows-table) .el-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
 }
@@ -739,6 +745,18 @@
     @media (max-width: 570px) {
         flex-direction: column;
         align-items: flex-end;
+    }
+}
+
+.table-link {
+    cursor: pointer;
+
+    & :deep(button) {
+        cursor: pointer !important;
+    }
+
+    &:hover {
+        text-decoration: none;
     }
 }
 

@@ -1,37 +1,44 @@
 <template>
-    <el-dropdown-item :disabled :icon="LocationExit" @click="isOpen = !isOpen">
+    <el-dropdown-item :icon="LocationExit" @click="redirect">
         {{ $t("outputs") }}
     </el-dropdown-item>
-
-    <Drawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
-        <Vars
-            :execution="props.execution"
-            class="table-unrounded mt-1"
-            :data="props.outputs"
-        />
-    </Drawer>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, type PropType} from "vue";
-
-    import Drawer from "../Drawer.vue";
-    import Vars from "../executions/Vars.vue";
+    import {type PropType} from "vue";
+    import {useRouter} from "vue-router";
 
     import LocationExit from "vue-material-design-icons/LocationExit.vue";
 
     const props = defineProps({
         outputs: {
-            type: Object as PropType<object>,
+            type: Object as PropType<any>,
             default: () => ({}),
         },
         execution: {
-            type: Object as PropType<object>,
+            type: Object as PropType<any>,
             required: true,
         },
+        taskRunId: {
+            type: String,
+            required: true
+        }
     });
 
-    const isOpen = ref(false);
+    const router = useRouter();
 
-    const disabled = computed(() => !props.outputs || Object.keys(props.outputs).length === 0);
+    const redirect = () => {
+        router.push({
+            name: "executions/update",
+            params: {
+                namespace: props.execution.namespace,
+                flowId: props.execution.flowId,
+                id: props.execution.id,
+                tab: "outputs"
+            },
+            query: {
+                q: props.taskRunId
+            }
+        });
+    };
 </script>

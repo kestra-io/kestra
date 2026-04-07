@@ -85,6 +85,7 @@
                     <Outputs
                         :outputs="currentTaskRun.outputs"
                         :execution="followedExecution"
+                        :taskRunId="currentTaskRun.id"
                     />
 
                     <Restart
@@ -105,17 +106,6 @@
                         :taskRun="currentTaskRun"
                         :attemptIndex="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
                         @follow="$emit('follow', $event)"
-                    />
-                    <TaskEdit
-                        v-if="canReadFlow"
-                        :readOnly="true"
-                        component="el-dropdown-item"
-                        :taskId="currentTaskRun.taskId"
-                        section="tasks"
-                        :flowId="followedExecution.flowId"
-                        :namespace="followedExecution.namespace"
-                        :revision="followedExecution.flowRevision"
-                        :flowSource="flow?.source"
                     />
                     <el-dropdown-item
                         :icon="Download"
@@ -177,7 +167,6 @@
     import Metrics from "./Metrics.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import ChangeStatus from "./ChangeStatus.vue";
-    import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
     import Outputs from "./Outputs.vue";
     import Clock from "vue-material-design-icons/Clock.vue";
@@ -207,7 +196,6 @@
             TaskIcon,
             Outputs,
             SubFlowLink,
-            TaskEdit,
             ChangeStatus,
             Status,
             Metrics,

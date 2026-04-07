@@ -1,43 +1,36 @@
 <template>
     <el-dropdown-item
         :icon="ChartAreaspline"
-        @click="onClick"
+        @click="redirect"
     >
         {{ $t('metrics') }}
     </el-dropdown-item>
-
-    <Drawer
-        v-if="isOpen"
-        v-model="isOpen"
-        :title="$t('metrics')"
-    >
-        <MetricsTable
-            ref="table"
-            :taskRunId="props.taskRun.id"
-            :execution="props.execution"
-        />
-    </Drawer>
 </template>
 
 <script setup lang="ts">
-    import {ref, nextTick} from "vue"
-    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
-    import Drawer from "../Drawer.vue"
-    import MetricsTable from "./MetricsTable.vue"
-    import {Execution} from "../../stores/executions";
+    import {useRouter} from "vue-router";
+    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
+    import type {Execution} from "../../stores/executions";
 
     const props = defineProps<{
-        embed?: boolean;
         taskRun: Record<string, any>;
         execution: Execution;
     }>();
 
-    const isOpen = ref(false)
-    const table = ref<InstanceType<typeof MetricsTable> | null>(null)
+    const router = useRouter();
 
-    const onClick = async () => {
-        isOpen.value = !isOpen.value
-        await nextTick()
-        table.value?.loadData()
-    }
+    const redirect = () => {
+        router.push({
+            name: "executions/update",
+            params: {
+                namespace: props.execution.namespace,
+                flowId: props.execution.flowId,
+                id: props.execution.id,
+                tab: "metrics"
+            },
+            query: {
+                q: props.taskRun.id
+            }
+        });
+    };
 </script>

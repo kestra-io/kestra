@@ -25,7 +25,12 @@ tasks.register('runApiServer', JavaExec) {
     description = "Run Kestra API server (no browser assets). Does not build the Vue frontend."
     // Exclude webserver-browser from the classpath so that StaticFilter, RedirectController,
     // VueStaticResourceResolver and any previously-built frontend assets are not registered.
-    classpath = sourceSets.main.runtimeClasspath.filter { !it.path.contains('webserver-browser') }
+    // Exclude webserver (browser assets module) but keep webserver-api (REST API) on the classpath,
+    // so that StaticFilter, RedirectController, VueStaticResourceResolver and any previously-built
+    // frontend assets are not registered.
+    classpath = sourceSets.main.runtimeClasspath.filter {
+        !it.path.contains('webserver') || it.path.contains('webserver-api')
+    }
     mainClass = "io.kestra.cli.Kestra"
     // Do not load application-override.yml: LocalCommand already provides all H2 configuration
     // at highest priority, and the user's override file may register additional datasources

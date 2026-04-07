@@ -1,5 +1,4 @@
-// Umbrella module: aggregates webserver-api (REST API) and webserver-browser (Vue SPA static assets).
-// Depend on this module to get both concerns together (e.g. in the CLI or production builds).
+// Browser-facing module: serves the Vue SPA static assets and depends on webserver-api for the REST API.
 // Depend on :webserver-api alone when you only need the REST API (e.g. during frontend development).
 configurations {
     implementation.extendsFrom(micronaut)
@@ -7,5 +6,13 @@ configurations {
 
 dependencies {
     api project(':webserver-api')
-    api project(':webserver-browser')
+    implementation project(':core')
+    implementation "io.micronaut:micronaut-http-server-netty"
+}
+
+// Static assets are written here by ui:assembleFrontend — process resources after that task runs.
+if (rootProject.name == "kestra") {
+    tasks.named('processResources') {
+        mustRunAfter(':ui:assembleFrontend')
+    }
 }

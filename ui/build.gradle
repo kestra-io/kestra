@@ -23,5 +23,5 @@ tasks.register('assembleFrontend', NpmTask) {
     inputs.file('../openapi.yml')
 
     args = ['run', 'build']
-    outputs.dir('../webserver-browser/src/main/resources/ui')
+    outputs.dir('../webserver/src/main/resources/ui')
 }

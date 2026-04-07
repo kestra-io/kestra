@@ -155,7 +155,7 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
-            SelectConditionStep<Record> select = context.select(DSL.asterisk())
+            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
                 .from(this.jdbcRepository.getTable())
                 .where(field("type").eq(queueNameToType(queue)));
 
@@ -165,20 +165,20 @@ public class JdbcQueueClient {
                 select = select.and(field("routing_key").isNull());
             }
 
-            List<JdbcQueueItem> queueItems = select
+            Result<Record2<Object, Object>> result = select
                 .orderBy(field("offset").asc())
                 .limit(configuration.pollSize())
                 .forUpdate()
                 .skipLocked()
-                .fetchInto(JdbcQueueItem.class);
+                .fetch();
 
-            if (!queueItems.isEmpty()) {
-                List<Long> processedItems = queueItems
+            if (!result.isEmpty()) {
+                List<Long> processedItems = result
                     .stream()
-                    .map(queueItem ->
+                    .map(record ->
                     {
-                        consumer.accept(queueItem.value().getBytes());
-                        return queueItem.offset();
+                        consumer.accept(record.get("value").toString().getBytes());
+                        return record.get("offset", Long.class);
                     })
                     .filter(Objects::nonNull)
                     .toList();
@@ -191,7 +191,7 @@ public class JdbcQueueClient {
                 }
             }
 
-            return queueItems.size();
+            return result.size();
         });
     }
 
@@ -200,7 +200,7 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
-            SelectConditionStep<Record> select = context.select(DSL.asterisk())
+            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
                 .from(this.jdbcRepository.getTable())
                 .where(field("type").eq(queueNameToType(queue)));
 
@@ -210,19 +210,19 @@ public class JdbcQueueClient {
                 select = select.and(field("routing_key").isNull());
             }
 
-            List<JdbcQueueItem> queueItems = select
+            Result<Record2<Object, Object>> result = select
                 .orderBy(field("offset").asc())
                 .limit(configuration.pollSize())
                 .forUpdate()
                 .skipLocked()
-                .fetchInto(JdbcQueueItem.class);
+                .fetch();
 
-            if (!queueItems.isEmpty()) {
-                consumer.accept(queueItems.stream().map(item -> item.value().getBytes()).toList());
+            if (!result.isEmpty()) {
+                consumer.accept(result.stream().map(record -> record.get("value").toString().getBytes()).toList());
 
-                List<Long> processedItems = queueItems
+                List<Long> processedItems = result
                     .stream()
-                    .map(queueItem -> queueItem.offset())
+                    .map(record -> record.get("offset", Long.class))
                     .toList();
 
                 DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
@@ -230,7 +230,7 @@ public class JdbcQueueClient {
                 delete.execute();
             }
 
-            return queueItems.size();
+            return result.size();
         });
     }
 
@@ -254,7 +254,7 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 
-            SelectConditionStep<Record> select = context.select(DSL.asterisk())
+            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
                 .from(this.jdbcRepository.getTable())
                 .where(field("type").eq(queueNameToType(queue)));
 
@@ -262,26 +262,22 @@ public class JdbcQueueClient {
                 select = select.and(field("offset").gt(maxOffset));
             }
 
-            List<JdbcQueueItem> queueItems = select
+            Result<Record2<Object, Object>> result = select
                 .orderBy(field("offset").asc())
                 .limit(configuration.pollSize())
-                .fetchInto(JdbcQueueItem.class);
+                .fetch();
 
-            if (!queueItems.isEmpty()) {
-                queueItems
-                    .forEach(queueItem ->
-                    {
-                        consumer.accept(queueItem.value().getBytes());
-                    });
+            if (!result.isEmpty()) {
+                result.forEach(record -> consumer.accept(record.get("value").toString().getBytes()));
 
-                maxOffsetResult = queueItems
+                maxOffsetResult = result
                     .stream()
-                    .map(JdbcQueueItem::offset)
+                    .map(record -> record.get("offset", Long.class))
                     .max(Long::compareTo)
                     .orElse(null);
             }
 
-            return Pair.of(queueItems.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
+            return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
         });
     }
 
@@ -291,7 +287,7 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 
-            SelectConditionStep<Record> select = context.select(DSL.asterisk())
+            SelectConditionStep<Record2<Object, Object>> select = context.select(field("offset"), field("value"))
                 .from(this.jdbcRepository.getTable())
                 .where(field("type").eq(queueNameToType(queue)));
 
@@ -299,22 +295,22 @@ public class JdbcQueueClient {
                 select = select.and(field("offset").gt(maxOffset));
             }
 
-            List<JdbcQueueItem> queueItems = select
+            Result<Record2<Object, Object>> result = select
                 .orderBy(field("offset").asc())
                 .limit(configuration.pollSize())
-                .fetchInto(JdbcQueueItem.class);
+                .fetch();
 
-            if (!queueItems.isEmpty()) {
-                consumer.accept(queueItems.stream().map(item -> item.value().getBytes()).toList());
+            if (!result.isEmpty()) {
+                consumer.accept(result.stream().map(record -> record.get("value").toString().getBytes()).toList());
 
-                maxOffsetResult = queueItems
+                maxOffsetResult = result
                     .stream()
-                    .map(JdbcQueueItem::offset)
+                    .map(record -> record.get("offset", Long.class))
                     .max(Long::compareTo)
                     .orElse(null);
             }
 
-            return Pair.of(queueItems.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
+            return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
         });
     }
 }

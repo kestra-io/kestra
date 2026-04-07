@@ -37,9 +37,17 @@ import lombok.experimental.SuperBuilder;
     examples = {
         @Example(
             code = """
-                spec: |
-                  type: io.kestra.plugin.core.http.Download
-                  {{ task.property }}: {{ task.value }}
+                id: templated_task
+                namespace: company.team
+                variables:
+                  property: uri
+                  value: https://kestra.io
+                tasks:
+                  - id: templated_task
+                    type: io.kestra.plugin.core.templating.TemplatedTask
+                    spec: |
+                      type: io.kestra.plugin.core.http.Download
+                      {{ vars.property }}: {{ vars.value }}
                 """
         )
     },

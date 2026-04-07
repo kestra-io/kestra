@@ -83,7 +83,7 @@ public class PosthogChatModelListener implements ChatModelListener {
         properties.put("$ai_span_id", IdUtils.create());
 
         posthogService.capture(
-            attributes.get(MetadataAppenderChatModelListener.INSTANCE_UID).toString(),
+            attributes.get(MetadataAppenderChatModelListener.USER_UID).toString(),
             "$ai_generation",
             properties
         );

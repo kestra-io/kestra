@@ -13,33 +13,10 @@
         </div>
 
         <template v-if="props.elements">
-            <template v-if="props.includeDebug">
-                <el-cascader-panel
-                    :options="filteredOptions"
-                    @expand-change="(p: string[]) => (path = p.join('.'))"
-                >
-                    <template #default="{data}">
-                        <div class="node">
-                            <div :title="data.label">
-                                {{ data.label }}
-                            </div>
-                            <div v-if="data.value && data.children">
-                                <code>{{ itemsCount(data) }}</code>
-                            </div>
-                        </div>
-                        <div v-if="isFile(data.value)" class="node buttons">
-                            <VarValue :value="data.value" :execution />
-                        </div>
-                    </template>
-                </el-cascader-panel>
-                <DebugPanel
-                    :property="props.includeDebug"
-                    :execution
-                    :path
-                />
-            </template>
-
-            <el-cascader-panel v-else :options="filteredOptions">
+            <el-cascader-panel
+                :options="filteredOptions"
+                @expand-change="onExpandChange"
+            >
                 <template #default="{data}">
                     <div class="node">
                         <div :title="data.label">
@@ -62,8 +39,6 @@
 
 <script setup lang="ts">
     import {onMounted, nextTick, computed, ref} from "vue";
-
-    import DebugPanel from "./DebugPanel.vue";
 
     import VarValue from "../../../../VarValue.vue";
 
@@ -95,7 +70,31 @@
         }
     >();
 
+    const emits = defineEmits<{
+        (e: "debugPath", property: string, path: string): void;
+    }>();
+
     const path = ref<string>("");
+
+    const onExpandChange = (p: string[]) => {
+        path.value = p.join(".");
+        if (props.includeDebug) {
+            let debugPath = path.value;
+            if (props.includeDebug === "trigger") {
+                // id and type are metadata, not Pebble-accessible — map to just "trigger"
+                if (debugPath === "id" || debugPath === "type") {
+                    debugPath = "";
+                }
+                // variables.<name> maps to trigger.<name> in Pebble
+                else if (debugPath.startsWith("variables.")) {
+                    debugPath = debugPath.substring("variables.".length);
+                } else if (debugPath === "variables") {
+                    debugPath = "";
+                }
+            }
+            emits("debugPath", props.includeDebug, debugPath);
+        }
+    };
 
     const isFile = (value: unknown): value is string => {
         return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));

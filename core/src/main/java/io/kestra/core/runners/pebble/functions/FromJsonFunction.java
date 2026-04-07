@@ -9,15 +9,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class FromJsonFunction implements Function {
+public class FromJsonFunction implements KestraFunction {
+    public static final String NAME = "fromJson";
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     public List<String> getArgumentNames() {
         return List.of("json");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of("json", ReadFileFunction.NAME + "('json/namespace/file')");
     }
 
     @Override

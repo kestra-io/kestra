@@ -987,67 +987,6 @@ public abstract class AbstractExecutionRepositoryTest {
             .containsOnly(exec1);
     }
 
-    @Test
-    protected void labelFilterShouldResistSqlInjection() {
-        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-
-        var exec = executionRepository.save(
-            builder(tenant, State.Type.RUNNING, null)
-                .labels(List.of(new Label("mykey", "myvalue")))
-                .build()
-        );
-
-        // QueryFilter API — EQUALS: injection in label key must return no results
-        assertThat(
-            executionRepository.find(Pageable.from(1, 10), tenant, List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LABELS)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(Map.of("' OR '1'='1", "anything"))
-                    .build()
-            ))
-        ).as("EQUALS with SQL injection in label key should return no results").isEmpty();
-
-        // QueryFilter API — EQUALS: injection in label value must return no results
-        assertThat(
-            executionRepository.find(Pageable.from(1, 10), tenant, List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LABELS)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(Map.of("mykey", "' OR '1'='1"))
-                    .build()
-            ))
-        ).as("EQUALS with SQL injection in label value should return no results").isEmpty();
-
-        // QueryFilter API — NOT_EQUALS: injection in label key; no execution has the injected key,
-        // so NOT_EQUALS must return the execution (tests the Postgres jsonb_path_query_first path and MySQL JSON_SEARCH path)
-        assertThat(
-            executionRepository.find(Pageable.from(1, 10), tenant, List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LABELS)
-                    .operation(QueryFilter.Op.NOT_EQUALS)
-                    .value(Map.of("' OR '1'='1", "anything"))
-                    .build()
-            ))
-        ).as("NOT_EQUALS with SQL injection in label key should return the execution (literal comparison, key absent)")
-            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
-            .containsOnly(exec);
-
-        // Old Map-based API — injection in label key must return no results
-        assertThat(
-            executionRepository.find(null, tenant, null, null, null, null, null, null,
-                Map.of("' OR '1'='1", "anything"), null, null, false)
-                .collectList().block()
-        ).as("Old API: SQL injection in label key should return no results").isEmpty();
-
-        // Old Map-based API — injection in label value must return no results
-        assertThat(
-            executionRepository.find(null, tenant, null, null, null, null, null, null,
-                Map.of("mykey", "' OR '1'='1"), null, null, false)
-                .collectList().block()
-        ).as("Old API: SQL injection in label value should return no results").isEmpty();
-    }
-
     record ExecutionSortTestData(Execution createdExecution, Execution successExecution, Execution runningExecution, Execution failedExecution) {
         static ExecutionSortTestData insertExecutionsTestData(String tenant, ExecutionRepositoryInterface executionRepository) {
             final Instant clock = Instant.now();

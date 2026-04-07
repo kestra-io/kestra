@@ -71,11 +71,12 @@
                     :defaultSort="{prop: 'state.startDate', order: 'descending'}"
                     tableLayout="auto"
                     fixed
-                    @row-dblclick="(row: any) => onRowDoubleClick(executionParams(row))"
+                    @row-click="(row: any) => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
+                    class="executions-table"
                     :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
@@ -162,20 +163,8 @@
                             :sortOrders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
-                            <template #default="scope">
-                                <RouterLink
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            namespace: scope.row?.namespace,
-                                            flowId: scope.row?.flowId,
-                                            id: scope.row?.id
-                                        }
-                                    }"
-                                    class="execution-id"
-                                >
-                                    <Id :value="scope.row?.id" :shrink="true" />
-                                </RouterLink>
+                            <template #default="scope">                              
+                                <Id :value="scope.row?.id" :shrink="true" />
                             </template>
                         </el-table-column>
 
@@ -205,7 +194,13 @@
                                 </template>
                                 <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
                                     <router-link
-                                        :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
+                                        :to="{
+                                            name: 'flows/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                id: scope.row?.flowId
+                                            }
+                                        }"
                                     >
                                         {{ invisibleSpace(scope.row?.flowId) }}
                                     </router-link>
@@ -261,7 +256,6 @@
                                                 id: scope.row?.trigger?.variables?.executionId
                                             }
                                         }"
-                                        class="execution-id"
                                     >
                                         <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
                                     </RouterLink>
@@ -272,21 +266,6 @@
                                 <el-tooltip :content="$t('taskid column details')" effect="light">
                                     {{ scope.column.label }}
                                 </el-tooltip>
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column
-                            columnKey="action"
-                            className="row-action"
-                            :label="$t('actions')"
-                        >
-                            <template #default="scope">
-                                <IconButton
-                                    :tooltip="$t('details')"
-                                    :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
-                                >
-                                    <TextSearch />
-                                </IconButton>
                             </template>
                         </el-table-column>
                     </template>
@@ -415,7 +394,6 @@
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
@@ -425,7 +403,6 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import IconButton from "../IconButton.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -1112,7 +1089,7 @@
     color: var(--ks-content-primary);
 }
 
-:deep(a.execution-id) code {
-    color: var(--bs-code-color) !important;
+:deep(.executions-table) .el-table__row {
+    cursor: pointer;
 }
 </style>

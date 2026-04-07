@@ -6,7 +6,7 @@ export const inputsToFormData = (submitor, inputsList, values) => {
     let inputValuesCloned = _cloneDeep(values)
 
     for (const input of inputsList || []) {
-        if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === "") {
+        if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === null || inputValuesCloned[input.id] === "") {
             delete inputValuesCloned[input.id];
         }
     }

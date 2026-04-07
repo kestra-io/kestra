@@ -4,6 +4,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -110,7 +111,7 @@ class JsonSchemaGeneratorTest {
             assertThat((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
             assertThat(((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("message").get("markdownDescription")).contains("can be a string"), is(true));
             assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("type").containsKey("pattern"), is(false));
-            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("description").get("$group"), is(PluginProperty.CORE_GROUP));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("description").get("$group"), is("advanced"));
             assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("level").containsKey("$group"), is(false));
             assertThat((String) log.get("markdownDescription"), containsString("##### Examples"));
             assertThat((String) log.get("markdownDescription"), containsString("level: DEBUG"));
@@ -533,6 +534,40 @@ class JsonSchemaGeneratorTest {
         public VoidOutput run(RunContext runContext) throws Exception {
             return null;
         }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class TaskWithOptionalField extends Task implements RunnableTask<VoidOutput> {
+        @PluginProperty
+        @Schema(title = "An optional string field")
+        private Optional<String> optionalString;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void optionalFieldShouldNotContainNullType() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithOptionalField.class);
+            Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+            // Optional<String> should be unwrapped to String, not anyOf with null
+            Map<String, Object> optionalStringProp = props.get("optionalString");
+            assertThat(optionalStringProp.get("type"), is("string"));
+            assertThat(optionalStringProp.containsKey("anyOf"), is(false));
+        });
     }
 
 }

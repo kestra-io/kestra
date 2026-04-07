@@ -1340,13 +1340,9 @@
       },
       "sections": {
         "afterExecution": "Po wykonaniu",
-        "connection": "Właściwości połączenia",
         "deprecated": "Właściwości przestarzałe",
         "errors": "Obsługa błędów",
         "finally": "Na koniec",
-        "general": "Właściwości ogólne",
-        "main": "Główne właściwości",
-        "optional": "Właściwości opcjonalne",
         "pluginDefaults": "Domyślne ustawienia Pluginów",
         "tasks": "Zadania",
         "triggers": "Triggery"
@@ -1619,8 +1615,16 @@
     "prev_execution": "Poprzednia wykonanie",
     "preview": {
       "auto-view": "Widok automatyczny",
+      "collapse": "Zwiń",
+      "expand": "Rozwiń",
       "force-editor": "Wymuś widok edytora",
       "label": "Podgląd",
+      "next": "Dalej",
+      "page_of": "Strona {current} z {total}",
+      "pagination_info": "Wyświetlanie wierszy {start}-{end} z {total}.",
+      "previous": "Poprzedni",
+      "rows_truncated": "Wyświetlanie {shown} z {total} wierszy. Pobierz plik, aby zobaczyć wszystkie dane.",
+      "showing_rows": "Wyświetlanie wierszy {start}-{end} z {total}",
       "view": "Zobacz"
     },
     "product_tour": "Przewodnik po produkcie",
@@ -1648,6 +1652,7 @@
     "replay from beginning tooltip": "Utwórz podobne wykonanie zaczynając od początku",
     "replay from task tooltip": "Utwórz podobne wykonanie zaczynając od task <code>{taskId}</code>",
     "replay inputs": "Wejścia",
+    "replay inputs new required": "Ta wersja ma inputy. Zostaniesz poproszony o ich wypełnienie.",
     "replay latest revision": "Odtwórz używając najnowszej wersji",
     "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
     "replay using": "Odtwórz używając",
@@ -1658,6 +1663,7 @@
     "restart": "Uruchom ponownie",
     "restart change revision": "Możesz zmienić wersję, która będzie używana do nowego wykonania.",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić wykonanie <code>{id}</code>?",
+    "restart execution title": "Uruchom ponownie wykonanie",
     "restart latest revision": "Uruchom ponownie najnowszą wersję",
     "restart tooltip": "Uruchom ponownie wykonanie od task <code>{state}</code>",
     "restart trigger": {

@@ -399,10 +399,18 @@ class TriggerControllerTest {
         flowService.create(GenericFlow.of(flow1));
         flowService.create(GenericFlow.of(flow2));
 
-        TriggerState triggerDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
-        TriggerState triggerNotDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
+        final TriggerState triggerDisabled = createTriggerFromFlow(flow1, true);
+        final TriggerState triggerNotDisabled = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerDisabled).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerNotDisabled).isPresent());
 
-        List<TriggerController.ApiTriggerId> triggers = Stream.of(triggerDisabled, triggerNotDisabled)
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(
+            jdbcTriggerRepository.save(triggerDisabled),
+                jdbcTriggerRepository.save(triggerNotDisabled)
+            )
             .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
@@ -432,12 +440,19 @@ class TriggerControllerTest {
         flowService.create(GenericFlow.of(flow1));
         flowService.create(GenericFlow.of(flow2));
 
-        TriggerState triggerDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
-        TriggerState triggerToDisable = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
+        final TriggerState triggerDisabled = createTriggerFromFlow(flow1, true);
+        final TriggerState triggerToDisable = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerDisabled).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerToDisable).isPresent());
 
         // WHEN
-        List<TriggerController.ApiTriggerId> triggers = Stream.of(triggerDisabled, triggerToDisable)
-            .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(
+            jdbcTriggerRepository.save(triggerDisabled),
+                jdbcTriggerRepository.save(triggerToDisable)
+            ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(
@@ -466,8 +481,15 @@ class TriggerControllerTest {
         flowService.create(GenericFlow.of(flow1));
         flowService.create(GenericFlow.of(flow2));
 
-        jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
-        TriggerState toDisable = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
+        TriggerState trigger1 = createTriggerFromFlow(flow1, true);
+        final TriggerState toDisable = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger1).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(toDisable).isPresent());
+        jdbcTriggerRepository.save(trigger1);
+        jdbcTriggerRepository.save(toDisable);
 
         // WHEN
         BulkResponse bulkResponse = client.toBlocking().retrieve(

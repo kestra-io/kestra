@@ -123,11 +123,9 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
 
     @Schema(
         title = "The number of log rows deleted per batch",
-        description = "Deletion is performed in batches to limit transaction size. Tune this down if you hit database transaction size limits (e.g. MySQL group_replication_transaction_size_limit)."
+        description = "Only applies on MySQL. When set, deletion runs in batches of this size using `DELETE ... LIMIT n` to stay within `group_replication_transaction_size_limit`. When not set, all matching rows are deleted in a single transaction."
     )
-    @Builder.Default
-    @NotNull
-    private Property<Integer> batchSize = Property.ofValue(1000);
+    private Property<Integer> batchSize;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -156,7 +154,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
             ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
             execLogs,
             nonExecLogs,
-            runContext.render(this.batchSize).as(Integer.class).orElse(1000)
+            runContext.render(this.batchSize).as(Integer.class).orElse(null)
         );
 
         return Output.builder()

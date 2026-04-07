@@ -29,7 +29,6 @@ import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudRepository<LogEntry> implements LogRepositoryInterface {
 
@@ -332,58 +331,25 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
-        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, int batchSize) {
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
         Condition condition = buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
 
-        Integer deleted = Flux.<String> create(
-            emitter -> this.jdbcRepository
-                .getDslContextWrapper()
-                .transaction(configuration ->
-                {
-                    DSLContext context = DSL.using(configuration);
-                    try (
-                        var stream = context
-                            .select(KEY_FIELD)
-                            .from(this.jdbcRepository.getTable())
-                            .where(condition)
-                            .fetchSize(FETCH_SIZE)
-                            .stream()
-                    ) {
-                        stream.map(r -> r.get(KEY_FIELD)).forEach(emitter::next);
-                    } finally {
-                        emitter.complete();
-                    }
-                }),
-            FluxSink.OverflowStrategy.BUFFER
-        )
-            .buffer(batchSize)
-            .map(
-                keys -> this.jdbcRepository
-                    .getDslContextWrapper()
-                    .transactionResult(
-                        configuration -> DSL.using(configuration)
-                            .delete(this.jdbcRepository.getTable())
-                            .where(KEY_FIELD.in(keys))
-                            .execute()
-                    )
-            )
-            .reduce(Integer::sum)
-            .block();
-
-        return deleted != null ? deleted : 0;
-    }
-
-    @Override
-    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
-        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(
-                configuration -> DSL.using(configuration)
-                    .delete(this.jdbcRepository.getTable())
-                    .where(buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs))
-                    .execute()
-            );
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
+                int total = 0;
+                int deleted;
+                do {
+                    deleted = DSL.using(configuration)
+                        .delete(this.jdbcRepository.getTable())
+                        .where(condition)
+                        .limit(batchSize)
+                        .execute();
+                    total += deleted;
+                } while (deleted > 0);
+                return total;
+            }
+            return DSL.using(configuration).delete(this.jdbcRepository.getTable()).where(condition).execute();
+        });
     }
 
     private Condition buildDeleteCondition(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,

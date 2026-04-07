@@ -44,7 +44,7 @@ public class ExecutionLogService {
      * @return the number of log entries deleted
      */
     public PurgeResult purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
-        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, int batchSize) {
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
         if (!purgeExecutionLogs && !purgeNonExecutionLogs) {
             return new PurgeResult(0, 0);
         }

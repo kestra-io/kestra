@@ -271,6 +271,10 @@ public class State {
             return this == Type.WARNING || this == Type.SUCCESS || this == Type.RETRIED || this == Type.SKIPPED || this == Type.RESUBMITTED;
         }
 
+        public boolean isTerminatedInError() {
+            return this == Type.FAILED || this == Type.KILLED || this == Type.CANCELLED;
+        }
+
         public boolean isCreated() {
             return this == Type.CREATED || this == Type.RESTARTED;
         }

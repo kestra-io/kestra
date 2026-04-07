@@ -50,8 +50,7 @@ import lombok.experimental.SuperBuilder;
                         message: "{{ outputs.get_size.size }} bytes"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.storages.Size"
+    }
 )
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(

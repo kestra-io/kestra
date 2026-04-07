@@ -369,9 +369,6 @@ public final class ExecutableUtils {
 
     public static boolean isSubflow(Execution execution) {
         return execution.getTrigger() != null && ("io.kestra.plugin.core.flow.Subflow".equals(execution.getTrigger().getType()) ||
-            "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable".equals(execution.getTrigger().getType()) ||
-            "io.kestra.core.tasks.flows.Subflow".equals(execution.getTrigger().getType()) ||
-            "io.kestra.core.tasks.flows.Flow".equals(execution.getTrigger().getType()) ||
-            "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable".equals(execution.getTrigger().getType()));
+            "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable".equals(execution.getTrigger().getType()));
     }
 }

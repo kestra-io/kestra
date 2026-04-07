@@ -124,28 +124,6 @@ class KVControllerTest {
         assertThat(res.getResults().getFirst().key()).isEqualTo(namespaceKey);
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    void listKeys() throws IOException {
-        Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
-        Instant mySecondKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(10)).truncatedTo(ChronoUnit.MILLIS);
-        kvStore().put("my-key", new KVValueAndMetadata(new KVMetadata(null, myKeyExpirationDate), "my-value"));
-        String secondKvDescription = "myDescription";
-        kvStore().put("my-second-key", new KVValueAndMetadata(new KVMetadata(secondKvDescription, mySecondKeyExpirationDate), "my-second-value"));
-
-        List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv"), Argument.of(List.class, KVEntry.class));
-        res.forEach(entry ->
-        {
-            assertThat(entry.creationDate()).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
-            assertThat(entry.updateDate()).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
-        });
-
-        assertThat(res.stream().filter(entry -> entry.key().equals("my-key")).findFirst().get().expirationDate()).isEqualTo(myKeyExpirationDate);
-        KVEntry secondKv = res.stream().filter(entry -> entry.key().equals("my-second-key")).findFirst().get();
-        assertThat(secondKv.expirationDate()).isEqualTo(mySecondKeyExpirationDate);
-        assertThat(secondKv.description()).isEqualTo(secondKvDescription);
-    }
-
     @Test
     void listKeysWithInheritance() throws IOException {
         Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);

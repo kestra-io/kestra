@@ -49,8 +49,7 @@ import lombok.experimental.SuperBuilder;
                       - SUCCESS
                 """
         )
-    },
-    aliases = { "io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge" }
+    }
 )
 public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output> {
     @Schema(

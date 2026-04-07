@@ -130,6 +130,9 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     @Nullable
     List<Breakpoint> breakpoints;
 
+    @Nullable
+    LoopRun loopRun;
+
     @Override
     @JsonIgnore
     public String uid() {
@@ -276,7 +279,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.traceParent,
             this.fixtures,
             this.kind,
-            this.breakpoints
+            this.breakpoints,
+            this.loopRun
         );
     }
 
@@ -302,7 +306,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.traceParent,
             this.fixtures,
             this.kind,
-            this.breakpoints
+            this.breakpoints,
+            this.loopRun
         );
     }
 
@@ -343,7 +348,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.traceParent,
             this.fixtures,
             this.kind,
-            this.breakpoints
+            this.breakpoints,
+            this.loopRun
         );
     }
 
@@ -369,7 +375,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.traceParent,
             this.fixtures,
             this.kind,
-            newBreakpoints
+            newBreakpoints,
+            this.loopRun
         );
     };
 
@@ -405,8 +412,57 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.traceParent,
             this.fixtures,
             this.kind,
-            this.breakpoints
+            this.breakpoints,
+            this.loopRun
         );
+    }
+
+    /**
+     * Creates a derived loop execution from the current execution and the loop task run
+     * with the given index information (value and index).
+     */
+    public Execution loopExecution(String loopExecutionId, TaskRun taskRun, String value, int index) {
+        return new Execution(
+            this.tenantId,
+            loopExecutionId,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            null,
+            this.inputs,
+            this.outputs,
+            this.labels,
+            this.variables,
+            this.state,
+            this.id,
+            this.originalId,
+            this.trigger,
+            this.deleted,
+            this.metadata,
+            this.scheduleDate,
+            this.traceParent,
+            this.fixtures,
+            ExecutionKind.LOOP,
+            this.breakpoints,
+            new LoopRun(this.id, taskRun.getTaskId(), taskRun.getId(), value, index, computeParents())
+        );
+    }
+
+    /**
+     * Computes loop parents from the current execution's loop run for inclusion in a new loop execution.
+     */
+    private List<LoopRun.Parent> computeParents() {
+        if (this.loopRun == null) {
+            return null;
+        }
+
+        List<LoopRun.Parent> parents = new ArrayList<>();
+        if (this.loopRun.parents() != null) {
+            parents.addAll(this.loopRun.parents());
+        }
+
+        parents.add(new LoopRun.Parent(this.loopRun.value(), this.loopRun.index()));
+        return parents;
     }
 
     public List<TaskRun> findTaskRunsByTaskId(String id) {

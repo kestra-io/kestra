@@ -21,7 +21,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "STANDALONE|EXECUTOR")
+@Requires(property = "kestra.server-type", pattern = "STANDALONE|EXECUTOR|WEBSERVER")
 public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.UsageEvent> {
 
     private final FlowRepositoryInterface flowRepository;

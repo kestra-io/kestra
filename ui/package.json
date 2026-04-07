@@ -122,7 +122,6 @@
         "playwright": "^1.55.0",
         "prettier": "^3.8.1",
         "rimraf": "^6.1.3",
-        "rolldown-vite": "^7.3.1",
         "rollup-plugin-copy": "^3.5.0",
         "sass": "^1.98.0",
         "storybook": "^10.3.3",
@@ -131,7 +130,7 @@
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.58.0",
         "uuid": "^13.0.0",
-        "vite": "npm:rolldown-vite@latest",
+        "vite": "^8.0.0",
         "vitest": "^4.1.2",
         "vue-tsc": "^3.2.6"
     },
@@ -158,7 +157,10 @@
             "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
         },
         "storybook": "$storybook",
-        "vite": "npm:rolldown-vite@latest"
+        "vite": "^8.0.0",
+        "@codecov/vite-plugin": {
+            "vite": "$vite"
+        }
     },
     "lint-staged": {
         "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"

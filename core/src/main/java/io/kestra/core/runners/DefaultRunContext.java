@@ -130,6 +130,14 @@ public class DefaultRunContext extends RunContext {
     @Override
     public void setTraceParent(String traceParent) {
         this.traceParent = traceParent;
+
+        // add it inside variables if not already present to be available in expressions
+        if (traceParent != null && !this.variables.containsKey("trace")) {
+            this.variables = ImmutableMap.<String, Object>builder()
+                .putAll(this.variables)
+                .put("trace", Map.of("parent", traceParent))
+                .build();
+        }
     }
 
     @JsonIgnore
@@ -685,7 +693,7 @@ public class DefaultRunContext extends RunContext {
             context.applicationContext = applicationContext;
             context.variableRenderer = variableRenderer;
             context.meterRegistry = meterRegistry;
-            context.variables = Optional.ofNullable(variables).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
+            context.variables = variables;
             context.pluginConfiguration = Optional.ofNullable(pluginConfiguration).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
             context.logger = logger;
             context.secretKey = secretKey;

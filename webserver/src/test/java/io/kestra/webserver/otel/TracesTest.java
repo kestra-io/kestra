@@ -52,14 +52,14 @@ public class TracesTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    @LoadFlowsWithTenant({ "flows/traces.yaml" })
     void runningAFlowShouldGenerateTraces(String tenantId) {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
 
         // running a flow until completion
         Execution result = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/%s/executions/io.kestra.tests/minimal?wait=true".formatted(tenantId), null)
+                .POST("/api/v1/%s/executions/io.kestra.tests/trace-parent?wait=true".formatted(tenantId), null)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -67,12 +67,12 @@ public class TracesTest {
 
         List<SpanData> spans = otelTesting.getSpans().stream().filter(span -> tenantId.equals(span.getAttributes().get(TraceUtils.ATTR_TENANT_ID))).toList();
         assertThat(spans).hasSizeGreaterThanOrEqualTo(6); // rarely, CI shows 6 traces and not 7 and even sometimes 14, probably due to asynchronicity
-        assertThat(spans).extracting(SpanData::getName).contains("EXECUTOR - %s_io.kestra.tests_minimal".formatted(tenantId), "WORKER - io.kestra.plugin.core.debug.Return");
+        assertThat(spans).extracting(SpanData::getName).contains("EXECUTOR - %s_io.kestra.tests_trace-parent".formatted(tenantId), "WORKER - io.kestra.plugin.core.output.OutputValues");
         Attributes attributes = spans.getFirst().getAttributes();
         assertThat(attributes.size()).isEqualTo(5);
         assertThat(attributes.get(TraceUtils.ATTR_TENANT_ID)).isEqualTo(tenantId);
         assertThat(attributes.get(TraceUtils.ATTR_NAMESPACE)).isEqualTo("io.kestra.tests");
-        assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("minimal");
+        assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("trace-parent");
         assertThat(attributes.get(TraceUtils.ATTR_EXECUTION_ID)).isEqualTo(result.getId());
         assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.executor.DefaultExecutor");
     }

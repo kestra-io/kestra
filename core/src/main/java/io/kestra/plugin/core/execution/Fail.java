@@ -113,8 +113,7 @@ import lombok.experimental.SuperBuilder;
                     }
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.executions.Fail"
+    }
 )
 public class Fail extends Task implements RunnableTask<VoidOutput> {
     @Schema(

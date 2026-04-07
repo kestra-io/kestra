@@ -213,10 +213,12 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @Builder.Default
     @Schema(
         title = "Policy for handling child task failures when concurrencyLimit allows parallel execution.",
-        description = "FAIL_FAST: kill running task groups immediately. "
-            + "STOP: let running groups finish but don't start new ones. "
-            + "CONTINUE: keep starting and running all groups, fail only after all complete. "
-            + "Has no effect when concurrencyLimit is 1 (serial execution)."
+        description = """
+            - `FAIL_FAST`: kill running task groups immediately.
+            - `STOP`: let running groups finish but don't start new ones.
+            - `CONTINUE`: keep starting and running all groups, fail only after all complete.
+
+            Has no effect when `concurrencyLimit` is 1 (serial execution)."""
     )
     private final Property<ChildFailurePolicy> childFailurePolicy = Property.ofValue(ChildFailurePolicy.FAIL_FAST);
 

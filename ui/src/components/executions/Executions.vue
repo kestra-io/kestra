@@ -71,7 +71,7 @@
                     :defaultSort="{prop: 'state.startDate', order: 'descending'}"
                     tableLayout="auto"
                     fixed
-                    @row-dblclick="(row: any) => onRowDoubleClick(executionParams(row))"
+                    @row-click="(row: any) => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
@@ -218,7 +218,7 @@
                                     </router-link>
                                 </template>
                                 <template v-else-if="col.prop === 'labels'">
-                                    <Labels :labels="filteredLabels(scope.row?.labels)" />
+                                    <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
                                 </template>
                                 <template v-else-if="col.prop === 'state.current'">
                                     <Status :status="scope.row?.state?.current" size="small" />
@@ -1104,4 +1104,3 @@
     color: var(--ks-content-link);
 }
 </style>
-

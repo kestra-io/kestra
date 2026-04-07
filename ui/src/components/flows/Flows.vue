@@ -69,7 +69,7 @@
                         :defaultSort="{prop: 'id', order: 'ascending'}"
                         tableLayout="auto"
                         fixed
-                        @row-dblclick="onRowDoubleClick"
+                        @row-click="onRowDoubleClick"
                         @sort-change="onSort"
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
@@ -150,7 +150,7 @@
                                     :label="$t('labels')"
                                 >
                                     <template #default="scope">
-                                        <Labels :labels="scope.row.labels" />
+                                        <Labels :labels="scope.row.labels" @click.prevent.stop />
                                     </template>
                                 </el-table-column>
 
@@ -171,20 +171,21 @@
                                     :label="$t('last execution date')"
                                 >
                                     <template #default="scope">
-                                        <router-link
-                                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
-                                            :to="{
-                                                name: 'executions/update',
-                                                params: {
-                                                    namespace: scope.row.namespace,
-                                                    flowId: scope.row.id,
-                                                    id: getLastExecution(scope.row).id
-                                                }
-                                            }"
-                                            class="table-link"
-                                        >
-                                            <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
-                                        </router-link>
+                                        <div @click.prevent.stop>
+                                            <router-link
+                                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                                :to="{
+                                                    name: 'executions/update',
+                                                    params: {
+                                                        namespace: scope.row.namespace,
+                                                        flowId: scope.row.id,
+                                                        id: getLastExecution(scope.row).id
+                                                    }
+                                                }"
+                                            >
+                                                <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
+                                            </router-link>
+                                        </div>
                                     </template>
                                 </el-table-column>
 
@@ -195,6 +196,7 @@
                                 >
                                     <template #default="scope">
                                         <div
+                                            @click.prevent.stop
                                             v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
                                             class="d-flex justify-content-between align-items-center"
                                         >
@@ -207,7 +209,6 @@
                                                         id: getLastExecution(scope.row).id
                                                     }
                                                 }"
-                                                class="table-link"
                                             >
                                                 <Status :status="getLastExecution(scope.row).status" size="small" />
                                             </router-link>
@@ -732,6 +733,10 @@
     vertical-align: middle;
 }
 
+:deep(.flows-table) .el-table__row {
+    cursor: pointer;
+}
+
 :deep(.flows-table) .el-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
 }
@@ -745,18 +750,6 @@
     @media (max-width: 570px) {
         flex-direction: column;
         align-items: flex-end;
-    }
-}
-
-.table-link {
-    cursor: pointer;
-
-    & :deep(button) {
-        cursor: pointer !important;
-    }
-
-    &:hover {
-        text-decoration: none;
     }
 }
 

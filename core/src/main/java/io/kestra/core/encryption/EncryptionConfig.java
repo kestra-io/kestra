@@ -18,7 +18,10 @@ public class EncryptionConfig {
 
     public static final String CONFIG_KEY = "${kestra.encryption.secret-key}";
 
-    private final Optional<String> secretKey;
+    /** Key used in the worker configs map to propagate the encryption key via gRPC. */
+    public static final String WORKER_CONFIG_KEY = "encryption.secret-key";
+
+    private volatile Optional<String> secretKey;
 
     @Inject
     public EncryptionConfig(@Nullable @Value(CONFIG_KEY) String secretKey) {
@@ -33,7 +36,7 @@ public class EncryptionConfig {
     public String get() {
         return secretKey.orElseThrow(
             () -> new IllegalStateException(
-                "No encryption key configured through the application configuration property: 'kestra.encryption.secret-key'."
+                "No encryption key configured through the application configuration property: '%s'.".formatted(CONFIG_KEY)
             )
         );
     }
@@ -46,5 +49,17 @@ public class EncryptionConfig {
     /** Returns {@code true} if an encryption key is configured. */
     public boolean isConfigured() {
         return secretKey.isPresent();
+    }
+
+    /**
+     * Sets the encryption key received from the controller (for workers).
+     * Only applies if no key was configured locally.
+     *
+     * @param secretKey the encryption key to set
+     */
+    public void initialize(String secretKey) {
+        if (this.secretKey.isEmpty() && secretKey != null) {
+            this.secretKey = Optional.of(secretKey);
+        }
     }
 }

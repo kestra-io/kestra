@@ -12,6 +12,7 @@ import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -38,14 +39,17 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
     private final WorkerControllersConfiguration workerControllersConfiguration;
     @Nullable
     private final WorkerReportableScheduler workerReportableScheduler;
+    private final EncryptionConfig encryptionConfig;
 
     @Inject
     public GrpcWorkerConnectionService(ConnectControllerServiceBlockingStub connectControllerService,
         WorkerControllersConfiguration workerControllersConfiguration,
-        @Nullable WorkerReportableScheduler workerReportableScheduler) {
+        @Nullable WorkerReportableScheduler workerReportableScheduler,
+        EncryptionConfig encryptionConfig) {
         this.connectControllerService = connectControllerService;
         this.workerControllersConfiguration = workerControllersConfiguration;
         this.workerReportableScheduler = workerReportableScheduler;
+        this.encryptionConfig = encryptionConfig;
     }
 
     /**
@@ -86,15 +90,25 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
      * @return the connection result
      */
     protected ConnectionResult toConnectionResult(ConnectResponse response, String workerGroupKey) {
-        // Extract telemetry configuration from serialized worker configs
-        if (workerReportableScheduler != null && !response.getWorkerConfigs().isEmpty()) {
+        // Extract worker configs from serialized response
+        if (!response.getWorkerConfigs().isEmpty()) {
             Map<String, Object> configs = MessageFormats.JSON.fromByteString(response.getWorkerConfigs(), MAP_TYPE);
-            if (configs != null && configs.containsKey(UsageReportConfig.ANONYMOUS_USAGE_REPORT)) {
-                UsageReportConfig config = OBJECT_MAPPER.convertValue(
-                    configs.get(UsageReportConfig.ANONYMOUS_USAGE_REPORT), UsageReportConfig.class
-                );
-                workerReportableScheduler.init(config);
-                log.debug("Worker usage reporting is {}", config.enabled() ? "enabled" : "disabled");
+            if (configs != null) {
+                // Extract telemetry configuration
+                if (workerReportableScheduler != null && configs.containsKey(UsageReportConfig.ANONYMOUS_USAGE_REPORT)) {
+                    UsageReportConfig config = OBJECT_MAPPER.convertValue(
+                        configs.get(UsageReportConfig.ANONYMOUS_USAGE_REPORT), UsageReportConfig.class
+                    );
+                    workerReportableScheduler.init(config);
+                    log.debug("Worker usage reporting is {}", config.enabled() ? "enabled" : "disabled");
+                }
+
+                // Extract encryption key from controller
+                if (configs.containsKey(EncryptionConfig.WORKER_CONFIG_KEY)) {
+                    String key = (String) configs.get(EncryptionConfig.WORKER_CONFIG_KEY);
+                    encryptionConfig.initialize(key);
+                    log.debug("Encryption key received from controller");
+                }
             }
         }
 

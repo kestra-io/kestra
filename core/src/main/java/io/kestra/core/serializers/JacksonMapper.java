@@ -143,6 +143,8 @@ public final class JacksonMapper {
     private static ObjectMapper configure(ObjectMapper mapper) {
         SimpleModule durationDeserialization = new SimpleModule();
         durationDeserialization.addDeserializer(Duration.class, new DurationDeserializer());
+        SimpleModule surrogateSanitizer = new SimpleModule("surrogate-sanitizer");
+        surrogateSanitizer.addSerializer(String.class, new SurrogateStrippingStringSerializer());
 
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
@@ -153,6 +155,7 @@ public final class JacksonMapper {
             .registerModules(new GuavaModule())
             .registerModule(new PluginModule())
             .registerModule(durationDeserialization)
+            .registerModule(surrogateSanitizer) 
             .setTimeZone(TimeZone.getDefault());
     }
 

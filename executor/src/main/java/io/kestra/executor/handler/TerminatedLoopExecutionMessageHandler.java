@@ -2,6 +2,7 @@ package io.kestra.executor.handler;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
+import java.io.IOException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -74,23 +75,39 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                     // Check the next iteration index
                     int nextIndex = runningIteration + terminatedIteration;
                     if (nextIndex < iterationCount) {
-                        taskOutputService.saveOutputs(parentTaskRun, Map.of(
-                            Loop.ITERATION_COUNT_OUTPUT, iterationCount,
-                            Loop.RUNNING_ITERATIONS_OUTPUT, runningIteration + 1,
-                            Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedIteration)
-                        );
                         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), parentTaskRun);
-                        var either = FlowableUtils.resolveValues(runContext, loop.getValues());
-                        if (either.isLeft()) {
-                            List<String> values = either.getLeft();
-                            String value = values.get(nextIndex);
+                        if (outputs.containsKey(Loop.NEXT_OFFSET_OUTPUT)) {
+                            // URI mode: seek to stored offset and read the next value
+                            long nextOffset = ((Number) outputs.get(Loop.NEXT_OFFSET_OUTPUT)).longValue();
+                            String valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues())
+                                .orElseThrow(() -> new IllegalStateException("Loop has a nextOffset output but values did not resolve to a URI"));
+                            var valuesAndOffset = FlowableUtils.readLoopValuesFromUri(runContext, valuesUri, nextOffset, 1);
+                            String value = valuesAndOffset.getLeft().getFirst();
+                            taskOutputService.saveOutputs(parentTaskRun, Map.of(
+                                Loop.ITERATION_COUNT_OUTPUT, iterationCount,
+                                Loop.RUNNING_ITERATIONS_OUTPUT, runningIteration + 1,
+                                Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedIteration,
+                                Loop.NEXT_OFFSET_OUTPUT, valuesAndOffset.getRight())
+                            );
                             var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, null, value);
                             executionQueue.emit(loopExecution);
                         } else {
-                            List<Pair<String, String>> values = either.getRight();
-                            Pair<String, String> value = values.get(nextIndex);
-                            var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, value.getKey(), value.getValue());
-                            executionQueue.emit(loopExecution);
+                            // Non-URI mode: resolve all values in memory and pick by index
+                            taskOutputService.saveOutputs(parentTaskRun, Map.of(
+                                Loop.ITERATION_COUNT_OUTPUT, iterationCount,
+                                Loop.RUNNING_ITERATIONS_OUTPUT, runningIteration + 1,
+                                Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedIteration)
+                            );
+                            var either = FlowableUtils.resolveValues(runContext, loop.getValues());
+                            if (either.isLeft()) {
+                                String value = either.getLeft().get(nextIndex);
+                                var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, null, value);
+                                executionQueue.emit(loopExecution);
+                            } else {
+                                Pair<String, String> value = either.getRight().get(nextIndex);
+                                var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, value.getKey(), value.getValue());
+                                executionQueue.emit(loopExecution);
+                            }
                         }
                         // we don't update the execution itself as the loop is still running
                         // TODO we may need to send a follow execution message to update the UI
@@ -113,7 +130,7 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                         }
                     }
                 }
-            } catch (InternalException | QueueException e) {
+            } catch (InternalException | QueueException | IOException e) {
                 return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
             } catch (FlowNotFoundException e) {
                 // avoid infinite loop for FlowNotFoundException

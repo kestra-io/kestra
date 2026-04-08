@@ -16,7 +16,6 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 
 import io.micronaut.context.ApplicationContext;
@@ -38,9 +37,6 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
-
-    @Inject
-    private StartExecutorService startExecutorService;
 
     @Inject
     @Nullable
@@ -75,18 +71,6 @@ public class StandAloneCommand extends AbstractServerCommand {
     @Option(names = { "--no-tutorials" }, description = "Flag to disable auto-loading of tutorial flows.")
     boolean tutorialsDisabled = false;
 
-    @Option(
-        names = { "--start-executors" }, split = ",",
-        description = "a list of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue, for debugging purpose."
-    )
-    private List<String> startExecutors = Collections.emptyList();
-
-    @Option(
-        names = { "--not-start-executors" }, split = ",",
-        description = "a list of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue, for debugging purpose."
-    )
-    private List<String> notStartExecutors = Collections.emptyList();
-
     @Option(names = { "--no-indexer" }, description = "Flag to disable starting an embedded indexer.")
     boolean indexerDisabled = false;
 
@@ -113,7 +97,6 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
         this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
         this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 

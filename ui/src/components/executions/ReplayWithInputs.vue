@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, getCurrentInstance} from "vue";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
     import {useRouter, useRoute} from "vue-router";
@@ -28,6 +28,7 @@
     const toast = useToast();
     const route = useRoute();
     const router = useRouter();
+    const instance = getCurrentInstance();
 
     const props = defineProps({
         execution: {type: Object, required: true},
@@ -45,7 +46,7 @@
 
     const handleReplaySubmit = async ({inputs}: any) => {
 
-        const formData = inputsToFormData({}, flow.value.inputs, inputs);
+        const formData = inputsToFormData(instance?.proxy, flow.value.inputs, inputs);
         let response = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,

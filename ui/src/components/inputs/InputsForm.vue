@@ -411,7 +411,7 @@
         for (const input of inputsMetaData.value) {
             const {type, id, value, defaults} = input;
             const valueOrDefault = value ?? defaults;
-            if (inputsValues[id] === undefined || inputsValues[id] === null || input.isDefault) {
+            if (inputsValues[id] === undefined || inputsValues[id] === null) {
                 if (type === "MULTISELECT") {
                     multiSelectInputs[id] = valueOrDefault;
                 } else if (type === "JSON" && value == undefined && input.isDefault) {

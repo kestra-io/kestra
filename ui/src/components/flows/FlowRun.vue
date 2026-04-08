@@ -270,6 +270,15 @@
                     this.$emit("updateLabels", this.executionLabels);
                 },
                 deep: true
+            },
+            // Auto-prefill inputs when replaying execution
+            replaySubmit: {
+                handler() {
+                    if (this.execution && this.replaySubmit) {
+                        this.fillInputsFromExecution();
+                    }
+                },
+                immediate: true
             }
         }
     };

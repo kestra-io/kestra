@@ -15,7 +15,7 @@
                 :aria-label="'Close menu'"
                 link
             />
-            <div v-if="!collapsed" class="d-flex flex-column gap-3">
+            <div v-if="!collapsed" class="menu-slot-wrapper">
                 <slot name="menu" />
             </div>
         </div>
@@ -88,6 +88,15 @@
         > div > ul > li > span:first-child {
             font-size: 12px;
         }
+    }
+
+    .menu-slot-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
     }
 
     .main-content-wrapper {
@@ -301,6 +310,7 @@
     .mobile-backdrop {
         display: none;
     }
+    
 
     @media (max-width: 991px) {        
         .secondary-header {
@@ -443,7 +453,7 @@
             position: sticky;
             left: auto;
             top: 0;
-            height: auto;
+            height: 100vh;
             width: auto;
             box-shadow: none;
             padding: 2rem;

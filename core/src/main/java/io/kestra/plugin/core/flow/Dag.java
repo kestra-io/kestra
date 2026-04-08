@@ -101,7 +101,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
         title = "Policy for handling child task failures.",
         description = """
             - `FAIL_FAST`: kill running tasks immediately.
-            - `STOP`: let running tasks finish but don't start new ones.
+            - `FAIL`: let running tasks finish but don't start new ones.
             - `CONTINUE`: keep starting and running all tasks, fail only after all complete."""
     )
     private final Property<ChildFailurePolicy> childFailurePolicy = Property.ofValue(ChildFailurePolicy.FAIL_FAST);

@@ -11,7 +11,7 @@ tasks:
     type: io.kestra.plugin.core.flow.ForEach
     values: '["1", "2", "3"]'
     concurrencyLimit: 0
-    childFailurePolicy: STOP
+    childFailurePolicy: FAIL
     tasks:
       - id: if
         type: io.kestra.plugin.core.flow.If

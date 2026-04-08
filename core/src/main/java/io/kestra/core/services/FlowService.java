@@ -358,9 +358,9 @@ public class FlowService {
                 }
 
                 constraintsBuilder.deprecationPaths(deprecationPaths(flow));
-                List<String> allWarnings = new ArrayList<>(warnings(flow, tenantId));
-                allWarnings.addAll(pebbleDeprecationWarnings(source));
-                constraintsBuilder.warnings(allWarnings);
+                constraintsBuilder.warnings(
+                    Stream.concat(warnings(flow, tenantId).stream(), pebbleDeprecationWarnings(source).stream()).toList()
+                );
                 constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                 constraintsBuilder.flow(flow.getId());
                 constraintsBuilder.namespace(flow.getNamespace());

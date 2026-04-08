@@ -15,7 +15,7 @@
                 @toggle="collapsed = onToggleCollapse(!collapsed)"
             />
             <div class="logo">
-                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
+                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'welcome'}">
                     <span class="img" />
                 </component>
             </div>

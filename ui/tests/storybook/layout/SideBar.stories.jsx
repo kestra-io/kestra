@@ -12,32 +12,32 @@ import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
 
 import SideBar from "../../../src/components/layout/SideBar.vue";
 
-
 export default {
   title: "Layout/SideBar",
   component: SideBar,
   decorators: [
     vueRouter([
-        {
-            path: "/",
-            name: "home",
-            component: {template: "<div>home</div>"}
-        },
-          {
-            path: "/dashboard",
-            name: "dashboard",
-            component: {template: "<div>dashboard</div>"}
-          },{
-            path: "/dashboard/:menu",
-            name: "dashboard/menu",
-            component: {template: "<div>/dashboard sub</div>"}
-          },
-          {
-            path: "/:graball/:menu?",
-            name: "graball",
-            component: {template: "<div>/dashboard sub</div>"}
-          },
-        ])
+      {
+          path: "/welcome",
+          name: "welcome",
+          component: {template: "<div>welcome</div>"}
+      },
+      {
+        path: "/dashboard",
+        name: "dashboard",
+        component: {template: "<div>dashboard</div>"}
+      },
+      {
+        path: "/dashboard/:menu",
+        name: "dashboard/menu",
+        component: {template: "<div>/dashboard sub</div>"}
+      },
+      {
+        path: "/:graball/:menu?",
+        name: "graball",
+        component: {template: "<div>/dashboard sub</div>"}
+      },
+    ])
   ]
 };
 

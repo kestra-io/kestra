@@ -15,11 +15,11 @@ tasks:
             values: [ 1, 2, 3 ]
             tasks:
             - id: item
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               format: "{{item.index}} - {{item.value}}"
             - id: parent
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               format: "{{item.parent.index}} - {{item.parent.value}}"
             - id: parents
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               format: "{{item.parents[0].index}} - {{item.parents[0].value}} - {{item.parents[1].index}} - {{item.parents[1].value}}"

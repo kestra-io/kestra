@@ -2,8 +2,8 @@
     <div class="flow-editor-shell">
         <MultiPanelGenericEditorView
             ref="editorView"
-            :class="{playgroundMode}"
-            :editorElements="editorElements"
+            :class="{playgroundMode, 'tour-mode': isGuidedCodeOnly}"
+            :editorElements="EDITOR_ELEMENTS"
             :defaultActiveTabs="tabs"
             :saveKey
             :preSerializePanels="preSerializePanels"
@@ -86,9 +86,12 @@
     const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value);
 
     watch(() => flowStore.isCreating, (isCreating) => {
-        if(!isCreating){
-            // when switching from creating to editing, ensure the saveKey is updated
-            editorView.value?.saveState(alwaysSaveKey.value);
+        if (!isCreating) {
+            if (isGuidedCodeOnly.value && alwaysSaveKey.value) {
+                localStorage.removeItem(alwaysSaveKey.value);
+            } else {
+                editorView.value?.saveState(alwaysSaveKey.value);
+            }
         }
     })
 
@@ -153,14 +156,14 @@
     const isGuidedCodeOnly = computed(
         () => onboardingV2Store.isGuidedActive && onboardingV2Store.state.editorMode === "code_only",
     );
-    watch(isGuidedCodeOnly, (guided) => {
+    watch(isGuidedCodeOnly, (guided, wasGuided) => {
         if (guided && playgroundStore.enabled) {
             playgroundStore.enabled = false;
         }
+        if (!guided && wasGuided && alwaysSaveKey.value) {
+            localStorage.removeItem(alwaysSaveKey.value);
+        }
     }, {immediate: true});
-    const editorElements = computed(() => (isGuidedCodeOnly.value
-        ? EDITOR_ELEMENTS.filter((element) => element.uid === "code")
-        : EDITOR_ELEMENTS));
     const tabs = computed(() => (isGuidedCodeOnly.value ? ["code"] : DEFAULT_ACTIVE_TABS));
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
@@ -201,6 +204,20 @@
         #{--el-color-primary}: colorPalette.$base-blue-500;
         color: colorPalette.$base-white;
         background-position: 10% 0;
+    }
+
+    .tour-mode :deep(.tabs-wrapper button) {
+        transition: opacity 0.2s ease;
+
+        &:first-child {
+            opacity: 1;
+        }
+
+        &:not(:first-child) {
+            opacity: 0.45;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
     }
 
     .flow-editor-shell {

@@ -156,8 +156,6 @@
         "bootstrap": {
             "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
         },
-        "storybook": "$storybook",
-        "vite": "^8.0.0",
         "@codecov/vite-plugin": {
             "vite": "$vite"
         }

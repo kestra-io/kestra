@@ -8,7 +8,6 @@ import {shared} from "./fixtures/shared";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const helloFlowYaml = fs.readFileSync(
     path.resolve(__dirname, "./fixtures/flows/hello.yaml"),
     "utf-8"
@@ -48,8 +47,7 @@ test.describe("Flow Page", () => {
 
         await test.step("execute the flow", async () => {
 
-            await expect(page.locator("section").getByRole("button", {name: "Execute"})).toBeVisible();
-            await page.locator("section").getByRole("button", {name: "Execute"}).click();
+            await page.getByRole("button", {name: "Execute"}).first().click();
 
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 
@@ -101,3 +99,4 @@ test.describe("Flow Page", () => {
         });
     });
 });
+

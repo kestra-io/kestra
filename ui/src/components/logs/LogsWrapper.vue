@@ -57,7 +57,7 @@
     import _merge from "lodash/merge";
     import moment from "moment";
     import {useLogFilter} from "../filter/configurations";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
@@ -69,15 +69,15 @@
         getUniqueFilters,
         isValidFilter,
         keyOfComparator
-    } from "../filter/utils/helpers";
-    import {AppliedFilter} from "../filter/utils/filterTypes";
+    } from "@kestra-io/ui-design-system";
+    import type {AppliedFilter} from "@kestra-io/ui-design-system";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter
-    } from "../filter/utils/logLevelQuery";
-    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
+    } from "@kestra-io/ui-design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/ui-design-system";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";

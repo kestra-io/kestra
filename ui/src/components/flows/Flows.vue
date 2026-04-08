@@ -309,7 +309,7 @@
 
     //@ts-expect-error no declaration file
     import FlowRun from "./FlowRun.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import TimeSeries from "../dashboard/sections/TimeSeries.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";

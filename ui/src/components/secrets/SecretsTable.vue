@@ -230,7 +230,7 @@
 
     import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import MultilineSecret from "./MultilineSecret.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 

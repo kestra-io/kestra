@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-    import {Close} from "../../utils/icons";
+    import {Close} from "../utils/icons";
 
     defineProps<{
         label: string;

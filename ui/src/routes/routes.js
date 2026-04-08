@@ -8,7 +8,7 @@ import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
-import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
+import {applyDefaultFilters} from "@kestra-io/ui-design-system";
 
 export default [
     //Initial

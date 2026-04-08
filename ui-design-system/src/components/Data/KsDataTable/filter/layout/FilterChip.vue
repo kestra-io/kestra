@@ -33,11 +33,30 @@
 
 <script setup lang="ts">
     import {computed, h, ref} from "vue";
-    import {KsTag} from "@kestra-io/ui-design-system";
-    import {useValues} from "../../composables/useValues";
-    import {Close} from "../../utils/icons";
-    import {AppliedFilter, FilterKeyConfig, Comparators} from "../../utils/filterTypes";
+    import {useI18n} from "vue-i18n";
+    import KsTag from "../../../KsTag/KsTag.vue";
+    import {Close} from "../utils/icons";
+    import {AppliedFilter, FilterKeyConfig, Comparators} from "../utils/filterTypes";
     import FilterEditPopover from "./FilterEditPopover.vue";
+
+    const {t} = useI18n({useScope: "global"});
+
+    const RELATIVE_DATE = [
+        {label: t("datepicker.last5minutes"), value: "PT5M"},
+        {label: t("datepicker.last15minutes"), value: "PT15M"},
+        {label: t("datepicker.last1hour"), value: "PT1H"},
+        {label: t("datepicker.last12hours"), value: "PT12H"},
+        {label: t("datepicker.last24hours"), value: "PT24H"},
+        {label: t("datepicker.last48hours"), value: "PT48H"},
+        {label: t("datepicker.last7days"), value: "PT168H"},
+        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last365days"), value: "PT8760H"},
+    ];
+
+    const getRelativeDateLabel = (value: string): string => {
+        const item = RELATIVE_DATE.find((item) => item.value === value);
+        return item ? item.label : value;
+    };
 
     type FilterValueType = string | string[] | Date | {startDate: Date; endDate: Date};
 
@@ -52,8 +71,6 @@
     }>();
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>();
-
-    const {getRelativeDateLabel} = useValues("executions");
 
     const shouldShowComparatorInPopper = computed(
         () => (props.filterKey?.comparators?.length ?? 0) >= 2

@@ -124,14 +124,14 @@
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import {storageKeys} from "../../utils/constants";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readRouteLevelFilter
-    } from "../filter/utils/logLevelQuery";
-    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
+    } from "@kestra-io/ui-design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/ui-design-system";
 
     export default {
         components: {

@@ -82,12 +82,12 @@
 
 <script setup lang="ts">
     import {ref, inject} from "vue";
-    import {ChevronDown, BookmarkCheckOutline, Refresh} from "../utils/icons";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
-    
-    import SaveFilters from "../segments/SaveFilters.vue";
-    import SavedFilters from "../segments/SavedFilters.vue";
-    import VerticalSliders from "../../../assets/icons/VerticalSliders.vue";
+    import {ChevronDown, BookmarkCheckOutline, Refresh} from "./utils/icons";
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
+
+    import SaveFilters from "./segments/SaveFilters.vue";
+    import SavedFilters from "./segments/SavedFilters.vue";
+    import VerticalSliders from "./assets/VerticalSliders.vue";
 
     const isSavedFiltersVisible = ref(false);
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;

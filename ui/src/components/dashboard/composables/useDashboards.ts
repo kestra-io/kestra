@@ -6,7 +6,7 @@ import {useDashboardStore} from "../../../stores/dashboard";
 
 import {useI18n} from "vue-i18n";
 
-import {decodeSearchParams} from "../../filter/utils/helpers";
+import {decodeSearchParams} from "@kestra-io/ui-design-system";
 
 
 import {FilterObject} from "../../../utils/filters";

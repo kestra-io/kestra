@@ -26,8 +26,8 @@
 <script setup lang="ts">
     import {computed, ref} from "vue";
     import {Close} from "../utils/icons";
-    import type {ColumnConfig} from "../../../composables/useTableColumns";
-    import DraggableTableColumns from "../../layout/DraggableTableColumns.vue";
+    import type {ColumnConfig} from "../composables/useTableColumns";
+    import DraggableTableColumns from "../DraggableTableColumns.vue";
 
     const props = defineProps<{
         storageKey: string;

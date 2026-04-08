@@ -90,14 +90,14 @@
     import {ref, inject, nextTick, computed} from "vue";
     import {useDebounceFn} from "@vueuse/core";
 
-    import {FilterOutline} from "../utils/icons";
+    import {FilterOutline} from "./utils/icons";
 
     import FilterChip from "./layout/FilterChip.vue";
     import SearchInput from "./layout/SearchInput.vue";
-    import CustomizeFilters from "../segments/CustomizeFilters.vue";
+    import CustomizeFilters from "./segments/CustomizeFilters.vue";
 
-    import {AppliedFilter} from "../utils/filterTypes";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
+    import {AppliedFilter} from "./utils/filterTypes";
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
 
     const isCustomizeFiltersVisible = ref(false);
     const chipRefs = ref<Record<string, any>>({});

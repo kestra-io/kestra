@@ -31,7 +31,7 @@
         COMPARATOR_DESCRIPTIONS,
         COMPARATOR_LABELS,
         Comparators
-    } from "../../utils/filterTypes";
+    } from "../utils/filterTypes";
 
     const {t} = useI18n();
 

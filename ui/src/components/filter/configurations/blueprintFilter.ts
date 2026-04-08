@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue";
-import {FilterConfiguration} from "../utils/filterTypes";
+import {FilterConfiguration} from "@kestra-io/ui-design-system";
 import {useI18n} from "vue-i18n";
 
 export const useBlueprintFilter = (): ComputedRef<FilterConfiguration> => {

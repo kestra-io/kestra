@@ -1,13 +1,13 @@
 import {nextTick, onMounted} from "vue";
 import {LocationQuery, useRoute, useRouter} from "vue-router";
-import {useMiscStore} from "override/stores/misc";
-import {defaultNamespace} from "../../../composables/useNamespaces";
 
 interface DefaultFilterOptions {
     namespace?: string | null;
     includeTimeRange?: boolean;
     includeScope?: boolean;
     legacyQuery?: boolean;
+    defaultChartDuration?: string;
+    defaultNamespaceValue?: string;
 }
 
 const NAMESPACE_FILTER_PREFIX = "filters[namespace]";
@@ -24,14 +24,15 @@ export function applyDefaultFilters(
         includeTimeRange,
         includeScope,
         legacyQuery,
+        defaultChartDuration,
+        defaultNamespaceValue,
     }: DefaultFilterOptions = {}): { query: LocationQuery, change: boolean } {
 
     const query = {...currentQuery};
     let change = false;
 
-
-    if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
-        query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
+    if (namespace !== null && defaultNamespaceValue && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
+        query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespaceValue;
         change = true;
     }
 
@@ -43,7 +44,7 @@ export function applyDefaultFilters(
     const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
 
     if (includeTimeRange && !Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))) {
-        const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "PT24H";
+        const defaultDuration = defaultChartDuration ?? "PT24H";
         query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
         change = true;
     }

@@ -35,10 +35,9 @@
 </template>
 
 <script setup lang="ts">
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
-    import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue";
-    import {useDragAndDrop} from "../../composables/useDragAndDrop";
-    import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns";
+    import {EyeOutline, EyeOffOutline} from "./utils/icons";
+    import {useDragAndDrop} from "./composables/useDragAndDrop";
+    import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns";
     import Drag from "vue-material-design-icons/Drag.vue";
 
     const props = defineProps<{
@@ -125,7 +124,7 @@
         .column-text {
             display: flex;
             flex-direction: column;
-            
+
             small {
                 color: var(--ks-content-tertiary);
                 font-size: 0.75rem;

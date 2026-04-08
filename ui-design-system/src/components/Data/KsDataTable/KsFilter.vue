@@ -14,28 +14,35 @@
 
 <script setup lang="ts">
     import {ref, computed, provide, onMounted, watch} from "vue";
-    import {useFilters} from "../composables/useFilters";
-    import {useSavedFilters} from "../composables/useSavedFilters";
-    import {useDataOptions} from "../composables/useDataOptions";
-    
+    import {useI18n} from "vue-i18n";
+    import locale from "./KsFilter.locale.ts";
+    import {useFilters} from "./filter/composables/useFilters";
+    import {useSavedFilters} from "./filter/composables/useSavedFilters";
+    import {useDataOptions} from "./filter/composables/useDataOptions";
+
     import {
         SavedFilter,
         TableOptions,
         AppliedFilter,
         TableProperties,
         FilterConfiguration,
-    } from "../utils/filterTypes";
+    } from "./filter/utils/filterTypes";
 
-    import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys";
 
-    import MainFilter from "./MainFilter.vue";
-    import RightFilter from "./RightFilter.vue";
-    import FilterOptions from "./FilterOptions.vue";
+    import MainFilter from "./filter/MainFilter.vue";
+    import RightFilter from "./filter/RightFilter.vue";
+    import FilterOptions from "./filter/FilterOptions.vue";
+
+    const {mergeLocaleMessage} = useI18n({useScope: "global"});
+    for (const [lang, messages] of Object.entries(locale)) {
+        mergeLocaleMessage(lang, messages);
+    }
 
     const props = withDefaults(defineProps<{
         configuration: FilterConfiguration;
         buttons?: {
-            savedFilters?: {shown?: boolean}; 
+            savedFilters?: {shown?: boolean};
             tableOptions?: {shown?: boolean}
         };
         tableOptions?: TableOptions;
@@ -47,6 +54,8 @@
         readOnly?: boolean;
         defaultScope?: boolean;
         defaultTimeRange?: boolean;
+        defaultChartDuration?: string;
+        defaultNamespaceValue?: string;
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -58,6 +67,8 @@
         readOnly: false,
         defaultScope: undefined,
         defaultTimeRange: undefined,
+        defaultChartDuration: undefined,
+        defaultNamespaceValue: undefined,
     });
 
     const emits = defineEmits<{
@@ -83,6 +94,8 @@
         props.legacyQuery,
         props.defaultScope,
         props.defaultTimeRange,
+        props.defaultChartDuration,
+        props.defaultNamespaceValue,
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
@@ -172,7 +185,7 @@
     watch(appliedFilters, (newFilters) => {
         emits("filter", newFilters);
     }, {deep: true});
-    
+
 </script>
 
 <style lang="scss" scoped>
@@ -182,13 +195,13 @@
     margin-bottom: 1rem;
     width: 100%;
     border-radius: 0.5rem;
-    
+
     .top {
         display: flex;
         align-items: flex-start;
         flex-wrap: nowrap;
         gap: 0.5rem;
-        
+
         &.options {
             padding-bottom: 1rem;
         }

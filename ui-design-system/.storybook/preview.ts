@@ -2,14 +2,21 @@ import {setup} from "@storybook/vue3-vite"
 import {withThemeByClassName} from "@storybook/addon-themes"
 import type {Preview} from "@storybook/vue3-vite"
 import {createI18n} from "vue-i18n"
+import {createRouter, createMemoryHistory} from "vue-router"
 
 import "../src/assets/styles/index.scss"
 
 import KestraDesignSystem from "../src/index"
 
+const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{path: "/", component: {template: "<div/>"}}],
+})
+
 setup((app) => {
     app.use(createI18n({legacy: false, locale: "en"}))
     app.use(KestraDesignSystem)
+    app.use(router)
 })
 
 const preview: Preview = {

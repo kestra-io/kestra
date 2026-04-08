@@ -5,7 +5,7 @@
                 <span class="title">{{ $t("filter.hierarchy.all") }}</span>
                 <span class="desc">{{ $t("filter.show default") }}</span>
             </div>
-            <ks-radio :modelValue="selectedOption" :value="'ALL'" />
+            <ks-radio :modelValue="selectedOption" :value="'ALL'" label="" />
         </div>
 
         <div
@@ -19,14 +19,14 @@
                 <span class="title">{{ option.label }}</span>
                 <span v-if="option.description" class="desc">{{ option.description }}</span>
             </div>
-            <ks-radio :modelValue="selectedOption" :value="option.value" />
+            <ks-radio :modelValue="selectedOption" :value="option.value" label="" />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, watch} from "vue";
-    import type {FilterValue} from "../../utils/filterTypes";
+    import type {FilterValue} from "../utils/filterTypes";
 
     const props = defineProps<{
         modelValue: string;

@@ -46,10 +46,10 @@
                     />
                     <span v-else class="option-label">{{ option.label }}</span>
                 </div>
-                <Checkbox
+                <ks-checkbox
                     :modelValue="modelValue.includes(option.value)"
+                    label=""
                     @update-model-value="(checked: boolean) => handleOptionChange(option.value, checked)"
-                    @click.stop
                 />
             </div>
             <ks-alert
@@ -70,9 +70,8 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {Magnify, InformationOutline} from "../../utils/icons";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
-    import Checkbox from "../../../layout/Checkbox.vue";
+    import {Magnify, InformationOutline} from "../utils/icons";
+    import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue";
 
     const props = defineProps<{
         label?: string;

@@ -30,15 +30,19 @@
         "storybook:build": "storybook build"
     },
     "peerDependencies": {
+        "@vueuse/core": ">=11.0.0",
         "bootstrap": "^5.3.8",
         "echarts": ">=5.4.0",
         "element-plus": ">=2.13.5",
         "vue": "^3.5.0",
         "vue-echarts": ">=7.0.0",
         "vue-i18n": "^11.3.0",
-        "vue-material-design-icons": "^5.3.1"
+        "vue-material-design-icons": "^5.3.1",
+        "vue-router": ">=4.0.0"
     },
     "devDependencies": {
+        "@vueuse/core": "^11.0.0",
+        "vue-router": "^4.0.0",
         "@storybook/addon-a11y": "^10.3.1",
         "echarts": "^5.6.0",
         "vue-echarts": "^7.0.3",

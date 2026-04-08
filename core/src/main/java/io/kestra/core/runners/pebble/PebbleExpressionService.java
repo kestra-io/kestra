@@ -67,8 +67,6 @@ public class PebbleExpressionService {
             DeprecatedPebble ann = entry.getValue().getClass().getAnnotation(DeprecatedPebble.class);
             if (ann != null) {
                 String name = entry.getKey();
-                // Functions: match word-boundary + name + optional whitespace + opening paren
-                // Filters:   match pipe + optional whitespace + name + word-boundary
                 Pattern pattern = isFilter
                     ? Pattern.compile("\\|\\s*" + Pattern.quote(name) + "\\b")
                     : Pattern.compile("\\b" + Pattern.quote(name) + "\\s*\\(");

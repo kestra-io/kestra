@@ -8,5 +8,5 @@ tasks:
     values: ["value 1", "value 2", "value 3"]
     tasks:
       - id: item
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{item.index}} - {{item.value}}"

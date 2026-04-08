@@ -19,6 +19,7 @@ import io.kestra.core.models.tasks.ChildFailurePolicy;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 import org.jspecify.annotations.NonNull;
@@ -84,21 +85,10 @@ public class FlowableUtils {
             return Collections.singletonList(currentTasks.getFirst().toNextTaskRun(execution));
         }
 
-        // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
-        if (lastCreated.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have submitted, leave
-        Optional<TaskRun> lastSubmitted = execution.findLastSubmitted(taskRuns);
-        if (lastSubmitted.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have running, leave
-        Optional<TaskRun> lastRunning = execution.findLastRunning(taskRuns);
-        if (lastRunning.isPresent()) {
+        // if it has any created/submitted or running, we leave
+        if (taskRuns.stream()
+            .anyMatch(taskRun -> taskRun.getState().isCreated()  || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+        ) {
             return Collections.emptyList();
         }
 
@@ -135,21 +125,10 @@ public class FlowableUtils {
             );
         }
 
-        // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
-        if (lastCreated.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have running, leave
-        Optional<TaskRun> lastRunning = execution.findLastRunning(taskRuns);
-        if (lastRunning.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have submitted, leave
-        Optional<TaskRun> lastSubmitted = execution.findLastSubmitted(taskRuns);
-        if (lastSubmitted.isPresent()) {
+        // if it has any created/submitted or running, we leave
+        if (taskRuns.stream()
+            .anyMatch(taskRun -> taskRun.getState().isCreated()  || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+        ) {
             return Collections.emptyList();
         }
 

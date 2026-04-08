@@ -64,9 +64,9 @@
     };
 
     const {panels, saveState} = useStoredPanels(
-        props.saveKey, 
-        props.editorElements, 
-        props.defaultActiveTabs, 
+        props.saveKey,
+        props.editorElements,
+        props.defaultActiveTabs,
         props.preSerializePanels,
     );
 
@@ -94,8 +94,6 @@
             }
         }
     }
-
-
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.uid)));
 
@@ -152,3 +150,4 @@
         }
     }
 </style>
+

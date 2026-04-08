@@ -32,7 +32,7 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.10.10")
+    api platform("io.micronaut.platform:micronaut-platform:4.10.11")
     api platform("io.qameta.allure:allure-bom:2.33.0")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.79.0')
@@ -90,7 +90,7 @@ dependencies {
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.3'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        api group: 'net.thisptr', name: 'jackson-jq', version: '1.6.0'
+        api group: 'net.thisptr', name: 'jackson-jq', version: '1.6.1'
         api group: 'com.google.guava', name: 'guava', version: '33.4.8-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.21.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.20.0'
@@ -128,12 +128,12 @@ dependencies {
         api group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '3.0.0'
         api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.5'
         api group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.3'
-        api group: 'de.siegmar', name: 'fastcsv', version: '4.1.1'
+        api group: 'de.siegmar', name: 'fastcsv', version: '4.2.0'
         // Json Diff
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
         api 'com.rabbitmq:amqp-client:5.29.0'
         api 'org.apache.commons:commons-pool2:2.13.1'
-        api 'io.lettuce:lettuce-core:7.5.0.RELEASE'
+        api 'io.lettuce:lettuce-core:7.5.1.RELEASE'
 
         // force transitive version to fix CVE
         api 'org.codehaus.plexus:plexus-utils:4.0.3' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244

@@ -7492,6 +7492,10 @@ components:
           nullable: true
           items:
             $ref: "#/components/schemas/Breakpoint"
+        loopRun:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/LoopRun"
     ExecutionController.ApiValidateExecutionInputsResponse:
       type: object
       properties:
@@ -7596,6 +7600,7 @@ components:
       - NORMAL
       - TEST
       - PLAYGROUND
+      - LOOP
     ExecutionMetadata:
       type: object
       properties:
@@ -8324,6 +8329,32 @@ components:
           nullable: true
           allOf:
           - $ref: "#/components/schemas/ExecutionKind"
+    LoopRun:
+      type: object
+      properties:
+        executionId:
+          type: string
+        taskId:
+          type: string
+        taskRunId:
+          type: string
+        value:
+          type: string
+        index:
+          type: integer
+          format: int32
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoopRun.Parent"
+    LoopRun.Parent:
+      type: object
+      properties:
+        value:
+          type: string
+        index:
+          type: integer
+          format: int32
     Map_Object.Object_:
       type: object
       properties:

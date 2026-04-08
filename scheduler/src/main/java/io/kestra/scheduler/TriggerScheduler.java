@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,7 +282,8 @@ public class TriggerScheduler {
         try {
             List<Condition> conditions = trigger.getConditions() != null ? trigger.getConditions() : List.of();
 
-            if (!conditionService.areValid(conditions, context.conditionContext())) {
+            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen())) ||
+                !conditionService.areValid(conditions, context.conditionContext())) {
                 updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, context).ifPresent(triggerStateStore::save);
                 return;
             }

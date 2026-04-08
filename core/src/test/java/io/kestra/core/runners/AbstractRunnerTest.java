@@ -309,6 +309,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/flow-trigger-when-condition-flow-a.yaml", "flows/valids/flow-trigger-when-condition-flow-listen.yaml" })
+    void flowTriggerWhenCondition() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerWhenCondition();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/flow-trigger-mixed-conditions-flow-a.yaml", "flows/valids/flow-trigger-mixed-conditions-flow-listen.yaml" })
     void flowTriggerMixedConditions() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerMixedConditions();

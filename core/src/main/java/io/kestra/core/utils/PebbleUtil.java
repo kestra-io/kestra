@@ -3,6 +3,7 @@ package io.kestra.core.utils;
 import io.pebbletemplates.pebble.lexer.Syntax;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Utility for Pebble template delimiter detection.
@@ -35,6 +36,16 @@ public final class PebbleUtil {
      */
     public static List<String> closingBlockDelimiters() {
         return CLOSING_BLOCK_DELIMITERS;
+    }
+
+    /**
+     * Returns a regex pattern that matches Pebble print blocks ({@code {{ ... }}}).
+     */
+    public static Pattern printBlockPattern() {
+        return Pattern.compile(
+            Pattern.quote(DEFAULT_SYNTAX.getPrintOpenDelimiter()) + "(.*?)" + Pattern.quote(DEFAULT_SYNTAX.getPrintCloseDelimiter()),
+            java.util.regex.Pattern.DOTALL
+        );
     }
 
     /**

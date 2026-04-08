@@ -35,6 +35,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
@@ -66,7 +67,9 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowService {
-    private static final Pattern PEBBLE_BLOCK_PATTERN = Pattern.compile("\\{\\{(.*?)}}", Pattern.DOTALL);
+    private static final Pattern PEBBLE_BLOCK_PATTERN = PebbleUtil.printBlockPattern();
+    private static final Pattern STRING_LITERAL_SINGLE = Pattern.compile("'[^']*'");
+    private static final Pattern STRING_LITERAL_DOUBLE = Pattern.compile("\"[^\"]*\"");
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -495,7 +498,9 @@ public class FlowService {
         Set<String> warnings = new LinkedHashSet<>();
 
         while (blockMatcher.find()) {
-            String block = blockMatcher.group(1);
+            String block = STRING_LITERAL_DOUBLE.matcher(
+                STRING_LITERAL_SINGLE.matcher(blockMatcher.group(1)).replaceAll("''")
+            ).replaceAll("\"\"");
 
             for (PebbleExpressionService.DeprecatedEntry entry : pebbleExpressionService.deprecatedFunctions()) {
                 if (entry.pattern().matcher(block).find()) {
@@ -548,10 +553,9 @@ public class FlowService {
 
         subFlows.forEach(subflow ->
         {
-            String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
             String subflowId = subflow.getFlowId();
             String namespace = subflow.getNamespace();
-            if ((subflowId != null && subflowId.matches(regex)) || (namespace != null && namespace.matches(regex))) {
+            if ((subflowId != null && PebbleUtil.containsOpeningBlockDelimiter(subflowId)) || (namespace != null && PebbleUtil.containsOpeningBlockDelimiter(namespace))) {
                 return;
             }
             if (subflowId == null || namespace == null) {

@@ -29,7 +29,7 @@
     import Circle from "vue-material-design-icons/Circle.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
 
     import {useExecutionsStore} from "../../../../../stores/executions";
     import {useAuthStore} from "override/stores/auth";

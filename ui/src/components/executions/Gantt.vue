@@ -54,7 +54,7 @@
                                             <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                             <ChevronDown v-else />
                                         </div>
-                                        <ks-tooltip placement="top-start" :persistent="false" transition="ks-fade-in-linear" :autoClose="2000" effect="light">
+                                        <ks-tooltip placement="top-start">
                                             <template #content>
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
@@ -69,7 +69,7 @@
                                             </span>
                                         </ks-tooltip>
                                         <div>
-                                            <ks-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="ks-fade-in-linear" :autoClose="2000" effect="light">
+                                            <ks-tooltip v-if="item.attempts > 1" placement="right">
                                                 <template #content>
                                                     <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                                 </template>
@@ -77,7 +77,7 @@
                                             </ks-tooltip>
                                         </div>
                                         <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                            <ks-tooltip placement="top" :persistent="false" transition="ks-fade-in-linear" :autoClose="2000" effect="light">
+                                            <ks-tooltip placement="top">
                                                 <template #content>
                                                     <span style="white-space: pre-wrap;">
                                                         {{ item.tooltip }}
@@ -87,14 +87,15 @@
                                                     :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                                     class="task-progress"
                                                 >
-                                                    <div class="progress">
-                                                        <div
-                                                            :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
-                                                            class="progress-bar"
-                                                            :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
-                                                            role="progressbar"
-                                                        />
-                                                    </div>
+                                                    <ks-progress
+                                                        :left="Math.min(item.left, 90)"
+                                                        :percentage="Math.max(100 - item.left, 10)"
+                                                        :color="item.color"
+                                                        :stroke-width="25"
+                                                        :striped="item.running"
+                                                        :striped-flow="item.running"
+                                                        :show-text="false"
+                                                    />
                                                 </div>
                                             </ks-tooltip>
                                         </div>
@@ -138,7 +139,7 @@
     import {useRoute} from "vue-router";
     // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
     // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
@@ -242,7 +243,7 @@
     // Constants
     const TASKRUN_THRESHOLD = 50;
     const ts = (date: string | Date): number => new Date(date).getTime();
-    const colors = State.colorClass();
+    const colors = State.color();
     const taskTypesToExclude = [
         "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
         "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
@@ -609,13 +610,12 @@
 </script>
 
 <style scoped lang="scss">
-    .kks-card {
+    .kel-card {
         padding: 0;
 
-        :deep(.kks-card__header) {
+        :deep(.kel-card__header) {
             padding: 0;
             font-size: var(--kel-font-size-small);
-            background-color: var(--ks-gray-200);
 
             > div {
                 > * {
@@ -647,7 +647,7 @@
             }
         }
 
-        :deep(.kks-card__body) {
+        :deep(.kel-card__body) {
             padding: 0;
 
             .vue-recycle-scroller {
@@ -723,23 +723,6 @@
                     position: relative;
                     transition: all 0.3s;
                     min-width: 5px;
-
-                    .progress {
-                        height: 25px;
-                        border-radius: var(--kel-border-radius-base-sm);
-                        background-color: var(--ks-gray-200);
-                        cursor: pointer;
-
-                        .progress-bar {
-                            position: absolute;
-                            height: 25px;
-                            transition: none;
-
-                            &.bg-gray {
-                                background-color: #5a6268;
-                            }
-                        }
-                    }
                 }
             }
         }

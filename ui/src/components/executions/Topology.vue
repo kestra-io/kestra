@@ -25,7 +25,8 @@
 <script>
     import throttle from "lodash/throttle";
     import {mapStores} from "pinia";
-    import {Utils, State} from "@kestra-io/ui-libs";
+    import {Utils} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {useExecutionsStore} from "../../stores/executions";
     import {useFlowStore} from "../../stores/flow";

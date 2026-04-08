@@ -67,7 +67,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/ui-design-system"
     import {KsExecutionStatus} from "@kestra-io/ui-design-system"
     import * as ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef, ref} from "vue";

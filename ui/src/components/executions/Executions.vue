@@ -406,7 +406,7 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
 

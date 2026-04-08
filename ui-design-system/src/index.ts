@@ -90,12 +90,14 @@ export {designSystemLocale, setDesignSystemLocale} from "./i18n"
 // ─── utils ─────────────────────────────────────────────────────────────
 export {setMomentInstance, setDateFormatter} from "./date/index"
 export {cssVar} from "./utils/css.ts"
+export {State} from "./utils/state.ts"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
 export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
+export {LOG_LEVELS} from "./utils/state.ts"
 
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {

@@ -23,7 +23,7 @@
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
 
     import {useToast} from "../../../../../utils/toast";
     const toast = useToast();

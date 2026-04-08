@@ -14,7 +14,7 @@
 </template>
 
 <script>
-    import {State} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/ui-design-system"
     import Utils from "../../utils/utils";
 
     const ts = date => new Date(date).getTime();

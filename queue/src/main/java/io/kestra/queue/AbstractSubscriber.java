@@ -84,8 +84,9 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             } catch (Exception e) {
                 if (event.isLeft()) {
                     log.error(
-                        "{} failed to process message with key '{}'. Message will be redelivered.",
+                        "{} failed to process message with key '{}'. Message will be redelivered. You can ignore this message by starting Kestra with `--ignore-queue-records {}`.",
                         logPrefix,
+                        event.getLeft().key(),
                         event.getLeft().key(),
                         e
                     );

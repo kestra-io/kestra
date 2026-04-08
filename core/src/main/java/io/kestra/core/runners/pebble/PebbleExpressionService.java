@@ -84,12 +84,10 @@ public class PebbleExpressionService {
         return functions;
     }
 
-    /** Deprecated function entries with pre-compiled match patterns. */
     public List<DeprecatedEntry> deprecatedFunctions() {
         return deprecatedFunctions;
     }
 
-    /** Deprecated filter entries with pre-compiled match patterns. */
     public List<DeprecatedEntry> deprecatedFilters() {
         return deprecatedFilters;
     }

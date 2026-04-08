@@ -274,6 +274,46 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldWarnOnDeprecatedPebbleFunction() {
+        String source = """
+            id: test-deprecated-fn
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ testDeprecated() }}"
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getWarnings())
+            .contains("The Pebble function 'testDeprecated' is deprecated. Use 'testReplacement' instead.");
+    }
+
+    @Test
+    void shouldDeduplicateDeprecatedPebbleWarnings() {
+        String source = """
+            id: test-deprecated-dedup
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log1
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ testDeprecated() }}"
+              - id: log2
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ testDeprecated() }}"
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getWarnings().stream()
+            .filter(w -> w.contains("'testDeprecated'"))
+            .count()).isEqualTo(1);
+    }
+
+    @Test
     void shouldReturnValidationErrorForReservedFlowId() {
         // Given
         String source = """

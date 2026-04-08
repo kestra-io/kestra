@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -39,6 +40,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;
@@ -64,6 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowService {
+    private static final Pattern PEBBLE_BLOCK_PATTERN = Pattern.compile("\\{\\{(.*?)}}", Pattern.DOTALL);
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -90,6 +93,9 @@ public class FlowService {
 
     @Inject
     private PluginRegistry pluginRegistry;
+
+    @Inject
+    private PebbleExpressionService pebbleExpressionService;
 
     private final ExecutorService executorService;
 
@@ -352,7 +358,9 @@ public class FlowService {
                 }
 
                 constraintsBuilder.deprecationPaths(deprecationPaths(flow));
-                constraintsBuilder.warnings(warnings(flow, tenantId));
+                List<String> allWarnings = new ArrayList<>(warnings(flow, tenantId));
+                allWarnings.addAll(pebbleDeprecationWarnings(source));
+                constraintsBuilder.warnings(allWarnings);
                 constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                 constraintsBuilder.flow(flow.getId());
                 constraintsBuilder.namespace(flow.getNamespace());
@@ -480,6 +488,34 @@ public class FlowService {
         });
 
         return warnings;
+    }
+
+    private List<String> pebbleDeprecationWarnings(String source) {
+        Matcher blockMatcher = PEBBLE_BLOCK_PATTERN.matcher(source);
+        Set<String> warnings = new LinkedHashSet<>();
+
+        while (blockMatcher.find()) {
+            String block = blockMatcher.group(1);
+
+            for (PebbleExpressionService.DeprecatedEntry entry : pebbleExpressionService.deprecatedFunctions()) {
+                if (entry.pattern().matcher(block).find()) {
+                    warnings.add(deprecationMessage("function", entry.name(), entry.replaceWith()));
+                }
+            }
+
+            for (PebbleExpressionService.DeprecatedEntry entry : pebbleExpressionService.deprecatedFilters()) {
+                if (entry.pattern().matcher(block).find()) {
+                    warnings.add(deprecationMessage("filter", entry.name(), entry.replaceWith()));
+                }
+            }
+        }
+
+        return new ArrayList<>(warnings);
+    }
+
+    private static String deprecationMessage(String kind, String name, String replacement) {
+        String base = "The Pebble " + kind + " '" + name + "' is deprecated.";
+        return replacement.isEmpty() ? base : base + " Use '" + replacement + "' instead.";
     }
 
     public List<Relocation> relocations(String flowSource) {

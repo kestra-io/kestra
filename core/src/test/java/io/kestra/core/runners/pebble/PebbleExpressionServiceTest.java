@@ -95,6 +95,26 @@ class PebbleExpressionServiceTest {
     }
 
     @Test
+    void deprecatedFunctionsShouldBeDetected() {
+        List<PebbleExpressionService.DeprecatedEntry> deprecated = pebbleExpressionService.deprecatedFunctions();
+
+        assertThat(deprecated).isNotEmpty();
+        PebbleExpressionService.DeprecatedEntry entry = deprecated.stream()
+            .filter(e -> e.name().equals("testDeprecated"))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Deprecated function 'testDeprecated' not found"));
+
+        assertThat(entry.replaceWith()).isEqualTo("testReplacement");
+        assertThat(entry.pattern().matcher("testDeprecated(inputs.x)").find()).isTrue();
+        assertThat(entry.pattern().matcher("testReplacement(inputs.x)").find()).isFalse();
+    }
+
+    @Test
+    void deprecatedFiltersShouldBeEmpty() {
+        assertThat(pebbleExpressionService.deprecatedFilters()).isEmpty();
+    }
+
+    @Test
     void argumentOrderShouldBePreserved() {
         assertThat(findFunction("encrypt").arguments()).extracting(PebbleFunction.Argument::name)
             .containsExactly("key", "plaintext");

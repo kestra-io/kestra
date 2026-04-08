@@ -69,6 +69,9 @@ public class StandAloneCommand extends AbstractServerCommand {
     @Option(names = { "--ignore-indexer-records" }, split = ",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreIndexerRecords = Collections.emptyList();
 
+    @Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
+
     @Option(names = { "--no-tutorials" }, description = "Flag to disable auto-loading of tutorial flows.")
     boolean tutorialsDisabled = false;
 
@@ -109,6 +112,7 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
         this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
         this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
+        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);

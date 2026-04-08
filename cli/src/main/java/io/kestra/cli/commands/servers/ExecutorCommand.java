@@ -57,6 +57,9 @@ public class ExecutorCommand extends AbstractServerCommand {
     @CommandLine.Option(names = { "--ignore-tenants" }, split = ",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreTenants = Collections.emptyList();
 
+    @CommandLine.Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
+
     @CommandLine.Option(
         names = { "--start-executors" }, split = ",", description = "List of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue; for debugging only"
     )
@@ -81,6 +84,7 @@ public class ExecutorCommand extends AbstractServerCommand {
         this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
         this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
         this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
+        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 

@@ -17,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 @Singleton
 @Slf4j
 public class TenantMigrationService {

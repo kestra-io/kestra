@@ -20,8 +20,15 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
+import org.jspecify.annotations.NonNull;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class FlowableUtils {
+    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {
+    };
+    private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
+
     public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> tasks) {
@@ -483,31 +490,80 @@ public class FlowableUtils {
         return Collections.emptyList();
     }
 
-    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {
-    };
-    private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Resolves the values, then for each value create a {@link ResolvedTask} with it.
+     *
+     * @see #resolveValues(RunContext, Object)
+     */
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
-        List<Object> values;
+        List<String> distinctValue = resolveValues(runContext, value);
+
+        ArrayList<ResolvedTask> result = new ArrayList<>();
+
+        int iteration = 0;
+        for (String current : distinctValue) {
+            for (Task task : tasks) {
+                result.add(
+                    ResolvedTask.builder()
+                        .task(task)
+                        .value(current)
+                        .iteration(iteration)
+                        .parentId(parentTaskRun.getId())
+                        .build()
+                );
+            }
+
+            iteration++;
+        }
+
+        return result;
+    }
+
+    /**
+     * Resolves a single Object values to a List of String representation.
+     * It supports:
+     * - A String that will be rendered then parsed as a JSON array.
+     * - A List of Objects that will be converted to a List of String, each object being rendered then parsed as a JSON object.
+     *
+     * @throws IllegalVariableEvaluationException in case of JSON error, unsupported value type or duplicate values.
+     */
+    public static List<String> resolveValues(RunContext runContext, Object value) throws IllegalVariableEvaluationException {
+        List<String> resolvedValues;
 
         if (value instanceof String stringValue) {
             String renderValue = runContext.render(stringValue);
             try {
-                values = MAPPER.readValue(renderValue, TYPE_REFERENCE);
+                resolvedValues = MAPPER.readValue(renderValue, TYPE_REFERENCE)
+                    .stream()
+                    .map(throwFunction(obj -> {
+                        if (obj instanceof String s) {
+                            return s;
+                        } else if (obj == null) {
+                            throw new IllegalVariableEvaluationException(
+                                "Found a null value inside the iteration values=" + serializeAsString(value)
+                            );
+                        } else {
+                            return serializeAsString(obj);
+                        }
+                    }))
+                    .toList();
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
         } else if (value instanceof List<?> listValue) {
-            values = new ArrayList<>(listValue.size());
+            resolvedValues = new ArrayList<>(listValue.size());
             for (Object obj : (List<Object>) value) {
                 if (obj instanceof String stringObj) {
-                    values.add(runContext.render(stringObj));
-                } else if (obj instanceof Integer) {
-                    values.add(runContext.render(obj.toString()));
+                    resolvedValues.add(runContext.render(stringObj));
+                } else if (obj instanceof Number) {
+                    resolvedValues.add(runContext.render(obj.toString()));
                 } else if (obj instanceof Map mapObj) {
                     //JSON or YAML map
-                    values.add(runContext.render(mapObj));
+                    resolvedValues.add(serializeAsString(runContext.render(mapObj)));
+                } else if (obj == null) {
+                    throw new IllegalVariableEvaluationException(
+                        "Found a null value inside the iteration values=" + serializeAsString(value)
+                    );
                 } else {
                     throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
                 }
@@ -516,46 +572,18 @@ public class FlowableUtils {
             throw new IllegalVariableEvaluationException("Unknown value type: " + value.getClass());
         }
 
-        List<Object> distinctValue = values
+        return resolvedValues
             .stream()
             .distinct()
             .toList();
+    }
 
-        long nullCount = distinctValue
-            .stream()
-            .filter(Objects::isNull)
-            .count();
-
-        if (nullCount > 0) {
-            throw new IllegalVariableEvaluationException(
-                "Found '" + nullCount + "' null values on Each, " +
-                    "with values=" + Arrays.toString(values.toArray())
-            );
+    private static String serializeAsString(Object obj) throws IllegalVariableEvaluationException {
+        try {
+            return MAPPER.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            throw new IllegalVariableEvaluationException(e);
         }
-
-        ArrayList<ResolvedTask> result = new ArrayList<>();
-
-        int iteration = 0;
-        for (Object current : distinctValue) {
-            try {
-                String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
-                for (Task task : tasks) {
-                    result.add(
-                        ResolvedTask.builder()
-                            .task(task)
-                            .value(resolvedValue)
-                            .iteration(iteration)
-                            .parentId(parentTaskRun.getId())
-                            .build()
-                    );
-                }
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
-            }
-            iteration++;
-        }
-
-        return result;
     }
 
     /**

@@ -8,9 +8,7 @@ export default defineProject({
         vue(),
     ],
     resolve: {
-        alias: {
-            ...viteConfig.resolve.alias,
-        },
+        alias: viteConfig.resolve.alias,
     },
     test: {
         name: "unit",

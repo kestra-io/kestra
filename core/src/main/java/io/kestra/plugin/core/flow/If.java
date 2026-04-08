@@ -73,8 +73,7 @@ import lombok.experimental.SuperBuilder;
                         message: "Condition was false"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.If"
+    }
 )
 public class If extends Task implements FlowableTask<If.Output> {
     @Schema(

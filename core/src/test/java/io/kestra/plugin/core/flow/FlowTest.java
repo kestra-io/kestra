@@ -44,14 +44,4 @@ class FlowTest {
     void noLabels() throws Exception {
         flowCaseTest.noLabels("nolabels");
     }
-
-    @Test
-    @LoadFlows(
-        value = { "flows/valids/subflow-old-task-name.yaml",
-            "flows/valids/minimal.yaml" },
-        tenantId = "oldtaskname"
-    )
-    void oldTaskName() throws Exception {
-        flowCaseTest.oldTaskName("oldtaskname");
-    }
 }

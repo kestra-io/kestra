@@ -66,7 +66,7 @@
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import {isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import {usePluginFilter} from "../filter/configurations";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";

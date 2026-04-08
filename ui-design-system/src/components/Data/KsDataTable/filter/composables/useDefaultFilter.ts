@@ -1,7 +1,5 @@
 import {nextTick, onMounted} from "vue";
 import {LocationQuery, useRoute, useRouter} from "vue-router";
-import {useMiscStore} from "override/stores/misc";
-import {defaultNamespace} from "../../../composables/useNamespaces";
 
 interface DefaultFilterOptions {
     namespace?: string | null;
@@ -33,8 +31,8 @@ export function applyDefaultFilters(
     const query = {...currentQuery};
     let change = false;
 
-    if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
-        query[`${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
+    if (namespace !== null && defaultNamespaceValue && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
+        query[`${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespaceValue;
         change = true;
     }
 

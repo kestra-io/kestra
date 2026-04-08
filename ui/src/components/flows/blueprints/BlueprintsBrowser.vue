@@ -110,7 +110,7 @@
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Errors from "../../../components/errors/Errors.vue";
-    import KSFilter from "../../../components/filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import {editorViewTypes} from "../../../utils/constants";
     import Utils from "../../../utils/utils";
     import {usePluginsStore} from "../../../stores/plugins";

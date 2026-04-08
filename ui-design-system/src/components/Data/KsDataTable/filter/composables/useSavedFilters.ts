@@ -2,7 +2,6 @@ import {computed} from "vue";
 import {useRoute} from "vue-router";
 import {useStorage} from "@vueuse/core";
 import {SavedFilter} from "../utils/filterTypes";
-import {storageKeys} from "../../../utils/constants";
 
 const isDateString = (value: any) =>
     typeof value === "string" && !isNaN(Date.parse(value)) && value.includes("T");
@@ -22,10 +21,10 @@ const deserializeDates = (filter: SavedFilter): SavedFilter => ({
 
 export function useSavedFilters(prefix: string) {
     const route = useRoute();
-    
+
     const storageKey = computed(() => {
         const routeKey = String(route.name || route.path.replace(/\//g, "_").replace(/^_/, ""));
-        return `${storageKeys.SAVED_FILTERS_PREFIX}_${prefix}_${routeKey}`;
+        return `saved_filters_${prefix}_${routeKey}`;
     });
 
     const savedFilters = useStorage<SavedFilter[]>(storageKey, [], localStorage, {

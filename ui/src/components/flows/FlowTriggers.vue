@@ -283,7 +283,7 @@
     import Empty from "../layout/empty/Empty.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
 
     import action from "../../models/action";
     import permission from "../../models/permission";

@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
-    import {KsMessageBox} from "@kestra-io/ui-design-system";
+    import {KsMessageBox} from "../../../../Feedback/KsMessageBox";
     import {SavedFilter} from "../utils/filterTypes";
     import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons";
 

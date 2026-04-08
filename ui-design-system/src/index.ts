@@ -41,6 +41,7 @@ import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vu
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
 import KsEmpty from "./components/Data/KsEmpty.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
+import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
 import KsId from "./components/Data/KsId.vue"
@@ -98,6 +99,14 @@ export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
 export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
 export {LOG_LEVELS} from "./utils/state.ts"
+export type { FilterConfiguration, AppliedFilter, SavedFilter, TableOptions, TableProperties, FilterKeyConfig } from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export { Comparators } from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export type { FilterValue } from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export type { FilterContext } from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
+export { useRouteFilterPolicy } from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
+export { readRouteLevelFilter, hasUnsupportedRouteLevelComparator, readAppliedLevelFilter, normalizeRouteLevelFilter } from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export { applyDefaultFilters } from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
+export { decodeSearchParams, encodeFiltersToQuery, getUniqueFilters, isValidFilter, keyOfComparator, getComparator } from "./components/Data/KsDataTable/filter/utils/helpers"
 
 // ─── Named exports (tree-shakeable) ──────────────────────────────────────────
 export {
@@ -141,6 +150,7 @@ export {
     KsDropdownMenu,
     KsEmpty,
     KsExecutionStatus,
+    KsFilter,
     KsForm,
     KsFormItem,
     KsId,
@@ -229,6 +239,7 @@ const KestraDesignSystem = {
         app.component("KsDropdownMenu", KsDropdownMenu)
         app.component("KsEmpty", KsEmpty)
         app.component("KsExecutionStatus", KsExecutionStatus)
+        app.component("KsFilter", KsFilter)
         app.component("KsForm", KsForm)
         app.component("KsFormItem", KsFormItem)
         app.component("KsId", KsId)
@@ -317,6 +328,7 @@ declare module "vue" {
         KsDropdownMenu: typeof KsDropdownMenu
         KsEmpty: typeof KsEmpty
         KsExecutionStatus: typeof KsExecutionStatus
+        KsFilter: typeof KsFilter
         KsForm: typeof KsForm
         KsFormItem: typeof KsFormItem
         KsId: typeof KsId

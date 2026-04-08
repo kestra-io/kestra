@@ -343,7 +343,7 @@
 
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import useRouteContext from "../../composables/useRouteContext";
 

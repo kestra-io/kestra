@@ -28,7 +28,7 @@
     import {processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import Sections from "./sections/Sections.vue";
 
     import {

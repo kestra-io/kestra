@@ -1,8 +1,7 @@
 import {ref, computed, onUnmounted, watch} from "vue";
 import {useRoute} from "vue-router";
-import {storageKeys} from "../../../utils/constants";
 
-const getAutoRefreshEnabledKey = (routeName: string) => `${storageKeys.AUTO_REFRESH_ENABLED}_${routeName}`;
+const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${routeName}`;
 
 export {getAutoRefreshEnabledKey};
 
@@ -13,7 +12,7 @@ export function usePeriodicRefresh() {
 
     const enabledKey = computed(() => getAutoRefreshEnabledKey(String(route.name)));
     const tooltip = computed(() => `Auto refresh every ${intervalSeconds.value} seconds`);
-    const intervalSeconds = computed(() => parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "10"));
+    const intervalSeconds = computed(() => parseInt(localStorage.getItem("autoRefreshInterval") ?? "10"));
 
     watch(enabledKey, () => {
         enabledRef.value = localStorage.getItem(enabledKey.value) === "true";
@@ -35,8 +34,8 @@ export function usePeriodicRefresh() {
     onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value));
 
     return {
-        isEnabled, 
-        tooltip, 
+        isEnabled,
+        tooltip,
         toggleRefresh
     };
 }

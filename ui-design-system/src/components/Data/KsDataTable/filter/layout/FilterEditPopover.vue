@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
     import {nextTick, onMounted, onUnmounted, ref} from "vue";
-    import {AppliedFilter, FilterKeyConfig} from "../../utils/filterTypes";
+    import {AppliedFilter, FilterKeyConfig} from "../utils/filterTypes";
     import FilterEditPopper from "./FilterEditPopper.vue";
 
     defineProps<{

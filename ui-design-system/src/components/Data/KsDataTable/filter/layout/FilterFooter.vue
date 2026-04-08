@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    import {Restore} from "../../utils/icons";
+    import {Restore} from "../utils/icons";
 
     defineProps<{
         footerText: string;

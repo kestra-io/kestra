@@ -39,7 +39,7 @@
         },
     );
 
-    import {decodeSearchParams} from "../../components/filter/utils/helpers";
+    import {decodeSearchParams} from "@kestra-io/ui-design-system";
     let query: any[] = [];
     watch(
         () => route.query,

@@ -153,15 +153,15 @@
     import ExecutionPending from "./ExecutionPending.vue";
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue";
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
-    import {Comparators, type AppliedFilter} from "../filter/utils/filterTypes";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {Comparators, type AppliedFilter} from "@kestra-io/ui-design-system";
     import {useGanttExecutionFilter} from "../filter/configurations";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readRouteLevelFilter
-    } from "../filter/utils/logLevelQuery";
-    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
+    } from "@kestra-io/ui-design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/ui-design-system";
     import {useExecutionsStore, type Execution} from "../../stores/executions";
 
     interface TaskRun {

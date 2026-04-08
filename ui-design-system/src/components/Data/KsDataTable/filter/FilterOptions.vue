@@ -4,7 +4,7 @@
             <div class="options-left">
                 <div v-if="filter.tableOptions.value?.chart?.shown !== false" class="option-item">
                     <span class="option-label">{{ $t("filter.show chart") }}</span>
-                    <ks-switch 
+                    <ks-switch
                         v-model="localChartVisible"
                     />
                 </div>
@@ -12,12 +12,12 @@
 
             <div class="options-right">
                 <div class="option-item">
-                    <ks-switch 
+                    <ks-switch
                         v-model="periodicRefreshEnabled"
                     />
-                    <Kicon :tooltip="refreshTooltip" placement="top">
+                    <ks-tooltip :content="refreshTooltip" placement="top">
                         <span class="option-label periodic">{{ $t("filter.periodic refresh") }}</span>
-                    </Kicon>
+                    </ks-tooltip>
                 </div>
 
                 <ks-popover
@@ -54,13 +54,12 @@
 <script setup lang="ts">
     import {ref, inject, watch} from "vue";
 
-    import Kicon from "../../Kicon.vue";
-    import CustomColumns from "../segments/CustomColumns.vue";
+    import CustomColumns from "./segments/CustomColumns.vue";
 
-    import {CogOutline} from "../utils/icons";
+    import {CogOutline} from "./utils/icons";
 
-    import {usePeriodicRefresh} from "../composables/usePeriodicRefresh";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
+    import {usePeriodicRefresh} from "./composables/usePeriodicRefresh";
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
 
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
 

@@ -39,7 +39,7 @@
     import {cssVariable} from "@kestra-io/ui-libs";
     import {KsBar} from "@kestra-io/ui-design-system";
     import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import {useFlowMetricFilter} from "../filter/configurations";
 
     defineOptions({

@@ -396,7 +396,7 @@
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
 
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";

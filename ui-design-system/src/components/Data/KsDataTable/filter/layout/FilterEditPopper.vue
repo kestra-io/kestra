@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
     import {computed, onMounted, reactive, inject} from "vue";
-    import {useValues} from "../../composables/useValues";
+    import {useI18n} from "vue-i18n";
     import {
         AppliedFilter,
         COMPARATOR_LABELS,
@@ -38,8 +38,8 @@
         FilterValue,
         TEXT_COMPARATORS,
         KV_COMPARATORS
-    } from "../../utils/filterTypes";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "../../utils/filterInjectionKeys";
+    } from "../utils/filterTypes";
+    import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
     import FilterText from "./FilterText.vue";
     import FilterRadio from "./FilterRadio.vue";
     import FilterFooter from "./FilterFooter.vue";
@@ -50,8 +50,24 @@
     import FilterMultiSelect from "./FilterMultiSelect.vue";
     import FilterComparatorSelect from "./FilterComparatorSelect.vue";
 
-    import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
+
+    const RELATIVE_DATE = [
+        {label: t("datepicker.last5minutes"), value: "PT5M"},
+        {label: t("datepicker.last15minutes"), value: "PT15M"},
+        {label: t("datepicker.last1hour"), value: "PT1H"},
+        {label: t("datepicker.last12hours"), value: "PT12H"},
+        {label: t("datepicker.last24hours"), value: "PT24H"},
+        {label: t("datepicker.last48hours"), value: "PT48H"},
+        {label: t("datepicker.last7days"), value: "PT168H"},
+        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last365days"), value: "PT8760H"},
+    ];
+
+    const getRelativeDateLabel = (value: string): string => {
+        const item = RELATIVE_DATE.find((item) => item.value === value);
+        return item ? item.label : value;
+    };
 
     const props = defineProps<{
         filter: AppliedFilter;
@@ -66,7 +82,6 @@
     }>();
 
     const filterContext = inject(FILTER_CONTEXT_INJECTION_KEY);
-    const {getRelativeDateLabel} = useValues("executions");
 
     const state = reactive({
         textValue: "",
@@ -85,7 +100,7 @@
         () => props.filterKey?.showComparatorSelection ?? props.showComparatorSelection ?? false
     );
 
-    const isTextOp = computed(() => 
+    const isTextOp = computed(() =>
         TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey?.key !== "resources"
     );
 
@@ -110,7 +125,7 @@
                 events: {"update:modelValue": (value: string[]) => (state.keyValuePair = value)}
             };
         }
-        
+
         // valueType drives component selection
         const componentConfigs = {
             select: {
@@ -208,15 +223,15 @@
     });
 
     const resetState = () => {
-        const defaultFilter = filterContext?.hasPreApplied(props.filterKey.key) 
-            ? filterContext?.getPreApplied(props.filterKey.key) 
+        const defaultFilter = filterContext?.hasPreApplied(props.filterKey.key)
+            ? filterContext?.getPreApplied(props.filterKey.key)
             : null;
-        
+
         if (defaultFilter) {
             initializeStateFromFilter(defaultFilter);
             return;
         }
-        
+
         Object.assign(state, {
             textValue: "",
             selectValue: "",
@@ -322,7 +337,7 @@
 
         const isTextOp = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey?.key !== "resources";
         const isKVPair = props.filterKey?.valueType === "key-value" || (props.filterKey?.key === "labels" && KV_COMPARATORS.includes(filter.comparator));
-        
+
         if (isTextOp) {
             state.textValue = typeof filter.value === "string" ? filter.value : "";
         } else if (isKVPair) {

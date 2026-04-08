@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "../utils/filterTypes";
+import {FilterConfiguration, Comparators} from "@kestra-io/ui-design-system";
 import {useValues} from "../composables/useValues";
 import {useFlowStore} from "../../../stores/flow";
 import {useI18n} from "vue-i18n";

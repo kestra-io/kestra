@@ -251,7 +251,7 @@
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
 
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 

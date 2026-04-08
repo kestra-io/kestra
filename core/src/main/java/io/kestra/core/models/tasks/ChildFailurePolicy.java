@@ -14,8 +14,8 @@ public enum ChildFailurePolicy {
     @Schema(title = "Kill all running siblings immediately on first failure.")
     FAIL_FAST,
 
-    @Schema(title = "Stop starting new siblings but let running ones finish.")
-    STOP,
+    @Schema(title = "Let running siblings finish but don't start new ones.")
+    FAIL,
 
     @Schema(title = "Keep starting and running all siblings; fail only after all complete.")
     CONTINUE;

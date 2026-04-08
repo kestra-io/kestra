@@ -215,7 +215,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
         title = "Policy for handling child task failures when concurrencyLimit allows parallel execution.",
         description = """
             - `FAIL_FAST`: kill running task groups immediately.
-            - `STOP`: let running groups finish but don't start new ones.
+            - `FAIL`: let running groups finish but don't start new ones.
             - `CONTINUE`: keep starting and running all groups, fail only after all complete.
 
             Has no effect when `concurrencyLimit` is 1 (serial execution)."""

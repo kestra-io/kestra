@@ -173,7 +173,6 @@ public class ExecutorService {
             ) {
                 executor = this.handleNext(executor);
                 executor = this.handleFlowableTasks(executor);
-                executor = this.handleFailFastKilling(executor);
             }
 
             // but keep listeners on killing
@@ -269,6 +268,8 @@ public class ExecutorService {
                 runContext.logger().error("Unable to resolve state from the Flowable task: {}", e.getMessage(), e);
                 state = Optional.of(State.Type.FAILED);
             }
+            // When FAIL_FAST killed siblings, guessFinalState returns KILLED.
+            // Convert to FAILED when the root cause is a child failure, not a manual execution kill.
             if (state.isPresent() && state.get() == State.Type.KILLED
                 && execution.getState().getCurrent() != State.Type.KILLING
                 && execution.getState().getCurrent() != State.Type.KILLED) {
@@ -330,7 +331,6 @@ public class ExecutorService {
 
             // after if the execution is KILLING, we find if all already started tasks if finished
             if (execution.getState().getCurrent() == State.Type.KILLING) {
-                // first notified the parent taskRun of killing to avoid new creation of tasks
                 if (parentTaskRun.getState().getCurrent() != State.Type.KILLING) {
                     return childWorkerTaskTypeToWorkerTask(
                         Optional.of(State.Type.KILLING),
@@ -338,13 +338,11 @@ public class ExecutorService {
                     );
                 }
 
-                // Then wait for completion (KILLED or whatever) on child tasks to KILLED the parent one.
                 List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
                     flowableParent.childTasks(runContext, parentTaskRun),
                     FlowableUtils.resolveTasks(flowableParent.getErrors(), parentTaskRun),
                     FlowableUtils.resolveTasks(flowableParent.getFinally(), parentTaskRun)
                 );
-
                 List<TaskRun> taskRunByTasks = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
 
                 if (taskRunByTasks.stream().filter(t -> t.getState().isTerminated()).count() == taskRunByTasks.size()) {
@@ -545,6 +543,37 @@ public class ExecutorService {
         }
 
         if (result.isEmpty()) {
+            // No new tasks to start — check if any FAIL_FAST parent needs to kill running siblings.
+            Execution execution = executor.getExecution();
+            for (TaskRun parentTaskRun : running) {
+                Task parent = executor.getFlow().findTaskByTaskIdOrNull(parentTaskRun.getTaskId());
+                if (!(parent instanceof FlowableTask<?> flowableParent)) {
+                    continue;
+                }
+                try {
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), parent, execution, parentTaskRun);
+                    var policy = runContext.render(flowableParent.getChildFailurePolicy())
+                        .as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST);
+                    if (policy != ChildFailurePolicy.FAIL_FAST) {
+                        continue;
+                    }
+                    List<ResolvedTask> childTasks = flowableParent.childTasks(runContext, parentTaskRun);
+                    if (!execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
+                        continue;
+                    }
+                    List<TaskRun> children = execution.findTaskRunByTasks(childTasks, parentTaskRun);
+                    for (TaskRun child : children) {
+                        if (child.getState().isRunning() && !child.getState().isFailed()) {
+                            execution = execution.withTaskRun(child.withState(State.Type.KILLED));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Unable to process failFast for task '{}': {}", parentTaskRun.getTaskId(), e.getMessage(), e);
+                }
+            }
+            if (execution != executor.getExecution()) {
+                executor.withExecution(execution, "handleFailFastKilling");
+            }
             return executor;
         }
 
@@ -852,54 +881,6 @@ public class ExecutorService {
             .toList();
 
         this.addWorkerTaskResults(executor, workerTaskResults);
-        return executor;
-    }
-
-    private ExecutorContext handleFailFastKilling(ExecutorContext executor) {
-        if (executor.getExecution().getTaskRunList() == null) {
-            return executor;
-        }
-
-        Execution execution = executor.getExecution();
-
-        for (TaskRun parentTaskRun : execution.getTaskRunList()) {
-            if (!parentTaskRun.getState().isRunning()) {
-                continue;
-            }
-
-            Task parent = executor.getFlow().findTaskByTaskIdOrNull(parentTaskRun.getTaskId());
-            if (!(parent instanceof FlowableTask<?> flowableParent)) {
-                continue;
-            }
-
-            try {
-                RunContext runContext = runContextFactory.of(executor.getFlow(), parent, execution, parentTaskRun);
-                var policy = runContext.render(flowableParent.getChildFailurePolicy())
-                    .as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST);
-                if (policy != ChildFailurePolicy.FAIL_FAST) {
-                    continue;
-                }
-
-                List<ResolvedTask> childTasks = flowableParent.childTasks(runContext, parentTaskRun);
-                if (!execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
-                    continue;
-                }
-
-                List<TaskRun> children = execution.findTaskRunByTasks(childTasks, parentTaskRun);
-                for (TaskRun child : children) {
-                    if (child.getState().isRunning() && !child.getState().isFailed()) {
-                        execution = execution.withTaskRun(child.withState(State.Type.KILLED));
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("Unable to process failFast for task '{}': {}", parentTaskRun.getTaskId(), e.getMessage(), e);
-            }
-        }
-
-        if (execution != executor.getExecution()) {
-            executor.withExecution(execution, "handleFailFastKilling");
-        }
-
         return executor;
     }
 
@@ -1353,15 +1334,6 @@ public class ExecutorService {
         }
 
         TaskRun taskRun = workerTaskResult.getTaskRun();
-        try {
-            TaskRun existing = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
-            if (existing.getState().getCurrent() == State.Type.KILLED && taskRun.getState().getCurrent() != State.Type.KILLED) {
-                return;
-            }
-        } catch (InternalException ignored) {
-            // ignored
-        }
-
         newExecution = executor.getExecution().withTaskRun(taskRun);
         // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
         // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.

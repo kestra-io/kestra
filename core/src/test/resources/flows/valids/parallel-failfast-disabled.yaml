@@ -4,7 +4,7 @@ namespace: io.kestra.tests
 tasks:
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
-    childFailurePolicy: STOP
+    childFailurePolicy: FAIL
     tasks:
       - id: fail
         type: io.kestra.plugin.core.execution.Fail

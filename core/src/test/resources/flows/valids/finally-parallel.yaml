@@ -9,7 +9,7 @@ inputs:
 tasks:
   - id: seq
     type: io.kestra.plugin.core.flow.Parallel
-    childFailurePolicy: STOP
+    childFailurePolicy: FAIL
     tasks:
       - id: p1
         type: io.kestra.plugin.core.debug.Return

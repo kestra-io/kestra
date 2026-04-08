@@ -421,7 +421,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
      * Creates a derived loop execution from the current execution and the loop task run
      * with the given index information (value and index).
      */
-    public Execution loopExecution(String loopExecutionId, TaskRun taskRun, String value, int index) {
+    public Execution loopExecution(String loopExecutionId, TaskRun taskRun, int index, @Nullable String key, String value) {
         return new Execution(
             this.tenantId,
             loopExecutionId,
@@ -444,7 +444,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.fixtures,
             ExecutionKind.LOOP,
             this.breakpoints,
-            new LoopRun(this.id, taskRun.getTaskId(), taskRun.getId(), value, index, computeParents())
+            new LoopRun(this.id, taskRun.getTaskId(), taskRun.getId(), index, key, value, computeParents())
         );
     }
 
@@ -461,7 +461,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             parents.addAll(this.loopRun.parents());
         }
 
-        parents.add(new LoopRun.Parent(this.loopRun.value(), this.loopRun.index()));
+        parents.add(new LoopRun.Parent(this.loopRun.index(), this.loopRun.key(), this.loopRun.value()));
         return parents;
     }
 

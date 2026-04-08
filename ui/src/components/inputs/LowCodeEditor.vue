@@ -213,7 +213,7 @@
                         {
                             type: "module",
                             name: remoteName,
-                            entry: `${basePath}plugin-ui.js`,
+                            entry: `${basePath}artifact.js`,
                         },
                     ]);
 

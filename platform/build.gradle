@@ -133,7 +133,7 @@ dependencies {
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
         api 'com.rabbitmq:amqp-client:5.29.0'
         api 'org.apache.commons:commons-pool2:2.13.1'
-        api 'io.lettuce:lettuce-core:7.5.0.RELEASE'
+        api 'io.lettuce:lettuce-core:7.5.1.RELEASE'
 
         // force transitive version to fix CVE
         api 'org.codehaus.plexus:plexus-utils:4.0.3' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244

@@ -1,4 +1,4 @@
-id: working-directory-invalid-runif
+id: working-directory-invalid-when
 namespace: io.kestra.tests
 
 tasks:
@@ -11,5 +11,5 @@ tasks:
 
       - id: s2
         type: io.kestra.plugin.core.debug.Return
-        runIf: "{{ outputs.failed }}"
+        when: "{{ outputs.failed }}"
         format: 2

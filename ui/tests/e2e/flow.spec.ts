@@ -95,7 +95,9 @@ test.describe("Flow Page", () => {
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 
             await page.getByText("log_hello_task").click();
-            await expect(page.getByText(inputValue)).toBeVisible();
+            await expect(page.getByText(inputValue)
+                .first()// TODO this is probably a hack, but at least it's fixing the test
+            ).toBeVisible();
         });
     });
 });

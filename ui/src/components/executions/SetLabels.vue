@@ -44,7 +44,7 @@
 
     import LabelInput from "../../components/labels/LabelInput.vue";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
     import {filterValidLabels} from "./utils";
 
     import {useMiscStore} from "override/stores/misc";

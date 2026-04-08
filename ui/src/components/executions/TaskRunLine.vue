@@ -175,7 +175,7 @@
 <script>
     import Restart from "./overview/components/actions/Restart.vue";
     import Metrics from "./Metrics.vue";
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";

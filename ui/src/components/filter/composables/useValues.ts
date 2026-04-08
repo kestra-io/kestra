@@ -3,7 +3,7 @@ import {computed} from "vue";
 import {useMiscStore} from "override/stores/misc";
 import {FilterValue} from "../utils/filterTypes";
 
-import {State} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/ui-design-system";
 import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission";
 import action from "../../../models/action";

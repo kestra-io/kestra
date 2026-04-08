@@ -48,7 +48,7 @@ export const TextInside: Story = {
         components: {KsProgress},
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:400px">
-                <ks-progress :percentage="40" text-inside :stroke-width="20" />
+                <ks-progress :percentage="40" :left="20" text-inside :stroke-width="20" />
                 <ks-progress :percentage="70" text-inside :stroke-width="20" status="success" />
                 <ks-progress :percentage="90" text-inside :stroke-width="20" status="warning" />
             </div>

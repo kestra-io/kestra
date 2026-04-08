@@ -196,7 +196,7 @@
     import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
 
     import Row from "./components/sidebar/Row.vue";

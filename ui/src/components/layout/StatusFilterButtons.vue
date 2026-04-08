@@ -19,7 +19,7 @@
     </ks-select>
 </template>
 <script>
-    import {State} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/ui-design-system"
     import {KsExecutionStatus} from "@kestra-io/ui-design-system"
 
     export default {

@@ -4,7 +4,7 @@ import {YamlElement} from "@kestra-io/ui-libs";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import {QUOTE, YamlAutoCompletion, functionToSnippet} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
-import {State} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/ui-design-system";
 import {usePluginsStore} from "../../stores/plugins";
 import {useFlowStore} from "../../stores/flow";
 import {useNamespacesStore} from "override/stores/namespaces";

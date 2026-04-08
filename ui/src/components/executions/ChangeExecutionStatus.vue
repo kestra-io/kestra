@@ -58,7 +58,7 @@
 
     import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/ui-design-system";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useToast} from "../../utils/toast";

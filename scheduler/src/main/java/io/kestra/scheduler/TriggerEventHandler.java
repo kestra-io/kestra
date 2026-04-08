@@ -221,7 +221,7 @@ public class TriggerEventHandler {
                 state
                     .lastEventId(clock, event.eventId())
                     .locked(clock, false)
-                    .updateForExecutionState(clock, event.executionState())
+                    .updateOnExecutionTerminated(clock, event.executionState())
             );
         });
     }
@@ -244,15 +244,15 @@ public class TriggerEventHandler {
                 newState = newState.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
             }
 
-            if (event.execution() != null) {
-                newState = newState.updateForExecution(clock, event.execution());
+            if (event.evaluation() != null) {
+                newState = newState.updateOnExecutionCreated(clock, event.evaluation().stateType());
             }
 
             newState = newState.lastEventId(clock, event.eventId());
             triggerStateStore.save(newState);
 
-            if (event.execution() != null) {
-                Execution execution = event.execution().withTenantId(state.getTenantId());
+            if (event.evaluation() != null) {
+                Execution execution = event.evaluation().toExecution(event.id());
                 triggerExecutionPublisher.send(execution);
             }
         });

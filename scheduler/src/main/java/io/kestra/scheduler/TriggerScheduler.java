@@ -303,7 +303,7 @@ public class TriggerScheduler {
             // Save the final trigger state
             triggerState = triggerState
                 .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger))
-                .updateForExecutionState(clock, State.Type.FAILED)
+                .updateOnExecutionTerminated(clock, State.Type.FAILED)
                 .locked(clock, false);
             triggerStateStore.save(triggerState);
 
@@ -338,7 +338,7 @@ public class TriggerScheduler {
         if (maybeExecution.isPresent()) {
             log(clock, triggerContext, maybeExecution.get());
             triggerState = triggerState
-                .updateForExecution(clock, maybeExecution.get())
+                .updateOnExecutionCreated(clock, maybeExecution.get().getState().getCurrent())
                 .locked(clock, !((AbstractTrigger) trigger).isAllowConcurrent());
         }
         // Save the final trigger state

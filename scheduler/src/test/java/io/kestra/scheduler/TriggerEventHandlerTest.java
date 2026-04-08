@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -34,6 +33,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.worker.models.TriggerEvaluationResult;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -296,10 +296,14 @@ class TriggerEventHandlerTest {
         triggerStateStore.save(triggerState);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         TriggerEvaluated event = new TriggerEvaluated(
-            triggerId, Execution.builder()
-                .id(IdUtils.create())
-                .state(new State())
-                .build()
+            triggerId, new TriggerEvaluationResult(
+                IdUtils.create(),
+                State.Type.CREATED,
+                null,
+                null,
+                null,
+                null
+            )
         );
 
         // WHEN
@@ -307,6 +311,44 @@ class TriggerEventHandlerTest {
 
         // THEN
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldExecuteFailedTriggerGivenFlowAndFailedEvaluationWhenHandled() {
+        // GIVEN
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerEvaluated event = new TriggerEvaluated(
+            triggerId, new TriggerEvaluationResult(
+                IdUtils.create(),
+                State.Type.FAILED,
+                null,
+                null,
+                null,
+                null
+            )
+        );
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldNotPublishExecutionGivenNullEvaluationWhenHandled() {
+        // GIVEN
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerEvaluated event = new TriggerEvaluated(triggerId, null);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
 
     @Test

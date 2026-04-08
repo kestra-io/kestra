@@ -601,7 +601,7 @@ class TriggerSchedulerTest {
         triggerStateStore.findById(Fixtures.triggerId()).ifPresent(state ->
         {
             TriggerState newState = state
-                .updateForExecutionState(SchedulerClock.getClock(), State.Type.SUCCESS)
+                .updateOnExecutionTerminated(SchedulerClock.getClock(), State.Type.SUCCESS)
                 .locked(SchedulerClock.getClock(), false);
             triggerStateStore.save(newState);
         });

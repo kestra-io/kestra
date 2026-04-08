@@ -671,6 +671,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
+    public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
+        return taskRuns
+            .reversed()
+            .stream()
+            .filter(t -> t.getState().getCurrent() == state)
+            .findFirst();
+    }
+
     public Optional<TaskRun> findLastCreated(List<TaskRun> taskRuns) {
         return taskRuns
             .reversed()

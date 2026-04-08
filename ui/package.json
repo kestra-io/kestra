@@ -61,7 +61,7 @@
         "path-browserify": "^1.0.1",
         "pdfjs-dist": "^5.6.205",
         "pinia": "^3.0.4",
-        "posthog-js": "^1.364.4",
+        "posthog-js": "^1.365.3",
         "rapidoc": "^9.3.8",
         "semver": "^7.7.4",
         "shiki": "^4.0.2",

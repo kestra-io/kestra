@@ -1,5 +1,6 @@
 package io.kestra.indexer;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -14,9 +15,11 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.runners.IndexingRepository;
+import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
@@ -33,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings("this-escape")
 @Slf4j
 @Singleton
-public class DefaultIndexer implements Indexer {
+public class DefaultIndexer extends AbstractService implements Indexer {
     private final LogRepositoryInterface logRepository;
     private final DispatchQueueInterface<LogEntry> logQueue;
 
@@ -61,6 +64,8 @@ public class DefaultIndexer implements Indexer {
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         IgnoreExecutionService ignoreExecutionService,
         QueueService queueService) {
+        super(ServiceType.INDEXER, eventPublisher);
+
         this.logRepository = logRepository;
         this.logQueue = logQueue;
         this.metricRepository = metricRepositor;
@@ -122,11 +127,6 @@ public class DefaultIndexer implements Indexer {
         }));
     }
 
-    private void setState(final ServiceState state) {
-        this.state.set(state);
-        this.eventPublisher.publishEvent(new ServiceStateChangeEvent(this));
-    }
-
     /** {@inheritDoc} **/
     @Override
     public String getId() {
@@ -145,16 +145,9 @@ public class DefaultIndexer implements Indexer {
         return state.get();
     }
 
-    @PreDestroy
     @Override
-    public void close() {
-        if (closed.compareAndSet(false, true)) {
-            setState(ServiceState.TERMINATING);
-            if (log.isDebugEnabled()) {
-                log.debug("Terminating");
-            }
-            this.subscribers.forEach(QueueSubscriber::close);
-            setState(ServiceState.TERMINATED_GRACEFULLY);
-        }
+    protected ServiceState doStop() {
+        this.subscribers.forEach(QueueSubscriber::close);
+        return ServiceState.TERMINATED_GRACEFULLY;
     }
 }

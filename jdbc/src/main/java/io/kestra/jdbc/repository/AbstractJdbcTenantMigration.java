@@ -31,7 +31,7 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
         migrate(dryRun, excludes);
     }
 
-    public void migrate(boolean dryRun) {
+    public void migrate(boolean dryRun, List<String> excludes) {
         List<Table<?>> tables = dslContextWrapper.transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
             return context.meta()

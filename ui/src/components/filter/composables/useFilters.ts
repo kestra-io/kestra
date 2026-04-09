@@ -24,7 +24,8 @@ export function useFilters(
     showSearchInput = true,
     legacyQuery = false,
     defaultScope?: boolean,
-    defaultTimeRange?: boolean
+    defaultTimeRange?: boolean,
+    defaultDuration?: string,
 ) {
     const router = useRouter();
     const route = useRoute();
@@ -495,6 +496,7 @@ export function useFilters(
         namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
+        defaultDuration,
     };
     useDefaultFilter(defaultFilterOptions);
 
@@ -556,4 +558,3 @@ export function useFilters(
         getPreApplied,
     };
 }
-

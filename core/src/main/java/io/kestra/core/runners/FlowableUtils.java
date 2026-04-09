@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -18,8 +19,11 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.Either;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.NonNull;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -83,21 +87,10 @@ public class FlowableUtils {
             return Collections.singletonList(currentTasks.getFirst().toNextTaskRun(execution));
         }
 
-        // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
-        if (lastCreated.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have submitted, leave
-        Optional<TaskRun> lastSubmitted = execution.findLastSubmitted(taskRuns);
-        if (lastSubmitted.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have running, leave
-        Optional<TaskRun> lastRunning = execution.findLastRunning(taskRuns);
-        if (lastRunning.isPresent()) {
+        // if it has any created/submitted or running, we leave
+        if (taskRuns.stream()
+            .anyMatch(taskRun -> taskRun.getState().isCreated()  || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+        ) {
             return Collections.emptyList();
         }
 
@@ -134,21 +127,10 @@ public class FlowableUtils {
             );
         }
 
-        // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
-        if (lastCreated.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have running, leave
-        Optional<TaskRun> lastRunning = execution.findLastRunning(taskRuns);
-        if (lastRunning.isPresent()) {
-            return Collections.emptyList();
-        }
-
-        // have submitted, leave
-        Optional<TaskRun> lastSubmitted = execution.findLastSubmitted(taskRuns);
-        if (lastSubmitted.isPresent()) {
+        // if it has any created/submitted or running, we leave
+        if (taskRuns.stream()
+            .anyMatch(taskRun -> taskRun.getState().isCreated()  || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+        ) {
             return Collections.emptyList();
         }
 
@@ -496,7 +478,11 @@ public class FlowableUtils {
      * @see #resolveValues(RunContext, Object)
      */
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
-        List<String> distinctValue = resolveValues(runContext, value);
+        var either = resolveValues(runContext, value);
+        if (either.isRight()) {
+            throw new IllegalArgumentException("Maps are not supported in values");
+        }
+        List<String> distinctValue = either.getLeft();
 
         ArrayList<ResolvedTask> result = new ArrayList<>();
 
@@ -522,60 +508,76 @@ public class FlowableUtils {
     /**
      * Resolves a single Object values to a List of String representation.
      * It supports:
-     * - A String that will be rendered then parsed as a JSON array.
+     * - A String that will be rendered then parsed as a JSON array or a JSON object (list or map, see under).
      * - A List of Objects that will be converted to a List of String, each object being rendered then parsed as a JSON object.
+     * - A Map of String to Object that will be converted to a List of pairs of String/String, each object being rendered then parsed as a JSON object.
      *
+     * @return a list of String with no duplicates if the values were a list, or a list of pairs of String/String if the values were a map.
      * @throws IllegalVariableEvaluationException in case of JSON error, unsupported value type or duplicate values.
      */
-    public static List<String> resolveValues(RunContext runContext, Object value) throws IllegalVariableEvaluationException {
-        List<String> resolvedValues;
-
-        if (value instanceof String stringValue) {
+    public static Either<List<String>, List<Pair<String, String>>> resolveValues(RunContext runContext, Object values) throws IllegalVariableEvaluationException {
+        if (values instanceof String stringValue) {
             String renderValue = runContext.render(stringValue);
             try {
-                resolvedValues = MAPPER.readValue(renderValue, TYPE_REFERENCE)
-                    .stream()
-                    .map(throwFunction(obj -> {
-                        if (obj instanceof String s) {
-                            return s;
-                        } else if (obj == null) {
-                            throw new IllegalVariableEvaluationException(
-                                "Found a null value inside the iteration values=" + serializeAsString(value)
-                            );
-                        } else {
-                            return serializeAsString(obj);
-                        }
-                    }))
-                    .toList();
+                JsonNode valuesNode = MAPPER.readTree(renderValue);
+                if (valuesNode.isArray()) {
+                    List<String> resolvedValues = MAPPER.convertValue(valuesNode, TYPE_REFERENCE)
+                        .stream()
+                        .map(throwFunction(obj -> {
+                            if (obj instanceof String s) {
+                                return s;
+                            } else if (obj == null) {
+                                throw new IllegalVariableEvaluationException(
+                                    "Found a null value inside the iteration values=" + serializeAsString(values)
+                                );
+                            } else {
+                                return serializeAsString(obj);
+                            }
+                        }))
+                        .distinct()
+                        .toList();
+                    return Either.left(resolvedValues);
+                } else if (valuesNode.isObject()) {
+                    List<Pair<String, String>> resolvedValues = new ArrayList<>();
+                    Map<String, Object> mapValues = MAPPER.convertValue(valuesNode, JacksonMapper.MAP_TYPE_REFERENCE);
+                    for (var entry : mapValues.entrySet()) {
+                        resolvedValues.add(Pair.of(entry.getKey(), valueAsString(runContext, values, entry.getValue())));
+                    }
+                    return Either.right(resolvedValues);
+                } else {
+                    throw new IllegalVariableEvaluationException("Unknown value type: " + valuesNode.getNodeType());
+                }
+
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
-        } else if (value instanceof List<?> listValue) {
-            resolvedValues = new ArrayList<>(listValue.size());
-            for (Object obj : (List<Object>) value) {
-                if (obj instanceof String stringObj) {
-                    resolvedValues.add(runContext.render(stringObj));
-                } else if (obj instanceof Number) {
-                    resolvedValues.add(runContext.render(obj.toString()));
-                } else if (obj instanceof Map mapObj) {
-                    //JSON or YAML map
-                    resolvedValues.add(serializeAsString(runContext.render(mapObj)));
-                } else if (obj == null) {
-                    throw new IllegalVariableEvaluationException(
-                        "Found a null value inside the iteration values=" + serializeAsString(value)
-                    );
-                } else {
-                    throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
-                }
+        } else if (values instanceof List<?> listValue) {
+            List<String> resolvedValues = new ArrayList<>(listValue.size());
+            for (Object obj : listValue) {
+                resolvedValues.add(valueAsString(runContext, values, obj));
             }
+            return Either.left(resolvedValues.stream().distinct().toList());
+        } else if (values instanceof Map<?, ?> mapValue) {
+          List<Pair<String, String>> resolvedValues = new ArrayList<>();
+            for (var entry : ((Map<String, Object>) mapValue).entrySet()) {
+                resolvedValues.add(Pair.of(entry.getKey(), valueAsString(runContext, values, entry.getValue())));
+            }
+            return Either.right(resolvedValues);
         } else {
-            throw new IllegalVariableEvaluationException("Unknown value type: " + value.getClass());
+            throw new IllegalVariableEvaluationException("Unknown value type: " + values.getClass());
         }
+    }
 
-        return resolvedValues
-            .stream()
-            .distinct()
-            .toList();
+    private static String valueAsString(RunContext runContext, Object value, Object obj) throws IllegalVariableEvaluationException {
+        return switch (obj) {
+            case String stringObj -> runContext.render(stringObj);
+            case Number number -> runContext.render(number.toString());
+            case Map<?, ?> mapObj -> serializeAsString(runContext.render((Map<String, Object>) mapObj)); //JSON or YAML map
+            case null -> throw new IllegalVariableEvaluationException(
+                "Found a null value inside the iteration values=" + serializeAsString(value)
+            );
+            default -> throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
+        };
     }
 
     private static String serializeAsString(Object obj) throws IllegalVariableEvaluationException {

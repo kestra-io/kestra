@@ -19,6 +19,7 @@ import io.kestra.plugin.core.flow.Loop;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,9 +80,18 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                             Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedIteration)
                         );
                         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), parentTaskRun);
-                        String value = FlowableUtils.resolveValues(runContext, loop.getValues()).get(nextIndex);
-                        var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, value, nextIndex);
-                        executionQueue.emit(loopExecution);
+                        var either = FlowableUtils.resolveValues(runContext, loop.getValues());
+                        if (either.isLeft()) {
+                            List<String> values = either.getLeft();
+                            String value = values.get(nextIndex);
+                            var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, null, value);
+                            executionQueue.emit(loopExecution);
+                        } else {
+                            List<Pair<String, String>> values = either.getRight();
+                            Pair<String, String> value = values.get(nextIndex);
+                            var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, value.getKey(), value.getValue());
+                            executionQueue.emit(loopExecution);
+                        }
                         // we don't update the execution itself as the loop is still running
                         // TODO we may need to send a follow execution message to update the UI
                         return null;

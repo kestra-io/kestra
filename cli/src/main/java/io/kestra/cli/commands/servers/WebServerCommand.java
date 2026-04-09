@@ -49,6 +49,9 @@ public class WebServerCommand extends AbstractServerCommand {
     @CommandLine.Option(names = { "--ignore-indexer-records" }, split = ",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreIndexerRecords = Collections.emptyList();
 
+    @Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
+
     @Override
     public boolean isFlowAutoLoadEnabled() {
         return !tutorialsDisabled;
@@ -64,6 +67,7 @@ public class WebServerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
+        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 
         super.call();
 

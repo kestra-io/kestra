@@ -2306,7 +2306,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportExecutions(
+    public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY

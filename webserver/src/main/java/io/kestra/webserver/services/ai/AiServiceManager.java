@@ -52,7 +52,7 @@ public class AiServiceManager {
 
         String legacyType = propertyResolver.get("kestra.ai.type", String.class).orElse(null);
         if (legacyType != null) {
-            Map<String, Object> rawConfig = propertyResolver.get("kestra.ai." + legacyType, Map.class).orElse(null);
+            @SuppressWarnings("unchecked") Map<String, Object> rawConfig = (Map<String, Object>) propertyResolver.get("kestra.ai." + legacyType, Map.class).orElse(null);
 
             Map<String, Object> legacyConfig = rawConfig.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(e -> io.micronaut.core.naming.NameUtils.camelCase(e.getKey()), Map.Entry::getValue));

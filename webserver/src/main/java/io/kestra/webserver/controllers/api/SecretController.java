@@ -42,6 +42,7 @@ public class SecretController<META extends ApiSecretMeta> {
     @Get
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Search secrets of all namespaces")
+    @SuppressWarnings("unchecked")
     public HttpResponse<ApiSecretListResponse<META>> listSecrets(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,

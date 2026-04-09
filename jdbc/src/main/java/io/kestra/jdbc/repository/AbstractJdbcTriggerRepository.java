@@ -258,6 +258,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->

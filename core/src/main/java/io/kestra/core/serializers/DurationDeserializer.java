@@ -18,6 +18,7 @@ public class DurationDeserializer extends com.fasterxml.jackson.datatype.jsr310.
     // durations can be a string with a number which is not taken into account as it should not happen
     // we specialize the Duration deserialization from string to support that
     @Override
+    @SuppressWarnings("deprecation")
     protected Duration _fromString(JsonParser parser, DeserializationContext ctxt, String value0) throws IOException {
         String value = value0.trim();
         if (value.isEmpty()) {

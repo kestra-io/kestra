@@ -248,6 +248,7 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     @SneakyThrows
+    @SuppressWarnings("deprecation")
     public List<String> fragments(String query, String yaml) {
         List<String> split = Arrays.asList(StringUtils.split(yaml, "\n"));
 

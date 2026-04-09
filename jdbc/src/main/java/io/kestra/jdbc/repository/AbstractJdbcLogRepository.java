@@ -306,6 +306,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->

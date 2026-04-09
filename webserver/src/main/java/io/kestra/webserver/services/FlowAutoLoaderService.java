@@ -55,7 +55,7 @@ public class FlowAutoLoaderService {
     @Inject
     private TenantService tenantService;
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void load() {
         try {
             // Loads all flows.

@@ -340,6 +340,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         return mapper::get;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Double fetchValue(String tenantId, DataFilterKPI<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->

@@ -138,6 +138,7 @@ public final class Enums {
      * @param <T> The type of the enum.
      * @throws IllegalArgumentException If the value does not match any enum value.
      */
+    @SuppressWarnings("unchecked")
     public static <T extends Enum<T>> List<T> fromList(Object value, Class<T> enumClass) {
         return switch (value) {
             case List<?> list when !list.isEmpty() && enumClass.isInstance(list.getFirst()) -> (List<T>) list;

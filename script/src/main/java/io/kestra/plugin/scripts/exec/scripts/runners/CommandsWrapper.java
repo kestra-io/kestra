@@ -148,6 +148,7 @@ public class CommandsWrapper implements TaskCommands {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends TaskRunnerDetailResult> ScriptOutput run() throws Exception {
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
             NamespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
@@ -173,7 +174,7 @@ public class CommandsWrapper implements TaskCommands {
 
         this.commands = Property.ofValue(finalCommands);
 
-        ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder();
+        var scriptOutputBuilder = ScriptOutput.builder();
 
         try {
             TaskRunnerResult<T> taskRunnerResult = (TaskRunnerResult<T>) taskRunner.run(taskRunnerRunContext, this, this.outputFiles);

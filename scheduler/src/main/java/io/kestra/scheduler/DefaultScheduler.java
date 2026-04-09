@@ -260,7 +260,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
         // Wait for all scheduling loop to be effectively paused
         if (!pausable.isEmpty()) {
-            CompletableFuture.allOf(pausable.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.allOf(pausable.toArray(new CompletableFuture<?>[0])).join();
         }
 
         // Stop and remove all scheduling loop

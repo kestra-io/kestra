@@ -813,7 +813,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Flows" }, summary = "Export all flows as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportFlows(
+    public MutableHttpResponse<Flux<String>> exportFlows(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) {
         return HttpResponse.ok(

@@ -914,7 +914,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return findAsync(defaultFilter(tenantId), condition);
     }
 
-    protected Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    protected final Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
         return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()
@@ -1037,6 +1039,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Double fetchValue(String tenantId, DataFilterKPI<Flows.Fields, ? extends ColumnDescriptor<Flows.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->

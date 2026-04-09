@@ -50,10 +50,12 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 @Slf4j
 abstract public class TestsUtils {
     private static final ThreadLocal<List<Runnable>> queueConsumersCancellations = ThreadLocal.withInitial(ArrayList::new);
+    @SuppressWarnings("rawtypes")
     private static final ThreadLocal<List<QueueSubscriber>> subscribers = ThreadLocal.withInitial(ArrayList::new);
 
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
 
+    @SuppressWarnings("rawtypes")
     public static void queueConsumersCleanup() {
         queueConsumersCancellations.get().forEach(Runnable::run);
         queueConsumersCancellations.get().clear();

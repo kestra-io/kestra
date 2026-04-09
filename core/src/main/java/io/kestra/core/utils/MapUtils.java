@@ -154,6 +154,7 @@ public class MapUtils {
      * @return the merged Map.
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public static Map<String, Object> mergeWithNullableValues(final Map<String, Object>... maps) {
         return Arrays.stream(maps)
             .flatMap(map -> map.entrySet().stream())

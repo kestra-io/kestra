@@ -15,7 +15,7 @@
                 @toggle="collapsed = onToggleCollapse(!collapsed)"
             />
             <div class="logo">
-                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'welcome'}">
+                <component :is="props.showLink ? 'router-link' : 'div'" :to="props.logoTo">
                     <span class="img" />
                 </component>
             </div>
@@ -46,9 +46,11 @@
 
     const props = withDefaults(defineProps<{
         menu: MenuItem[],
-        showLink?: boolean
+        showLink?: boolean,
+        logoTo?: object
     }>(), {
-        showLink: true
+        showLink: true,
+        logoTo: () => ({name: "welcome"})
     })
 
     const $emit = defineEmits(["menu-collapse"])

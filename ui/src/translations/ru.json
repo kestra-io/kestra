@@ -260,7 +260,6 @@
       "5minutes": "5 минут",
       "7days": "7 дней",
       "custom": "Пользовательский",
-      "custom duration": "Пользовательская длительность",
       "dayBeforeYesterday": "Позавчера",
       "duration example": "Пример: 'P1DT1H1M1S'",
       "error": "Неверный формат длительности, должен быть в формате ISO 8601 (например, P1DT1H1M1S)",
@@ -287,7 +286,6 @@
       "today": "Сегодня",
       "yesterday": "Вчера"
     },
-    "days": "Дни",
     "debug": "Отладка",
     "default": "По умолчанию",
     "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "Скрыть документацию задачи",
     "home": "Домой",
     "hostname": "Имя хоста",
-    "hours": "Часы",
     "iam": "IAM",
     "id": "Id",
     "import": "Импорт",
     "in-our-documentation": "в нашей документации.",
     "informative notice": "Примечание(я)",
     "input": "Ввод",
-    "input_custom_duration": "или введите пользовательскую продолжительность:",
     "inputs": "Входные данные",
     "instance": "Экземпляр",
     "invalid bulk delete": "Не удалось удалить выполнения",
@@ -845,12 +841,10 @@
     "metric choice": "Пожалуйста, выберите метрику и агрегацию",
     "metrics": "Метрики",
     "min": "Мин",
-    "minutes": "Минуты",
     "missingSource": "Отсутствует источник",
     "modify inputs": "Изменить inputs",
     "modify_inputs": "Изменить inputs",
     "monogram": "Монограмма",
-    "months": "Месяцы",
     "more_actions": "Больше действий",
     "multi_panel_editor": {
       "close_all_panels": "Закрыть все панели",
@@ -1402,7 +1396,6 @@
     "search term in message": "Поиск по термину в сообщении",
     "search_docs": "Поиск",
     "searching": "Поиск...",
-    "seconds": "Секунды",
     "secret": {
       "add": "Создать",
       "inherited": "Унаследованные секреты",
@@ -1743,7 +1736,6 @@
       "payload": "Payload Webhook (JSON)"
     },
     "webhook link copied": "Ссылка на Webhook скопирована.",
-    "weeks": "Недели",
     "welcome": {
       "help": {
         "text": "Задайте любой вопрос в нашем сообществе Slack. Если вы застряли, мы здесь, чтобы помочь вам. ✋",
@@ -1872,7 +1864,6 @@
     "worker information": "Информация о Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Пустой key или value не допускается в метках",
-    "years": "Годы"
+    "wrong labels": "Пустой key или value не допускается в метках"
   }
 }

@@ -4,7 +4,7 @@ import {createRouter, createMemoryHistory} from "vue-router"
 import KestraDesignSystem from "../../../src/index"
 import {KsRouterTab} from "../../../src"
 import type {RouterTab} from "../../../src"
-import {defineComponent} from "vue"
+import {defineComponent, markRaw} from "vue"
 
 const router = createRouter({
     history: createMemoryHistory(),
@@ -141,9 +141,9 @@ describe("KsRouterTab", () => {
     })
 
     test("renders activeTab.component inside the section", () => {
-        const DummyComponent = defineComponent({
+        const DummyComponent = markRaw(defineComponent({
             template: `<div class="dummy-component">Dummy</div>`,
-        })
+        }))
         const tabs: RouterTab[] = [
             {name: "a", title: "A", component: DummyComponent},
         ]
@@ -157,7 +157,7 @@ describe("KsRouterTab", () => {
 
     test("section has maximized class when activeTab.maximized is true", () => {
         const tabs: RouterTab[] = [
-            {name: "a", title: "A", component: defineComponent({template: "<div/>"}), maximized: true},
+            {name: "a", title: "A", component: markRaw(defineComponent({template: "<div/>"})), maximized: true},
         ]
         const wrapper = mount(KsRouterTab, {
             props: {tabs, embedActiveTab: "a"},
@@ -168,7 +168,7 @@ describe("KsRouterTab", () => {
 
     test("section has no-overflow class when activeTab.noOverflow is true", () => {
         const tabs: RouterTab[] = [
-            {name: "a", title: "A", component: defineComponent({template: "<div/>"}), noOverflow: true},
+            {name: "a", title: "A", component: markRaw(defineComponent({template: "<div/>"})), noOverflow: true},
         ]
         const wrapper = mount(KsRouterTab, {
             props: {tabs, embedActiveTab: "a"},

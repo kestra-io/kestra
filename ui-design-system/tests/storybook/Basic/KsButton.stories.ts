@@ -16,7 +16,7 @@ const meta: Meta<typeof KsButton> = {
     component: KsButton,
     tags: ["autodocs"],
     argTypes: {
-        type: {control: "select", options: ["default", "primary", "success", "warning", "info", "danger", "text", ""]},
+        type: {control: "select", options: ["default", "primary", "success", "warning", "info", "danger"]},
         size: {control: "select", options: ["small", "default", "large"]},
         disabled: {control: "boolean"},
         loading: {control: "boolean"},
@@ -70,7 +70,7 @@ export const Types: Story = {
                 <ks-button type="warning">Warning</ks-button>
                 <ks-button type="danger">Danger</ks-button>
                 <ks-button type="info">Info</ks-button>
-                <ks-button type="text">Text</ks-button>
+                <ks-button text>Text</ks-button>
             </div>
         `,
     }),

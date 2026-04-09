@@ -155,13 +155,13 @@ html.full-screen {
 
 // setup non color CSS variables
 :root{
-    --el-box-shadow: $box-shadow;
-    --el-box-shadow-light: $box-shadow-sm;
-    --el-box-shadow-lighter: $box-shadow-sm;
-    --el-box-shadow-dark: $box-shadow-lg;
+    --kel-box-shadow: $box-shadow;
+    --kel-box-shadow-light: $box-shadow-sm;
+    --kel-box-shadow-lighter: $box-shadow-sm;
+    --kel-box-shadow-dark: $box-shadow-lg;
 
-    --el-transition-duration: 0.2s;
-    --el-transition-duration-fast: 0.2s;
+    --kel-transition-duration: 0.2s;
+    --kel-transition-duration-fast: 0.2s;
     --top-navbar-height: 79px;
     #{--menu-width}: global-var.$menu-width;
     #{--menu-collapsed-width}: 65px;

@@ -2,6 +2,7 @@
     <ks-echart
         ref="ksEchartRef"
         v-bind="$attrs"
+        class="ks-chart--pie"
         :options="mergedOption"
         :loading="isLoading"
         :tooltip-type="tooltipType"

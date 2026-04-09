@@ -157,6 +157,12 @@ export const AsyncData: Story = {
 
 /** Custom colors via options override */
 export const WithOptionsOverride: Story = {
+    args: {
+        disableFeatures: ["LEGEND"],
+        loading: true,
+        tooltipType: "external"
+    },
+
     render: () => ({
         components: {KsBar},
         setup() { return {MONTHS} },
@@ -174,7 +180,7 @@ export const WithOptionsOverride: Story = {
                 />
             </div>
         `,
-    }),
+    })
 }
 
 // ─── Compact sparkline (all features disabled) ────────────────────────────────

@@ -11,6 +11,7 @@ const meta: Meta<typeof KsProgress> = {
         status: {control: "select", options: ["", "success", "exception", "warning"]},
         showText: {control: "boolean"},
         striped: {control: "boolean"},
+        color: {control: "text", type: {name: "string"}},
     },
     parameters: {
         docs: {description: {component: "KsProgress is the Kestra design-system abstraction over `ElProgress` from Element Plus."}},

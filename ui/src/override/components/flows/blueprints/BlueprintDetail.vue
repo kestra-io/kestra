@@ -21,9 +21,9 @@
                 {{ $t('blueprints.title') }}
             </span>
             <router-link v-if="userCanCreate" :to="editorRoute" class="ms-auto">
-                <el-button type="primary" @click="trackBlueprintUse('detail')">
+                <ks-button type="primary" @click="trackBlueprintUse('detail')">
                     {{ $t('use') }}
-                </el-button>
+                </ks-button>
             </router-link>
         </div>
         <div>

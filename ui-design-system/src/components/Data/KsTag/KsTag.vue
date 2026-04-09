@@ -36,10 +36,10 @@
         @close="emit('close')"
     >
         <template #default>
-            <el-icon v-if="icon || $slots.icon">
+            <ks-icon v-if="icon || $slots.icon">
                 <component :is="icon" v-if="icon" />
                 <slot v-else name="icon" />
-            </el-icon>
+            </ks-icon>
             <span v-if="label">{{ label }}</span>
             <span v-else-if="$slots.default"><slot  /></span>
         </template>

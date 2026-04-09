@@ -48,8 +48,9 @@ export const Underline: Story = {
         components: {KsLink},
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:8px">
-                <ks-link type="primary" :underline="true">With underline</ks-link>
-                <ks-link type="primary" :underline="false">Without underline</ks-link>
+                <ks-link type="primary" underline="always">With underline</ks-link>
+                <ks-link type="primary" underline="hover">Hover underline</ks-link>
+                <ks-link type="primary" underline="never">Without underline</ks-link>
             </div>
         `,
     }),

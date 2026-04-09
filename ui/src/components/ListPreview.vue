@@ -1,13 +1,13 @@
 <template>
     <div class="list-preview-container">
-        <el-table :data="previewData" stripe class="ion-table-preview">
-            <el-table-column type="index" :index="indexMethod" label="#" width="60" align="center" />
-            <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
+        <ks-table :data="previewData" stripe class="ion-table-preview">
+            <ks-table-column type="index" :index="indexMethod" label="#" width="60" align="center" />
+            <ks-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
                 <template #default="scope">
                     <div :class="['cell-wrapper', {'expanded': expandedCells.has(getCellKey(scope.$index, column))}]">
                         <span v-if="isComplex(scope.row[column])">
                             <span class="preview-cell">{{ getTruncatedContent(scope.row[column], scope.$index, column) }}</span>
-                            <el-button
+                            <ks-button
                                 v-if="needsExpansion(scope.row[column])"
                                 link
                                 type="primary"
@@ -16,17 +16,17 @@
                                 @click="toggleExpand(scope.$index, column)"
                             >
                                 {{ expandedCells.has(getCellKey(scope.$index, column)) ? $t('preview.collapse') : $t('preview.expand') }}
-                            </el-button>
+                            </ks-button>
                         </span>
                         <span v-else class="preview-cell">
                             {{ scope.row[column] }}
                         </span>
                     </div>
                 </template>
-            </el-table-column>
-        </el-table>
+            </ks-table-column>
+        </ks-table>
 
-        <Pagination
+        <ks-pagination
             v-if="totalPages > 1"
             :total="props.value.length"
             :size="pageSize"
@@ -38,7 +38,6 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
-    import Pagination from "./layout/Pagination.vue";
 
     const MAX_CELL_CHARS = 2000;
 

@@ -260,7 +260,6 @@
       "5minutes": "5분",
       "7days": "7일",
       "custom": "사용자 정의",
-      "custom duration": "사용자 정의 지속 시간",
       "dayBeforeYesterday": "그저께",
       "duration example": "예: 'P1DT1H1M1S'",
       "error": "잘못된 형식입니다. 지속 시간은 ISO 8601 형식이어야 합니다.(예: P1DT1H1M1S)",
@@ -287,7 +286,6 @@
       "today": "오늘",
       "yesterday": "어제"
     },
-    "days": "일",
     "debug": "디버그",
     "default": "기본값",
     "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "task 문서 숨기기",
     "home": "홈",
     "hostname": "호스트 이름",
-    "hours": "운영 시간",
     "iam": "IAM",
     "id": "Id",
     "import": "가져오기",
     "in-our-documentation": "우리의 문서에서.",
     "informative notice": "노트(s)",
     "input": "Input",
-    "input_custom_duration": "또는 사용자 지정 기간 입력:",
     "inputs": "Inputs",
     "instance": "인스턴스",
     "invalid bulk delete": "실행을 삭제할 수 없습니다",
@@ -845,12 +841,10 @@
     "metric choice": "메트릭과 집계를 선택하세요",
     "metrics": "메트릭",
     "min": "Min",
-    "minutes": "분",
     "missingSource": "소스 누락",
     "modify inputs": "입력 수정",
     "modify_inputs": "입력 수정",
     "monogram": "모노그램",
-    "months": "개월",
     "more_actions": "추가 작업",
     "multi_panel_editor": {
       "close_all_panels": "모든 패널 닫기",
@@ -1402,7 +1396,6 @@
     "search term in message": "메시지에서 검색어 찾기",
     "search_docs": "검색",
     "searching": "검색 중...",
-    "seconds": "초",
     "secret": {
       "add": "생성",
       "inherited": "상속된 비밀",
@@ -1743,7 +1736,6 @@
       "payload": "Webhook Payload (JSON)"
     },
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
-    "weeks": "주",
     "welcome": {
       "help": {
         "text": "Slack 커뮤니티에서 질문을 하세요. 문제가 생기면 저희가 도와드리겠습니다. ✋",
@@ -1872,7 +1864,6 @@
     "worker information": "작업자 정보",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
-    "years": "연도"
+    "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다"
   }
 }

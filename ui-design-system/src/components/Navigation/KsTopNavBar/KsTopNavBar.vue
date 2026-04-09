@@ -63,6 +63,7 @@
                             <ks-tooltip v-if="description" :content="description">
                                 <Information class="ms-2 icon" />
                             </ks-tooltip>
+                            <span v-if="beta" class="beta-badge">Beta</span>
                             <template v-if="$slots.badge">
                                 <span class="ks-badge">
                                     <slot name="badge" />

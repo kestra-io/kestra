@@ -260,7 +260,6 @@
       "5minutes": "5分",
       "7days": "7日間",
       "custom": "カスタム",
-      "custom duration": "カスタム期間",
       "dayBeforeYesterday": "一昨日",
       "duration example": "例：'P1DT1H1M1S'",
       "error": "無効な期間形式です。ISO 8601期間である必要があります（例：P1DT1H1M1S）",
@@ -287,7 +286,6 @@
       "today": "今日",
       "yesterday": "昨日"
     },
-    "days": "日数",
     "debug": "デバッグ",
     "default": "デフォルト",
     "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "taskのドキュメントを非表示",
     "home": "ホーム",
     "hostname": "ホスト名",
-    "hours": "営業時間",
     "iam": "IAM",
     "id": "Id",
     "import": "インポート",
     "in-our-documentation": "ドキュメント内で。",
     "informative notice": "注記",
     "input": "Input",
-    "input_custom_duration": "またはカスタム期間を入力してください:",
     "inputs": "Inputs",
     "instance": "インスタンス",
     "invalid bulk delete": "実行を削除できませんでした",
@@ -845,12 +841,10 @@
     "metric choice": "メトリックと集計を選択してください",
     "metrics": "メトリクス",
     "min": "Min",
-    "minutes": "分",
     "missingSource": "ソースが見つかりません",
     "modify inputs": "入力を変更",
     "modify_inputs": "入力を変更",
     "monogram": "モノグラム",
-    "months": "月",
     "more_actions": "その他のアクション",
     "multi_panel_editor": {
       "close_all_panels": "すべてのパネルを閉じる",
@@ -1402,7 +1396,6 @@
     "search term in message": "メッセージ内の検索語",
     "search_docs": "検索",
     "searching": "検索中...",
-    "seconds": "秒",
     "secret": {
       "add": "作成",
       "inherited": "継承されたsecrets",
@@ -1743,7 +1736,6 @@
       "payload": "Webhookペイロード（JSON）"
     },
     "webhook link copied": "Webhookリンクがコピーされました。",
-    "weeks": "週間",
     "welcome": {
       "help": {
         "text": "Slackコミュニティで質問してください。行き詰まった場合は、私たちがサポートします。✋",
@@ -1872,7 +1864,6 @@
     "worker information": "ワーカー情報",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
-    "years": "年"
+    "wrong labels": "ラベルには空のkeyまたはvalueを設定できません"
   }
 }

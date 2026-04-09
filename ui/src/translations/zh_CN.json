@@ -260,7 +260,6 @@
       "5minutes": "5分钟",
       "7days": "7天",
       "custom": "自定义",
-      "custom duration": "自定义持续时间",
       "dayBeforeYesterday": "前天",
       "duration example": "例如：'P1DT1H1M1S'",
       "error": "无效的持续时间格式，必须为ISO 8601持续时间（例如：'P1DT1H1M1S'）",
@@ -287,7 +286,6 @@
       "today": "今天",
       "yesterday": "昨天"
     },
-    "days": "天数",
     "debug": "调试",
     "default": "默认值",
     "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "隐藏任务文档",
     "home": "首页",
     "hostname": "主机名",
-    "hours": "小时",
     "iam": "IAM",
     "id": "ID",
     "import": "导入",
     "in-our-documentation": "在我们的文档中。",
     "informative notice": "注意事项",
     "input": "输入",
-    "input_custom_duration": "或输入自定义持续时间：",
     "inputs": "输入",
     "instance": "实例",
     "invalid bulk delete": "无法删除执行",
@@ -845,12 +841,10 @@
     "metric choice": "请选择一个指标和一个聚合",
     "metrics": "指标",
     "min": "最小",
-    "minutes": "分钟",
     "missingSource": "缺少源",
     "modify inputs": "修改inputs",
     "modify_inputs": "修改输入",
     "monogram": "字母组合",
-    "months": "月份",
     "more_actions": "更多操作",
     "multi_panel_editor": {
       "close_all_panels": "关闭所有面板",
@@ -1402,7 +1396,6 @@
     "search term in message": "在消息中搜索术语",
     "search_docs": "搜索",
     "searching": "搜索中...",
-    "seconds": "秒钟",
     "secret": {
       "add": "创建",
       "inherited": "继承的秘密",
@@ -1743,7 +1736,6 @@
       "payload": "Webhook Payload (JSON)"
     },
     "webhook link copied": "Webhook链接已复制。",
-    "weeks": "周",
     "welcome": {
       "help": {
         "text": "在我们的Slack社区中提问。如果您遇到困难，我们会帮助您。✋",
@@ -1872,7 +1864,6 @@
     "worker information": "工作者信息",
     "workerId": "工作者ID",
     "workers": "工作者",
-    "wrong labels": "标签中不允许空键或值",
-    "years": "年"
+    "wrong labels": "标签中不允许空键或值"
   }
 }

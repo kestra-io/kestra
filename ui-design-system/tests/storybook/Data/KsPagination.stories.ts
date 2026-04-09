@@ -8,6 +8,8 @@ const meta: Meta<typeof KsPagination> = {
     tags: ["autodocs"],
     argTypes: {
         size: {control: "select", options: ["small", "default", "large"]},
+        background: {control: "boolean", type: {name: "boolean"}},
+        disabled: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsPagination is the Kestra design-system abstraction over `ElPagination` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
@@ -70,7 +72,7 @@ export const PagerCount: Story = {
                 </div>
                 <div>
                     <p style="font-size:12px;opacity:0.5;margin:0 0 6px">pager-count: 3</p>
-                    <ks-pagination v-model:current-page="current" :total="100" :page-size="10" layout="prev, pager, next" :pager-count="3" />
+                    <ks-pagination v-model:current-page="current" :total="100" :page-size="10" layout="prev, pager, next" :pager-count="5" />
                 </div>
             </div>
         `,

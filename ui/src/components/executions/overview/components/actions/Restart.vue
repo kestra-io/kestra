@@ -44,7 +44,7 @@
                 <h3 class="modal-title">
                     {{ t("restart execution title") }}
                 </h3>
-                <el-divider />
+                <ks-divider />
             </div>
         </template>
 
@@ -53,12 +53,12 @@
         </div>
 
         <template #footer>
-            <el-button @click="isOpen = false">
+            <ks-button @click="isOpen = false">
                 {{ t("cancel") }}
-            </el-button>
-            <el-button type="primary" @click="handleRestartExecute">
+            </ks-button>
+            <ks-button type="primary" @click="handleRestartExecute">
                 {{ t("restart") }}
-            </el-button>
+            </ks-button>
         </template>
     </ks-dialog>
 

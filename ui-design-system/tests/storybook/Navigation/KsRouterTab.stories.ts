@@ -1,19 +1,19 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref, markRaw, defineComponent} from "vue"
+import {ref, defineComponent} from "vue"
 import type {RouterTab} from "../../../src"
 import {KsTag, KsRouterTab} from "../../../src"
 
 
 // Simple content components for stories
-const OverviewPanel = markRaw(defineComponent({
+const OverviewPanel = defineComponent({
     template: `<div style="padding:16px;background:var(--ks-background-card);border-radius:4px">Overview content</div>`,
-}))
-const LogsPanel = markRaw(defineComponent({
+})
+const LogsPanel = defineComponent({
     template: `<div style="padding:16px;background:var(--ks-background-card);border-radius:4px">Logs content</div>`,
-}))
-const MetricsPanel = markRaw(defineComponent({
+})
+const MetricsPanel = defineComponent({
     template: `<div style="padding:16px;background:var(--ks-background-card);border-radius:4px">Metrics content</div>`,
-}))
+})
 
 const baseTabs: RouterTab[] = [
     {name: "overview", title: "Overview"},

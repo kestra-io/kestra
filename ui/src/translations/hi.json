@@ -260,7 +260,6 @@
       "5minutes": "5 मिनट",
       "7days": "7 दिन",
       "custom": "कस्टम",
-      "custom duration": "कस्टम अवधि",
       "dayBeforeYesterday": "परसों",
       "duration example": "उदाहरण: 'P1DT1H1M1S'",
       "error": "अमान्य अवधि प्रारूप, एक ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए P1DT1H1M1S)",
@@ -287,7 +286,6 @@
       "today": "आज",
       "yesterday": "कल"
     },
-    "days": "दिन",
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",
     "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "Task दस्तावेज़ छिपाएं",
     "home": "होम",
     "hostname": "होस्टनाम",
-    "hours": "घंटे",
     "iam": "IAM",
     "id": "Id",
     "import": "आयात करें",
     "in-our-documentation": "हमारे दस्तावेज़ में।",
     "informative notice": "नोट(s)",
     "input": "इनपुट",
-    "input_custom_duration": "या कस्टम अवधि दर्ज करें:",
     "inputs": "इनपुट्स",
     "instance": "इंस्टेंस",
     "invalid bulk delete": "निष्पादन हटाने में असमर्थ",
@@ -845,12 +841,10 @@
     "metric choice": "कृपया एक मेट्रिक और एकत्रीकरण चुनें",
     "metrics": "मेट्रिक्स",
     "min": "न्यूनतम",
-    "minutes": "मिनट्स",
     "missingSource": "स्रोत अनुपलब्ध",
     "modify inputs": "इनपुट्स संशोधित करें",
     "modify_inputs": "इनपुट्स संशोधित करें",
     "monogram": "मोनोग्राम",
-    "months": "महीने",
     "more_actions": "अधिक क्रियाएँ",
     "multi_panel_editor": {
       "close_all_panels": "सभी पैनल बंद करें",
@@ -1402,7 +1396,6 @@
     "search term in message": "संदेश में खोज शब्द",
     "search_docs": "खोजें",
     "searching": "खोज जारी है...",
-    "seconds": "सेकंड्स",
     "secret": {
       "add": "बनाएं",
       "inherited": "Inherited secrets",
@@ -1743,7 +1736,6 @@
       "payload": "Webhook Payload (JSON)"
     },
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
-    "weeks": "सप्ताह",
     "welcome": {
       "help": {
         "text": "हमारे Slack समुदाय में कोई भी प्रश्न पूछें। यदि आप अटके हुए हैं, तो हम आपकी सहायता के लिए यहाँ हैं। ✋",
@@ -1872,7 +1864,6 @@
     "worker information": "वर्कर जानकारी",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
-    "years": "वर्ष"
+    "wrong labels": "labels में खाली key या value की अनुमति नहीं है"
   }
 }

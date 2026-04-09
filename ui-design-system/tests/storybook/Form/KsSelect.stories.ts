@@ -67,7 +67,7 @@ export const Default: Story = {
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
                 <ks-select v-model="value" v-bind="args" style="width:240px">
-                    <el-option
+                    <ks-option
                         v-for="opt in STATUS_OPTIONS"
                         :key="opt.value"
                         :value="opt.value"
@@ -107,7 +107,7 @@ export const Filterable: Story = {
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
                 <ks-select v-model="value" v-bind="args" style="width:280px">
-                    <el-option v-for="tz in TIMEZONE_OPTIONS" :key="tz" :value="tz" :label="tz" />
+                    <ks-option v-for="tz in TIMEZONE_OPTIONS" :key="tz" :value="tz" :label="tz" />
                 </ks-select>
                 <span style="font-size:13px;opacity:0.6">Selected: {{ value || '(none)' }}</span>
             </div>
@@ -134,7 +134,7 @@ export const Multiple: Story = {
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
                 <ks-select v-model="value" v-bind="args" style="width:300px">
-                    <el-option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value" :label="opt.label" />
+                    <ks-option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value" :label="opt.label" />
                 </ks-select>
                 <span style="font-size:13px;opacity:0.6">Selected: {{ value.join(', ') || '(none)' }}</span>
             </div>
@@ -172,7 +172,7 @@ export const SmallSize: Story = {
         template: `
             <div style="padding:24px;min-height:200px">
                 <ks-select v-model="value" v-bind="args" style="width:130px">
-                    <el-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
+                    <ks-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
                 </ks-select>
             </div>
         `,
@@ -191,7 +191,7 @@ export const Disabled: Story = {
         template: `
             <div style="padding:24px;min-height:200px">
                 <ks-select v-model="value" v-bind="args" style="width:200px">
-                    <el-option v-for="l in LOG_LEVELS" :key="l" :value="l" :label="l" />
+                    <ks-option v-for="l in LOG_LEVELS" :key="l" :value="l" :label="l" />
                 </ks-select>
             </div>
         `,
@@ -225,12 +225,12 @@ export const CustomOptionContent: Story = {
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
                 <ks-select v-model="value" v-bind="args" style="width:240px">
-                    <el-option v-for="s in statuses" :key="s.value" :value="s.value" :label="s.value">
+                    <ks-option v-for="s in statuses" :key="s.value" :value="s.value" :label="s.value">
                         <span style="display:flex;align-items:center;gap:8px">
                             <span :style="{display:'inline-block',width:'10px',height:'10px',borderRadius:'50%',backgroundColor:s.color}" />
                             {{ s.value }}
                         </span>
-                    </el-option>
+                    </ks-option>
                 </ks-select>
                 <span style="font-size:13px;opacity:0.6">Selected: {{ value || '(none)' }}</span>
             </div>
@@ -264,7 +264,7 @@ export const WithPrefixSlot: Story = {
                             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                         </svg>
                     </template>
-                    <el-option v-for="p in presets" :key="p.value" :value="p.value" :label="p.label" />
+                    <ks-option v-for="p in presets" :key="p.value" :value="p.value" :label="p.label" />
                 </ks-select>
             </div>
         `,
@@ -284,7 +284,7 @@ export const AllowCreate: Story = {
         template: `
             <div style="padding:24px;min-height:280px;display:flex;flex-direction:column;gap:12px">
                 <ks-select v-model="value" v-bind="args" style="width:280px">
-                    <el-option v-for="f in flows" :key="f" :value="f" :label="f" />
+                    <ks-option v-for="f in flows" :key="f" :value="f" :label="f" />
                 </ks-select>
                 <span style="font-size:13px;opacity:0.6">Value: {{ value ?? '(none)' }}</span>
             </div>
@@ -318,7 +318,7 @@ export const RemoteSearch: Story = {
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
                 <ks-select v-model="value" v-bind="args" :loading="loading" :remoteMethod="remoteMethod" style="width:320px">
-                    <el-option v-for="ns in results" :key="ns" :value="ns" :label="ns" />
+                    <ks-option v-for="ns in results" :key="ns" :value="ns" :label="ns" />
                 </ks-select>
                 <span style="font-size:13px;opacity:0.6">Selected: {{ value || '(none)' }}</span>
             </div>
@@ -346,14 +346,14 @@ export const CustomTagSlot: Story = {
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
                 <ks-select v-model="value" v-bind="args" style="width:380px">
                     <template #tag>
-                        <el-tag
+                        <ks-tag
                             v-for="ns in value" :key="ns"
                             closable size="small" type="primary"
                             style="margin:2px"
                             @close="remove(ns)"
-                        >{{ ns.split('.').pop() }}</el-tag>
+                        >{{ ns.split('.').pop() }}</ks-tag>
                     </template>
-                    <el-option v-for="ns in namespaces" :key="ns" :value="ns" :label="ns" />
+                    <ks-option v-for="ns in namespaces" :key="ns" :value="ns" :label="ns" />
                 </ks-select>
                 <span style="font-size:13px;opacity:0.6">Selected: {{ value.join(', ') || '(none)' }}</span>
             </div>
@@ -377,7 +377,7 @@ export const WithLabelSlot: Story = {
                     <template #label="{ value: v }">
                         <span>Version: </span><strong>{{ v }}</strong>
                     </template>
-                    <el-option v-for="v in versions" :key="v" :value="v" :label="v" />
+                    <ks-option v-for="v in versions" :key="v" :value="v" :label="v" />
                 </ks-select>
             </div>
         `,

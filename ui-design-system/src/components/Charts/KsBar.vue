@@ -1,6 +1,7 @@
 <template>
     <ks-echart
         ref="ksEchartRef"
+        class="ks-chart--bar"
         v-bind="$attrs"
         :options="mergedOption"
         :loading="isLoading"

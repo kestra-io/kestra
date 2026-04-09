@@ -1,6 +1,5 @@
 import {describe, test, expect, vi, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
-import KestraDesignSystem from "../../../src/index"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
 
 // ─── Mock vue-echarts ─────────────────────────────────────────────────────────
@@ -25,9 +24,38 @@ vi.mock("vue-echarts", () => ({
     },
 }))
 
+vi.mock("echarts/renderers", () => ({CanvasRenderer: {}, SVGRenderer: {}}))
+vi.mock("echarts/core", () => ({use: vi.fn()}))
+vi.mock("echarts/components", () => ({
+    GridComponent: {},
+    TooltipComponent: {},
+    LegendComponent: {},
+    DataZoomComponent: {},
+    GraphicComponent: {},
+}))
+
+vi.mock("../../../src/components/Feedback/KsLoading", () => ({
+    vKsLoading: {
+        mounted(el: HTMLElement, binding: {value: boolean}) {
+            el.setAttribute("data-loading", String(binding.value))
+        },
+        updated(el: HTMLElement, binding: {value: boolean}) {
+            el.setAttribute("data-loading", String(binding.value))
+        },
+    },
+}))
+
+vi.mock("../../../src/components/Feedback/KsTooltip.vue", () => ({
+    default: {
+        name: "KsTooltip",
+        props: ["trigger", "visible", "content", "rawContent", "placement"],
+        template: `<div class="ks-tooltip-stub"><slot /></div>`,
+    },
+}))
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const globalConfig = {plugins: [KestraDesignSystem]}
+const globalConfig = {}
 
 const BASE_OPTIONS = {
     xAxis: {type: "category", data: ["Jan", "Feb", "Mar"], boundaryGap: false},
@@ -101,10 +129,12 @@ describe("KsEchart", () => {
     // ── disableFeatures ────────────────────────────────────────────────────────
 
     test("hides native tooltip in effectiveOption when tooltipType is external", () => {
+        // The tooltip is hidden by moving it off-screen (preserving ECharts axis-snapping
+        // so the formatter callback still fires to populate the external KsTooltip).
         const wrapper = mountChart({tooltipType: "external"})
         const vChart = wrapper.findComponent({name: "VChart"})
         const opt = vChart.props("option") as Record<string, unknown>
-        expect((opt.tooltip as Record<string, unknown>)?.show).toBe(false)
+        expect(typeof (opt.tooltip as Record<string, unknown>)?.position).toBe("function")
     })
 
     test("does not override tooltip option when tooltipType is native", () => {

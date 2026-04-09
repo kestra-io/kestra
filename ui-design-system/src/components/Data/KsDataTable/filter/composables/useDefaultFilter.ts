@@ -19,6 +19,10 @@ const TIME_RANGE_FILTER_PREFIX = "filters[timeRange]";
 const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
     Object.keys(query).some(key => key.startsWith(prefix));
 
+export function defaultNamespace() {
+    return localStorage.getItem("defaultNamespace");
+}
+
 export function applyDefaultFilters(
     currentQuery?: LocationQuery,
     {
@@ -31,8 +35,8 @@ export function applyDefaultFilters(
     const query = {...currentQuery};
     let change = false;
 
-    if (namespace !== null && defaultNamespaceValue && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
-        query[`${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespaceValue;
+    if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
+        query[`${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
         change = true;
     }
 
@@ -49,7 +53,7 @@ export function applyDefaultFilters(
             if (hasExisting) {
                 Object.keys(query).forEach(key => { if (TIME_FILTER_KEYS.test(key)) delete query[key]; });
             }
-            const duration = defaultDuration ?? useMiscStore().configs?.chartDefaultDuration ?? "PT24H";
+            const duration = defaultDuration ?? "PT24H";
             query[`${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = duration;
             change = true;
         }

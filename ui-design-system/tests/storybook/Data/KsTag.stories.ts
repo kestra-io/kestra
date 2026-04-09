@@ -7,7 +7,7 @@ const meta: Meta<typeof KsTag> = {
     component: KsTag,
     tags: ["autodocs"],
     argTypes: {
-        type: {control: "select", options: ["", "success", "info", "warning", "danger", "primary"]},
+        type: {control: "select", options: ["primary", "success", "info", "warning", "danger"]},
         size: {control: "select", options: ["large", "default", "small"]},
         effect: {control: "select", options: ["dark", "light", "plain"]},
         closable: {control: "boolean"},
@@ -26,41 +26,43 @@ export const Default: Story = {
         setup() { return {args} },
         template: `<div style="padding:24px"><ks-tag v-bind="args">My Tag <a href="#">with link</a></ks-tag></div>`,
     }),
-    args: {type: ""},
+    args: {type: "primary"},
 }
 
 export const Types: Story = {
     render: () => ({
         components: {KsTag},
         template: `
-            <table cellpadding="12">
-                <tr>
-                    <td>Dark</td>
-                    <td><ks-tag effect="dark">Default</ks-tag></td>
-                    <td><ks-tag effect="dark" type="primary">Primary</ks-tag></td>
-                    <td><ks-tag effect="dark" type="success">Success</ks-tag></td>
-                    <td><ks-tag effect="dark" type="info">Info</ks-tag></td>
-                    <td><ks-tag effect="dark" type="warning">Warning</ks-tag></td>
-                    <td><ks-tag effect="dark" type="danger">Danger</ks-tag></td>
-                </tr>
-                <tr>
-                    <td>Light (default)</td>
-                    <td><ks-tag effect="light">Default</ks-tag></td>
-                    <td><ks-tag effect="light" type="primary">Primary</ks-tag></td>
-                    <td><ks-tag effect="light" type="success">Success</ks-tag></td>
-                    <td><ks-tag effect="light" type="info">Info</ks-tag></td>
-                    <td><ks-tag effect="light" type="warning">Warning</ks-tag></td>
-                    <td><ks-tag effect="light" type="danger">Danger</ks-tag></td>
-                </tr>
-                <tr>
-                    <td>Plain</td>
-                    <td><ks-tag effect="plain">Default</ks-tag></td>
-                    <td><ks-tag effect="plain" type="primary">Primary</ks-tag></td>
-                    <td><ks-tag effect="plain" type="success">Success</ks-tag></td>
-                    <td><ks-tag effect="plain" type="info">Info</ks-tag></td>
-                    <td><ks-tag effect="plain" type="warning">Warning</ks-tag></td>
-                    <td><ks-tag effect="plain" type="danger">Danger</ks-tag></td>
-                </tr>
+            <table class="kel-table">
+                <tbody>
+                    <tr>
+                        <td class="kel-table__cell">Dark</td>
+                        <td class="kel-table__cell"><ks-tag effect="dark">Default</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="dark" type="primary">Primary</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="dark" type="success">Success</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="dark" type="info">Info</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="dark" type="warning">Warning</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="dark" type="danger">Danger</ks-tag></td>
+                    </tr>
+                    <tr>
+                        <td class="kel-table__cell">Light (default)</td>
+                        <td class="kel-table__cell"><ks-tag effect="light">Default</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="light" type="primary">Primary</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="light" type="success">Success</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="light" type="info">Info</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="light" type="warning">Warning</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="light" type="danger">Danger</ks-tag></td>
+                    </tr>
+                    <tr>
+                        <td class="kel-table__cell">Plain</td>
+                        <td class="kel-table__cell"><ks-tag effect="plain">Default</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="plain" type="primary">Primary</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="plain" type="success">Success</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="plain" type="info">Info</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="plain" type="warning">Warning</ks-tag></td>
+                        <td class="kel-table__cell"><ks-tag effect="plain" type="danger">Danger</ks-tag></td>
+                    </tr>
+                </tbody>
             </table>
         `,
     }),

@@ -1,7 +1,7 @@
 <template>
     <ks-card class="card">
         <div v-if="showIcon" class="header">
-            <ks-link :underline="true" :href="link" target="_blank">
+            <ks-link :href="link" target="_blank">
                 <ks-icon class="el-icon--right">
                     <OpenInNew />
                 </ks-icon>

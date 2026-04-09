@@ -12,13 +12,14 @@ vi.mock("vue-echarts", () => ({
 }))
 
 vi.mock("echarts/core", () => ({use: vi.fn()}))
-vi.mock("echarts/renderers", () => ({CanvasRenderer: {}}))
+vi.mock("echarts/renderers", () => ({CanvasRenderer: {}, SVGRenderer: {}}))
 vi.mock("echarts/charts", () => ({PieChart: {}}))
 vi.mock("echarts/components", () => ({
     GridComponent: {},
     TooltipComponent: {},
     LegendComponent: {},
     DataZoomComponent: {},
+    GraphicComponent: {},
 }))
 
 vi.mock("../../../src/components/Feedback/KsLoading", () => ({

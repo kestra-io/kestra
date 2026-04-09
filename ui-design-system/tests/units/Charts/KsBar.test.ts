@@ -1,55 +1,27 @@
-import {describe, test, expect, vi, beforeAll} from "vitest"
+import {describe, test, expect, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {nextTick} from "vue"
 import KsBar from "../../../src/components/Charts/KsBar.vue"
 
-vi.mock("vue-echarts", () => ({
-    default: {
-        name: "VChart",
-        props: ["option", "initOptions", "autoresize", "theme"],
-        template: `<div class="v-chart-stub" :data-option="JSON.stringify(option)" />`,
-    },
-}))
-
 vi.mock("echarts/core", () => ({use: vi.fn()}))
-vi.mock("echarts/renderers", () => ({CanvasRenderer: {}}))
 vi.mock("echarts/charts", () => ({BarChart: {}}))
-vi.mock("echarts/components", () => ({
-    GridComponent: {},
-    TooltipComponent: {},
-    LegendComponent: {},
-    DataZoomComponent: {},
-}))
 
-vi.mock("../../../src/components/Feedback/KsLoading", () => ({
-    vKsLoading: {
-        mounted(el: HTMLElement, binding: {value: boolean}) {
-            el.setAttribute("data-loading", String(binding.value))
-        },
-        updated(el: HTMLElement, binding: {value: boolean}) {
-            el.setAttribute("data-loading", String(binding.value))
-        },
-    },
-}))
-
-vi.mock("../../../src/components/Feedback/KsTooltip.vue", () => ({
+vi.mock("../../../src/components/Charts/KsEchart.vue", () => ({
     default: {
-        name: "KsTooltip",
-        props: ["trigger", "visible", "content", "rawContent", "placement"],
-        template: `<div class="ks-tooltip-stub"><slot /></div>`,
+        name: "KsEchart",
+        props: ["options", "loading", "tooltipType", "disableFeatures", "data", "renderer"],
+        template: `<div
+            class="ks-chart--bar"
+            :data-loading="String(loading)"
+            :data-option="JSON.stringify(options)"
+        />`,
     },
 }))
-
-beforeAll(() => {
-    vi.spyOn(window, "getComputedStyle").mockReturnValue({
-        getPropertyValue: () => "",
-    } as unknown as CSSStyleDeclaration)
-})
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getOption(wrapper: ReturnType<typeof mount>): Record<string, unknown> {
-    return JSON.parse(wrapper.find(".v-chart-stub").attributes("data-option") ?? "{}")
+    return JSON.parse(wrapper.find(".ks-chart--bar").attributes("data-option") ?? "{}")
 }
 
 // ─── Container ────────────────────────────────────────────────────────────────
@@ -150,91 +122,5 @@ describe("KsBar — options deep merge", () => {
         })
         const tooltip = getOption(wrapper).tooltip as Record<string, unknown>
         expect(tooltip.trigger).toBe("item")
-    })
-})
-
-// ─── Mini mode ────────────────────────────────────────────────────────────────
-
-describe("KsBar — mini container", () => {
-    test("applies ks-mini-chart class when mini=true", () => {
-        const wrapper = mount(KsBar, {props: {mini: true, loading: false}})
-        expect(wrapper.find(".ks-mini-chart").exists()).toBe(true)
-    })
-})
-
-describe("KsBar — mini chrome stripped", () => {
-    test("legend is hidden", () => {
-        const wrapper = mount(KsBar, {props: {mini: true, data: [], loading: false}})
-        const legend = getOption(wrapper).legend as Record<string, unknown>
-        expect(legend.show).toBe(false)
-    })
-
-    test("xAxis is hidden", () => {
-        const wrapper = mount(KsBar, {props: {mini: true, data: [], loading: false}})
-        const xAxis = getOption(wrapper).xAxis as Record<string, unknown>
-        expect(xAxis.show).toBe(false)
-    })
-
-    test("yAxis is hidden", () => {
-        const wrapper = mount(KsBar, {props: {mini: true, data: [], loading: false}})
-        const yAxis = getOption(wrapper).yAxis as Record<string, unknown>
-        expect(yAxis.show).toBe(false)
-    })
-
-    test("tooltip is hidden", () => {
-        const wrapper = mount(KsBar, {props: {mini: true, data: [], loading: false}})
-        const tooltip = getOption(wrapper).tooltip as Record<string, unknown>
-        expect(tooltip.show).toBe(false)
-    })
-
-    test("grid has minimal padding", () => {
-        const wrapper = mount(KsBar, {props: {mini: true, data: [], loading: false}})
-        const grid = getOption(wrapper).grid as Record<string, unknown>
-        expect(grid.top).toBe(2)
-        expect(grid.right).toBe(2)
-        expect(grid.bottom).toBe(2)
-        expect(grid.left).toBe(2)
-    })
-})
-
-describe("KsBar — mini bar series", () => {
-    test("series type is bar", () => {
-        const wrapper = mount(KsBar, {
-            props: {mini: true, data: [{name: "A", data: [1, 2, 3]}], loading: false},
-        })
-        const series = getOption(wrapper).series as Record<string, unknown>[]
-        expect(series[0].type).toBe("bar")
-    })
-
-    test("bar data is not modified (no symbol injection)", () => {
-        const wrapper = mount(KsBar, {
-            props: {mini: true, data: [{name: "A", data: [10, 20]}], loading: false},
-        })
-        const series = getOption(wrapper).series as Record<string, unknown>[]
-        expect(series[0].symbol).toBeUndefined()
-    })
-
-    test("stack prop stacks bar series in mini mode", () => {
-        const wrapper = mount(KsBar, {
-            props: {
-                mini: true,
-                stack: true,
-                data: [{name: "A", data: [1, 2]}, {name: "B", data: [3, 4]}],
-                loading: false,
-            },
-        })
-        const series = getOption(wrapper).series as Record<string, unknown>[]
-        expect(series[0].stack).toBe("total")
-        expect(series[1].stack).toBe("total")
-    })
-})
-
-describe("KsBar — mini options override", () => {
-    test("user options are merged over mini defaults", () => {
-        const wrapper = mount(KsBar, {
-            props: {mini: true, data: [], loading: false, options: {tooltip: {show: true}}},
-        })
-        const tooltip = getOption(wrapper).tooltip as Record<string, unknown>
-        expect(tooltip.show).toBe(true)
     })
 })

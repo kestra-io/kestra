@@ -78,7 +78,7 @@ describe("KsTopNavBar", () => {
 
     test("star button has active class when bookmarked", () => {
         const wrapper = mount(KsTopNavBar, {
-            props: {title: "Flows", bookmarked: true},
+            props: {title: "Flows", isBookmarked: true},
             global: globalConfig,
         })
         expect(wrapper.find("button.icon.active").exists()).toBe(true)
@@ -86,7 +86,7 @@ describe("KsTopNavBar", () => {
 
     test("star button does not have active class when not bookmarked", () => {
         const wrapper = mount(KsTopNavBar, {
-            props: {title: "Flows", bookmarked: false},
+            props: {title: "Flows", isBookmarked: false},
             global: globalConfig,
         })
         expect(wrapper.find("button.icon.active").exists()).toBe(false)

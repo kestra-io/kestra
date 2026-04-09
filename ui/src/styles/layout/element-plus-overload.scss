@@ -9,8 +9,8 @@
 
 // FIXME: create a new component for this
 .kel-input-file.custom-upload {
-    font-size: var(--el-font-size-base);
-    border-radius: var(--el-border-radius-base);
+    font-size: var(--kel-font-size-base);
+    border-radius: var(--kel-border-radius-base);
     border: 1px solid var(--ks-border-primary);
     white-space: nowrap;
 
@@ -73,12 +73,12 @@
         color: var(--ks-button-content-primary);
         border: 0;
         margin: 2px 10px 0 4px;
-        border-radius: var(--el-border-radius-base);
+        border-radius: var(--kel-border-radius-base);
     }
 
     &.custom-upload {
-        font-size: var(--el-font-size-base);
-        border-radius: var(--el-border-radius-base);
+        font-size: var(--kel-font-size-base);
+        border-radius: var(--kel-border-radius-base);
         border: 1px solid var(--ks-border-primary);
         white-space: nowrap;
 

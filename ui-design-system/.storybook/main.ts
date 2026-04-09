@@ -16,6 +16,13 @@ const config: StorybookConfig = {
     async viteFinal(config) {
         return mergeConfig(config, {
             define: {"process.env": {}},
+            css: {
+                preprocessorOptions: {
+                    scss: {
+                        silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"],
+                    },
+                },
+            },
         })
     },
 }

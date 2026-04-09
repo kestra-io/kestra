@@ -260,7 +260,6 @@
       "5minutes": "5 minutos",
       "7days": "7 dias",
       "custom": "Personalizado",
-      "custom duration": "Duração personalizada",
       "dayBeforeYesterday": "Anteontem",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
       "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (P1DT1H1M1S por ex.)",
@@ -287,7 +286,6 @@
       "today": "Hoje",
       "yesterday": "Ontem"
     },
-    "days": "Dias",
     "debug": "Depurar",
     "default": "Padrão",
     "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "Ocultar documentação da task",
     "home": "Início",
     "hostname": "Nome do host",
-    "hours": "Horas",
     "iam": "IAM",
     "id": "Id",
     "import": "Importar",
     "in-our-documentation": "na nossa documentação.",
     "informative notice": "Nota(s)",
     "input": "Input",
-    "input_custom_duration": "ou insira uma duração personalizada:",
     "inputs": "Inputs",
     "instance": "Instância",
     "invalid bulk delete": "Não foi possível excluir execuções",
@@ -845,12 +841,10 @@
     "metric choice": "Por favor, escolha uma métrica e uma agregação",
     "metrics": "Métricas",
     "min": "Min",
-    "minutes": "Minutos",
     "missingSource": "Fonte ausente",
     "modify inputs": "Modificar inputs",
     "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
-    "months": "Meses",
     "more_actions": "Mais Ações",
     "multi_panel_editor": {
       "close_all_panels": "Fechar todos os painéis",
@@ -1402,7 +1396,6 @@
     "search term in message": "Termo de busca na mensagem",
     "search_docs": "Pesquisar",
     "searching": "Procurando...",
-    "seconds": "Segundos",
     "secret": {
       "add": "Criar",
       "inherited": "Segredos herdados",
@@ -1743,7 +1736,6 @@
       "payload": "Payload do Webhook (JSON)"
     },
     "webhook link copied": "Link do Webhook copiado.",
-    "weeks": "Semanas",
     "welcome": {
       "help": {
         "text": "Faça qualquer pergunta em nossa comunidade no Slack. Se você estiver com dificuldades, estamos aqui para ajudar você. ✋",
@@ -1872,7 +1864,6 @@
     "worker information": "Informações do Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Chave ou valor vazio não é permitido em labels",
-    "years": "Anos"
+    "wrong labels": "Chave ou valor vazio não é permitido em labels"
   }
 }

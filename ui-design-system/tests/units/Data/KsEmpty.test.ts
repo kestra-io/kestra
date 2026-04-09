@@ -1,9 +1,11 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../src/index"
 import KsEmpty from "../../../src/components/Data/KsEmpty.vue"
 
-const globalConfig = {plugins: [KestraDesignSystem]}
+const i18n = createI18n({legacy: false, locale: "en", messages: {}})
+const globalConfig = {plugins: [i18n, KestraDesignSystem]}
 
 describe("KsEmpty", () => {
     test("renders empty element", () => {

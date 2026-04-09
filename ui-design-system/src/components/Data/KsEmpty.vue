@@ -38,7 +38,7 @@
         <template #description>
             <slot name="description">
                 <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="description ?? t('no_data')" />
+                <span v-html="description ?? t('no_data').replaceAll('\n', '<br >')" />
             </slot>
         </template>
         <template v-if="$slots.image" #image><slot name="image" /></template>

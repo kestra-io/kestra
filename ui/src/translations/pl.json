@@ -260,7 +260,6 @@
       "5minutes": "5 minut",
       "7days": "7 dni",
       "custom": "Niestandardowy",
-      "custom duration": "Niestandardowy czas trwania",
       "dayBeforeYesterday": "Przedwczoraj",
       "duration example": "Przykład: 'P1DT1H1M1S'",
       "error": "Nieprawidłowy format czasu trwania, musi być w formacie ISO 8601 (np. P1DT1H1M1S)",
@@ -287,7 +286,6 @@
       "today": "Dzisiaj",
       "yesterday": "Wczoraj"
     },
-    "days": "Dni",
     "debug": "Debugowanie",
     "default": "Domyślny",
     "defaultsToNamespaceFile": "Domyślnie do pliku namespace: <code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "Ukryj dokumentację task",
     "home": "Strona główna",
     "hostname": "Nazwa hosta",
-    "hours": "Godziny",
     "iam": "IAM",
     "id": "Id",
     "import": "Importuj",
     "in-our-documentation": "w naszej dokumentacji.",
     "informative notice": "Notatka(i)",
     "input": "Input",
-    "input_custom_duration": "lub wprowadź niestandardowy czas trwania:",
     "inputs": "Inputs",
     "instance": "Instancja",
     "invalid bulk delete": "Nie można usunąć wykonań",
@@ -845,12 +841,10 @@
     "metric choice": "Proszę wybrać metrykę i agregację",
     "metrics": "Metryki",
     "min": "Min",
-    "minutes": "Minuty",
     "missingSource": "Brak źródła",
     "modify inputs": "Modyfikuj inputy",
     "modify_inputs": "Modyfikuj inputy",
     "monogram": "Monogram",
-    "months": "Miesiące",
     "more_actions": "Więcej akcji",
     "multi_panel_editor": {
       "close_all_panels": "Zamknij wszystkie panele",
@@ -1402,7 +1396,6 @@
     "search term in message": "Wyszukaj termin w wiadomości",
     "search_docs": "Szukaj",
     "searching": "Szukanie...",
-    "seconds": "Sekundy",
     "secret": {
       "add": "Utwórz",
       "inherited": "Dziedziczone secrets",
@@ -1743,7 +1736,6 @@
       "payload": "Payload Webhook (JSON)"
     },
     "webhook link copied": "Link Webhook skopiowany.",
-    "weeks": "Tygodnie",
     "welcome": {
       "help": {
         "text": "Zadaj dowolne pytanie w naszej społeczności Slack. Jeśli utkniesz, jesteśmy tutaj, aby Ci pomóc. ✋",
@@ -1872,7 +1864,6 @@
     "worker information": "Informacje o Workerze",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
-    "years": "Lata"
+    "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach"
   }
 }

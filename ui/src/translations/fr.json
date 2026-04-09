@@ -260,7 +260,6 @@
       "5minutes": "5 minutes",
       "7days": "7 jours",
       "custom": "Personnalisé",
-      "custom duration": "Durée personnalisée",
       "dayBeforeYesterday": "Avant-hier",
       "duration example": "Exemple: 'P1DT1H1M1S'",
       "error": "Format de durée invalide, un format ISO 8601 est attendu (ex: P1DT1H1M1S)",
@@ -287,7 +286,6 @@
       "today": "Aujourd'hui",
       "yesterday": "Hier"
     },
-    "days": "Jours",
     "debug": "Déboguer",
     "default": "Par défaut",
     "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",
@@ -761,14 +759,12 @@
     "hide task documentation": "Cacher la documentation des tâches",
     "home": "Accueil",
     "hostname": "Nom d'hôte",
-    "hours": "Heures",
     "iam": "IAM",
     "id": "Identifiant",
     "import": "Importer",
     "in-our-documentation": "dans notre documentation.",
     "informative notice": "Note(s)",
     "input": "Entré",
-    "input_custom_duration": "ou saisir une durée personnalisée :",
     "inputs": "Entrées",
     "instance": "Instance",
     "invalid bulk delete": "Impossible de supprimer les exécutions",
@@ -845,12 +841,10 @@
     "metric choice": "Merci de sélectionner une métrique et une agrégation",
     "metrics": "Mesures",
     "min": "Minimum",
-    "minutes": "Minutes",
     "missingSource": "Source manquant",
     "modify inputs": "Modifier les inputs",
     "modify_inputs": "Modifier les inputs",
     "monogram": "Monogramme",
-    "months": "Mois",
     "more_actions": "Plus d'actions",
     "multi_panel_editor": {
       "close_all_panels": "Fermer tous les panneaux",
@@ -1402,7 +1396,6 @@
     "search term in message": "Chercher dans le message",
     "search_docs": "Rechercher",
     "searching": "Recherche en cours...",
-    "seconds": "Secondes",
     "secret": {
       "add": "Créer",
       "inherited": "Secrets hérités",
@@ -1743,7 +1736,6 @@
       "payload": "Payload Webhook (JSON)"
     },
     "webhook link copied": "Lien du webhook copié.",
-    "weeks": "Semaines",
     "welcome": {
       "help": {
         "text": "Posez n'importe quelle question dans notre communauté Slack. Si vous êtes bloqué, nous sommes là pour vous aider. ✋",
@@ -1872,7 +1864,6 @@
     "worker information": "Informations sur le Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Clé ou valeur vide détecté dans les labels",
-    "years": "Années"
+    "wrong labels": "Clé ou valeur vide détecté dans les labels"
   }
 }

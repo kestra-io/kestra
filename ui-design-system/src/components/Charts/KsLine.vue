@@ -1,6 +1,7 @@
 <template>
     <ks-echart
         ref="ksEchartRef"
+        class="ks-chart--line"
         v-bind="$attrs"
         :options="mergedOption"
         :loading="isLoading"
@@ -39,6 +40,8 @@
         defineProps<{
             /** Series data loaded asynchronously. Pass `null` or omit while fetching. */
             data?: KsChartSeriesItem[] | null
+            /** X-axis category labels. */
+            categories?: string[]
             /** Partial ECharts option deep-merged over component defaults. */
             options?: Record<string, unknown>
             /** Show the loading spinner. Defaults to `true` when data is null/undefined. */
@@ -52,6 +55,7 @@
         }>(),
         {
             data: null,
+            categories: () => [],
             options: () => ({}),
             loading: undefined,
             disableFeatures: () => [],
@@ -82,7 +86,7 @@
     const mergedOption = computed(() => {
         let base: Record<string, unknown> = {
             grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
-            xAxis: {type: "category", boundaryGap: false},
+            xAxis: {type: "category", boundaryGap: false, data: props.categories},
             yAxis: {type: "value"},
             tooltip: {trigger: "axis"},
             legend: {},

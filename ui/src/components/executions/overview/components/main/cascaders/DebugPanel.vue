@@ -43,7 +43,7 @@
             :closable="false"
         >
             <pre v-if="stackTrace" class="mb-0 stack-trace">{{ stackTrace }}</pre>
-        </el-alert>
+        </ks-alert>
     </div>
 </template>
 

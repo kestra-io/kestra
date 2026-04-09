@@ -8,7 +8,7 @@
 
     const props = defineProps<{
         type?: "" | "default" | "primary" | "success" | "warning" | "danger" | "info"
-        underline?: boolean
+        underline?: "" | "always" | "hover" | "never"
         disabled?: boolean
         href?: string
         target?: string

@@ -1,4 +1,4 @@
-package io.kestra.core.worker.models;
+package io.kestra.core.models.triggers;
 
 import java.util.List;
 
@@ -8,7 +8,6 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.TriggerId;
 
 import jakarta.annotation.Nullable;
 
@@ -53,11 +52,14 @@ public record TriggerEvaluationResult(
     }
 
     /**
+     * Returns a copy with a different state type.
+     */
+    public TriggerEvaluationResult withState(State.Type state) {
+        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision);
+    }
+
+    /**
      * Reconstructs a full {@link Execution} from this lightweight result.
-     * <p>
-     * This method is self-contained — it only needs the {@link TriggerId}
-     * (for namespace, flowId, tenantId) which is already available in
-     * {@link WorkerTriggerResult}.
      *
      * @param triggerId the trigger identifier providing namespace, flowId, and tenantId.
      * @return a reconstructed {@link Execution}.

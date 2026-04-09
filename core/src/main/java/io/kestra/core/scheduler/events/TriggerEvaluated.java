@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.worker.models.TriggerEvaluationResult;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 
 import jakarta.annotation.Nullable;
 

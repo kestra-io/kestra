@@ -3,7 +3,7 @@ package io.kestra.core.worker.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.scheduler.model.TriggerType;
@@ -24,17 +24,17 @@ public record WorkerTriggerResult(
     @JsonProperty @Nullable TriggerEvaluationResult evaluation) {
 
     /**
-     * Create a new {@link WorkerTriggerResult} from a {@link WorkerTrigger} and an {@link Execution}.
+     * Create a new {@link WorkerTriggerResult} from a {@link WorkerTrigger} and a {@link TriggerEvaluationResult}.
      *
-     * @param trigger   the trigger.
-     * @param execution the resulting execution, or {@code null} if the trigger did not match.
+     * @param trigger    the trigger.
+     * @param evaluation the evaluation result, or {@code null} if the trigger did not match.
      * @return a new {@link WorkerTriggerResult}.
      */
-    public static WorkerTriggerResult of(WorkerTrigger trigger, Execution execution) {
+    public static WorkerTriggerResult of(WorkerTrigger trigger, @Nullable TriggerEvaluationResult evaluation) {
         return new WorkerTriggerResult(
             trigger.triggerId(),
             TriggerType.from(trigger.getTrigger()),
-            execution != null ? TriggerEvaluationResult.from(execution) : null
+            evaluation
         );
     }
 }

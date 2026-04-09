@@ -1,10 +1,14 @@
 <template>
     <section v-if="data?.results?.length" id="table">
-        <ks-table
+        <ks-data-table
             :id="containerID"
             :data="data.results"
+            :total="isPaginationEnabled(props.chart) ? data.total : 0"
+            :current-page="pageNumber"
+            :page-size="pageSize"
             :height="240"
             size="small"
+            @page-changed="handlePageChange"
         >
             <ks-table-column
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
@@ -19,22 +23,14 @@
                     <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                 </template>
             </ks-table-column>
-        </ks-table>
-
-        <Pagination
-            v-if="isPaginationEnabled(props.chart)"
-            :total="data.total"
-            :page="pageNumber"
-            :size="pageSize"
-            @page-changed="handlePageChange"
-        />
+        </ks-data-table>
     </section>
 
     <NoData v-else :text="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref, computed} from "vue";
+    import {PropType, watch, ref} from "vue";
 
     import type {Chart} from "../types.ts";
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
@@ -45,7 +41,6 @@
     import Namespace from "./table/columns/Namespace.vue";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
 
-    import Pagination from "../../layout/Pagination.vue";
     import NoData from "../../layout/NoData.vue";
 
     const props = defineProps({
@@ -106,17 +101,12 @@
     const route = useRoute();
     const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false);
 
-    const getData = async () => (data.value = await generate(pagination.value));
+    const getData = async () => (data.value = await generate(
+        isPaginationEnabled(props.chart) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : undefined
+    ));
 
     const pageNumber = ref(1);
     const pageSize = ref(25);
-
-    const pagination = computed(() => {
-        return isPaginationEnabled(props.chart)
-            ? {pageNumber: pageNumber.value, pageSize: pageSize.value}
-            : undefined;
-    });
-
 
     const handlePageChange = (options: { page?: number; size?: number | string }) => {
         if (pageNumber.value === options.page && pageSize.value === options.size) return;

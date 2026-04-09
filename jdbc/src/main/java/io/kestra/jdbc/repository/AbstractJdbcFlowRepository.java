@@ -667,8 +667,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 return (ArrayListTotal) this.jdbcRepository.fetchPage(
                     context,
                     getFindFlowSelect(tenantId, null, context, null)
-                        .and(findTriggerClassCondition(triggerClass)
-                        .and(NAMESPACE_FIELD.eq(namespace))),
+                        .and(findTriggerClassCondition(triggerClass))
+                        .and(NAMESPACE_FIELD.eq(namespace)),
                     pageable
                 );
             });

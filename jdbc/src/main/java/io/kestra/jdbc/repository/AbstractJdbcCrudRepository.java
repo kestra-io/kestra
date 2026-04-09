@@ -41,6 +41,7 @@ import reactor.core.publisher.FluxSink;
  *
  * @param <T> the type of the persisted entity.
  */
+@SuppressWarnings("varargs")
 public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcRepository {
     protected io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository;
 

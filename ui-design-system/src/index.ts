@@ -48,6 +48,7 @@ import KsId from "./components/Data/KsId.vue"
 import KsIcon from "./components/Basic/KsIcon.vue"
 import KsIconButton from "./components/Basic/KsIconButton/KsIconButton.vue"
 import KsInput from "./components/Form/KsInput.vue"
+import KsPassword from "./components/Form/KsPassword.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
 import KsMenu from "./components/Navigation/KsMenu/KsMenu.vue"
@@ -158,6 +159,7 @@ export {
     KsIconButton,
     KsInput,
     KsInputNumber,
+    KsPassword,
     KsLink,
     vKsLoading,
     KsMenu,
@@ -247,6 +249,7 @@ const KestraDesignSystem = {
         app.component("KsIconButton", KsIconButton)
         app.component("KsInput", KsInput)
         app.component("KsInputNumber", KsInputNumber)
+        app.component("KsPassword", KsPassword)
         app.component("KsLink", KsLink)
         app.component("KsMenu", KsMenu)
         app.component("KsMenuItem", KsMenuItem)
@@ -336,6 +339,7 @@ declare module "vue" {
         KsIconButton: typeof KsIconButton
         KsInput: typeof KsInput
         KsInputNumber: typeof KsInputNumber
+        KsPassword: typeof KsPassword
         KsLink: typeof KsLink
         KsMenu: typeof KsMenu
         KsMenuItem: typeof KsMenuItem

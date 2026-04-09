@@ -1,7 +1,6 @@
 package io.kestra.core.worker.models;
 
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -18,22 +17,23 @@ import jakarta.annotation.Nullable;
  * <p>
  * This record carries only the data needed to reconstruct a full {@link Execution}
  * on the controller/scheduler side, avoiding the overhead of transporting
- * the full Execution object (23 fields) over gRPC when only a subset is populated.
+ * the full Execution object over gRPC when only a subset is populated.
+ * <p>
+ * Flow-level variables are NOT transported — the executor resolves them
+ * directly from the {@code Flow} via {@code RunVariables}.
  *
- * @param executionId   the generated execution ID.
- * @param stateType     the execution state type (CREATED or FAILED).
- * @param trigger       the execution trigger metadata containing plugin output variables and log file URI.
- * @param labels        the execution labels including system labels (FROM, CORRELATION_ID).
- * @param flowRevision  the flow revision at evaluation time.
- * @param flowVariables the flow-level variables (typically small or null).
+ * @param executionId  the generated execution ID.
+ * @param stateType    the execution state type (CREATED or FAILED).
+ * @param trigger      the execution trigger metadata containing plugin output variables and log file URI.
+ * @param labels       the execution labels including system labels (FROM, CORRELATION_ID).
+ * @param flowRevision the flow revision at evaluation time.
  */
 public record TriggerEvaluationResult(
     @JsonProperty String executionId,
     @JsonProperty State.Type stateType,
     @JsonProperty ExecutionTrigger trigger,
     @JsonProperty @Nullable List<Label> labels,
-    @JsonProperty @Nullable Integer flowRevision,
-    @JsonProperty @Nullable Map<String, Object> flowVariables
+    @JsonProperty @Nullable Integer flowRevision
 ) {
 
     /**
@@ -48,8 +48,7 @@ public record TriggerEvaluationResult(
             execution.getState().getCurrent(),
             execution.getTrigger(),
             execution.getLabels(),
-            execution.getFlowRevision(),
-            execution.getVariables()
+            execution.getFlowRevision()
         );
     }
 
@@ -74,7 +73,6 @@ public record TriggerEvaluationResult(
             .namespace(triggerId.getNamespace())
             .flowId(triggerId.getFlowId())
             .flowRevision(flowRevision)
-            .variables(flowVariables)
             .state(state)
             .trigger(trigger)
             .labels(labels)

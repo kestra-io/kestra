@@ -568,4 +568,67 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class TaskWithGroupedBooleanProperty extends Task implements RunnableTask<VoidOutput> {
+        @PluginProperty(group = "reliability")
+        @Builder.Default
+        private Property<Boolean> failOnMissing = Property.ofValue(false);
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void propertyBooleanWithGroupShouldHaveGroupAtTopLevel() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            // Check via properties() - the path TaskObject uses for single-task schema
+            Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithGroupedBooleanProperty.class);
+            Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+            Map<String, Object> prop = props.get("failOnMissing");
+
+            // Check via schemas() - the path the flow schema uses (full definitions)
+            Map<String, Object> fullSchema = jsonSchemaGenerator.schemas(TaskWithGroupedBooleanProperty.class);
+            var defs = (Map<String, Map<String, Object>>) fullSchema.get("definitions");
+            var taskDef = defs.entrySet().stream()
+                .filter(e -> e.getKey().contains("TaskWithGroupedBooleanProperty"))
+                .findFirst().orElseThrow().getValue();
+            var defProps = (Map<String, Map<String, Object>>) taskDef.get("properties");
+
+            // $group must be at top level so the no-code editor can pick it up
+            assertThat("properties() path: $group must be at top level for Property<Boolean>",
+                prop.get("$group"), is("reliability"));
+
+            // Check schemas() path — what does the definition actually look like?
+            Map<String, Object> taskDefFailOnMissing = null;
+            if (defProps != null) {
+                taskDefFailOnMissing = defProps.get("failOnMissing");
+            } else if (taskDef.get("allOf") != null) {
+                var allOfList = (java.util.List<?>) taskDef.get("allOf");
+                for (var allOfItem : allOfList) {
+                    var allOfProps = (Map<String, Object>) ((Map<?, ?>) allOfItem).get("properties");
+                    if (allOfProps != null && allOfProps.containsKey("failOnMissing")) {
+                        taskDefFailOnMissing = (Map<String, Object>) allOfProps.get("failOnMissing");
+                        break;
+                    }
+                }
+            }
+            assertThat("schemas() path: failOnMissing definition must be found", taskDefFailOnMissing, is(notNullValue()));
+
+            // $group must be at top level in the full schemas() path too
+            assertThat("schemas() path: $group must be at top level for Property<Boolean>",
+                taskDefFailOnMissing.get("$group"), is("reliability"));
+        });
+    }
+
 }

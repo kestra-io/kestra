@@ -86,6 +86,7 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @PluginProperty(hidden = true, group = "reliability")
     private boolean failOnTriggerError = false;
 
+    @Builder.Default
     @PluginProperty(group = "execution")
     @Schema(
         title = "Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress."

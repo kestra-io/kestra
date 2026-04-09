@@ -105,7 +105,6 @@
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
-    import {apiUrlWithoutTenants} from "override/utils/route";
 
     import {Topology} from "@kestra-io/ui-libs";
     import {SECTIONS} from "@kestra-io/ui-libs";
@@ -128,8 +127,7 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
     import {useToast} from "../../utils/toast";
-    import {registerRemotes, registerShared, loadRemote} from "@module-federation/enhanced/runtime";
-    import {useAxios} from "../../utils/axios";
+    import {useFederatedModule} from "../../utils/useFederatedModule";
 
     const router = useRouter();
 
@@ -142,12 +140,8 @@
     const playgroundStore = usePlaygroundStore();
     const flowStore = useFlowStore();
 
-    const axios = useAxios();
 
-    const TopologyDetailsRemotes: Record<string, any> = {};
-    const taskAdditionalInfoRemote = ref<Record<string, any>>({});
-
-    const manifestReady = ref(false);
+    const {RemoteComponents:TopologyDetailsRemotes, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details");
 
     function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) { 
         const taskType = node?.task?.type;
@@ -158,15 +152,6 @@
         } 
     };
 
-    function addCSSLinkIfNotAlreadyPresent(href: string) {
-        if (!document.querySelector(`link[href="${href}"]`)) {
-            const link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = href;
-            document.head.appendChild(link);
-        }
-    }
-
     onMounted(async () => {
         // compile the list of task types
         const taskTypes = new Set<{cls: string, version: string | null}>();
@@ -176,70 +161,7 @@
 
         // get the manifest of the all the tasks we will 
         // have in the graph
-        const pluginTaskManifestsResponse = await axios.post<{
-            manifest:Record<string, {
-                group: string;
-                uiModule: string;
-                staticInfo?: Record<string, any>;
-                styles?: string[];
-            }[]>
-        }>(`${apiUrlWithoutTenants()}/plugins/pluginUiManifest`, Array.from(taskTypes));
-
-        const pluginTaskManifests = pluginTaskManifestsResponse.data.manifest;
-
-        for(const taskTypeKey in pluginTaskManifests){
-            for(const manifest of pluginTaskManifests[taskTypeKey]){
-                if(manifest.uiModule === "topology-details"){
-                    if(manifest.staticInfo){
-                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo
-                    }
-                }
-            }
-        }
-
-        manifestReady.value = true;
-
-        for(const taskTypeKey in pluginTaskManifests){
-            for(const manifest of pluginTaskManifests[taskTypeKey]){
-                if(manifest.uiModule === "topology-details"){
-                    const remoteName = `remote--${taskTypeKey}`;
-                    const basePath = `${apiUrlWithoutTenants()}/plugins/${manifest.group}/pluginUi/`
-
-                    if(manifest.styles){
-                        manifest.styles.forEach((style) => addCSSLinkIfNotAlreadyPresent(`${basePath}${style}`));
-                    }
-
-                    registerRemotes([
-                        {
-                            type: "module",
-                            name: remoteName,
-                            entry: `${basePath}plugin-ui.js`,
-                        },
-                    ]);
-
-                    registerShared({
-                        vue: {
-                            shareConfig: {
-                                requiredVersion: "^3",
-                                singleton: true,
-                            },
-                        },
-                    });
-
-                    const taskRoot = taskTypeKey.slice(manifest.group.length + 1);
-                    const module = await loadRemote<{default: any}>(`${remoteName}/${taskRoot}/topology-details`)
-
-                    if(!module){
-                        console.error(`Remote module ${remoteName} did not load correctly`);
-                        return;
-                    }
-                    const TopologyDetailsRemote = module.default;
-                    TopologyDetailsRemotes[taskTypeKey] = TopologyDetailsRemote;
-                    
-                    
-                }
-            }
-        }
+        await resolveRemoteComponent(Array.from(taskTypes));
     });
 
     const props = withDefaults(

@@ -68,6 +68,7 @@ export const Colors: Story = {
     }),
 }
 
+/** Colors */
 export const Sizes: Story = {
     render: () => ({
         components: {KsIcon},
@@ -85,4 +86,20 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+}
+
+/** Tooltip */
+export const Tooltip: Story = {
+    render: (args) => ({
+        components: {KsIcon},
+        setup() { return {args} },
+        template: `
+            <div style="padding:24px">
+                <ks-icon v-bind="args">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
+                </ks-icon>
+            </div>
+        `,
+    }),
+    args: {tooltip: "I'm a tooltip"},
 }

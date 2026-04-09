@@ -615,6 +615,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-values-from-uri.yaml")
+    protected void loopValuesFromUri(Execution execution) throws Exception {
+        loopCaseTest.loopValuesFromUri(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);

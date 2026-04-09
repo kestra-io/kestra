@@ -18,6 +18,11 @@ export default {
   decorators: [
     vueRouter([
       {
+          path: "/",
+          name: "home",
+          component: {template: "<div>home</div>"}
+      },
+      {
           path: "/welcome",
           name: "welcome",
           component: {template: "<div>welcome</div>"}

@@ -265,7 +265,7 @@
     import {useI18n} from "vue-i18n";
     import _isEqual from "lodash/isEqual";
     import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, watch, onMounted, nextTick} from "vue";
+    import {ref, computed, watch, onMounted} from "vue";
 
     import Play from "vue-material-design-icons/Play.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -292,7 +292,7 @@
 
     import action from "../../models/action";
     import permission from "../../models/permission";
-    
+
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
 
@@ -329,28 +329,28 @@
 
     const localOptionalColumns = ref([
         {
-            label: t("type"), 
-            prop: "type", 
-            default: true, 
+            label: t("type"),
+            prop: "type",
+            default: true,
             description: t("filter.table_column.flow_triggers.type")
         },
         {
-            label: t("workerId"), 
-            prop: "workerId", 
-            default: false, 
+            label: t("workerId"),
+            prop: "workerId",
+            default: false,
             description: t("filter.table_column.flow_triggers.workerId")
         },
         {
             label: t("next evaluation date"),
             prop: "nextEvaluationDate",
-            default: true, 
+            default: true,
             description: t("filter.table_column.flow_triggers.next execution date")
         }
     ]);
 
     const {
-        orderedColumns, 
-        visibleColumns: displayColumns, 
+        orderedColumns,
+        visibleColumns: displayColumns,
         updateVisibleColumns: updateDisplayColumns
     } = useTableColumns({
         columns: localOptionalColumns.value,
@@ -436,10 +436,6 @@
             }
         }
         return false
-    });
-
-    const editorViewType = computed(() => {
-        return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
     });
 
     const userCan = (act: any) => {
@@ -558,39 +554,18 @@
 
     const addNewTrigger = () => {
         if (!flowStore.flow) return;
-        localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
-
-        const baseUrl = {
+        router.push({
             name: "flows/update",
             params: {
                 tenant: route.params?.tenant,
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
                 tab: "edit"
+            },
+            query: {
+                createTrigger: "true"
             }
-        };
-
-        if (editorViewType.value) {
-            const r = {
-                ...baseUrl,
-                query: {
-                    section: "triggers"
-                }
-            };
-
-            nextTick(() => {
-                router.push(r).then(() => {
-                    router.replace({
-                        ...r,
-                        query: {
-                            ...r.query,
-                        }
-                    });
-                });
-            });
-        } else {
-            router.push(baseUrl);
-        }
+        });
     };
 
     onMounted(() => {
@@ -630,3 +605,4 @@
     }
 }
 </style>
+

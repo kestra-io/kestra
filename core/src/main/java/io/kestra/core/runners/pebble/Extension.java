@@ -178,6 +178,7 @@ public class Extension extends AbstractExtension {
         functions.put(DayOfWeekFunction.NAME, new DayOfWeekFunction());
         functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
         functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());
+        functions.put(MonthOfYearFunction.NAME, new MonthOfYearFunction());
         return functions;
     }
 

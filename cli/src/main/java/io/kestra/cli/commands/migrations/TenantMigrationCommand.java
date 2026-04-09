@@ -31,7 +31,7 @@ public class TenantMigrationCommand extends AbstractCommand {
     @Option(names = "--restore-queue", description = "Should it restore the queue after tenant migration", defaultValue = "true")
     boolean restoreQueue = true;
 
-    @Option(names = "--excludes", description = "data to exclude from migration")
+    @Option(names = "--excludes", description = "data to exclude from migration", split = ",")
     List<String> excludes;
 
 

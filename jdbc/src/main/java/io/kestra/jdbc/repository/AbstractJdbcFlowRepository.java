@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.validations.ConstantRetryValidation;
 
 import dev.failsafe.RetryPolicyBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +19,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @ConstantRetryValidation
+@Schema(title = "Constant retry", description = "Retry with a fixed delay between attempts.")
 public class Constant extends AbstractRetry {
     @NotNull
     @JsonInclude

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.validations.ExponentialRetryValidation;
 
 import dev.failsafe.RetryPolicyBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +20,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @ExponentialRetryValidation
+@Schema(title = "Exponential retry", description = "Retry with exponentially increasing delays between attempts.")
 public class Exponential extends AbstractRetry {
     @NotNull
     @JsonInclude

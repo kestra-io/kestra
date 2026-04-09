@@ -166,10 +166,10 @@
             </div>
         </ks-splitter-panel>
     </ks-splitter>
-    <NoData
+    <ks-empty
         v-else
         id="empty"
-        :text="$t('execution not found', {executionId: route.params.id})"
+        :description="$t('execution not found', {executionId: route.params.id})"
     />
 </template>
 
@@ -209,8 +209,6 @@
     import DebugPanel from "./components/main/cascaders/DebugPanel.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";
-
-    import NoData from "../../layout/NoData.vue";
 
     import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
     import SetLabels from "../SetLabels.vue";

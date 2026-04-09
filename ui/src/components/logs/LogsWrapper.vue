@@ -4,7 +4,7 @@
         <div class="log-content">
             <ks-data-table
                 ref="dataTable"
-                :load-data="loadData"
+                :loadData="loadData"
                 @ready="ready = true"
                 @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 :total="logsStore.total"
@@ -41,7 +41,7 @@
                         </div>
 
                         <div v-else-if="!isLoading">
-                            <NoData :text="$t('no_logs_data_description')" />
+                            <ks-empty :description="$t('no_logs_data_description')" />
                         </div>
                     </div>
                 </template>
@@ -61,7 +61,6 @@
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
-    import NoData from "../layout/NoData.vue";
     import {storageKeys} from "../../utils/constants";
     import {
         decodeSearchParams,

@@ -4,7 +4,7 @@
         <div>
             <ks-data-table
                 ref="dataTable"
-                :load-data="loadData"
+                :loadData="loadData"
                 @ready="ready = true"
                 @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 striped
@@ -41,7 +41,7 @@
                         </ks-card>
                     </template>
 
-                    <NoData v-if="flowStore.search === undefined || flowStore.search.length === 0" />
+                    <ks-empty v-if="flowStore.search === undefined || flowStore.search.length === 0" />
                 </template>
             </ks-data-table>
         </div>
@@ -53,9 +53,8 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import _escape from "lodash/escape";
-    import NoData from "../layout/NoData.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
-import SearchField from "../layout/SearchField.vue";
+    import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import useRouteContext from "../../composables/useRouteContext";
 

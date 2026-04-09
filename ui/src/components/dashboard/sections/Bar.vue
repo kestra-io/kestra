@@ -10,11 +10,11 @@
             :loading="false"
             :stack="true"
             :options="echartsOption"
-            :disable-features="[ChartFeature.AXIS_SPLITLINE]"
-            :tooltip-type="TooltipType.EXTERNAL"
+            :disableFeatures="[ChartFeature.AXIS_SPLITLINE]"
+            :tooltipType="TooltipType.EXTERNAL"
         />
     </div>
-    <NoData v-else />
+    <ks-empty v-else />
 </template>
 
 <script setup lang="ts">
@@ -22,7 +22,6 @@
     import {useRoute, useRouter} from "vue-router";
     import {ChartFeature, KsBar, TooltipType} from "@kestra-io/ui-design-system";
     import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
-    import NoData from "../../layout/NoData.vue";
     import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import {useTheme} from "../../../utils/utils";

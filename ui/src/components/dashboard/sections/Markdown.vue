@@ -3,7 +3,7 @@
         <Markdown :source="data" />
     </section>
 
-    <NoData v-else :text="EMPTY_TEXT" />
+    <ks-empty v-else :description="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">
@@ -13,7 +13,6 @@
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
     import Markdown from "../../layout/Markdown.vue";
-    import NoData from "../../layout/NoData.vue";
     import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({

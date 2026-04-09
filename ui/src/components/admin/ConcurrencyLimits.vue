@@ -4,7 +4,7 @@
     <section class="container">
         <ks-data-table :total="data?.total ?? 0">
             <template #table>
-                <NoData v-if="data?.results === undefined || data?.results.length === 0" />
+                <ks-empty v-if="data?.results === undefined || data?.results.length === 0" />
                 <ks-table
                     v-else
                     :data="data?.results"
@@ -55,7 +55,6 @@
     import {useAxios} from "../../utils/axios";
     import IconEdit from "vue-material-design-icons/Pencil.vue";
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
-    import NoData from "../layout/NoData.vue";
 
     const {t} = useI18n();
 

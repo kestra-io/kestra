@@ -7,11 +7,11 @@
             ref="ksEchartRef"
             :options="echartsOption"
             :loading="false"
-            :disable-features="[ChartFeature.AXIS_SPLITLINE]"
-            :tooltip-type="TooltipType.EXTERNAL"
+            :disableFeatures="[ChartFeature.AXIS_SPLITLINE]"
+            :tooltipType="TooltipType.EXTERNAL"
         />
     </div>
-    <NoData v-else-if="!props.short || (props.execution && generated?.total === 0)" />
+    <ks-empty v-else-if="!props.short || (props.execution && generated?.total === 0)" />
 </template>
 
 <script setup lang="ts">
@@ -21,7 +21,6 @@
     import * as echarts from "echarts/core";
     import {use} from "echarts/core";
     import {BarChart, LineChart} from "echarts/charts";
-    import NoData from "../../layout/NoData.vue";
     import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import KestraUtils, {useTheme} from "../../../utils/utils";
@@ -34,9 +33,6 @@
     use([BarChart, LineChart]);
 
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n();
 
     const route = useRoute();
     const router = useRouter();

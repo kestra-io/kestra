@@ -4,8 +4,8 @@
             :id="containerID"
             :data="data.results"
             :total="isPaginationEnabled(props.chart) ? data.total : 0"
-            :current-page="pageNumber"
-            :page-size="pageSize"
+            :currentPage="pageNumber"
+            :pageSize="pageSize"
             :height="240"
             size="small"
             @page-changed="handlePageChange"
@@ -26,7 +26,7 @@
         </ks-data-table>
     </section>
 
-    <NoData v-else :text="EMPTY_TEXT" />
+    <ks-empty v-else :description="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">
@@ -40,8 +40,6 @@
     import Link from "./table/columns/Link.vue";
     import Namespace from "./table/columns/Namespace.vue";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
-
-    import NoData from "../../layout/NoData.vue";
 
     const props = defineProps({
         dashboardId: {type: String, required: false, default: undefined},

@@ -9,8 +9,8 @@
             :loading="false"
             :donut="chartOptions?.graphStyle !== 'PIE'"
             :options="pieOptions"
-            :disable-features="[ChartFeature.LEGEND]"
-            :tooltip-type="TooltipType.EXTERNAL"
+            :disableFeatures="[ChartFeature.LEGEND]"
+            :tooltipType="TooltipType.EXTERNAL"
         />
         <div
             v-if="generated !== undefined"
@@ -18,7 +18,7 @@
         >
             {{ totalValue }}
         </div>
-        <NoData v-else />
+        <ks-empty v-else />
     </div>
 </template>
 
@@ -26,7 +26,6 @@
     import {computed, PropType, ref, watch} from "vue";
 
     import {Chart, useChartGenerator} from "../composables/useDashboards";
-    import NoData from "../../layout/NoData.vue";
     import Utils from "../../../utils/utils";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import {FilterObject} from "../../../utils/filters";

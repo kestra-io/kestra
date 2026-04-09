@@ -14,12 +14,10 @@ export default meta
 type Story = StoryObj<typeof KsEmpty>
 
 export const Default: Story = {
-    render: (args) => ({
+    render: () => ({
         components: {KsEmpty},
-        setup() { return {args} },
-        template: `<div style="padding:24px"><ks-empty v-bind="args" /></div>`,
+        template: `<div style="padding:24px"><ks-empty /></div>`,
     }),
-    args: {description: "No data available"},
 }
 
 export const WithAction: Story = {

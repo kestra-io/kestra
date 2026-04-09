@@ -107,9 +107,8 @@ class ForEachTest {
     @Test
     @ExecuteFlow("flows/valids/foreach-failfast.yaml")
     void failFast(Execution execution) {
-        // Given failFast=true (default) with concurrencyLimit=0 and one value triggers a failure
-        // Then the execution should be FAILED
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // FAIL_FAST (default) kills the entire execution
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
 
         // And the fail branch should be FAILED
         assertThat(execution.findTaskRunsByTaskId("do-fail").getFirst().getState().getCurrent())

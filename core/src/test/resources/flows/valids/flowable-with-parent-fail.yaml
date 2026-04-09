@@ -5,11 +5,13 @@ tasks:
   - id: vision
     type: io.kestra.plugin.core.flow.ForEach
     concurrencyLimit: 0
+    childFailurePolicy: FAIL
     values: "[\"MONTHLY\", \"CUMULATIVE\"]"
     tasks:
       - id: metaseg_date
         type: io.kestra.plugin.core.flow.ForEach
         concurrencyLimit: 0
+        childFailurePolicy: FAIL
         values: "[{\"NEW_MONTH\":\"2018-01-01\"}]"
         tasks:
           - id: if

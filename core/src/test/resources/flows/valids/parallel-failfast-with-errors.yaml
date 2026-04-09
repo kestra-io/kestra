@@ -5,11 +5,16 @@ tasks:
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
     childFailurePolicy: FAIL_FAST
+    concurrent: 2
     tasks:
       - id: fail
         type: io.kestra.plugin.core.execution.Fail
 
-      - id: slow
+      - id: slow1
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT0.1S
+
+      - id: slow2
         type: io.kestra.plugin.core.flow.Sleep
         duration: PT10S
 

@@ -4,12 +4,18 @@ namespace: io.kestra.tests
 tasks:
   - id: dag
     type: io.kestra.plugin.core.flow.Dag
+    concurrent: 2
     tasks:
       - task:
           id: fail
           type: io.kestra.plugin.core.execution.Fail
 
       - task:
-          id: slow
+          id: slow1
+          type: io.kestra.plugin.core.flow.Sleep
+          duration: PT0.1S
+
+      - task:
+          id: slow2
           type: io.kestra.plugin.core.flow.Sleep
           duration: PT10S

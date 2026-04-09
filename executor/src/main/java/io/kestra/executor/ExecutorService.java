@@ -28,7 +28,6 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
-import io.kestra.core.models.tasks.ChildFailurePolicy;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -268,25 +267,6 @@ public class ExecutorService {
                 runContext.logger().error("Unable to resolve state from the Flowable task: {}", e.getMessage(), e);
                 state = Optional.of(State.Type.FAILED);
             }
-            // When FAIL_FAST killed siblings, guessFinalState returns KILLED.
-            // Convert to FAILED when the root cause is a child failure, not a manual execution kill.
-            if (state.isPresent() && state.get() == State.Type.KILLED
-                && execution.getState().getCurrent() != State.Type.KILLING
-                && execution.getState().getCurrent() != State.Type.KILLED) {
-                try {
-                    var policy = runContext.render(flowableParent.getChildFailurePolicy())
-                        .as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST);
-                    if (policy == ChildFailurePolicy.FAIL_FAST
-                        && execution.hasFailedNoRetry(flowableParent.childTasks(runContext, parentTaskRun), parentTaskRun)) {
-                        state = Optional.of(flowableParent.isAllowFailure()
-                            ? (flowableParent.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING)
-                            : State.Type.FAILED);
-                    }
-                } catch (Exception e) {
-                    runContext.logger().warn("Unable to evaluate childFailurePolicy: {}", e.getMessage(), e);
-                }
-            }
-
             Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
                 state,
                 parentTaskRun
@@ -331,6 +311,7 @@ public class ExecutorService {
 
             // after if the execution is KILLING, we find if all already started tasks if finished
             if (execution.getState().getCurrent() == State.Type.KILLING) {
+                // first notified the parent taskRun of killing to avoid new creation of tasks
                 if (parentTaskRun.getState().getCurrent() != State.Type.KILLING) {
                     return childWorkerTaskTypeToWorkerTask(
                         Optional.of(State.Type.KILLING),
@@ -338,6 +319,7 @@ public class ExecutorService {
                     );
                 }
 
+                // Then wait for completion (KILLED or whatever) on child tasks to KILLED the parent one.
                 List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
                     flowableParent.childTasks(runContext, parentTaskRun),
                     FlowableUtils.resolveTasks(flowableParent.getErrors(), parentTaskRun),
@@ -543,37 +525,6 @@ public class ExecutorService {
         }
 
         if (result.isEmpty()) {
-            // No new tasks to start — check if any FAIL_FAST parent needs to kill running siblings.
-            Execution execution = executor.getExecution();
-            for (TaskRun parentTaskRun : running) {
-                Task parent = executor.getFlow().findTaskByTaskIdOrNull(parentTaskRun.getTaskId());
-                if (!(parent instanceof FlowableTask<?> flowableParent)) {
-                    continue;
-                }
-                try {
-                    RunContext runContext = runContextFactory.of(executor.getFlow(), parent, execution, parentTaskRun);
-                    var policy = runContext.render(flowableParent.getChildFailurePolicy())
-                        .as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST);
-                    if (policy != ChildFailurePolicy.FAIL_FAST) {
-                        continue;
-                    }
-                    List<ResolvedTask> childTasks = flowableParent.childTasks(runContext, parentTaskRun);
-                    if (!execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
-                        continue;
-                    }
-                    List<TaskRun> children = execution.findTaskRunByTasks(childTasks, parentTaskRun);
-                    for (TaskRun child : children) {
-                        if (child.getState().isRunning() && !child.getState().isFailed()) {
-                            execution = execution.withTaskRun(child.withState(State.Type.KILLED));
-                        }
-                    }
-                } catch (Exception e) {
-                    log.warn("Unable to process failFast for task '{}': {}", parentTaskRun.getTaskId(), e.getMessage(), e);
-                }
-            }
-            if (execution != executor.getExecution()) {
-                executor.withExecution(execution, "handleFailFastKilling");
-            }
             return executor;
         }
 
@@ -788,6 +739,16 @@ public class ExecutorService {
 
         this.addWorkerTaskResults(executor, list);
 
+        // When resolveState() returned KILLING (from failFast), trigger a real execution kill
+        // so that workers detect it and abort running tasks.
+        if (executor.getExecution().getState().getCurrent() != State.Type.KILLING
+            && list.stream().anyMatch(wtr -> wtr.getTaskRun().getState().getCurrent() == State.Type.KILLING)) {
+            executor.withExecution(
+                executor.getExecution().withState(State.Type.KILLING),
+                "handleFailFastKilling"
+            );
+        }
+
         return executor;
     }
 
@@ -861,6 +822,7 @@ public class ExecutorService {
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
+    // if killing: move created tasks to killed as they are not already started
     private ExecutorContext handleCreatedKilling(ExecutorContext executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;

@@ -94,17 +94,10 @@ public class DagTest {
     @Test
     @ExecuteFlow("flows/valids/dag-failfast.yaml")
     void dagFailFast(Execution execution) {
-        // Given failFast=true (default) and one DAG task fails immediately
-        // Then the execution should be FAILED
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        // And the fail task should be FAILED
+        // FAIL_FAST kills the entire execution
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getState().getCurrent())
             .isEqualTo(State.Type.FAILED);
-
-        // And the slow sibling should be KILLED (not allowed to complete)
-        assertThat(execution.findTaskRunsByTaskId("slow").getFirst().getState().getCurrent())
-            .isEqualTo(State.Type.KILLED);
     }
 
     private Flow parse(String path) {

@@ -199,6 +199,16 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
+        // When FAIL_FAST is enabled and a child has failed, return KILLING to trigger
+        // the executor's kill machinery for running siblings.
+        if (parentTaskRun.getState().getCurrent() != State.Type.KILLING) {
+            ChildFailurePolicy policy = runContext.render(this.childFailurePolicy)
+                .as(ChildFailurePolicy.class).orElse(ChildFailurePolicy.FAIL_FAST);
+            if (policy == ChildFailurePolicy.FAIL_FAST && execution.hasFailedNoRetry(childTasks, parentTaskRun)) {
+                return Optional.of(State.Type.KILLING);
+            }
+        }
+
         return FlowableUtils.resolveSequentialState(
             execution,
             childTasks,

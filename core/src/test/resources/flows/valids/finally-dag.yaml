@@ -9,6 +9,7 @@ inputs:
 tasks:
   - id: dag
     type: io.kestra.plugin.core.flow.Dag
+    childFailurePolicy: FAIL
     tasks:
       - task:
           id: t1

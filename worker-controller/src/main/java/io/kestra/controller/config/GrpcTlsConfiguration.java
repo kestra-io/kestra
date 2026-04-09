@@ -1,6 +1,7 @@
 package io.kestra.controller.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
 
@@ -27,6 +28,11 @@ import java.security.KeyStore;
  *                                     Set to REQUIRE for mutual TLS (mTLS).
  * @param insecureTrustAllCertificates When true, the client skips CA certificate verification.
  *                                     For development use only. Defaults to false.
+ * @param authorityOverride            Overrides the hostname used for TLS certificate verification on the client side.
+ *                                     Required for static discovery where the synthetic URI authority ("controllers")
+ *                                     does not match the server certificate's SANs. Set this to a hostname present
+ *                                     in the server certificate's Subject Alternative Names (e.g., "kestra-controller").
+ *                                     Not needed for DNS discovery (authority is derived from the DNS hostname).
  */
 @ConfigurationProperties("kestra.grpc.tls")
 public record GrpcTlsConfiguration(
@@ -43,7 +49,10 @@ public record GrpcTlsConfiguration(
     ClientAuth clientAuth,
 
     @Bindable(defaultValue = "false")
-    boolean insecureTrustAllCertificates
+    boolean insecureTrustAllCertificates,
+
+    @Nullable
+    String authorityOverride
 ) {
     /**
      * Client authentication mode for mTLS.
@@ -67,6 +76,7 @@ public record GrpcTlsConfiguration(
      *                    Typically needed only for JKS keystores where key and store passwords differ.
      */
     @ConfigurationProperties("key-store")
+    @Requires(property = "kestra.grpc.tls.key-store.path")
     public record KeyStoreConfig(
         String path,
         @Bindable(defaultValue = "PKCS12")
@@ -90,6 +100,7 @@ public record GrpcTlsConfiguration(
      * @param password Password for the truststore.
      */
     @ConfigurationProperties("trust-store")
+    @Requires(property = "kestra.grpc.tls.trust-store.path")
     public record TrustStoreConfig(
         String path,
         @Bindable(defaultValue = "PKCS12")
@@ -132,6 +143,12 @@ public record GrpcTlsConfiguration(
         KeyStore ts = KeyStore.getInstance(config.type());
         try (var fis = new FileInputStream(config.path())) {
             ts.load(fis, config.password() != null ? config.password().toCharArray() : null);
+        }
+        if (ts.size() == 0) {
+            throw new IllegalStateException(
+                "Truststore at '" + config.path() + "' contains no trusted certificate entries. "
+                    + "Verify that the file contains at least one CA certificate stored as a trusted entry."
+            );
         }
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init(ts);

@@ -52,7 +52,7 @@ class DefaultControllerTlsTest {
     @Test
     void shouldFailWhenTlsEnabledWithoutKeyStore() {
         // Given
-        var tlsConfig = new GrpcTlsConfiguration(true, null, null, ClientAuth.NONE, false);
+        var tlsConfig = new GrpcTlsConfiguration(true, null, null, ClientAuth.NONE, false, null);
         var controller = createController(tlsConfig);
 
         // When/Then
@@ -66,7 +66,7 @@ class DefaultControllerTlsTest {
     void shouldFailWhenClientAuthWithoutTrustStore(ClientAuth clientAuth) {
         // Given
         var keyStore = new KeyStoreConfig(TEST_KEYSTORE, "PKCS12", KEYSTORE_PASSWORD, null);
-        var tlsConfig = new GrpcTlsConfiguration(true, keyStore, null, clientAuth, false);
+        var tlsConfig = new GrpcTlsConfiguration(true, keyStore, null, clientAuth, false, null);
         var controller = createController(tlsConfig);
 
         // When/Then
@@ -80,7 +80,7 @@ class DefaultControllerTlsTest {
     void shouldStartAndServeOverTls() throws Exception {
         // Given
         var keyStore = new KeyStoreConfig(TEST_KEYSTORE, "PKCS12", KEYSTORE_PASSWORD, null);
-        var tlsConfig = new GrpcTlsConfiguration(true, keyStore, null, ClientAuth.NONE, false);
+        var tlsConfig = new GrpcTlsConfiguration(true, keyStore, null, ClientAuth.NONE, false, null);
         controller = createController(tlsConfig, 0); // port 0 = random available port
 
         // When
@@ -110,7 +110,7 @@ class DefaultControllerTlsTest {
         // Given - server requires client cert; use the same keystore as client cert for simplicity
         var keyStore = new KeyStoreConfig(TEST_KEYSTORE, "PKCS12", KEYSTORE_PASSWORD, null);
         var trustStore = new TrustStoreConfig(TEST_TRUSTSTORE, "PKCS12", TRUSTSTORE_PASSWORD);
-        var tlsConfig = new GrpcTlsConfiguration(true, keyStore, trustStore, ClientAuth.REQUIRE, false);
+        var tlsConfig = new GrpcTlsConfiguration(true, keyStore, trustStore, ClientAuth.REQUIRE, false, null);
         controller = createController(tlsConfig, 0);
 
         // When
@@ -127,6 +127,37 @@ class DefaultControllerTlsTest {
 
         ManagedChannel channel = Grpc.newChannelBuilder("localhost:" + port, credentials).build();
         try {
+            HealthCheckResponse response = HealthGrpc.newBlockingStub(channel)
+                .check(HealthCheckRequest.newBuilder().setService("").build());
+            assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.ServingStatus.SERVING);
+        } finally {
+            channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void shouldConnectWithAuthorityOverride() throws Exception {
+        // Given - server has SAN=dns:kestra-controller, client connects to localhost
+        // but overrides authority to "kestra-controller" for TLS verification
+        var keyStore = new KeyStoreConfig(TEST_KEYSTORE, "PKCS12", KEYSTORE_PASSWORD, null);
+        var tlsConfig = new GrpcTlsConfiguration(true, keyStore, null, ClientAuth.NONE, false, null);
+        controller = createController(tlsConfig, 0);
+        controller.start();
+
+        // When - connect with authority override
+        int port = controller.getServer().getPort();
+        TrustManagerFactory tmf = GrpcTlsConfiguration.loadTrustManagerFactory(
+            new TrustStoreConfig(TEST_TRUSTSTORE, "PKCS12", TRUSTSTORE_PASSWORD)
+        );
+        ChannelCredentials credentials = TlsChannelCredentials.newBuilder()
+            .trustManager(tmf.getTrustManagers())
+            .build();
+
+        ManagedChannel channel = Grpc.newChannelBuilder("localhost:" + port, credentials)
+            .overrideAuthority("kestra-controller")
+            .build();
+        try {
+            // Then - handshake succeeds because "kestra-controller" is in the cert's SANs
             HealthCheckResponse response = HealthGrpc.newBlockingStub(channel)
                 .check(HealthCheckRequest.newBuilder().setService("").build());
             assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.ServingStatus.SERVING);

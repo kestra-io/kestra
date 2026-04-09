@@ -142,7 +142,8 @@ public class DefaultController extends AbstractService implements Controller {
                 case REQUIRE -> TlsServerCredentials.ClientAuth.REQUIRE;
             });
 
-            LOG.info("gRPC TLS enabled with clientAuth={}", grpcTlsConfiguration.clientAuth());
+            LOG.info("gRPC TLS enabled with clientAuth={}, keyStore={}, trustStore={}",
+                grpcTlsConfiguration.clientAuth(), grpcTlsConfiguration.keyStore(), grpcTlsConfiguration.trustStore());
             return builder.build();
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to configure gRPC TLS server credentials", e);

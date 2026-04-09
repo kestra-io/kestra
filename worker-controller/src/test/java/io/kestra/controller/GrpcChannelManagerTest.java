@@ -441,7 +441,7 @@ class GrpcChannelManagerTest {
         // Given
         String truststorePath = GrpcChannelManagerTest.class.getClassLoader().getResource("tls/server-truststore.p12").getPath();
         var trustStore = new GrpcTlsConfiguration.TrustStoreConfig(truststorePath, "PKCS12", "trustpass");
-        var tlsConfig = new GrpcTlsConfiguration(true, null, trustStore, GrpcTlsConfiguration.ClientAuth.NONE, false);
+        var tlsConfig = new GrpcTlsConfiguration(true, null, trustStore, GrpcTlsConfiguration.ClientAuth.NONE, false, null);
         WorkerControllersConfiguration config = createStaticConfig(
             List.of(new Endpoint("localhost", 9096))
         );
@@ -460,7 +460,7 @@ class GrpcChannelManagerTest {
     @Test
     void shouldCreateChannelWithTlsInsecureTrustAll() {
         // Given
-        var tlsConfig = new GrpcTlsConfiguration(true, null, null, GrpcTlsConfiguration.ClientAuth.NONE, true);
+        var tlsConfig = new GrpcTlsConfiguration(true, null, null, GrpcTlsConfiguration.ClientAuth.NONE, true, null);
         WorkerControllersConfiguration config = createStaticConfig(
             List.of(new Endpoint("localhost", 9096))
         );
@@ -550,6 +550,6 @@ class GrpcChannelManagerTest {
     }
 
     static GrpcTlsConfiguration createDefaultTlsConfig() {
-        return new GrpcTlsConfiguration(false, null, null, GrpcTlsConfiguration.ClientAuth.NONE, false);
+        return new GrpcTlsConfiguration(false, null, null, GrpcTlsConfiguration.ClientAuth.NONE, false, null);
     }
 }

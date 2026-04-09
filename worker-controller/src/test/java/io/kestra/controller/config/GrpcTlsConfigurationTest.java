@@ -1,11 +1,15 @@
 package io.kestra.controller.config;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -116,6 +120,25 @@ class GrpcTlsConfigurationTest {
         // When/Then
         assertThatThrownBy(() -> GrpcTlsConfiguration.loadTrustManagerFactory(config))
             .isInstanceOf(IOException.class);
+    }
+
+    @Test
+    void shouldFailWhenTruststoreHasNoCertificateEntries(@TempDir Path tempDir) throws Exception {
+        // Given - create an empty PKCS12 truststore (no certificate entries)
+        Path emptyTruststore = tempDir.resolve("empty-truststore.p12");
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        ks.load(null, "password".toCharArray());
+        try (var fos = new FileOutputStream(emptyTruststore.toFile())) {
+            ks.store(fos, "password".toCharArray());
+        }
+        var config = new GrpcTlsConfiguration.TrustStoreConfig(
+            emptyTruststore.toString(), "PKCS12", "password"
+        );
+
+        // When/Then
+        assertThatThrownBy(() -> GrpcTlsConfiguration.loadTrustManagerFactory(config))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("contains no trusted certificate entries");
     }
 
     // -- toString redaction --

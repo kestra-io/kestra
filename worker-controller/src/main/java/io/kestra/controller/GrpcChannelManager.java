@@ -225,6 +225,12 @@ public class GrpcChannelManager {
             .maxInboundMessageSize(grpcConfiguration.maxInboundMessageSize())
             .executor(sharedExecutorService);
 
+        // Override TLS authority if configured (required for static discovery)
+        if (grpcTlsConfiguration.enabled() && grpcTlsConfiguration.authorityOverride() != null) {
+            log.info("Overriding TLS authority to: {}", grpcTlsConfiguration.authorityOverride());
+            builder.overrideAuthority(grpcTlsConfiguration.authorityOverride());
+        }
+
         // Configure load balancing policy
         String loadBalancingPolicy = controllersConfig.loadBalancing().policy().getGrpcName();
         log.debug("Using load balancing policy: {}", loadBalancingPolicy);

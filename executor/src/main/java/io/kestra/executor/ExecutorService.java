@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
@@ -641,20 +642,33 @@ public class ExecutorService {
                 if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
                     if (taskRun.getState().getCurrent() == State.Type.CREATED) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                        List<String> values = FlowableUtils.resolveValues(runContext, loop.getValues());
-                        int limit = loop.getConcurrencyLimit() == 0 ? values.size() : (loop.getConcurrencyLimit() > values.size() ? values.size() : loop.getConcurrencyLimit());
+                        var either = FlowableUtils.resolveValues(runContext, loop.getValues());
+                        int size = either.isLeft() ? either.getLeft().size() : either.getRight().size();
+                        int limit = loop.getConcurrencyLimit() == 0 ? size : (loop.getConcurrencyLimit() > size ? size : loop.getConcurrencyLimit());
 
                         // save the iteration information in outputs to know how many loop iterations we already triggered
                         taskOutputService.saveOutputs(taskRun, Map.of(
-                            Loop.ITERATION_COUNT_OUTPUT, values.size(),
+                            Loop.ITERATION_COUNT_OUTPUT, size,
                             Loop.RUNNING_ITERATIONS_OUTPUT, limit,
                             Loop.TERMINATED_ITERATIONS_OUTPUT, 0)
                         );
 
-                        for (int i = 0; i < limit; i++) {
-                            var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), taskRun, values.get(i), i);
-                            executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                        if (either.isLeft()) {
+                            List<String> values = either.getLeft();
+                            for (int i = 0; i < limit; i++) {
+                                var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), taskRun, i, null, values.get(i));
+                                executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                            }
+                        } else {
+                            List<Pair<String, String>> values = either.getRight();
+                            for (int i = 0; i < limit; i++) {
+                                var value = values.get(i);
+                                var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), taskRun, i, value.getKey(), value.getValue());
+                                executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                            }
+
                         }
+
                         // TODO we may need to also start the attempts...
                         executor.withExecution(executor.getExecution()
                             .withTaskRun(taskRun.withState(State.Type.RUNNING)), "handleLoop");

@@ -271,6 +271,29 @@ public class LoopCaseTest {
         }
     }
 
+    public void loopMap(Execution execution) throws InternalException {
+        // Then — values defined as a map: each iteration exposes item.key and item.value
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        TaskRun loopTaskRun = execution.getTaskRunList().getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+
+        // 3 loop sub-executions, one per map entry, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        // each iteration must carry a non-null key
+        assertThat(subExecutions).allMatch(sub -> sub.getLoopRun().key() != null);
+        assertThat(subExecutions).allMatch(throwPredicate(sub -> {
+            LoopRun lr = sub.getLoopRun();
+            String expectedOutput = lr.key() + " - " + lr.value();
+            return expectedOutput.equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"));
+        }));
+    }
+
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
     private List<Execution> loopSubExecutions(Execution parentExecution) {
         // FIXME retrieving loop sub-executions for a given loop should be more easy

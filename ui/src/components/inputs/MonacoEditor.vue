@@ -875,7 +875,26 @@
                         }
 
                         if (e.keyCode === monaco.KeyCode.Enter) {
-                            localEditor.value?.trigger("inlineSuggestHide", "editor.action.inlineSuggest.hide", {});
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            // hide suggestions
+                            localEditor.value?.trigger("keyboard", "hideSuggestWidget", {});
+
+                            // insert newline manually
+                            const position = localEditor.value?.getPosition();
+                            if (position && localEditor.value) {
+                                localEditor.value.executeEdits("", [{
+                                    range: new monaco.Range(
+                                        position.lineNumber,
+                                        position.column,
+                                        position.lineNumber,
+                                        position.column
+                                    ),
+                                    text: "\n",
+                                    forceMoveMarkers: true
+                                }]);
+                            }
                             return;
                         }
                     }

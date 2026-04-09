@@ -73,6 +73,8 @@ import KsSteps from "./components/Navigation/KsSteps/KsSteps.vue"
 import KsSwitch from "./components/Form/KsSwitch.vue"
 import KsTabPane from "./components/Navigation/KsTabs/KsTabPane.vue"
 import KsTabs from "./components/Navigation/KsTabs/KsTabs.vue"
+import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
+export type {RouterTab} from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
@@ -184,6 +186,7 @@ export {
     KsSwitch,
     KsTabPane,
     KsTabs,
+    KsRouterTab,
     KsTable,
     KsTableColumn,
     KsTag,
@@ -273,6 +276,7 @@ const KestraDesignSystem = {
         app.component("KsSwitch", KsSwitch)
         app.component("KsTabPane", KsTabPane)
         app.component("KsTabs", KsTabs)
+        app.component("KsRouterTab", KsRouterTab)
         app.component("KsTable", KsTable)
         app.component("KsTableColumn", KsTableColumn)
         app.component("KsTag", KsTag)
@@ -363,6 +367,7 @@ declare module "vue" {
         KsSwitch: typeof KsSwitch
         KsTabPane: typeof KsTabPane
         KsTabs: typeof KsTabs
+        KsRouterTab: typeof KsRouterTab
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
         KsTag: typeof KsTag

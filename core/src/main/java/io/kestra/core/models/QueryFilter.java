@@ -49,7 +49,7 @@ public record QueryFilter(
         PREFIX
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "varargs"})
     private List<Object> asValues(Object value) {
         return value instanceof String valueStr ? Arrays.asList(valueStr.split(",")) : (List<Object>) value;
     }

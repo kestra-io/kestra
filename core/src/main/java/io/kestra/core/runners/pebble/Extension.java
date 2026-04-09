@@ -174,6 +174,7 @@ public class Extension extends AbstractExtension {
         functions.put(ParentOutputFunction.NAME, new ParentOutputFunction());
         functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
         functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
+        functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());
         return functions;
     }
 

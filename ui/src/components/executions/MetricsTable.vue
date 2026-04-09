@@ -1,7 +1,7 @@
 <template>
     <ks-data-table
         ref="dataTable"
-        :load-data="loadData"
+        :loadData="loadData"
         :data="metrics"
         :total="metricsTotal"
         :defaultSort="{prop: 'name', order: 'ascending'}"
@@ -22,10 +22,10 @@
             <ks-table-column v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
                 <template #default="scope">
                     <template v-if="scope.row.type === 'timer'">
-                        <Kicon><Timer /></Kicon>
+                        <ks-icon><Timer /></ks-icon>
                     </template>
                     <template v-else>
-                        <Kicon><Counter /></Kicon>
+                        <ks-icon><Counter /></ks-icon>
                     </template>
                     &nbsp;<code>{{ scope.row.name }}</code>
                 </template>
@@ -67,7 +67,6 @@
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
 
-    import Kicon from "../Kicon.vue";
 
     import type {Execution} from "../../stores/executions";
     import {humanizeDuration, humanizeNumber} from "../../utils/filters";

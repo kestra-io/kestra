@@ -25,7 +25,7 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <KestraIcon
+                            <ks-icon
                                 v-if="isTableChart(chart.type)"
                                 :tooltip="$t('dashboards.export')"
                             >
@@ -35,9 +35,9 @@
                                     link
                                     class="ms-2"
                                 />
-                            </KestraIcon>
+                            </ks-icon>
 
-                            <KestraIcon
+                            <ks-icon
                                 v-if="props.dashboard?.id !== 'default'"
                                 :tooltip="$t('dashboards.edition.chart')"
                             >
@@ -51,7 +51,7 @@
                                     link
                                     class="ms-2"
                                 />
-                            </KestraIcon>
+                            </ks-icon>
                         </div>
                     </div>
 
@@ -83,8 +83,6 @@
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
-
-    import KestraIcon from "../../Kicon.vue";
 
     import Download from "vue-material-design-icons/Download.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";

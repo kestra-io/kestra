@@ -8,7 +8,9 @@
 
     const props = defineProps<{
         size?: number | string
-        color?: string
+        color?: string,
+        tooltip?: string;
+        placement?: string;
     }>()
 
     const filteredProps = useFilteredProps(props)
@@ -23,7 +25,22 @@
 </script>
 
 <template>
+    <ks-tooltip
+        v-if="tooltip"
+        :content="tooltip"
+        :rawContent="true"
+        v-bind="placement ? {placement} : {}"
+        :enterable="false"
+    >
+        <el-icon
+            v-bind="({...filteredProps(), ...$attrs} as any)"
+            @click="emit('click', $event)"
+        >
+            <template v-if="$slots.default" #default><slot /></template>
+        </el-icon>
+    </ks-tooltip>
     <el-icon
+        v-else
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @click="emit('click', $event)"
     >

@@ -656,7 +656,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     public ArrayListTotal<Flow> find(
             Pageable pageable,
             @Nullable String tenantId,
-            @Nullable String namespace,
+            String namespace,
             @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
         ) {
         return this.jdbcRepository

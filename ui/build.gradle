@@ -10,6 +10,7 @@ node {
 
 tasks.register('assembleFrontend', NpmTask) {
     dependsOn npmInstall
+    dependsOn ':webserver:generateOpenapiSpec'
     description = 'Builds the frontend'
 
     inputs.files(fileTree('node_modules'))
@@ -18,7 +19,7 @@ tasks.register('assembleFrontend', NpmTask) {
     inputs.file('package.json')
     inputs.file('vite.config.js')
     inputs.file('openapi-ts.config.ts')
-    // inputs.file('../openapi.yml')
+    inputs.file('../openapi.yml')
 
     args = ['run', 'build']
     outputs.dir('../webserver/src/main/resources/ui')

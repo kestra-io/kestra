@@ -20,6 +20,16 @@ tasks.register('runStandalone', JavaExec) {
     args 'server', 'standalone', '--plugins', '../local/plugins'
 }
 
+tasks.register('runDev', JavaExec) {
+    group = "application"
+    description = "Generate OpenAPI spec and run Kestra API server for frontend development (run 'npm run dev' separately in ui/)"
+    dependsOn ':webserver:generateOpenapiSpec'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "io.kestra.cli.Kestra"
+    environment 'MICRONAUT_ENVIRONMENTS', 'override'
+    args 'server', 'local', '--plugins', '../local/plugins'
+}
+
 dependencies {
     // micronaut
     implementation "info.picocli:picocli"

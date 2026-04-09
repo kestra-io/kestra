@@ -583,6 +583,12 @@ tasks.register('runStandalone') {
     dependsOn ':cli:runStandalone'
 }
 
+tasks.register('runDev') {
+    group = "application"
+    description = "Generate OpenAPI spec and run Kestra API server for frontend development"
+    dependsOn ':cli:runDev'
+}
+
 /**********************************************************************************************************************\
  * Publish
  **********************************************************************************************************************/

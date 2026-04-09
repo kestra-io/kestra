@@ -20,6 +20,7 @@ public class KestraConstraintViolationException extends ConstraintViolationExcep
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public String getMessage() {
         StringBuilder message = new StringBuilder();
         for (ConstraintViolation<?> violation : getConstraintViolations()) {

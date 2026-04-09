@@ -227,6 +227,7 @@ public final class RunVariables {
 
         // Note: for performance reason, cloning maps should be avoided as much as possible.
         @Override
+        @SuppressWarnings("unchecked")
         public Map<String, Object> build(final RunContextLogger logger, final PropertyContext propertyContext) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 

@@ -21,6 +21,7 @@ public final class ExecutionService {
     private ExecutionService() {
     }
 
+    @SuppressWarnings("unchecked")
     public static Execution findExecution(RunContext runContext, Property<String> executionId) throws IllegalVariableEvaluationException, NoSuchElementException {
         ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).services().additionalService(ExecutionRepositoryInterface.class);
 
@@ -128,6 +129,7 @@ public final class ExecutionService {
      *
      * @return the state of the execution that triggered the Flow trigger, or empty if another usecase/trigger
      */
+    @SuppressWarnings("unchecked")
     private static Optional<String> getOptionalFlowTriggerExecutionState(RunContext runContext) {
         var triggerVar = Optional.ofNullable(
             runContext.getVariables().get("trigger")
@@ -135,6 +137,7 @@ public final class ExecutionService {
         return triggerVar.map(trigger -> ((Map<String, String>) trigger).get("state"));
     }
 
+    @SuppressWarnings("unchecked")
     private static boolean isCurrentExecution(RunContext runContext, String executionId) {
         var executionVars = (Map<String, String>) runContext.getVariables().get("execution");
         return executionId.equals(executionVars.get("id"));

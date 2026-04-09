@@ -33,6 +33,7 @@ public class WorkerCommand extends AbstractServerCommand {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
 
         KestraContext.getContext().injectWorkerConfigs(thread, workerGroupKey);

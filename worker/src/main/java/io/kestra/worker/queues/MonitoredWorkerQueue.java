@@ -23,6 +23,7 @@ public class MonitoredWorkerQueue<T> extends AbstractDelegateWorkerQueue<T> {
     private final Counter enqueuedCounter;
     private final Counter dequeuedCounter;
 
+    @SuppressWarnings("this-escape")
     public MonitoredWorkerQueue(MetricRegistry metricRegistry, String queueName, WorkerQueue<T> queue) {
         super(queue);
 

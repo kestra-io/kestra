@@ -22,6 +22,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.debug.Breakpoint;
@@ -1702,6 +1703,7 @@ public class ExecutionController {
             }
         )
     )
+    @SuppressWarnings("deprecation")
     public Flux<Event<Execution>> followExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         String subscriberId = UUID.randomUUID().toString();
@@ -2194,6 +2196,7 @@ public class ExecutionController {
             }
         )
     )
+    @SuppressWarnings("deprecation")
     public Flux<Event<ExecutionStatusEvent>> followDependenciesExecutions(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,
@@ -2315,7 +2318,7 @@ public class ExecutionController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, new TypeReference<Map<String, Object>>() {}))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");

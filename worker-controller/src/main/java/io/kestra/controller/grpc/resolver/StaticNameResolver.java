@@ -44,6 +44,7 @@ public class StaticNameResolver extends NameResolver {
         resolve();
     }
 
+    @SuppressWarnings("deprecation")
     private void resolve() {
         if (listener != null) {
             listener.onResult(ResolutionResult.newBuilder().setAddresses(addresses).build());

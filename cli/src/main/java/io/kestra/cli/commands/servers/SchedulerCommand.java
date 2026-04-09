@@ -34,6 +34,7 @@ public class SchedulerCommand extends AbstractServerCommand {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
         super.call();
 

@@ -106,7 +106,7 @@ public class AuthenticationFilter implements HttpServerFilter {
             .map(cred -> cred.substring(PREFIX.length() + 1));
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "deprecation"})
     private boolean isManagementEndpoint(HttpRequest<?> request) {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
         if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {

@@ -50,6 +50,7 @@ public class TestRunner implements Runnable, AutoCloseable {
     private ExecutorService poolExecutor;
 
     @Override
+    @SuppressWarnings("deprecation")
     public void run() {
         running.set(true);
 

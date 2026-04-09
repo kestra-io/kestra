@@ -46,6 +46,7 @@ public final class ServiceRegistry {
         return services.get(type).service();
     }
 
+    @SuppressWarnings("deprecation")
     public Service waitForServiceAndGet(final ServiceType type) {
         Await.until(() -> containsService(type));
         return getServiceByType(type);
@@ -78,6 +79,7 @@ public final class ServiceRegistry {
      * @param maxWaitDuration The max wait duration.
      * @return {@code true} if the service is in the expected state. Otherwise {@code false}.
      */
+    @SuppressWarnings("deprecation")
     public boolean waitForServiceInState(final ServiceType type,
         final Service.ServiceState state,
         final Duration maxWaitDuration) {

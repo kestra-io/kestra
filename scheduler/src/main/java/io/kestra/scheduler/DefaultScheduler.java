@@ -87,6 +87,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     }
 
     @VisibleForTesting
+    @SuppressWarnings("this-escape")
     public DefaultScheduler(final TriggerSchedulingLoopFactory schedulerEventLoopFactory,
         final VNodesAssigner vNodesAssigner,
         final ExecutorsUtils executorsUtils,

@@ -14,6 +14,7 @@ import jakarta.annotation.Nullable;
 /**
  * Service interface for managing Kestra's plugins.
  */
+@SuppressWarnings("try")
 public interface PluginManager extends AutoCloseable {
 
     /**

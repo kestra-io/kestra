@@ -35,6 +35,7 @@ public class SecretFunction implements KestraFunction {
     private static final String KEY_ARG = "key";
 
     @Inject
+    @SuppressWarnings("rawtypes")
     private SecretService secretService;
 
     @Inject

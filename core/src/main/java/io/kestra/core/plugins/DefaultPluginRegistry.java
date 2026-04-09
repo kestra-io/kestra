@@ -82,6 +82,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
      * {@inheritDoc}
      */
     @Override
+    @SuppressWarnings("rawtypes")
     public List<String> getAllVersionsForType(final String type) {
         return plugins.values()
             .stream().filter(
@@ -131,6 +132,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
      * {@inheritDoc}
      */
     @Override
+    @SuppressWarnings("rawtypes")
     public void unregister(final List<RegisteredPlugin> pluginsToUnregister) {
         if (pluginsToUnregister == null || pluginsToUnregister.isEmpty()) {
             return;

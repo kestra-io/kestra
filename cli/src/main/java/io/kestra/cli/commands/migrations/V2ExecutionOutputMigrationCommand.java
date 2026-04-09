@@ -33,6 +33,7 @@ public class V2ExecutionOutputMigrationCommand extends AbstractCommand {
     boolean includeRunningCreated = false;
 
     @Override
+    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
         super.call();
 

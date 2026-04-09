@@ -33,6 +33,7 @@ public class JsonSchemaCache {
      *
      * @param jsonSchemaGenerator The {@link JsonSchemaGenerator}.
      */
+    @SuppressWarnings("this-escape")
     public JsonSchemaCache(final JsonSchemaGenerator jsonSchemaGenerator) {
         this.jsonSchemaGenerator = Objects.requireNonNull(jsonSchemaGenerator, "JsonSchemaGenerator cannot be null");
         registerClassForType(SchemaType.FLOW, Flow.class);

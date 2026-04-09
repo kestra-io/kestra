@@ -30,6 +30,7 @@ public class ParentOutputFunction implements KestraFunction {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         if (args.containsKey("index")) {
             if (args.get("index") instanceof Long index) {

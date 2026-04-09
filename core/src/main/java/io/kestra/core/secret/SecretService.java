@@ -57,6 +57,7 @@ public class SecretService<META> {
         return secret;
     }
 
+    @SuppressWarnings("unchecked")
     public ArrayListTotal<META> list(Pageable pageable, String tenantId, List<QueryFilter> filters) throws IOException {
         final Predicate<String> queryPredicate = filters.stream()
             .filter(filter -> filter.field().equals(QueryFilter.Field.QUERY) && filter.value() != null)

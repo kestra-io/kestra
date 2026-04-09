@@ -242,6 +242,7 @@ public class TestRunnerUtils {
         return awaitExecution(predicate, execution, Duration.ofSeconds(20));
     }
 
+    @SuppressWarnings("deprecation")
     public Execution awaitExecution(Predicate<Execution> predicate, Execution execution, Duration duration) {
         try {
 
@@ -283,6 +284,7 @@ public class TestRunnerUtils {
         return awaitFlowExecution(predicate, tenantId, namespace, flowId, null);
     }
 
+    @SuppressWarnings("deprecation")
     public Execution awaitFlowExecution(Predicate<Execution> predicate, String tenantId, String namespace, String flowId, Duration duration) {
         try {
 
@@ -323,6 +325,7 @@ public class TestRunnerUtils {
         return awaitFlowExecutionNumber(number, tenantId, namespace, flowId, null);
     }
 
+    @SuppressWarnings("deprecation")
     public List<Execution> awaitFlowExecutionNumber(int number, String tenantId, String namespace, String flowId, Duration duration) {
         AtomicReference<List<Execution>> receive = new AtomicReference<>();
         Flow flow = flowRepository
@@ -385,6 +388,7 @@ public class TestRunnerUtils {
         );
     }
 
+    @SuppressWarnings("deprecation")
     public Execution awaitChildExecution(Flow flow, Execution parentExecution, Duration duration) throws QueueException {
         try {
 

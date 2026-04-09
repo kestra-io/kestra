@@ -60,6 +60,7 @@ public class Extension extends AbstractExtension {
     private ErrorLogsFunction errorLogsFunction;
 
     @Inject
+    @SuppressWarnings("rawtypes")
     private HttpFunction httpFunction;
 
     @Override

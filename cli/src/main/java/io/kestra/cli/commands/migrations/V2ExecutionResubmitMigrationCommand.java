@@ -30,6 +30,7 @@ public class V2ExecutionResubmitMigrationCommand extends AbstractCommand {
     private ApplicationContext applicationContext;
 
     @Override
+    @SuppressWarnings({"unchecked", "deprecation"})
     public Integer call() throws Exception {
         super.call();
 

@@ -79,6 +79,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.deleted = deleted;
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Asset> T toUpdated(T previousAsset) {
         this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset.getCreated())).orElseGet(Instant::now);
         this.updated = Instant.now();

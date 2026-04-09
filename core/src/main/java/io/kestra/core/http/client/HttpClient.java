@@ -82,6 +82,7 @@ public class HttpClient implements Closeable {
         this.client = this.createClient();
     }
 
+    @SuppressWarnings("deprecation")
     private CloseableHttpClient createClient() throws IllegalVariableEvaluationException {
         if (this.client != null) {
             throw new IllegalStateException("Client has already been created");
@@ -198,6 +199,7 @@ public class HttpClient implements Closeable {
         return client;
     }
 
+    @SuppressWarnings("deprecation")
     private SSLConnectionSocketFactory selfSignedConnectionSocketFactory() {
         try {
             SSLContext sslContext = SSLContexts

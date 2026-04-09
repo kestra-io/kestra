@@ -77,6 +77,7 @@ public class NoopCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public ConcurrentMap<K, @NonNull V> asMap() {
         return (ConcurrentMap<K, V>) EMPTY_MAP;
     }

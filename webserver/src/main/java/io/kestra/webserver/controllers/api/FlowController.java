@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -819,7 +820,7 @@ public class FlowController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, new TypeReference<Map<String, Object>>() {}))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");

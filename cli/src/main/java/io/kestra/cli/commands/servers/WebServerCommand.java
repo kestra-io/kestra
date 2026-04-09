@@ -65,6 +65,7 @@ public class WebServerCommand extends AbstractServerCommand {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
         this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
         this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);

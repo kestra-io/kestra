@@ -37,6 +37,7 @@ public class ControllerCommand extends AbstractServerCommand {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
         this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 

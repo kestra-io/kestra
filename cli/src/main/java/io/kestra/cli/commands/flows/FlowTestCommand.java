@@ -74,6 +74,7 @@ public class FlowTestCommand extends AbstractApiCommand {
     }
 
     @Override
+    @SuppressWarnings({"unchecked", "try"})
     public Integer call() throws Exception {
         super.call();
 

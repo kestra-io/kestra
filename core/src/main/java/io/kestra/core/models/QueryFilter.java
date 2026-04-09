@@ -49,9 +49,13 @@ public record QueryFilter(
         PREFIX
     }
 
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings("unchecked")
     private List<Object> asValues(Object value) {
-        return value instanceof String valueStr ? Arrays.asList(valueStr.split(",")) : (List<Object>) value;
+        if (value instanceof String valueStr) {
+            Object[] parts = valueStr.split(",");
+            return Arrays.asList(parts);
+        }
+        return (List<Object>) value;
     }
 
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {

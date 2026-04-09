@@ -28,7 +28,7 @@ public class BasicAuthEndpointsFilter implements HttpServerFilter {
         this.endpointBasicAuthConfiguration = endpointBasicAuthConfiguration;
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "deprecation"})
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);

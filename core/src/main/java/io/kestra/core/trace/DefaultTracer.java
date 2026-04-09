@@ -85,6 +85,7 @@ class DefaultTracer implements Tracer {
         return inNewContext(spanName, attributesBuilder.build(), callable);
     }
 
+    @SuppressWarnings("try")
     private <V> V inCurrentContext(Context context, String spanName, Attributes attributes, Callable<V> callable) {
         try (Scope ignored = context.makeCurrent()) {
             var span = tracer.spanBuilder(spanNamePrefix + " - " + spanName)
@@ -101,6 +102,7 @@ class DefaultTracer implements Tracer {
         }
     }
 
+    @SuppressWarnings("try")
     private <V> V inNewContext(String spanName, Attributes attributes, Callable<V> callable) {
         var span = tracer.spanBuilder(spanNamePrefix + " - " + spanName)
             .setAllAttributes(attributes)

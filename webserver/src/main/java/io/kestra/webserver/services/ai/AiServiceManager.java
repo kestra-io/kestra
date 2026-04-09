@@ -31,6 +31,7 @@ public class AiServiceManager {
     private String defaultProviderId;
     protected final NamespaceContextTool namespaceContextTool;
 
+    @SuppressWarnings("this-escape")
     public AiServiceManager(
         @Client("api") HttpClient apiHttpClient,
         AiProvidersConfiguration providersConfiguration,

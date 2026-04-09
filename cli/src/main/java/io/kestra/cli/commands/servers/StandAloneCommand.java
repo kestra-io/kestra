@@ -90,6 +90,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     }
 
     @Override
+    @SuppressWarnings({"try", "deprecation"})
     public Integer call() throws Exception {
         this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
         this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);

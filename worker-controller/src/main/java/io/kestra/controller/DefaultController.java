@@ -64,6 +64,7 @@ public class DefaultController extends AbstractService implements Controller {
     protected final GrpcTlsConfiguration grpcTlsConfiguration;
 
     @Inject
+    @SuppressWarnings("this-escape")
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
         GrpcConfiguration grpcConfiguration,

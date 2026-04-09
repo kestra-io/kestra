@@ -64,6 +64,7 @@ public class ExecutorCommand extends AbstractServerCommand {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
         this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
         this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);

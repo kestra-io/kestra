@@ -145,6 +145,7 @@ abstract public class TestsUtils {
         return awaitLogs(logs, logMatcher, exactCount::equals);
     }
 
+    @SuppressWarnings("deprecation")
     public static List<LogEntry> awaitLogs(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Predicate<Integer> countMatcher) {
         AtomicReference<List<LogEntry>> matchingLogs = new AtomicReference<>();
         try {

@@ -356,6 +356,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public TaskRunnerResult<DockerTaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
         Boolean renderedDelete = runContext.render(delete).as(Boolean.class).orElseThrow();
 

@@ -29,6 +29,7 @@ public class IterationOutputFunction implements KestraFunction {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Object execute(Map<String, Object> args,
         PebbleTemplate self,
         EvaluationContext context,

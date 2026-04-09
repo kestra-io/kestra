@@ -154,11 +154,11 @@
                     <ks-input v-model="secret.key" :disabled="secret.update" required />
                 </ks-form-item>
                 <ks-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
-                    <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
+                    <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
                 </ks-form-item>
                 <ks-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
                     <ks-col :span="20">
-                        <MultilineSecret
+                        <KsPassword
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
@@ -228,10 +228,9 @@
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsId, KsIconButton, KsPassword} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
     import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
-    import MultilineSecret from "./MultilineSecret.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import action from "../../models/action";

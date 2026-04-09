@@ -14,7 +14,6 @@
             storageKey: storageKeys.DISPLAY_TRIGGERS_COLUMNS
         }"
         @update-properties="updateDisplayColumns"
-        legacyQuery
         readOnly
         :defaultScope="false"
         :defaultTimeRange="false"
@@ -605,4 +604,3 @@
     }
 }
 </style>
-

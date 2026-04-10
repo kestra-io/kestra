@@ -16,15 +16,199 @@ This document provides essential information for AI coding agents working on the
 - **Write clear, maintainable, and well-documented code**
 - **Build & test are mandatory**
 
-## Project Overview
+## Project
 
-It's a monorepo built with Java (backend) and Vue (frontend), using Gradle as the build system.
+Monorepo built with Java (backend) and Vue (frontend), using Gradle as the build system.
 
-**Core Technologies:**
-- **Backend:** Java 25, Micronaut Framework, Lombok, JUnit 5
+## Tech Stack
+- **Backend:** Java 25, Micronaut Framework, Lombok
 - **Frontend:** Vue 3, TypeScript, Vite, Element Plus, Pinia
 - **Build:** Gradle 8.x with multi-project structure (77 submodules)
 - **Testing:** JUnit 5, Mockito, AssertJ, Vitest, Playwright
+
+## Critical Code Patterns
+
+### Dependency Injection
+
+**DO**: Use constructor injection with final fields.
+
+```java
+@Singleton
+public class MyService {
+    private final SomeDependency dependency;
+
+    @Inject
+    public MyService(SomeDependency dependency) {
+        this.dependency = Objects.requireNonNull(dependency);
+    }
+}
+```
+
+**DON'T**: Use field injection (`@Inject` on fields directly). Always prefer constructor injection.
+
+### Class Structure
+
+```java
+// 1. Package declaration and imports
+// 2. Class-level annotations (@Slf4j, @Singleton, etc.)
+// 3. Class declaration with Javadoc
+// 4. Static constants (UPPER_SNAKE_CASE)
+// 5. Injected fields (@Inject)
+// 6. Constructors
+// 7. Public methods
+// 8. Protected methods  
+// 9. Private methods
+// 10. Inner classes/records
+```
+
+### Annotations
+- **Micronaut:** `@Singleton`, `@Inject`, `@Controller`, `@Replaces`, `@Requires`
+- **Validation:** `@Valid`, `@NotNull`, `@Nullable`
+- **Lombok:** `@Slf4j`, `@Getter`, `@NoArgsConstructor`, `@AllArgsConstructor`
+- Use `@Builder` for complex object creation
+
+### Error Handling
+
+**DO**:
+- Use specific exception types — extend `KestraException` or `KestraRuntimeException`
+- Use `Optional<T>` for potentially absent returned values
+- Return empty collections (e.g., `List.of()`, `Collections.emptyList()`) for absent values
+- Use try-with-resources for resource management
+- Log errors before re-throwing: `log.error("message", exception)`
+
+**DON'T**: Use generic `Exception`. Don't return null for collections.
+
+### Java Language Features
+- Use java records for simple data carriers
+
+### Naming Conventions
+- Follow Java naming-convention best practices for Classes, Methods, Variables, Constants.
+- Boolean methods: Start with `is`, `has`, `should`, `can` (e.g., `isReadOnly()`).
+
+### File Organization
+- Use 4-space indentation (configured in .editorconfig)
+- UTF-8 encoding with LF line endings
+- No trailing whitespace
+
+### Utility Classes
+* Mark utility classes as `final` with a private constructor
+* Use static methods only
+* Use existing utility classes (e.g., `ListUtils`, `MapUtils`) instead of creating new ones (`io.kestra.core.utils.*`)
+
+### Enums
+- Use enums for fixed sets of constants
+- Use `@JsonValue` for custom serialization if needed
+- Use `UNKNOWN` enum value for unknown cases in deserialization
+- Compare Constants From The Left (a.k.a., Yoda conditions)
+- Use a static `fromString` method for case-insensitive lookups using `Enums` class.
+
+e.g.:
+```java
+public enum MyEnum {
+    VALUE_ONE,
+    VALUE_TWO,
+    UNKNOWN;
+
+    @JsonCreator
+    public static ResourceType fromString(final String value) {
+        return Enums.getForNameIgnoreCase(value, MyEnum.class, UNKNOWN);
+    }
+}
+```
+
+### Documentation
+- Javadoc for all public classes and methods - be concise
+- Use `@param`, `@return`, `@throws` appropriately
+- Use `{@inheritDoc}` for inherited methods
+- Include usage examples for complex methods
+
+## Webserver Constraints
+- Put classes used by only controllers in the webserver module (not core)
+- No business code/rule inside controllers - instead use a Service class
+- All APIs must return a valid JSON object
+- APIs should not return a response being a JSON array which cannot be evolved in a backwards-compatible way
+- Unit tests must assert that a user can only access a given API if authorized to do so, and that access is denied otherwise
+- APIs must be documented with OpenAPI annotations
+- Use DTOs for requests/responses
+- Always validate input parameters with `@Valid`
+- Use `@ExecuteOn(TaskExecutors.IO)` for blocking operations
+- Return meaningful error responses in controllers
+
+## Worker Constraints
+- Never depend on repositories for code called by the workers - instead use MetaStore/StateStore facades
+
+## Testing Guidelines
+
+### Java Tests
+
+**Test Organization:**
+- Test classes end with `Test` (e.g., `SecretServiceTest`)
+- Abstract test classes start with `Abstract`
+- Use `@KestraTest` for Kestra-specific integration test configuration
+- Use `@MicronautTest` only when `@KestraTest` is not appropriate
+- Place tests in same package structure as source code
+- Simple unit test with mocks over complex integration tests when possible
+- Add // Given-When-Then comments for clarity
+
+**DO**:
+- Always use naming conventions for test methods (e.g., `shouldPerformActionWhenCondition`)
+- Use `@KestraTest` for tests that require running Kestra services (e.g., Executor, Scheduler)
+- 
+```java
+@KestraTest
+class ServiceTest {
+    @Inject
+    private ServiceClass service;
+    
+    @Test
+    void shouldPerformActionWhenCondition() {
+        // Given (setup)
+        
+        // When (action)
+        
+        // Then (assertions)
+        assertThat(result).isNotNull();
+    }
+}
+```
+
+**DON'T**: Use Nested classes for test organization. Avoid complex test hierarchies.
+
+**Assertions:**
+- Use AssertJ: `assertThat().isEqualTo()`, `assertThat().isNotNull()`, `assertThatThrownBy()`, `assertThatObject()`
+- Prefer descriptive assertion methods
+- Use `@MockBean` for mocking dependencies
+
+**Test Categories:**
+- Unit tests: Fast, isolated, no external dependencies
+- Integration tests: Test component interaction, use `@Tag("integration")`
+- Flaky tests: Use `@Tag("flaky")` for unreliable tests
+
+### Frontend Tests
+- Unit tests with Vitest and `@vue/test-utils`
+- E2E tests with Playwright
+- Storybook component tests
+- Use JSdom environment for DOM testing
+
+## Frontend Code Style (Vue 3)
+
+**File Organization:**
+- Use 2-space indentation for Vue, JSON, YAML, CSS
+- Use 4-space indentation for JavaScript/TypeScript
+- Follow Vue 3 Composition API patterns
+- Organize imports: Vue/framework → third-party → local modules
+
+**Naming Conventions:**
+- Components: `PascalCase` files (e.g., `MyComponent.vue`)
+- Variables/functions: `camelCase`
+- Constants: `UPPER_SNAKE_CASE`
+- CSS classes: Follow Element Plus conventions
+
+**TypeScript:**
+- Use strict TypeScript configuration
+- Prefer type definitions over `any`
+- Use interfaces for object shapes
+- Use enums for fixed sets of values
 
 ## Build Commands
 
@@ -107,168 +291,44 @@ npm run storybook       # Development
 npm run build-storybook # Build
 ```
 
-## Code Style Guidelines
+## Development Workflow
 
-### Java Backend
+### Running Locally
 
-**File Organization:**
-- Use 4-space indentation (configured in .editorconfig)
-- UTF-8 encoding with LF line endings
-- No trailing whitespace
-- Organize imports: Java built-ins → third-party → Kestra core
+1. **Start/stop backends:**
+```bash
+# Start databases with Docker Compose
+docker compose -f docker-compose-ci.yml up
 
-**Webserver Constraints**
-- Put classes used by only controllers in the webserver module (not core)
-- No business code/rule inside controllers - instead use a Service class
-- All APIs must return a valid JSON object
-- APIs should not return a response being a JSON array which cannot be evolved in a backwards-compatible way
-- Unit tests must assert that a user can only access a given API if authorized to do so, and that access is denied otherwise
-- APIs must be documented with OpenAPI annotations
-- Use DTOs for requests/responses
-
-**Worker Constraints**
-- Never depend on repositories for code called by the workers - instead use MetaStore/StateStore facades
-
-**Class Structure:**
-```java
-// 1. Package declaration and imports
-// 2. Class-level annotations (@Slf4j, @Singleton, etc.)
-// 3. Class declaration with Javadoc
-// 4. Static constants (UPPER_SNAKE_CASE)
-// 5. Injected fields (@Inject)
-// 6. Constructors
-// 7. Public methods
-// 8. Protected methods  
-// 9. Private methods
-// 10. Inner classes/records
+# Stop databases with Docker Compose
+docker compose -f docker-compose-ci.yml down
 ```
 
-**Naming Conventions:**
-- Follow Java naming-convention best practices for Classes, Methods, Variables, Constants.
-- Boolean methods: Start with `is`, `has`, `should`, `can` (e.g., `isReadOnly()`).
+2. **Access application:** http://localhost:8080
 
-**Annotations:**
-- **Micronaut:** `@Singleton`, `@Inject`, `@Controller`, `@Replaces`, `@Requires`
-- **Validation:** `@Valid`, `@NotNull`, `@Nullable`
-- **Lombok:** `@Slf4j`, `@Getter`, `@NoArgsConstructor`, `@AllArgsConstructor`
+### Security Considerations
+- Use tenant isolation for multi-tenant features
+- Implement proper authorization with `@HasAnyPermission`
+- Handle secrets securely (never log sensitive data)
 
-**Dependency Injection:**
-- Use constructor injection (`@Inject` on constructor) rather than field injection
-- Use `@Builder` for complex object creation
+### Performance Best Practices
+- Implement pagination for large datasets
+- Use streaming for large file operations
+- Cache frequently accessed data appropriately
+- Initialize collections with the expected size to avoid resizing overhead
 
-**Java Language Features:**
-- Use java records for simple data carriers
+## Troubleshooting
 
-**Error Handling:**
-- Use specific exception types (avoid generic `Exception`)
-- Extend `KestraException`, or `KestraRuntimeException` for new exceptions classes
-- Use `Optional<T>` for potentially absent returned values
-- Return an empty collection or array (e.g. List.of, Collections.emptyLIst() , etc) for absent values
-- Try-with-resources for resource management
-- Log errors before re-throwing: `log.error("message", exception)`
-- Return meaningful error responses in controllers
+**Common Issues:**
+- **Build failures:** Run `./gradlew clean` and retry
+- **Test failures:** Check for service dependencies (Docker containers)
+- **Frontend issues:** Ensure Node.js version matches package.json requirements
 
-**Documentation:**
-- Javadoc for all public classes and methods - be concise
-- Use `@param`, `@return`, `@throws` appropriately
-- Use `{@inheritDoc}` for inherited methods
-- Include usage examples for complex methods
-
-**Utility Classes:**
-* Mark utility classes as `final` with a private constructor
-* Use static methods only
-* Use existing utility classes (e.g., `ListUtils`, `MapUtils`) instead of creating new ones (`io.kestra.core.utils.*` and `io.kestra.ee.utils.*`)
-
-**Enums:**
-- Use enums for fixed sets of constants
-- Use `@JsonValue` for custom serialization if needed
-- Use `UNKNOWN` enum value for unknown cases in deserialization
-- Compare Constants From The Left (a.k.a., Yoda conditions)
-- Use a static `fromString` method for case-insensitive lookups using `Enums` class.
-
-e.g.:
-```java
-public enum MyEnum {
-    VALUE_ONE,
-    VALUE_TWO,
-    UNKNOWN;
-
-    @JsonCreator
-    public static ResourceType fromString(final String value) {
-        return Enums.getForNameIgnoreCase(value, MyEnum.class, UNKNOWN);
-    }
-}
-```
-
-### Frontend (Vue 3)
-
-**File Organization:**
-- Use 2-space indentation for Vue, JSON, YAML, CSS
-- Use 4-space indentation for JavaScript/TypeScript
-- Follow Vue 3 Composition API patterns
-- Organize imports: Vue/framework → third-party → local modules
-
-**Naming Conventions:**
-- Components: `PascalCase` files (e.g., `MyComponent.vue`)
-- Variables/functions: `camelCase`
-- Constants: `UPPER_SNAKE_CASE`
-- CSS classes: Follow Element Plus conventions
-
-**TypeScript:**
-- Use strict TypeScript configuration
-- Prefer type definitions over `any`
-- Use interfaces for object shapes
-- Use enums for fixed sets of values
-
-## Testing Guidelines
-
-### Java Tests
-
-**Test Organization:**
-- Test classes end with `Test` (e.g., `SecretServiceTest`)
-- Abstract test classes start with `Abstract`
-- Use `@MicronautTest` for Micronaut context loading
-- Use `@KestraTest` for Kestra-specific integration test configuration
-- Place tests in same package structure as source code
-- Simple unit test with mocks over complex integration tests when possible
-- Add // Given-When-Then comments for clarity
-
-**Test Structure:**
-```java
-@KestraTest
-class ServiceTest {
-    @Inject
-    private ServiceClass service;
-    
-    @Test
-    void shouldPerformActionWhenCondition() {
-        // Given (setup)
-        
-        // When (action)
-        
-        // Then (assertions)
-        assertThat(result).isNotNull();
-    }
-}
-```
-
-**Assertions:**
-- Use AssertJ: `assertThat().isEqualTo()`, `assertThat().isNotNull()`, `assertThatThrownBy()`, `assertThatObject()`
-- Prefer descriptive assertion methods
-- Use `@MockBean` for mocking dependencies
-
-**Test Categories:**
-- Unit tests: Fast, isolated, no external dependencies
-- Integration tests: Test component interaction, use `@Tag("integration")`
-- Flaky tests: Use `@Tag("flaky")` for unreliable tests
-
-### Frontend Tests
-
-**Test Types:**
-- Unit tests with Vitest and `@vue/test-utils`
-- E2E tests with Playwright
-- Storybook component tests
-- Use JSdom environment for DOM testing
+**Debugging:**
+- Use IDE debugging with remote JVM debugging
+- Use Micronaut's built-in health endpoints
+- Enable debug logging: `--logging.level.io.kestra=DEBUG`
+- Use JUnit and Vitest reports for test failures
 
 ## Module Structure
 
@@ -300,65 +360,6 @@ class ServiceTest {
 - Service layer for business logic
 - Controller layer for HTTP endpoints
 - Builder pattern for object construction (often with Lombok `@Builder`)
-
-## Development Workflow
-
-### Running Locally
-
-1. **Start/stop backends:**
-```bash
-# Start databases with Docker Compose
-docker compose -f docker-compose-ci.yml up
-
-# Stop databases with Docker Compose
-docker compose -f docker-compose-ci.yml down
-```
-
-3. **Access application:** http://localhost:8080
-
-### Common Development Tasks
-
-**Adding New Features:**
-1. Create/modify Java classes in appropriate module
-2. Add corresponding tests (unit and integration)
-3. Update frontend components if needed
-4. Run tests: `./gradlew test`
-5. Build: `./gradlew build`
-
-**Database Changes:**
-- Modify repository interfaces and implementations
-- Update corresponding service classes
-- Add migration scripts if needed
-- Test against multiple databases (H2, Postgres, MySQL)
-
-### Security Considerations
-
-- Always validate input parameters with `@Valid`
-- Use tenant isolation for multi-tenant features
-- Implement proper authorization with `@HasAnyPermission`
-- Handle secrets securely (never log sensitive data)
-- Use HTTPS in production configurations
-
-### Performance Best Practices
-
-- Use `@ExecuteOn(TaskExecutors.IO)` for blocking operations (for controller classes)
-- Implement pagination for large datasets
-- Use streaming for large file operations
-- Cache frequently accessed data appropriately
-- Initialize collections with expected size to avoid resizing overhead
-
-## Troubleshooting
-
-**Common Issues:**
-- **Build failures:** Run `./gradlew clean` and retry
-- **Test failures:** Check for service dependencies (Docker containers)
-- **Frontend issues:** Ensure Node.js version matches package.json requirements
-
-**Debugging:**
-- Use IDE debugging with remote JVM debugging
-- Use Micronaut's built-in health endpoints
-- Enable debug logging: `--logging.level.io.kestra=DEBUG`
-- Use JUnit and Vitest reports for test failures
 
 ## Pull request guidelines
 - Always add tests, keep your branch rebased instead of merged, and adhere to the commit message recommendations from https://www.conventionalcommits.org/en/v1.0.0.

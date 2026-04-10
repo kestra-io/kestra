@@ -126,15 +126,10 @@ public class VariableRenderer {
             }
 
         } catch (IOException | PebbleException e) {
-            String alternativeRender = this.alternativeRender(e, (String) inline, variables);
-            if (alternativeRender == null) {
-                if (e instanceof PebbleException pebbleException) {
-                    throw properPebbleException(pebbleException);
-                }
-                throw new IllegalVariableEvaluationException(e);
-            } else {
-                result = alternativeRender;
+            if (e instanceof PebbleException pebbleException) {
+                throw properPebbleException(pebbleException);
             }
+            throw new IllegalVariableEvaluationException(e);
         }
 
         if (result instanceof String stringValue && replacers != null) {
@@ -151,18 +146,6 @@ public class VariableRenderer {
         } catch (Exception ignored) {
             return value;
         }
-    }
-
-    /**
-     * This method can be used in fallback for rendering an input string.
-     *
-     * @param e The exception that was throw by the default variable renderer.
-     * @param inline The expression to be rendered.
-     * @param variables The context variables.
-     * @return The rendered string.
-     */
-    protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return null;
     }
 
     private static String putBackRawTags(Map<String, String> replacers, String result) {

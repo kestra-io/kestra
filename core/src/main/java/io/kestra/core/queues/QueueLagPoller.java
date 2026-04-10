@@ -45,7 +45,7 @@ public class QueueLagPoller {
         Set<String> availableWorkerGroups = workerGroupExecutor.listAllWorkerGroupKeys();
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobQueue = workerJobQueueProvider.get();
         availableWorkerGroups.stream().filter(
-            workerGroup -> metricRegistry.findGauges(MetricRegistry.QUEUE_MESSAGE_LAG_COUNT).stream().noneMatch(
+            workerGroup -> metricRegistry.findGauges(MetricRegistry.METRIC_QUEUE_MESSAGE_LAG_COUNT).stream().noneMatch(
                 gauge -> workerGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP))
             )
         ).forEach(
@@ -77,8 +77,8 @@ public class QueueLagPoller {
 
     private void register(Supplier<Number> supplier, String... tags) {
         this.metricRegistry.gauge(
-            MetricRegistry.QUEUE_MESSAGE_LAG_COUNT,
-            MetricRegistry.QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION,
+            MetricRegistry.METRIC_QUEUE_MESSAGE_LAG_COUNT,
+            MetricRegistry.METRIC_QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION,
             supplier,
             tags
         );

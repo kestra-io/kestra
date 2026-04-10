@@ -121,8 +121,12 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION = "The total number of executions popped by the Executor";
-    public static final String QUEUE_MESSAGE_LAG_COUNT = "queue.message.lag.count";
-    public static final String QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION = "Total number of messages in the queue that are not yet consumed";
+    public static final String METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION = "executor.processing.flow.trigger.duration";
+    public static final String METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION_DESCRIPTION = "Flow trigger processing duration inside the Executor";
+    public static final String METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION = "executor.loop.sla.duration";
+    public static final String METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION = "SLA monitor loop duration inside the Executor";
+    public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION = "executor.loop.delay.duration";
+    public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION = "Execution delay loop duration inside the Executor";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
@@ -171,6 +175,8 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_CONSUME_DURATION_DESCRIPTION = "Queue message consumer duration for each message";
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION = "queue.consume.batch.duration";
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION_DESCRIPTION = "Queue message consumer duration for a batch of messages";
+    public static final String METRIC_QUEUE_MESSAGE_LAG_COUNT = "queue.message.lag.count";
+    public static final String METRIC_QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION = "Total number of messages in the queue that are not yet consumed";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
@@ -283,7 +289,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Meter in the meter registry
-     * 
+     *
      * @param name The base metric name
      */
     public Search find(String name) {
@@ -292,7 +298,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Counter in the meter registry
-     * 
+     *
      * @param name The base metric name
      */
     public Counter findCounter(String name) {
@@ -301,7 +307,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Gauge in the meter registry
-     * 
+     *
      * @param name The base metric name
      */
     public Gauge findGauge(String name) {
@@ -310,7 +316,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Gauges in the meter registry
-     * 
+     *
      * @param name The base metric name
      */
     public Collection<Gauge> findGauges(String name) {
@@ -319,7 +325,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing Timer in the meter registry
-     * 
+     *
      * @param name The base metric name
      */
     public Timer findTimer(String name) {
@@ -328,7 +334,7 @@ public class MetricRegistry {
 
     /**
      * Search for an existing DistributionSummary in the meter registry
-     * 
+     *
      * @param name The base metric name
      */
     public DistributionSummary findDistributionSummary(String name) {
@@ -337,7 +343,7 @@ public class MetricRegistry {
 
     /**
      * Remove existing Meter in the meter registry
-     * 
+     *
      * @param meter The meter to remove
      */
     public void removeMeter(Meter meter) {
@@ -533,7 +539,7 @@ public class MetricRegistry {
 
     /**
      * Speed-optimized version of {@link Label}s to tags conversion.
-     * 
+     *
      * @param labels The labels to evaluate against configured keys
      * @return tags based on matching label keys
      */

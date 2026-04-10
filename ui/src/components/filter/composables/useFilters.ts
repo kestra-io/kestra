@@ -99,9 +99,7 @@ export function useFilters(
         delete query["filters[q][EQUALS]"];
 
         if (trimmedQuery && showSearchInput) {
-            const searchKey = configuration.keys?.length > 0 && !legacyQuery
-                ? "filters[q][EQUALS]"
-                : "q";
+            const searchKey = legacyQuery ? "q" : "filters[q][EQUALS]";
             query[searchKey] = trimmedQuery;
         }
     };
@@ -424,10 +422,9 @@ export function useFilters(
 
     const initializeFromRoute = () => {
         if (showSearchInput) {
-            searchQuery.value =
-                (route.query?.["filters[q][EQUALS]"] as string) ??
-                (route.query?.q as string) ??
-                "";
+            searchQuery.value = legacyQuery
+                ? (route.query?.q as string) ?? ""
+                : (route.query?.["filters[q][EQUALS]"] as string) ?? "";
         }
 
         const parsedFilters = legacyQuery

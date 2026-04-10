@@ -55,7 +55,7 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @Builder.Default
     @NotNull
-    @PluginProperty(group = "execution")
+    @PluginProperty(group = "execution", dynamic = true)
     @Schema(
         title = "A condition that determines whether the trigger should run.",
         description = "A Pebble expression evaluated at trigger time. The trigger fires only when the expression evaluates to a truthy value (`true`, a non-empty string, a non-zero number). Use this to gate trigger execution on dynamic runtime values such as execution labels, flow variables, or environment conditions."

@@ -455,7 +455,10 @@ public class FlowService {
             .toList();
         flowTriggers.forEach(flowTrigger ->
         {
-            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null && (flowTrigger.getWhen() == null || "true".equals(flowTrigger.getWhen()))) {
+            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty()
+                && flowTrigger.getPreconditions() == null
+                && ListUtils.isEmpty(flowTrigger.getDependsOn())
+                && (flowTrigger.getWhen() == null || "true".equals(flowTrigger.getWhen()))) {
                 warnings.add(
                     "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId()
                         + "'."

@@ -144,7 +144,7 @@ public class JsonSchemaGenerator {
                     .map(JsonNode::asText)
                     .collect(Collectors.toList());
 
-                properties.fields().forEachRemaining(e ->
+                properties.properties().forEach(e ->
                 {
                     int indexInRequiredArray = requiredFieldValues.indexOf(e.getKey());
                     if (indexInRequiredArray != -1 && e.getValue() instanceof ObjectNode valueNode && valueNode.has("default")) {

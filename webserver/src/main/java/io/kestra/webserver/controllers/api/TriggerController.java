@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -367,14 +368,14 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Triggers" }, summary = "Export all triggers as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportTriggers(
+    public MutableHttpResponse<Flux<String>> exportTriggers(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 triggerRepository.find(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, new TypeReference<Map<String, Object>>() {}))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=triggers.csv");

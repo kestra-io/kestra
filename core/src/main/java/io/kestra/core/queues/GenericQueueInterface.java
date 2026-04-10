@@ -1,10 +1,16 @@
 package io.kestra.core.queues;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 
 import io.kestra.core.queues.event.Event;
 
 public interface GenericQueueInterface<T extends Event> extends AutoCloseable {
+
+    @Override
+    default void close() throws IOException {
+    }
+
     /**
      * Add a listener to the queue.
      * This listener will receive every message emitted to the queue.

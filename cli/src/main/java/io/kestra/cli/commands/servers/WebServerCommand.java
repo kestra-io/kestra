@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 
@@ -93,7 +93,7 @@ public class WebServerCommand extends AbstractServerCommand {
         }
 
         log.info("Webserver started");
-        Await.until(() -> !this.applicationContext.isRunning());
+        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
         return 0;
     }
 }

@@ -141,17 +141,12 @@ public enum MyEnum {
 
 ### Java Tests
 
-**Test Organization:**
-- Test classes end with `Test` (e.g., `SecretServiceTest`)
-- Abstract test classes start with `Abstract`
-- Use `@KestraTest` for Kestra-specific integration test configuration
-- Use `@MicronautTest` only when `@KestraTest` is not appropriate
+**DO**:
 - Place tests in same package structure as source code
 - Simple unit test with mocks over complex integration tests when possible
 - Add // Given-When-Then comments for clarity
-
-**DO**:
 - Always use naming conventions for test methods (e.g., `shouldPerformActionWhenCondition`)
+- Use `@MicronautTest` for tests that require Micronaut beans
 - Use `@KestraTest` for tests that require running Kestra services (e.g., Executor, Scheduler)
 - 
 ```java
@@ -223,15 +218,6 @@ class ServiceTest {
 
 # Build without tests (faster)
 ./gradlew build -x test -x integrationTest -x testCodeCoverageReport --refresh-dependencies --no-daemon --parallel
-
-# Create executable JAR
-./gradlew executableJar --parallel
-
-# Run application locally
-./gradlew runLocal
-
-# Run standalone server
-./gradlew runStandalone
 ```
 
 ### Test Commands

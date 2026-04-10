@@ -20,7 +20,7 @@ public class RegexConfiguration {
      * Maximum duration for a single regex operation before it is aborted.
      * Defaults to 30 seconds.
      */
-    private Duration timeout = Duration.ofSeconds(30);
+    private Duration timeout = Duration.ofSeconds(10);
 
     @PostConstruct
     void init() {

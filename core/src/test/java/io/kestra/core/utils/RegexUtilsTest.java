@@ -70,12 +70,24 @@ class RegexUtilsTest {
 
     @Test
     void shouldRespectConfiguredTimeout() {
-        Duration original = RegexUtils.getTimeout();
         try {
+            RegexUtils.resetInit();
             RegexUtils.setTimeout(Duration.ofSeconds(5));
             assertThat(RegexUtils.getTimeout()).isEqualTo(Duration.ofSeconds(5));
         } finally {
-            RegexUtils.setTimeout(original);
+            RegexUtils.resetInit();
+        }
+    }
+
+    @Test
+    void shouldIgnoreSecondSetTimeout() {
+        try {
+            RegexUtils.resetInit();
+            RegexUtils.setTimeout(Duration.ofSeconds(7));
+            RegexUtils.setTimeout(Duration.ofSeconds(99));
+            assertThat(RegexUtils.getTimeout()).isEqualTo(Duration.ofSeconds(7));
+        } finally {
+            RegexUtils.resetInit();
         }
     }
 }

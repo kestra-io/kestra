@@ -1,8 +1,11 @@
 package io.kestra.core.utils;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Utilities for running regex operations with a timeout guard to prevent ReDoS
@@ -14,18 +17,24 @@ import java.util.regex.Pattern;
  */
 public final class RegexUtils {
 
-    private static volatile Duration timeout = Duration.ofSeconds(30);
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
+    private static final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    private static volatile Duration timeout = DEFAULT_TIMEOUT;
 
     private RegexUtils() {
     }
 
     /**
-     * Sets the global regex timeout.
+     * Sets the global regex timeout. Can only be called once (typically by {@link RegexConfiguration}
+     * at startup). Subsequent calls are silently ignored.
      *
      * @param duration the maximum duration for any regex operation.
      */
     public static void setTimeout(Duration duration) {
-        timeout = duration;
+        if (initialized.compareAndSet(false, true)) {
+            timeout = duration;
+        }
     }
 
     /**
@@ -33,6 +42,16 @@ public final class RegexUtils {
      */
     public static Duration getTimeout() {
         return timeout;
+    }
+
+    /**
+     * Resets the initialized flag so {@link #setTimeout(Duration)} can be called again.
+     * This is intended for tests only.
+     */
+    @VisibleForTesting
+    static void resetInit() {
+        initialized.set(false);
+        timeout = DEFAULT_TIMEOUT;
     }
 
     /**

@@ -2,7 +2,7 @@
     <div class="flow-editor-shell">
         <MultiPanelGenericEditorView
             ref="editorView"
-            :class="{playgroundMode, 'tour-mode': isGuidedCodeOnly}"
+            :class="{playgroundMode}"
             :editorElements="EDITOR_ELEMENTS"
             :defaultActiveTabs="tabs"
             :saveKey
@@ -224,20 +224,6 @@
         #{--el-color-primary}: colorPalette.$base-blue-500;
         color: colorPalette.$base-white;
         background-position: 10% 0;
-    }
-
-    .tour-mode :deep(.tabs-wrapper button) {
-        transition: opacity 0.2s ease;
-
-        &:first-child {
-            opacity: 1;
-        }
-
-        &:not(:first-child) {
-            opacity: 0.45;
-            pointer-events: none;
-            cursor: not-allowed;
-        }
     }
 
     .flow-editor-shell {

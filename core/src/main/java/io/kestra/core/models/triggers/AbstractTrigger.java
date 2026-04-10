@@ -46,10 +46,21 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @PluginProperty(group = "reliability")
     @Schema(
-        title = "List of conditions in order to limit the flow trigger."
+        title = "List of conditions in order to limit the flow trigger.",
+        description = "**DEPRECATED**, use `when` instead."
     )
     @Valid
+    @Deprecated(forRemoval = true, since = "2.0.0")
     protected List<@Valid @NotNull Condition> conditions;
+
+    @Builder.Default
+    @NotNull
+    @PluginProperty(group = "execution")
+    @Schema(
+        title = "A condition that determines whether the trigger should run.",
+        description = "A Pebble expression evaluated at trigger time. The trigger fires only when the expression evaluates to a truthy value (`true`, a non-empty string, a non-zero number). Use this to gate trigger execution on dynamic runtime values such as execution labels, flow variables, or environment conditions."
+    )
+    private String when = "true";
 
     @Builder.Default
     @PluginProperty(hidden = true, group = "execution")

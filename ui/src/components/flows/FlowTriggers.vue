@@ -362,7 +362,7 @@
     const triggerStore = useTriggerStore();
 
     const query = computed(() => {
-        return Array.isArray(route.query?.q) ? route.query.q[0] : route.query?.q;
+        return Array.isArray(route.query?.["filters[q][EQUALS]"]) ? route.query["filters[q][EQUALS]"][0] : route.query?.["filters[q][EQUALS]"];
     });
 
     const modalData = computed(() => {

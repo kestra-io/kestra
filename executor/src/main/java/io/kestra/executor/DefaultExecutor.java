@@ -39,6 +39,8 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.*;
+
+import org.awaitility.Awaitility;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.trigger.Webhook;
 
@@ -183,7 +185,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public void run() {
         // listen to executor related queues
         this.queueSubscribers.addFirst(this.executionQueue.subscriber().subscribe(this::executionQueue));
@@ -258,7 +259,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         Thread.ofVirtual().name("executor-delay-exception-watcher").start(
             () ->
             {
-                Await.until(executionDelayFuture::isDone);
+                Awaitility.await().forever().until(executionDelayFuture::isDone);
 
                 try {
                     executionDelayFuture.get();
@@ -279,7 +280,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         Thread.ofVirtual().name("executor-sla-monitor-exception-watcher").start(
             () ->
             {
-                Await.until(monitorSLAFuture::isDone);
+                Awaitility.await().forever().until(monitorSLAFuture::isDone);
 
                 try {
                     monitorSLAFuture.get();

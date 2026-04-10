@@ -4,9 +4,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 
 import jakarta.inject.Singleton;
 
@@ -46,9 +46,8 @@ public final class ServiceRegistry {
         return services.get(type).service();
     }
 
-    @SuppressWarnings("deprecation")
     public Service waitForServiceAndGet(final ServiceType type) {
-        Await.until(() -> containsService(type));
+        Awaitility.await().forever().until(() -> containsService(type));
         return getServiceByType(type);
     }
 
@@ -79,19 +78,18 @@ public final class ServiceRegistry {
      * @param maxWaitDuration The max wait duration.
      * @return {@code true} if the service is in the expected state. Otherwise {@code false}.
      */
-    @SuppressWarnings("deprecation")
     public boolean waitForServiceInState(final ServiceType type,
         final Service.ServiceState state,
         final Duration maxWaitDuration) {
         if (!containsService(type))
             return false;
         try {
-            Await.until(() ->
+            Awaitility.await().atMost(maxWaitDuration).pollInterval(Duration.ofMillis(100)).until(() ->
             {
                 LocalServiceState service = get(type);
                 return service != null && service.instance().is(state);
-            }, Duration.ofMillis(100), maxWaitDuration);
-        } catch (TimeoutException e) {
+            });
+        } catch (ConditionTimeoutException e) {
             return false;
         }
         return true;

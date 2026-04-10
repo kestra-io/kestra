@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Scheduler;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -34,14 +34,13 @@ public class SchedulerCommand extends AbstractServerCommand {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
         super.call();
 
         Scheduler scheduler = applicationContext.getBean(Scheduler.class);
         scheduler.start(Optional.ofNullable(this.maxThread).orElse(Scheduler.defaultMaxNumThreads()));
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

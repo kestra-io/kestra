@@ -5,13 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.kestra.core.runners.*;
 import io.kestra.core.server.Service;
-import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import io.kestra.core.worker.Controller;
 import io.kestra.executor.DefaultExecutor;
 
@@ -52,7 +53,6 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     private ExecutorService poolExecutor;
 
     @Override
-    @SuppressWarnings("deprecation")
     public void run() {
         running.set(true);
 
@@ -84,8 +84,10 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         }
 
         try {
-            Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, runningTimeout);
-        } catch (TimeoutException e) {
+            Awaitility.await().atMost(runningTimeout).until(
+                () -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
+            );
+        } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
                 servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
                     .map(Service::getClass)

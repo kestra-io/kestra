@@ -6,7 +6,7 @@ import java.util.Map;
 
 import io.kestra.core.models.ServerType;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 import io.kestra.core.worker.Controller;
 
 import io.micronaut.context.ApplicationContext;
@@ -37,7 +37,6 @@ public class ControllerCommand extends AbstractServerCommand {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public Integer call() throws Exception {
         this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 
@@ -46,7 +45,7 @@ public class ControllerCommand extends AbstractServerCommand {
         Controller controller = applicationContext.getBean(Controller.class);
         controller.start();
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

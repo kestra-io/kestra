@@ -64,7 +64,7 @@ public class DefaultController extends AbstractService implements Controller {
     protected final GrpcTlsConfiguration grpcTlsConfiguration;
 
     @Inject
-    @SuppressWarnings("this-escape")
+    @SuppressWarnings("this-escape") // setState() calls getProperties() which is not overridden in this class — safe
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
         GrpcConfiguration grpcConfiguration,

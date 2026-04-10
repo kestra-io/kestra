@@ -30,7 +30,6 @@ import static io.kestra.core.plugins.PluginManager.createLocalRepositoryIfNotExi
  */
 @Singleton
 @Slf4j
-@SuppressWarnings("try")
 public class LocalPluginManager implements PluginManager {
 
     private final Provider<PluginRegistry> pluginRegistryProvider;

@@ -23,7 +23,6 @@ import jakarta.inject.Inject;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-@SuppressWarnings("try")
 @Slf4j
 public class StandAloneRunner implements Runnable, AutoCloseable {
     @Setter
@@ -102,7 +101,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
 
     @PreDestroy
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (this.poolExecutor != null) {
             this.poolExecutor.shutdown();
         }

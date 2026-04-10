@@ -31,7 +31,7 @@ public class AiServiceManager {
     private String defaultProviderId;
     protected final NamespaceContextTool namespaceContextTool;
 
-    @SuppressWarnings("this-escape")
+    @SuppressWarnings("this-escape") // createAiService() is protected for EE extension; EE subclasses must not access uninitialized fields in their override
     public AiServiceManager(
         @Client("api") HttpClient apiHttpClient,
         AiProvidersConfiguration providersConfiguration,

@@ -149,7 +149,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final int numberOfThreads;
 
     @Inject
-    @SuppressWarnings("this-escape")
+    @SuppressWarnings("this-escape") // setState() calls getProperties() which is not overridden in this class — safe
     public DefaultExecutor(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher, ExecutorsUtils executorsUtils, @Value("${kestra.executor.thread-count:0}") int threadCount) {
         super(ServiceType.EXECUTOR, eventPublisher);
         // By default, we start available processors count threads with a minimum of 4 by executor service

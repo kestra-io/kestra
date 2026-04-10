@@ -53,7 +53,6 @@ public class PluginInstallCommand extends AbstractCommand {
     Provider<PluginCatalogService> pluginCatalogService;
 
     @Override
-    @SuppressWarnings("try")
     public Integer call() throws Exception {
         super.call();
 

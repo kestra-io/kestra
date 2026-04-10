@@ -87,7 +87,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     }
 
     @VisibleForTesting
-    @SuppressWarnings("this-escape")
+    @SuppressWarnings("this-escape") // setState() calls getProperties() which is not overridden in this class — safe
     public DefaultScheduler(final TriggerSchedulingLoopFactory schedulerEventLoopFactory,
         final VNodesAssigner vNodesAssigner,
         final ExecutorsUtils executorsUtils,

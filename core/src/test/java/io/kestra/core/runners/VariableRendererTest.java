@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
@@ -14,22 +13,11 @@ import java.util.Map;
 
 @KestraTest
 class VariableRendererTest {
-
-    @Inject
-    ApplicationContext applicationContext;
-
-    @Inject
-    VariableRenderer.VariableConfiguration variableConfiguration;
-
     @Inject
     VariableRenderer variableRenderer;
 
-    @Test
-    void shouldRenderUsingAlternativeRendering() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
-        String render = renderer.render("{{ dummy }}", Map.of());
-        Assertions.assertEquals("result", render);
-    }
+    @Inject
+    PebbleEngineFactory pebbleEngineFactory;
 
     @Test
     void shouldKeepKeyOrderWhenRenderingMap() throws IllegalVariableEvaluationException {
@@ -88,19 +76,4 @@ class VariableRendererTest {
         assertThat(result.get("key3")).isEqualTo("static");
         assertThat(result).containsKey("key1");
     }
-
-    public static class TestVariableRenderer extends VariableRenderer {
-
-        public TestVariableRenderer(ApplicationContext applicationContext,
-                                    VariableConfiguration variableConfiguration) {
-            super(applicationContext, variableConfiguration);
-        }
-
-        @Override
-        protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-            return "result";
-        }
-    }
-
-
 }

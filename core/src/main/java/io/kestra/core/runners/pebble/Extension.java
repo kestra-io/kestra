@@ -120,9 +120,9 @@ public class Extension extends AbstractExtension {
         filters.put("sha512", new Sha512Filter());
         filters.put("md5", new Md5Filter());
         filters.put("string", new StringFilter());
-        filters.put("regexMatch", new RegexMatchFilter());
-        filters.put("regexReplace", new RegexReplaceFilter());
-        filters.put("regexExtract", new RegexExtractFilter());
+        filters.put(RegexMatchFilter.NAME, new RegexMatchFilter());
+        filters.put(RegexReplaceFilter.NAME, new RegexReplaceFilter());
+        filters.put(RegexExtractFilter.NAME, new RegexExtractFilter());
         return filters;
     }
 

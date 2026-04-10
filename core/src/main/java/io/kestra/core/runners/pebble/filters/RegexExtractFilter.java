@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Pebble filter that extracts the first portion of a string matching a regular expression.
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
  */
 public class RegexExtractFilter implements Filter {
 
-    public static final String FILTER_NAME = "regexExtract";
+    public static final String NAME = "regexExtract";
 
     private static final String ARGUMENT_REGEX = "regex";
     private static final String ARGUMENT_GROUP = "group";
@@ -58,7 +59,21 @@ public class RegexExtractFilter implements Filter {
             ? ((Number) args.get(ARGUMENT_GROUP)).intValue()
             : 0;
 
-        Matcher matcher = Pattern.compile(regex).matcher(input.toString());
+        if (group < 0) {
+            throw new PebbleException(
+                null,
+                MessageFormat.format("Group index {0} is out of bounds: must be >= 0.", group),
+                lineNumber,
+                self.getName()
+            );
+        }
+
+        Matcher matcher;
+        try {
+            matcher = Pattern.compile(regex).matcher(input.toString());
+        } catch (PatternSyntaxException e) {
+            throw new PebbleException(e, MessageFormat.format("Invalid regex ''{0}'': {1}", regex, e.getDescription()), lineNumber, self.getName());
+        }
         if (matcher.find()) {
             if (group > matcher.groupCount()) {
                 throw new PebbleException(

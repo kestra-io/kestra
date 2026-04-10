@@ -86,8 +86,9 @@ class RegexFilterTest {
 
     @Test
     void regexExtractCaptureGroup() throws IllegalVariableEvaluationException {
-        String result = variableRenderer.render("{{ 'order-12345-6789-done' | regexExtract(regex='order-(\\d+)-(\\d+)', group=2) }}", Map.of());
-        assertThat(result).isEqualTo("6789");
+        // Use 3 capture groups and assert group 2 to verify correct group selection
+        String result = variableRenderer.render("{{ 'order-111-222-333-done' | regexExtract(regex='order-(\\d+)-(\\d+)-(\\d+)', group=2) }}", Map.of());
+        assertThat(result).isEqualTo("222");
     }
 
     @Test
@@ -114,5 +115,65 @@ class RegexFilterTest {
         assertThatThrownBy(() -> variableRenderer.render("{{ 'order-12345' | regexExtract(regex='order-(\\d+)', group=5) }}", Map.of()))
             .isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("Group index 5 is out of bounds");
+    }
+
+    @Test
+    void regexExtractNegativeGroup() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'order-12345' | regexExtract(regex='order-(\\d+)', group=-1) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Group index -1 is out of bounds");
+    }
+
+    // --- missing required arguments ---
+
+    @Test
+    void regexMatchMissingRegex() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'hello' | regexMatch() }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The argument 'regex' is required");
+    }
+
+    @Test
+    void regexReplaceMissingRegex() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'hello' | regexReplace(replacement='x') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The argument 'regex' is required");
+    }
+
+    @Test
+    void regexReplaceMissingReplacement() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'hello' | regexReplace(regex='\\d+') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The argument 'replacement' is required");
+    }
+
+    @Test
+    void regexExtractMissingRegex() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'hello' | regexExtract() }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The argument 'regex' is required");
+    }
+
+    // --- invalid regex ---
+
+    @Test
+    void regexMatchInvalidRegex() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'hello' | regexMatch(regex='[unclosed') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Invalid regex");
+    }
+
+    @Test
+    void regexReplaceInvalidRegex() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'hello' | regexReplace(regex='[unclosed', replacement='x') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Invalid regex");
+    }
+
+    @Test
+    void regexExtractInvalidRegex() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'hello' | regexExtract(regex='[unclosed') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Invalid regex");
     }
 }

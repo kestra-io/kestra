@@ -9,9 +9,14 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
- * Pebble filter that checks if the input string matches a given regular expression.
+ * Pebble filter that checks if the input string contains a substring matching a given regular expression.
+ *
+ * <p>This filter uses {@code find()} semantics (partial match), not {@code matches()} (full-string match).
+ * For example, {@code {{ "abc-123" | regexMatch(regex="\d+") }}} returns {@code true} because a
+ * substring matches, even though the entire string does not.</p>
  *
  * <p>Usage: {@code {{ "hello world" | regexMatch(regex="hello.*") }}}</p>
  *
@@ -20,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public class RegexMatchFilter implements Filter {
 
-    public static final String FILTER_NAME = "regexMatch";
+    public static final String NAME = "regexMatch";
 
     private static final String ARGUMENT_REGEX = "regex";
 
@@ -47,6 +52,10 @@ public class RegexMatchFilter implements Filter {
         }
 
         String regex = args.get(ARGUMENT_REGEX).toString();
-        return Pattern.compile(regex).matcher(input.toString()).find();
+        try {
+            return Pattern.compile(regex).matcher(input.toString()).find();
+        } catch (PatternSyntaxException e) {
+            throw new PebbleException(e, MessageFormat.format("Invalid regex ''{0}'': {1}", regex, e.getDescription()), lineNumber, self.getName());
+        }
     }
 }

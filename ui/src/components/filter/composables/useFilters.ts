@@ -22,7 +22,6 @@ import {applyDefaultFilters, useDefaultFilter} from "./useDefaultFilter";
 export function useFilters(
     configuration: FilterConfiguration,
     showSearchInput = true,
-    legacyQuery = false,
     defaultScope?: boolean,
     defaultTimeRange?: boolean,
     defaultDuration?: string,
@@ -39,14 +38,6 @@ export function useFilters(
         hasPreApplied,
         getPreApplied
     } = usePreAppliedFilters();
-
-    const appendQueryParam = (query: Record<string, any>, key: string, value: string) => {
-        if (query[key]) {
-            query[key] = Array.isArray(query[key]) ? [...query[key], value] : [query[key], value];
-        } else {
-            query[key] = value;
-        }
-    };
 
     const isDefaultVisibleKey = (key: string) =>
         configuration.keys?.some((k) => k.key === key && k.visibleByDefault) ?? false;
@@ -87,11 +78,6 @@ export function useFilters(
         () => dismissedDefaultVisibleKeys.value.size > 0
     );
 
-    const isTimeRange = (filter: AppliedFilter) =>
-        typeof filter.value === "object" &&
-        "startDate" in filter.value &&
-        filter.key === "timeRange";
-
     const updateSearchQuery = (query: Record<string, any>) => {
         const trimmedQuery = searchQuery.value?.trim();
         delete query.q;
@@ -99,47 +85,8 @@ export function useFilters(
         delete query["filters[q][EQUALS]"];
 
         if (trimmedQuery && showSearchInput) {
-            const searchKey = legacyQuery ? "q" : "filters[q][EQUALS]";
-            query[searchKey] = trimmedQuery;
+            query["filters[q][EQUALS]"] = trimmedQuery;
         }
-    };
-
-    const clearLegacyParams = (query: Record<string, any>) => {
-        configuration.keys?.forEach(({key, valueType}) => {
-            delete query[key];
-            if (valueType === "key-value") {
-                Object.keys(query).forEach(queryKey => {
-                    if (queryKey.startsWith(`${key}.`)) delete query[queryKey];
-                });
-            }
-        });
-        delete query.startDate;
-        delete query.endDate;
-    };
-
-    /**
-     * Builds legacy query parameters from applied filters.
-     * @param query - Query object to populate
-     */
-    const buildLegacyQuery = (query: Record<string, any>) => {
-        getUniqueFilters(appliedFilters.value.filter(isValidFilter)).forEach(filter => {
-            if (configuration.keys?.find(k => k.key === filter.key)?.valueType === "key-value") {
-                (filter.value as string[]).forEach(item => {
-                    const [k, v] = item.split(":");
-                    query[`${filter.key}.${k}`] = v;
-                });
-            } else if (Array.isArray(filter.value)) {
-                filter.value.forEach(item =>
-                    appendQueryParam(query, filter.key, item?.toString() ?? "")
-                );
-            } else if (isTimeRange(filter)) {
-                const {startDate, endDate} = filter.value as { startDate: Date; endDate: Date };
-                query.startDate = startDate.toISOString();
-                query.endDate = endDate.toISOString();
-            } else {
-                query[filter.key] = filter.value?.toString() || "";
-            }
-        });
     };
 
     const hasValue = (filter: AppliedFilter): boolean => {
@@ -151,13 +98,8 @@ export function useFilters(
         const query = {...route.query};
         clearFilterQueryParams(query);
 
-        if (legacyQuery) {
-            clearLegacyParams(query);
-            buildLegacyQuery(query);
-        } else {
-            Object.assign(query, encodeFiltersToQuery(getUniqueFilters(appliedFilters.value
-                .filter(isValidFilter)), keyOfComparator));
-        }
+        Object.assign(query, encodeFiltersToQuery(getUniqueFilters(appliedFilters.value
+            .filter(isValidFilter)), keyOfComparator));
 
         updateSearchQuery(query);
 
@@ -185,21 +127,6 @@ export function useFilters(
         valueLabel
     });
 
-    const createFilter = (
-        key: string,
-        config: any,
-        value: string | string[]
-    ): AppliedFilter => {
-        const comparator = (config?.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
-        return createAppliedFilter(key, config, comparator, value,
-            config?.valueType === "key-value" && Array.isArray(value)
-                ? value.length > 1 ? `${value[0]} +${value.length - 1}` : value[0] ?? ""
-                : Array.isArray(value)
-                    ? value.join(", ")
-                    : value as string
-        , "EQUALS");
-    };
-
     const createTimeRangeFilter = (
         config: any,
         startDate: Date,
@@ -217,60 +144,6 @@ export function useFilters(
             ),
             comparatorLabel: "Is Between"
         };
-    };
-
-    /**
-     * Parses filters from legacy URL parameters.
-     * @returns Array of AppliedFilter objects
-     */
-    const parseLegacyFilters = (): AppliedFilter[] => {
-        const filtersMap = new Map<string, AppliedFilter>();
-        const keyValueFilters: Record<string, string[]> = {};
-
-        Object.entries(route.query).forEach(([key, value]) => {
-            if (["q", "search", "filters[q][EQUALS]"].includes(key)) return;
-
-            const kvConfig = configuration.keys?.find(k => key.startsWith(`${k.key}.`) && k.valueType === "key-value");
-            if (kvConfig) {
-                if (!keyValueFilters[kvConfig.key]) keyValueFilters[kvConfig.key] = [];
-                keyValueFilters[kvConfig.key].push(`${key.split(".")[1]}:${value}`);
-                return;
-            }
-
-            const config = configuration.keys?.find(k => k.key === key);
-            if (!config) return;
-
-            filtersMap.set(key, createFilter(key, config,
-                Array.isArray(value)
-                    ? (value as string[]).filter(v => v !== null)
-                    : config?.valueType === "multi-select"
-                        ? ((value as string) ?? "").split(",")
-                        : ((value as string) ?? "")
-            ));
-        });
-
-        Object.entries(keyValueFilters).forEach(([key, values]) => {
-            const config = configuration.keys?.find(k => k.key === key);
-            if (config) {
-                filtersMap.set(key, createFilter(key, config, values));
-            }
-        });
-
-        if (route.query.startDate && route.query.endDate) {
-            const timeRangeConfig = configuration.keys?.find(k => k.key === "timeRange");
-            if (timeRangeConfig) {
-                filtersMap.set(
-                    "timeRange",
-                    createTimeRangeFilter(
-                        timeRangeConfig,
-                        new Date(route.query.startDate as string),
-                        new Date(route.query.endDate as string)
-                    )
-                );
-            }
-        }
-
-        return Array.from(filtersMap.values());
     };
 
     const processFieldValue = (config: any, params: any[], _field: string, comparator: Comparators) => {
@@ -422,14 +295,10 @@ export function useFilters(
 
     const initializeFromRoute = () => {
         if (showSearchInput) {
-            searchQuery.value = legacyQuery
-                ? (route.query?.q as string) ?? ""
-                : (route.query?.["filters[q][EQUALS]"] as string) ?? "";
+            searchQuery.value = (route.query?.["filters[q][EQUALS]"] as string) ?? "";
         }
 
-        const parsedFilters = legacyQuery
-            ? parseLegacyFilters()
-            : parseEncodedFilters();
+        const parsedFilters = parseEncodedFilters();
 
         if (appliedFilters.value?.length === 0 && parsedFilters.length > 0) {
             markAsPreApplied(parsedFilters);
@@ -489,7 +358,6 @@ export function useFilters(
     };
 
     const defaultFilterOptions = {
-        legacyQuery,
         namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
@@ -506,7 +374,7 @@ export function useFilters(
         // Append time range as first filter to preserve order
         if (defaultFilterOptions.includeTimeRange) {
             const timeRangeConfig = configuration.keys?.find((k) => k.key === "timeRange");
-            const timeRangeQueryKey = legacyQuery ? "timeRange" : "filters[timeRange][EQUALS]";
+            const timeRangeQueryKey = "filters[timeRange][EQUALS]";
             const defaultTimeRange = defaultQuery[timeRangeQueryKey];
             const timeRangeValue = Array.isArray(defaultTimeRange) ? defaultTimeRange[0] : defaultTimeRange;
 
@@ -529,9 +397,6 @@ export function useFilters(
 
         const currentQuery = {...route.query};
         clearFilterQueryParams(currentQuery);
-        if (legacyQuery) {
-            clearLegacyParams(currentQuery);
-        }
         delete currentQuery.page;
 
         const query = {...currentQuery, ...defaultQuery};

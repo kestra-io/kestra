@@ -43,7 +43,6 @@
         prefix?: string;
         showSearchInput?: boolean;
         searchInputFullWidth?: boolean;
-        legacyQuery?: boolean;
         readOnly?: boolean;
         defaultScope?: boolean;
         defaultTimeRange?: boolean;
@@ -55,7 +54,6 @@
         prefix: "",
         showSearchInput: true,
         searchInputFullWidth: false,
-        legacyQuery: false,
         readOnly: false,
         defaultScope: undefined,
         defaultTimeRange: undefined,
@@ -82,7 +80,6 @@
     } = useFilters(
         props.configuration,
         props.showSearchInput,
-        props.legacyQuery,
         props.defaultScope,
         props.defaultTimeRange,
         props.defaultDuration,

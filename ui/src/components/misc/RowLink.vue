@@ -1,6 +1,6 @@
 <template>
     <div class="row-link" @click.prevent="$emit('click')" :class="{clickable: clickable}">
-        <TaskIcon
+        <KsTaskIcon
             v-if="icon"
             class="icon"
             :onlyIcon="true"
@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
 
     interface Props {
         icon?: string;

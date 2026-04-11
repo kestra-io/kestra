@@ -28,7 +28,7 @@
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
-                                                    <TaskIcon
+                                                    <KsTaskIcon
                                                         :onlyIcon="true"
                                                         :cls="namespace + '.' + cls"
                                                         :icons="pluginsStore.icons"
@@ -55,7 +55,8 @@
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, reactive} from "vue";
     import {useRoute} from "vue-router";
-    import {isEntryAPluginElementPredicate, TaskIcon, type Plugin, type PluginElement} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import {usePluginsStore} from "../../stores/plugins";
     import {cap} from "../../utils/filters";
 

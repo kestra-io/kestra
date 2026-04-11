@@ -13,7 +13,7 @@
                     @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
+                        <KsTaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
@@ -29,7 +29,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import Utils from "../../utils/utils";
     import TriggerVars from "./TriggerVars.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
     import {Execution} from "../../stores/executions";

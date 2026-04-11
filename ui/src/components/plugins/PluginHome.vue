@@ -47,7 +47,7 @@
                     </div>
                 </template>
                 <div class="plugin-card" @click="openGroup(plugin)">
-                    <TaskIcon
+                    <KsTaskIcon
                         class="size"
                         :onlyIcon="true"
                         :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
@@ -63,7 +63,8 @@
 <script setup lang="ts">
     import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import {isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
     import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";

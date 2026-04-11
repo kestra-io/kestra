@@ -7,7 +7,7 @@
         <template #secondary-header>
             <div class="plugin-secondary-header">
                 <div class="d-flex align-items-center gap-3">
-                    <TaskIcon
+                    <KsTaskIcon
                         class="plugin-icon"
                         :cls="pluginType"
                         onlyIcon
@@ -86,7 +86,8 @@
     import {ref, computed, onMounted, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {TaskIcon, SchemaToHtml} from "@kestra-io/ui-libs";
+    import {SchemaToHtml} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import DocsLayout from "../docs/DocsLayout.vue";
     import PluginHome from "./PluginHome.vue";
     import Markdown from "../layout/Markdown.vue";

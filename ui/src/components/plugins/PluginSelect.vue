@@ -12,7 +12,7 @@
             :value="item.cls"
         >
             <span class="options">
-                <TaskIcon
+                <KsTaskIcon
                     v-if="hasIcons"
                     :cls="item?.cls"
                     :onlyIcon="true"
@@ -28,7 +28,7 @@
         </ks-option>
 
         <template #prefix>
-            <TaskIcon
+            <KsTaskIcon
                 v-if="modelValue && hasIcons"
                 :cls="modelValue"
                 :onlyIcon="true"
@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onBeforeMount, ref} from "vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
         FULL_SCHEMA_INJECTION_KEY,

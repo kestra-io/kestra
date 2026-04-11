@@ -13,7 +13,7 @@
             </ks-icon>
         </div>
         <div class="task-icon d-none d-md-inline-block me-1">
-            <TaskIcon
+            <KsTaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 onlyIcon
@@ -192,7 +192,8 @@
     import AiIcon from "../ai/AiIcon.vue";
     import FlowUtils from "../../utils/flowUtils";
     import _groupBy from "lodash/groupBy";
-    import {TaskIcon, SECTIONS} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
     import permission from "../../models/permission";
@@ -205,7 +206,8 @@
 
     export default {
         components: {
-            TaskIcon,
+            KsTaskIcon,
+            KsExecutionStatus,
             Outputs,
             SubFlowLink,
             TaskEdit,

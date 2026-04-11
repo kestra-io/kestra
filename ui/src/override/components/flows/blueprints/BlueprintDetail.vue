@@ -81,7 +81,7 @@
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint?.includedTasks)]" :key="String(task)">
-                        <TaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
+                        <KsTaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
                     </div>
                 </div>
             </ks-col>
@@ -100,7 +100,7 @@
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue";
     import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue";
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
 
     import {useFlowStore} from "../../../../stores/flow";
     import {usePluginsStore} from "../../../../stores/plugins";

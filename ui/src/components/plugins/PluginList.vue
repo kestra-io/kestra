@@ -42,7 +42,7 @@
             @click.prevent="openGroup(plugin)"
         >
             <div class="content">
-                <TaskIcon
+                <KsTaskIcon
                     class="icon"
                     :onlyIcon="true"
                     :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
@@ -72,7 +72,8 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue";
-    import {TaskIcon, isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import {isPluginMatched} from "../../utils/pluginUtils";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";

@@ -74,7 +74,7 @@
                                 </div>
                                 <div class="bottom-section">
                                     <div class="task-icons">
-                                        <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
+                                        <KsTaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">
@@ -107,7 +107,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Errors from "../../../components/errors/Errors.vue";
     import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";

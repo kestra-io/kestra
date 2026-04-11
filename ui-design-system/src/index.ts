@@ -84,6 +84,7 @@ import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
 import KsTimePicker from "./components/Form/KsTimePicker.vue"
 import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
+import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import {vKsLoading} from "./components/Feedback/KsLoading"
@@ -190,6 +191,7 @@ export {
     KsTable,
     KsTableColumn,
     KsTag,
+    KsTaskIcon,
     KsText,
     KsTimeline,
     KsTimelineItem,
@@ -280,6 +282,7 @@ const KestraDesignSystem = {
         app.component("KsTable", KsTable)
         app.component("KsTableColumn", KsTableColumn)
         app.component("KsTag", KsTag)
+        app.component("KsTaskIcon", KsTaskIcon)
         app.component("KsText", KsText)
         app.component("KsTimeline", KsTimeline)
         app.component("KsTimelineItem", KsTimelineItem)
@@ -371,6 +374,7 @@ declare module "vue" {
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
         KsTag: typeof KsTag
+        KsTaskIcon: typeof KsTaskIcon
         KsText: typeof KsText
         KsTimeline: typeof KsTimeline
         KsTimelineItem: typeof KsTimelineItem

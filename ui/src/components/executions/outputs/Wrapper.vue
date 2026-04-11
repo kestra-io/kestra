@@ -28,7 +28,7 @@
                                 class="w-100 d-flex justify-content-between"
                             >
                                 <div class="pe-1 d-flex task">
-                                    <TaskIcon
+                                    <KsTaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
@@ -162,7 +162,7 @@
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import Editor from "../../inputs/Editor.vue";

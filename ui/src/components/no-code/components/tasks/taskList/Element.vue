@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
         <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
-            <TaskIcon :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
+            <KsTaskIcon :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
         </div>
 
         <div class="flex-grow-1 label">
@@ -39,7 +39,7 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY,
     } from "../../../injectionKeys";
 
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
 
     const emits = defineEmits(["removeElement", "moveElement"]);
 

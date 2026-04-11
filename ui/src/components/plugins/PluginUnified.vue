@@ -2,7 +2,7 @@
     <div>
         <div class="p-4">
             <h1>
-                <TaskIcon
+                <KsTaskIcon
                     class="icon"
                     :onlyIcon="true"
                     :cls="currentIcon"
@@ -47,7 +47,8 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue";
-    import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import RowLink from "../misc/RowLink.vue";
     import {usePluginsStore} from "../../stores/plugins";
     import Markdown from "../layout/Markdown.vue";

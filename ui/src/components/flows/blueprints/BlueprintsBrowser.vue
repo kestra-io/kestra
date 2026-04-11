@@ -357,7 +357,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .blueprints {
         width: 100%;
@@ -380,7 +379,7 @@
                 max-width: 50%;
 
                 :deep(span) {
-                    border-radius: $border-radius !important;
+                    border-radius: 0.25rem !important;
                     border: 1px solid var(--ks-border-primary);
                     width: 100%;
                     font-size: var(--kel-font-size-extra-small);
@@ -451,7 +450,7 @@
             color: var(--ks-content-primary);
             border-radius: 0.25rem;
             padding: 0.25rem 0.5rem;
-            font-size: 12px;
+            font-size: var(--kel-font-size-extra-small);
             background: var(--ks-tag-background-active);
         }
     }
@@ -461,7 +460,7 @@
         margin-top: 0.75rem;
 
         .title {
-            font-size: 1rem;
+            font-size: var(--kel-font-size-base);
             font-weight: 600;
             color: var(--ks-content-primary);
             line-height: 22px;

@@ -152,7 +152,7 @@
             display: block;
             margin-bottom: 0.25rem;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: var(--kel-font-size-small);
             color: var(--ks-content-secondary);
         }
     }
@@ -175,7 +175,7 @@
         display: flex;
         align-items: center;
         gap: 0.25rem;
-        font-size: 0.75rem;
+        font-size: var(--kel-font-size-extra-small);
 
         .key {
             color: var(--ks-content-primary);
@@ -198,7 +198,7 @@
     margin: 0 !important;
     padding: 0.5rem;
     border-radius: 0.25rem;
-    font-size: 1rem;
+    font-size: var(--kel-font-size-base);
     color: var(--ks-content-primary) !important;
     box-shadow: 0 2px 4px var(--ks-card-shadow);
 }
@@ -215,7 +215,7 @@
 :deep(.kel-input__inner::placeholder),
 :deep(.kel-textarea__inner::placeholder) {
     color: var(--ks-content-tertiary);
-    font-size: 0.875rem;
+    font-size: var(--kel-font-size-small);
 }
 
 :deep(footer.kel-dialog__footer) {

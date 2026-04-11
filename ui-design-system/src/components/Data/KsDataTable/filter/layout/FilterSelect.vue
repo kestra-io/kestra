@@ -105,7 +105,7 @@
             .form-label {
                 display: block;
                 color: var(--ks-content-secondary);
-                font-size: 0.75rem;
+                font-size: var(--kel-font-size-extra-small);
                 font-weight: 500;
                 margin-bottom: 0.25rem;
             }
@@ -116,17 +116,17 @@
 :deep(.kel-date-editor) {
     .kel-input__inner::placeholder {
         color: var(--ks-content-tertiary);
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
     }
 
     .kel-input__prefix .kel-input__icon {
         color: var(--ks-content-tertiary);
-        font-size: 16px;
+        font-size: var(--kel-font-size-base);
     }
 }
 
 .kel-select-dropdown__item {
-    font-size: 14px;
+    font-size: var(--kel-font-size-small);
 }
 
 .color-option {

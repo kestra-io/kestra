@@ -36,7 +36,7 @@
         margin: 0;
         line-height: 1.6;
         color: var(--kbs-body-color);
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
     }
 }
 
@@ -58,12 +58,12 @@
 
 :deep(.kel-dialog__title) {
     color: var(--kbs-body-color);
-    font-size: 18px;
+    font-size: var(--kel-font-size-medium);
     font-weight: 600;
 }
 
 :deep(.kel-dialog__body) {
-    padding: 20px;
+    padding: var(--kel-font-size-large);
     color: var(--kbs-body-color);
 }
 

@@ -666,7 +666,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
 .ai-copilot-onboarding-card {
     border: none;
@@ -731,14 +730,14 @@
     width: 69px;
     height: 69px;
     object-fit: contain;
-    border-radius: 20px;
+    border-radius: var(--kel-font-size-large);
 }
 
 .ai-onboarding-title {
     margin: 0;
     max-width: 760px;
     color: var(--ks-content-primary);
-    font-size: $font-size-2xl;
+    font-size: 2.188rem;
     line-height: 1.08;
     font-weight: 600;
     margin-bottom: 3rem;
@@ -762,14 +761,14 @@
     align-items: flex-start;
     gap: 8px;
     width: 100%;
-    font-size: $font-size-sm;
+    font-size: var(--kel-font-size-small);
     line-height: 1.35;
     white-space: normal;
 }
 
 .ai-onboarding-info-icon {
     color: var(--ks-content-info);
-    font-size: 16px;
+    font-size: var(--kel-font-size-base);
     flex-shrink: 0;
     align-self: center;
 }
@@ -785,7 +784,7 @@
     width: 100%;
     height: 152px;
     border: 1px solid transparent;
-    border-radius: 20px;
+    border-radius: var(--kel-font-size-large);
     background: var(--ks-background-input);
     box-shadow:
         0 8px 20px rgba(15, 23, 42, 0.035),
@@ -869,7 +868,7 @@
 .ai-custom-textarea {
     :deep(.kel-textarea__inner) {
         color: var(--ks-content-primary) !important;
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
         line-height: 1.6;
         resize: none;
 
@@ -924,12 +923,12 @@
         background: transparent !important;
         outline: none !important;
         box-shadow: none !important;
-        font-size: $font-size-md;
+        font-size: var(--kel-font-size-base);
         line-height: 1.45;
 
         &::placeholder {
             font-style: normal;
-            font-size: $font-size-md;
+            font-size: var(--kel-font-size-base);
         }
 
         &:disabled {
@@ -998,7 +997,7 @@
     border: none !important;
     color: var(--ks-content-tertiary) !important;
     padding: 4px !important;
-    font-size: 20px;
+    font-size: var(--kel-font-size-large);
 
     &:hover {
         color: var(--ks-content-primary) !important;
@@ -1049,7 +1048,7 @@
 }
 
 .shortcut-hint {
-    font-size: 11px;
+    font-size: var(--kel-font-size-extra-small);
     color: var(--ks-content-tertiary);
 }
 
@@ -1080,10 +1079,10 @@
 
     .ai-custom-textarea-onboarding {
         :deep(.kel-textarea__inner) {
-            font-size: $font-size-md;
+            font-size: var(--kel-font-size-base);
 
             &::placeholder {
-                font-size: $font-size-md;
+                font-size: var(--kel-font-size-base);
             }
         }
     }

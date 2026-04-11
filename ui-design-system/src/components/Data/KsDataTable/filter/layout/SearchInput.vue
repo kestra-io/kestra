@@ -70,7 +70,7 @@ $button-color: #8b8ba7;
 $svg-width: 17px;
 $input-font-size: 0.9rem;
 $placeholder-color: var(--ks-content-tertiary);
-$placeholder-font-size: 12px;
+$placeholder-font-size: var(--kel-font-size-extra-small);
 
 .form {
     position: relative;

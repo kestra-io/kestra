@@ -66,7 +66,7 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     font-family: inherit;
     height: 2rem;
     padding: 0.5rem 0.9375rem;
-    font-size: 0.875rem;
+    font-size: var(--kel-font-size-small);
     min-width: 7rem;
     gap: 0.375rem;
 
@@ -89,14 +89,14 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     &.ks-execution-status--large {
         height: 2.5rem;
         padding: 0.75rem 1.1875rem;
-        font-size: 0.875rem;
+        font-size: var(--kel-font-size-small);
         gap: 0.5rem;
     }
 
     &.ks-execution-status--small {
         height: 1.5rem;
         padding: 0.3125rem 0.6875rem;
-        font-size: 0.75rem;
+        font-size: var(--kel-font-size-extra-small);
         gap: 0.25rem;
     }
 }

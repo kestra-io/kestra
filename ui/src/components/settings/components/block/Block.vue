@@ -35,17 +35,16 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 section {
-    margin: calc($spacer * 2);
+    margin: calc(1rem * 2);
 
     & > h1.heading {
         display: flex;
         align-items: center;
-        margin-bottom: calc($spacer * 2);
+        margin-bottom: calc(1rem * 2);
         justify-content: space-between;
-        font-size: $font-size-xl;
+        font-size: 1.375rem;
         font-weight: 600;
 
         & .content {
@@ -54,14 +53,14 @@ section {
 
             & > span.kel-tooltip__trigger {
                 cursor: pointer;
-                margin-right: calc($spacer / 2);
+                margin-right: calc(1rem / 2);
             }
         }
 
         & .actions {
             display: flex;
             align-items: center;
-            gap: calc($spacer / 2);
+            gap: calc(1rem / 2);
         }
     }
 }

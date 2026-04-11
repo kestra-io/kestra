@@ -70,7 +70,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
     .onboarding-success-overlay {
         position: fixed;
@@ -105,7 +104,7 @@
         h3 {
             margin: 0 0 0.75rem;
             color: var(--ks-content-primary);
-            font-size: $font-size-lg;
+            font-size: var(--kel-font-size-large);
             font-weight: 700;
             line-height: 1.1;
         }
@@ -113,7 +112,7 @@
         p {
             margin: 0 0 1.5rem;
             color: var(--ks-content-secondary);
-            font-size: $font-size-md;
+            font-size: var(--kel-font-size-base);
             line-height: 1.5;
         }
     }

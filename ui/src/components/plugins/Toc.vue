@@ -208,7 +208,6 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .plugins-list {
         display: flex;
@@ -232,7 +231,7 @@
         }
 
         .kel-collapse-item__header {
-            font-size: 0.875rem;
+            font-size: var(--kel-font-size-small);
         }
 
         ul {
@@ -293,7 +292,7 @@
             }
 
             .kel-collapse-item__header {
-                font-size: 0.75rem;
+                font-size: var(--kel-font-size-extra-small);
             }
 
             ul {
@@ -308,7 +307,7 @@
                 }
 
                 h6 {
-                    font-size: 0.75rem;
+                    font-size: var(--kel-font-size-extra-small);
                 }
 
                 .toc-h4 {

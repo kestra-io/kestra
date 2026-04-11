@@ -25,13 +25,12 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .clipboard {
     z-index: 1;
     position: absolute;
-    top: $spacer;
-    right: $spacer;
+    top: 1rem;
+    right: 1rem;
     display: inline-flex;
 }
 </style>

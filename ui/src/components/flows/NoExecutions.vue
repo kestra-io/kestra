@@ -66,7 +66,7 @@
     .desc {
         line-height: var(--kel-font-line-height-primary);
         font-weight: 300;
-        font-size: 16px;
+        font-size: var(--kel-font-size-base);
         line-height: 28px;
         text-align: center;
         color: var(--ks-content-primary);

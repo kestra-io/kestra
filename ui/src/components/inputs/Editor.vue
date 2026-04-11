@@ -737,10 +737,9 @@
 </script>
 
 <style lang="scss">
-@import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 .highlight-lines{
-    background-color: rgba($base-blue-400, .2);
+    background-color: rgba(#3991ff, .2);
 }
 
 .editor-content-widget-content{
@@ -786,7 +785,7 @@
     .editor-absolute-container {
         position: absolute;
         top: 8px;
-        right: 20px;
+        right: var(--kel-font-size-large);
         z-index: 10;
         color: var(--ks-content-secondary);
         cursor: pointer;
@@ -824,7 +823,7 @@
             }
 
             &.theme-light {
-                background-color: $base-white;
+                background-color: var(--ks-white);
             }
         }
 

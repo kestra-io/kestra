@@ -84,7 +84,6 @@
 
 <style scoped lang="scss">
 @import "../../../styles/code.scss";
-@import "@kestra-io/ui-libs/src/scss/_color-palette";
 
 .element {
     cursor: pointer;
@@ -111,8 +110,8 @@
     }
 
     .playground-run-task{
-        color: $base-white;
-        background-color: $base-blue-400;
+        color: var(--ks-white);
+        background-color: var(--ks-blue-400);
         height: 16px;
         width: 16px;
         font-size: 4px;
@@ -124,7 +123,7 @@
         border: none;
     }
 
-    .delete-element {        color: $base-white;
+    .delete-element {        color: var(--ks-white);
         border: none;
         background-color: transparent;
     }

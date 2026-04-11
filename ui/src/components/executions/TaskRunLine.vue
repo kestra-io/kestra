@@ -409,7 +409,6 @@
     }
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .task-duration {
         padding: .375rem 0;
@@ -443,7 +442,7 @@
         .task-icon {
             width: 36px;
             padding: 6px 6px 6px 0;
-            border-radius: $border-radius-lg;
+            border-radius: 0.5rem;
             margin-left: -0.5rem;
         }
 
@@ -455,21 +454,21 @@
 
             span span {
                 color: var(--ks-content-primary);
-                font-size: 14px;
+                font-size: var(--kel-font-size-small);
 
                 html:not(.dark) & {
-                    color: $black;
+                    color: #26282D;
                 }
             }
         }
 
         .task-run-buttons {
             padding: 0 .5rem;
-            border: 1px solid rgba($white, .05);
+            border: 1px solid rgba(#FFFFFF, .05);
             background-color: var(--ks-button-background-secondary) !important;
             // FIXME: what does this mean?
             &:not(:hover) {
-                background: rgba($white, .10);
+                background: rgba(#FFFFFF, .10);
             }
         }
     }

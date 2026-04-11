@@ -361,19 +361,17 @@
         max-width: 90vw;
 
         .search-container {
-            --gs-font-size: 0.875rem;
-
             background: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);
             border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
             box-shadow:
                 0 8px 24px rgba(0,0,0,0.35);
             overflow: hidden;
-            font-size: var(--gs-font-size);
+            font-size: var(--kel-font-size-small);
         }
 
         :deep(.kel-input) {
-            font-size: var(--gs-font-size);
+            font-size: var(--kel-font-size-small);
 
             .kel-input__wrapper {
                 padding: 8px 16px;
@@ -427,7 +425,7 @@
         }
 
         .result-link {
-            font-size: var(--gs-font-size);
+            font-size: var(--kel-font-size-small);
             padding: 6px 10px;
             border-radius: 6px;
             color: var(--ks-content-primary);
@@ -468,7 +466,7 @@
         .result-hint {
             margin-left: auto;
             color: var(--ks-content-secondary);
-            font-size: var(--gs-font-size);
+            font-size: var(--kel-font-size-small);
             white-space: nowrap;
             transition: none;
         }
@@ -476,7 +474,7 @@
         .empty {
             padding: 12px 16px;
             color: var(--ks-content-secondary);
-            font-size: var(--gs-font-size);
+            font-size: var(--kel-font-size-small);
         }
     }
 </style>

@@ -45,11 +45,10 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .demo-layout {
-        padding: $spacer 0 !important;
+        padding: 1rem 0 !important;
         margin-top: 0 !important;
     }
 
@@ -75,8 +74,8 @@
 
         h2 {
             margin: 1rem 0;
-            line-height: 20px;
-            font-size: 14px;
+            line-height: var(--kel-font-size-large);
+            font-size: var(--kel-font-size-small);
             font-weight: 600;
             text-align: center;
         }
@@ -91,10 +90,10 @@
         .video-container {
             position: relative;
             padding-bottom: 56.25%;
-            border-radius: $border-radius;
+            border-radius: 0.25rem;
             border: 1px solid var(--ks-border-primary);
             overflow: hidden;
-            margin: $spacer auto;
+            margin: 1rem auto;
 
             iframe {
                 position: absolute;
@@ -115,7 +114,7 @@
         margin-bottom: -1.5rem;
     }
 
-    @include media-breakpoint-up(md) {
+    @include res(md) {
         .message-block,
         .msg-block {
             padding: 0 1rem;
@@ -123,38 +122,38 @@
 
         .enterprise-tag {
             padding: .125rem 0.75rem;
-            font-size: 0.8125rem;
+            font-size: var(--kel-font-size-small);
         }
 
         .msg-block {
             h2 {
-                font-size: 16px;
+                font-size: var(--kel-font-size-base);
                 line-height: 24px;
             }
 
             p {
-                font-size: 12px;
+                font-size: var(--kel-font-size-extra-small);
                 line-height: 18px;
             }
         }
     }
 
-    @include media-breakpoint-up(lg) {
+    @include res(lg) {
         .enterprise-tag {
-            font-size: 0.875rem;
+            font-size: var(--kel-font-size-small);
             padding: .125rem 1rem;
         }
 
         .msg-block {
             h2 {
-                font-size: 18px;
+                font-size: var(--kel-font-size-medium);
                 line-height: 26px;
                 margin: 1.5rem 0;
             }
 
             p {
-                font-size: 13px;
-                line-height: 20px;
+                font-size: var(--kel-font-size-extra-small);
+                line-height: var(--kel-font-size-large);
             }
         }
 
@@ -164,15 +163,15 @@
         }
     }
 
-    @include media-breakpoint-up(xl) {
+    @include res(xl) {
         .msg-block {
             h2 {
-                font-size: 20px;
+                font-size: var(--kel-font-size-large);
                 line-height: 30px;
             }
 
             p {
-                font-size: 1rem;
+                font-size: var(--kel-font-size-base);
                 line-height: 22px;
             }
         }

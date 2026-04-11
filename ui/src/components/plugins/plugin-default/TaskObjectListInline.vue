@@ -76,12 +76,12 @@
     .label {
         font-family: var(--kel-font-family-monospace);
         color: var(--ks-content-primary);
-        font-size: 0.875rem;
+        font-size: var(--kel-font-size-small);
         font-weight: 600;
     }
 
     .index-tag {
-        font-size: 0.75rem;
+        font-size: var(--kel-font-size-extra-small);
         font-weight: 700;
         color: var(--ks-content-tertiary);
         text-transform: uppercase;

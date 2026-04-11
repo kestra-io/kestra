@@ -87,16 +87,15 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #buttons {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: $spacer;
+    margin-bottom: 1rem;
 
     .kel-button {
-        font-size: $font-size-sm;
+        font-size: var(--kel-font-size-small);
     }
 }
 </style>

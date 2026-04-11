@@ -23,7 +23,7 @@
     :deep(.kel-input__inner) {
         &::placeholder {
             color: var(--ks-content-tertiary);
-            font-size: 14px;
+            font-size: var(--kel-font-size-small);
         }
     }
 </style>

@@ -16,19 +16,18 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .kel-row {
-    margin-bottom: calc($spacer / 1.5) !important;
+    margin-bottom: calc(1rem / 1.5) !important;
 
     .kel-col {
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: $font-size-sm;
+        font-size: var(--kel-font-size-small);
 
         & :deep(.kel-tag) {
-            margin-left: calc($spacer / 1.5);
+            margin-left: calc(1rem / 1.5);
             overflow: hidden;
             background-color: var(--ks-tag-background-active);
             color: var(--ks-tag-content);

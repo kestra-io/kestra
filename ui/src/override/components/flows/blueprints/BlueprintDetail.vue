@@ -246,11 +246,10 @@
     });
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .header-wrapper {
-        margin-top: calc($spacer * 2);
-        margin-bottom: $spacer;
+        margin-top: calc(1rem * 2);
+        margin-bottom: 1rem;
 
         .kel-card & {
             margin-top: 2.5rem;
@@ -266,7 +265,7 @@
             .back-button {
                 height: 32px;
                 margin-left: 0;
-                margin-right: calc($spacer);
+                margin-right: calc(1rem);
                 cursor: pointer;
                 border: none;
                 background: var(--ks-background-card);
@@ -279,7 +278,7 @@
 
             .blueprint-title {
                 font-weight: 600;
-                font-size: 20px;
+                font-size: var(--kel-font-size-large);
                 line-height: 30px;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -297,9 +296,9 @@
         }
 
         h4 {
-            margin-top: calc($spacer * 2);
+            margin-top: calc(1rem * 2);
             font-weight: 600;
-            font-size: 18.4px;
+            font-size: var(--kel-font-size-medium);
             line-height: 28px;
         }
 
@@ -318,9 +317,9 @@
                 min-width : 100px;
                 width: 100px;
                 height : 100px;
-                padding: $spacer;
-                margin-right: $spacer;
-                margin-bottom: $spacer;
+                padding: 1rem;
+                margin-right: 1rem;
+                margin-bottom: 1rem;
                 display: flex;
                 flex-wrap: wrap;
                 border: 1px solid var(--ks-border-primary);
@@ -357,7 +356,7 @@
         }
 
         .tag-box {
-            margin-right: calc($spacer / 3);
+            margin-right: calc(1rem / 3);
         }
     }
 </style>

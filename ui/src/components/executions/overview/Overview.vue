@@ -504,7 +504,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #overview {
     :deep(.kel-splitter-panel:has(> .sidebar:first-child)) {
@@ -513,7 +512,7 @@
 
     .sidebar > div,
     .main > div {
-        padding: calc($spacer * 1.5);
+        padding: calc(1rem * 1.5);
     }
 
     .sidebar {
@@ -522,7 +521,7 @@
         & :deep(.state),
         & :deep(.labels) {
             .kel-row {
-                margin-bottom: calc($spacer * 1.5);
+                margin-bottom: calc(1rem * 1.5);
             }
 
             & button {
@@ -540,7 +539,7 @@
         }
 
         & .actions .kel-row {
-            margin-top: calc($spacer * 1.5);
+            margin-top: calc(1rem * 1.5);
 
             & .kel-col {
                 &:empty {
@@ -549,9 +548,9 @@
 
                 & :deep(.kel-button) {
                     width: 100%;
-                    margin-bottom: calc($spacer / 1.5);
-                    padding: $spacer;
-                    font-size: $font-size-sm;
+                    margin-bottom: calc(1rem / 1.5);
+                    padding: 1rem;
+                    font-size: var(--kel-font-size-small);
                     overflow: hidden;
 
                     span:not(i span) {
@@ -571,7 +570,7 @@
             padding-bottom: 0;
 
             &:last-child {
-                padding-bottom: calc($spacer * 1.5);
+                padding-bottom: calc(1rem * 1.5);
             }
         }
 
@@ -582,29 +581,29 @@
 
             .kel-alert {
                 &:not(:first-child) {
-                    margin-top: $spacer;
+                    margin-top: 1rem;
                 }
 
                 & :deep(.kel-alert__icon) {
                     font-size: var(--kel-alert-icon-size);
                     width: var(--kel-alert-icon-size);
-                    margin-right: calc($spacer * 1.5);
+                    margin-right: calc(1rem * 1.5);
                 }
             }
         }
 
         #chart {
             > div {
-                padding: calc($spacer * 2);
+                padding: calc(1rem * 2);
                 border: 1px solid var(--kel-border-color-light);
-                border-radius: calc($spacer / 2);
+                border-radius: calc(1rem / 2);
                 background-color: var(--ks-background-card);
 
                 > section:first-child {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: $spacer;
+                    margin-bottom: 1rem;
 
                     & .heading {
                         display: flex;
@@ -612,8 +611,8 @@
                         overflow: hidden;
 
                         & .material-design-icon {
-                            margin-right: $spacer;
-                            font-size: $font-size-xl;
+                            margin-right: 1rem;
+                            font-size: 1.375rem;
                             color: var(--ks-content-link);
                         }
 
@@ -628,7 +627,7 @@
 
                     & .timerange {
                         .kel-select {
-                            width: calc($spacer * 10);
+                            width: calc(1rem * 10);
                         }
                     }
                 }
@@ -639,11 +638,11 @@
             padding: 0;
 
             & .kel-empty__image {
-                width: calc($spacer * 8) !important;
+                width: calc(1rem * 8) !important;
             }
 
             & .kel-empty__description {
-                margin-top: calc($spacer / 2);
+                margin-top: calc(1rem / 2);
             }
         }
     }

@@ -122,7 +122,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
 #welcome-success {
     position: relative;
@@ -142,7 +141,7 @@
         h1 {
             margin: 0.5rem 0 1rem;
             color: var(--ks-content-primary);
-            font-size: $font-size-lg;
+            font-size: var(--kel-font-size-large);
             font-weight: 700;
         }
 
@@ -150,7 +149,7 @@
             max-width: 460px;
             margin: 0;
             color: var(--ks-content-secondary);
-            font-size: $font-size-md;
+            font-size: var(--kel-font-size-base);
             line-height: 1.5;
         }
     }

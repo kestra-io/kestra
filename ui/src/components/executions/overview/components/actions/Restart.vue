@@ -399,19 +399,19 @@
 <style scoped lang="scss">
 .modal-header {
     .modal-title {
-        font-size: 16px;
+        font-size: var(--kel-font-size-base);
         font-weight: 600;
         margin: 0;
         color: var(--ks-color-text-primary);
     }
 }
 .execution-description {
-    font-size: 13px;
+    font-size: var(--kel-font-size-extra-small);
     color: var(--ks-color-text-secondary);
 }
 
 .section-title {
-    font-size: 14px;
+    font-size: var(--kel-font-size-small);
     font-weight: 600;
     margin: 20px 0 12px 0;
     color: var(--ks-color-text-primary);
@@ -442,7 +442,7 @@
     }
 
     :deep(.kel-radio__label) {
-        font-size: 13px;
+        font-size: var(--kel-font-size-extra-small);
         color: var(--kel-text-color-regular);
         padding-left: 8px;
     }

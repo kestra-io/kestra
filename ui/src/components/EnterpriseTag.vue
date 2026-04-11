@@ -9,8 +9,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
     @keyframes move-border {
         0%{background-position: 0% 0%}
@@ -39,25 +37,25 @@
 
     .enterprise-tag::after{
         z-index: -1;
-        background: $base-gray-100;
+        background: var(--ks-gray-100);
         top: 1px;
         left: 1px;
         bottom: 1px;
         right: 1px;
         html.dark & {
-            background: $base-gray-400;
+            background: var(--ks-gray-400);
         }
     }
 
     .enterprise-tag{
         position: relative;
-        background: $base-gray-200;
+        background: var(--ks-gray-200);
         padding: .125rem 0.5rem !important;
         border-radius: 1rem;
         display: inline-block;
         z-index: 2;
         margin: 0 auto;
-        font-size: 0.75rem !important;
+        font-size: var(--kel-font-size-extra-small) !important;
         html.dark &{
             background: #FBFBFB26;
         }
@@ -72,11 +70,11 @@
             right: 0;
             background-image:
                 // vertical flare
-                linear-gradient(0deg, rgba($base-gray-200, 0) 0%, $base-gray-200 50%, rgba($base-gray-200, 0) 100%),
+                linear-gradient(0deg, rgba(#cfd3d6, 0) 0%, var(--ks-gray-200) 50%, rgba(#cfd3d6, 0) 100%),
                 // horizontal flare
-                linear-gradient(90deg, rgba($base-gray-200, 0) 0%, $base-gray-200 50%, rgba($base-gray-200, 0) 100%),
+                linear-gradient(90deg, rgba(#cfd3d6, 0) 0%, var(--ks-gray-200) 50%, rgba(#cfd3d6, 0) 100%),
                 // flare effect
-                radial-gradient(circle, $base-gray-200 0%, rgba($base-gray-200, .1) 50%,rgba($base-gray-200, 0) 70%);
+                radial-gradient(circle, var(--ks-gray-200) 0%, rgba(#cfd3d6, .1) 50%,rgba(#cfd3d6, 0) 70%);
             background-size:  1px 100%, 100% 1px, 40% 40%;
             background-repeat: no-repeat;
             background-position: center, center, center;
@@ -89,9 +87,9 @@
                 width: 2rem;
                 background-image:
                     // vertical flare
-                    linear-gradient(0deg, rgba($base-gray-200, 0) 0%, rgba($base-gray-200, .7) 50%, rgba($base-gray-200, 0) 100%),
+                    linear-gradient(0deg, rgba(#cfd3d6, 0) 0%, rgba(#cfd3d6, .7) 50%, rgba(#cfd3d6, 0) 100%),
                     // horizontal flare
-                    linear-gradient(90deg, rgba($base-gray-200, 0) 0%, rgba($base-gray-200, .7) 50%, rgba($base-gray-200, 0) 100%);
+                    linear-gradient(90deg, rgba(#cfd3d6, 0) 0%, rgba(#cfd3d6, .7) 50%, rgba(#cfd3d6, 0) 100%);
                 background-size:  1px 50%, 50% 1px;
                 background-repeat: no-repeat;
                 background-position: center, center, center;

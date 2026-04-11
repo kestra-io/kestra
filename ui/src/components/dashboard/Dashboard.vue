@@ -182,7 +182,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .filterPadding {
     margin-top: 1.5rem;

@@ -29,7 +29,7 @@
                 </div>
             </div>
         </div>
-                
+
         <div v-else class="sub-sec">
             <div class="sub-grid">
                 <RowLink
@@ -84,13 +84,13 @@
     const subgroupTitles = ref<Record<string, string>>({});
 
     const isSubgroupView = computed(() => !!props.subgroup);
-    
+
     const availableSubgroups = computed(() => Object.keys(groupedElements.value));
-    
+
     const showElements = computed(() => !!props.subgroup || Object.keys(groupedElements.value).length === 1);
 
-    const displayTitle = computed(() => 
-        props.subgroup 
+    const displayTitle = computed(() =>
+        props.subgroup
             ? formatPluginTitle(subgroupTitles.value[getShortName(props.subgroup)]) ?? formatPluginTitle(getShortName(props.subgroup))
             : formatPluginTitle(plugin.value?.title)
     );
@@ -139,8 +139,8 @@
     };
 
     const loadSubgroupData = async (matchingPlugin: any, plugins: any[]) => {
-        const subgroupPlugin = plugins.find(p => 
-            p.group === props.group && 
+        const subgroupPlugin = plugins.find(p =>
+            p.group === props.group &&
             (p.subGroup === props.subgroup || p.subGroup?.endsWith(`.${props.subgroup}`))
         );
         if (subgroupPlugin?.title) subgroupTitles.value[getShortName(props.subgroup!)] = subgroupPlugin.title;
@@ -223,7 +223,7 @@
         margin-bottom: 1rem;
         color: var(--ks-content-primary);
         font-weight: 600;
-        font-size: 24px;
+        font-size: var(--kel-font-size-extra-large);
         line-height: 36px;
 
         .icon {

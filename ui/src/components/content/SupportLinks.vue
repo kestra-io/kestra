@@ -66,7 +66,7 @@ h2.support-title{
     border-radius: .5rem;
     border: 1px solid $black-3;
     span{
-        font-size: 24px;
+        font-size: var(--kel-font-size-extra-large);
         color: $white;
         margin-bottom: 1rem;
     }

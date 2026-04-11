@@ -138,7 +138,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/_color-palette";
 
     .tab-icon{
         color: var(--ks-content-inactive);
@@ -227,7 +226,7 @@
             align-items: center;
             gap: .5rem;
             width: 268px;
-            font-size: 1rem;
+            font-size: var(--kel-font-size-base);
             margin: .8rem 1rem;
             font-weight: normal;
             margin-bottom: 0.5rem;
@@ -260,14 +259,14 @@
         gap: 2px;
         button{
             padding: 0.2rem .5rem;
-            font-size: 14px;
+            font-size: var(--kel-font-size-small);
             color: var(--ks-content-tertiary);
             background-color: transparent;
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: $base-white;
-                background-color: $base-blue-500;
+                color: var(--ks-white);
+                background-color: var(--ks-blue-500);
             }
         }
     }

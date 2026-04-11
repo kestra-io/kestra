@@ -127,7 +127,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .dashboard-sections-container{
     container-type: inline-size;
@@ -156,7 +155,7 @@ section#charts {
             padding: 1.5rem;
             background: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);
-            border-radius: $border-radius;
+            border-radius: 0.25rem;
             box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
         }
 

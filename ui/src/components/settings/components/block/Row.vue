@@ -5,9 +5,8 @@
 </template>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .row {
-    margin-bottom: $spacer;
+    margin-bottom: 1rem;
 }
 </style>

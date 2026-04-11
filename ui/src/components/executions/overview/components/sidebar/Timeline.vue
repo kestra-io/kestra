@@ -61,16 +61,15 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .kel-collapse {
-    margin-top: $spacer;
+    margin-top: 1rem;
 
     & :deep(.kel-collapse-item__header),
     & :deep(.kel-collapse-item__content) {
         padding-bottom: 0;
         background-color: var(--ks-background-table-row);
-        font-size: $font-size-sm;
+        font-size: var(--kel-font-size-small);
     }
 
     & :deep(.kel-collapse-item__header) {
@@ -86,25 +85,25 @@
     }
 
     & :deep(.kel-collapse-item__title) {
-        margin-right: calc($spacer / 2);
+        margin-right: calc(1rem / 2);
         text-align: right;
     }
 }
 
 .kel-timeline {
     padding-left: 50%;
-    margin-top: $spacer;
+    margin-top: 1rem;
 
     &.is-narrow {
         padding-left: 0;
     }
 
     & :deep(.kel-timeline-item) {
-        padding-bottom: $spacer;
+        padding-bottom: 1rem;
 
         & * {
             line-height: 1.5;
-            font-size: $font-size-sm;
+            font-size: var(--kel-font-size-small);
         }
     }
 
@@ -137,7 +136,7 @@
         gap: 4px;
 
         .timeline-timestamp {
-            font-size: $font-size-sm;
+            font-size: var(--kel-font-size-small);
             color: var(--ks-content-tertiary);
         }
     }

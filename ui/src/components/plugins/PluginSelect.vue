@@ -139,8 +139,8 @@
 <style scoped lang="scss">
     :deep(div.wrapper) {
         display: inline-block;
-        width: 20px;
-        height: 20px;
+        width: var(--kel-font-size-large);
+        height: var(--kel-font-size-large);
         margin-right: 1rem;
     }
 
@@ -186,7 +186,7 @@
             }
 
             .title {
-                font-size: 0.75rem;
+                font-size: var(--kel-font-size-extra-small);
                 color: var(--ks-content-secondary);
                 line-height: 1.2;
                 white-space: normal;

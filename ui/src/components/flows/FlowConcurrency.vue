@@ -138,6 +138,6 @@
 
     .text-center {
         text-align: center;
-        padding: 20px;
+        padding: var(--kel-font-size-large);
     }
 </style>

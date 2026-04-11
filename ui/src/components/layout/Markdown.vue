@@ -1000,7 +1000,7 @@
 }
 :deep(.doc-code-block code) {
   font-family: "Source Code Pro", monospace;
-  font-size: 0.85rem;
+  font-size: var(--kel-font-size-small);
 }
 :deep(.doc-collapsible__content p) {
   margin: 0;

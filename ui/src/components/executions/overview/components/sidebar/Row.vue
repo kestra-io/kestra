@@ -44,16 +44,15 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .kel-row:not(:last-child) {
-    margin-bottom: calc($spacer / 2);
+    margin-bottom: calc(1rem / 2);
 }
 
 .kel-row {
     & :deep(.kel-text),
     & :deep(.kel-button) {
-        font-size: $font-size-sm;
+        font-size: var(--kel-font-size-small);
     }
 
     & :deep(.label) {
@@ -61,7 +60,7 @@
         align-items: center;
 
         & span.material-design-icon {
-            margin-right: calc($spacer / 2);
+            margin-right: calc(1rem / 2);
         }
 
         & .kel-text {

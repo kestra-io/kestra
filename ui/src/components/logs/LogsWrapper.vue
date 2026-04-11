@@ -276,8 +276,7 @@
     });
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
-
+    
     .shadow {
         box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
     }
@@ -298,7 +297,7 @@
             margin-bottom: 1rem;
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
-            padding: $spacer;
+            padding: 1rem;
             padding-top: .5rem;
             background-color: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);

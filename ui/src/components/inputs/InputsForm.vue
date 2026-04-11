@@ -767,7 +767,7 @@
 
 <style scoped lang="scss">
 .md-label {
-    height: 20px;
+    height: var(--kel-font-size-large);
 }
 
 .hint {

@@ -50,10 +50,10 @@
 <style lang="scss" scoped>
     .docsMenu {
         .depth-0 {
-            padding-left: 20px;
+            padding-left: var(--kel-font-size-large);
         }
         .depth-1 {
-            padding-left: 20px;
+            padding-left: var(--kel-font-size-large);
         }
         .depth-2 {
             padding-left: 30px;

@@ -979,7 +979,6 @@
     };
 </script>
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .log-wrapper {
     :deep(
@@ -1030,7 +1029,7 @@
         background-color: var(--ks-gray-200);
         padding: 10px;
         margin-top: 5px;
-        margin-bottom: 20px;
+        margin-bottom: var(--kel-font-size-large);
     }
 
     .log-lines {

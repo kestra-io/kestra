@@ -107,7 +107,7 @@
 
 .vsm--input {
     flex: 1;
-    font-size: 0.875em;
+    font-size: var(--kel-font-size-small);
 }
 
 .edit-row {
@@ -130,7 +130,7 @@
     width: 100%;
     text-decoration: none;
     color: var(--ks-content-primary);
-    font-size: 0.875em;
+    font-size: var(--kel-font-size-small);
 }
 
 .wrapper:not(.editing) .vsm--link:hover .buttons {

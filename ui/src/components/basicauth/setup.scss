@@ -80,7 +80,7 @@ $survey-group-spacing: 0.75rem;
     top: 0;
     right: 0;
     @extend %text-primary;
-    font-size: 14px;
+    font-size: var(--kel-font-size-small);
     font-weight: 400;
     transition: color 0.2s;
     background-color: var(--ks-button-background-secondary);
@@ -93,7 +93,7 @@ $survey-group-spacing: 0.75rem;
   .header-title {
     @extend %text-primary;
     font-weight: 600;
-    font-size: 24px;
+    font-size: var(--kel-font-size-extra-large);
     line-height: 36px;
   }
 
@@ -111,7 +111,7 @@ $survey-group-spacing: 0.75rem;
 
   .kel-text {
     color: var(--ks-content-tertiary);
-    font-size: 12px;
+    font-size: var(--kel-font-size-extra-small);
   }
 }
 
@@ -143,7 +143,7 @@ $survey-group-spacing: 0.75rem;
     &.is-process {
       color: var(--ks-content-primary);
       font-weight: 400;
-      font-size: 16px;
+      font-size: var(--kel-font-size-base);
     }
   }
 
@@ -179,7 +179,7 @@ $survey-group-spacing: 0.75rem;
     }
 
     .kel-radio__label {
-      font-size: 14px;
+      font-size: var(--kel-font-size-small);
       padding-left: 0;
       line-height: 1.4;
       align-self: center;
@@ -282,7 +282,7 @@ $survey-group-spacing: 0.75rem;
   }
 
   :deep(.kel-checkbox__label) {
-    font-size: 14px;
+    font-size: var(--kel-font-size-small);
     padding-left: 0;
     line-height: 1.4;
     align-self: center;
@@ -335,12 +335,12 @@ $survey-group-spacing: 0.75rem;
   }
 
   .success-title {
-    font-size: 24px;
+    font-size: var(--kel-font-size-extra-large);
     line-height: 36px;
   }
 
   .success-subtitle {
-    font-size: 18.4px;
+    font-size: var(--kel-font-size-medium);
     line-height: 28px;
   }
 
@@ -368,7 +368,7 @@ $survey-group-spacing: 0.75rem;
 }
 
 :deep(.kel-input__inner) {
-  font-size: 14px;
+  font-size: var(--kel-font-size-small);
 
   &::placeholder {
     color: var(--ks-content-tertiary) !important;

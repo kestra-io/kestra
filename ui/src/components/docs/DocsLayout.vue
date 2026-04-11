@@ -66,7 +66,7 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .sidebar {
         background: var(--ks-background-card);
@@ -82,11 +82,11 @@
 
         .toggle-btn {
             white-space:nowrap;
-            font-size: 12px;
+            font-size: var(--kel-font-size-extra-small);
         }
 
         > div > ul > li > span:first-child {
-            font-size: 12px;
+            font-size: var(--kel-font-size-extra-small);
         }
     }
 
@@ -197,7 +197,7 @@
 
         :deep(blockquote) {
             border-left: 4px solid #8997bd;
-            font-size: 1rem;
+            font-size: var(--kel-font-size-base);
             padding-left: 1rem;
 
             > p {
@@ -224,7 +224,7 @@
             padding-top: 56.75%;
             overflow: hidden;
             background-color: var(--ks-background-body);
-            border-radius: calc($spacer / 2);
+            border-radius: calc(1rem / 2);
             border: 1px solid var(--ks-border-secondary);
 
             iframe {
@@ -300,7 +300,7 @@
     .mobile-backdrop {
         display: none;
     }
-    
+
 
     @media (max-width: 991px) {
         .secondary-header {
@@ -426,7 +426,7 @@
         }
     }
 
-    @include media-breakpoint-up(md) {
+    @include res(md) {
         .mobile-menu-toggle {
             display: none;
         }
@@ -470,7 +470,7 @@
         }
     }
 
-    @include media-breakpoint-up(lg) {
+    @include res(lg) {
         .content {
             padding: 2rem;
             padding-top: 1rem;

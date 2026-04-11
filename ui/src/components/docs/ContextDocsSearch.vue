@@ -165,7 +165,7 @@
 
     .kel-input__inner {
         color: var(--ks-content-primary);
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
         height: 1.25rem;
         background: transparent;
     }
@@ -179,7 +179,7 @@
     }
 
     .search-icon {
-        font-size: 1rem;
+        font-size: var(--kel-font-size-base);
         color: var(--ks-content-tertiary);
     }
 
@@ -189,7 +189,7 @@
         top: 60%;
         transform: translateY(-50%);
         color: var(--ks-content-secondary);
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
     }
 
     .search-results {
@@ -231,11 +231,11 @@
             font-weight: 400;
             color: var(--ks-content-primary);
             margin-bottom: 2px;
-            font-size: 14px;
+            font-size: var(--kel-font-size-small);
         }
 
         .result-preview {
-            font-size: 12px;
+            font-size: var(--kel-font-size-extra-small);
             color: var(--ks-content-secondary);
             margin: 0;
             opacity: 0.8;
@@ -247,7 +247,7 @@
         text-align: center;
         cursor: default;
         padding: 6px 12px;
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
 
         &:hover {
             background: none;

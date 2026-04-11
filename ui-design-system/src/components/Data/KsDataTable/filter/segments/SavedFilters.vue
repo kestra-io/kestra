@@ -105,14 +105,14 @@
         top: 0;
 
         h6 {
-            font-size: 0.875rem;
+            font-size: var(--kel-font-size-small);
             font-weight: 700;
             margin-bottom: 0.25rem;
         }
 
         :deep(.kel-button) {
             color: var(--ks-content-tertiary);
-            font-size: 1rem;
+            font-size: var(--kel-font-size-base);
             cursor: pointer;
 
             &:hover {
@@ -146,7 +146,7 @@
 
             .saved-filter-name {
                 display: block;
-                font-size: 0.875rem;
+                font-size: var(--kel-font-size-small);
                 font-weight: 400;
                 margin-bottom: -0.375rem;
             }
@@ -167,7 +167,7 @@
 
                     .play-icon {
                         color: var(--ks-chart-success);
-                        font-size: 1rem;
+                        font-size: var(--kel-font-size-base);
                     }
                 }
 
@@ -190,7 +190,7 @@
 
     :deep(.kel-alert__icon) {
         color: var(--ks-content-info);
-        font-size: 1.5rem;
+        font-size: var(--kel-font-size-extra-large);
     }
 }
 </style>

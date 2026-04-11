@@ -110,7 +110,7 @@
     }
 
     li {
-        font-size: 0.8rem;
+        font-size: var(--kel-font-size-small);
         margin-top: .5rem;
 
     }

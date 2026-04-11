@@ -81,15 +81,14 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .card-title {
-        font-size: $font-size-xl !important;
+        font-size: 1.375rem !important;
         line-height: 1.375rem !important;
     }
 
     .card-text {
-        font-size: $font-size-sm !important;
+        font-size: var(--kel-font-size-small) !important;
         line-height: 1rem !important;
     }
 

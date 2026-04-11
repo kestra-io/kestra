@@ -72,7 +72,7 @@
 
         .header-content {
             .title {
-                font-size: 1.25rem;
+                font-size: var(--kel-font-size-large);
                 display: block;
             }
 
@@ -103,7 +103,7 @@
 
             .check-column {
                 flex-shrink: 0;
-                width: 20px;
+                width: var(--kel-font-size-large);
                 display: flex;
                 justify-content: center;
                 align-items: flex-start;

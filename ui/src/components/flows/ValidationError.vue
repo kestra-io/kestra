@@ -130,7 +130,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .kel-button.kel-button--default {
         transition: none;
@@ -151,7 +150,7 @@
 
         &:not(.success) span:not(.material-design-icon) {
             margin-left: .5rem;
-            font-size: $font-size-sm;
+            font-size: var(--kel-font-size-small);
         }
 
         &.warning {
@@ -169,7 +168,7 @@
         min-width: 20vw;
         max-width: 50vw;
         max-height: 500px;
-        border-radius: $border-radius-lg;
+        border-radius: 0.5rem;
         color: var(--ks-content-primary);
         overflow-y: auto;
 
@@ -179,21 +178,21 @@
         }
 
         .kel-header {
-            padding: $spacer;
+            padding: 1rem;
             background-color: var(--ks-background-table-header);
-            border-radius: $border-radius-lg $border-radius-lg 0 0;
-            font-size: $font-size-sm;
-            font-weight: $font-weight-bold;
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-size: var(--kel-font-size-small);
+            font-weight: 700;
 
             .material-design-icon {
-                font-size: 1.5rem;
+                font-size: var(--kel-font-size-extra-large);
                 margin-right: .5rem;
             }
         }
 
         .kel-main {
             padding: 1.5rem 1rem !important;
-            font-family: $font-family-monospace;
+            font-family: "Source Code Pro", monospace;
             background-color: var(--ks-background-card);
             white-space: normal;
             border-top: 1px solid var(--ks-border-primary);

@@ -58,7 +58,7 @@
 
         :deep(.kel-icon) {
             color: var(--ks-content-secondary);
-            font-size: 1rem;
+            font-size: var(--kel-font-size-base);
             position: absolute;
             top: -0.875rem;
             right: 0;
@@ -71,13 +71,13 @@
 
     .title {
         font-weight: 700;
-        font-size: 0.875rem;
+        font-size: var(--kel-font-size-small);
         line-height: 1.375rem;
     }
 
     .desc {
         margin: 0;
-        font-size: 0.75rem;
+        font-size: var(--kel-font-size-extra-small);
         line-height: 1.25rem;
         color: var(--ks-content-secondary);
     }

@@ -1042,13 +1042,13 @@
     box-shadow: 1px 1px 3px 1px var(--ks-chart-border-warning);
 
     :deep(.kel-alert__title) {
-        font-size: 16px;
+        font-size: var(--kel-font-size-base);
         color: var(--ks-content-warning);
         font-weight: bold;
     }
 
     :deep(.kel-alert__description) {
-        font-size: 12px;
+        font-size: var(--kel-font-size-extra-small);
     }
 
     :deep(.kel-alert__icon) {

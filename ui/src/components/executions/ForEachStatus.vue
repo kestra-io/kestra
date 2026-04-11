@@ -121,7 +121,7 @@
         align-items: center;
         gap: 8px;
         border-radius: 2px;
-        font-size: 0.75rem;
+        font-size: var(--kel-font-size-extra-small);
     }
 
     .counter {

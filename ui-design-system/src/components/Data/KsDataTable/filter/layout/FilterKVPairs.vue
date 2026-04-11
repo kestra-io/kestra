@@ -110,14 +110,14 @@
 
     .section-title {
         color: var(--ks-content-tertiary);
-        font-size: 12px;
+        font-size: var(--kel-font-size-extra-small);
         font-weight: 500;
         margin-bottom: 8px;
     }
 
     .empty-state {
         color: var(--ks-content-tertiary);
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
         font-style: italic;
     }
 
@@ -135,7 +135,7 @@
             border: 1px solid var(--ks-badge-border);
             background-color: var(--ks-badge-background);
             color: var(--ks-badge-content);
-            font-size: 0.75rem;
+            font-size: var(--kel-font-size-extra-small);
 
             :deep(.kel-tag__content) {
                 display: flex;
@@ -180,7 +180,7 @@
         .input-label {
             display: block;
             margin-bottom: 6px;
-            font-size: 12px;
+            font-size: var(--kel-font-size-extra-small);
             font-weight: 500;
             color: var(--ks-content-secondary);
         }
@@ -193,7 +193,7 @@
 }
 
 :deep(.kel-input__inner) {
-    font-size: 14px;
+    font-size: var(--kel-font-size-small);
 
     &::placeholder {
         color: var(--ks-content-tertiary);

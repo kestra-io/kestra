@@ -214,7 +214,7 @@
         gap: 8px;
         border-radius: 4px;
         text-overflow: ellipsis;
-        font-size: 12px;
+        font-size: var(--kel-font-size-extra-small);
         font-weight: 700;
         line-height: 26px;
         cursor: pointer;

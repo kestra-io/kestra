@@ -737,7 +737,7 @@
     .onboarding-overlay .description {
         margin: 0.75rem 0;
         color: var(--ks-content-primary);
-        font-size: 0.875rem;
+        font-size: var(--kel-font-size-small);
         line-height: 1.45;
     }
 

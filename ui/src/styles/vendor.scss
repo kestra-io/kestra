@@ -17,7 +17,7 @@
 
 // skiki
 .shiki {
-    font-size: 0.875em;
+    font-size: var(--kel-font-size-small);
 
     &.github-dark {
         background-color: var(--ks-background-card) !important;

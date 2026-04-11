@@ -61,11 +61,11 @@
             flex: 1;
             color: var(--ks-content-primary);
             text-transform: capitalize;
-            font-size: 1rem;
+            font-size: var(--kel-font-size-base);
         }
 
         .chevron {
-            font-size: 1.5rem;
+            font-size: var(--kel-font-size-extra-large);
             color: var(--ks-content-tertiary);
         }
     }

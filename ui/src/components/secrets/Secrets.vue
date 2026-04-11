@@ -112,7 +112,7 @@
 
         .header-block {
             p {
-                font-size: .875rem;
+                font-size: var(--kel-font-size-small);
             }
 
         }
@@ -166,7 +166,7 @@
             .header-block {
 
                 p {
-                    font-size: 0.8125rem;
+                    font-size: var(--kel-font-size-small);
                 }
             }
 
@@ -179,11 +179,11 @@
             .header-block {
 
                 h5 {
-                    font-size: 1.125rem;
+                    font-size: var(--kel-font-size-medium);
                 }
 
                 p {
-                    font-size: 0.75rem;
+                    font-size: var(--kel-font-size-extra-small);
                 }
             }
         }
@@ -198,7 +198,7 @@
 
         ul,
         li {
-            font-size: .875rem;
+            font-size: var(--kel-font-size-small);
         }
     }
 

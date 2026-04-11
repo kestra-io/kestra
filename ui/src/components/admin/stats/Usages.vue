@@ -168,7 +168,7 @@
         margin-bottom: 1.5rem;
 
         span {
-            font-size: 1.25rem;
+            font-size: var(--kel-font-size-large);
             font-weight: 600;
         }
     }
@@ -203,14 +203,14 @@
             flex-shrink: 0;
 
             :deep(.material-design-icon__svg) {
-                font-size: 24px;
+                font-size: var(--kel-font-size-extra-large);
                 color: var(--ks-content-secondary);
                 vertical-align: middle;
             }
         }
 
         .usage-label {
-            font-size: 14px;
+            font-size: var(--kel-font-size-small);
             color: var(--ks-content-primary);
             line-height: 1.2;
         }
@@ -222,7 +222,7 @@
         }
 
         .usage-value {
-            font-size: 14px;
+            font-size: var(--kel-font-size-small);
             line-height: 1.2;
             white-space: nowrap;
         }

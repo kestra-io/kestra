@@ -177,7 +177,7 @@
 
         .kel-dialog__title {
             color: var(--ks-content-primary, #ffffff);
-            font-size: 18px;
+            font-size: var(--kel-font-size-medium);
             font-weight: 600;
         }
     }
@@ -202,7 +202,7 @@
 
         h4 {
             color: var(--ks-content-primary, #ffffff);
-            font-size: 16px;
+            font-size: var(--kel-font-size-base);
             font-weight: 700;
             margin: 0 0 16px 0;
         }
@@ -254,7 +254,7 @@
                 .kel-radio__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 8px;
-                    font-size: 14px;
+                    font-size: var(--kel-font-size-small);
                 }
             }
         }
@@ -296,7 +296,7 @@
                 .kel-checkbox__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 10px;
-                    font-size: 14px;
+                    font-size: var(--kel-font-size-small);
                     line-height: 22px;
                 }
             }
@@ -332,7 +332,7 @@
 
             .kel-checkbox__label {
                 color: var(--ks-content-secondary, #9ca3af);
-                font-size: 14px;
+                font-size: var(--kel-font-size-small);
                 line-height: 22px;
                 padding-left: 10px;
             }

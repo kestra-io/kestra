@@ -160,7 +160,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 [id^="cascader-"] {
     overflow: hidden;
@@ -169,19 +168,19 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: $spacer;
+        padding-bottom: 1rem;
 
         > .kel-text {
             width: 100%;
             display: flex;
             align-items: center;
-            font-size: $font-size-xl;
+            font-size: 1.375rem;
         }
 
         > .kel-input {
             display: flex;
             align-items: center;
-            width: calc($spacer * 16);
+            width: calc(1rem * 16);
         }
     }
 
@@ -191,7 +190,7 @@
     }
 
     .empty {
-        font-size: $font-size-sm;
+        font-size: var(--kel-font-size-small);
         color: var(--ks-content-secondary);
     }
 
@@ -228,7 +227,7 @@
         & .kel-cascader-node {
             height: min-content;
             line-height: 36px;
-            font-size: $font-size-sm;
+            font-size: var(--kel-font-size-small);
             color: var(--ks-content-primary);
             padding: 0 30px 0 5px;
 

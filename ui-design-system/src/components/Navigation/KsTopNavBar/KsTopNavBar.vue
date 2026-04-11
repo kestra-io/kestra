@@ -152,7 +152,7 @@
         }
 
         .description {
-            font-size: 0.875rem;
+            font-size: var(--kel-font-size-small);
             margin-top: -0.5rem;
             color: var(--ks-content-secondary);
         }

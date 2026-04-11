@@ -24,9 +24,9 @@
     }
 
     .clear-icon * {
-        font-size: 20px;
+        font-size: var(--kel-font-size-large);
     }
     .clear-icon {
-        height: 20px;
+        height: var(--kel-font-size-large);
     }
 </style>

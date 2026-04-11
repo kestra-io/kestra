@@ -69,7 +69,6 @@
     });
 </script>
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #error {
     :deep(.kel-alert__content) {
@@ -94,7 +93,7 @@
             color: var(--ks-content-primary);
 
             & .logs {
-                padding-top: calc($spacer * 1.5);
+                padding-top: calc(1rem * 1.5);
 
                 > div {
                     width: 100%;
@@ -103,7 +102,7 @@
                         & .header {
                             display: flex;
                             flex-wrap: wrap;
-                            margin-bottom: calc($spacer / 2);
+                            margin-bottom: calc(1rem / 2);
 
                             & span {
                                 margin-left: 0;
@@ -117,7 +116,7 @@
                 }
 
                 .link {
-                    padding: $spacer 0 calc($spacer / 2) 0;
+                    padding: 1rem 0 calc(1rem / 2) 0;
                     border-top: 1px solid var(--ks-border-primary);
                     text-align: right;
                 }

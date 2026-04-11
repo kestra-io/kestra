@@ -4,8 +4,8 @@
 
 <style scoped lang="scss">
     .icon {
-        height: 20px;
-        min-width: 20px;
+        height: var(--kel-font-size-large);
+        min-width: var(--kel-font-size-large);
         background: center url("../../assets/icons/ai-agent.svg#file");
         background-repeat: no-repeat;
 

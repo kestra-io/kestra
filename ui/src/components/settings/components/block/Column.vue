@@ -32,14 +32,13 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .column {
-    margin-bottom: $spacer;
+    margin-bottom: 1rem;
 
     & p.label {
-        margin-bottom: calc($spacer / 3);
-        font-size: $font-size-sm;
+        margin-bottom: calc(1rem / 3);
+        font-size: var(--kel-font-size-small);
         font-weight: 500;
     }
 }

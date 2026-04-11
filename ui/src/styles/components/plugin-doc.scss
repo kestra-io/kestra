@@ -2,7 +2,7 @@
     background-color: var(--ks-background-panel) !important;
 
     :deep(.plugin-title) {
-        font-size: 1.25em;
+        font-size:  var(--kel-font-size-large);
     }
 
     .plugin-icon {
@@ -33,7 +33,7 @@
             padding: 0.75rem;
 
             .line {
-                font-size: 0.75rem;
+                font-size: var(--kel-font-size-extra-small);
             }
 
             .language, .copy {
@@ -74,7 +74,7 @@
             [id$="-body"] .type-box,
             [id$="-body"] .type-box *,
             [id$="-body"] span.type-box {
-                font-size: 0.75rem !important;
+                font-size: var(--kel-font-size-extra-small) !important;
             }
 
             .property {
@@ -142,7 +142,7 @@
 
         @media (max-width: 576px) {
             padding: 6px 12px;
-            font-size: 0.875rem;
+            font-size: var(--kel-font-size-small);
             min-width: auto;
         }
     }

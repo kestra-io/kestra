@@ -126,9 +126,10 @@
     })
 
     const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
-        .map(([section, childrenTitles]) => ({
-            section,
-            children: childrenTitles
+        .map(([section, childrenTitles]) =>({
+
+                section,
+                children: childrenTitles
                 .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
                     path.split("/").length === 2 && (sidebarTitle === name || title === name)
                 ))
@@ -138,6 +139,10 @@
 </script>
 
 <style scoped lang="scss">
+    ul > li > span:first-child {
+        font-size: var(--kel-font-size-extra-small);
+    }
+
     $scrollbar-width: 6px;
     $link-radius: 6px;
     $transition-timing: cubic-bezier(0.16, 1, 0.3, 1);

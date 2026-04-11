@@ -115,7 +115,7 @@
         }
 
         return Object.entries(sections).map(([section, childrenTitles]) => [
-            section, 
+            section,
             toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title))
         ]);
     });
@@ -131,6 +131,6 @@
 
 <style lang="scss" scoped>
     ul > li > span:first-child {
-        font-size: 12px;
+        font-size: var(--kel-font-size-extra-small);
     }
 </style>

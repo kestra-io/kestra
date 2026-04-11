@@ -170,7 +170,7 @@
                 width: calc(50% - 0.5rem);
 
                 :deep(.kel-checkbox__label) {
-                    font-size: 12px;
+                    font-size: var(--kel-font-size-extra-small);
                     color: var(--ks-content-secondary);
                 }
 
@@ -214,7 +214,7 @@
 
                 .option-label {
                     max-width: 250px;
-                    font-size: 14px;
+                    font-size: var(--kel-font-size-small);
                     font-weight: 400;
                     padding-right: 0.25rem;
                 }
@@ -224,17 +224,17 @@
         .no-options {
             text-align: center;
             color: var(--ks-content-tertiary);
-            font-size: 14px;
+            font-size: var(--kel-font-size-small);
 
             :deep(.kel-alert__icon) {
                 color: var(--ks-content-info);
-                font-size: 1.5rem;
+                font-size: var(--kel-font-size-extra-large);
             }
         }
     }
 
     :deep(.kel-input__inner) {
-        font-size: 14px;
+        font-size: var(--kel-font-size-small);
 
         &::placeholder {
             color: var(--ks-content-tertiary);

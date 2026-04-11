@@ -204,7 +204,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 .namespaces {
     margin: 0.25rem 0;
@@ -213,7 +212,7 @@
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
 
     &.system {
-        border-color: $base-blue-300;
+        border-color: var(--ks-blue-300);
 
         & span.system {
             line-height: 1.5rem;

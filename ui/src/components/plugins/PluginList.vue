@@ -337,7 +337,7 @@
         padding: 0.5rem;
 
         :deep(svg) {
-            font-size: 1.25rem;
+            font-size: var(--kel-font-size-large);
             position: absolute;
             bottom: -0.10em;
         }
@@ -348,7 +348,7 @@
         margin-left: auto;
 
         :deep(.kel-input__inner) {
-            font-size: 14px;
+            font-size: var(--kel-font-size-small);
 
             &::placeholder {
                 color: var(--ks-content-tertiary) !important;
@@ -400,14 +400,14 @@
 
             .name {
                 color: var(--ks-content-primary);
-                font-size: 1rem;
+                font-size: var(--kel-font-size-base);
                 line-height: 1.5;
             }
         }
 
         .chevron-right-icon {
             color: var(--ks-content-tertiary);
-            font-size: 1.5rem;
+            font-size: var(--kel-font-size-extra-large);
         }
     }
 }

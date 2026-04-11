@@ -262,9 +262,8 @@
     });
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
-    $spacing: 20px;
+    $spacing: var(--kel-font-size-large);
 
     .main-editor {
         padding: .5rem 0px;
@@ -308,7 +307,7 @@
                     height: 100%;
                     background: var(--ks-background-card);
                     border: 1px solid var(--ks-border-primary);
-                    border-radius: $border-radius;
+                    border-radius: 0.25rem;
                 }
             }
         }

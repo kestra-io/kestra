@@ -212,7 +212,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 0.875rem;
+        font-size: var(--kel-font-size-small);
     }
 
     .label-anyof{
@@ -222,8 +222,8 @@
     .type-tag {
         background-color: var(--ks-tag-background-active);
         color: var(--ks-tag-content);
-        font-size: 12px;
-        line-height: 20px;
+        font-size: var(--kel-font-size-extra-small);
+        line-height: var(--kel-font-size-large);
         padding: 0 8px;
         padding-bottom: 2px;
         border-radius: 8px;

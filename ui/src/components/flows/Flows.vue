@@ -160,20 +160,20 @@
                     >
                         <template #default="scope">
                             <div @click.prevent.stop>
-                                            <router-link
-                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
-                                :to="{
-                                    name: 'executions/update',
-                                    params: {
-                                        namespace: scope.row.namespace,
-                                        flowId: scope.row.id,
-                                        id: getLastExecution(scope.row).id
-                                    }
-                                }"
-
-                            >
-                                <ks-date-ago :date="getLastExecution(scope.row)?.startDate" inverted />
-                            </router-link></div>
+                                <router-link
+                                    v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                    :to="{
+                                        name: 'executions/update',
+                                        params: {
+                                            namespace: scope.row.namespace,
+                                            flowId: scope.row.id,
+                                            id: getLastExecution(scope.row).id
+                                        }
+                                    }"
+                                >
+                                    <ks-date-ago :date="getLastExecution(scope.row)?.startDate" inverted />
+                                </router-link>
+                            </div>
                         </template>
                     </ks-table-column>
 
@@ -184,7 +184,8 @@
                     >
                         <template #default="scope">
                             <div
-                                @click.prevent.stopv-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                @click.prevent.stop
+                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
                                 class="d-flex justify-content-between align-items-center"
                             >
                                 <router-link
@@ -196,7 +197,6 @@
                                             id: getLastExecution(scope.row).id
                                         }
                                     }"
-
                                 >
                                     <KsExecutionStatus :status="getLastExecution(scope.row).status" size="small" />
                                 </router-link>

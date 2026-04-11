@@ -61,7 +61,7 @@
                 "</svg>";
         }
 
-        let color = (isDark() ? cssVar("--ks-gray-900") : cssVar("--ks-black")) || cssVar("--ks-white");
+        let color = (isDark ? cssVar("--ks-gray-900") : cssVar("--ks-black")) || cssVar("--ks-white");
 
         if (props.theme) {
             color = (props.theme === "dark" ? cssVar("--ks-gray-900") : cssVar("--ks-black")) || color;

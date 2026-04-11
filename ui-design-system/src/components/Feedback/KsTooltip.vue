@@ -1,6 +1,8 @@
 <script setup lang="ts">
     import {ElTooltip, provideGlobalConfig} from "element-plus"
+    import {computed} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import {useTheme} from "../../composables/useTheme"
 
     provideGlobalConfig({namespace: "kel"})
 
@@ -21,7 +23,11 @@
         autoClose: undefined,
     })
 
-    const filteredProps = useFilteredProps(props)
+    const {isDark} = useTheme()
+
+    const effectValue = computed(() => props.effect ?? (isDark.value ? "light" : "dark"))
+
+    const filteredProps = useFilteredProps(props, ["effect"])
 
     defineSlots<{
         default?(): unknown
@@ -34,6 +40,7 @@
         :persistent="false"
         :hideAfter="0"
         transition=""
+        :effect="effectValue"
         v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default><slot /></template>

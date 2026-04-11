@@ -120,10 +120,20 @@ export default () => {
             },
         }),
         tooltip: {
+            backgroundColor: cssVar("--kel-bg-color-overlay"), 
+            borderColor: cssVar("--kel-border-color"),
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: [8, 12],
+            textStyle: {
+                color: cssVar("--kel-text-color-primary"),
+                fontSize: 12,
+                fontFamily: cssVar("--kbs-font-sans-serif"),
+            },
+            extraCssText: "box-shadow: var(--kel-box-shadow);",
             axisPointer: {
                 shadowStyle: {
                     color: cssVar("--ks-purple-900", 0.1)
-
                 }
             }
         },

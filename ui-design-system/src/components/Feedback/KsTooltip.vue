@@ -16,6 +16,7 @@
         disabled?: boolean,
         autoClose?: boolean | number
     }>(), {
+        effect: "dark",
         enterable: undefined,
         autoClose: undefined,
     })

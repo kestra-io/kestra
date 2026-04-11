@@ -36,7 +36,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {content: "This is a tooltip", effect: "light"},
+    args: {content: "This is a tooltip"},
 }
 
 export const Placements: Story = {

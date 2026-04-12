@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {Utils} from "@kestra-io/ui-libs";
+    import {stringUtils} from "@kestra-io/ui-design-system";
     import LowCodeEditor from "./LowCodeEditor.vue";
     import {useFlowStore} from "../../stores/flow";
 
@@ -64,7 +64,7 @@
                 return (
                     swappedTaskSplit.join(".") +
                     "." +
-                    Utils.afterLastDot(expandedSubflow)
+                    stringUtils.afterLastDot(expandedSubflow)
                 );
             }
             if (expandedSubflow === swappedTasks[1]) {
@@ -74,7 +74,7 @@
                 return (
                     swappedTaskSplit.join(".") +
                     "." +
-                    Utils.afterLastDot(expandedSubflow)
+                    stringUtils.afterLastDot(expandedSubflow)
                 );
             }
 
@@ -89,7 +89,7 @@
             editorViewType: "YAML",
             topologyVisible: true,
         })
-        
+
         if (currentIsFlow && source) {
             await flowStore.loadGraphFromSource({
                 flow: source,
@@ -97,7 +97,7 @@
                 console.error("Error loading graph:", error);
             })
         }
-        
+
         return result
     }
 </script>

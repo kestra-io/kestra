@@ -108,7 +108,7 @@
     import {useApiStore} from "../../../../stores/api";
 
     import {canCreate} from "override/composables/blueprintsPermissions";
-    import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 
     const props = withDefaults(defineProps<{
         blueprintId: string;
@@ -145,7 +145,7 @@
 
     const parsedFlow = computed(() => {
         return blueprint.value?.source ? {
-            ...parseFlow(blueprint.value.source),
+            ...YAML_UTILS.parse(blueprint.value.source),
             source: blueprint.value.source
         } : {};
     });

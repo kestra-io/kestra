@@ -18,8 +18,49 @@
         width: 1rem;
         bottom: 0;
     }
+
+    &.icon-2x {
+        height: 2em;
+        width: 2em;
+    }
+
+    &.icon-2x > .material-design-icon__svg {
+        height: 2em;
+        width: 2em;
+    }
+
+    &.icon-3x {
+        height: 3em;
+        width: 3em;
+    }
+
+    &.icon-3x > .material-design-icon__svg {
+        height: 3em;
+        width: 3em;
+    }
 }
 
+// nprogress
+#nprogress {
+    .bar {
+        background: var(--ks-purple-500);
+        z-index: 9999;
+    }
+
+    .spinner {
+        top: 8px;
+        right: 8px;
+    }
+
+    .peg {
+        box-shadow: 0 0 10px var(--ks-purple-500), 0 0 5px var(--ks-purple-500);
+    }
+
+    .spinner-icon {
+        border-top-color: var(--ks-purple-500);
+        border-left-color: var(--ks-purple-500);
+    }
+}
 
 // global
 html, body {

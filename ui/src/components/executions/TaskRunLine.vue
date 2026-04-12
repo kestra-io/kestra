@@ -192,7 +192,7 @@
     import AiIcon from "../ai/AiIcon.vue";
     import FlowUtils from "../../utils/flowUtils";
     import _groupBy from "lodash/groupBy";
-    import {SECTIONS} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "@kestra-io/ui-design-system";
     import {KsTaskIcon} from "@kestra-io/ui-design-system";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";

@@ -9,6 +9,9 @@
 </template>
 
 <script lang="ts" setup>
+    import "./styles/vendor.scss"
+    import "./styles/app.scss"
+
     import {ref, computed, watch, onMounted} from "vue";
     import {useRoute} from "vue-router";
     import {useApiStore} from "./stores/api";
@@ -24,8 +27,6 @@
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue";
-    import "./styles/vendor.scss"
-    import "./styles/app.scss"
     import {usePluginsStore} from "./stores/plugins";
 
     const loaded = ref(false);

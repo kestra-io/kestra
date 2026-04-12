@@ -1,17 +1,9 @@
-@use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
-
+@use "@kestra-io/ui-design-system/src/assets/styles/variables.scss" as design;
 @use "@kestra-io/ui-design-system/src/assets/styles/index.scss" as *;
 
 // element-plus
 @use "layout/element-plus-overload";
-
-// components
-@use "layout/charts";
-@use "components/vue-material-design-icon";
-@use "components/vue-nprogress" with (
-    $indigo: global-var.$indigo
-);
 
 @use "components/sidebar-menu";
 
@@ -102,7 +94,7 @@ main {
 }
 
 // status
-@each $key, $value in global-var.$colors {
+@each $key, $value in design.$colors {
     .bg-#{$key} {
         background-color: $value;
     }
@@ -163,9 +155,8 @@ html.full-screen {
     --kel-transition-duration: 0.2s;
     --kel-transition-duration-fast: 0.2s;
     --top-navbar-height: 79px;
-    #{--menu-width}: global-var.$menu-width;
+    #{--menu-width}: 268px;
     #{--menu-collapsed-width}: 65px;
-    #{--spacer}: global-var.$spacer;
 }
 
 body{

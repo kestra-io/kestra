@@ -36,7 +36,7 @@
     import {useI18n} from "vue-i18n";
     import {useFlowStore} from "../../stores/flow";
     import {getFormat} from "../dashboard/composables/charts";
-    import {cssVariable} from "@kestra-io/ui-libs";
+    import {cssVar} from "@kestra-io/ui-design-system"
     import {KsBar} from "@kestra-io/ui-design-system";
     import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
     import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
@@ -85,7 +85,7 @@
             {
                 name: `${t(aggregationLabel)} ${t("of")} ${route.query.metric}`,
                 data: aggregations.map((e) => e.value ?? 0),
-                itemStyle: {color: cssVariable("--kel-color-success")},
+                itemStyle: {color: cssVar("--kel-color-success")},
             },
         ];
     });

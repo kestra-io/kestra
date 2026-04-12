@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue";
-    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
     import {processFlowYaml} from "./composables/useDashboards";
@@ -90,7 +90,7 @@
         charts.value = [];
 
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: stringify(chart)});
+            charts.value.push({...chart, content: YAML_UTILS.stringify(chart)});
         }
     };
 
@@ -109,7 +109,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
         isDashboardBundledWithUI.value = true;
     }
 

@@ -355,7 +355,7 @@ $survey-group-spacing: 0.75rem;
 
 :deep(.kel-card__body) {
   @extend %flexcol;
-  gap: calc(var(--spacer) / 2);
+  gap: calc(1rem / 2);
 }
 
 :deep(.kel-form-item.is-error .kel-input__wrapper) {

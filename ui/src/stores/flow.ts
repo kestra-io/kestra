@@ -2,7 +2,7 @@ import {computed, h, ref, watch} from "vue";
 import {KsMessageBox} from "@kestra-io/ui-design-system";
 import permission from "../models/permission";
 import action from "../models/action";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
@@ -305,7 +305,7 @@ export const useFlowStore = defineStore("flow", () => {
                         content: error.response.data
                     }
                 }
-                
+
                 throw error;
             }
         } else {
@@ -436,7 +436,7 @@ export const useFlowStore = defineStore("flow", () => {
         overallTotal.value = 1;
 
         return response.data;
-        
+
     }
     function loadTask(options: { namespace: string, id: string, taskId: string, revision?: string }) {
         return axios.get(
@@ -726,7 +726,7 @@ function deleteFlowAndDependencies() {
                 flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
             }
         }
-        
+
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
                 const validResults = response.data[0] ?? {};
@@ -740,7 +740,7 @@ function deleteFlowAndDependencies() {
                 }
 
                 flowValidation.value = validResults;
-                
+
                 return validResults
             })
     }

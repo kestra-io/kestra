@@ -39,7 +39,7 @@
 </script>
 
 <style scoped lang="scss">
-    @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
+    @use "@kestra-io/ui-design-system/src/assets/styles/variables" as colorPalette;
 
     .tabs-wrapper {
         display: flex;
@@ -56,20 +56,20 @@
         .dark & {
             background-image: linear-gradient(
                 to right,
-                colorPalette.$base-blue-500 0%,
-                colorPalette.$base-blue-700 35%,
-                rgba(colorPalette.$base-blue-700, .1) 55%,
-                rgba(colorPalette.$base-blue-700, 0) 100%
+                colorPalette.$blue-500 0%,
+                colorPalette.$blue-700 35%,
+                rgba(colorPalette.$blue-700, .1) 55%,
+                rgba(colorPalette.$blue-700, 0) 100%
             );
         }
 
         .playgroundMode & {
             background-image: linear-gradient(
                 to right,
-                colorPalette.$base-blue-500 0%,
-                colorPalette.$base-blue-500 35%,
-                rgba(colorPalette.$base-blue-500, .1) 55%,
-                rgba(colorPalette.$base-blue-500, 0) 100%
+                colorPalette.$blue-500 0%,
+                colorPalette.$blue-500 35%,
+                rgba(colorPalette.$blue-500, .1) 55%,
+                rgba(colorPalette.$blue-500, 0) 100%
             );
         }
     }

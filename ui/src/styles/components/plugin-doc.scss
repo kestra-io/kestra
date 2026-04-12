@@ -20,7 +20,7 @@
         :deep(.markdown) {
             display: flex;
             flex-direction: column;
-            gap: var(--spacer);
+            gap: 1rem;
         }
 
         :deep(button) {

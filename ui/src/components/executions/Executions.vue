@@ -372,7 +372,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import {ref, computed, watch, h, useTemplateRef} from "vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
     import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/ui-design-system";
 
     import Delete from "vue-material-design-icons/Delete.vue";

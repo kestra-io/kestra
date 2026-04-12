@@ -105,8 +105,8 @@
     import Editor from "./Editor.vue";
 
     import {Topology} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {SECTIONS} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
     import {useCoreStore} from "../../stores/core";

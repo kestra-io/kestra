@@ -274,7 +274,7 @@
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import * as FILTERS from "../../utils/filters";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
     import {useFlowFilter} from "../filter/configurations";
 
     import Plus from "vue-material-design-icons/Plus.vue";

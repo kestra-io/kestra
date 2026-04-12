@@ -1,6 +1,6 @@
 import type cytoscape from "cytoscape";
 
-import {cssVariable} from "@kestra-io/ui-libs";
+import {cssVar} from "@kestra-io/ui-design-system"
 
 import {States} from "./types";
 
@@ -33,7 +33,7 @@ const nodeBase = (): cytoscape.Css.Node => ({
     label: "data(flow)",
     "border-width": 2,
     "border-style": "solid",
-    color: cssVariable("--ks-content-primary"),
+    color: cssVar("--ks-content-primary"),
     "font-size": 10,
     "text-valign": "bottom",
     "text-margin-y": 10,
@@ -53,15 +53,15 @@ const edgeAnimated: cytoscape.Css.Edge = {
 
 function nodeColors(type: keyof States = "default"): Partial<cytoscape.Css.Node> {
     return {
-        "background-color": cssVariable(VARIABLES.node.background[type])!,
-        "border-color": cssVariable(VARIABLES.node.border[type])!,
+        "background-color": cssVar(VARIABLES.node.background[type])!,
+        "border-color": cssVar(VARIABLES.node.border[type])!,
     };
 }
 
 export function edgeColors(type: keyof Omit<States, "assets"> = "default"): Partial<cytoscape.Css.Edge> {
     return {
-        "line-color": cssVariable(VARIABLES.edge[type])!,
-        "target-arrow-color": cssVariable(VARIABLES.edge[type])!,
+        "line-color": cssVar(VARIABLES.edge[type])!,
+        "target-arrow-color": cssVar(VARIABLES.edge[type])!,
     };
 }
 

@@ -131,7 +131,7 @@
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
-    import {STATES} from "@kestra-io/ui-libs";
+    import {STATES} from "@kestra-io/ui-design-system";
 
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";

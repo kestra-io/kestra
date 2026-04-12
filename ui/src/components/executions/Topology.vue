@@ -25,7 +25,7 @@
 <script>
     import throttle from "lodash/throttle";
     import {mapStores} from "pinia";
-    import {Utils} from "@kestra-io/ui-libs";
+    import {stringUtils} from "@kestra-io/ui-design-system";
     import {State} from "@kestra-io/ui-design-system";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {useExecutionsStore} from "../../stores/executions";
@@ -147,7 +147,7 @@
                 }
 
                 const taskIdMatchingTaskrun = parentExecution.taskRunList
-                    .filter(taskRun => taskRun.taskId === Utils.afterLastDot(subflow))?.[0];
+                    .filter(taskRun => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0];
                 const executionId = taskIdMatchingTaskrun?.outputs?.executionId;
 
                 if(!executionId) {

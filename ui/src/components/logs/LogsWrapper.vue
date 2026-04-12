@@ -77,7 +77,7 @@
         readRouteLevelFilter
     } from "@kestra-io/ui-design-system";
     import {useRouteFilterPolicy} from "@kestra-io/ui-design-system";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";
     import useRouteContext from "../../composables/useRouteContext";
@@ -276,7 +276,7 @@
     });
 </script>
 <style scoped lang="scss">
-    
+
     .shadow {
         box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
     }

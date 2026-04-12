@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../utils/types";
@@ -257,7 +257,7 @@
                 isPluginSchemaLoading.value = false;
             }
         }
-    }, {immediate: true}); 
+    }, {immediate: true});
 
     const resolvedType = computed<string>(() => {
         if(resolvedTypes.value.length > 1 && selectedTaskType.value){

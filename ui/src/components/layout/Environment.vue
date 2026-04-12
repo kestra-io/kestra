@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-    import {cssVariable} from "@kestra-io/ui-libs";
+    import {cssVar} from "@kestra-io/ui-design-system"
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";
     import {computed} from "vue";
@@ -26,7 +26,7 @@
             return miscStore.configs.environment.color;
         }
 
-        return cssVariable("--kel-color-info");
+        return cssVar("--kel-color-info");
     })
 
 </script>

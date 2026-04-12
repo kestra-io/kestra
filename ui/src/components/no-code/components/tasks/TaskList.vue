@@ -46,7 +46,7 @@
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
     import Creation from "./taskList/buttons/Creation.vue";
     import Element from "./taskList/Element.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 
     import {CollapseItem} from "../../utils/types";
 
@@ -66,7 +66,7 @@
     const blockSchemaPath = computed(() => {
         const rootParts = props.root ? props.root.split(".") : []
         if(rootParts.length > 1){
-            // if second part is a property not defined in properties, 
+            // if second part is a property not defined in properties,
             // it can only be defined by additionalProperties
             const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]
             if(s && s.properties?.[rootParts[1]] === undefined && s.additionalProperties){

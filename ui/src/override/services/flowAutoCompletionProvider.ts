@@ -1,7 +1,7 @@
 import {ComputedRef} from "vue";
 import type {JSONSchema} from "@kestra-io/ui-libs";
-import {YamlElement} from "@kestra-io/ui-libs";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {YamlElement} from "@kestra-io/ui-design-system";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 import {QUOTE, YamlAutoCompletion, functionToSnippet} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-design-system";

@@ -18,7 +18,8 @@ import throttle from "lodash/throttle";
 
 import cytoscape from "cytoscape";
 
-import {State, cssVariable} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/ui-design-system";
+import {cssVar} from "@kestra-io/ui-design-system"
 
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../utils/types";
 import type {Types, Node, Edge, Element} from "../utils/types";
@@ -101,7 +102,7 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
  */
 function getStateColor(node?: cytoscape.NodeSingular, state?: string): string {
     const resolved = state ?? node?.data("metadata")?.state;
-    return resolved ? State.getStateColor(resolved) : cssVariable("--ks-dependencies-node-background")!;
+    return resolved ? State.getStateColor(resolved) : cssVar("--ks-dependencies-node-background")!;
 }
 
 /**
@@ -532,7 +533,7 @@ export function useDependencies(
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
                 if (!cy) return;
 
-                const options = {full: true, scale: 2, ...(type === "jpeg" && {bg: cssVariable("--ks-background-body")})};
+                const options = {full: true, scale: 2, ...(type === "jpeg" && {bg: cssVar("--ks-background-body")})};
                 const image = type === "jpeg" ? cy.jpg(options) : cy.png(options);
 
                 const filename = `dependencies-${nodeID}-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.${type}`;

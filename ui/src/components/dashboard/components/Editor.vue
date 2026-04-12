@@ -122,7 +122,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
     import yaml from "yaml";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useDashboardStore} from "../../../stores/dashboard";
 
@@ -330,7 +330,7 @@
         height: 100%;
 
         &.enhance-readability {
-            padding: calc(var(--spacer) * 1.5);
+            padding: calc(1rem * 1.5);
             background-color: var(--ks-gray-100);
         }
     }

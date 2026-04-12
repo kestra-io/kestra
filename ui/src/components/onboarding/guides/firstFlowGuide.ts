@@ -1,4 +1,4 @@
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 
 export interface OnboardingValidationResult {
     ok: boolean;

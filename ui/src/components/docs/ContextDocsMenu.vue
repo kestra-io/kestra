@@ -250,14 +250,14 @@
 
             &:hover {
                 color: var(--ks-primary);
-                background-color: var(--ks-select-hover);
+                background-color: var(--ks-button-background-secondary-hover);
             }
 
             &.active-page {
                 color: var(--ks-content-link) !important;
                 font-weight: 600;
                 opacity: 1 !important;
-                background-color: var(--ks-select-hover);
+                background-color: var(--ks-button-background-secondary-hover);
             }
         }
 

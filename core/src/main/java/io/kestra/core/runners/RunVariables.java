@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
@@ -118,6 +119,37 @@ public final class RunVariables {
             "id", trigger.getId(),
             "type", trigger.getType()
         );
+    }
+
+    /**
+     * Creates an immutable map representation of the given {@link LoopRun}.
+     */
+    static Map<String, Object> of(LoopRun loopRun) {
+        Map<String, Object> loopRunMap = HashMap.newHashMap(3);
+        loopRunMap.put("index", loopRun.index());
+        if (loopRun.key() != null) {
+            loopRunMap.put("key", loopRun.key());
+        }
+        loopRunMap.put("value", loopRun.value());
+        if (loopRun.parents() != null) {
+            loopRunMap.put("parent", of(loopRun.parents().getLast()));
+            if (loopRun.parents().size() > 1) {
+                List<Map<String, Object>> parents = new ArrayList<>();
+                loopRun.parents().forEach(parent -> parents.add(of(parent)));
+                loopRunMap.put("parents", parents);
+            }
+        }
+        return loopRunMap;
+    }
+
+    private static Map<String, Object> of(LoopRun.Parent parent) {
+        Map<String, Object> parentMap = HashMap.newHashMap(3);
+        parentMap.put("index", parent.index());
+        if (parent.key() != null) {
+            parentMap.put("key", parent.key());
+        }
+        parentMap.put("value", parent.value());
+        return parentMap;
     }
 
     /**
@@ -288,6 +320,7 @@ public final class RunVariables {
 
                     builder.put("tasks", tasksMap);
                 }
+
                 // Inputs
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (execution.getInputs() != null) {
@@ -364,6 +397,11 @@ public final class RunVariables {
                         .namespace(execution.getNamespace())
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
+                }
+
+                // item from Loop
+                if (execution.getLoopRun() != null) {
+                    builder.put("item", RunVariables.of(execution.getLoopRun()));
                 }
             } else if (flow != null) {
                 // if the execution is null, we should add flow labels

@@ -74,6 +74,9 @@ public abstract class AbstractRunnerTest {
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
+    protected LoopCaseTest loopCaseTest;
+
+    @Inject
     protected ScheduleDateCaseTest scheduleDateCaseTest;
 
     @Inject
@@ -306,6 +309,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/flow-trigger-when-condition-flow-a.yaml", "flows/valids/flow-trigger-when-condition-flow-listen.yaml" })
+    void flowTriggerWhenCondition() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerWhenCondition();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/flow-trigger-mixed-conditions-flow-a.yaml", "flows/valids/flow-trigger-mixed-conditions-flow-listen.yaml" })
     void flowTriggerMixedConditions() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerMixedConditions();
@@ -321,7 +330,7 @@ public abstract class AbstractRunnerTest {
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found a null value inside the iteration values"));
         assertThat(matchingLog).isNotNull();
     }
 
@@ -537,6 +546,84 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = { "flows/valids/waitfor-multiple-tasks-failed.yaml" }, tenantId = "waitformultipletasksfailed")
     void waitforMultipleTasksFailed() throws Exception {
         loopUntilTestCaseTest.waitforMultipleTasksFailed("waitformultipletasksfailed");
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-serial.yaml")
+    protected void loopSerial(Execution execution) throws Exception {
+        loopCaseTest.loopSerial(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-serial-multiple-tasks.yaml")
+    protected void loopSerialMultipleTasks(Execution execution) throws Exception {
+        loopCaseTest.loopSerialMultipleTasks(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-failed.yaml")
+    protected void loopFailed(Execution execution) throws Exception {
+        loopCaseTest.loopFailed(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-failed-no-transmit.yaml")
+    protected void loopTransmitFailedFalse(Execution execution) throws Exception {
+        loopCaseTest.loopTransmitFailedFalse(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-parallel-unlimited.yaml")
+    protected void loopParallelUnlimited(Execution execution) throws Exception {
+        loopCaseTest.loopParallelUnlimited(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-parallel-equal.yaml")
+    protected void loopParallelEqual(Execution execution) throws Exception {
+        loopCaseTest.loopParallelEqual(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-parallel-more.yaml")
+    protected void loopParallelMore(Execution execution) throws Exception {
+        loopCaseTest.loopParallelMore(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-parallel-less.yaml")
+    protected void loopParallelLess(Execution execution) throws Exception {
+        loopCaseTest.loopParallelLess(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-flowable.yaml")
+    protected void loopFlowable(Execution execution) throws Exception {
+        loopCaseTest.loopFlowable(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-multiple.yaml")
+    protected void loopMultiple(Execution execution) throws Exception {
+        loopCaseTest.loopMultiple(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-nested.yaml")
+    protected void loopNested(Execution execution) throws Exception {
+        loopCaseTest.loopNested(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-map.yaml")
+    protected void loopMap(Execution execution) throws Exception {
+        loopCaseTest.loopMap(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-values-from-uri.yaml")
+    protected void loopValuesFromUri(Execution execution) throws Exception {
+        loopCaseTest.loopValuesFromUri(execution);
     }
 
     @Test

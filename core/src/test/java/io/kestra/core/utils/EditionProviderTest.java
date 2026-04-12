@@ -28,8 +28,12 @@ public class EditionProviderTest {
     @Test
     void shouldReturnCurrentEdition() {
         Assertions.assertEquals(expectedEdition(), editionProvider.get());
+    }
 
-        // check that the edition is persisted in settings
+    @Test
+    void shouldPersistEditionInSettings() {
+        editionProvider.persistEdition(settingRepository);
+
         Optional<Setting> editionSettings = settingRepository.findByKey(Setting.INSTANCE_EDITION);
         assertThat(editionSettings).isPresent();
         assertThat(editionSettings.get().getValue()).isEqualTo(expectedEdition().name());

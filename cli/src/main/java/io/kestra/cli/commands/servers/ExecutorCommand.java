@@ -13,7 +13,6 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 
 import io.micronaut.context.ApplicationContext;
@@ -33,9 +32,6 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
-
-    @Inject
-    private StartExecutorService startExecutorService;
 
     @CommandLine.Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
@@ -57,16 +53,8 @@ public class ExecutorCommand extends AbstractServerCommand {
     @CommandLine.Option(names = { "--ignore-tenants" }, split = ",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreTenants = Collections.emptyList();
 
-    @CommandLine.Option(
-        names = { "--start-executors" }, split = ",", description = "List of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue; for debugging only"
-    )
-    private List<String> startExecutors = Collections.emptyList();
-
-    @CommandLine.Option(
-        names = { "--not-start-executors" }, split = ",",
-        description = "Lst of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue; for debugging only"
-    )
-    private List<String> notStartExecutors = Collections.emptyList();
+    @CommandLine.Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
@@ -81,8 +69,7 @@ public class ExecutorCommand extends AbstractServerCommand {
         this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
         this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
         this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
-
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 
         super.call();
 

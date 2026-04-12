@@ -94,17 +94,6 @@
 
     const handleSearch = (query: string) => {
         searchText.value = query;
-        const newQuery: Record<string, any> = {...route.query};
-        if (query !== undefined && query !== null && String(query).trim() !== "") {
-            newQuery.q = query;
-        } else {
-            // remove an empty `q=` in the URL on plugins/view
-            delete newQuery.q;
-        }
-
-        router.push({
-            query: newQuery
-        });
     };
 
     const searchInput = computed(() => searchText.value.toLowerCase());
@@ -184,10 +173,10 @@
 
     onBeforeMount(() => {
         loadPluginIcons();
-        searchText.value = String(route.query?.q ?? "");
+        searchText.value = String(route.query?.["filters[q][EQUALS]"] ?? "");
     });
 
-    watch(() => route.query.q, (newQ) => {
+    watch(() => route.query["filters[q][EQUALS]"], (newQ) => {
         searchText.value = String(newQ ?? "");
         saveRestoreUrl();
     });
@@ -245,4 +234,3 @@
         width: 2em;
     }
 </style>
-

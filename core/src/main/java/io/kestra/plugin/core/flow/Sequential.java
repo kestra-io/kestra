@@ -62,8 +62,7 @@ import lombok.experimental.SuperBuilder;
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Sequential"
+    }
 )
 public class Sequential extends Task implements FlowableTask<VoidOutput> {
     @Valid
@@ -99,6 +98,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
         return subGraph;
     }
 
+    @Override
     public List<Task> allChildTasks() {
         return Stream
             .concat(

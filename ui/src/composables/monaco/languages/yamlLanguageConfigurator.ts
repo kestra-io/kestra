@@ -319,7 +319,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         }
                     }
 
-                    suggestion.sortText = suggestion.sortText?.toLowerCase();
+                    const pluginsStore = usePluginsStore();
+                    const allProperties = pluginsStore.editorPlugin?.schema?.properties?.properties ?? {};
+                    const requiredProperties = Object.keys(allProperties).filter(p => allProperties[p]?.$required === true);
+
+                    if (requiredProperties.includes(suggestion.label)) {
+                        suggestion.detail = "required";
+                    }
+
                     return suggestion;
                 })
                 // ---- Keep `type:` filtering scoped to plugin type suggestions ----

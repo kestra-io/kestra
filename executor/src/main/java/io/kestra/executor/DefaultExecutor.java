@@ -42,6 +42,7 @@ import io.kestra.core.utils.*;
 import io.kestra.executor.handler.*;
 import io.kestra.plugin.core.trigger.Webhook;
 
+import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
@@ -78,13 +79,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     @Inject
+    private DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue;
+    @Inject
     private KillSwitchService killSwitchService;
     @Inject
     private ExecutorService executorService;
     @Inject
     private ExecutionService executionService;
-    @Inject
-    private VariablesService variablesService;
     @Inject
     private FlowTriggerService flowTriggerService;
     @Inject
@@ -130,6 +131,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
     @Inject
     private MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
+    @Inject
+    private TerminatedLoopExecutionMessageHandler terminatedLoopExecutionMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> executionDelayFuture;
@@ -144,15 +147,21 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final java.util.concurrent.ExecutorService executionExecutorService;
     private final int numberOfThreads;
 
+    private Timer flowTriggerProcessingTimer;
+    private Timer slaMonitorLoopTimer;
+    private Timer executionDelayLoopTimer;
+
     @Inject
     public DefaultExecutor(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher, ExecutorsUtils executorsUtils, @Value("${kestra.executor.thread-count:0}") int threadCount) {
         super(ServiceType.EXECUTOR, eventPublisher);
+
         // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
         this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, KestraContext.getContext().getAllocatedCpuCores());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
+
         setState(ServiceState.CREATED);
     }
 
@@ -160,6 +169,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
     void initMetrics() {
         // create metrics to store thread count
         this.metricRegistry.gauge(MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT, MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION, numberOfThreads);
+
+        // init internal timers
+        this.flowTriggerProcessingTimer = this.metricRegistry.timer(MetricRegistry.METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION, MetricRegistry.METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION_DESCRIPTION);
+        this.slaMonitorLoopTimer = this.metricRegistry.timer(MetricRegistry.METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION, MetricRegistry.METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION);
+        this.executionDelayLoopTimer = this.metricRegistry.timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION);
     }
 
     @Override
@@ -220,6 +234,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribe(this::subflowExecutionEndQueue));
         this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
+        this.queueSubscribers.addFirst(this.terminatedLoopExecutionQueue.subscriber().subscribe(this::loopExecutionTerminatedQueue));
         this.queueSubscribers.addFirst(this.killQueue.subscriber().subscribe(this::killQueue));
 
         // Register maintenance listener
@@ -469,6 +484,18 @@ public class DefaultExecutor extends AbstractService implements Executor {
         multipleConditionEventMessageHandler.handle(multipleConditionEvent);
     }
 
+    private void loopExecutionTerminatedQueue(Either<TerminatedLoopExecution, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize a terminated loop execution event: {}", either.getRight().getMessage());
+            return;
+        }
+
+        TerminatedLoopExecution terminatedLoopExecution = either.getLeft();
+
+        Optional<ExecutorContext> maybeExecutor = terminatedLoopExecutionMessageHandler.handle(terminatedLoopExecution);
+        maybeExecutor.ifPresent(this::toExecution);
+    }
+
     private void handleKillSwitchedExecution(EvaluationType evaluationType, Execution message) {
         handleKillSwitchedExecution(evaluationType, message.getTenantId(), message.getId());
     }
@@ -538,68 +565,70 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        executionDelayStateStore.processExpired(Instant.now(), executionDelay ->
-        {
-            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution ->
+        executionDelayLoopTimer.record(() -> {
+            executionDelayStateStore.processExpired(Instant.now(), executionDelay ->
             {
-                ExecutorContext executor = new ExecutorContext(execution);
+                Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution ->
+                {
+                    ExecutorContext executor = new ExecutorContext(execution);
 
-                metricRegistry
-                    .counter(
-                        MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION,
-                        metricRegistry.tags(executor.getExecution())
-                    )
-                    .increment();
+                    metricRegistry
+                        .counter(
+                            MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION,
+                            metricRegistry.tags(executor.getExecution())
+                        )
+                        .increment();
 
-                try {
-                    // Handle paused tasks and scheduledAt
-                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !execution.getState().isTerminated()) {
-                        if (executionDelay.getTaskRunId() == null) {
-                            // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
-                            Execution markAsExecution = execution.withState(executionDelay.getState());
-                            executor = executor.withExecution(markAsExecution, "pausedRestart");
-                        } else {
-                            // if there is a taskRun it means we restart a paused task
-                            FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
-                            Execution markAsExecution = executionService.markAs(
+                    try {
+                        // Handle paused tasks and scheduledAt
+                        if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !execution.getState().isTerminated()) {
+                            if (executionDelay.getTaskRunId() == null) {
+                                // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
+                                Execution markAsExecution = execution.withState(executionDelay.getState());
+                                executor = executor.withExecution(markAsExecution, "pausedRestart");
+                            } else {
+                                // if there is a taskRun it means we restart a paused task
+                                FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
+                                Execution markAsExecution = executionService.markAs(
+                                    execution,
+                                    flow,
+                                    executionDelay.getTaskRunId(),
+                                    executionDelay.getState()
+                                );
+
+                                executor = executor.withExecution(markAsExecution, "pausedRestart");
+                            }
+                        }
+                        // Handle failed task retries
+                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
+                            FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                            Execution newAttempt = executionService.retryTask(
                                 execution,
                                 flow,
-                                executionDelay.getTaskRunId(),
-                                executionDelay.getState()
+                                executionDelay.getTaskRunId()
                             );
-
-                            executor = executor.withExecution(markAsExecution, "pausedRestart");
+                            executor = executor.withExecution(newAttempt, "retryFailedTask");
                         }
+                        // Handle failed flow retries
+                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
+                            FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                            Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
+                            executor = executor.withExecution(newExecution, "retryFailedFlow");
+                        }
+                        // Handle WaitFor
+                        else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
+                            Execution newExecution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
+                            executor = executor.withExecution(newExecution, "continueLoop");
+                        }
+                    } catch (Exception e) {
+                        executor = executorService.handleFailedExecutionFromExecutor(executor, e);
                     }
-                    // Handle failed task retries
-                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
-                        FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                        Execution newAttempt = executionService.retryTask(
-                            execution,
-                            flow,
-                            executionDelay.getTaskRunId()
-                        );
-                        executor = executor.withExecution(newAttempt, "retryFailedTask");
-                    }
-                    // Handle failed flow retries
-                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
-                        FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                        Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
-                        executor = executor.withExecution(newExecution, "retryFailedFlow");
-                    }
-                    // Handle WaitFor
-                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
-                        Execution newExecution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
-                        executor = executor.withExecution(newExecution, "continueLoop");
-                    }
-                } catch (Exception e) {
-                    executor = executorService.handleFailedExecutionFromExecutor(executor, e);
-                }
 
-                return executor;
+                    return executor;
+                });
+
+                maybeExecutor.ifPresent(this::toExecution);
             });
-
-            maybeExecutor.ifPresent(this::toExecution);
         });
     }
 
@@ -608,50 +637,52 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        slaMonitorStateStore.processExpired(Instant.now(), slaMonitor ->
-        {
-            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution ->
+        slaMonitorLoopTimer.record(() -> {
+            slaMonitorStateStore.processExpired(Instant.now(), slaMonitor ->
             {
-                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
-                if (sla.isEmpty()) {
-                    // this can happen in case the flow has been updated and the SLA removed
-                    log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                    return null;
-                }
-
-                // There can be a race: a monitor can be found, but the execution terminated.
-                // This particularly could occur in ElasticSearch due to refresh.
-                if (executionService.isTerminated(flow, execution)) {
-                    return null;
-                }
-
-                metricRegistry
-                    .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
-                    .increment();
-
-                ExecutorContext executor = new ExecutorContext(execution, flow);
-                try {
-                    RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                    Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
-                    if (violation.isPresent()) { // should always be true
-                        log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                        executor = executorService.processViolation(runContext, executor, violation.get());
-
-                        metricRegistry
-                            .counter(
-                                MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())
-                            )
-                            .increment();
+                Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution ->
+                {
+                    FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                    Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
+                    if (sla.isEmpty()) {
+                        // this can happen in case the flow has been updated and the SLA removed
+                        log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
+                        return null;
                     }
-                } catch (Exception e) {
-                    executor = executorService.handleFailedExecutionFromExecutor(executor, e);
-                }
 
-                return executor;
+                    // There can be a race: a monitor can be found, but the execution terminated.
+                    // This particularly could occur in ElasticSearch due to refresh.
+                    if (executionService.isTerminated(flow, execution)) {
+                        return null;
+                    }
+
+                    metricRegistry
+                        .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
+                        .increment();
+
+                    ExecutorContext executor = new ExecutorContext(execution, flow);
+                    try {
+                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                        Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
+                        if (violation.isPresent()) { // should always be true
+                            log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
+                            executor = executorService.processViolation(runContext, executor, violation.get());
+
+                            metricRegistry
+                                .counter(
+                                    MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())
+                                )
+                                .increment();
+                        }
+                    } catch (Exception e) {
+                        executor = executorService.handleFailedExecutionFromExecutor(executor, e);
+                    }
+
+                    return executor;
+                });
+
+                maybeExecutor.ifPresent(this::toExecution);
             });
-
-            maybeExecutor.ifPresent(this::toExecution);
         });
     }
 
@@ -731,6 +762,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs
                     );
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
+                }
+
+                // if it was a loop execution, we send a terminated loop execution message to the parent execution
+                if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
+                    var terminatedLoopExecution = new TerminatedLoopExecution(executor.getExecution().getLoopRun(), executor.getExecution().getId(), executor.getExecution().getState().getCurrent());
+                    terminatedLoopExecutionQueue.emit(terminatedLoopExecution);
                 }
 
                 // purge SLA monitors
@@ -827,22 +864,24 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void processFlowTriggers(Execution execution) throws QueueException {
-        Collection<FlowWithSource> allFlows = flowMetaStore.allLastVersion();
+        flowTriggerProcessingTimer.record(throwRunnable(() -> {
+            Collection<FlowWithSource> allFlows = flowMetaStore.allLastVersion();
 
-        // directly process simple conditions
-        flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-            .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
-            .map(f -> f.getFlow())
-            .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
-            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
-            .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
+            // directly process simple conditions
+            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+                .filter(f -> f.getTrigger().getPreconditions() == null)
+                .map(f -> f.getFlow())
+                .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
+                .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
+                .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
 
-        // send multiple conditions to the multiple condition queue for later processing
-        flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-            .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().anyMatch(c -> c instanceof MultipleCondition) || f.getTrigger().getPreconditions() != null)
-            .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
-            .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
-            .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
+            // send multiple conditions to the multiple condition queue for later processing
+            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+                .filter(f -> f.getTrigger().getPreconditions() != null)
+                .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
+                .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
+                .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
+        }));
     }
 
     @Override

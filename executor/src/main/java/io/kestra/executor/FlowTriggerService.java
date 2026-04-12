@@ -14,17 +14,21 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.utils.ListUtils;
 
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @Singleton
+@Slf4j
 public class FlowTriggerService {
     private final ConditionService conditionService;
     private final RunContextFactory runContextFactory;
@@ -59,8 +63,8 @@ public class FlowTriggerService {
     public List<Execution> computeExecutionsFromFlowTriggerConditions(Execution execution, Flow flow) {
         List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
             .stream()
-            // we must filter on no multiple conditions and no preconditions to avoid evaluating two times triggers that have standard conditions and multiple conditions
-            .filter(it -> it.getTrigger().getPreconditions() == null && ListUtils.emptyOnNull(it.getTrigger().getConditions()).stream().noneMatch(MultipleCondition.class::isInstance))
+            // we must filter on no preconditions to avoid evaluating two times triggers that have standard conditions and multiple conditions
+            .filter(it -> it.getTrigger().getPreconditions() == null)
             .toList();
 
         // short-circuit empty triggers to evaluate
@@ -92,10 +96,7 @@ public class FlowTriggerService {
         List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
             .stream()
             // we must filter on multiple conditions or preconditions to avoid evaluating two times triggers that only have standard conditions
-            .filter(
-                flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getPreconditions() != null
-                    || ListUtils.emptyOnNull(flowWithFlowTrigger.getTrigger().getConditions()).stream().anyMatch(MultipleCondition.class::isInstance)
-            )
+            .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getPreconditions() != null)
             .toList();
 
         // short-circuit empty triggers to evaluate
@@ -145,13 +146,13 @@ public class FlowTriggerService {
         // compute all executions to create from flow triggers now that multiple conditions storage is populated
         List<Execution> executions = flowWithFlowTriggers.stream()
             // will evaluate conditions
-            .filter(
+            .filter(throwPredicate(
                 flowWithFlowTrigger -> conditionService.isValid(
                     flowWithFlowTrigger.getTrigger(),
                     flowWithFlowTrigger.getFlow(),
                     execution,
                     multipleConditionStorage
-                )
+                ))
             )
             // will evaluate preconditions
             .filter(
@@ -207,27 +208,24 @@ public class FlowTriggerService {
             return Collections.emptyList();
         }
 
+        RunContext runContext = runContextFactory.of(flow, execution);
         return flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger))
             // filter on the execution state the flow listen to
             .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getStates().contains(execution.getState().getCurrent()))
             // validate flow triggers conditions excluding multiple conditions
             .filter(
-                flowWithFlowTrigger -> conditionService.valid(
+                flowWithFlowTrigger -> conditionService.isValid(
+                    flowWithFlowTrigger.getTrigger(),
                     flowWithFlowTrigger.getFlow(),
-                    Optional.ofNullable(flowWithFlowTrigger.getTrigger().getConditions()).stream().flatMap(Collection::stream)
-                        .filter(Predicate.not(MultipleCondition.class::isInstance))
-                        .toList(),
-                    execution
+                    execution,
+                    runContext,
+                    null
                 )
             ).toList();
     }
 
     private Stream<MultipleCondition> flowTriggerMultipleConditions(FlowWithFlowTrigger flowWithFlowTrigger) {
-        Stream<MultipleCondition> legacyMultipleConditions = ListUtils.emptyOnNull(flowWithFlowTrigger.getTrigger().getConditions()).stream()
-            .filter(MultipleCondition.class::isInstance)
-            .map(MultipleCondition.class::cast);
-        Stream<io.kestra.plugin.core.trigger.Flow.Preconditions> preconditions = Optional.ofNullable(flowWithFlowTrigger.getTrigger().getPreconditions()).stream();
-        return Stream.concat(legacyMultipleConditions, preconditions);
+        return Optional.<MultipleCondition>ofNullable(flowWithFlowTrigger.getTrigger().getPreconditions()).stream();
     }
 
     @AllArgsConstructor

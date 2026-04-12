@@ -105,7 +105,7 @@ import lombok.experimental.SuperBuilder;
 
                 errors:
                 - id: slack
-                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                    type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
                     url: "{{ secret('SLACK_WEBHOOK') }}"
                     payload: |
                     {
@@ -113,8 +113,7 @@ import lombok.experimental.SuperBuilder;
                     }
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.executions.Fail"
+    }
 )
 public class Fail extends Task implements RunnableTask<VoidOutput> {
     @Schema(

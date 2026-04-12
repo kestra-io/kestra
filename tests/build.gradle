@@ -1,4 +1,6 @@
 dependencies {
+    annotationProcessor project(':processor')
+
     implementation project(':core')
     implementation project(':worker')
     implementation project(':scheduler')

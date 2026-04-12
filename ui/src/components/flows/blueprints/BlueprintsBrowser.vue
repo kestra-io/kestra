@@ -138,12 +138,11 @@
     const route = useRoute();
     const router = useRouter();
 
+    const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]";
+
     const initSelectedTags = (): string[] => {
-        if (!route.query.selectedTag) return [];
-        if (Array.isArray(route.query.selectedTag)) {
-            return route.query.selectedTag.filter((tag): tag is string => tag !== null);
-        }
-        return route.query.selectedTag ? [route.query.selectedTag] : [];
+        const raw = route.query[SELECTED_TAG_QUERY_KEY];
+        return ([raw].flat().filter(Boolean) as string[]).flatMap(t => t.split(","));
     };
 
     const searchText = ref(route.query["filters[q][EQUALS]"] ?? "");
@@ -306,7 +305,7 @@
     });
 
     watch(
-        () => [route.query.selectedTag, route.query["filters[q][EQUALS]"]],
+        () => [route.query[SELECTED_TAG_QUERY_KEY], route.query["filters[q][EQUALS]"]],
         () => {
             syncFromRoute();
             load(onDataLoaded);
@@ -319,12 +318,13 @@
 
     watch(selectedTags, (newTags) => {
         if (!props.embed) {
-            router.push({
-                query: {
-                    ...route.query,
-                    selectedTag: newTags.length > 0 ? newTags : undefined
-                }
-            });
+            const query = {...route.query};
+            if (newTags.length > 0) {
+                query[SELECTED_TAG_QUERY_KEY] = newTags.join(",");
+            } else {
+                delete query[SELECTED_TAG_QUERY_KEY];
+            }
+            router.push({query});
         } else {
             load(onDataLoaded);
         }

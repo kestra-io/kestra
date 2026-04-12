@@ -183,7 +183,8 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     failed = failed.withOutputs(null);
                 }
                 if (e instanceof UnsupportedMessageException) {
-                    // we expect the offending char is in the output so we remove it
+                    // Unsupported queue payloads are most likely caused by a bad output value,
+                    // so retry without outputs instead of crashing the worker/controller loop.
                     failed = failed.withOutputs(null);
                 }
                 RunContextLogger contextLogger = runContextLoggerFactory.create(workerTaskResult);

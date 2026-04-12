@@ -65,6 +65,26 @@ public class JdbcQueueClient {
         });
     }
 
+    private boolean isUnsupportedUnicode(DataException e) {
+        Throwable current = e;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null) {
+                String lower = message.toLowerCase();
+                if (message.contains("unsupported Unicode escape sequence") ||
+                    lower.contains("surrogate") ||
+                    lower.contains("unicode escape") ||
+                    lower.contains("invalid unicode")) {
+                    return true;
+                }
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
+    }
+
     public void publish(String queue, @Nullable String routingKey, String key, String value) throws QueueException {
         try {
             dslContextWrapper.transaction(configuration ->
@@ -85,9 +105,10 @@ public class JdbcQueueClient {
                 insert.execute();
             });
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
-            // Postgres refuses to store JSONB with the '\0000' codepoint as it has no textual representation.
+            // Postgres refuses JSONB payloads with unsupported Unicode escape sequences such as '\0000'
+            // or lone UTF-16 surrogates. Convert those into a recoverable queue error.
             // We try to detect that and fail with a specific exception so the Worker can recover from it.
-            if (e.getMessage() != null && e.getMessage().contains("ERROR: unsupported Unicode escape sequence")) {
+            if (isUnsupportedUnicode(e)) {
                 throw new UnsupportedMessageException(e.getMessage(), e);
             }
             throw new QueueException("Unable to emit a message to the queue", e);
@@ -141,9 +162,10 @@ public class JdbcQueueClient {
                 insert.execute();
             });
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
-            // Postgres refuses to store JSONB with the '\0000' codepoint as it has no textual representation.
+            // Postgres refuses JSONB payloads with unsupported Unicode escape sequences such as '\0000'
+            // or lone UTF-16 surrogates. Convert those into a recoverable queue error.
             // We try to detect that and fail with a specific exception so the Worker can recover from it.
-            if (e.getMessage() != null && e.getMessage().contains("ERROR: unsupported Unicode escape sequence")) {
+            if (isUnsupportedUnicode(e)) {
                 throw new UnsupportedMessageException(e.getMessage(), e);
             }
             throw new QueueException("Unable to emit a message to the queue", e);

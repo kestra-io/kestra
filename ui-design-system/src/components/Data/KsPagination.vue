@@ -38,6 +38,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/pagination';
+
     .kel-pagination {
         --kel-pagination-bg-color: transparent;
         --kel-pagination-text-color: var(--ks-content-primary);

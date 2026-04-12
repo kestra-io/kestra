@@ -24,3 +24,8 @@
         <template v-if="$slots.default" #default><slot /></template>
     </el-divider>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/divider';
+</style>

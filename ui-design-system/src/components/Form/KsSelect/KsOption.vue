@@ -27,3 +27,8 @@
         </template>
     </el-option>
 </template>
+
+<style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/option';
+</style>

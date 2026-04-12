@@ -33,3 +33,8 @@
         <template v-if="$slots.dot" #dot><slot name="dot" /></template>
     </el-timeline-item>
 </template>
+
+<style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/timeline-item';
+</style>

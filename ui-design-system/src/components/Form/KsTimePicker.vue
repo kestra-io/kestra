@@ -33,3 +33,8 @@
         @change="emit('change', $event)"
     />
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/time-picker';
+</style>

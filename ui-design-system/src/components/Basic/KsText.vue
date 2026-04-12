@@ -26,3 +26,8 @@
         <template v-if="$slots.default" #default><slot /></template>
     </el-text>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/text';
+</style>

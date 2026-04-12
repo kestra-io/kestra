@@ -40,3 +40,8 @@
         <template v-if="$slots.header" #header="scope"><slot name="header" v-bind="scope" /></template>
     </el-table-column>
 </template>
+
+<style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/table-column';
+</style>

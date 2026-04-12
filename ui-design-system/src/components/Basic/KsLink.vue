@@ -36,3 +36,8 @@
         <template v-if="$slots.icon" #icon><slot name="icon" /></template>
     </el-link>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/link';
+</style>

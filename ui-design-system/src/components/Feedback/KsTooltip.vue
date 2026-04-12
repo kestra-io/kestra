@@ -47,3 +47,8 @@
         <template v-if="$slots.content" #content><slot name="content" /></template>
     </el-tooltip>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/tooltip';
+</style>

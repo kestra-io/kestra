@@ -31,3 +31,9 @@
         @active-change="emit('activeChange', $event as string)"
     />
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/color-picker';
+    @use 'element-plus/theme-chalk/src/color-picker-panel';
+</style>

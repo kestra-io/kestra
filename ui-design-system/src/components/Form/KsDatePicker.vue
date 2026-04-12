@@ -41,6 +41,10 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/date-picker';
+    @use 'element-plus/theme-chalk/src/date-picker-panel';
+
     .kel-date-editor {
         --kel-input-border-color: var(--ks-border-primary);
         --kel-input-bg-color: var(--ks-background-input);

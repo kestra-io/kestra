@@ -36,6 +36,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/step';
+
     .kel-steps {
         .is-process {
             color: var(--kel-color-white);

@@ -31,6 +31,7 @@ export default defineConfig({
         devSourcemap: true,
         preprocessorOptions: {
             scss: {
+                loadPaths: [resolve(__dirname, "src")],
                 silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
             },
         }

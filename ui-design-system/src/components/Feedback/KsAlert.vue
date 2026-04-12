@@ -32,6 +32,8 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/alert';
     @import "element-plus/theme-chalk/src/common/var.scss";
 
     .kel-alert {

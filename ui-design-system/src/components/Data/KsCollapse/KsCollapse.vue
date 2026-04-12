@@ -34,6 +34,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/collapse';
+
     .kel-collapse {
         --kel-collapse-content-text-color: var(--ks-content-primary);
         --kel-collapse-header-text-color: var(--ks-content-primary);

@@ -32,3 +32,8 @@
         <template v-if="$slots.default" #default="scope"><slot v-bind="scope" /></template>
     </el-cascader-panel>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/cascader-panel';
+</style>

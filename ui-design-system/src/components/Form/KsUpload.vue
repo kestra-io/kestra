@@ -46,3 +46,8 @@
         <template v-if="$slots.tip" #tip><slot name="tip" /></template>
     </el-upload>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/upload';
+</style>

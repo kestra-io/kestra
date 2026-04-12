@@ -29,6 +29,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/avatar';
+
     .kel-avatar {
         --kel-avatar-bg-color: var(--ks-gray-400);
         --kel-avatar-text-color: var(--ks-content-primary);

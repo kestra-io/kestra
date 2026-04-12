@@ -72,6 +72,8 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/drawer';
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .kel-drawer {

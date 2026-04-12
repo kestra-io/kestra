@@ -39,6 +39,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/input-number';
+
     .kel-input-number {
         background-color: var(--ks-background-body);
         width: 100%;

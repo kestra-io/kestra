@@ -29,6 +29,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/card';
+
     .kel-card {
         border-radius: var(--kel-border-radius-round);
         --kel-card-border-color: var(--ks-border-primary);

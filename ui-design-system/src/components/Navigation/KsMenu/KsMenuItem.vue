@@ -34,3 +34,8 @@
         <template v-if="$slots.title" #title><slot name="title" /></template>
     </el-menu-item>
 </template>
+
+<style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/menu-item';
+</style>

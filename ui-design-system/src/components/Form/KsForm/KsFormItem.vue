@@ -37,6 +37,8 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/form-item';
     .kel-form-item {
         .kel-form-item__error {
             &.kel-form-item__error--inline {

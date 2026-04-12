@@ -35,3 +35,10 @@
         <template v-if="$slots.default" #default><slot /></template>
     </el-menu>
 </template>
+
+<style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/menu';
+    @use 'element-plus/theme-chalk/src/menu-item-group';
+    @use 'element-plus/theme-chalk/src/sub-menu';
+</style>

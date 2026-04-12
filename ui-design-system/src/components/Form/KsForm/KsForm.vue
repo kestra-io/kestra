@@ -48,6 +48,8 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/form';
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     form.ks-horizontal {

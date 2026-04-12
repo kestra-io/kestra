@@ -53,6 +53,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/button';
+
     .kel-button {
         &:not(.kel-button--primary):not(.kel-button--success):not(.kel-button--warning):not(.kel-button--danger):not(.kel-button--error):not(.kel-button--info):not(.kel-button--playground), &--default {
             --kel-button-hover-text-color: var(--ks-content-primary);

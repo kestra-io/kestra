@@ -69,6 +69,10 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/select';
+    @use 'element-plus/theme-chalk/src/select-dropdown';
+
     .kel-select {
          --kel-disabled-text-color: var(--ks-content-inactive);
 

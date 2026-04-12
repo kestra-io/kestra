@@ -38,6 +38,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/radio-group';
+
     .kel-radio-group.filter {
         padding: 1px 4px;
         box-shadow: 0 0 0 1px var(--ks-border-primary) inset;

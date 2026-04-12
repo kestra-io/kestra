@@ -22,6 +22,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/dropdown';
+
     .kel-dropdown__popper {
         font-size: var(--kel-font-size-small);
         --kel-dropdown-menuItem-hover-fill: var(--ks-gray-300);

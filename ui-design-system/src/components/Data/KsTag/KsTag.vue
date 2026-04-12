@@ -47,6 +47,8 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/tag';
     @import "element-plus/theme-chalk/src/common/var.scss";
     @import "../../../assets/styles/variables.scss";
 

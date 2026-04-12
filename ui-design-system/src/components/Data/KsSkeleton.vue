@@ -31,3 +31,9 @@
         <template v-if="$slots.template" #template><slot name="template" /></template>
     </el-skeleton>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/skeleton';
+    @use 'element-plus/theme-chalk/src/skeleton-item';
+</style>

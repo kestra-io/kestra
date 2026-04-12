@@ -41,3 +41,8 @@
         <template v-if="$slots.default" #default><slot /></template>
     </el-scrollbar>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/scrollbar';
+</style>

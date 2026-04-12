@@ -73,3 +73,8 @@
         <template v-if="$slots.empty" #empty><slot name="empty" /></template>
     </el-tree>
 </template>
+
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/tree';
+</style>

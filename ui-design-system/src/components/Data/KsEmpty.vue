@@ -46,6 +46,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/empty';
+
     .kel-empty {
         background-color: var(--ks-background-card);
     }

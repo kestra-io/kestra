@@ -1,5 +1,8 @@
 import {mergeConfig} from "vite"
+import {resolve} from "path"
 import type {StorybookConfig} from "@storybook/vue3-vite"
+
+const srcDir = resolve(import.meta.dirname, "../src")
 
 const config: StorybookConfig = {
     stories: ["../tests/storybook/**/*.stories.@(ts|tsx)"],
@@ -19,6 +22,7 @@ const config: StorybookConfig = {
             css: {
                 preprocessorOptions: {
                     scss: {
+                        loadPaths: [srcDir],
                         silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"],
                     },
                 },

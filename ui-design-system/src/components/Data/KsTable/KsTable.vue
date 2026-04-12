@@ -75,6 +75,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/table';
+
     .kel-table {
         --kel-table-border-color: var(--ks-border-primary);
         --kel-table-border: 1px solid var(--ks-border-primary);

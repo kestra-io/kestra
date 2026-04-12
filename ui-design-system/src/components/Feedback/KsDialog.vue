@@ -51,6 +51,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/dialog';
+
     .kel-dialog {
         --kel-dialog-border-radius: var(--kel-border-radius-round);
         background-color: var(--ks-background-card);

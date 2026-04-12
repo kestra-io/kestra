@@ -33,6 +33,9 @@
 </template>
 
 <style lang="scss" scoped>
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/progress';
+
     .kel-progress {
         :deep(.kel-progress-bar__outer) {
             border-radius: var(--kel-border-radius-small);

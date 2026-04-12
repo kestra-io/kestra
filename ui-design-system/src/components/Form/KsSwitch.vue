@@ -40,6 +40,9 @@
 </template>
 
 <style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/switch';
+
     .kel-switch {
         .kel-switch__label {
             color: var(--ks-content-primary);

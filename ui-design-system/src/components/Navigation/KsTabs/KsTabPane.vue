@@ -28,3 +28,8 @@
         <template v-if="$slots.label" #label><slot name="label" /></template>
     </el-tab-pane>
 </template>
+
+<style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/tab-pane';
+</style>

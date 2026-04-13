@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.filters;
 
+import io.kestra.core.utils.RegexUtils;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -53,9 +54,11 @@ public class RegexMatchFilter implements Filter {
 
         String regex = args.get(ARGUMENT_REGEX).toString();
         try {
-            return Pattern.compile(regex).matcher(input.toString()).find();
+            return RegexUtils.matcher(Pattern.compile(regex), input.toString()).find();
         } catch (PatternSyntaxException e) {
             throw new PebbleException(e, MessageFormat.format("Invalid regex ''{0}'': {1}", regex, e.getDescription()), lineNumber, self.getName());
+        } catch (RegexUtils.RegexTimeoutException e) {
+            throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
     }
 }

@@ -228,8 +228,8 @@ class YamlParserTest {
         Optional<ConstraintViolationException> valid = modelValidator.isValid(parse);
 
         assertThat(valid.isPresent()).isTrue();
-        assertThat(valid.get().getConstraintViolations().size()).isEqualTo(10);
-        assertThat(new ArrayList<>(valid.get().getConstraintViolations()).stream().filter(r -> r.getMessage().contains("must not be empty")).count()).isEqualTo(3L);
+        assertThat(valid.get().getConstraintViolations().size()).isEqualTo(8);
+        assertThat(new ArrayList<>(valid.get().getConstraintViolations()).stream().filter(r -> r.getMessage().contains("cannot be empty")).count()).isEqualTo(3L);
     }
 
     @Test

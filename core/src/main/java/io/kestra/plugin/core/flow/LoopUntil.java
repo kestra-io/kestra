@@ -5,11 +5,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
+import io.kestra.core.models.hierarchies.AbstractGraph;
+import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.utils.GraphUtils;
 import org.slf4j.Logger;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -19,21 +20,13 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.hierarchies.AbstractGraph;
-import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -72,25 +65,8 @@ import lombok.experimental.SuperBuilder;
     },
     aliases = "io.kestra.plugin.core.flow.WaitFor"
 )
-public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
+public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
     private static final int INITIAL_LOOP_VALUE = 1;
-
-    @Valid
-    protected List<Task> errors;
-
-    @Valid
-    @JsonProperty("finally")
-    @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
-
-    public List<Task> getFinally() {
-        return this._finally;
-    }
-
-    @Valid
-    @PluginProperty
-    @NotNull
-    private List<Task> tasks;
 
     @NotNull
     @Schema(
@@ -118,7 +94,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
         GraphUtils.sequential(
             subGraph,
-            tasks,
+            this.getTasks(),
             this.errors,
             this._finally,
             taskRun,
@@ -126,24 +102,6 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
         );
 
         return subGraph;
-    }
-
-    @Override
-    public List<Task> allChildTasks() {
-        return Stream
-            .concat(
-                tasks.stream(),
-                Stream.concat(
-                    this.getErrors() != null ? this.getErrors().stream() : Stream.empty(),
-                    this.getFinally() != null ? this.getFinally().stream() : Stream.empty()
-                )
-            )
-            .toList();
-    }
-
-    @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(tasks, parentTaskRun);
     }
 
     @Override

@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -40,6 +41,7 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.*;
 import io.kestra.executor.handler.*;
+import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micrometer.core.instrument.Timer;
@@ -49,6 +51,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.event.Level;
 
 import static io.kestra.core.utils.Rethrow.*;
 
@@ -150,6 +153,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private Timer flowTriggerProcessingTimer;
     private Timer slaMonitorLoopTimer;
     private Timer executionDelayLoopTimer;
+    @Inject
+    private FlowInputOutput flowInputOutput;
 
     @Inject
     public DefaultExecutor(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher, ExecutorsUtils executorsUtils, @Value("${kestra.executor.thread-count:0}") int threadCount) {
@@ -766,7 +771,27 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
                 // if it was a loop execution, we send a terminated loop execution message to the parent execution
                 if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
-                    var terminatedLoopExecution = new TerminatedLoopExecution(executor.getExecution().getLoopRun(), executor.getExecution().getId(), executor.getExecution().getState().getCurrent());
+                    var loop = (Loop) executor.getFlow().findTaskByTaskId(executor.getExecution().getLoopRun().taskId());
+                    Map<String, Object> outputs = null;
+                    if (!ListUtils.isEmpty(loop.getOutputs())) {
+                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                        var inputAndOutput = runContext.inputAndOutput();
+
+                        try {
+                            outputs = inputAndOutput.renderOutputs(loop.getOutputs());
+                            outputs = inputAndOutput.typedOutputs(loop.getOutputs(), executor.getExecution(), outputs);
+                        } catch (Exception e) {
+                            Logs.logExecution(
+                                executor.getExecution(),
+                                Level.ERROR,
+                                "Failed to render output values",
+                                e
+                            );
+                            runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
+                            // FIXME should we fail the execution?
+                        }
+                    }
+                    var terminatedLoopExecution = new TerminatedLoopExecution(executor.getExecution().getLoopRun(), executor.getExecution().getId(), executor.getExecution().getState().getCurrent(), outputs);
                     terminatedLoopExecutionQueue.emit(terminatedLoopExecution);
                 }
 
@@ -837,7 +862,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // update all execution followers
                 this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
             }
-        } catch (QueueException | FlowNotFoundException e) {
+        } catch (QueueException | FlowNotFoundException | InternalException e) {
             if (!ignoreFailure) {
                 // If we cannot add the new worker task result to the execution, we fail it
                 executionStateStore.lock(executor.getExecution().getId(), execution ->

@@ -420,11 +420,15 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, Object> in) {
-        if (flow.getOutputs() == null) {
+        return typedOutputs(flow.getOutputs(), execution, in);
+    }
+
+    public Map<String, Object> typedOutputs(List<Output> outputs, Execution execution, Map<String, Object> in) {
+        if (outputs == null) {
             return Map.of();
         }
-        Map<String, Object> results = flow
-            .getOutputs()
+
+        Map<String, Object> results = outputs
             .stream()
             .map(output ->
             {

@@ -172,7 +172,7 @@
             margin-bottom: 8px;
 
             .check-border {
-                border: 1px solid var(--ks-border-default);
+                border: 1px solid var(--ks-border-primary);
                 border-radius: 4px;
                 padding: 0 12px;
                 width: calc(50% - 0.5rem);

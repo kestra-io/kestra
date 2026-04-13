@@ -17,8 +17,8 @@ export enum Comparators {
 export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS]
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
-    Comparators.ENDS_WITH, 
-    Comparators.STARTS_WITH, 
+    Comparators.ENDS_WITH,
+    Comparators.STARTS_WITH,
 ]
 
 export interface DateFilterOption {
@@ -94,17 +94,17 @@ export interface TableProperties {
 }
 
 export interface TableOptions {
-    chart?: { 
-        shown?: boolean; 
-        value?: boolean; 
-        callback?: (value: boolean) => void 
+    chart?: {
+        shown?: boolean;
+        value?: boolean;
+        callback?: (value: boolean) => void
     };
     columns?: {
         shown?: boolean
     };
-    refresh?: { 
-        shown?: boolean; 
-        callback?: () => void 
+    refresh?: {
+        shown?: boolean;
+        callback?: () => void
     };
 }
 

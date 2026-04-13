@@ -67,7 +67,6 @@ import static io.kestra.core.utils.DateUtils.validateTimeline;
 @Controller("/api/v1/{tenant}/dashboards")
 @Slf4j
 public class DashboardController {
-    protected static final YamlParser YAML_PARSER = new YamlParser();
     public static final Pattern DASHBOARD_ID_PATTERN = Pattern.compile("^id:.*$", Pattern.MULTILINE);
 
     @Inject

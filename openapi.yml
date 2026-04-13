@@ -1409,7 +1409,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  type: string
   /api/v1/{tenant}/executions/flows/{namespace}/{flowId}:
     get:
       tags:
@@ -4181,6 +4181,7 @@ paths:
         explode: false
         schema:
           type: boolean
+          nullable: true
           default: false
       - name: tenant
         in: path
@@ -5193,7 +5194,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  type: string
   /api/v1/{tenant}/triggers/search:
     get:
       tags:

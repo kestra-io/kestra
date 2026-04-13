@@ -13,7 +13,6 @@ import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 
 /**
@@ -36,10 +35,6 @@ public class JsonSchemaCache {
      */
     public JsonSchemaCache(final JsonSchemaGenerator jsonSchemaGenerator) {
         this.jsonSchemaGenerator = Objects.requireNonNull(jsonSchemaGenerator, "JsonSchemaGenerator cannot be null");
-    }
-
-    @PostConstruct
-    void registerDefaultTypes() {
         registerClassForType(SchemaType.FLOW, Flow.class);
         registerClassForType(SchemaType.TASK, Task.class);
         registerClassForType(SchemaType.TRIGGER, AbstractTrigger.class);
@@ -48,7 +43,7 @@ public class JsonSchemaCache {
     }
 
     public Map<String, Object> getSchemaForType(final SchemaType type,
-        final boolean arrayOf) {
+                                                final boolean arrayOf) {
         return schemaCache.computeIfAbsent(new CacheKey(type, arrayOf), key ->
         {
 

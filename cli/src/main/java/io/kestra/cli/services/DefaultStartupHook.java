@@ -17,7 +17,7 @@ import java.util.Optional;
 @Singleton
 public class DefaultStartupHook implements StartupHookInterface {
     @Inject
-    private Optional<VersionService> versionService;
+    private BeanProvider<VersionService> versionService;
 
     @Inject
     private Optional<EditionProvider> editionProvider;

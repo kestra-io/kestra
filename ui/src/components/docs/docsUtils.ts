@@ -21,7 +21,11 @@ export const SECTIONS = {
         "Task Runners",
         "Best Practices",
     ],
-    "Manage Kestra": ["Administrator Guide", "Migration Guide", "Performance"],
+    "Manage Kestra": [
+        "Administrator Guide",
+        "Migration Guide",
+        "Performance"
+    ],
     "Reference Docs": [
         "Configuration",
         "Releases & LTS Policy",

@@ -82,7 +82,7 @@
     const isCurrentSection = (sectionName: string) => {
         if (!currentDocPath.value) return false;
         const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || [];
-        return sectionChildren.some((child: { path: string }) => isCurrentPage(child.path));
+        return sectionChildren.some(child => isCurrentPage(child.path));
     };
 
     watch(menuOpen, async (val) => {
@@ -126,13 +126,14 @@
     })
 
     const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
-        .map(([section, childrenTitles]) => 
-            ({
-                section, 
-                children: toc.value?.filter(({title, sidebarTitle}) => 
-                    childrenTitles.includes(sidebarTitle) || childrenTitles.includes(title))
-            })
-        )
+        .map(([section, childrenTitles]) => ({
+            section,
+            children: childrenTitles
+                .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
+                    path.split("/").length === 2 && (sidebarTitle === name || title === name)
+                ))
+                .filter((item): item is NonNullable<typeof item> => !!item)
+        }))
     )
 </script>
 

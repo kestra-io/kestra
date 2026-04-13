@@ -7,44 +7,68 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount} from "vue";
-    import {useRoute, onBeforeRouteLeave} from "vue-router";
+    import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {useBlueprintsStore} from "../../stores/blueprints";
-    import {useCoreStore} from "../../stores/core";
     import {getRandomID} from "../../../scripts/id";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
-    import {useVueTour} from "../../composables/useVueTour";
 
     import type {BlueprintType} from "../../stores/blueprints"
+    import {useAuthStore} from "override/stores/auth";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
 
     const route = useRoute();
     const {t} = useI18n();
 
-    const tour = useVueTour("guidedTour");
-
     const blueprintsStore = useBlueprintsStore();
-    const coreStore = useCoreStore();
     const flowStore = useFlowStore();
+    const authStore = useAuthStore();
+    const onboardingV2Store = useOnboardingV2Store();
+    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset";
 
     const setupFlow = async () => {
         const blueprintId = route.query.blueprintId as string;
         const blueprintSource = route.query.blueprintSource as BlueprintType;
+        const blueprintSourceYaml = route.query.blueprintSourceYaml as string;
+        const isGuidedOnboarding = route.query.onboarding === "guided";
+        const onboardingPresetFlow = route.query.onboardingPreset === "true"
+            ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
+            : "";
+        const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
+            permission.FLOW,
+            action.CREATE,
+        )[0];
         let flowYaml = "";
         const id = getRandomID();
-        const selectedNamespace = (route.query.namespace as string) || defaultNamespace() || "company.team";
+        const selectedNamespace = (route.query.namespace as string)
+            ?? defaultNamespace()
+            ?? implicitDefaultNamespace
+            ?? "company.team";
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source;
-        } else if (blueprintId && blueprintSource) {
+        } else if (onboardingPresetFlow) {
+            flowYaml = onboardingPresetFlow;
+            sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY);
+        } else if (blueprintId && blueprintSourceYaml) {
+            flowYaml = blueprintSourceYaml;
+        } else if(blueprintId && blueprintSource === "community"){
             flowYaml = await blueprintsStore.getBlueprintSource({
                 type: blueprintSource,
                 kind: "flow",
                 id: blueprintId
             });
+        } else if (blueprintId) {
+            const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId);
+            flowYaml = flowBlueprint.source;
+        } else if (isGuidedOnboarding) {
+            flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`;
         } else {
             flowYaml = `
 id: ${id}
@@ -56,10 +80,17 @@ tasks:
     message: Hello World! 🚀`.trim();
         }
 
+        let parsedFlow = {};
+        try {
+            parsedFlow = YAML_UTILS.parse(flowYaml) ?? {};
+        } catch {
+            parsedFlow = {};
+        }
+
         flowStore.flow = {
             id,
             namespace: selectedNamespace,
-            ...YAML_UTILS.parse(flowYaml),
+            ...parsedFlow,
             source: flowYaml,
         };
 
@@ -73,21 +104,13 @@ tasks:
     });
 
     flowStore.isCreating = true;
-    if (route.query.reset) {
-        localStorage.setItem("tourDoneOrSkip", "");
-        coreStore.guidedProperties = {
-            ...coreStore.guidedProperties,
-            tourStarted: true,
-        };
-        tour.start();
+    if (route.query.reset || route.query.onboarding === "guided") {
+        onboardingV2Store.startGuided();
     }
     setupFlow();
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined;
-    });
-
-    onBeforeRouteLeave(() => {
         flowStore.flow = undefined;
     });
 </script>

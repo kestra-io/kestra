@@ -2,7 +2,7 @@
     <div class="outputs">
         <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
-                <div class="d-flex flex-column overflow-x-auto left">
+                <div class="d-flex flex-column overflow-auto left">
                     <el-cascader-panel
                         ref="cascader"
                         v-model="selected"
@@ -26,16 +26,19 @@
                                 @click="expandedValue = data.path"
                                 class="w-100 d-flex justify-content-between"
                             >
-                                <div class="pe-5 d-flex task">
+                                <div class="pe-1 d-flex task">
                                     <TaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
                                         onlyIcon
                                     />
-                                    <span :class="{'ms-3': data.icon}">{{
-                                        data.label
-                                    }}</span>
+                                    <span :class="{'ms-3': data.icon}" class="task-label">
+                                        <span>{{ data.label }}&nbsp;</span>
+                                        <code v-if="data.iterationValue != null" class="task-iteration-value">
+                                            {{ data.iterationValue }}
+                                        </code>
+                                    </span>
                                 </div>
                                 <code>
                                     <span
@@ -69,7 +72,7 @@
                         >
                             <el-collapse-item name="debug">
                                 <template #title>
-                                    <span>{{ t("eval.title") }}</span>
+                                    <span>{{ $t("eval.title") }}</span>
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
@@ -94,13 +97,14 @@
                                         "
                                         class="mt-3 el-button--wrap"
                                     >
-                                        {{ t("eval.title") }}
+                                        {{ $t("eval.title") }}
                                     </el-button>
 
                                     <Editor
                                         v-if="debugExpression"
                                         :readOnly="true"
                                         :input="true"
+                                        :showScroll="true"
                                         :fullHeight="false"
                                         :customHeight="20"
                                         :navbar="false"
@@ -135,7 +139,7 @@
 
                         <VarValue
                             v-if="displayVarValue()"
-                            :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
+                            :value="typeof selectedValue === 'object' && selectedValue?.uri ? selectedValue?.uri : selectedValue"
                             :execution="execution"
                         />
                         <SubFlowLink
@@ -167,12 +171,12 @@
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
+    import Utils from "../../../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
     const editorValue = ref<string>("");
     const debugCollapse = ref<string>("");
-    const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref<string>("");
 
     const computedDebugValue = computed(() => {
@@ -212,7 +216,7 @@
     };
 
     const axios = useAxios();
-    const onDebugExpression = (expression: string) => {
+    const onDebugExpression = (expression?: string) => {
         const taskRun = selectedTask();
 
         if (!taskRun) return;
@@ -260,7 +264,7 @@
 
     const execution = computed(() => executionsStore.execution);
 
-    function isValidURL(url) {
+    function isValidURL(url: string) {
         try {
             new URL(url);
             return true;
@@ -269,13 +273,13 @@
         }
     }
 
-    const processedValue = (data) => {
+    const processedValue = (data: TransformedTask) => {
         const regular = false;
 
         if (!data.value && !data.children?.length) {
             return {label: data.value, regular};
         } else if (data?.children?.length) {
-            const message = (length) => ({label: `${length} items`, regular});
+            const message = (length: number) => ({label: `${length} items`, regular});
             const length = data.children.length;
 
             return data.children[0].isFirstPass
@@ -294,7 +298,7 @@
     };
 
     const expandedValue = ref("");
-    const selected = ref<string[]>([]);
+    const selected = ref<(string | {uri: string})[]>([]);
 
     onMounted(() => {
         const task = outputs.value?.[1];
@@ -304,12 +308,12 @@
         expandedValue.value = task.value;
 
         const child = task.children?.[1];
-        if (child) {
+        if (child?.path) {
             selected.value.push(child.value);
             expandedValue.value = child.path;
 
             const grandChild = child.children?.[1];
-            if (grandChild) {
+            if (grandChild?.path) {
                 selected.value.push(grandChild.value);
                 expandedValue.value = grandChild.path;
             }
@@ -339,8 +343,18 @@
         return {label, value};
     };
 
-    const transform = (o, isFirstPass, path = "") => {
-        const result = Object.keys(o).map((key) => {
+    interface TransformedTask {
+        label: string;
+        heading?: boolean;
+        component?: any;
+        isFirstPass?: boolean;
+        value?: any;
+        children?: TransformedTask[];
+        path?: string;
+    }
+
+    const transform = (o: any, isFirstPass: boolean, path = "") => {
+        const result: TransformedTask[] = Object.keys(o).map((key) => {
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
 
@@ -365,7 +379,7 @@
         });
 
         if (isFirstPass) {
-            const OUTPUTS = {
+            const OUTPUTS: TransformedTask = {
                 label: t("outputs"),
                 heading: true,
                 component: shallowRef(TextBoxSearchOutline),
@@ -383,6 +397,7 @@
                 label: task.taskId,
                 value: task.taskId,
                 ...task,
+                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
                 icon: true,
                 children: task?.outputs
                     ? transform(task.outputs, true, task.taskId)
@@ -394,7 +409,7 @@
             label: t("tasks"),
             heading: true,
             component: shallowRef(TimelineTextOutline),
-        };
+        } as any;
         tasks?.unshift(HEADING);
 
         return tasks;
@@ -404,7 +419,11 @@
 
     const icons = computed(() => {
         // TODO: https://github.com/kestra-io/kestra/issues/5643
-        const getTaskIcons = (tasks, mapped) => {
+        const getTaskIcons = (tasks: {
+            id: string;
+            type: string;
+            tasks?: any[];
+        }[], mapped: Record<string, string>) => {
             tasks.forEach((task) => {
                 mapped[task.id] = task.type;
                 if (task.tasks && task.tasks.length > 0) {
@@ -413,7 +432,7 @@
             });
         };
 
-        const mapped = {};
+        const mapped:Record<string, string> = {};
 
         getTaskIcons(executionsStore?.flow?.tasks || [], mapped);
         getTaskIcons(executionsStore?.flow?.errors || [], mapped);
@@ -422,14 +441,13 @@
         return mapped;
     });
 
-    const trim = (value) =>
+    const trim = (value: any) =>
         typeof value !== "string" || value.length < 16
             ? value
             : `${value.substring(0, 16)}...`;
-    const isFile = (value) =>
-        typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+
     const displayVarValue = () =>
-        isFile(selectedValue.value) ||
+        Utils.isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");
@@ -440,7 +458,19 @@
 .outputs {
     display: flex;
     width: 100%;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+:deep(.el-splitter) {
+    height: 100%;
+    min-height: 0;
+}
+
+:deep(.el-splitter-panel) {
+    display: flex;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -460,7 +490,10 @@
 }
 
 :deep(.el-cascader-menu__list) {
-    min-height: 100vh;
+    /* Let the cascader list be constrained by its parent container
+       so it can scroll independently instead of forcing page height */
+    min-height: 0;
+    height: 100%;
 }
 
 :deep(.el-cascader-panel) {
@@ -483,6 +516,23 @@
     background: var(--ks-background-card);
     position: relative;
     z-index: 1;
+}
+
+/* Left column container: take full splitter-panel height and scroll internally */
+.outputs .left {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Right panel: make wrapper fill height and allow content to scroll independently */
+.right.wrapper {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 :deep(.el-cascader-menu) {
@@ -521,6 +571,25 @@
             display: none;
         }
 
+        .task {
+            width: 100%;
+            max-width: 100%;
+
+            & .task-label {
+                width: 100%;
+                max-width: 100%;
+                
+                & .task-iteration-value {
+                    display: inline-block;
+                    width: 80px;
+                    max-width: 80px;
+                    overflow-x: clip;
+                    text-overflow: ellipsis;
+                    color: var(--ks-content-primary);
+                }
+            }
+        }
+
         .task .wrapper {
             align-self: center;
             height: var(--el-font-size-small);
@@ -533,8 +602,9 @@
     }
 }
 .content-container {
-    height: calc(100vh - 0px);
-    overflow-y: scroll;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
     overflow-x: hidden;
     scrollbar-gutter: stable;
     word-wrap: break-word;
@@ -575,7 +645,7 @@
 
 //Mobile Version
 @media (max-width: 768px) {
-    :deep(.el-splitter) { 
+    :deep(.el-splitter) {
         .outputs-top {
             margin: 10px;
             border: 2px solid var(--ks-border-primary);
@@ -588,7 +658,7 @@
     :deep(.el-splitter-bar){
         height: 4px !important;
         width: auto !important;
-        
+
     }
 }
 </style>

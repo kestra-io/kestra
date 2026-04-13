@@ -1,3 +1,5 @@
+@use "fonts";
+
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
@@ -6,8 +8,6 @@
 // element-plus
 @use "layout/element-plus-overload";
 
-// vue-tour
-@use "vue3-tour/dist/vue3-tour.css";
 
 // layout
 @use "layout/root";

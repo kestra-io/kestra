@@ -1,5 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.Helpers;
 import io.kestra.core.docs.DocumentationWithSchema;
 import io.kestra.core.docs.InputType;
@@ -7,20 +13,22 @@ import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.ui.PluginUiManifest;
+import io.kestra.core.models.ui.PluginUiModuleWithGroup;
+import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class PluginControllerTest {
@@ -43,7 +51,7 @@ class PluginControllerTest {
             Argument.listOf(Plugin.class)
         );
 
-        assertThat(list.size()).isEqualTo(2);
+        assertThat(list.size()).isEqualTo(3);
 
         Plugin template = list.stream()
             .filter(plugin -> plugin.getTitle().equals("plugin-template-test"))
@@ -65,7 +73,7 @@ class PluginControllerTest {
             .findFirst()
             .orElseThrow();
 
-        assertThat(core.getCategories()).containsExactlyInAnyOrder(PluginSubGroup.PluginCategory.STORAGE, PluginSubGroup.PluginCategory.CORE);
+        assertThat(core.getCategories()).containsExactlyInAnyOrder(PluginSubGroup.PluginCategory.CORE);
 
         // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
         list = client.toBlocking().retrieve(
@@ -73,7 +81,7 @@ class PluginControllerTest {
             Argument.listOf(Plugin.class)
         );
 
-        assertThat(list.size()).isEqualTo(2);
+        assertThat(list.size()).isEqualTo(3);
     }
 
     @Test
@@ -83,15 +91,18 @@ class PluginControllerTest {
             Argument.mapOf(String.class, PluginIcon.class)
         );
 
-        assertThat(list.entrySet().stream()
-            .filter(e -> e.getKey().equals(Log.class.getName()))
-            .findFirst().orElseThrow().getValue().getIcon()).isNotNull();
+        assertThat(
+            list.entrySet().stream()
+                .filter(e -> e.getKey().equals(Log.class.getName()))
+                .findFirst().orElseThrow().getValue().getIcon()
+        ).isNotNull();
         // test an alias
-        assertThat(list.entrySet().stream()
-            .filter(e -> e.getKey().equals("io.kestra.core.tasks.log.Log"))
-            .findFirst().orElseThrow().getValue().getIcon()).isNotNull();
+        assertThat(
+            list.entrySet().stream()
+                .filter(e -> e.getKey().equals("io.kestra.core.runners.test.task.Alias"))
+                .findFirst().orElseThrow().getValue().getIcon()
+        ).isNotNull();
     }
-
 
     @SuppressWarnings("unchecked")
     @Test
@@ -125,14 +136,13 @@ class PluginControllerTest {
     @Test
     void docWithAlert() {
         DocumentationWithSchema doc = client.toBlocking().retrieve(
-            HttpRequest.GET(PATH + "/io.kestra.plugin.core.state.Set"),
+            HttpRequest.GET(PATH + "/io.kestra.core.plugins.test.DeprecatedTask"),
             DocumentationWithSchema.class
         );
 
-        assertThat(doc.getMarkdown()).contains("io.kestra.plugin.core.state.Set");
+        assertThat(doc.getMarkdown()).contains("io.kestra.core.plugins.test.DeprecatedTask");
         assertThat(doc.getMarkdown()).contains("::: warning\n");
     }
-
 
     @SuppressWarnings("unchecked")
     @Test
@@ -145,7 +155,7 @@ class PluginControllerTest {
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(properties.size()).isEqualTo(18);
+        assertThat(properties.size()).isEqualTo(19);
         assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
@@ -167,18 +177,8 @@ class PluginControllerTest {
             Argument.mapOf(String.class, Object.class)
         );
 
-        assertThat((Map<String, Object>) doc.get("properties")).hasSize(24);
+        assertThat((Map<String, Object>) doc.get("properties")).hasSize(22);
         assertThat((List<String>) doc.get("required")).hasSize(3);
-    }
-
-    @Test
-    void template() {
-        Map<String, Object> doc = client.toBlocking().retrieve(
-            HttpRequest.GET(PATH + "/schemas/template"),
-            Argument.mapOf(String.class, Object.class)
-        );
-
-        assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.templates.Template");
     }
 
     @Test
@@ -198,7 +198,7 @@ class PluginControllerTest {
             Argument.listOf(InputType.class)
         );
 
-        assertThat(doc.size()).isEqualTo(19);
+        assertThat(doc.size()).isEqualTo(17);
     }
 
     @SuppressWarnings("unchecked")
@@ -211,7 +211,62 @@ class PluginControllerTest {
 
         assertThat(doc.getSchema().getProperties().size()).isEqualTo(3);
         Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-        assertThat(properties.size()).isEqualTo(9);
-        assertThat(((Map<String, Object>) properties.get("name")).get("$deprecated")).isEqualTo(true);
+        assertThat(properties.size()).isEqualTo(8);
+    }
+
+    @Test
+    void should_get_plugin_manifest_for_tasks() {
+        PluginUiManifest manifest = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                PATH + "/pluginUiManifest", List.of(
+                    new TaskWithVersion("io.kestra.plugin.redis.list.ListPop", null),
+                    new TaskWithVersion("io.kestra.plugin.redis.json.Get", null)
+                )
+            ),
+            PluginUiManifest.class
+        );
+
+        assertThat(manifest.manifest()).hasSize(1);
+        assertThat(manifest.manifest()).containsKey("io.kestra.plugin.redis.list.ListPop");
+        List<PluginUiModuleWithGroup> pluginUiModules = manifest.manifest().get("io.kestra.plugin.redis.list.ListPop");
+        assertThat(pluginUiModules).containsExactly(
+            new PluginUiModuleWithGroup("topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css")),
+            new PluginUiModuleWithGroup("log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"))
+        );
+    }
+
+    @Test
+    void should_not_get_plugin_manifest_for_groups() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    PATH + "/pluginUiManifest",
+                    List.of(new TaskWithVersion("io.kestra.plugin.redis", null))
+                ),
+                PluginUiManifest.class
+            )
+        );
+        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void should_get_plugin_ui_for_group() {
+        String file = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/io.kestra.plugin.redis/pluginUi/plugin-ui.js"),
+            String.class
+        );
+
+        assertThat(file).contains("import{i as l,p}from\"./assets/plugin_mf_2_redis__mf_v__runtimeInit__mf_v__-CRaG84pD.js\";");
+    }
+
+    @Test
+    void should_not_get_plugin_ui_for_task() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET(PATH + "/io.kestra.plugin.redis.list.ListPop/pluginUi/plugin-ui.js"),
+                String.class
+            )
+        );
+        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 }

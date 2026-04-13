@@ -1,18 +1,5 @@
 package io.kestra.plugin.core.runner;
 
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.tasks.runners.*;
-import io.kestra.core.runners.RunContext;
-import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,23 +8,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Introspected
+import org.slf4j.Logger;
+
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.tasks.runners.*;
+import io.kestra.core.runners.RunContext;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Task runner that executes a task as a subprocess on the Kestra host.",
+    title = "Run tasks as local subprocesses on the worker.",
     description = """
-        To access the task's working directory, use the `{{workingDir}}` Pebble expression or the `WORKING_DIR` environment variable. Input files and namespace files will be available in this directory.
+        Executes task commands with the host OS process APIs. Working directory is exposed via `{{workingDir}}` expression / `WORKING_DIR` environment variables; if `outputFiles` are configured, write them to the same directory or use `{{outputDir}}` / `OUTPUT_DIR` when enabled. Input files and namespace files will be available in this directory.
 
-        To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
-
-        Note that:
-
-        - This task runner is independent of any Operating System. You can use it equally on Linux, Mac, or Windows without any additional configuration.
-        - When the Kestra Worker running this task is shut down, the process will be interrupted and re-created as soon as the worker is restarted."""
+        Platform-agnostic (Linux/macOS/Windows). If the worker stops, the process is interrupted and will be recreated on restart."""
 )
 @Plugin(
     examples = {
@@ -145,7 +140,6 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
         Thread stdOut = Thread.startVirtualThread(stdOutRunnable);
         Thread stdErr = Thread.startVirtualThread(stdErrRunnable);
 
-
         try {
             int exitCode = process.waitFor();
 
@@ -183,7 +177,8 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
     }
 
     private void killDescendantsOf(ProcessHandle process, Logger logger) {
-        process.descendants().forEach(processHandle -> {
+        process.descendants().forEach(processHandle ->
+        {
             if (!processHandle.destroy()) {
                 logger.warn("Descendant process {} of {} couldn't be killed", processHandle.pid(), process.pid());
             }

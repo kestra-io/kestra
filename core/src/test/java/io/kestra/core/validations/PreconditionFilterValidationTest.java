@@ -1,15 +1,17 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.plugin.core.trigger.Flow;
-import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.util.List;
-import java.util.Optional;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.plugin.core.trigger.Flow;
+
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +21,7 @@ class PreconditionFilterValidationTest {
     private ModelValidator modelValidator;
 
     @ParameterizedTest
-    @EnumSource(value = Flow.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
+    @EnumSource(value = Flow.Type.class, names = { "EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS" })
     void shouldValidateConditionWithAValue(Flow.Type type) {
         var condition = Flow.Filter.builder()
             .field(Flow.Field.FLOW_ID)
@@ -32,7 +34,7 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Flow.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
+    @EnumSource(value = Flow.Type.class, names = { "EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS" })
     void shouldNotValidateConditionWithValues(Flow.Type type) {
         var condition = Flow.Filter.builder()
             .field(Flow.Field.FLOW_ID)
@@ -47,7 +49,7 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Flow.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
+    @EnumSource(value = Flow.Type.class, names = { "EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS" })
     void shouldNotValidateConditionWithAValueAndValues(Flow.Type type) {
         var condition = Flow.Filter.builder()
             .field(Flow.Field.FLOW_ID)
@@ -63,7 +65,7 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Flow.Type.class, names = {"IN", "NOT_IN"})
+    @EnumSource(value = Flow.Type.class, names = { "IN", "NOT_IN" })
     void shouldValidateConditionWithValues(Flow.Type type) {
         var condition = Flow.Filter.builder()
             .field(Flow.Field.FLOW_ID)
@@ -76,7 +78,7 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Flow.Type.class, names = {"IN", "NOT_IN"})
+    @EnumSource(value = Flow.Type.class, names = { "IN", "NOT_IN" })
     void shouldNotValidateConditionWithAValue(Flow.Type type) {
         var condition = Flow.Filter.builder()
             .field(Flow.Field.FLOW_ID)

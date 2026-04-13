@@ -67,6 +67,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions");
                         return VALUES.EXECUTION_STATES;
                     },
+                    searchable: true,
                     showComparatorSelection: true
                 },
                 {
@@ -74,7 +75,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     label: t("filter.labels.label"),
                     description: t("filter.labels.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "text",
+                    valueType: "key-value",
                 }
             ]
         };

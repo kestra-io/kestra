@@ -6,13 +6,12 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
-
 import jakarta.inject.Singleton;
 
 @SuppressWarnings("rawtypes")
 @Produces(value = MediaType.TEXT_PLAIN)
 @Singleton
-@Requires(classes = {IllegalStateException.class, ExceptionHandler.class})
+@Requires(classes = { IllegalStateException.class, ExceptionHandler.class })
 public class IllegalStateExceptionHandler implements ExceptionHandler<IllegalStateException, HttpResponse> {
     @Override
     public HttpResponse handle(HttpRequest request, IllegalStateException exception) {

@@ -67,7 +67,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                     label: t("filter.labels_flow.label"),
                     description: t("filter.labels_flow.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "text",
+                    valueType: "key-value",
                 },
             ]
         };

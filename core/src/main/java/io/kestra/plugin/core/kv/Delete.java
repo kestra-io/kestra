@@ -1,11 +1,14 @@
 package io.kestra.plugin.core.kv;
 
+import java.util.NoSuchElementException;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -13,13 +16,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.NoSuchElementException;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a KV pair."
+    title = "Delete a key-value entry.",
+    description = """
+        Renders `key`/`namespace` (defaults to Flow Namespace) and removes the entry. If `errorOnMissing` is true and the key doesn’t exist, the task fails.
+
+        Requires Namespace authorization when deleting outside the current namespace."""
 )
 @Plugin(
     examples = {

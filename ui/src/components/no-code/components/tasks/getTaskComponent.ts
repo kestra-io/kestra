@@ -1,5 +1,6 @@
 import {pascalCase} from "change-case";
 import {resolve$ref} from "../../../../utils/utils";
+import {SECTIONS_IDS} from "../../utils/useFlowFields";
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
@@ -16,12 +17,20 @@ export interface Schema{
     items?: Schema;
     const?: string;
     format?: string;
+    $language: string;
+    $secret?: boolean;
 }
 
+export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
+
 function getType(property: any, definitions: Record<string, any>, key?: string): string {
-    
+
     if (property.enum !== undefined) {
         return "enum";
+    }
+
+    if (property.$secret === true) {
+        return "secret";
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "$ref")) {
@@ -30,7 +39,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         }
 
         if (property.$ref.includes("tasks.runners.TaskRunner")) {
-            return "task-runner"
+            return "task"
         }
 
         if (property.$ref.includes("io.kestra.preload")) {
@@ -54,7 +63,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         }
 
         // for dag tasks
-        if (property.anyOf.length > 10) {
+        if (property.anyOf.length > 10 || key === "taskRunner") {
             return "task"
         }
         return "any-of";
@@ -88,7 +97,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
 
     if (property.type === "array") {
         const items = definitions ? resolve$ref({definitions: definitions}, property.items) : property.items;
-        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
+        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || LIST_FIELDS.includes(key ?? "")) {
             return "list";
         }
 

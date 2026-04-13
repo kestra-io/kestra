@@ -1,21 +1,21 @@
 package io.kestra.plugin.core.condition;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -23,7 +23,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on weekend."
+    title = "Allow events on weekends.",
+    description = """
+        Renders a date (defaults to the trigger timestamp) and passes only if it falls on Saturday or Sunday.
+
+        Accepts ISO-8601 date/time strings; uses the rendered timezone to determine the day."""
 )
 @Plugin(
     examples = {
@@ -48,7 +52,7 @@ import jakarta.validation.constraints.NotNull;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.WeekendCondition", "io.kestra.plugin.core.condition.WeekendCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.WeekendCondition", "io.kestra.plugin.core.condition.WeekendCondition" }
 )
 public class Weekend extends Condition implements ScheduleCondition {
     @NotNull

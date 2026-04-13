@@ -1,8 +1,15 @@
 package io.kestra.core.runners;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -14,22 +21,21 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.services.NamespaceService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+
+import io.kestra.core.encryption.EncryptionConfig;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @Singleton
 public class RunContextFactory {
@@ -60,8 +66,8 @@ public class RunContextFactory {
     @Inject
     protected WorkingDirFactory workingDirFactory;
 
-    @Value("${kestra.encryption.secret-key}")
-    protected Optional<String> secretKey;
+    @Inject
+    protected EncryptionConfig encryptionConfig;
 
     @Value("${kestra.environment.name}")
     @Nullable
@@ -79,6 +85,12 @@ public class RunContextFactory {
 
     @Inject
     private NamespaceFactory namespaceFactory;
+
+    @Inject
+    private AssetManagerFactory assetManagerFactory;
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     // hacky
     public RunContextInitializer initializer() {
@@ -109,14 +121,17 @@ public class RunContextFactory {
             .withPluginConfiguration(Map.of())
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory))
             .withVariableRenderer(variableRenderer)
-            .withVariables(runVariableModifier.apply(
+            .withVariables(
+                runVariableModifier.apply(
                     newRunVariablesBuilder()
                         .withFlow(flow)
                         .withExecution(execution)
+                        .withOutputs(taskOutputService.computeOutputs(execution))
                         .withDecryptVariables(decryptVariables)
                         .withSecretInputs(secretInputsFromFlow(flow))
                 )
-                .build(runContextLogger, PropertyContext.create(variableRenderer)))
+                    .build(runContextLogger, PropertyContext.create(variableRenderer))
+            )
             .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
@@ -138,15 +153,17 @@ public class RunContextFactory {
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
-            .withVariables(newRunVariablesBuilder()
-                .withFlow(flow)
-                .withTask(task)
-                .withExecution(execution)
-                .withTaskRun(taskRun)
-                .withDecryptVariables(decryptVariables)
-                .withSecretInputs(secretInputsFromFlow(flow))
-                .build(runContextLogger, PropertyContext.create(variableRenderer)))
-            .withKvStoreService(kvStoreService)
+            .withVariables(
+                newRunVariablesBuilder()
+                    .withFlow(flow)
+                    .withTask(task)
+                    .withExecution(execution)
+                    .withOutputs(taskOutputService.computeOutputs(execution))
+                    .withTaskRun(taskRun)
+                    .withDecryptVariables(decryptVariables)
+                    .withSecretInputs(secretInputsFromFlow(flow))
+                    .build(runContextLogger, PropertyContext.create(variableRenderer))
+            )
             .withSecretInputs(secretInputsFromFlow(flow))
             .withTask(task)
             .withVariableRenderer(variableRenderer)
@@ -160,25 +177,29 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(trigger.getType(), trigger.getClass()))
-            .withVariables(newRunVariablesBuilder()
-                .withFlow(flow)
-                .withTrigger(trigger)
-                .withSecretInputs(secretInputsFromFlow(flow))
-                .build(runContextLogger, PropertyContext.create(this.variableRenderer))
+            .withVariables(
+                newRunVariablesBuilder()
+                    .withFlow(flow)
+                    .withTrigger(trigger)
+                    .withSecretInputs(secretInputsFromFlow(flow))
+                    .build(runContextLogger, PropertyContext.create(this.variableRenderer))
             )
             .withSecretInputs(secretInputsFromFlow(flow))
             .withTrigger(trigger)
             .build();
     }
 
-
-    @VisibleForTesting
     public RunContext of(final FlowInterface flow, final Map<String, Object> variables) {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, namespaceService, namespaceFactory))
-            .withVariables(variables)
+            .withVariables(
+                newRunVariablesBuilder()
+                    .withFlow(flow)
+                    .withVariables(variables)
+                    .build(runContextLogger, PropertyContext.create(this.variableRenderer))
+            )
             .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
@@ -193,32 +214,34 @@ public class RunContextFactory {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)
-            .withStorage(new InternalStorage(
-                runContextLogger.logger(),
-                new StorageContext() {
-                    @Override
-                    public URI getContextStorageURI() {
-                        return URI.create("");
-                    }
+            .withStorage(
+                new InternalStorage(
+                    runContextLogger.logger(),
+                    new StorageContext() {
+                        @Override
+                        public URI getContextStorageURI() {
+                            return URI.create("");
+                        }
 
-                    @SuppressWarnings("unchecked")
-                    @Override
-                    public String getTenantId() {
-                        var tenantId = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("tenantId");
-                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(MAIN_TENANT);
-                    }
+                        @SuppressWarnings("unchecked")
+                        @Override
+                        public String getTenantId() {
+                            var tenantId = ((Map<String, Object>) variables.getOrDefault("flow", Map.of())).get("tenantId");
+                            return Optional.ofNullable(tenantId).map(Object::toString).orElse(MAIN_TENANT);
+                        }
 
-                    @SuppressWarnings("unchecked")
-                    @Override
-                    public String getNamespace() {
-                        var namespace = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("namespace");
-                        return Optional.ofNullable(namespace).map(Object::toString).orElse(null);
-                    }
-                },
-                storageInterface,
-                namespaceService,
-                namespaceFactory
-            ))
+                        @SuppressWarnings("unchecked")
+                        @Override
+                        public String getNamespace() {
+                            var namespace = ((Map<String, Object>) variables.getOrDefault("flow", Map.of())).get("namespace");
+                            return Optional.ofNullable(namespace).map(Object::toString).orElse(null);
+                        }
+                    },
+                    storageInterface,
+                    namespaceService,
+                    namespaceFactory
+                )
+            )
             .withVariables(variables)
             .withTask(task)
             .build();
@@ -246,13 +269,14 @@ public class RunContextFactory {
             .withMeterRegistry(metricRegistry)
             .withVariableRenderer(this.variableRenderer)
             .withStorageInterface(storageInterface)
-            .withSecretKey(secretKey)
+            .withSecretKey(encryptionConfig.asOptional())
             .withWorkingDir(workingDirFactory.createWorkingDirectory())
-            .withKvStoreService(kvStoreService);
+            .withKvStoreService(kvStoreService)
+            .withAssetManagerFactory(assetManagerFactory);
     }
 
     protected RunVariables.Builder newRunVariablesBuilder() {
-        return new RunVariables.DefaultBuilder(secretKey)
+        return new RunVariables.DefaultBuilder(encryptionConfig.asOptional())
             .withEnvs(runContextCache.getEnvVars())
             .withGlobals(runContextCache.getGlobalVars())
             .withKestraConfiguration(new RunVariables.KestraConfiguration(kestraEnvironment, kestraUrl));

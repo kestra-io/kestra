@@ -1,9 +1,5 @@
 package io.kestra.core.storages.kv;
 
-import io.kestra.core.models.kv.PersistedKvMetadata;
-import io.kestra.core.storages.FileAttributes;
-import jakarta.annotation.Nullable;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -11,7 +7,13 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.storages.FileAttributes;
+
+import jakarta.annotation.Nullable;
+
 public record KVEntry(String namespace, String key, Integer version, @Nullable String description, Instant creationDate, Instant updateDate, @Nullable Instant expirationDate) {
+
     private static final Pattern captureKeyAndVersion = Pattern.compile("(.*)\\.ion(?:\\.v(\\d+))?$");
 
     public static KVEntry from(String namespace, FileAttributes fileAttributes) throws IOException {
@@ -34,7 +36,15 @@ public record KVEntry(String namespace, String key, Integer version, @Nullable S
         );
     }
 
-    public static KVEntry from(PersistedKvMetadata persistedKvMetadata) throws IOException {
-        return new KVEntry(persistedKvMetadata.getNamespace(), persistedKvMetadata.getName(), persistedKvMetadata.getVersion(), persistedKvMetadata.getDescription(), persistedKvMetadata.getCreated(), persistedKvMetadata.getUpdated(), persistedKvMetadata.getExpirationDate());
+    public static KVEntry from(PersistedKvMetadata persistedKvMetadata) {
+        return new KVEntry(
+            persistedKvMetadata.getNamespace(),
+            persistedKvMetadata.getName(),
+            persistedKvMetadata.getVersion(),
+            persistedKvMetadata.getDescription(),
+            persistedKvMetadata.getCreated(),
+            persistedKvMetadata.getUpdated(),
+            persistedKvMetadata.getExpirationDate()
+        );
     }
 }

@@ -20,7 +20,6 @@
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapStores} from "pinia";
-    import {useCoreStore} from "../../stores/core";
     import {useFlowStore} from "../../stores/flow";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -63,24 +62,12 @@
                         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
                         if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                            const DEFAULT_DURATION = this.miscStore.configs?.chartDefaultDuration ?? "P30D";
+                            const DEFAULT_DURATION = this.miscStore.configs?.chartDefaultDuration ?? "PT24H";
                             const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION};
                             this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
                         }
                     }
                 }
-            },
-            "coreStore.guidedProperties": {
-                deep: true,
-                immediate: true,
-                handler: function (newValue) {
-                    if (newValue?.manuallyContinue) {
-                        setTimeout(() => {
-                            this.$tours["guidedTour"]?.nextStep();
-                            this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, manuallyContinue: false};
-                        }, 500);
-                    }
-                },
             },
             "flowStore.flow": {
                 deep: true,
@@ -281,7 +268,8 @@
                         name: "dependencies",
                         component: Dependencies,
                         title: this.$t("dependencies"),
-                        count: this.dependenciesCount,
+                        count: (this.dependenciesCount ?? 0) > 0 ? this.dependenciesCount : undefined,
+                        disabled: !this.dependenciesCount,
                         maximized: true
                     });
                 }
@@ -313,7 +301,7 @@
             }
         },
         computed: {
-            ...mapStores(useCoreStore, useFlowStore, useAuthStore, useMiscStore),
+            ...mapStores(useFlowStore, useAuthStore, useMiscStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,

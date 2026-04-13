@@ -10,7 +10,7 @@
             <KSFilter
                 :configuration="pluginFilter"
                 :buttons="{
-                    savedFilters: {shown: false}, 
+                    savedFilters: {shown: false},
                     tableOptions: {shown: false}
                 }"
                 :searchInputFullWidth="true"
@@ -31,14 +31,14 @@
                             :key="elementType"
                         >
                             <p
-                                v-if="elements.filter(t => t.toLowerCase().includes(searchInput)).length > 0"
+                                v-if="elements.length > 0"
                                 class="mb-0"
                             >
                                 {{ $t(elementType) }}
                             </p>
                             <ul>
                                 <li
-                                    v-for="element in elements.filter(t => t.toLowerCase().includes(searchInput))"
+                                    v-for="element in elements"
                                     :key="element"
                                 >
                                     <span @click="openPlugin(element)">{{ element }}</span>
@@ -65,6 +65,7 @@
     import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
+    import {isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import {usePluginFilter} from "../filter/configurations";
@@ -76,7 +77,7 @@
     const route = useRoute();
     const router = useRouter();
     const pluginsStore = usePluginsStore();
-    
+
     const pluginFilter = usePluginFilter();
 
     const props = withDefaults(defineProps<{
@@ -93,17 +94,6 @@
 
     const handleSearch = (query: string) => {
         searchText.value = query;
-        const newQuery: Record<string, any> = {...route.query};
-        if (query !== undefined && query !== null && String(query).trim() !== "") {
-            newQuery.q = query;
-        } else {
-            // remove an empty `q=` in the URL on plugins/view
-            delete newQuery.q;
-        }
-
-        router.push({
-            query: newQuery
-        });
     };
 
     const searchInput = computed(() => searchText.value.toLowerCase());
@@ -123,10 +113,7 @@
             .filter((plugin, index, self) =>
                 index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
             )
-            .filter(plugin =>
-                plugin.title.toLowerCase().includes(searchInput.value) ||
-                allElements(plugin).some(e => e.toLowerCase().includes(searchInput.value))
-            )
+            .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => isVisible(plugin))
             .sort((a, b) => {
                 const nameA = a.manifest["X-Kestra-Title"].toLowerCase();
@@ -186,10 +173,10 @@
 
     onBeforeMount(() => {
         loadPluginIcons();
-        searchText.value = String(route.query?.q ?? "");
+        searchText.value = String(route.query?.["filters[q][EQUALS]"] ?? "");
     });
 
-    watch(() => route.query.q, (newQ) => {
+    watch(() => route.query["filters[q][EQUALS]"], (newQ) => {
         searchText.value = String(newQ ?? "");
         saveRestoreUrl();
     });

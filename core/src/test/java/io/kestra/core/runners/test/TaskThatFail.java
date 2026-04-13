@@ -4,6 +4,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.RunContext;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -18,7 +19,6 @@ public class TaskThatFail extends Task implements RunnableTask<TaskThatFail.Outp
     @NotNull
     @PluginProperty(dynamic = true)
     private String message;
-
 
     @Override
     public TaskThatFail.Output run(RunContext runContext) throws Exception {

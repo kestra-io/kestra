@@ -2,34 +2,37 @@
     <el-collapse accordion v-model="openedDocs" :key="openedDocs">
         <template
             :key="child.title"
-            v-for="child in parent.children"
+            v-for="child in filteredChildren"
         >
             <el-collapse-item
-                class="mt-1"
                 :name="child.path"
                 v-if="child.children"
             >
                 <template #title>
-                    <span v-if="disabledPages.includes(child.path) || !makeIndexNavigable">
+                    <span v-if="DISABLED_PAGES.includes(child.path) || !makeIndexNavigable" :class="`depth-${depth}`">
                         {{ child.title.capitalize() }}
                     </span>
-                    <slot v-else v-bind="child">
-                        <router-link :to="{path: '/' + child.path}">
+                    <slot v-else v-bind="child" :class="`depth-${depth}`">
+                        <RouterLink :to="{path: '/' + child.path}" :class="`depth-${depth}`">
                             {{ child.title.capitalize() }}
-                        </router-link>
+                        </RouterLink>
                     </slot>
                 </template>
-                <recursive-toc :parent="child" :makeIndexNavigable="makeIndexNavigable">
+                <RecursiveToc
+                    :parent="{children: child.children}"
+                    :makeIndexNavigable="makeIndexNavigable"
+                    :depth="depth + 1"
+                >
                     <template #default="subChild">
                         <slot v-bind="subChild" />
                     </template>
-                </recursive-toc>
+                </RecursiveToc>
             </el-collapse-item>
             <div v-else>
-                <slot v-bind="child">
-                    <router-link :to="{path: '/' + child.path}">
+                <slot v-bind="child" :class="`depth-${depth}`">
+                    <RouterLink :to="{path: '/' + child.path}">
                         {{ child.title.capitalize() }}
-                    </router-link>
+                    </RouterLink>
                 </slot>
             </div>
         </template>
@@ -37,56 +40,86 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {computed, ref} from "vue";
+    import {DISABLED_PAGES} from "./docsUtils";
 
-    const disabledPages = [
-        "docs/api-reference",
-        "docs/terraform/data-sources",
-        "docs/terraform/guides",
-        "docs/terraform/resources"
-    ]
+    defineOptions({
+        name: "RecursiveToc"
+    })
 
-    defineProps({
+    defineSlots<{
+        default: (child: TocChild & {class?: string}) => any
+    }>()
+
+
+    interface TocChild {
+        path: string;
+        sidebarTitle?: string;
+        title: string;
+        children?: TocChild[];
+    }
+
+    const props = withDefaults(defineProps<{
         parent: {
-            type: Object as () => {children?: {path: string, title: string, children?: any[]}[]},
-            required: true
-        },
-        makeIndexNavigable: {
-            type: Boolean,
-            default: true
+            children: TocChild[]
         }
+        depth?: number
+        makeIndexNavigable?: boolean
+    }>(), {
+        makeIndexNavigable: true,
+        depth: 0
+    })
+
+    const filteredChildren = computed(() => {
+        return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})))
     })
 
     const openedDocs = ref<string[]>([]);
-
 </script>
 
 <style scoped lang="scss">
     .el-collapse {
         --el-collapse-header-font-size: 14px;
+        --el-collapse-header-height: auto;
+        border-top: none;
+        border-bottom: none;
 
         > * {
             font-size: var(--el-collapse-header-font-size);
-            line-height: 30px;
         }
 
-        > .el-collapse-item {
-            > :deep(button) {
+        :deep(> .el-collapse-item) {
+            > .el-collapse-item__header {
                 padding: 0;
+                border-bottom: none;
+                min-height: 32px;
+                line-height: 1.2;
+            }
+            
+            > button {
+                padding: 0;
+            }
+
+            .el-collapse-item__wrap {
+                border-bottom: none;
             }
 
             a {
                 color: var(--ks-content-primary);
 
-                &.router-link-exact-active {
+                &.RouterLink-exact-active {
                     font-weight: 700;
                 }
             }
         }
 
         :deep(.el-collapse-item__content) {
-            padding-top: 0;
-            padding-bottom: 0;
+            padding: 0;
+        }
+
+        :deep(.el-collapse-item__arrow) {
+            margin: 0 8px;
         }
     }
+
 </style>

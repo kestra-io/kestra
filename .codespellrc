@@ -1,0 +1,8 @@
+[codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = .git*,*.svg,package-lock.json,*.css,.codespellrc,translations,*.patch,data
+check-hidden = true
+# mixed case
+ignore-regex = \b([a-zA-Z]+[A-Z]|[A-Z][a-z])[a-zA-Z_-]*\b
+# some unfortunate choices to not bother about for now
+ignore-words-list = splited,childs,fwe,te,ser,serie

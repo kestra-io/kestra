@@ -6,18 +6,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated use {@link org.awaitility.Awaitility} instead
+ */
+@Deprecated
 public class Await {
     private static final Duration defaultSleep = Duration.ofMillis(100);
 
     public static void until(BooleanSupplier condition) {
-        Await.untilWithSleepInterval(condition, null);
+        Await.until(condition, null);
     }
 
-    public static void untilWithTimeout(BooleanSupplier condition, Duration timeout) throws TimeoutException {
-        until(condition, null, timeout);
-    }
-
-    public static void untilWithSleepInterval(BooleanSupplier condition, Duration sleep) {
+    public static void until(BooleanSupplier condition, Duration sleep) {
         if (sleep == null) {
             sleep = defaultSleep;
         }
@@ -43,11 +43,13 @@ public class Await {
         long start = System.currentTimeMillis();
         while (!condition.getAsBoolean()) {
             if (System.currentTimeMillis() - start > timeout.toMillis()) {
-                throw new TimeoutException(String.format(
-                    "Await failed to terminate within %s.%s",
-                    timeout,
-                    errorMessageInCaseOfFailure == null ? "" : " " + errorMessageInCaseOfFailure.get()
-                ));
+                throw new TimeoutException(
+                    String.format(
+                        "Await failed to terminate within %s.%s",
+                        timeout,
+                        errorMessageInCaseOfFailure == null ? "" : " " + errorMessageInCaseOfFailure.get()
+                    )
+                );
             } else {
                 try {
                     Thread.sleep(sleep.toMillis());
@@ -59,7 +61,8 @@ public class Await {
     }
 
     private static <T> BooleanSupplier untilSupplier(Supplier<T> supplier, AtomicReference<T> result) {
-        return () -> {
+        return () ->
+        {
             T t = supplier.get();
             if (t != null) {
                 result.set(t);
@@ -78,10 +81,10 @@ public class Await {
         return result.get();
     }
 
-    public static <T> T untilWithSleepInterval(Supplier<T> supplier, Duration sleep) {
+    public static <T> T until(Supplier<T> supplier, Duration sleep) {
         AtomicReference<T> result = new AtomicReference<>();
 
-        Await.untilWithSleepInterval(untilSupplier(supplier, result), sleep);
+        Await.until(untilSupplier(supplier, result), sleep);
 
         return result.get();
     }

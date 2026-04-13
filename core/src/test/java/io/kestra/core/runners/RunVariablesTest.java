@@ -1,6 +1,14 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.junit.annotations.KestraTest;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
@@ -12,7 +20,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
@@ -21,38 +28,33 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class RunVariablesTest {
-    
+
     @Inject
     VariableRenderer renderer;
-    
+
     @Inject
     StorageInterface storageInterface;
 
     @Inject
-    KvMetadataRepositoryInterface kvMetadataRepository;
-    
+    KVMetadataStateStore kvMetadataStateStore;
+
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
         return new KVStoreService() {
             @Override
             public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository) {
+                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore) {
                     @Override
                     public Optional<KVValue> getValue(String key) {
                         return Optional.of(new KVValue("value"));
@@ -61,7 +63,7 @@ class RunVariablesTest {
             }
         };
     }
-    
+
     @Test
     @SuppressWarnings("unchecked")
     void shouldGetEmptyVariables() {
@@ -75,39 +77,45 @@ class RunVariablesTest {
     @Test
     void shouldGetVariablesGivenFlowWithNoTenant() {
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
-            .withFlow(Flow
-                .builder()
-                .id("id-value")
-                .namespace("namespace-value")
-                .revision(42)
-                .build()
+            .withFlow(
+                Flow
+                    .builder()
+                    .id("id-value")
+                    .namespace("namespace-value")
+                    .revision(42)
+                    .build()
             )
             .build(new RunContextLogger(), PropertyContext.create(renderer));
-        Assertions.assertEquals(Map.of(
-            "id", "id-value",
-            "namespace", "namespace-value",
-            "revision", 42
-        ), variables.get("flow"));
+        Assertions.assertEquals(
+            Map.of(
+                "id", "id-value",
+                "namespace", "namespace-value",
+                "revision", 42
+            ), variables.get("flow")
+        );
     }
 
     @Test
     void shouldGetVariablesGivenFlowWithTenant() {
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
-            .withFlow(Flow
-                .builder()
-                .id("id-value")
-                .namespace("namespace-value")
-                .revision(42)
-                .tenantId("tenant-value")
-                .build()
+            .withFlow(
+                Flow
+                    .builder()
+                    .id("id-value")
+                    .namespace("namespace-value")
+                    .revision(42)
+                    .tenantId("tenant-value")
+                    .build()
             )
             .build(new RunContextLogger(), PropertyContext.create(renderer));
-        Assertions.assertEquals(Map.of(
-            "id", "id-value",
-            "namespace", "namespace-value",
-            "revision", 42,
-            "tenantId", "tenant-value"
-        ), variables.get("flow"));
+        Assertions.assertEquals(
+            Map.of(
+                "id", "id-value",
+                "namespace", "namespace-value",
+                "revision", 42,
+                "tenantId", "tenant-value"
+            ), variables.get("flow")
+        );
     }
 
     @Test
@@ -163,25 +171,34 @@ class RunVariablesTest {
     void nonResolvableDynamicInputsShouldBeSkipped() {
         VariableRenderer.VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableRenderer.VariableConfiguration.class);
         ApplicationContext mkApplicationContext = Mockito.mock(ApplicationContext.class);
+        MeterRegistry mkMeterRegistry = Mockito.mock(MeterRegistry.class);
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
-            .withFlow(Flow
-                .builder()
-                .namespace("a.b")
-                .id("c")
-                .inputs(List.of(
-                    BoolInput.builder().id("a").type(Type.BOOL).defaults(Property.ofValue(true)).build(),
-                    BoolInput.builder().id("b").type(Type.BOOL).dependsOn(new DependsOn(List.of("a"), null)).defaults(Property.ofExpression("{{inputs.a == true}}")).build()
-                ))
-                .build()
+            .withFlow(
+                Flow
+                    .builder()
+                    .namespace("a.b")
+                    .id("c")
+                    .inputs(
+                        List.of(
+                            BoolInput.builder().id("a").type(Type.BOOL).defaults(Property.ofValue(true)).build(),
+                            BoolInput.builder().id("b").type(Type.BOOL).dependsOn(new DependsOn(List.of("a"), null)).defaults(Property.ofExpression("{{inputs.a == true}}")).build()
+                        )
+                    )
+                    .build()
             )
             .withExecution(Execution.builder().id(IdUtils.create()).build())
-            .build(new RunContextLogger(), PropertyContext.create(new VariableRenderer(new PebbleEngineFactory(mkApplicationContext, mkVariableConfiguration), mkVariableConfiguration)));
+            .build(
+                new RunContextLogger(),
+                PropertyContext.create(new VariableRenderer(new PebbleEngineFactory(mkApplicationContext, mkVariableConfiguration, mkMeterRegistry), mkVariableConfiguration))
+            );
 
-        Assertions.assertEquals(Map.of(
-            "a", true
-        ), variables.get("inputs"));
+        Assertions.assertEquals(
+            Map.of(
+                "a", true
+            ), variables.get("inputs")
+        );
     }
-    
+
     @Test
     void shouldBuildVariablesGivenFlowWithInputHavingDefaultPebbleExpression() {
         FlowInterface flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
@@ -192,12 +209,41 @@ class RunVariablesTest {
               type: STRING
               defaults: "{{ kv('???') }}"
             """);
-        
+
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(flow)
             .withExecution(Execution.builder().id(IdUtils.create()).build())
             .build(new RunContextLogger(), PropertyContext.create(renderer));
-        
+
         assertThat(variables.get("inputs")).isEqualTo(Map.of("input", "value"));
+    }
+
+    @Test
+    void shouldBuildVariablesGivenFlowWithLabelsAndNoExecution() {
+        FlowInterface flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
+            id: opossum_534817
+            namespace: company.team
+
+            labels:
+              some: label
+
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "* * * * *"
+                inputs:
+                  fromLabel: "{{labels.some}}"
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hello World! 🚀
+            """);
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables.get("labels")).isEqualTo(Map.of("some", "label"));
     }
 }

@@ -7,23 +7,16 @@
     "Editor fontfamily": "편집기 글꼴 패밀리",
     "Editor fontsize": "편집기 글꼴 크기",
     "Editor theme": "편집기 테마",
-    "Finish": "완료",
     "Fold auto": "편집기: 다중 라인 자동 접기",
     "Fold content lines": "다중 라인 문자열 접기",
     "Hover description": "편집기: key 또는 value에 마우스를 올리면 필드 설명 표시",
     "Language": "언어",
-    "Next step": "다음 단계",
     "Per page": "페이지당",
-    "Previous step": "이전 단계",
-    "Reset guided tour": "가이드 투어 재시작",
     "Set default page": "기본 페이지 설정",
     "Set labels": "라벨 설정",
     "Set labels done": "실행의 라벨이 성공적으로 설정되었습니다",
     "Set labels to execution": "실행 <code>{id}</code>의 라벨 추가 또는 업데이트",
     "Set labels tooltip": "실행에 라벨 설정",
-    "Skip tour": "투어 건너뛰기",
-    "Skip tutorial": "튜토리얼 건너뛰기",
-    "Step": "단계",
     "Task Id already exist in the flow": "Task Id {taskId}가 flow에 이미 존재합니다.",
     "Total": "총계",
     "Unfold content lines": "다중 라인 문자열 펼치기",
@@ -47,12 +40,20 @@
     "after": "이후",
     "aggregation": "집계",
     "ai": {
+      "dashboard": {
+        "prompt_placeholder": "데이터에 대해 질문하세요. 예시 프롬프트: 지난 7일 동안 내 flows의 성공률을 보여줘."
+      },
       "flow": {
         "enable_instructions": {
-          "footer": "참고: 현재 AI 제공자로는 Gemini만 지원됩니다.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
+          "footer": "참고: 현재 오픈 소스 에디션에서는 AI 제공자로 Gemini만 지원됩니다. 엔터프라이즈 에디션의 경우, 다른 모델 제공자 구성을 위해 AI Copilot 문서를 참조하십시오.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
           "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면, 다음 코드 조각을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:"
         },
-        "generating": "Flow YAML을 생성 중입니다...",
+        "generating": {
+          "app": "앱 YAML을 생성 중입니다...",
+          "dashboard": "대시보드 YAML을 생성 중입니다...",
+          "flow": "Flow YAML을 생성 중입니다...",
+          "test": "테스트 YAML을 생성 중입니다..."
+        },
         "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
         "title": "AI 에이전트"
       }
@@ -62,6 +63,9 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
+    "assets": {
+      "title": "자산"
+    },
     "attempt": "시도",
     "attempts": "시도 횟수",
     "auditlogs": "감사 Logs",
@@ -294,6 +298,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">이 실행은 아직 RUNNING 상태입니다. 삭제해도 중지되지 않습니다.<br />실행을 중지하려면 실행을 강제 종료해야 합니다.</div>",
     "delete logs": "Logs 삭제",
     "delete ok": "삭제됨",
+    "delete revision confirm": "{revision} 개정을 삭제하시겠습니까?",
+    "delete revision error": "{error} 오류로 인해 {revision} 수정본 삭제 오류 발생",
     "delete task confirm": "task <code>{taskId}</code>을(를) 삭제하시겠습니까?",
     "delete trigger": "트리거 삭제",
     "delete trigger confirmation": "트리거 {id}를 삭제하시겠습니까? WARNING: 트리거가 flow에서 여전히 활성 상태인 경우 삭제하면 중복 실행이 발생할 수 있습니다.",
@@ -314,6 +320,12 @@
         "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다.",
         "title": "Kestra로 맞춤형 앱 만들기"
       },
+      "assets": {
+        "header": "자산 메타데이터 및 관측 가능성",
+        "label": "자산",
+        "message": "자산은 관측 가능성, 계보, 소유권 메타데이터를 연결하여 플랫폼 팀이 더 빠르게 문제를 해결하고 자신 있게 배포할 수 있도록 합니다.",
+        "title": "모든 데이터셋, 서비스 및 종속성을 한눈에 확인하세요."
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition은 모든 활동을 강력하고 변경 불가능한 기록으로 로그하여 변경 사항을 추적하고, 규정을 준수하며, 문제를 해결하는 것을 쉽게 만듭니다.",
         "title": "변경 사항 추적 - 감사 Log"
@@ -329,6 +341,10 @@
         "title": "인스턴스 전반의 인프라 관리"
       },
       "namespace": {
+        "assets": {
+          "message": "Kestra Enterprise Edition에서 Assets는 워크플로우가 상호작용하는 리소스의 실시간 인벤토리를 유지합니다. 이러한 리소스는 데이터베이스 테이블, 가상 머신, 파일 또는 사용 중인 외부 시스템일 수 있습니다.",
+          "title": "자산 관리 중앙화"
+        },
         "audit-logs": {
           "message": "Kestra Enterprise Edition에서는 namespace 수준의 감사 로그를 상세한 차이점과 함께 볼 수 있어, 모든 리소스에 걸쳐 누가 무엇을 언제 변경했는지에 대한 명확한 기록을 제공합니다.",
           "title": "모든 변경 사항을 한 곳에서 추적하기"
@@ -356,7 +372,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">비밀 값 Base64로 인코딩</a></strong>",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
           "intro": "새 Secret을 생성하려면:",
           "second": "위의 값을 사용하여 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>'라는 환경 변수를 추가하세요.",
           "third": "Kestra 인스턴스를 재시작하십시오"
@@ -389,8 +405,18 @@
         "zoom_out": "축소"
       },
       "search": {
+        "flow": {
+          "display": "flow 종속성 포함"
+        },
+        "namespace": {
+          "no_namespace": "namespace 없음",
+          "select": "namespace 선택"
+        },
         "no_results": "{term}에 대한 결과가 없습니다.",
-        "placeholder": "flow 또는 namespace로 검색..."
+        "placeholders": {
+          "asset": "자산, flow 또는 namespace로 검색...",
+          "default": "flow 또는 namespace로 검색..."
+        }
       }
     },
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
@@ -415,6 +441,7 @@
     "download": "다운로드",
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
+    "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "duration": "지속 시간",
     "dynamic": "동적",
@@ -426,14 +453,14 @@
       "command_palette": "명령 팔레트 표시",
       "comment": "댓글",
       "comment_uncomment": "주석 처리/주석 해제",
-      "decrease_fontsize": "글꼴 크기 줄이기",
+      "decrease_fontsize": "편집기 글꼴 크기 줄이기",
       "duplicate_cursor": "커서 복제",
       "execute_flow": "flow 실행",
       "fold_unfold": "코드 접기/펼치기",
-      "increase_fontsize": "글꼴 크기 증가",
+      "increase_fontsize": "에디터 글꼴 크기 증가",
       "label": "키보드 단축키",
       "move_line": "줄 이동",
-      "reset_fontsize": "글꼴 크기 재설정",
+      "reset_fontsize": "편집기 글꼴 크기 재설정",
       "save_flow": "Flow 저장",
       "toggle_ai_agent": "AI 에이전트 전환",
       "trigger_autocompletion": "자동 완성 트리거",
@@ -454,34 +481,50 @@
         "content": "Kestra와 외부 세계를 상호작용하는 앱을 만들기 시작하세요.",
         "title": "앱이 아직 없습니다!"
       },
+      "assets": {
+        "content": "데이터 자산, 서비스 및 인프라를 추적하고 관리하기 위해 자산을 추가하세요.",
+        "title": "아직 자산이 없습니다!"
+      },
       "concurrency_executions": {
-        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>에 대한 문서를 참조하세요.",
+        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executions</a></strong>에 대한 문서를 참조하세요.",
         "title": "이 Flow에 대한 진행 중인 실행이 없습니다."
       },
       "concurrency_limit": {
-        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
+        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "이 자산은 flow 또는 다른 자산과 상위 또는 하위 종속성이 없습니다.",
+          "title": "현재 종속성이 없습니다."
+        },
         "EXECUTION": {
-          "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">실행 종속성</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "content": "<a href=\"https://kestra.io/docs/ui/executions?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">실행 종속성</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         },
         "FLOW": {
-          "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "content": "<a href=\"https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         },
         "NAMESPACE": {
-          "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         }
       },
+      "kill_switches": {
+        "content": "킬 스위치 기능은 문제 있는 실행을 중지할 수 있는 UI 기반 메커니즘을 제공합니다. 이는 CLI 전용 <code>--skip-executions</code> 및 <code>--skip-flows</code> 명령을 포괄적인 관리 인터페이스로 대체합니다.",
+        "title": "아직 Kill Switch가 없습니다!"
+      },
       "panels": {
-        "content": "Flow Code 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Files, Blueprints, Namespace Context)을 선택하세요.",
+        "content": "Flow 코드 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Namespace Files, Blueprints, Context)을 선택하세요.",
         "title": "현재 열려 있는 패널이 없습니다."
       },
+      "pluginDefaults": {
+        "content": "플러그인 기본값을 사용하면 플러그인 구성을 중앙에서 관리하고 namespace의 모든 flow와 공유할 수 있습니다.",
+        "title": "아직 플러그인 기본값이 없습니다!"
+      },
       "plugins": {
-        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
+        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults?utm_source=app&utm_medium=referral&utm_campaign=plugin-default-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Namespace에 대한 플러그인 기본값이 설정되지 않았습니다."
       },
       "testSuites": {
@@ -489,7 +532,7 @@
         "title": "아직 Test suite가 없습니다!"
       },
       "triggers": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=trigger-inlinedoc\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
         "title": "flow에 Triggers가 없습니다."
       },
       "versionPlugin": {
@@ -573,6 +616,7 @@
         "title": "워크플로우 구성 요소"
       }
     },
+    "execution_started": "실행이 시작되었습니다!",
     "execution_starts_progress": "실행이 시작되면, 여기에서 진행 상황 업데이트를 볼 수 있습니다.",
     "execution_status": "실행 상태:",
     "executions": "실행",
@@ -595,8 +639,11 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_as": ".{format}로 내보내기",
     "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
+    "failed to export plugin defaults": "플러그인 기본값 내보내기에 실패했습니다.",
+    "failed to import plugin defaults": "플러그인 기본값 가져오기에 실패했습니다",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
     "feeds": {
@@ -606,8 +653,8 @@
     "fileTypeNotAllowed": "허용되지 않는 파일 유형입니다. 허용되는 유형: {types}",
     "files": "파일",
     "filter": {
-      "active key value pairs": "활성 key/value 쌍",
-      "add key value pair": "key/value 쌍 추가",
+      "active key value pairs": "활성 Key/Value 쌍",
+      "add key value pair": "Key/Value 쌍 추가",
       "aggregation": {
         "description": "집계 방법으로 필터링",
         "label": "집계"
@@ -650,9 +697,14 @@
       "drag to reorder columns": "열을 재정렬하려면 드래그하세요.",
       "edit filter": "필터 편집",
       "empty": "저장된 필터가 아직 없습니다.",
+      "enabled": {
+        "description": "사용 가능 여부로 필터링",
+        "label": "사용 가능"
+      },
       "end_date": "종료 날짜",
       "enter description": "필터 설명 입력",
       "enter label": "필터 label 입력",
+      "enter name": "필터 이름 입력",
       "execution_kind": {
         "playground": "플레이그라운드",
         "playground_description": "플레이그라운드 모드에서 트리거된 실행",
@@ -665,16 +717,25 @@
         "label": "Flow ID"
       },
       "footer_apply": "적용",
+      "group": {
+        "description": "그룹별 필터링",
+        "label": "그룹"
+      },
       "hierarchy": {
         "all": "기본",
         "child_description": "중첩/trigger된 실행만 표시",
         "parent_description": "최상위/루트 실행만 표시"
       },
       "key": "키",
+      "kill_switch_type": {
+        "description": "킬 스위치 유형별 필터",
+        "label": "유형"
+      },
       "kind": {
         "description": "실행 종류별 필터링",
         "label": "종류"
       },
+      "kv_pair_selected": "{count} Key/Value 쌍 선택됨",
       "label": "레이블",
       "labels": {
         "description": "레이블로 필터링",
@@ -698,6 +759,10 @@
       "metric": {
         "description": "메트릭 유형별 필터",
         "label": "메트릭"
+      },
+      "name": {
+        "description": "이름으로 필터링",
+        "label": "이름"
       },
       "namespace": {
         "description": "namespace로 필터링",
@@ -774,6 +839,7 @@
           "labels": "실행 레이블 (key:value 형식)",
           "namespace": "실행된 flow가 속한 namespace",
           "outputs": "실행에 의해 생성된 Outputs",
+          "parent-execution": "이 실행을 트리거한 상위 execution ID",
           "revision": "이 실행에 사용된 flow의 버전",
           "start-date": "실행이 시작되었을 때",
           "state": "현재 실행 상태",
@@ -883,7 +949,21 @@
         "description": "트리거 ID로 필터링",
         "label": "트리거 ID"
       },
+      "triggerState": {
+        "description": "트리거 상태별 필터링",
+        "disabled": "비활성화됨",
+        "enabled": "사용 가능",
+        "label": "트리거 상태"
+      },
+      "type": {
+        "description": "유형별 필터",
+        "label": "유형"
+      },
       "update": "업데이트",
+      "username": {
+        "description": "사용자 이름으로 필터링",
+        "label": "사용자 이름"
+      },
       "value": "값",
       "workerId": {
         "description": "작업자 ID로 필터링",
@@ -957,7 +1037,9 @@
     "fix_with_ai": "AI로 수정",
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",
+    "flow already exists message": "namespace <code>{namespace}</code>에 flow <code>{id}</code>가 이미 존재합니다. 새로운 리비전을 생성하시겠습니까?",
     "flow creation": "Flow 생성",
+    "flow creation denied in namespace": "`{namespace}` namespace에서 flow를 생성할 권한이 없습니다.",
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
     "flow deleted, you can restore it": "Flow가 삭제되었으며 읽기 전용 보기입니다. 여전히 복원할 수 있습니다.",
     "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",
@@ -966,6 +1048,9 @@
     "flow must have id and namespace": "Flow에는 id와 namespace가 있어야 합니다.",
     "flow must not be empty": "flow는 비어 있을 수 없습니다",
     "flow not imported": "일부 flow를 가져올 수 없습니다.",
+    "flow revision latest": "최신 flow 개정판",
+    "flow revision original": "원본 flow 개정",
+    "flow revision specific": "특정 flow 개정",
     "flow source not found": "Flow source를 찾을 수 없음",
     "flow-dependencies": "종속성",
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
@@ -1026,12 +1111,12 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "종료",
-    "kill only parents": "부모만 종료",
-    "kill parents and subflow": "부모 및 subflows 종료",
+    "kill only parents": "현재 것만 종료",
+    "kill parents and subflow": "현재 및 subflow 종료",
     "killed confirm": "실행 <code>{id}</code>을(를) 종료하시겠습니까?",
     "killed done": "종료 중입니다.",
     "kv": {
-      "add": "새 Key-Value",
+      "add": "생성",
       "delete multiple": {
         "confirm": "정말로 삭제하시겠습니까: <code>{name}</code> KV(s)?",
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
@@ -1047,6 +1132,7 @@
     "labels": "라벨",
     "last 48 hours": "지난 48시간",
     "last X days count": "지난 {days}일 동안 {count}",
+    "last evaluation date": "마지막 평가 날짜",
     "last execution date": "마지막 실행 날짜",
     "last execution state": "마지막 상태",
     "last execution status": "마지막 실행 상태",
@@ -1060,7 +1146,6 @@
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
     "light_version": "라이트 버전",
     "line-by-line": "줄별로",
-    "live help": "실시간 도움말",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
     "log expand setting": "기본 Log 표시",
     "logExporters": "로그 Exporters",
@@ -1080,6 +1165,8 @@
     "min": "Min",
     "minutes": "분",
     "missingSource": "소스 누락",
+    "modify inputs": "입력 수정",
+    "modify_inputs": "입력 수정",
     "monogram": "모노그램",
     "months": "개월",
     "more_actions": "추가 작업",
@@ -1113,7 +1200,9 @@
       "dialog": {
         "deletion": {
           "confirm": "확인",
+          "file_single": "파일 <code>{name}</code>을(를) 삭제하시겠습니까?",
           "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
+          "folder_single": "폴더 <code>{name}</code> 및 모든 내용을 삭제하시겠습니까?",
           "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
           "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
           "title": "콘텐츠 삭제 확인"
@@ -1219,6 +1308,7 @@
       },
       "fields": {
         "general": {
+          "checks": "점검",
           "concurrency": "병행성",
           "disabled": "비활성화됨",
           "labels": "레이블",
@@ -1227,6 +1317,7 @@
           "retry": "재시도",
           "sla": "SLA",
           "taskDefaults": "작업 기본값",
+          "updated": "업데이트됨",
           "variables": "변수",
           "workerGroup": "작업자 그룹"
         },
@@ -1249,13 +1340,9 @@
       },
       "sections": {
         "afterExecution": "실행 후",
-        "connection": "연결 속성",
         "deprecated": "사용되지 않는 속성",
         "errors": "오류 처리기",
         "finally": "마지막으로",
-        "general": "일반 속성",
-        "main": "주요 속성",
-        "optional": "선택적 속성",
         "pluginDefaults": "플러그인 기본값",
         "tasks": "작업",
         "triggers": "트리거"
@@ -1282,11 +1369,13 @@
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "no_file_choosen": "파일이 선택되지 않음",
     "no_flow_outputs": "출력 없음.",
+    "no_history": "기록 없음",
     "no_inputs": "입력값이 없습니다.",
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "선택한 필터에 대한 로그가 없습니다. <br> 필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
     "no_results": {
+      "assets": "자산을 찾을 수 없음",
       "executions": "실행을 찾을 수 없음",
       "flows": "flow를 찾을 수 없음",
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
@@ -1302,45 +1391,130 @@
     "of": "의",
     "ok": "확인",
     "onboarding": {
-      "finish": "완료",
-      "next": "다음",
-      "no_flows": "튜토리얼 namespace에 사용할 수 있는 flow가 없습니다.",
-      "previous": "이전",
-      "skip": "튜토리얼 건너뛰기",
+      "actions": {
+        "cancel_tutorial": "Cancel tutorial",
+        "complete": "Complete",
+        "edit_flow_to_continue": "Press Edit flow in the top bar (right).",
+        "execute_to_continue": "1. Press Execute in the top bar (right).\n2. Provide a value for <strong>name</strong>.\n3. Press Execute again in the modal.",
+        "finish_tutorial": "Finish tutorial",
+        "next": "Next",
+        "save_to_continue": "Press Save in the top bar (right)."
+      },
+      "cancel_modal": {
+        "confirm": "Cancel tutorial",
+        "description": "Do you want to cancel the First Flow tutorial?",
+        "keep": "Keep tutorial",
+        "title": "Cancel First Flow tutorial"
+      },
+      "editor_hints": {
+        "build_intro": "Build your first flow step by step.",
+        "step_1": "# 1) Add id",
+        "step_2": "# 2) Add namespace",
+        "step_3": "# 3) Add an input",
+        "step_4": "# 4) Add tasks and your first Python task",
+        "step_5": "# 5) Add a cron trigger"
+      },
+      "finish_actions": {
+        "create_flow": "Create Flow",
+        "explore_blueprints": "Explore Blueprints"
+      },
       "steps": {
-        "0": {
-          "content": "여기 오신 것을 환영합니다.<br />첫 번째 flow를 만들어 봅시다.",
-          "primary": "시작합시다!",
-          "title": "Kestra에 오신 것을 환영합니다!"
+        "add_cron_trigger": {
+          "description": "Triggers can start runs based on schedules or external events (for example webhooks or MQTT messages).<br><br>Now add a cron schedule trigger so this flow runs every 5 minutes.",
+          "title": "Add a cron trigger"
         },
-        "1": {
-          "primary": "다음",
-          "title": "사용 사례를 선택하세요<br />그리고 우리가 어떻게 하는지 보여드리겠습니다!"
+        "add_id": {
+          "description": "The ID is the unique name of your flow, so you can find it, run it, and reference it consistently.<br><br>Now add <code>id</code> at the root level.",
+          "title": "Add flow id"
         },
-        "2": {
-          "content": "flow는 자동 완성 및 구문 검증이 포함된 YAML로 작성됩니다. 매우 간단합니다!",
-          "primary": "다음",
-          "title": "코드 편집기"
+        "add_input": {
+          "description": "Inputs are flow-level parameters that can be referenced inside tasks to dynamically control behavior at runtime.<br><br>Now add an input named <code>name</code> with type <code>STRING</code>.",
+          "title": "Add an input"
         },
-        "3": {
-          "content": "종속성 보기는 실시간으로 업데이트됩니다. 새 task를 추가해 보세요!",
-          "primary": "다음",
-          "title": "토폴로지 보기"
+        "add_input_default": {
+          "description": "When a flow is triggered automatically, inputs still need values at runtime.<br><br>The <code>name</code> input was already created in the previous step, so there’s no need to add it again. Just set a default value for the existing <code>name</code> input.",
+          "title": "Set a default input value"
         },
-        "4": {
-          "content": "\"Execute\"를 눌러 flow를 실행하세요.",
-          "title": "이제 실행할 시간입니다."
+        "add_log_task": {
+          "description": "Tasks are the units of work your flow executes, defined as an ordered list of steps. Each task needs a unique <code>id</code> and a <code>type</code>. Kestra provides many task plugins for external systems; here we use a Python Script task.<br><br>The <code>&#123;&#123; ... &#125;&#125;</code> syntax is a Pebble expression, used to reference variables dynamically at runtime, like <code>&#123;&#123; inputs.name &#125;&#125;</code> from your flow inputs.<br><br>Now add the first task under <code>tasks</code> with <code>id</code>, <code>type</code>, and a <code>script</code> that prints a greeting.",
+          "title": "Add first task"
         },
-        "5": {
-          "content": "\"Execute\"를 눌러 flow가 작동하는 것을 확인하세요.",
-          "title": "확인하고 실행하세요!"
+        "add_namespace": {
+          "description": "The Namespace is the folder-like grouping that organizes flows by team, project, or environment.<br><br>Now add <code>namespace</code> at the root level.",
+          "title": "Add namespace"
         },
-        "6": {
-          "content": "실행 진행 상황을 추적하려면 Logs 및 Outputs 탭을 확인하세요.<br /><br />그런 다음 Flows 페이지로 이동하여 다른 사용 사례를 탐색하세요.",
-          "primary": "새 flow 생성",
-          "secondary": "다른 Flows 탐색",
-          "title": "준비가 완료되었습니다!"
+        "background_runs_info": {
+          "description": "This flow will now execute in the background every 5 minutes.<br><br>You can navigate to the Executions overview from the left menu to monitor scheduled runs.",
+          "title": "Scheduled runs"
+        },
+        "edit_flow_from_execution": {
+          "description": "You can jump directly from an execution back to the flow definition to iterate quickly.",
+          "title": "Return to Flow Editor"
+        },
+        "execute_flow": {
+          "description": "Executing starts a run of your flow with runtime input values.",
+          "title": "Execute flow"
+        },
+        "finish": {
+          "description": "Great start. You created, executed, parameterized, and scheduled a flow.<br><br>Choose what to do next ...",
+          "title": "You completed the First Flow tutorial"
+        },
+        "flow_basics": {
+          "description": "In Kestra, a <code>flow</code> is the core orchestration unit. You define it in YAML with metadata and ordered tasks.<br><br>Review the example structure below, then continue to build it step by step.",
+          "title": "Flow basics"
+        },
+        "save_flow": {
+          "description": "Saving persists your flow definition so it can be executed.",
+          "title": "Save flow"
+        },
+        "save_flow_again": {
+          "description": "Your flow now has a schedule and a default input value for automatic runs.",
+          "title": "Save flow"
+        },
+        "view_logs_status": {
+          "description": "Execution details show run status, timing, and task-level output logs.<br><br>Now open the execution details and click <code>greet</code> in the Gantt chart to see the logs.",
+          "title": "Check execution"
         }
+      },
+      "validation": {
+        "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
+        "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
+        "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
+        "add_id": "Add a flow ID at the top. Example: `id: hello_flow`.",
+        "add_input_default_defaults": "Add a default value for `name`, for example: `defaults: \"Kestra\"`.",
+        "add_input_default_id": "Keep the existing input ID as `name`.",
+        "add_input_default_section": "Go back to `inputs` and keep one existing input named `name` (do not add a second input).",
+        "add_input_id": "Inside `inputs`, add `id: name`.",
+        "add_input_section": "Create an `inputs` section with one input.",
+        "add_input_type": "Set the input type to `STRING`.",
+        "add_log_task_id": "Give the task an ID, for example: `id: greet`.",
+        "add_log_task_message": "Add a `script` field to the task.",
+        "add_log_task_pebble": "Use a Pebble expression in the script so it uses your input value (for example: `inputs.name`).",
+        "add_log_task_section": "Create a `tasks` section and add your first task.",
+        "add_log_task_type": "Set the task type to `io.kestra.plugin.scripts.python.Script`.",
+        "add_namespace": "Add a namespace at the top. Example: `namespace: company.team`.",
+        "complete_step": "You're close. Complete this step to continue.",
+        "edit_flow_from_execution": "Click `Edit flow` in the top bar to continue.",
+        "execute_flow": "Run the flow once to continue.",
+        "fix_yaml": "There is a small YAML formatting issue. Fix it, then continue.",
+        "save_flow": "Click Save to continue.",
+        "save_flow_again": "Click Save again to continue.",
+        "view_logs_status": "Open the execution details and check the logs for `greet`."
+      },
+      "welcome": {
+        "additional_help": "Additional help",
+        "badge": "Tutorial",
+        "blueprints": "Blueprints",
+        "docs": "Documentation",
+        "guided_description": "Learn how to create and run your first flow with guided steps.",
+        "guided_duration": "Recommended for most",
+        "guided_title": "Build your first flow",
+        "headline": "Build and run your first workflow in minutes",
+        "self_serve_description": "Go directly to the editor and build your own flow.",
+        "self_serve_note": "For experienced users",
+        "self_serve_title": "Create flow from scratch",
+        "slack": "Slack community",
+        "tutorial": "Tutorial"
       }
     },
     "open": "열기",
@@ -1400,13 +1574,36 @@
       "toggle": "플레이그라운드",
       "tooltip_persistence": "Playground를 끄고 다시 켜면, 페이지에 머무르는 동안 정보가 유지됩니다."
     },
-    "pluginDefaults": "플러그인 기본값",
+    "plugin defaults exported": "플러그인 기본값 내보내기 완료",
+    "plugin defaults imported": "플러그인 기본값이 가져왔습니다.",
+    "plugin defaults not imported": "일부 플러그인 기본값을 가져올 수 없습니다.",
+    "pluginDefaults": {
+      "add": "플러그인 기본값 추가",
+      "add_subtitle": "새 플러그인 기본값을 해당 속성으로 구성하십시오.",
+      "cancel": "취소",
+      "custom": "사용자 정의 플러그인",
+      "custom_configure": "사용자 정의 플러그인 유형 - YAML을 사용하여 구성",
+      "custom_placeholder": "플러그인 유형 입력",
+      "custom_type": "사용자 정의 플러그인 유형",
+      "edit": "플러그인 기본값 편집",
+      "edit_subtitle": "기존 플러그인 기본 설정 수정",
+      "form": "폼",
+      "predefined": "사전 정의된 플러그인",
+      "select_predefined": "미리 정의된 플러그인 선택",
+      "show_yaml": "YAML 보기",
+      "title": "플러그인 기본값",
+      "update": "플러그인 기본값 업데이트",
+      "use_custom": "사용자 정의 사용",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML 구성"
+    },
     "pluginPage": {
       "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
     },
+    "plugin_default_already_exists": "<code>{type}</code>에 대한 플러그인 기본값이 이미 존재합니다.",
     "plugins": {
       "name": "플러그인",
       "names": "플러그인들",
@@ -1418,10 +1615,19 @@
     "prev_execution": "이전 실행",
     "preview": {
       "auto-view": "자동 보기",
+      "collapse": "접기",
+      "expand": "확장",
       "force-editor": "편집기 보기 강제 적용",
       "label": "미리보기",
+      "next": "다음",
+      "page_of": "{total} 중 {current} 페이지",
+      "pagination_info": "{total}개 중 {start}-{end} 행 표시 중.",
+      "previous": "이전",
+      "rows_truncated": "{total}개의 행 중 {shown}개를 표시 중입니다. 모든 데이터를 보려면 파일을 다운로드하세요.",
+      "showing_rows": "{total}개 중 {start}-{end} 행 표시",
       "view": "보기"
     },
+    "product_tour": "제품 둘러보기",
     "properties": {
       "hidden": "테이블에 숨김",
       "hint": "열 표시 선택",
@@ -1441,10 +1647,15 @@
     "remove_bookmark": "이 북마크를 제거하시겠습니까?",
     "replay": "재실행",
     "replay confirm": "재실행 하시겠습니까?",
+    "replay execution description": "선택한 실행을 기반으로 새 실행을 생성합니다.",
+    "replay execution title": "실행 다시 실행",
     "replay from beginning tooltip": "처음부터 재실행",
     "replay from task tooltip": "<code>{taskId}</code> Task에서 재실행",
+    "replay inputs": "입력",
+    "replay inputs new required": "이 수정본에는 input이 있습니다. 입력하라는 메시지가 표시됩니다.",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
+    "replay using": "사용하여 재실행",
     "replay with inputs": "입력과 함께 재실행",
     "replayed": "재실행되었습니다.",
     "required field": "필수 필드",
@@ -1452,6 +1663,7 @@
     "restart": "재시작",
     "restart change revision": "선택하시는 수정본으로 재실행 할 수 있습니다.",
     "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
+    "restart execution title": "실행 재시작",
     "restart latest revision": "최신 수정본으로 재시작",
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
     "restart trigger": {
@@ -1466,7 +1678,10 @@
     "resumed confirm": "실행 <code>{id}</code>을(를) 재개하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resumed title": "실행 <code>{id}</code> 재개",
+    "reuse original inputs": "원래 input 재사용",
+    "reuse_original_inputs": "원래 input 재사용",
     "revision": "수정본",
+    "revision deleted": "{revision} 리비전이 성공적으로 삭제되었습니다.",
     "revisions": "수정본들",
     "row count": "행 수",
     "run task in playground": "플레이그라운드에서 task 실행",
@@ -1481,6 +1696,7 @@
       }
     },
     "save task": "Task 저장",
+    "save_and_execute": "저장 및 실행",
     "saved": "성공적으로 저장됨",
     "saved done": "<em>{name}</em>이(가) 성공적으로 저장되었습니다.",
     "scheduleDate": "일정 날짜",
@@ -1506,7 +1722,7 @@
     "searching": "검색 중...",
     "seconds": "초",
     "secret": {
-      "add": "새 비밀",
+      "add": "생성",
       "inherited": "상속된 비밀",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
@@ -1604,7 +1820,7 @@
       },
       "confirm": {
         "config_title": "구성이 유효한지 확인하십시오",
-        "confirm": "확인",
+        "confirm": "관리자 사용자 생성",
         "not_valid": "아니요, 유효하지 않습니다",
         "valid": "네, 유효합니다"
       },
@@ -1612,7 +1828,8 @@
         "email": "이메일",
         "firstName": "이름",
         "lastName": "성씨",
-        "password": "비밀번호"
+        "password": "비밀번호",
+        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함."
       },
       "login": "로그인",
       "logout": "로그아웃",
@@ -1620,38 +1837,40 @@
         "complete": "Kestra UI 시작",
         "config": "구성 유효성 검사",
         "survey": "자세히 알려주세요",
-        "user": "계정 생성"
+        "user": "관리자 사용자 생성"
       },
       "subtitles": {
         "complete": "설정이 성공적으로 완료되었습니다!",
         "config": "여기 귀하의 구성 세부 정보가 있습니다",
-        "survey": "Kestra 오픈 소스 에디션 개선에 도움을 주세요",
-        "user": "계정을 생성하여 인스턴스를 설정하세요"
+        "survey": "죄송하지만 번역할 텍스트가 제공되지 않았습니다. 번역할 텍스트를 제공해 주시면 감사하겠습니다.",
+        "user": "인스턴스를 보호하여 시작하세요."
       },
       "success": {
         "subtitle": "모두 준비되었습니다!",
         "title": "축하합니다!"
       },
       "survey": {
-        "company_11_50": "11-50",
-        "company_1_10": "1-10",
-        "company_250_plus": "250+",
-        "company_50_250": "50-250",
-        "company_personal": "개인용",
-        "company_size": "귀하의 회사 규모는 어떻게 되십니까?",
+        "company_11_50": "개인 프로젝트",
+        "company_1_10": "학습 / 탐색",
+        "company_250_plus": "프로덕션 배포",
+        "company_50_250": "우리 팀/회사 평가 중",
+        "company_personal": "기타",
+        "company_size": "Kestra를 사용하는 주요 목표는 무엇인가요?",
         "continue": "계속",
-        "newsletter": "Kestra 뉴스레터를 구독하세요 – 최신 기능과 변경 사항을 계속 업데이트 받으세요.",
+        "newsletter": "제품 업데이트를 이메일로 받으세요.",
+        "newsletter_heading": "항상 최신 정보를 받아보세요",
         "skip": "건너뛰기",
-        "use_case": "주요 사용 사례는 무엇입니까?",
-        "use_case_business": "비즈니스 프로세스",
+        "use_case": "무엇을 위해 사용할 계획입니까?",
+        "use_case_business": "비즈니스 워크플로우",
         "use_case_data": "데이터 워크플로우",
         "use_case_infrastructure": "인프라 자동화",
-        "use_case_ml": "ML/AI 파이프라인",
-        "use_case_other": "기타"
+        "use_case_ml": "ML 파이프라인",
+        "use_case_other": "기타",
+        "use_case_scheduling": "일정 및 반복 작업"
       },
       "titles": {
-        "survey": "자세히 알려주세요",
-        "user": "계정 생성"
+        "survey": "Kestra OSS 개선에 도움을 주세요",
+        "user": "관리자 사용자 생성"
       },
       "troubleshooting": "비밀번호를 잊으셨습니까?",
       "validation": {
@@ -1680,6 +1899,10 @@
     "side-by-side": "나란히",
     "slack support": "Slack을 통해 질문하기",
     "something_went_wrong": {
+      "connection_lost": {
+        "message": "Kestra 인스턴스에 연결할 수 없습니다. 실행 중인지 확인한 후 페이지를 새로 고치세요.",
+        "title": "연결이 중단되었습니다"
+      },
       "loading_execution": "실행을 로드하는 중 문제가 발생했습니다."
     },
     "source": "소스",
@@ -1693,6 +1916,7 @@
     "start datetime": "시작 날짜 및 시간",
     "started date": "시작 날짜",
     "state": "상태",
+    "state updated date": "상태 업데이트 날짜",
     "state_history": "상태 기록",
     "stats": "통계",
     "steps": "단계",
@@ -1728,7 +1952,7 @@
     "template export": "<code>{templateCount}</code> 개의 템플릿을 내보내시겠습니까?",
     "templates": "템플릿들",
     "templates deleted": "<code>{count}</code> 개의 템플릿이 삭제되었습니다",
-    "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
+    "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
     "templates exported": "템플릿이 내보내졌습니다",
     "tenant": {
       "name": "테넌트",
@@ -1818,6 +2042,7 @@
     "update aborted": "업데이트 중단됨",
     "update ok": "업데이트됨",
     "updated date": "업데이트 날짜",
+    "usage": "사용량",
     "use": "사용",
     "use_dark_background": "어두운 배경에서 작업할 때는 이 버전을 사용하여 우리의 이름이 읽기 쉽게 유지되도록 하세요.",
     "validate": "유효성 검사",
@@ -1842,23 +2067,120 @@
         "text": "Slack 커뮤니티에서 질문을 하세요. 문제가 생기면 저희가 도와드리겠습니다. ✋",
         "title": "도움이 필요하신가요?"
       },
+      "menu": "Welcome",
       "tour": {
         "text": "사용 사례를 선택하고 단계별 가이드를 따라 Kestra의 기능과 역량을 배워보세요. ❤️",
         "title": "제품 투어 시작하기"
       },
       "tutorial": {
-        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">비디오 튜토리얼</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">문서</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>",
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">비디오 튜토리얼</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">문서</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>",
         "title": "튜토리얼"
       }
     },
-    "welcome aboard": "🚀 Kestra에 오신 것을 환영합니다!",
-    "welcome aboard content": "가이드 투어를 사용하여 첫 번째 flow를 만들고 Blueprints에서 더 많은 예제를 확인하세요.",
-    "welcome button create": "첫 번째 flow 만들기",
-    "welcome display require": "<strong>첫 번째 flow</strong>를 실행하여 시작하세요",
+    "welcome_copilot": {
+      "button_cta": "새 flow 생성",
+      "execute_hint": {
+        "description": "클릭하여 워크플로우를 저장하고 즉시 실행하세요.",
+        "title": "저장 및 flow 실행"
+      },
+      "flows": {
+        "buildDbtPipeline": {
+          "label": "dbt 파이프라인 구축",
+          "prompt": "Kestra flow를 생성하여 dbt 프로젝트 저장소를 복제하고 DuckDB 프로필로 dbt build를 실행합니다."
+        },
+        "buildDockerImageAndRunIt": {
+          "label": "Docker 이미지를 빌드하고 실행하기",
+          "prompt": "인라인 Dockerfile에서 Docker 이미지를 빌드하고 결과 컨테이너를 실행하는 Kestra flow를 생성합니다."
+        },
+        "convertCsvToExcel": {
+          "label": "CSV를 Excel로 변환",
+          "prompt": "CSV 파일을 다운로드하고 Ion으로 변환한 후 결과를 Excel 파일로 내보내는 flow를 생성합니다."
+        },
+        "etlWorkflow": {
+          "label": "ETL 워크플로우",
+          "prompt": "JSON 데이터를 다운로드하고 Python으로 처리한 후 DuckDB로 변환된 결과를 쿼리하는 ETL flow를 생성합니다."
+        },
+        "installNginxViaAnsible": {
+          "label": "Ansible를 통해 Nginx 설치",
+          "prompt": "Ansible을 사용하여 대상 머신에 Nginx를 설치하고 설치된 버전을 확인하는 Kestra flow를 생성합니다."
+        },
+        "jsonApiToDuckdb": {
+          "label": "DuckDB로의 JSON API",
+          "prompt": "공용 API에서 JSON 파일을 다운로드하고 Python 스크립트로 변환한 후 DuckDB Queries task로 처리하는 flow를 생성하세요."
+        },
+        "manualApproval": {
+          "label": "수동 승인",
+          "prompt": "승인 후 초기 처리 단계, 수동 승인 일시 중지, 최종 배포 단계가 포함된 flow를 생성합니다."
+        },
+        "microservicesApis": {
+          "label": "마이크로서비스 & API",
+          "prompt": "웹사이트 API 응답을 확인하고 상태 코드가 성공적이지 않을 때 Slack 알림을 보내는 flow를 생성합니다."
+        },
+        "scheduledPdfReports": {
+          "label": "예약된 PDF 보고서",
+          "prompt": "보고서가 준비되면 PDF 보고서를 다운로드하고 Slack 알림을 보내는 예약된 flow를 생성합니다."
+        },
+        "weeklySalesKpisToSlack": {
+          "label": "주간 판매 KPI를 Slack으로 보내기",
+          "prompt": "DuckDB를 사용하여 판매 KPI를 계산하고 요약을 Slack에 게시하는 주간 예약 flow를 생성합니다."
+        }
+      },
+      "help": {
+        "blueprints": {
+          "description": "일반적인 워크플로 패턴을 위한 사용 가능한 예제와 템플릿을 탐색하세요.",
+          "title": "블루프린트"
+        },
+        "slack": {
+          "description": "아이디어와 모범 사례를 공유하고, 기술적인 질문에 대한 도움을 받으세요.",
+          "title": "Slack 커뮤니티"
+        },
+        "tutorial": {
+          "description": "가이드 단계와 함께 첫 번째 flow를 생성하고 실행하는 방법을 배우세요.",
+          "title": "튜토리얼 시작"
+        }
+      },
+      "need_help": "도움이 필요하신가요?",
+      "placeholder_prompt": "매일 오전 9시에 인사 메시지를 보내주세요.",
+      "remaining_quota": "{count}개의 AI 생성이 남았습니다",
+      "show_less": "더 적은 프롬프트 표시",
+      "show_more": "더 많은 프롬프트 보기",
+      "success_page": {
+        "description": "Kestra의 기본을 배웠습니다. 여정을 계속하는 데 도움이 될 몇 가지 리소스를 소개합니다.",
+        "items": {
+          "blueprints": {
+            "description": "일반적인 사용 사례를 위한 사전 구축된 워크플로우 템플릿",
+            "title": "블루프린트"
+          },
+          "demo": {
+            "description": "Kestra Enterprise Edition을 개인 맞춤형 데모로 탐색하세요.",
+            "title": "데모 받기"
+          },
+          "slack": {
+            "description": "다른 사용자와 연결하고 커뮤니티로부터 도움 받기",
+            "title": "슬랙 커뮤니티"
+          },
+          "tutorial": {
+            "description": "Kestra 기능의 대화형 안내",
+            "title": "튜토리얼 시작"
+          },
+          "videos": {
+            "description": "고급 기능을 위한 단계별 비디오 가이드",
+            "title": "비디오 튜토리얼"
+          }
+        },
+        "restart": "튜토리얼 다시 시작",
+        "title": "모든 준비가 완료되었습니다!"
+      },
+      "success_popup": {
+        "description": "첫 번째 flow를 성공적으로 실행했습니다! Kestra 전문가가 되는 길에 있습니다.",
+        "explore": "더 보기",
+        "title": "축하합니다!",
+        "tutorial": "심층 튜토리얼"
+      },
+      "title": "아이디어를 workflow로 전환하세요"
+    },
     "welcome_page": {
       "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
-      "start": "첫 번째 workflow를 시작해 봅시다.",
-      "wel_text": "환영합니다!",
       "welcome": "Kestra에 오신 것을 환영합니다"
     },
     "wordmark_colors": "워드마크 색상은 배경에 따라 조정되며, 아이콘은 어두운 배경에 놓였을 때 배경 없이 유지됩니다.",
@@ -1869,7 +2191,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
-    "years": "연도",
-    "your usage": "사용량"
+    "years": "연도"
   }
 }

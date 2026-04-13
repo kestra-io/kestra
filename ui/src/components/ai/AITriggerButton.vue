@@ -6,13 +6,12 @@
             :icon="AiIcon" 
             @click="handleClick"
         >
-            {{ t("ai.flow.title") }}
+            {{ $t("ai.flow.title") }}
         </el-button>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
     import AiIcon from "./AiIcon.vue";
 
     interface AITriggerButtonProps {
@@ -23,8 +22,6 @@
     interface AITriggerButtonEmits {
         (event: "click"): void;
     }
-
-    const {t} = useI18n();
 
     withDefaults(defineProps<AITriggerButtonProps>(), {
         show: false,

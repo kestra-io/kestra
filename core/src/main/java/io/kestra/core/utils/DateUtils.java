@@ -1,11 +1,11 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.QueryFilter;
-
 import java.time.*;
 import java.util.List;
 import java.util.Locale;
+
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.QueryFilter;
 
 public class DateUtils {
     public static ZonedDateTime parseZonedDateTime(String render) throws InternalException {
@@ -28,16 +28,20 @@ public class DateUtils {
         return currentTime;
     }
 
-
     public static LocalDate parseLocalDate(String render) throws InternalException {
-        LocalDate currentDate;
         try {
-            currentDate = LocalDate.parse(render);
-        } catch (DateTimeException e) {
-            currentDate = DateUtils.parseZonedDateTime(render).toLocalDate();
+            return LocalDate.parse(render);
+        } catch (DateTimeException e1) {
+            try {
+                return ZonedDateTime.parse(render).toLocalDate();
+            } catch (DateTimeException e2) {
+                try {
+                    return LocalDateTime.parse(render).toLocalDate();
+                } catch (DateTimeException e3) {
+                    throw new InternalException(e3);
+                }
+            }
         }
-
-        return currentDate;
     }
 
     public static GroupType groupByType(Duration duration) {
@@ -47,7 +51,7 @@ public class DateUtils {
             return GroupType.WEEK;
         } else if (duration.toDays() > GroupValue.DAY.getValue()) {
             return GroupType.DAY;
-        } else if (duration.toHours() > GroupValue.HOUR.getValue()){
+        } else if (duration.toHours() > GroupValue.HOUR.getValue()) {
             return GroupType.HOUR;
         } else {
             return GroupType.MINUTE;
@@ -90,24 +94,25 @@ public class DateUtils {
             }
         }
     }
+
     public static void validateTimeline(List<QueryFilter> filters) {
-        if(filters == null || filters.isEmpty()) {
+        if (filters == null || filters.isEmpty()) {
             return;
         }
         ZonedDateTime startDate = null;
         ZonedDateTime endDate = null;
         for (QueryFilter filter : filters) {
-            if(isStartDateFilter(filter)) {
+            if (isStartDateFilter(filter)) {
                 startDate = parse(filter.value());
-            } else if(isEndDateFilter(filter)) {
+            } else if (isEndDateFilter(filter)) {
                 endDate = parse(filter.value());
             }
         }
         validateTimeline(startDate, endDate);
     }
 
-    private static ZonedDateTime parse(Object o){
-        if(o instanceof ZonedDateTime){
+    private static ZonedDateTime parse(Object o) {
+        if (o instanceof ZonedDateTime) {
             return (ZonedDateTime) o;
         } else {
             return ZonedDateTime.parse(o.toString());

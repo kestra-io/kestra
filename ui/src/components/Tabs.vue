@@ -8,13 +8,15 @@
             :disabled="tab.disabled"
         >
             <template #label>
-                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
+                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
                     <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
                     <EnterpriseBadge :enable="tab.locked">
-                        {{ tab.title }}
-                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
+                        <span class="tab-label-wrapper">
+                            {{ tab.title }}
+                            <el-badge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
+                        </span>
                     </EnterpriseBadge>
                 </component>
             </template>
@@ -47,7 +49,7 @@
     import {ref, computed, watch, onMounted, nextTick, useAttrs} from "vue";
     import {useRoute} from "vue-router";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
-    import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
+    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
 
     interface Tab {
         name?: string;
@@ -223,6 +225,22 @@ section.container.mt-4:has(> section.empty) {
 :deep(.el-tabs__nav-prev) {
     &.is-disabled {
         display: none;
+    }
+}
+
+.tab-label-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-badge {
+    :deep(.el-badge__content) {
+        transform: translateY(-1px);
+        position: static;
+        border: none;
+        margin-top: 0;
+        vertical-align: middle;
     }
 }
 </style>

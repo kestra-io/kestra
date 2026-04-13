@@ -1,24 +1,5 @@
 package io.kestra.plugin.core.storage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.TruthUtils;
-import io.micronaut.core.util.functional.ThrowingFunction;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -29,27 +10,62 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.TruthUtils;
+
+import io.micronaut.core.util.functional.ThrowingFunction;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 @Schema(
-    title = "Filter a file by retaining only the items that match a given expression."
+    title = "Filter line-oriented files with a Pebble expression.",
+    description = """
+        Reads a line-delimited file from internal storage, evaluates `filterCondition` per item, and writes matched lines to a new file. `filterType` controls include vs exclude; `errorOrNullBehavior` handles expression errors or nulls.
+
+        Expressions can reference columns directly (rendered as strings unless cast) and must return a boolean."""
 )
 @Plugin(
     examples = {
         @Example(
+            title = "Filter a CSV file and retain rows with a product ID equal to 20.",
             full = true,
             code = {
                 """
-                tasks:
-                   - id: filter
-                     type: io.kestra.plugin.core.storage.FilterItems
-                     from: "{{ inputs.file }}"
-                     filterCondition: " {{ value == null }}"
-                     filterType: EXCLUDE
-                     errorOrNullBehavior: EXCLUDE
-                """
+                    id: filter_items
+                    namespace: company.team
+
+                    tasks:
+                      - id: download
+                        type: io.kestra.plugin.core.http.Download
+                        uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                      - id: csv_to_ion
+                        type: io.kestra.plugin.serdes.csv.CsvToIon
+                        from: "{{ outputs.download.uri }}"
+
+                      - id: filter
+                        type: io.kestra.plugin.core.storage.FilterItems
+                        from: "{{ outputs.download.uri }}"
+                        filterCondition: "{{ (product_id | number) == 20 }}"
+                        filterType: INCLUDE
+                    """
             }
         )
-    },
-    aliases = "io.kestra.core.tasks.storages.FilterItems"
+    }
 )
 @SuperBuilder
 @ToString
@@ -66,8 +82,9 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
     private Property<String> from;
 
     @Schema(
-        title = "The 'pebble' expression used to match items to be included or excluded",
-        description = "The 'pebble' expression should return a BOOLEAN value (i.e. `true` or `false`). Values `0`, `-0`, and `\"\"` are interpreted as `false`. " +
+        title = "The expression used to match items to be included or excluded",
+        description = "Headers from the file can be referenced directly, e.g., `{{ product_id }}`, but will be rendered as a string unless combined with a filter, e.g., `product_id | number`. The Pebble expression should return a BOOLEAN value (i.e., `true` or `false`). Values `0`, `-0`, and `\"\"` are interpreted as `false`. "
+            +
             "Otherwise, any non empty value will be interpreted as `true`."
     )
     @PluginProperty
@@ -101,8 +118,10 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
         final Path path = runContext.workingDir().createTempFile(".ion");
         long processedItemsTotal = 0L;
         long droppedItemsTotal = 0L;
-        try (final BufferedWriter writer = Files.newBufferedWriter(path);
-             final BufferedReader reader = newBufferedReader(runContext, from)) {
+        try (
+            final BufferedWriter writer = Files.newBufferedWriter(path);
+            final BufferedReader reader = newBufferedReader(runContext, from)
+        ) {
 
             String item;
             while ((item = reader.readLine()) != null) {
@@ -122,15 +141,17 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
                             if (exception != null) {
                                 throw exception;
                             } else {
-                                throw new IllegalVariableEvaluationException(String.format(
-                                    "Expression `%s` return `null` on item `%s`",
-                                    filterCondition,
-                                    item
-                                ));
+                                throw new IllegalVariableEvaluationException(
+                                    String.format(
+                                        "Expression `%s` return `null` on item `%s`",
+                                        filterCondition,
+                                        item
+                                    )
+                                );
                             }
                         }
                         case INCLUDE -> action = FilterType.INCLUDE;
-                        case EXCLUDE ->  action = FilterType.EXCLUDE;
+                        case EXCLUDE -> action = FilterType.EXCLUDE;
                     }
                     match = true;
                 }
@@ -208,7 +229,7 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
          * @param expression the 'pebble' expression.
          */
         public PebbleExpressionPredicate(final RunContext runContext,
-                                         final String expression) {
+            final String expression) {
             this.runContext = runContext;
             this.expression = expression;
         }
@@ -221,7 +242,8 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
     }
 
     public enum FilterType {
-        INCLUDE, EXCLUDE;
+        INCLUDE,
+        EXCLUDE;
 
         public FilterType reverse() {
             return equals(INCLUDE) ? EXCLUDE : INCLUDE;
@@ -229,6 +251,8 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
     }
 
     public enum ErrorOrNullBehavior {
-        FAIL, INCLUDE, EXCLUDE;
+        FAIL,
+        INCLUDE,
+        EXCLUDE;
     }
 }

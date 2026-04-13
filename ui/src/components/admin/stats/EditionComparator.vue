@@ -1,6 +1,6 @@
 <template>
     <el-row :gutter="32">
-        <el-col :span="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name">
+        <el-col :xs="24" :md="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name" class="edition-col">
             <EditionCharacteristics
                 class="h-100"
                 :name="characteristics.name"
@@ -93,7 +93,7 @@
             ],
             button: {
                 text: "Talk to us",
-                href: "https://kestra.io/demo?utm_source=app$&utm_campaign=enterprise&utm_content=stats"
+                href: "https://kestra.io/demo?utm_source=app$utm_medium=referral&&utm_campaign=enterprise&utm_content=ee"
             }
         },
         {
@@ -110,8 +110,22 @@
             ],
             button: {
                 text: "Join Early Adopter Program",
-                href: "https://kestra.io/cloud?utm_source=app&utm_campaign=cloud&utm_content=stats"
+                href: "https://kestra.io/cloud?utm_source=app&utm_medium=referral&utm_campaign=enterprise&utm_content=cloud"
             }
         }
     ]
 </script>
+
+<style scoped lang="scss">
+.edition-col {
+    margin-bottom: 2rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    @media (min-width: 992px) {
+        margin-bottom: 0;
+    }
+}
+</style>

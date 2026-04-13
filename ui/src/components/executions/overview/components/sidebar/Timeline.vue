@@ -1,18 +1,24 @@
 <template>
-    <el-collapse accordion>
+    <el-collapse accordion ref="container">
         <el-collapse-item :icon="ChevronDown">
             <template #title>
                 <span>{{ $t("state_history") }}</span>
             </template>
 
-            <el-timeline>
+            <el-timeline :class="{'is-narrow': isNarrow}">
                 <el-timeline-item
                     v-for="(activity, aIdx) in props.histories"
                     :key="aIdx"
-                    :timestamp="formatDate(activity.date)"
+                    v-bind="isNarrow ? {} : {timestamp: formatDate(activity.date)}"
                     :color="getSchemeValue(activity.state)"
                 >
-                    {{ activity.state }}
+                    <div v-if="isNarrow" class="timeline-row">
+                        <span class="timeline-timestamp">{{ formatDate(activity.date) }}</span>
+                        <span>{{ activity.state }}</span>
+                    </div>
+                    <template v-else>
+                        {{ activity.state }}
+                    </template>
                 </el-timeline-item>
             </el-timeline>
         </el-collapse-item>
@@ -20,10 +26,10 @@
 </template>
 
 <script setup lang="ts">
+    import {ref, onMounted, onBeforeUnmount} from "vue";
     import type {Histories} from "../../../../../stores/executions";
 
     import {getSchemeValue} from "../../../../../utils/scheme";
-    import {storageKeys} from "../../../../../utils/constants";
 
     import moment from "moment";
 
@@ -31,8 +37,27 @@
 
     const props = defineProps<{ histories: Histories[] }>();
 
-    const F = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
-    const formatDate = (date: string) => moment(date)?.format(F) ?? date;
+    const formatDate = (date: string) => {
+        return moment(date)?.format("YYYY-MM-DD HH:mm:ss.SSS") ?? date;
+    };
+
+    const container = ref<HTMLElement | null>(null);
+    const isNarrow = ref(false);
+    let ro: ResizeObserver | null = null;
+
+    onMounted(() => {
+        ro = new ResizeObserver(([entry]) => {
+            isNarrow.value = entry.contentRect.width < 220;
+        });
+        const el = (container.value as any)?.$el ?? container.value;
+        if (el) {
+            ro.observe(el);
+        }
+    });
+
+    onBeforeUnmount(() => {
+        ro?.disconnect();
+    });
 </script>
 
 <style scoped lang="scss">
@@ -67,25 +92,54 @@
 }
 
 .el-timeline {
+    padding-left: 50%;
+    margin-top: $spacer;
+
+    &.is-narrow {
+        padding-left: 0;
+    }
+
     & :deep(.el-timeline-item) {
         padding-bottom: $spacer;
+
+        & * {
+            line-height: 1.5;
+            font-size: $font-size-sm;
+        }
     }
 
     & :deep(.el-timeline-item__content) {
-        font-size: $font-size-sm;
         color: var(--ks-content-primary);
     }
 
     & :deep(.el-timeline-item__timestamp) {
-        margin-top: calc($spacer / 4);
+        position: absolute;
+        top: 0;
+        left: -210px;
+        width: 190px;
+        margin-top: 0;
+        text-align: right;
         color: var(--ks-content-tertiary);
     }
 
     & :deep(.el-timeline-item__tail) {
         height: inherit;
-        top: 30%;
+        top: 40%;
         bottom: 10%;
+        left: 4.5px;
         border-left-width: 1px;
+    }
+
+    .timeline-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px;
+
+        .timeline-timestamp {
+            font-size: $font-size-sm;
+            color: var(--ks-content-tertiary);
+        }
     }
 }
 </style>

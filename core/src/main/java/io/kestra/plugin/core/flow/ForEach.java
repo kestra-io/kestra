@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -16,15 +19,12 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -32,30 +32,13 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a group of tasks for each value in the list.",
+    title = "Execute child tasks for each value in a list.",
     description = """
-        You can control how many task groups are executed concurrently by setting the `concurrencyLimit` property. \
+        Renders `values` (JSON array, YAML list, or expression) and runs the child task group once per item. The current item is available as `taskrun.value` (or `parent.taskrun.value` in nested loops); `taskrun.iteration` exposes the index.
 
-        - A `concurrencyLimit` of `0` means no limit — all task groups run in parallel. \
+        Control parallelism with `concurrencyLimit` (0 = unlimited, 1 = fully serialized, N = up to N concurrent task groups). To run tasks inside each group in parallel, wrap them in a `Parallel` task.
 
-        - A `concurrencyLimit` of `1` means full serialization — only one task group runs at a time, in order. \
-
-        - A `concurrencyLimit` greater than `1` allows up to that number of task groups to run in parallel. \
-
-
-        Regardless of the `concurrencyLimit` property, the `tasks` will run one after the other — to run those in parallel, wrap them in a [Parallel](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.parallel) task as shown in the last example below (_see the flow `parallel_tasks_example`_). \
-
-
-        The `values` can be defined as a JSON string or an array, e.g. a list of string values `["value1", "value2"]` or a list of key-value pairs `[{"key": "value1"}, {"key": "value2"}]`.\s
-
-
-        Access the current iteration value using `{{ taskrun.value }}` \
-        or `{{ parent.taskrun.value }}` when inside a nested child task. \
-        The iteration number is available via `{{ taskrun.iteration }}`. \
-
-
-        If you need to execute more than 2-5 tasks for each value, we recommend triggering a subflow for each value for better performance and modularity. \
-        See the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) for more details."""
+        For large fan-out, consider triggering subflows per item for better scaling."""
 )
 @Plugin(
     examples = {
@@ -205,7 +188,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The list of values for which Kestra will execute a group of tasks",
         description = "The values can be passed as a string, a list of strings, or a list of objects.",
-        oneOf = {String.class, Object[].class}
+        oneOf = { String.class, Object[].class }
     )
     private Object values;
 
@@ -213,14 +196,14 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-      title = "The number of concurrent task groups for each value in the `values` array",
-      description = """
-        A `concurrencyLimit` of 0 means no limit — all task groups run in parallel.
+        title = "The number of concurrent task groups for each value in the `values` array",
+        description = """
+            A `concurrencyLimit` of 0 means no limit — all task groups run in parallel.
 
-        A `concurrencyLimit` of 1 means full serialization — only one task group runs at a time, in order.
+            A `concurrencyLimit` of 1 means full serialization — only one task group runs at a time, in order.
 
-        A `concurrencyLimit` greater than 1 allows up to the specified number of task groups to run in parallel.
-        """
+            A `concurrencyLimit` greater than 1 allows up to the specified number of task groups to run in parallel.
+            """
     )
     @PluginProperty
     private final Integer concurrencyLimit = 1;

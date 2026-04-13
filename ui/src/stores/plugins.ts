@@ -4,38 +4,23 @@ import {trackPluginDocumentationView} from "../utils/tabTracking";
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
-import {Schemas} from "../components/no-code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
-import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type JSONSchema} from "@kestra-io/ui-libs";
 import {useAxios} from "../utils/axios";
 
 export interface PluginComponent {
     icon?: string;
     cls?: string;
+    title?: string;
     deprecated?: boolean;
     version?: string;
     description?: string;
     properties?: Record<string, any>;
-    schema: Schemas;
+    schema: JSONSchema;
     markdown?: string;
 }
 
-export interface Plugin {
-    tasks: PluginComponent[];
-    triggers: PluginComponent[];
-    conditions: PluginComponent[];
-    controllers: PluginComponent[];
-    storages: PluginComponent[];
-    taskRunners: PluginComponent[];
-    charts: PluginComponent[];
-    dataFilters: PluginComponent[];
-    dataFiltersKPI: PluginComponent[];
-    aliases: PluginComponent[];
-    logExporters: PluginComponent[];
-    apps: PluginComponent[];
-    appBlocks: PluginComponent[];
-    additionalPlugins: PluginComponent[];
-}
+export type {Plugin} from "@kestra-io/ui-libs";
 
 interface LoadOptions {
     cls: string;
@@ -139,12 +124,16 @@ export const usePluginsStore = defineStore("plugins", () => {
     const allTypes = computed(() => {
         return plugins.value?.flatMap(plugin => Object.entries(plugin))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-            ?.flatMap(([, value]: [string, PluginComponent[]]) => value.map(({cls}) => cls!)) ?? [];
+            ?.flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)) ?? [];
     });
     const deprecatedTypes = computed(() => {
-        return plugins.value?.flatMap(plugin => Object.entries(plugin))
+        const deprecatedPlugins = plugins.value?.flatMap(plugin => Object.entries(plugin))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-            ?.flatMap(([, value]: [string, PluginComponent[]]) => value.filter(({deprecated}) => deprecated === true).map(({cls}) => cls!)) ?? [];
+            ?.flatMap(([, value]) => (value as PluginElement[]).filter(({deprecated}) => deprecated === true).map(({cls}) => cls)) ?? [];
+        return [
+            ...deprecatedPlugins,
+            ...(plugins.value?.flatMap(({aliases}) => aliases ?? [])) ?? []
+        ];
     });
 
     function resolveRef(obj: JsonSchemaDef): JsonSchemaDef {
@@ -185,7 +174,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             ...Object.fromEntries(excludedElements.map(e => [e, undefined]))
         })).filter(p => Object.entries(p)
                 .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-                .some(([, value]: [string, PluginComponent[]]) => value.length !== 0))
+                .some(([, value]) => (value as PluginElement[]).length !== 0))
     }
 
     async function list() {
@@ -208,7 +197,8 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls;
-        const cachedPluginDoc = pluginsDocumentation.value[options.hash ? options.hash + id : id];
+        const cacheKey = options.hash ? options.hash + id : id;
+        const cachedPluginDoc = pluginsDocumentation.value[cacheKey];
         if (!options.all && cachedPluginDoc) {
             nextTick(() => {
                 plugin.value = cachedPluginDoc;
@@ -216,13 +206,16 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc;
         }
 
-        const baseUrl = options.version ?
+        const url = options.version ?
             `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
             `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
-        const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
-
-        const response = await axios.get<PluginComponent>(url);
+        const response = await axios.get<PluginComponent>(url, options.all ? {
+            params: {
+                all: options.all,
+                hash: options.hash,
+            }
+        } : {});
 
         if (options.commit !== false) {
             if (options.all === true) {
@@ -233,10 +226,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         if (!options.all) {
-            pluginsDocumentation.value = {
-                ...pluginsDocumentation.value,
-                [options.hash ? options.hash+id : id]: response.data
-            };
+            pluginsDocumentation.value[cacheKey] = response.data;
         }
 
         return response.data;
@@ -283,30 +273,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         });
     }
 
-    let currentlyLoading: {type?: string; version?: string} | undefined = undefined;
+    let currentlyLoading: {cls?: string; version?: string} | undefined = undefined;
 
-    async function updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
-        if (!pluginElement?.type || !allTypes.value.includes(pluginElement.type)) {
+    async function updateDocumentation(pluginElement?: (LoadOptions & {forceRefresh?: boolean}) | undefined) {
+        if (!pluginElement?.cls || !allTypes.value.includes(pluginElement.cls)) {
             editorPlugin.value = undefined;
             currentlyLoading = undefined;
             return;
         }
 
-        const {type, version, forceRefresh = false} = pluginElement;
+        const {cls,  version, hash, forceRefresh = false} = pluginElement;
 
-        if (currentlyLoading?.type === type &&
+        if (currentlyLoading?.cls === cls &&
             currentlyLoading?.version === version &&
             !forceRefresh) {
             return
         }
 
         if (!forceRefresh &&
-            editorPlugin.value?.cls === type &&
+            editorPlugin.value?.cls === cls &&
             editorPlugin.value?.version === version) {
             return;
         }
 
-        let payload: LoadOptions = {cls: type, hash: pluginElement.hash};
+        let payload: LoadOptions = {cls, version, hash}
 
         if (version !== undefined) {
             if (semver.valid(version) !== null ||
@@ -321,21 +311,21 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         currentlyLoading = {
-            type,
+            cls,
             version,
         };
 
         const pluginData = await load(payload);
 
         editorPlugin.value = {
-            cls: type,
+            cls,
             version,
             ...pluginData,
         };
 
-        trackPluginDocumentationView(type);
+        trackPluginDocumentationView(cls);
 
-        forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
+        forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "cls" && k !== "version" && k !== "forceRefresh");
     }
 
     const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()

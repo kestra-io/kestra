@@ -1,6 +1,10 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.*;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -16,20 +20,14 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.DagTaskValidation;
-import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.*;
-import java.util.stream.Stream;
-
-
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -38,10 +36,11 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @DagTaskValidation
 @Schema(
-    title = "Create a DAG of tasks without explicitly specifying the order in which the tasks must run.",
-    description = "List your tasks and their dependencies, and Kestra will figure out the execution sequence.\n" +
-        "Each task can only depend on other tasks from the DAG task.\n" +
-        "For technical reasons, low-code interaction via UI forms is disabled for now when using this task."
+    title = "Define tasks as a DAG with explicit dependencies.",
+    description = """
+        Declare tasks and their `dependsOn` links; Kestra derives the execution order and parallelism (bounded by `concurrent`). Tasks may only reference peers inside this DAG block.
+
+        UI low-code forms are disabled for now with DAG tasks."""
 )
 @Plugin(
     examples = {
@@ -86,8 +85,7 @@ import java.util.stream.Stream;
                           - task3
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Dag"
+    }
 )
 public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull
@@ -136,7 +134,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     private void controlTask() throws IllegalVariableEvaluationException {
         List<String> dagCheckNotExistTasks = this.dagCheckNotExistTask(this.tasks);
         if (!dagCheckNotExistTasks.isEmpty()) {
-            throw new IllegalVariableEvaluationException("Some task doesn't exist on task '" + this.id + "': " +  String.join(", ", dagCheckNotExistTasks));
+            throw new IllegalVariableEvaluationException("Some task doesn't exist on task '" + this.id + "': " + String.join(", ", dagCheckNotExistTasks));
         }
 
         ArrayList<String> cyclicDependenciesTasks = this.dagCheckCyclicDependencies(this.tasks);
@@ -214,7 +212,8 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
 
     public ArrayList<String> dagCheckCyclicDependencies(List<DagTask> taskDepends) {
         ArrayList<String> cyclicDependency = new ArrayList<>();
-        taskDepends.forEach(taskDepend -> {
+        taskDepends.forEach(taskDepend ->
+        {
             if (taskDepend.getDependsOn() != null) {
                 List<String> nestedDependencies = this.nestedDependencies(taskDepend, taskDepends, new ArrayList<>());
                 if (nestedDependencies.contains(taskDepend.getTask().getId())) {
@@ -232,7 +231,8 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
             taskDepend.getDependsOn()
                 .stream()
                 .filter(depend -> !localVisited.contains(depend))
-                .forEach(depend -> {
+                .forEach(depend ->
+                {
                     localVisited.add(depend);
                     Optional<DagTask> task = tasks
                         .stream()
@@ -252,7 +252,6 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    @Introspected
     public static class DagTask {
         @NotNull
         @Schema(

@@ -1,13 +1,13 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 
 public class NamespaceFileAttributes implements FileAttributes {
     private final NamespaceFileMetadata namespaceFileMetadata;

@@ -1,5 +1,6 @@
 import {useApiStore} from "../stores/api"
 import {useMiscStore} from "override/stores/misc"
+import {ensureUid, getUid} from "../utils/uid"
 
 export interface SetupEventData {
     type: string
@@ -34,19 +35,46 @@ function statsGlobalData(config: Config, uid: string): any {
     }
 }
 
+const SURVEY_HOOKS_FLAG = "__kestra_posthog_survey_hooks_installed"
+
+function installSurveyHooksOnce() {
+    if ((window as any)[SURVEY_HOOKS_FLAG]) return
+    (window as any)[SURVEY_HOOKS_FLAG] = true
+
+    let surveyVisible = false
+    window.addEventListener("PHSurveyShown", () => {
+        surveyVisible = true
+    })
+
+    window.addEventListener("PHSurveyClosed", () => {
+        surveyVisible = false
+    })
+
+    window.addEventListener("KestraRouterAfterEach", () => {
+        if (surveyVisible) {
+            window.dispatchEvent(new Event("PHSurveyClosed"))
+            surveyVisible = false
+        }
+    })
+}
+
 export async function initPostHogForSetup(config: Config): Promise<void> {
     try {
-        if (!config.isUiAnonymousUsageEnabled || import.meta.env.MODE === "development") return
+        const uid = ensureUid()
+
+        const {default: posthog} = await import("posthog-js")
+
+        // PostHog can already be initialized (e.g. user logs out then logs back in without a full page refresh).
+        // In that case we don't need to init again.
+        if ((posthog as any)?.__loaded) {
+            installSurveyHooksOnce()
+            return
+        }
 
         const apiStore = useApiStore()
         const apiConfig = await apiStore.loadConfig()
 
-        if (!apiConfig?.posthog?.token || (window as any).posthog?.__loaded) return
-
-        const uid = getUID()
-        if (!uid) return
-
-        const {default: posthog} = await import("posthog-js")
+        if (!apiConfig?.posthog?.token) return
 
         posthog.init(apiConfig.posthog.token, {
             api_host: apiConfig.posthog.apiHost,
@@ -56,27 +84,13 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             autocapture: false,
         })
 
-        posthog.register_once(statsGlobalData(config, uid));
+        posthog.register_for_session(statsGlobalData(config, uid));
 
         if (!posthog.get_property("__alias")) {
             posthog.alias(apiConfig.id)
         }
 
-        let surveyVisible = false;
-        window.addEventListener("PHSurveyShown", () => {
-            surveyVisible = true;
-        });
-
-        window.addEventListener("PHSurveyClosed", () => {
-            surveyVisible = false;
-        })
-
-        window.addEventListener("KestraRouterAfterEach", () => {
-            if (surveyVisible) {
-                window.dispatchEvent(new Event("PHSurveyClosed"))
-                surveyVisible = false;
-            }
-        })
+        installSurveyHooksOnce()
     } catch (error) {
         console.error("Failed to initialize PostHog:", error)
     }
@@ -88,7 +102,7 @@ export function trackSetupEvent(
     userFormData: UserFormData
 ): void {
     const miscStore = useMiscStore()
-    const uid = getUID()
+    const uid = getUid()
 
     if (!miscStore.configs?.isAnonymousUsageEnabled || !uid) return
 
@@ -108,5 +122,3 @@ export function trackSetupEvent(
 
     useApiStore().posthogEvents(eventData)
 }
-
-const getUID = (): string | null => localStorage.getItem("uid")

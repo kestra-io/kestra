@@ -7,7 +7,10 @@
             </el-text>
         </el-col>
 
-        <el-col v-if="row.value" :span="10" class="value">
+        <el-col v-if="$slots.value" :span="10" class="value">
+            <slot name="value" />
+        </el-col>
+        <el-col v-else-if="row.value" :span="10" class="value">
             <el-text truncated>
                 <router-link v-if="row.to" :to="row.to">
                     {{ row.value }}
@@ -27,13 +30,14 @@
 
 <script setup lang="ts">
     import type {Component} from "vue";
+
     import {RouteLocationRaw} from "vue-router";
 
     const props = defineProps<{
         rows: {
             icon: Component;
             label: string;
-            value?: string | number;
+            value?: string | number | Date;
             to?: RouteLocationRaw;
         }[];
     }>();
@@ -55,8 +59,6 @@
     & :deep(.label) {
         display: flex;
         align-items: center;
-        font-family: $font-family-monospace;
-        text-transform: uppercase;
 
         & span.material-design-icon {
             margin-right: calc($spacer / 2);
@@ -70,11 +72,7 @@
     & :deep(.value) {
         display: flex;
         align-items: center;
-
-        & .el-text {
-            width: 100%;
-            text-align: right;
-        }
+        justify-content: end;
     }
 }
 </style>

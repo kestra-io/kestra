@@ -1,24 +1,24 @@
 package io.kestra.plugin.core.condition;
 
+import java.util.List;
+
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import jakarta.validation.Valid;
 
 @SuperBuilder
 @ToString
@@ -26,7 +26,11 @@ import jakarta.validation.Valid;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition that matches if any taskRun has retry attempts."
+    title = "Match executions where a task was retried.",
+    description = """
+        Passes if any task run has more than one attempt and its state satisfies `in` / `notIn` filters.
+
+        Provide `in` states to avoid matching nothing (an empty `in` list fails all attempts). Use with Flow triggers to react when retries occur."""
 )
 @Plugin(
     examples = {
@@ -36,12 +40,12 @@ import jakarta.validation.Valid;
             code = """
                 id: flow_condition_hasretryattempt
                 namespace: company.team
-    
+
                 tasks:
                   - id: log_message
                     type: io.kestra.plugin.core.log.Log
                     message: "This flow will execute when any flow task on retry enters a specific state(s)."
-    
+
                 triggers:
                   - id: flow_condition
                     type: io.kestra.plugin.core.trigger.Flow
@@ -52,7 +56,7 @@ import jakarta.validation.Valid;
                 """
         )
     },
-    aliases = {"io.kestra.core.models.conditions.types.HasRetryAttemptCondition", "io.kestra.plugin.core.condition.HasRetryAttemptCondition"}
+    aliases = { "io.kestra.core.models.conditions.types.HasRetryAttemptCondition", "io.kestra.plugin.core.condition.HasRetryAttemptCondition" }
 )
 public class HasRetryAttempt extends Condition {
     @Valid
@@ -79,7 +83,8 @@ public class HasRetryAttempt extends Condition {
             .stream()
             .filter(taskRun -> taskRun.getAttempts().size() > 1)
             .flatMap(taskRun -> taskRun.getAttempts().stream())
-            .anyMatch(taskRunAttempt -> {
+            .anyMatch(taskRunAttempt ->
+            {
                 boolean result = true;
 
                 if (!stateInRendered.contains(taskRunAttempt.getState().getCurrent())) {

@@ -1,61 +1,84 @@
 package io.kestra.cli.commands.migrations.metadata;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.NoSuchFileException;
+import java.time.Instant;
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.tenant.TenantService;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import jakarta.inject.Singleton;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 public class MetadataMigrationService {
-    @Inject
-    private TenantService tenantService;
+    private static final Pattern REVISION_FILE_PATTERN = Pattern.compile(".*\\.v\\d+$");
 
-    @Inject
-    private FlowRepositoryInterface flowRepository;
+    protected FlowRepositoryInterface flowRepository;
+    protected TenantService tenantService;
+    protected KvMetadataRepositoryInterface kvMetadataRepository;
+    protected KVMetadataStateStore kvMetadataStateStore;
+    protected NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository;
+    protected StorageInterface storageInterface;
+    protected KestraConfig kestraConfig;
 
-    @Inject
-    private KvMetadataRepositoryInterface kvMetadataRepository;
+    @Singleton
+    public MetadataMigrationService(FlowRepositoryInterface flowRepository,
+        TenantService tenantService,
+        KvMetadataRepositoryInterface kvMetadataRepository,
+        KVMetadataStateStore kvMetadataStateStore,
+        NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository,
+        StorageInterface storageInterface,
+        KestraConfig kestraConfig) {
+        this.flowRepository = flowRepository;
+        this.tenantService = tenantService;
+        this.kvMetadataRepository = kvMetadataRepository;
+        this.kvMetadataStateStore = kvMetadataStateStore;
+        this.namespaceFileMetadataRepository = namespaceFileMetadataRepository;
+        this.storageInterface = storageInterface;
+        this.kestraConfig = kestraConfig;
+    }
 
-    @Inject
-    private NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository;
-
-    @Inject
-    private StorageInterface storageInterface;
-
-    protected Map<String, List<String>> namespacesPerTenant() {
+    @VisibleForTesting
+    public Map<String, List<String>> namespacesPerTenant() {
         String tenantId = tenantService.resolveTenant();
-        return Map.of(tenantId, flowRepository.findDistinctNamespace(tenantId));
+        return Map.of(
+            tenantId, Stream.concat(
+                Stream.of(kestraConfig.getSystemFlowNamespace()),
+                flowRepository.findDistinctNamespace(tenantId).stream()
+            ).map(NamespaceInterface::asTree).flatMap(Collection::stream).distinct().toList()
+        );
     }
 
     public void kvMigration() throws IOException {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
-            .flatMap(throwFunction(namespaceForTenant -> {
-                InternalKVStore kvStore = new InternalKVStore(namespaceForTenant.getKey(), namespaceForTenant.getValue(), storageInterface, kvMetadataRepository);
+            .flatMap(throwFunction(namespaceForTenant ->
+            {
+                InternalKVStore kvStore = new InternalKVStore(namespaceForTenant.getKey(), namespaceForTenant.getValue(), storageInterface, kvMetadataStateStore);
                 List<FileAttributes> list = listAllFromStorage(storageInterface, StorageContext::kvPrefix, namespaceForTenant.getKey(), namespaceForTenant.getValue()).stream()
                     .map(PathAndAttributes::attributes)
                     .toList();
@@ -63,7 +86,8 @@ public class MetadataMigrationService {
                     .map(throwFunction(fileAttributes -> KVEntry.from(namespaceForTenant.getValue(), fileAttributes)))
                     .collect(Collectors.partitioningBy(kvEntry -> Optional.ofNullable(kvEntry.expirationDate()).map(expirationDate -> Instant.now().isAfter(expirationDate)).orElse(false)));
 
-                entriesByIsExpired.get(true).forEach(kvEntry -> {
+                entriesByIsExpired.get(true).forEach(kvEntry ->
+                {
                     try {
                         storageInterface.delete(
                             namespaceForTenant.getKey(),
@@ -77,24 +101,31 @@ public class MetadataMigrationService {
 
                 return entriesByIsExpired.get(false).stream().map(kvEntry -> PersistedKvMetadata.from(namespaceForTenant.getKey(), kvEntry));
             }))
-            .forEach(throwConsumer(kvMetadata -> {
+            .forEach(throwConsumer(kvMetadata ->
+            {
                 if (kvMetadataRepository.findByName(kvMetadata.getTenantId(), kvMetadata.getNamespace(), kvMetadata.getName()).isEmpty()) {
                     kvMetadataRepository.save(kvMetadata);
                 }
             }));
     }
 
-    public void nsFilesMigration() throws IOException {
+    public void nsFilesMigration(boolean verbose) throws IOException {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
-            .flatMap(throwFunction(namespaceForTenant -> {
+            .flatMap(throwFunction(namespaceForTenant ->
+            {
                 List<PathAndAttributes> list = listAllFromStorage(storageInterface, StorageContext::namespaceFilePrefix, namespaceForTenant.getKey(), namespaceForTenant.getValue());
                 return list.stream()
+                    .filter(pathAndAttributes -> !REVISION_FILE_PATTERN.matcher(pathAndAttributes.path()).matches())
                     .map(pathAndAttributes -> NamespaceFileMetadata.of(namespaceForTenant.getKey(), namespaceForTenant.getValue(), pathAndAttributes.path(), pathAndAttributes.attributes()));
             }))
-            .forEach(throwConsumer(nsFileMetadata -> {
+            .forEach(throwConsumer(nsFileMetadata ->
+            {
                 if (namespaceFileMetadataRepository.findByPath(nsFileMetadata.getTenantId(), nsFileMetadata.getNamespace(), nsFileMetadata.getPath()).isEmpty()) {
                     namespaceFileMetadataRepository.save(nsFileMetadata);
+                    if (verbose) {
+                        System.out.println("Migrated namespace file metadata: " + nsFileMetadata.getNamespace() + " - " + nsFileMetadata.getPath());
+                    }
                 }
             }));
     }
@@ -106,13 +137,15 @@ public class MetadataMigrationService {
     private static List<PathAndAttributes> listAllFromStorage(StorageInterface storage, Function<String, String> prefixFunction, String tenant, String namespace) throws IOException {
         try {
             String prefix = prefixFunction.apply(namespace);
+
             return storage.allByPrefix(tenant, namespace, URI.create(StorageContext.KESTRA_PROTOCOL + prefix + "/"), true).stream()
                 .map(throwFunction(uri -> new PathAndAttributes(uri.getPath().substring(prefix.length()), storage.getAttributes(tenant, namespace, uri))))
                 .toList();
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException | NoSuchFileException e) {
             return Collections.emptyList();
         }
     }
 
-    public record PathAndAttributes(String path, FileAttributes attributes) {}
+    public record PathAndAttributes(String path, FileAttributes attributes) {
+    }
 }

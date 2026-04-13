@@ -7,12 +7,16 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
+import DemoAssets from "../components/demo/Assets.vue"
 import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
+
+    // New onboarding pages, initial one and the success one after the user has completed the onboarding flow.
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
+    {name: "welcome/success", path: "/:tenant?/welcome/success", component: () => import("../components/onboarding/Success.vue")},
 
     //Dashboards
     {
@@ -28,21 +32,10 @@ export default [
             // - using nextTick in useDefaultFilter to delay the redirection
             // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
             // but both were more complex and fragile than this simple check.
-            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
-            if (!to.params.dashboard) {
-                next({
-                    ...to,
-                    params: {
-                        ...to.params,
-                        dashboard: "default",
-                    },
-                    query,
-                });
-                return;
-            }
+            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true})
             if(change) {
                 next({
-                    ...to, 
+                    ...to,
                     query,
                 });
                 return;
@@ -79,16 +72,11 @@ export default [
 
     //Blueprints
     {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},
-    {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../components/flows/blueprints/BlueprintDetail.vue"), props: true},
+    {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("override/components/flows/blueprints/BlueprintDetail.vue"), props: true},
 
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
     {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?",   component: () => import("../components/plugins/Plugin.vue")},
-
-    //Templates
-    {name: "templates/list", path: "/:tenant?/templates", component: () => import("../components/templates/Templates.vue")},
-    {name: "templates/create", path: "/:tenant?/templates/new", component: () => import("../components/templates/TemplateEdit.vue")},
-    {name: "templates/update", path: "/:tenant?/templates/edit/:namespace/:id", component: () => import("../components/templates/TemplateEdit.vue")},
 
     //Logs
     {
@@ -99,7 +87,6 @@ export default [
 
     //Namespaces
     {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
-    {name: "namespaces/create", path: "/:tenant?/namespaces/new/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
     {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
 
     //Docs
@@ -110,7 +97,7 @@ export default [
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: () => import("../components/admin/Triggers.vue")},
-    {name: "admin/stats", path: "/:tenant?/admin/stats", component: () => import("override/components/admin/stats/Stats.vue")},
+    {name: "admin/stats", path: "/:tenant?/admin/stats/:type?", component: () => import("override/components/admin/stats/Stats.vue")},
     {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
 
     //Setup
@@ -124,8 +111,9 @@ export default [
     //Demo Pages
     {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
     {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
+    {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
-    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants", component: DemoTenants},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
 ];

@@ -7,5 +7,8 @@ package io.kestra.core.models.executions;
  * - NORMAL: anything else, for backward compatibility NORMAL is not persisted but null is used instead
  */
 public enum ExecutionKind {
-    NORMAL, TEST, PLAYGROUND
+    NORMAL,
+    TEST,
+    PLAYGROUND,
+    LOOP
 }

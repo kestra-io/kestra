@@ -1,13 +1,5 @@
 package io.kestra.core.tasks;
 
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.tasks.runners.PluginUtilsService;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,10 +7,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.tasks.runners.PluginUtilsService;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest
 public class PluginUtilsServiceTest {
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -64,11 +65,13 @@ public class PluginUtilsServiceTest {
         assertThat(executionInfo.flowId()).isEqualTo("flow2");
         assertThat(executionInfo.id()).isEqualTo("exec2");
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             PluginUtilsService.executionFromTaskParameters(runContext, "ns2", "flow2", null);
         });
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             PluginUtilsService.executionFromTaskParameters(runContext, "ns2", null, "exec2");
         });
     }

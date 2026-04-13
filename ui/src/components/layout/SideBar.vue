@@ -4,17 +4,18 @@
         id="side-menu"
         :menu
         @update:collapsed="onToggleCollapse"
-        width="268px"
+        width="280px"
         :collapsed="collapsed"
         linkComponentName="LeftMenuLink"
         hideToggle
+        showOneChild
     >
         <template #header>
             <SidebarToggleButton
                 @toggle="collapsed = onToggleCollapse(!collapsed)"
             />
             <div class="logo">
-                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
+                <component :is="props.showLink ? 'router-link' : 'div'" :to="props.logoTo">
                     <span class="img" />
                 </component>
             </div>
@@ -28,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onUpdated, ref, computed, h, watch} from "vue";
+    import {onUpdated, computed, h, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useMediaQuery} from "@vueuse/core";
@@ -45,9 +46,11 @@
 
     const props = withDefaults(defineProps<{
         menu: MenuItem[],
-        showLink: boolean
+        showLink?: boolean,
+        logoTo?: object
     }>(), {
-        showLink: true
+        showLink: true,
+        logoTo: () => ({name: "welcome"})
     })
 
     const $emit = defineEmits(["menu-collapse"])
@@ -68,16 +71,16 @@
     function disabledCurrentRoute(items: MenuItem[]) {
         return items
             .map(r => {
-                if (r.href?.path === $route.path) {
+                if (typeof r.href === "object" && r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 
                 // route hack is still needed for blueprints
-                if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
+                if (typeof r.href === "string" && r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
                     r.class = "vsm--link_active";
                 }
 
-                if (r.child && r.child.some(c => $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
+                if ((!r.href || typeof r.href === "string") && r.child && r.child.some(c => typeof c.href === "string" && $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
                     r.class = "vsm--link_active";
                     r.child = disabledCurrentRoute(r.child);
                 }
@@ -118,7 +121,10 @@
         ];
     });
 
-    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+    const collapsed = computed({
+        get: () => layoutStore.sideMenuCollapsed,
+        set: (v: boolean) => layoutStore.setSideMenuCollapsed(v),
+    })
 
     const isSmallScreen = useMediaQuery("(max-width: 768px)")
 
@@ -132,18 +138,12 @@
 <style scoped lang="scss">
 .collapseButton {
     position: absolute;
-    top: .5rem;
-    right: 0;
+    top: .75rem;
+    right: .5rem;
     z-index: 1;
 
     #side-menu & {
         border: none;
-        background: none;
-
-        &:hover {
-            background: none !important;
-            color: var(--ks-content-link) !important;
-        }
     }
 }
 

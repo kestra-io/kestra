@@ -1,15 +1,19 @@
 package io.kestra.plugin.core.namespace;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.namespace.NamespaceFileService;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.plugin.core.purge.PurgeTask;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Builder;
@@ -18,33 +22,36 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
 @Slf4j
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete expired keys globally for a specific namespace.",
-    description = "This task will delete expired keys from the Kestra KV store. By default, it will only delete expired keys, but you can choose to delete all keys by setting `expiredOnly` to false. You can also filter keys by a specific pattern and choose to include child namespaces."
+    title = "Purge Namespace files (and versions).",
+    description = """
+        Deletes files from Namespace storage using a purge `behavior` (default keeps 1 latest version), optional file glob, and Namespace filters (`namespaces` list or `namespacePattern`). Child Namespaces are included by default.
+
+        Use to clean old asset versions at scale; behavior controls retention (keepAmount/before)."""
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Delete expired keys globally for a specific namespace, with or without including child namespaces.",
+            title = "Purge old versions of namespace files for a namespace tree.",
             full = true,
             code = """
-                id: purge_kv_store
+                id: purge_namespace_files
                 namespace: system
-                
+
                 tasks:
-                  - id: purge_kv
-                    type: io.kestra.plugin.core.kv.PurgeKV
-                    expiredOnly: true
+                  - id: purge_files
+                    type: io.kestra.plugin.core.namespace.PurgeFiles
                     namespaces:
                       - company
                     includeChildNamespaces: true
+                    filePattern: "**/*.sql"
+                    behavior:
+                      type: version
+                      before: "2025-01-01T00:00:00Z"
                 """
         )
     }
@@ -89,10 +96,11 @@ public class PurgeFiles extends Task implements PurgeTask<NamespaceFile>, Runnab
         runContext.logger().info("purging {} namespaces: {}", filesNamespaces.size(), filesNamespaces);
         AtomicLong count = new AtomicLong();
         FilesPurgeBehavior renderedBehavior = runContext.render(behavior).as(FilesPurgeBehavior.class).orElseThrow();
+        String tenantId = runContext.flowInfo().tenantId();
+        NamespaceFileService namespaceFileService = ((DefaultRunContext) runContext).services().additionalService(NamespaceFileService.class);
         for (String ns : filesNamespaces) {
-            Namespace namespaceStorage = runContext.storage().namespace(ns);
-            List<NamespaceFile> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(runContext.flowInfo().tenantId(), namespaceStorage));
-            count.addAndGet(namespaceStorage.purge(toPurge));
+            List<NamespaceFile> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(tenantId, ns, namespaceFileService));
+            count.addAndGet(namespaceFileService.purge(tenantId, ns, toPurge));
         }
         runContext.logger().info("purged {} files", count.get());
 
@@ -111,12 +119,11 @@ public class PurgeFiles extends Task implements PurgeTask<NamespaceFile>, Runnab
         return item.path();
     }
 
-
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The number of purged KV pairs"
+            title = "The number of purged namespace file versions"
         )
         private Long size;
     }

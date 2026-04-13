@@ -1,7 +1,8 @@
 package io.kestra.core.reporter.reports;
 
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.models.ServerType;
+import java.time.Instant;
+import java.util.Objects;
+
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.reporter.AbstractReportable;
@@ -11,35 +12,30 @@ import io.kestra.core.reporter.model.Count;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.micronaut.core.annotation.Introspected;
+
+import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
-import java.time.Instant;
-import java.util.Objects;
-
 @Singleton
+@Requires(property = "kestra.server-type", pattern = "STANDALONE|EXECUTOR|WEBSERVER")
 public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.UsageEvent> {
 
     private final FlowRepositoryInterface flowRepository;
     private final ExecutionRepositoryInterface executionRepository;
     private final DashboardRepositoryInterface dashboardRepository;
-    private final boolean enabled;
 
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
-                              ExecutionRepositoryInterface executionRepository,
-                              DashboardRepositoryInterface dashboardRepository) {
+        ExecutionRepositoryInterface executionRepository,
+        DashboardRepositoryInterface dashboardRepository) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;
         this.executionRepository = executionRepository;
         this.dashboardRepository = dashboardRepository;
-
-        ServerType serverType = KestraContext.getContext().getServerType();
-        this.enabled = ServerType.EXECUTOR.equals(serverType) || ServerType.STANDALONE.equals(serverType);
     }
 
     @Override
@@ -50,11 +46,6 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
             .executions(ExecutionUsage.of(executionRepository, interval.from(), interval.to()))
             .dashboards(new Count(dashboardRepository.countAllForAllTenants()))
             .build();
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return enabled;
     }
 
     @Override
@@ -71,7 +62,6 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     @SuperBuilder(toBuilder = true)
     @Getter
     @Jacksonized
-    @Introspected
     public static class UsageEvent implements Event {
         private ExecutionUsage executions;
         private FlowUsage flows;

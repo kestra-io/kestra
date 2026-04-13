@@ -3,6 +3,7 @@
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
     <div class="wrapper" :class="[props.margin, props.class]">
         <el-input
+            ref="elInputRef"
             v-model="input"
             :id="uid"
             :placeholder
@@ -16,12 +17,13 @@
 </template>
 
 <script setup lang="ts">
-    import {useId, computed} from "vue";
+    import {useId, computed, useTemplateRef} from "vue";
     import Lock from "vue-material-design-icons/Lock.vue";
 
     defineOptions({inheritAttrs: false});
 
     const uid = useId();
+    const elInputRef = useTemplateRef("elInputRef");
 
     const emits = defineEmits(["update:modelValue"]);
     const props = defineProps({
@@ -39,6 +41,12 @@
         get: () => props.modelValue,
         set: (value) => {
             emits("update:modelValue", value);
+        }
+    });
+
+    defineExpose({
+        focus: () => {
+            elInputRef.value?.focus();
         }
     });
 </script>

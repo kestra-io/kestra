@@ -5,17 +5,16 @@ import vue from "@vitejs/plugin-vue";
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
+const MDC_STUB = path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js");
+const NUXTJS_MDC_STUB = path.resolve(__dirname, "plugins/stub-nuxtjs-mdc.js");
+
 export default defineConfig({
     base: "",
     build: {
         outDir: "../webserver/src/main/resources/ui",
         rollupOptions: {
-            external: [
-                "https://fonts.googleapis.com",
-                "https://fonts.gstatic.com"
-            ],
             output: {
-                advancedChunks: {
+                codeSplitting: {
                     groups: [
                         {
                             test: /src\/components\/dashboard/i,
@@ -44,14 +43,19 @@ export default defineConfig({
         }
     },
     resolve: {
-        alias: {
-            "override": path.resolve(__dirname, "src/override/"),
-            "#imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "@storybook/addon-actions": "storybook/actions",
-        },
+        alias: [
+            {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+            {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
+            {find: "#imports", replacement: MDC_STUB},
+            {find: "#build/mdc-image-component.mjs", replacement: MDC_STUB},
+            {find: "#mdc-imports", replacement: MDC_STUB},
+            {find: "#mdc-configs", replacement: MDC_STUB},
+            {find: "@storybook/addon-actions", replacement: "storybook/actions"},
+            // @nuxtjs/mdc is a peer dep of @kestra-io/ui-libs that is not installed here;
+            // all its subpaths are stubbed out to prevent Rolldown from erroring on
+            // unresolved imports (Vite 8 treats them as errors, not warnings).
+            {find: /^@nuxtjs\/mdc(\/.*)?$/, replacement: NUXTJS_MDC_STUB},
+        ],
     },
     plugins: [
         vue({
@@ -76,7 +80,7 @@ export default defineConfig({
         devSourcemap: true,
         preprocessorOptions: {
             scss: {
-                silenceDeprecations: ["color-functions", "global-builtin", "import"]
+                silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
             },
         }
     },
@@ -90,7 +94,6 @@ export default defineConfig({
             "debug",
             "@braintree/sanitize-url",
             "monaco-yaml/yaml.worker",
-            "vue-axios",
             "lodash-es",
             "nprogress"
         ],

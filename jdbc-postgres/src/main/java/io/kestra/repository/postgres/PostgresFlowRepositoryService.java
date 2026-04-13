@@ -1,15 +1,17 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import org.jooq.Condition;
-import org.jooq.impl.DSL;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.jdbc.AbstractJdbcRepository;
 
 import static io.kestra.core.models.QueryFilter.Op.EQUALS;
 
@@ -22,9 +24,9 @@ public abstract class PostgresFlowRepositoryService {
         }
 
         if (labels != null) {
-            labels.forEach((key, value) -> {
-                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
-                conditions.add(DSL.condition(sql));
+            labels.forEach((key, value) ->
+            {
+                conditions.add(DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)));
             });
         }
 
@@ -35,22 +37,23 @@ public abstract class PostgresFlowRepositoryService {
         return jdbcRepository.fullTextCondition(Collections.singletonList("FULLTEXT_INDEX(source_code)"), query);
     }
 
-
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
         List<Condition> conditions = new ArrayList<>();
 
         if (labels instanceof Map<?, ?> labelValues) {
-            labelValues.forEach((key, value) -> {
-                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
+            labelValues.forEach((key, value) ->
+            {
                 if (operation.equals(EQUALS)) {
-                    conditions.add(DSL.condition(sql));
-                } else {
-                    conditions.add(DSL.not(DSL.condition(sql)));
+                    conditions.add(DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)));
+                } else if (operation.equals(QueryFilter.Op.NOT_EQUALS)) {
+                    // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
+                    String extractValueSql = "(SELECT jsonb_path_query_first(value, '$.labels[*] ? (@.key == $labelKey).value', jsonb_build_object('labelKey', {0}::text))#>>'{}')";
+                    Field<String> extractedValue = DSL.field(extractValueSql, String.class, DSL.val(key, String.class));
+                    conditions.add(extractedValue.isNull().or(extractedValue.ne((String) value)));
                 }
             });
         }
         return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
-
 
 }

@@ -11,6 +11,7 @@ export interface FilterContext {
     hasFilterKeys: ComputedRef<boolean>;
     showSearchInput: ComputedRef<boolean>;
     hasAppliedFilters: ComputedRef<boolean>;
+    hasDismissedDefaultVisibleKeys: ComputedRef<boolean>;
     tableOptions: ComputedRef<TableOptions>;
     savedFilters: ComputedRef<SavedFilter[]>;
     properties: ComputedRef<TableProperties>;
@@ -33,11 +34,11 @@ export interface FilterContext {
     editSavedFilter: (filter: SavedFilter) => void;
     updateProperties: (columns: string[]) => void;
     deleteSavedFilter: (filter: SavedFilter) => void;
-    resetToPreApplied: () => void;
+    resetToDefaults: () => void;
     hasPreApplied: (filterKey: string) => boolean;
     getPreApplied: (filterKey: string) => AppliedFilter | undefined;
     updateSavedFilter: (id: string, name: string, description: string) => void;
-    saveFilter: (name: string, description: string, filters: AppliedFilter[], searchQuery?: string) => void;
+    saveFilter: (name: string, description: string, filters: AppliedFilter[]) => void;
 }
 
 export const FILTER_CONTEXT_INJECTION_KEY = Symbol("filter-context-injection-key") as InjectionKey<FilterContext>;

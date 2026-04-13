@@ -40,7 +40,7 @@ async function selectorOptions(canvasElement: HTMLElement) {
         selector.click();
         await waitFor(() => selector.ariaDescribedByElements !== null);
         revisionSelectorsOptions.push(
-            (selector.ariaDescribedByElements?? []).flatMap(selectorDropdown => [...selectorDropdown.querySelectorAll("[role='option']")] as HTMLElement[])
+            (selector.ariaDescribedByElements ?? []).flatMap(selectorDropdown => [...selectorDropdown.querySelectorAll("[role='option']")] as HTMLElement[])
         );
     }
     return revisionSelectorsOptions;
@@ -55,7 +55,7 @@ function getSimplifiedOptions(revisionSelectorsOptions: HTMLElement[][]) {
     );
 }
 
-const revisions: {revision: number, source?: string}[] = [
+const revisions: { revision: number, source?: string }[] = [
     {
         revision: 1,
     },
@@ -85,7 +85,7 @@ export const Default: Story = {
     async play({args, canvas, canvasElement}) {
         await expect(
             ([...canvasElement.querySelectorAll(".editor .monaco-editor")] as HTMLElement[])
-            .every(el => el.getAttribute("aria-uri")?.endsWith(`.${args.lang}`))
+                .every(el => el.getAttribute("aria-uri")?.endsWith(`.${args.lang}`))
         ).toBeTruthy();
 
         let revisionSelectorsOptions = await selectorOptions(canvasElement);
@@ -94,8 +94,8 @@ export const Default: Story = {
 
         let simplifiedOptions = getSimplifiedOptions(revisionSelectorsOptions);
 
-        await expect(simplifiedOptions[0]).toEqual([{selected: false, content: "1"}, {selected: true, content: "3"}]);
-        await expect(simplifiedOptions[1]).toEqual([{selected: false, content: "1"}, {selected: true, content: "4 (current)"}]);
+        await expect(simplifiedOptions[0]).toEqual([{selected: false, content: "Revision 1"}, {selected: true, content: "Revision 3"}]);
+        await expect(simplifiedOptions[1]).toEqual([{selected: false, content: "Revision 1"}, {selected: true, content: "Revision 4 (current)"}]);
 
         await expect(canvas.getByText(crudText(3))).not.toBeNull();
         await expect(canvas.getByText(crudText(4))).not.toBeNull();
@@ -119,7 +119,7 @@ export const Default: Story = {
             confirmButton.click();
         });
         await waitFor(() => expect(revisions[revisions.length - 1].revision).toEqual(5));
-        await expect(revisions[revisions.length - 1].source).toContain('"revision": 1');
+        await expect(revisions[revisions.length - 1].source).toContain("\"revision\": 1");
         await expect(revisionSourceMock).not.toHaveBeenCalledWith(5);
     }
 };

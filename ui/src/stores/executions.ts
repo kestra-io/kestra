@@ -26,13 +26,14 @@ export type Histories = {
 export interface Execution{
     id: string;
     namespace: string;
-    flowId?: string;
+    flowId: string;
     tenantId?: string;
     taskRunList:  {
         id: string,
         taskId: string,
         value?: string
         executionId?: string
+        outputs?: Record<string, any>
     }[]
     state: {
         current: string;
@@ -79,7 +80,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     const flowGraph = ref<any | undefined>(undefined);
     const namespaces = ref<string[]>([]);
     const flowsExecutable = ref<any[]>([]);
-
 
     // clear flow graph when execution is reset
     // since it is supposed to represent the current execution's flow
@@ -415,13 +415,17 @@ export const useExecutionsStore = defineStore("executions", () => {
                 coreStore.message = {
                     variant: "error",
                     title: translate("error"),
-                    message: translate("errors.404.flow or execution"),
+                    content: {
+                        message: translate("errors.404.flow or execution"),
+                    }
                 };
             } else {
                 coreStore.message = {
                     variant: "error",
-                    title: translate("error"),
-                    message: translate("something_went_wrong.loading_execution"),
+                    title: translate("something_went_wrong.connection_lost.title"),
+                    content: {
+                        message: translate("something_went_wrong.connection_lost.message"),
+                    }
                 };
             }
         }

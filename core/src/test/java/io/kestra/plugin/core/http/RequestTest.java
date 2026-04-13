@@ -1,7 +1,35 @@
 package io.kestra.plugin.core.http;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.reactivestreams.Publisher;
+
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.http.client.HttpClientRequestException;
 import io.kestra.core.http.client.HttpClientResponseException;
@@ -13,6 +41,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.http.HttpRequest;
@@ -24,27 +53,12 @@ import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -152,11 +166,15 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/params?foo=baz"))
-                .params(Property.ofValue(Map.of(
-                    "hello", "world",
-                    "foo", "bar",
-                    "bar", List.of("foo1", "foo2")
-                )))
+                .params(
+                    Property.ofValue(
+                        Map.of(
+                            "hello", "world",
+                            "foo", "bar",
+                            "bar", List.of("foo1", "foo2")
+                        )
+                    )
+                )
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -183,9 +201,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/redirect"))
-                .options(HttpConfiguration.builder()
-                    .followRedirects(Property.ofValue(false))
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .followRedirects(Property.ofValue(false))
+                        .build()
                 )
                 .build();
 
@@ -208,9 +227,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
-                .options(HttpConfiguration.builder()
-                    .allowFailed(Property.ofValue(true))
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .allowFailed(Property.ofValue(true))
+                        .build()
                 )
                 .build();
 
@@ -289,10 +309,11 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/hello"))
-                .options(HttpConfiguration.builder()
-                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
-                    .ssl(SslOptions.builder().insecureTrustAllCertificates(Property.ofValue(true)).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
+                        .ssl(SslOptions.builder().insecureTrustAllCertificates(Property.ofValue(true)).build())
+                        .build()
                 )
                 .build();
 
@@ -316,10 +337,11 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/hello"))
-                .options(HttpConfiguration.builder()
-                    .allowFailed(Property.ofValue(true))
-                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .allowFailed(Property.ofValue(true))
+                        .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
+                        .build()
                 )
                 .build();
 
@@ -371,16 +393,21 @@ class RequestTest {
                 .method(Property.ofValue("POST"))
                 .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
                 .uri(Property.ofValue(server.getURL().toString() + "/post/url-encoded"))
-                .headers(Property.ofValue(Map.of(
-                    "test", "{{ inputs.test }}"
-                )))
+                .headers(
+                    Property.ofValue(
+                        Map.of(
+                            "test", "{{ inputs.test }}"
+                        )
+                    )
+                )
                 .formData(Property.ofValue(ImmutableMap.of("hello", "world")))
                 .build();
 
-
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of(
-                "test", "value"
-            ));
+            RunContext runContext = TestsUtils.mockRunContext(
+                this.runContextFactory, task, ImmutableMap.of(
+                    "test", "value"
+                )
+            );
 
             Request.Output output = task.run(runContext);
 
@@ -483,6 +510,79 @@ class RequestTest {
     }
 
     @Test
+    void multipartInlineContent_doesNotThrowContentTooLong() throws Exception {
+        Path tmp = Files.createTempFile("kestra-large-", ".txt");
+
+        try {
+            int size = 5 * 1024 * 1024; // large enough to trigger old client-side ContentTooLongException
+            byte[] payloadBytes = new byte[size];
+            Arrays.fill(payloadBytes, (byte) 'a');
+            Files.write(tmp, payloadBytes);
+
+            URI bigStorage;
+            try (InputStream in = Files.newInputStream(tmp)) {
+                bigStorage = storageInterface.put(
+                    MAIN_TENANT,
+                    null,
+                    new URI("/" + FriendlyId.createFriendlyId()),
+                    in
+                );
+            }
+
+            try (
+                ApplicationContext applicationContext = ApplicationContext.run();
+                EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
+            ) {
+                Request task = Request.builder()
+                    .id(RequestTest.class.getSimpleName())
+                    .type(RequestTest.class.getName())
+                    .method(Property.ofValue("POST"))
+                    .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+                    .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
+                    .formData(
+                        Property.ofValue(
+                            ImmutableMap.of(
+                                "hello", "world",
+                                "file", ImmutableMap.of(
+                                    "content", bigStorage.toString(),
+                                    "name", "big.txt"
+                                )
+                            )
+                        )
+                    )
+                    .build();
+
+                RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+                assertThatThrownBy(() -> task.run(runContext))
+                    .isInstanceOf(HttpClientResponseException.class)
+                    .hasMessageContaining("response code '413'");
+            }
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    }
+
+    @Test
+    void multipartFromEntity_doesNotMaterialize_andKeepsEntityForSend() throws Exception {
+        HttpEntity entity = MultipartEntityBuilder.create()
+            .addTextBody("hello", "world")
+            .addBinaryBody(
+                "file",
+                "abc".getBytes(StandardCharsets.UTF_8),
+                ContentType.DEFAULT_BINARY,
+                "a.txt"
+            )
+            .build();
+
+        io.kestra.core.http.HttpRequest.RequestBody body = io.kestra.core.http.HttpRequest.RequestBody.from(entity);
+
+        HttpEntity rebuilt = body.to();
+
+        assertThat(rebuilt).isSameAs(entity);
+    }
+
+    @Test
     void bytes() {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
@@ -511,10 +611,13 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
-                .options(HttpConfiguration.builder()
-                    .auth(BasicAuthConfiguration.builder().username(Property.ofValue("John"))
-                        .password(Property.ofValue("p4ss")).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .auth(
+                            BasicAuthConfiguration.builder().username(Property.ofValue("John"))
+                                .password(Property.ofValue("p4ss")).build()
+                        )
+                        .build()
                 )
                 .build();
 
@@ -538,10 +641,16 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
-                .options(HttpConfiguration.builder()
-                    .basicAuthUser("John")
-                    .basicAuthPassword("p4ss")
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .auth(
+                            BasicAuthConfiguration
+                                .builder()
+                                .username(Property.ofValue("John"))
+                                .password(Property.ofValue("p4ss"))
+                                .build()
+                        )
+                        .build()
                 )
                 .build();
 
@@ -566,9 +675,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.ofValue(server.getURL().toString() + "/auth/bearer"))
-                .options(HttpConfiguration.builder()
-                    .auth(BearerAuthConfiguration.builder().token(Property.ofValue(id)).build())
-                    .build()
+                .options(
+                    HttpConfiguration.builder()
+                        .auth(BearerAuthConfiguration.builder().token(Property.ofValue(id)).build())
+                        .build()
                 )
                 .build();
 
@@ -577,6 +687,96 @@ class RequestTest {
             Request.Output output = task.run(runContext);
 
             assertThat(output.getBody()).isEqualTo("{\"hello\":\"" + id + "\"}");
+            assertThat(output.getCode()).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void allowedResponseCodesEnforcedForSuccessResponses() {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
+                .options(
+                    HttpConfiguration.builder()
+                        .allowedResponseCodes(Property.ofValue(List.of(201)))
+                        .build()
+                )
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+
+            HttpClientResponseException exception = assertThrows(
+                HttpClientResponseException.class,
+                () -> task.run(runContext)
+            );
+
+            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void digestAuthMd5() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(server.getURL().toString() + "/auth/digest/md5"))
+                .options(
+                    HttpConfiguration.builder()
+                        .auth(
+                            DigestAuthConfiguration.builder()
+                                .username(Property.ofValue("John"))
+                                .password(Property.ofValue("p4ss"))
+                                .build()
+                        )
+                        .build()
+                )
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
+            assertThat(output.getCode()).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void digestAuthSha256() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(server.getURL().toString() + "/auth/digest/sha256"))
+                .options(
+                    HttpConfiguration.builder()
+                        .auth(
+                            DigestAuthConfiguration.builder()
+                                .username(Property.ofValue("John"))
+                                .password(Property.ofValue("p4ss"))
+                                .build()
+                        )
+                        .build()
+                )
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
             assertThat(output.getCode()).isEqualTo(200);
         }
     }
@@ -634,6 +834,10 @@ class RequestTest {
 
         private static final int LARGE_BODY_SIZE = 20 * 1024 * 1024; // 20MB > 19MB safeguard
         private static final String LARGE_BODY = "a".repeat(LARGE_BODY_SIZE);
+        private static final String DIGEST_REALM = "kestra";
+        private static final String DIGEST_OPAQUE = "kestra-opaque";
+        private static final String DIGEST_NONCE_MD5 = "kestra-md5-nonce";
+        private static final String DIGEST_NONCE_SHA256 = "kestra-sha256-nonce";
 
         @Get("/hello")
         HttpResponse<String> hello() {
@@ -679,7 +883,8 @@ class RequestTest {
             return request.getHeaders()
                 .getAuthorization()
                 .filter(v -> v.startsWith("Basic "))
-                .map(v -> {
+                .map(v ->
+                {
                     String decode = new String(
                         Base64.getDecoder().decode(v.substring(6).getBytes(StandardCharsets.UTF_8)),
                         StandardCharsets.UTF_8
@@ -702,6 +907,16 @@ class RequestTest {
                 .orElseThrow();
         }
 
+        @Get("/auth/digest/md5")
+        HttpResponse<String> digestAuthMd5(HttpRequest<?> request) {
+            return handleDigestAuth(request, "MD5", DIGEST_NONCE_MD5);
+        }
+
+        @Get("/auth/digest/sha256")
+        HttpResponse<String> digestAuthSha256(HttpRequest<?> request) {
+            return handleDigestAuth(request, "SHA-256", DIGEST_NONCE_SHA256);
+        }
+
         @Post(uri = "/post/json")
         HttpResponse<Map<String, String>> postBody(@Body Map<String, String> body) {
             return HttpResponse.ok(body);
@@ -719,7 +934,8 @@ class RequestTest {
             Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
 
             return Mono.from(uploadPublisher)
-                .map(throwFunction(success -> {
+                .map(throwFunction(success ->
+                {
                     try (FileInputStream fileInputStream = new FileInputStream(tempFile)) {
                         return hello + " > " + IOUtils.toString(fileInputStream, StandardCharsets.UTF_8);
                     }
@@ -734,6 +950,140 @@ class RequestTest {
         @Get("/large")
         HttpResponse<String> large() {
             return HttpResponse.ok(LARGE_BODY);
+        }
+
+        private static HttpResponse<String> handleDigestAuth(HttpRequest<?> request, String algorithm, String nonce) {
+            var authorization = request.getHeaders().getAuthorization().orElse(null);
+            if (authorization == null || !authorization.startsWith("Digest ")) {
+                return digestChallenge(algorithm, nonce);
+            }
+
+            Map<String, String> directives = parseDigestAuthorization(authorization);
+            String username = directives.get("username");
+            String realm = directives.get("realm");
+            String requestNonce = directives.get("nonce");
+            String uri = directives.get("uri");
+            String response = directives.get("response");
+            String qop = directives.get("qop");
+            String nc = directives.get("nc");
+            String cnonce = directives.get("cnonce");
+
+            if (
+                !"John".equals(username) ||
+                    !DIGEST_REALM.equals(realm) ||
+                    !nonce.equals(requestNonce) ||
+                    response == null ||
+                    !"auth".equals(qop) ||
+                    nc == null ||
+                    cnonce == null ||
+                    uri == null
+            ) {
+                return digestChallenge(algorithm, nonce);
+            }
+
+            String method = request.getMethodName();
+            String expected = computeDigestResponse(
+                algorithm,
+                username,
+                realm,
+                "p4ss",
+                method,
+                uri,
+                requestNonce,
+                nc,
+                cnonce,
+                qop
+            );
+
+            if (!expected.equalsIgnoreCase(response)) {
+                return digestChallenge(algorithm, nonce);
+            }
+
+            return HttpResponse.ok("{\"hello\":\"John\"}");
+        }
+
+        private static HttpResponse<String> digestChallenge(String algorithm, String nonce) {
+            return HttpResponse.<String> status(HttpStatus.UNAUTHORIZED)
+                .header(
+                    "WWW-Authenticate",
+                    "Digest realm=\"" + DIGEST_REALM + "\", qop=\"auth\", nonce=\"" + nonce + "\", opaque=\"" + DIGEST_OPAQUE + "\", algorithm=" + algorithm
+                );
+        }
+
+        private static Map<String, String> parseDigestAuthorization(String header) {
+            String payload = header.substring("Digest ".length());
+            Map<String, String> directives = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+            StringBuilder token = new StringBuilder();
+            boolean inQuotes = false;
+            for (int i = 0; i < payload.length(); i++) {
+                char c = payload.charAt(i);
+                if (c == '"') {
+                    inQuotes = !inQuotes;
+                    token.append(c);
+                } else if (c == ',' && !inQuotes) {
+                    putDigestDirective(directives, token.toString());
+                    token.setLength(0);
+                } else {
+                    token.append(c);
+                }
+            }
+            putDigestDirective(directives, token.toString());
+
+            return directives;
+        }
+
+        private static void putDigestDirective(Map<String, String> directives, String rawToken) {
+            String token = rawToken.trim();
+            if (token.isEmpty()) {
+                return;
+            }
+
+            int equalsIndex = token.indexOf('=');
+            if (equalsIndex == -1) {
+                return;
+            }
+
+            String key = token.substring(0, equalsIndex).trim();
+            String rawValue = token.substring(equalsIndex + 1).trim();
+            String value = rawValue;
+            if (value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
+                value = value.substring(1, value.length() - 1);
+            }
+
+            directives.put(key, value);
+        }
+
+        private static String computeDigestResponse(
+            String algorithm,
+            String username,
+            String realm,
+            String password,
+            String method,
+            String digestUri,
+            String nonce,
+            String nc,
+            String cnonce,
+            String qop) {
+            String ha1 = hash(algorithm, username + ":" + realm + ":" + password);
+            String ha2 = hash(algorithm, method + ":" + digestUri);
+            return hash(algorithm, ha1 + ":" + nonce + ":" + nc + ":" + cnonce + ":" + qop + ":" + ha2);
+        }
+
+        private static String hash(String algorithm, String input) {
+            String javaAlgorithm = switch (algorithm) {
+                case "MD5" -> "MD5";
+                case "SHA-256" -> "SHA-256";
+                default -> throw new IllegalArgumentException("Unsupported digest algorithm: " + algorithm);
+            };
+
+            try {
+                MessageDigest digest = MessageDigest.getInstance(javaAlgorithm);
+                byte[] hashed = digest.digest(input.getBytes(StandardCharsets.ISO_8859_1));
+                return HexFormat.of().formatHex(hashed);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

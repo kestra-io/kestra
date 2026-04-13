@@ -43,7 +43,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ];
 
@@ -92,7 +92,11 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
                 value: "TEST",
             }]),
         ],
-        LEVELS: buildFromArray(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]),
+        LEVELS: ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"].map(level => ({
+            label: level,
+            value: level,
+            color: `var(--ks-log-border-${level.toLowerCase()})`,
+        })),
         TYPES: auditLogTypes,
         PERMISSIONS: buildFromObject(permission),
         ACTIONS: buildFromObject({
@@ -103,6 +107,10 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE,
+        TRIGGER_STATES:[
+        {label: t("filter.triggerState.enabled"), value: "enabled"},
+        {label: t("filter.triggerState.disabled"), value: "disabled"}
+    ]
     };
 
     return {VALUES, getRelativeDateLabel};

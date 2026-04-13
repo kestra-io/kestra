@@ -33,12 +33,13 @@
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
+    import {Execution} from "../../stores/executions";
 
     const {t, te} = useI18n();
 
     defineProps<{
         data: Record<string, any>;
-        execution?: Record<string, any>;
+        execution?: Execution;
     }>();
     
     const emit = defineEmits<{ (e: "on-copy", event: any): void }>();
@@ -46,11 +47,11 @@
     const getHumanizeLabel = (key: string): string => {
         const mappings: Record<string, string> = {
             "flowId": "flow",
-            "executionId": "current execution",
-            "nextExecutionDate": "next evaluation date",
-            "date": "last trigger date",
-            "updatedDate": "context updated date",
-            "evaluateRunningDate": "evaluation lock date",
+            "nextEvaluationDate": "next evaluation date",
+            "lastTriggeredDate": "last trigger date",
+            "updatedAt": "state updated date",
+            "evaluatedAt": "last evaluation date",
+            "locked": "locked",
             "states": "trigger_states",
         };
         const translationKey = mappings[key] ?? key;

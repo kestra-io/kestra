@@ -1,4 +1,4 @@
-import {coverageConfigDefaults, defineProject} from "vitest/config";
+import {defineProject} from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 
 import viteConfig from "./vite.config.js";
@@ -8,9 +8,7 @@ export default defineProject({
         vue(),
     ],
     resolve: {
-        alias: {
-            ...viteConfig.resolve.alias,
-        },
+        alias: viteConfig.resolve.alias,
     },
     test: {
         name: "unit",
@@ -32,7 +30,6 @@ export default defineProject({
                 "src/**/*.{js,ts,vue}",
             ],
             exclude: [
-                ...coverageConfigDefaults.exclude,
                 "stylelint.config.mjs",
                 "storybook-static/**",
                 "**/.storybook/**",

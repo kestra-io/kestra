@@ -1,25 +1,30 @@
 package io.kestra.core.models.tasks;
 
+import java.time.Duration;
+import java.util.Optional;
+
+import org.slf4j.event.Level;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.event.Level;
-
-import java.time.Duration;
-import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -34,49 +39,59 @@ abstract public class Task implements TaskInterface {
 
     protected String type;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     protected String version;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     private String description;
 
     @Valid
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "reliability")
     protected AbstractRetry retry;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "execution")
     protected Property<Duration> timeout;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "execution")
     protected Boolean disabled = false;
 
     @Valid
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "execution")
     private WorkerGroup workerGroup;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "reliability")
     private boolean allowFailure = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "logging")
     private boolean logToFile = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
-    private String runIf = "true";
+    @PluginProperty(hidden = true, group = "reliability")
+    private String when = "true";
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "reliability")
     private boolean allowWarning = false;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     @Valid
     private Cache taskCache;
+
+    @PluginProperty(hidden = true, group = "advanced")
+    @Valid
+    @Nullable
+    private AssetsDeclaration assets;
+
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    public void setRunIf(String runIf) {
+        this.when = runIf;
+    }
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {

@@ -98,13 +98,12 @@ public class Data {
             if (URIFetcher.supports(renderedString)) {
                 var uri = URIFetcher.of(runContext.render(str));
                 try {
-                    var inputStream = new BufferedInputStream(uri.fetch(runContext), FileSerde.BUFFER_SIZE);
-
-                    return FileSerde.readAll(inputStream, clazz)
+                    var reader = new BufferedReader(new InputStreamReader(uri.fetch(runContext)), FileSerde.BUFFER_SIZE);
+                    return FileSerde.readAll(reader, clazz)
                         .publishOn(Schedulers.boundedElastic())
                         .doFinally(signalType -> {
                             try {
-                                inputStream.close();
+                                reader.close();
                             } catch (IOException e) {
                                 throw new UncheckedIOException(e);
                             }

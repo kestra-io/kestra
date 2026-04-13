@@ -1,19 +1,20 @@
 package io.kestra.plugin.core.storage;
 
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.Optional;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.Rethrow.throwSupplier;
@@ -24,8 +25,11 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Write data to a file in Kestra’s internal storage.",
-    description = "Use the Write task to store outputs as files internally and then reference the stored file for processing further down your flow."
+    title = "Write data to a file in Kestra internal storage.",
+    description = """
+        Renders `content`, writes it to a temp file (optionally with `extension`), and uploads it to internal storage, returning the `kestra://` URI.
+
+        Handy for generating small artifacts that downstream tasks can consume via URI."""
 )
 @Plugin(
     examples = {
@@ -33,14 +37,15 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
             title = "Write data to a file in the internal storage.",
             full = true,
             code = """
-                id: write
+                id: write_file
                 namespace: company.team
 
                 tasks:
-                - id: write
-                  type: io.kestra.plugin.core.storage.Write
-                  content: Hello World
-                  extension: .txt"""
+                  - id: write
+                    type: io.kestra.plugin.core.storage.Write
+                    content: Hello World
+                    extension: .txt
+                """
         )
     }
 )
@@ -51,7 +56,6 @@ public class Write extends Task implements RunnableTask<Write.Output> {
 
     @Schema(title = "The file extension")
     private Property<String> extension;
-
 
     @Override
     public Write.Output run(RunContext runContext) throws Exception {

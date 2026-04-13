@@ -1,5 +1,9 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
@@ -8,13 +12,11 @@ import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.MapUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -22,7 +24,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow to set execution variables. These variables are available via the `{{ vars.name }}` expression."
+    title = "Set execution-scoped variables.",
+    description = """
+        Renders a map and merges it into the execution variables, making them available via `{{ vars.* }}`. By default, existing keys are overwritten; set `overwrite` to false to fail when a key already exists.
+
+        Deep merges preserve nested maps rather than replacing them entirely."""
 )
 @Plugin(
     examples = {
@@ -62,14 +68,23 @@ public class SetVariables extends Task implements ExecutionUpdatableTask {
     public Execution update(Execution execution, RunContext runContext) throws Exception {
         Map<String, Object> renderedVars = runContext.render(this.variables).asMap(String.class, Object.class);
         boolean renderedOverwrite = runContext.render(overwrite).as(Boolean.class).orElseThrow();
+
+        Map<String, Object> currentVariables = execution.getVariables() == null ? Collections.emptyMap() : execution.getVariables();
+
         if (!renderedOverwrite) {
             // check that none of the new variables already exist
-            List<String> duplicated = renderedVars.keySet().stream().filter(key -> execution.getVariables().containsKey(key)).toList();
+            List<String> duplicated = renderedVars.keySet().stream()
+                .filter(currentVariables::containsKey)
+                .toList();
+
             if (!duplicated.isEmpty()) {
-                throw new IllegalArgumentException("`overwrite` is set to false and the following variables already exist: " + String.join(",", duplicated));
+                throw new IllegalArgumentException(
+                    "`overwrite` is set to false and the following variables already exist: " +
+                        String.join(",", duplicated)
+                );
             }
         }
 
-        return execution.withVariables(MapUtils.deepMerge(execution.getVariables(), renderedVars));
+        return execution.withVariables(MapUtils.deepMerge(currentVariables, renderedVars));
     }
 }

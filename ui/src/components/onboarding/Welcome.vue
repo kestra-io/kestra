@@ -1,222 +1,228 @@
 <template>
-    <TopNavBar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar :title="routeInfo.title">
         <template #additional-right>
-            <ul>
-                <li>
-                    <el-button v-if="canCreate" tag="router-link" :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" :icon="Plus" type="primary">
-                        {{ $t('create_flow') }}
-                    </el-button>
-                </li>
-            </ul>
+            <router-link v-if="canCreateFlow" :to="{name: 'flows/create'}">
+                <el-button type="primary">
+                    {{ $t("welcome_copilot.button_cta") }}
+                </el-button>
+            </router-link>
         </template>
     </TopNavBar>
-    <div class="main">
-        <div class="section-1">
-            <div class="section-1-main">
-                <div class="section-content">
-                    <img
-                        :src="logo"
-                        alt="Kestra"
-                        class="section-1-img img-fluid"
-                        width="180px"
+
+    <section id="welcome" class="container mt-0">
+        <el-row justify="center">
+            <el-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
+                <AiCopilot
+                    :flow="activeExample.flow"
+                    :conversationId="conversationId"
+                    namespace="tutorial"
+                    :onboarding="true"
+                    :initialPrompt="te(activeExample.promptKey) ? t(activeExample.promptKey) : undefined"
+                    :onboardingExamples="onboardingExamples"
+                    :generationType="aiGenerationTypes.FLOW"
+                    :selectedFromTag="selectedLabel !== undefined"
+                    :redirectOnUnchangedPrompt="selectedLabel !== undefined"
+                    @onboarding-prompt-diverged="clearSelectedTag"
+                    @generated-yaml="createFlowFromGeneratedPrompt"
+                    @create-flow-directly="createFlowFromSelectedExample"
+                />
+
+                <div class="mt-2 welcome-copilot-tags">
+                    <el-tag
+                        v-for="label in visibleLabels"
+                        :key="label"
+                        round
+                        :effect="selectedLabel === label ? 'dark' : 'plain'"
+                        :type="selectedLabel === label ? 'primary' : 'info'"
+                        @click="selectLabel(label)"
                     >
-                    <h2 class="section-1-title">
-                        {{ $t("welcome_page.wel_text") }}
-                    </h2>
-                    <p class="section-1-desc">
-                        {{ $t("welcome_page.start") }}
+                        {{ t(flowExamples[label].labelKey) }}
+                    </el-tag>
+
+                    <el-tag
+                        v-if="labels.length > 5"
+                        round
+                        effect="plain"
+                        type="info"
+                        @click="allLabelsShown = !allLabelsShown"
+                    >
+                        {{
+                            allLabelsShown
+                                ? $t("welcome_copilot.show_less")
+                                : $t("welcome_copilot.show_more")
+                        }}
+                    </el-tag>
+                </div>
+
+                <div class="welcome-help-section">
+                    <p class="welcome-help-title">
+                        {{ $t("welcome_copilot.need_help") }}
                     </p>
 
-                    <el-button
-                        v-if="isOSS"
-                        @click="startTour"
-                        :icon="Plus"
-                        size="large"
-                        type="primary"
-                        class="px-3 p-4 section-1-link product-link"
-                    >
-                        {{ $t("welcome button create") }}
-                    </el-button>
-                    <el-button
-                        v-else
-                        :icon="Plus"
-                        tag="router-link"
-                        :to="{name: 'flows/create'}"
-                        size="large"
-                        type="primary"
-                        class="px-3 p-4 section-1-link product-link"
-                    >
-                        {{ $t("welcome button create") }}
-                    </el-button>
-
-                    <el-button
-                        :icon="Play"
-                        tag="a"
-                        href="https://www.youtube.com/watch?v=waTpmiv4ZCs"
-                        target="_blank"
-                        class="p-3 px-4 mt-0 mb-lg-5 watch"
-                    >
-                        {{ $t("watch_video") }}
-                    </el-button>
+                    <OnboardingResourceList :items="welcomeResources" />
                 </div>
-                <el-divider>
-                    {{ $t("welcome_page.guide") }}
-                </el-divider>
-                <OnboardingBottom />
-            </div>
-        </div>
-    </div>
+            </el-col>
+        </el-row>
+    </section>
 </template>
 
-
 <script setup lang="ts">
-    import {computed, getCurrentInstance} from "vue";
-    import {useCoreStore} from "../../stores/core";
-    import {useI18n} from "vue-i18n";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Play from "vue-material-design-icons/Play.vue";
-    import OnboardingBottom from "override/components/OnboardingBottom.vue";
-    import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";
+    import {computed, ref} from "vue";
+    import {useRoute, useRouter} from "vue-router";
+
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import useRouteContext from "../../composables/useRouteContext";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import AiCopilot from "../ai/AiCopilot.vue";
+    import OnboardingResourceList from "./OnboardingResourceList.vue";
+    import {useOnboardingResources} from "./useOnboardingResources";
+
+    import {flowExamples, labels} from "./flows/index";
+    import {aiGenerationTypes} from "../../utils/constants";
+
     import permission from "../../models/permission";
     import action from "../../models/action";
+
     import {useAuthStore} from "override/stores/auth";
-    import {useMiscStore} from "override/stores/misc";
-
-    const {topbar = true} = defineProps<{topbar?: boolean}>();
-
-    const coreStore = useCoreStore();
-    const {t} = useI18n();
-    const instance = getCurrentInstance();
-
-    const logo = computed(() => {
-        return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
-    });
-
-    const routeInfo = computed(() =>  ({title: t("welcome_page.welcome")}));
-
     const authStore = useAuthStore();
 
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
-
-    const canCreate = computed(() => {
-        return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+    const canCreateFlow = computed(() => {
+        return authStore.user?.hasAnyActionOnAnyNamespace(
+            permission.FLOW,
+            action.CREATE,
+        );
     });
 
-    useRouteContext(routeInfo);
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import useRouteContext from "../../composables/useRouteContext";
+
+    import Utils from "../../utils/utils";
+
+    import {useI18n} from "vue-i18n";
+    const {t, te} = useI18n();
+    const route = useRoute();
+    const router = useRouter();
+
     useRestoreUrl();
 
-    const startTour = () => {
-        localStorage.setItem("tourDoneOrSkip", "undefined");
-        coreStore.guidedProperties = {
-            ...coreStore.guidedProperties,
-            tourStarted: true
-        };
-        (instance?.proxy as any)?.$tours["guidedTour"]?.start();
-    };
+    const routeInfo = computed(() => ({title: t("ai.flow.title")}));
+    useRouteContext(routeInfo);
+
+    const conversationId = ref<string>(Utils.uid());
+    const selectedLabel = ref<(typeof labels)[number] | undefined>(labels[0]);
+    const activeLabel = ref<(typeof labels)[number]>(labels[0]);
+    const activeExample = computed(() => flowExamples[activeLabel.value]);
+    const onboardingExamples = computed(() => labels
+        .map((label) => {
+            const example = flowExamples[label];
+            return {
+                prompt: te(example.promptKey) ? t(example.promptKey) : "",
+                flow: example.flow,
+            };
+        })
+        .filter((example) => example.prompt.length > 0),
+    );
+
+    const allLabelsShown = ref(false);
+    const visibleLabels = computed(() => {
+        return allLabelsShown.value ? labels : labels.slice(0, 5);
+    });
+
+    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset";
+    const {onboardingResources} = useOnboardingResources();
+    const welcomeResources = computed(() => onboardingResources.value.slice(0, 3));
+
+    function selectLabel(label: (typeof labels)[number]) {
+        activeLabel.value = label;
+        selectedLabel.value = label;
+    }
+
+    function clearSelectedTag() {
+        selectedLabel.value = undefined;
+    }
+
+    async function createFlowFromSelectedExample(flowSource: string) {
+        sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
+        await new Promise(resolve => window.setTimeout(resolve, 1000));
+        void router.push({name: "flows/create", query: {onboardingPreset: "true"}, params: {tenant: route.params.tenant}});
+    }
+
+    async function createFlowFromGeneratedPrompt(flowSource: string) {
+        sessionStorage.setItem(ONBOARDING_FLOW_PRESET_KEY, flowSource);
+        void router.push({name: "flows/create", query: {onboardingPreset: "true"}, params: {tenant: route.params.tenant}});
+    }
 </script>
 
 <style scoped lang="scss">
-    .main {
-        padding: 3rem 1rem 1rem;
-        background: var(--ks-background-body);
-        background: radial-gradient(ellipse at top, rgba(102,51,255,0.6) 0%, rgba(253, 253, 253, 0) 20%);
-        background-size: 4000px;
-        background-position: center;
-        height: 100%;
-        width: auto;
-        display: flex;
-        flex-direction: column;
-        container-type: inline-size;
+    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
-        @media (min-width: 768px) {
-            padding: 3rem 2rem 1rem;
-        }
+    section#welcome {
+        position: relative;
+        overflow: hidden;
+        background: url("./assets/background.svg") center top / cover no-repeat;
+        min-height: calc(100vh - 60px);
 
-        @media (min-width: 992px) {
-            padding: 3rem 3rem 1rem;
-        }
-
-        @media (min-width: 1920px) {
-            padding: 3rem 10rem 1rem;
-        }
-    }
-
-    .img-fluid {
-        max-width: 100%;
-        height: auto;
-    }
-
-    .product-link, .watch {
-        font-weight: 700;
-        border-radius: 5px;
-        text-decoration: none;
-        font-size: var(--el-font-size-small);
-        width: 200px;
-        margin: 0;
-        margin-bottom: 1rem;
-    }
-
-    .watch {
-        font-weight: 500;
-        background-color: var(--ks-button-background-secondary);
-        font-size: var(--el-font-size-small);
-    }
-
-    .main .section-1 {
-        display: flex;
-        flex-grow: 1;
-        justify-content: center;
-        align-items: center;
-        border-radius: var(--bs-border-radius);
-    }
-    .section-1-main {
-        .section-content {
-            width: 100%;
+        .welcome-copilot-tags {
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            flex-wrap: wrap;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
 
-            .section-1-title {
-                line-height: var(--el-font-line-height-primary);
-                text-align: center;
-                font-size: var(--el-font-size-extra-large);
-                font-weight: 600;
-                color: var(--ks-content-primary);
-            }
-
-            .section-1-desc {
-                line-height: var(--el-font-line-height-primary);
-                font-weight: 500;
-                font-size: 1rem;
-                text-align: center;
-                color: var(--ks-content-primary);
+        @media (min-width: 1200px) {
+            .welcome-copilot-tags {
+                width: 80%;
             }
         }
-    }
 
-    :deep(.el-divider__text) {
-        color: var(--ks-content-secondary);
-        white-space: nowrap;
-        font-size: var(--el-font-size-extra-small);
-    }
+        .el-tag {
+            cursor: pointer;
+            height: 30px;
+            margin: calc(1rem / 4);
+            border: 1px solid var(--ks-border-primary);
+            background-color: var(--ks-button-background-secondary);
+            color: var(--ks-content-primary);
 
-    @container (max-width: 20px) {
-        .main .section-1 .section-1-main {
-            width: 90%;
+            & :deep(.el-tag__content) {
+                padding: 4px 13px;
+            }
+
+            &:hover {
+                background-color: var(--ks-button-background-secondary-hover);
+            }
+
+            &.el-tag--primary {
+                border-color: var(--el-color-primary);
+                background-color: var(--el-color-primary);
+                color: white;
+            }
         }
-    }
 
-    @container (max-width: 50px) {
-        .main .section-1 .section-1-main {
-            padding-top: 30px;
+        .welcome-help-section {
+            width: calc(100% - 48px);
+            max-width: 1120px;
+            margin: 1rem auto 0;
+            position: relative;
+            z-index: 1;
         }
 
-        .section-1 .section-1-main .container {
-            width: 76%;
+        @media (max-width: 768px) {
+            .welcome-help-section {
+                width: calc(100% - 24px);
+            }
         }
-    }
 
+        .welcome-help-title {
+            margin: 0 0 0.875rem;
+            color: var(--ks-content-secondary);
+            font-size: $font-size-sm;
+        }
+
+        :deep(.el-row) {
+            position: relative;
+            z-index: 1;
+        }
+
+    }
 </style>

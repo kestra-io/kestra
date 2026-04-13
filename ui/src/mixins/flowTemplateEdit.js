@@ -7,15 +7,12 @@ import RouteContext from "./routeContext";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import action from "../models/action";
 import permission from "../models/permission";
-import {pageFromRoute} from "../utils/eventsRouter";
 import {apiUrl} from "override/utils/route";
 import {mapStores} from "pinia";
-import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
-import {useCoreStore} from "../stores/core";
-import {useTemplateStore} from "../stores/template";
 import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
+import {useAxios} from "../utils/axios";
 
 export default {
     mixins: [RouteContext],
@@ -34,10 +31,7 @@ export default {
         };
     },
     computed: {
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore, useAuthStore),
-        guidedProperties() {
-            return this.coreStore.guidedProperties;
-        },
+        ...mapStores(usePluginsStore, useFlowStore, useAuthStore),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -48,10 +42,10 @@ export default {
             return canSaveFlowTemplate(true, this.authStore.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user?.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
         },
         canExecute() {
-            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
         },
         routeInfo() {
             let route = {
@@ -97,6 +91,12 @@ export default {
             );
         },
     },
+    setup(){
+        const $http = useAxios();
+        return {
+            $http
+        }
+    },
     methods: {
         loadFile() {
             if (this.$route.query.copy) {
@@ -125,12 +125,6 @@ export default {
             }
         },
         deleteConfirmMessage() {
-            if (this.dataType === "template") {
-                return new Promise((resolve) => {
-                    resolve(this.$t("delete confirm", {name: this.item.id}));
-                });
-            }
-
             return this.$http
                 .get(`${apiUrl()}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {
@@ -190,20 +184,6 @@ export default {
             }
         },
         save() {
-            if (this.$tours["guidedTour"]?.isRunning?.value && !this.guidedProperties.saveFlow) {
-                this.apiStore.events({
-                    type: "ONBOARDING",
-                    onboarding: {
-                        step: this.$tours["guidedTour"]?.currentStep?._value,
-                        action: "next",
-                        template: this.guidedProperties.template
-                    },
-                    page: pageFromRoute(this.$router.currentRoute.value)
-                });
-                this.$tours["guidedTour"]?.nextStep();
-                return;
-            }
-
             if (this.item) {
                 let item;
                 try {

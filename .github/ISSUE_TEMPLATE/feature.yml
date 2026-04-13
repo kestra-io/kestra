@@ -1,8 +1,9 @@
 name: Feature request
 description: Suggest a new feature or improvement to enhance the project
 
-labels: ["enhancement", "area/backend", "area/frontend"]
+labels: ["area/backend", "area/frontend"]
 type: Feature
+projects: ["kestra-io/15"]
 
 body:
   - type: textarea

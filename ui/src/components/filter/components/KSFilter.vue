@@ -43,10 +43,10 @@
         prefix?: string;
         showSearchInput?: boolean;
         searchInputFullWidth?: boolean;
-        legacyQuery?: boolean;
         readOnly?: boolean;
         defaultScope?: boolean;
         defaultTimeRange?: boolean;
+        defaultDuration?: string;
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -54,10 +54,10 @@
         prefix: "",
         showSearchInput: true,
         searchInputFullWidth: false,
-        legacyQuery: false,
         readOnly: false,
         defaultScope: undefined,
         defaultTimeRange: undefined,
+        defaultDuration: undefined,
     });
 
     const emits = defineEmits<{
@@ -69,19 +69,20 @@
 
     const {
         appliedFilters,
+        hasDismissedDefaultVisibleKeys,
         searchQuery,
         addFilter,
         removeFilter,
         updateFilter,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied
     } = useFilters(
         props.configuration,
         props.showSearchInput,
-        props.legacyQuery,
         props.defaultScope,
         props.defaultTimeRange,
+        props.defaultDuration,
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
@@ -105,8 +106,6 @@
         savedFilter.filters.forEach((filter) => {
             addFilter(filter);
         });
-
-        searchQuery.value = savedFilter.searchQuery ?? "";
     };
 
     const refreshData = () => {
@@ -122,6 +121,7 @@
         editingFilter,
         hasFilterKeys,
         hasAppliedFilters,
+        hasDismissedDefaultVisibleKeys,
         buttons: computed(() => props.buttons),
         readOnly: computed(() => props.readOnly),
         properties: computed(() => props.properties),
@@ -140,7 +140,7 @@
         toggleOptions,
         updateChart,
         refreshData,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied,
         editSavedFilter: (filter: SavedFilter) => {
@@ -187,9 +187,14 @@
         display: flex;
         align-items: flex-start;
         flex-wrap: nowrap;
+        gap: 0.5rem;
         
         &.options {
             padding-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            flex-wrap: wrap;
         }
     }
 }

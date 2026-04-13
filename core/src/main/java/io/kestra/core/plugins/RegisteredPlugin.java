@@ -1,8 +1,22 @@
 package io.kestra.core.plugins;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
+
 import io.kestra.core.app.AppBlockInterface;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -11,20 +25,11 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
-import lombok.*;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ObjectUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import lombok.*;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -39,6 +44,8 @@ public class RegisteredPlugin {
     public static final String STORAGES_GROUP_NAME = "storages";
     public static final String SECRETS_GROUP_NAME = "secrets";
     public static final String TASK_RUNNERS_GROUP_NAME = "task-runners";
+    public static final String ASSETS_GROUP_NAME = "assets";
+    public static final String ASSETS_EXPORTERS_GROUP_NAME = "asset-exporters";
     public static final String APPS_GROUP_NAME = "apps";
     public static final String APP_BLOCKS_GROUP_NAME = "app-blocks";
     public static final String CHARTS_GROUP_NAME = "charts";
@@ -56,6 +63,8 @@ public class RegisteredPlugin {
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<Class<? extends TaskRunner<?>>> taskRunners;
+    private final List<Class<? extends Asset>> assets;
+    private final List<Class<? extends AssetExporter<?>>> assetExporters;
     private final List<Class<? extends AppPluginInterface>> apps;
     private final List<Class<? extends AppBlockInterface>> appBlocks;
     private final List<Class<? extends Chart<?>>> charts;
@@ -66,6 +75,7 @@ public class RegisteredPlugin {
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
+    Map<String, List<PluginUiModule>> pluginUiManifest;
 
     public boolean isValid() {
         return !tasks.isEmpty() ||
@@ -74,14 +84,15 @@ public class RegisteredPlugin {
             !storages.isEmpty() ||
             !secrets.isEmpty() ||
             !taskRunners.isEmpty() ||
-            !apps.isEmpty()  ||
+            !assets.isEmpty() ||
+            !assetExporters.isEmpty() ||
+            !apps.isEmpty() ||
             !appBlocks.isEmpty() ||
             !charts.isEmpty() ||
             !dataFilters.isEmpty() ||
             !dataFiltersKPI.isEmpty() ||
             !logExporters.isEmpty() ||
-            !additionalPlugins.isEmpty()
-        ;
+            !additionalPlugins.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -145,6 +156,14 @@ public class RegisteredPlugin {
             return AppPluginInterface.class;
         }
 
+        if (this.getAssets().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return Asset.class;
+        }
+
+        if (this.getAssetExporters().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AssetExporter.class;
+        }
+
         if (this.getLogExporters().stream().anyMatch(r -> r.getName().equals(cls))) {
             return LogExporter.class;
         }
@@ -180,6 +199,8 @@ public class RegisteredPlugin {
         result.put(STORAGES_GROUP_NAME, Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put(SECRETS_GROUP_NAME, Arrays.asList(this.getSecrets().toArray(Class[]::new)));
         result.put(TASK_RUNNERS_GROUP_NAME, Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
+        result.put(ASSETS_GROUP_NAME, Arrays.asList(this.getAssets().toArray(Class[]::new)));
+        result.put(ASSETS_EXPORTERS_GROUP_NAME, Arrays.asList(this.getAssetExporters().toArray(Class[]::new)));
         result.put(APPS_GROUP_NAME, Arrays.asList(this.getApps().toArray(Class[]::new)));
         result.put(APP_BLOCKS_GROUP_NAME, Arrays.asList(this.getAppBlocks().toArray(Class[]::new)));
         result.put(CHARTS_GROUP_NAME, Arrays.asList(this.getCharts().toArray(Class[]::new)));
@@ -194,7 +215,8 @@ public class RegisteredPlugin {
     public Set<String> subGroupNames() {
         return allClass()
             .stream()
-            .map(clazz -> {
+            .map(clazz ->
+            {
                 var pluginSubGroup = clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
 
                 // some plugins declare subgroup for main plugins
@@ -250,11 +272,10 @@ public class RegisteredPlugin {
 
     public String longDescription() {
         try (var is = this.getClassLoader().getResourceAsStream("doc/" + this.group() + ".md")) {
-            if(is != null) {
+            if (is != null) {
                 return IOUtils.toString(is, StandardCharsets.UTF_8);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // silently fail
         }
 
@@ -264,10 +285,14 @@ public class RegisteredPlugin {
     public Map<String, String> guides() throws IOException {
         return this.guides
             .stream()
-            .map(throwFunction(s -> new AbstractMap.SimpleEntry<>(
-                s,
-                IOUtils.toString(Objects.requireNonNull(this.getClassLoader().getResourceAsStream("doc/guides/" + s + ".md")), StandardCharsets.UTF_8)
-            )))
+            .map(
+                throwFunction(
+                    s -> new AbstractMap.SimpleEntry<>(
+                        s,
+                        IOUtils.toString(Objects.requireNonNull(this.getClassLoader().getResourceAsStream("doc/guides/" + s + ".md")), StandardCharsets.UTF_8)
+                    )
+                )
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -308,7 +333,7 @@ public class RegisteredPlugin {
         }
         return null;
     }
-    
+
     public long crc32() {
         return Optional.ofNullable(externalPlugin).map(ExternalPlugin::getCrc32).orElse(-1L);
     }
@@ -359,6 +384,12 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
+        if (!this.getAssets().isEmpty()) {
+            b.append("[Assets: ");
+            b.append(this.getAssets().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
         if (!this.getApps().isEmpty()) {
             b.append("[Apps: ");
             b.append(this.getApps().stream().map(Class::getName).collect(Collectors.joining(", ")));
@@ -403,10 +434,27 @@ public class RegisteredPlugin {
 
         if (!this.getAliases().isEmpty()) {
             b.append("[Aliases: ");
-            b.append(this.getAliases().values().stream().collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue
-            )));
+            b.append(
+                this.getAliases().values().stream().collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                    )
+                )
+            );
+            b.append("] ");
+        }
+
+        if (!this.getPluginUiManifest().isEmpty()) {
+            b.append("[Plugin UI manifests: ");
+            b.append(
+                this.getPluginUiManifest().entrySet().stream().collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().stream().map(Objects::toString).collect(Collectors.joining(","))
+                    )
+                )
+            );
             b.append("] ");
         }
 

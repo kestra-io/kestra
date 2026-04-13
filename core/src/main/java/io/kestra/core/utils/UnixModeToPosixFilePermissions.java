@@ -52,15 +52,33 @@ public final class UnixModeToPosixFilePermissions {
         int mode = 0;
         for (PosixFilePermission perm : perms) {
             switch (perm) {
-                case OWNER_READ:    mode |= 0400; break;
-                case OWNER_WRITE:   mode |= 0200; break;
-                case OWNER_EXECUTE: mode |= 0100; break;
-                case GROUP_READ:    mode |= 0040; break;
-                case GROUP_WRITE:   mode |= 0020; break;
-                case GROUP_EXECUTE: mode |= 0010; break;
-                case OTHERS_READ:   mode |= 0004; break;
-                case OTHERS_WRITE:  mode |= 0002; break;
-                case OTHERS_EXECUTE:mode |= 0001; break;
+                case OWNER_READ:
+                    mode |= 0400;
+                    break;
+                case OWNER_WRITE:
+                    mode |= 0200;
+                    break;
+                case OWNER_EXECUTE:
+                    mode |= 0100;
+                    break;
+                case GROUP_READ:
+                    mode |= 0040;
+                    break;
+                case GROUP_WRITE:
+                    mode |= 0020;
+                    break;
+                case GROUP_EXECUTE:
+                    mode |= 0010;
+                    break;
+                case OTHERS_READ:
+                    mode |= 0004;
+                    break;
+                case OTHERS_WRITE:
+                    mode |= 0002;
+                    break;
+                case OTHERS_EXECUTE:
+                    mode |= 0001;
+                    break;
             }
         }
         return mode;

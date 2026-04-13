@@ -1,72 +1,60 @@
 <template>
-    <div class="h-100 d-flex flex-column">
-        <img 
-            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)" 
-            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
-            class="image-preview"
-        >
-        <Editor
-            v-else
-            id="editorWrapper"
-            ref="editorRefElement"
-            class="flex-1"
-            :modelValue="hasDraft ? draftSource : source"
-            :schemaType="flow ? 'flow': undefined"
-            :lang="lang"
-            :extension="extension"
-            :navbar="false"
-            :readOnly="flow && flowStore.isReadOnly"
-            :creating="isCreating"
-            :path="path"
-            :diffOverviewBar="false"
-            :scrollKey="editorScrollKey"
-            @update:model-value="editorUpdate"
-            @cursor="updatePluginDocumentation"
-            @save="flow ? saveFlowYaml(): saveFileContent()"
-            @execute="execute"
-            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-            @mouse-leave="() => highlightHoveredTask(-1)"
-            :original="hasDraft ? source : undefined"
-            :diffSideBySide="false"
-        >
-            <template #absolute>
-                <AITriggerButton
-                    :show="flow"
-                    :opened="aiCopilotOpened"
-                    @click="draftSource = undefined; aiCopilotOpened = true"
-                />
-                <ContentSave v-if="!flow" @click="saveFileContent" />
-            </template>
-            <template v-if="playgroundStore.enabled" #widget-content>
-                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
-            </template>
-        </Editor>
-        <!-- Backdrop overlay -->
-        <Transition name="backdrop-fade">
-            <div 
-                v-if="aiCopilotOpened" 
-                class="ai-copilot-backdrop"
-                @click="closeAiCopilot"
-            />
-        </Transition>
-        
-        <!-- AI Copilot with enhanced animations -->
-        <Transition name="copilot-slide">
-            <AiCopilot
-                v-if="aiCopilotOpened"
-                class="position-absolute prompt ai-copilot-popup"
-                @close="closeAiCopilot"
-                :flow="editorContent"
-                :conversationId="conversationId"
-                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
-            />
-        </Transition>
-        <AcceptDecline
-            v-if="hasDraft"
-            @accept="acceptDraft"
-            @reject="declineDraft"
-        />
-    </div>
+    <AiCopilotWrapper
+        ref="copilotWrapper"
+        class="h-100 d-flex flex-column"
+        :flow="editorContent"
+        :generationType="aiGenerationTypes.FLOW"
+        :namespace="namespace"
+        @generated-yaml="(yaml: string) => { draftSource = yaml }"
+    >
+        <template #default="{aiCopilotOpened, openAiCopilot}">
+            <img
+                v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
+                :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+                class="image-preview"
+            >
+            <Editor
+                v-else
+                id="editorWrapper"
+                ref="editorRefElement"
+                class="flex-1"
+                :modelValue="hasDraft ? draftSource : source"
+                :schemaType="flow ? 'flow': undefined"
+                :lang="lang"
+                :extension="extension"
+                :navbar="false"
+                :readOnly="flow && flowStore.isReadOnly"
+                :creating="isCreating"
+                :path="path"
+                :diffOverviewBar="false"
+                :scrollKey="editorScrollKey"
+                @update:model-value="editorUpdate"
+                @cursor="updatePluginDocumentation"
+                @save="flow ? saveFlowYaml(): saveFileContent()"
+                @execute="execute"
+                @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+                @mouse-leave="() => highlightHoveredTask(-1)"
+                :original="hasDraft ? source : undefined"
+                :diffSideBySide="false"
+            >
+                <template #absolute>
+                    <AITriggerButton
+                        v-if="aiCopilotAllowed"
+                        :show="flow"
+                        :opened="aiCopilotOpened"
+                        @click="() => { draftSource = undefined; openAiCopilot(); }"
+                    />
+                    <ContentSave v-if="!flow" @click="saveFileContent" />
+                </template>
+                <template v-if="playgroundStore.enabled" #widget-content>
+                    <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+                </template>
+                <template #buttons>
+                    <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
+                </template>
+            </Editor>
+        </template>
+    </AiCopilotWrapper>
 </template>
 
 <script lang="ts">
@@ -86,41 +74,57 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {apiUrl} from "override/utils/route";
+    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useFlowStore} from "../../stores/flow";
+    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
+    import {useApiStore} from "../../stores/api";
+    import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+    import {aiGenerationTypes} from "../../utils/constants";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import AiCopilot from "../ai/AiCopilot.vue";
+    import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
-    import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
-    import Utils from "../../utils/utils";
+    import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
+    import permission from "../../models/permission"
+    import action from "../../models/action"
+    import AcceptDecline from "./AcceptDecline.vue";
 
     const route = useRoute();
     const router = useRouter();
 
     const flowStore = useFlowStore();
+    const authStore = useAuthStore();
 
     const cursor = ref();
 
+    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>();
+
     const toggleAiShortcut = (event: KeyboardEvent) => {
+        if (onboardingStore.isGuidedActive) {
+            return;
+        }
         if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && props.flow) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             draftSource.value = undefined;
-            aiCopilotOpened.value = !aiCopilotOpened.value;
+            if (copilotWrapper.value?.aiCopilotOpened) {
+                copilotWrapper.value.closeAiCopilot();
+            } else {
+                copilotWrapper.value?.openAiCopilot();
+            }
         }
     };
-    const aiCopilotOpened = ref(false);
     const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
@@ -135,14 +139,43 @@
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value);
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
+    // Overrides the wrapper's broader hasAnyActionOnAnyNamespace check with a
+    // namespace-scoped permission check and onboarding guard.
+    const aiCopilotAllowed = computed(() => {
+        return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
+    });
+
     async function loadFile() {
         if (props.dirty || props.flow) return;
 
         const fileNamespace = namespace.value ?? route.params?.namespace;
         if (!fileNamespace) return;
-        sourceNS.value = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
+        const result = await namespacesStore.readFile({
+            namespace: fileNamespace.toString(),
+            path: props.path ?? ""
+        });
 
-        savedSourceNS.value = source.value;
+        if(result.notFound) {
+            console.error(result.error);
+            closeCurrentTab();
+            return
+        }
+
+        if(result.error){
+            console.error(result.error);
+            return
+        }
+
+        if (result.content) {
+            sourceNS.value = result.content;
+            savedSourceNS.value = result.content;
+        }
+    }
+
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {});
+
+    function closeCurrentTab() {
+        closeTab(props);
     }
 
     const isDirty = computed(() => source.value !== savedSource.value);
@@ -165,12 +198,11 @@
             pluginsStore.lazyLoadSchemaType({type: "flow"});
         }
         loadFile();
-        loadPluginsHash();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
-        if(route.query.ai === "open") {
+        if(route.query.ai === "open" && !onboardingStore.isGuidedActive) {
             draftSource.value = undefined;
-            aiCopilotOpened.value = true;
+            copilotWrapper.value?.openAiCopilot();
         }
     });
 
@@ -192,9 +224,12 @@
     });
 
     watch(() => flowStore.openAiCopilot, (newVal) => {
+        if (onboardingStore.isGuidedActive) {
+            return;
+        }
         if (newVal) {
             draftSource.value = undefined;
-            aiCopilotOpened.value = true;
+            copilotWrapper.value?.openAiCopilot();
             flowStore.setOpenAiCopilot(false);
         }
     });
@@ -215,7 +250,6 @@
     const isCreating = computed(() => flowStore.isCreating);
 
     const timeout = ref<any>(null);
-    const hash = ref<any>(null);
 
     const editorContent = computed(() => {
         return draftSource.value ?? source.value;
@@ -224,6 +258,9 @@
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
+    const apiStore = useApiStore();
+    const onboardingStore = useOnboardingV2Store();
+    const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0);
 
     const editorScrollKey = computed(() => {
         if (props.flow) {
@@ -238,11 +275,6 @@
         return undefined;
     });
 
-    function loadPluginsHash() {
-        miscStore.loadConfigs().then(config => {
-            hash.value = config.pluginsHash;
-        });
-    }
 
     const updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY);
 
@@ -264,6 +296,7 @@
 
         // only validate and update graph for flow files
         if(!props.flow) return
+
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
@@ -279,43 +312,21 @@
         clearTimeout(timeout.value);
     });
 
-
-    function updatePluginDocumentation(event: any) {
-        const source = event.model.getValue();
-        const cursorOffset = event.model.getOffsetAt(event.position);
-
-        const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
-        const isInRange = (range: [number, number, number]) =>
-            cursorOffset >= range[0] && cursorOffset <= range[2];
-        const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
-
-        const getElementFromRange = (typeElement: any) => {
-            const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
-            return wrapper?.value?.type && isPlugin(wrapper.value.type)
-                ? wrapper.value
-                : {type: typeElement.type};
-        };
-
-        const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
-            .filter(el => el.range && isInRange(el.range))
-            .reduce((closest, current) =>
-                        !closest || getRangeSize(current.range) < getRangeSize(closest.range)
-                            ? current
-                            : closest
-                    , null as any);
-
-        let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
-        result = {...result, hash: hash.value, forceRefresh: true};
-        pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
-    };
+    function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
+        const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
+        const version = YAML_UTILS.getVersionAtPosition(source.value, event.position);
+        pluginsStore.updateDocumentation({cls, version, hash: hash.value});
+    }
 
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
 
+        const isCreating = flowStore.isCreating;
+
         // Use saveAll() for consistency with the Save button behavior
-        const result = flowStore.isCreating
+        const result = isCreating
             ? await flowStore.save()
             : await flowStore.saveAll();
 
@@ -329,6 +340,10 @@
                     tenant: route.params?.tenant,
                 },
             });
+        }
+
+        if (isSuccessfulFlowSaveOutcome(result)) {
+            onboardingStore.recordSave();
         }
     };
 
@@ -358,28 +373,26 @@
         flowStore.executeFlow = true;
     };
 
-    const conversationId = ref<string>(Utils.uid());
+    function trackAiCopilotAction(action: string) {
+        apiStore.posthogEvents({
+            type: "AI_COPILOT",
+            action,
+            ai_copilot_configured: miscStore.configs?.isAiEnabled === true,
+        });
+    }
 
     function acceptDraft() {
+        trackAiCopilotAction("changes_apply");
         const accepted = draftSource.value;
         draftSource.value = undefined;
-        conversationId.value = Utils.uid();
         editorUpdate(accepted!);
+        copilotWrapper.value?.resetConversation();
     }
 
     function declineDraft() {
+        trackAiCopilotAction("changes_reject");
         draftSource.value = undefined;
-        aiCopilotOpened.value = true;
-    }
-
-    function closeAiCopilot() {
-        aiCopilotOpened.value = false;
-        const currentQuery = {...route.query, ai: undefined};
-        router.replace({
-            name: route.name,
-            params: route.params,
-            query: currentQuery
-        });
+        copilotWrapper.value?.openAiCopilot();
     }
 
     const hasDraft = computed(() => draftSource.value !== undefined);
@@ -392,77 +405,6 @@
 </script>
 
 <style scoped lang="scss">
-    .prompt {
-        bottom: 10%;
-        width: calc(100% - 5rem);
-        left: 3rem;
-        max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
-    }
-
-    // Enhanced AI Copilot animations
-    .ai-copilot-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
-        z-index: 1000;
-    }
-
-    .ai-copilot-popup {
-        z-index: 1001;
-        transform-origin: center bottom;
-    }
-
-    // Backdrop fade transition (faster)
-    .backdrop-fade-enter-active,
-    .backdrop-fade-leave-active {
-        transition: opacity 0.2s ease;
-    }
-
-    .backdrop-fade-enter-from,
-    .backdrop-fade-leave-to {
-        opacity: 0;
-    }
-
-    // Copilot transition (scaleX only, no vertical movement)
-    .copilot-slide-enter-active {
-        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.15s ease;
-    }
-
-    .copilot-slide-leave-active {
-        transition: transform 0.35s cubic-bezier(0.4, 0.0, 1, 1);
-    }
-
-    .copilot-slide-enter-from {
-        opacity: 0;
-        transform: scaleX(0.85);
-    }
-
-    .copilot-slide-leave-to {
-        transform: scaleX(0.95);
-    }
-
-    // Responsive design
-    @media (max-width: 768px) {
-        .prompt {
-            width: calc(100% - 2rem);
-            left: 1rem;
-            bottom: 5%;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .prompt {
-            width: calc(100% - 1rem);
-            left: 0.5rem;
-            bottom: 2%;
-        }
-    }
-
     .image-preview {
         margin: 2rem;
     }

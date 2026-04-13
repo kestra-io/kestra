@@ -37,9 +37,6 @@ public class StandAloneCommand extends AbstractServerCommand {
     private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private Provider<StartExecutorService> startExecutorService;
-
-    @Inject
     private Provider<TenantIdSelectorService> tenantIdSelectorService;
 
     @Inject
@@ -106,7 +103,7 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
         this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
         this.ignoreExecutionService.get().setIgnoredIndexerRecords(ignoreIndexerRecords);
-        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
+        this.ignoreExecutionService.get().setIgnoredQueueRecords(ignoreQueueRecords);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 

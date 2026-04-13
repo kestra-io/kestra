@@ -32,9 +32,6 @@ public class ExecutorCommand extends AbstractServerCommand {
     private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private Provider<StartExecutorService> startExecutorService;
-
-    @Inject
     private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
 
     @Inject
@@ -79,8 +76,6 @@ public class ExecutorCommand extends AbstractServerCommand {
         this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
         this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
         this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
-
-        this.startExecutorService.get().applyOptions(startExecutors, notStartExecutors);
 
         super.call();
 

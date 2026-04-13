@@ -172,7 +172,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                 {
                                     WorkerTask workerTask = executorTask.workerTask();
                                     try {
-                                        if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
+                                        if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getWhen()))) {
                                             workerTaskResults.add(
                                                 new WorkerTaskResult(
                                                     workerTask.getTaskRun().withState(State.Type.SKIPPED)
@@ -215,7 +215,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     } catch (Exception e) {
                                         workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
                                         executorTask.runContext().logger()
-                                            .error("Failed to evaluate the runIf condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
+                                            .error("Failed to evaluate the when condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
                                     }
                                 }));
 

@@ -5655,6 +5655,7 @@ components:
       required:
       - id
       - type
+      - when
       type: object
       properties:
         id:
@@ -5683,8 +5684,18 @@ components:
         conditions:
           title: List of conditions in order to limit the flow trigger.
           type: array
+          description: "**DEPRECATED**, use `when` instead."
+          deprecated: true
           items:
             $ref: "#/components/schemas/Condition"
+        when:
+          title: A condition that determines whether the trigger should run.
+          type: string
+          description: "A Pebble expression evaluated at trigger time. The trigger\
+            \ fires only when the expression evaluates to a truthy value (`true`,\
+            \ a non-empty string, a non-zero number). Use this to gate trigger execution\
+            \ on dynamic runtime values such as execution labels, flow variables,\
+            \ or environment conditions."
         disabled:
           type: boolean
           default: false

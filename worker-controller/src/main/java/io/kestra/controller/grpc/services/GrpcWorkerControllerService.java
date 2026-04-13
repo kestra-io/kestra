@@ -14,7 +14,6 @@ import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.tasks.WorkerGroup;
@@ -206,15 +205,15 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
         BatchMessage<WorkerTriggerResult> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.WORKER_TRIGGER_RESULT);
         message.records().forEach(workerTriggerResult ->
         {
-            // Get if an Execution is attached to the TriggerResult.
-            Execution execution = workerTriggerResult.execution();
-            if (execution != null) {
-                execution = execution.withTenantId(workerTriggerResult.id().getTenantId());
-            }
+            var evaluation = workerTriggerResult.evaluation();
 
             switch (workerTriggerResult.type()) {
-                case POLLING -> triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), execution));
-                case REALTIME -> triggerExecutionPublisher.send(execution);
+                case POLLING -> triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
+                case REALTIME -> {
+                    if (evaluation != null) {
+                        triggerExecutionPublisher.send(evaluation.toExecution(workerTriggerResult.id()));
+                    }
+                }
                 default -> throw new IllegalStateException("Unexpected value: " + workerTriggerResult.type());
             }
             workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());

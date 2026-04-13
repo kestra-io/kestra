@@ -1115,8 +1115,8 @@ public class ExecutorService {
                         "handleExecutableTaskRunning"
                     );
 
-                    // handle runIf
-                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
+                    // handle when
+                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getWhen()))) {
                         executor.withExecution(
                             executor
                                 .getExecution()
@@ -1199,8 +1199,8 @@ public class ExecutorService {
                 }
 
                 try {
-                    // Skip task if runIf condition is false
-                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
+                    // Skip task if when condition is false
+                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getWhen()))) {
                         executor.withExecution(
                             executor
                                 .getExecution()

@@ -1,4 +1,4 @@
-id: task-runif-executionupdating
+id: task-when-executionupdating
 namespace: io.kestra.tests
 
 variables:
@@ -12,24 +12,24 @@ tasks:
 
   - id: unsetVariables
     type: io.kestra.plugin.core.execution.UnsetVariables
-    runIf: "true"
+    when: "true"
     variables:
       - list
 
   - id: setVariables
     type: io.kestra.plugin.core.execution.SetVariables
-    runIf: "{{ outputs.output['values']['taskrun_data'] == 1 }}"
+    when: "{{ outputs.output['values']['taskrun_data'] == 1 }}"
     variables:
       list: [42]
 
   - id: skipSetVariables
     type: io.kestra.plugin.core.execution.SetVariables
-    runIf: "false"
+    when: "false"
     variables:
       list: [1]
 
   - id: skipUnsetVariables
     type: io.kestra.plugin.core.execution.UnsetVariables
-    runIf: "{{ outputs.output['values']['taskrun_data'] == 2 }}"
+    when: "{{ outputs.output['values']['taskrun_data'] == 2 }}"
     variables:
       - list

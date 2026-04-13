@@ -63,9 +63,9 @@
             position: "absolute",
             top: `${chipRect.bottom + scrollY + 8}px`,
             left: `${chipRect.left + scrollX}px`,
-            width: `${popupWidth}px`,
-        }
-    }
+            "min-width": `${popupWidth}px`,
+        };
+    };
 
     const toggleDialog = () => {
         isDialogVisible.value = !isDialogVisible.value
@@ -122,6 +122,7 @@
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
         padding: 0;
         min-height: var(--ks-font-size-lg);
+        max-width: 480px;
         position: relative;
     }
 }

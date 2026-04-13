@@ -343,7 +343,7 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.USERNAME, Resource.USER,
                 Set.of(
-                    Op.EQUALS
+                    Op.EQUALS, Op.CONTAINS
                 )
             ),
 
@@ -1069,11 +1069,8 @@ public class QueryFilterTest {
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.IN,
-                    Op.NOT_IN,
                     Op.STARTS_WITH,
                     Op.ENDS_WITH,
-                    Op.CONTAINS,
                     Op.REGEX,
                     Op.PREFIX,
                     Op.NOT_EQUALS

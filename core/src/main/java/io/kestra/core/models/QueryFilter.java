@@ -368,7 +368,7 @@ public record QueryFilter(
         USERNAME("username") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN);
+                return List.of(Op.EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
         NAME("name") {

@@ -38,6 +38,7 @@
                     v-if="TopologyDetailsRemotes[taskProps.data.node?.task?.type]" 
                     :is="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
                     :task="taskProps.data.node?.task"
+                    :execution="executionsStore.execution"
                 />
             </template>
         </Topology>

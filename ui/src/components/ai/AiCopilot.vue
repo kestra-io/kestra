@@ -76,7 +76,7 @@
                         />
                         <template v-else>
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
-                            <div class="mt-2" v-html="highlightedAiConfiguration" />
+                            <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
                         <ks-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
@@ -188,7 +188,7 @@
                 />
                 <template v-else>
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
-                    <div class="mt-2" v-html="highlightedAiConfiguration" />
+                    <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                 </template>
                 <ks-text v-if="error" type="danger" size="small" class="error-msg">
@@ -372,7 +372,7 @@
 
     const miscStore = useMiscStore();
     const configured = computed(() => miscStore.configs?.isAiEnabled);
-    const highlightedAiConfiguration = ref<string | undefined>();
+    const highlightedAiConfiguration = "```yaml\nkestra:\n  ai:\n    type: \"gemini\"...\n```";
     const effectiveFlowYaml = computed(() => {
         if (!props.onboarding) {
             return props.flow;
@@ -611,25 +611,6 @@
 
     onMounted(async () => {
         await fetchProviders();
-
-        if (!configured.value) {
-            const {
-                createHighlighterCore,
-                langs,
-                githubDark,
-                githubLight,
-                onigurumaEngine
-            } = await import("../../utils/markdownDeps");
-            const highlighter = await createHighlighterCore({
-                langs: [langs.yaml],
-                themes: [githubDark, githubLight],
-                engine: onigurumaEngine
-            });
-            highlightedAiConfiguration.value = highlighter.codeToHtml("kestra:\n  ai:\n    type: \"gemini\"...", {
-                lang: "yaml",
-                theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"
-            });
-        }
     });
 
     onUnmounted(() => {

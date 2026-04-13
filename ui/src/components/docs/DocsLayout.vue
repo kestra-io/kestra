@@ -148,7 +148,6 @@
             padding-top: 3.125rem;
 
             > a {
-                border-left: 5px solid #9ca1de;
                 font-size: 1.87rem;
                 padding-left: .6rem;
             }

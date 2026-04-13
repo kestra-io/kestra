@@ -64,7 +64,7 @@
             <ListPreview v-if="!forceEditor && preview.type === 'LIST'" :value="preview.content" />
             <img v-else-if="!forceEditor && preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <PdfPreview v-else-if="!forceEditor && preview.type === 'PDF'" :source="preview.content" />
-            <Markdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :source="preview.content" />
+            <KsMarkdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :content="preview.content" />
             <Editor
                 v-else
                 :modelValue="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)"
@@ -106,7 +106,7 @@
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 

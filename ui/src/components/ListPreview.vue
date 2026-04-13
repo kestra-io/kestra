@@ -157,7 +157,7 @@
         display: block;
         white-space: pre-wrap;
         word-wrap: break-word;
-        font-family: monospace;
+        font-family: var(--kel-font-family-monospace), monospace;
         font-size: var(--kel-font-size-extra-small);
         line-height: 1.4;
     }

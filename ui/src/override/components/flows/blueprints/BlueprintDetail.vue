@@ -74,7 +74,7 @@
                             </ks-tag>
                         </div>
                     </div>
-                    <Markdown :source="blueprint?.description" />
+                    <KsMarkdown :content="blueprint?.description" />
                 </template>
             </ks-col>
             <ks-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
@@ -96,11 +96,10 @@
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
 
     import Editor from "../../../../components/inputs/Editor.vue";
-    import Markdown from "../../../../components/layout/Markdown.vue";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue";
     import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/ui-design-system";
 
     import {useFlowStore} from "../../../../stores/flow";
     import {usePluginsStore} from "../../../../stores/plugins";

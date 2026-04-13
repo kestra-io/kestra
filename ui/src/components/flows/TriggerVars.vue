@@ -9,7 +9,7 @@
         <ks-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
-                    <Markdown :source="scope.row.value" />
+                    <KsMarkdown :content="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'cron'">
                     <Cron :cronExpression="scope.row.value" />
@@ -31,7 +31,7 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import VarValue from "../executions/VarValue.vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
     import Cron from "../layout/Cron.vue";
     import {Execution} from "../../stores/executions";
 

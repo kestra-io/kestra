@@ -374,7 +374,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 async provideCompletionItems(model, position) {
                     const source = model.getValue();
                     const cursorPosition = model.getOffsetAt(position);
-                    const parsed = YamlUtils.parse(source, false);
+                    const parsed = YAML_UTILS.parse(source, false);
 
                     const currentWord = model.findPreviousMatch(
                         RegexProvider.beforeSeparator(),
@@ -384,7 +384,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         null,
                         true,
                     );
-                    const elementUnderCursor = YamlUtils.localizeElementAtIndex(
+                    const elementUnderCursor = YAML_UTILS.localizeElementAtIndex(
                         source,
                         cursorPosition,
                     );

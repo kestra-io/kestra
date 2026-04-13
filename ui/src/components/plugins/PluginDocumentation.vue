@@ -32,21 +32,18 @@
                 >
                     <template #markdown="{content}">
                         <!-- Plugin schema content: search disabled -->
-                        <Markdown 
-                            font-size-var="font-size-base"
-                            :source="content"
+                        <KsMarkdown
+                            :content="content"
                         />
                     </template>
                 </SchemaToHtml>
             </Suspense>
         </template>
 
-        <Markdown
+        <KsMarkdown
             v-else-if="introContent"
-            :source="introContent"
+            :content="introContent"
             :class="{'position-absolute': absolute}"
-            :showSearch="true"
-            :collapseExamples="true"
         />
     </div>
 </template>
@@ -54,9 +51,8 @@
 <script setup lang="ts">
 
     import {computed} from "vue";
-    import Markdown from "../layout/Markdown.vue";
     import {SchemaToHtml} from "@kestra-io/ui-libs";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/ui-design-system";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {useMiscStore} from "override/stores/misc";
     import {usePluginsStore} from "../../stores/plugins";

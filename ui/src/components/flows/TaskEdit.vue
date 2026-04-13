@@ -73,7 +73,7 @@
                         </span>
                     </template>
                     <div class="documentation">
-                        <Markdown :source="pluginMarkdown" />
+                        <KsMarkdown :content="pluginMarkdown" />
                     </div>
                 </ks-tab-pane>
             </ks-tabs>
@@ -83,14 +83,13 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {SECTIONS} from "@kestra-io/ui-design-system";
+    import {SECTIONS, KsMarkdown} from "@kestra-io/ui-design-system";
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "../no-code/components/TaskEditor.vue";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
-    import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
     import {usePluginsStore} from "../../stores/plugins";
     import {useAuthStore} from "override/stores/auth";

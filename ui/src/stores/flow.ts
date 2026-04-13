@@ -1,5 +1,5 @@
 import {computed, h, ref, watch} from "vue";
-import {KsMessageBox} from "@kestra-io/ui-design-system";
+import {KsMarkdown, KsMessageBox} from "@kestra-io/ui-design-system";
 import permission from "../models/permission";
 import action from "../models/action";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
@@ -18,7 +18,6 @@ import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
-import Markdown from "../components/layout/Markdown.vue"
 
 const textYamlHeader = {
     headers: {
@@ -285,7 +284,7 @@ export const useFlowStore = defineStore("flow", () => {
                 if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
-                        message: () => h(Markdown, {source: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
+                        message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
                         type: "warning",
                         showCancelButton: true,
                     }).then(async () => {

@@ -12,7 +12,7 @@
             v-model="isOpen"
             :title="title"
         >
-            <Markdown class="markdown-tooltip" :source="description" />
+            <KsMarkdown class="markdown-tooltip" :content="description" />
         </ks-drawer>
     </span>
 </template>
@@ -20,7 +20,7 @@
 <script setup lang="ts">
     import {ref} from "vue";
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
-    import Markdown from "./Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
 
     defineProps({
         id: {

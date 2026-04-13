@@ -51,6 +51,7 @@ import KsInput from "./components/Form/KsInput.vue"
 import KsPassword from "./components/Form/KsPassword.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
+import KsMarkdown from "./components/Data/KsMarkdown/KsMarkdown.vue"
 import KsMenu from "./components/Navigation/KsMenu/KsMenu.vue"
 import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
@@ -171,6 +172,7 @@ export {
     KsPassword,
     KsLink,
     vKsLoading,
+    KsMarkdown,
     KsMenu,
     KsMenuItem,
     KsOption,
@@ -262,6 +264,7 @@ const KestraDesignSystem = {
         app.component("KsInputNumber", KsInputNumber)
         app.component("KsPassword", KsPassword)
         app.component("KsLink", KsLink)
+        app.component("KsMarkdown", KsMarkdown)
         app.component("KsMenu", KsMenu)
         app.component("KsMenuItem", KsMenuItem)
         app.component("KsOption", KsOption)
@@ -354,6 +357,7 @@ declare module "vue" {
         KsInputNumber: typeof KsInputNumber
         KsPassword: typeof KsPassword
         KsLink: typeof KsLink
+        KsMarkdown: typeof KsMarkdown
         KsMenu: typeof KsMenu
         KsMenuItem: typeof KsMenuItem
         KsOption: typeof KsOption

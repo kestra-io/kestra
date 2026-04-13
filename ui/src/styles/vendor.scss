@@ -14,17 +14,3 @@
 );
 
 @use "nprogress/nprogress.css";
-
-// skiki
-.shiki {
-    font-size: var(--kel-font-size-small);
-
-    &.github-dark {
-        background-color: var(--ks-background-card) !important;
-        border: 1px solid var(--ks-border-primary) !important;
-    }
-
-    .line {
-        display: inline;
-    }
-}

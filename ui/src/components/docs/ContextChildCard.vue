@@ -1,34 +1,35 @@
 <template>
-    <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
-        <ContextDocsLink
-            :href="item.path"
-            class="col"
-            v-for="item in navigation"
-            :key="item.path"
-            useRaw
-        >
-            <div class="card h-100">
-                <div class="card-body d-flex align-items-center">
-                    <span class="card-icon">
-                        <img
-                            :src="docStore.resourceUrl(item.icon.replace(/^\/src\/contents\//, ''))"
-                            :alt="item.title"
-                            width="50px"
-                            height="50px"
-                        >
-                    </span>
-                    <div class="overflow-hidden">
-                        <h4 class="card-title">
-                            {{ item.title }}
-                        </h4>
-                        <p class="card-text mb-0">
-                            {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
-                        </p>
+    <el-row :gutter="16">
+        <el-col :span="12" v-for="item in navigation" :key="item.path" class="mb-3">
+            <ContextDocsLink
+                :href="item.path"
+                class="flex-1"
+                useRaw
+            >
+                <div class="card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <span class="card-icon">
+                            <img
+                                v-if="item.icon"
+                                :src="docStore.resourceUrl(item.icon.replace(/^\/src\/contents\//, ''))"
+                                :alt="item.title"
+                                width="50px"
+                                height="50px"
+                            >
+                        </span>
+                        <div class="overflow-hidden">
+                            <h4 class="card-title">
+                                {{ item.title }}
+                            </h4>
+                            <p class="card-text mb-0">
+                                {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </ContextDocsLink>
-    </div>
+            </ContextDocsLink>
+        </el-col>
+    </el-row>
 </template>
 
 <script setup lang="ts">
@@ -54,7 +55,6 @@
             return p ? p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/") : "docs";
         }
     })
-
 
     const resourcesWithMetadata = ref<Record<string, any>>({});
     onMounted(async () => {

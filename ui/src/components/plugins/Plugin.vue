@@ -73,7 +73,7 @@
                         noUrlChange
                     >
                         <template #markdown="{content}">
-                            <Markdown font-size-var="font-size-base" :source="content" />
+                            <KsMarkdown :content="content" />
                         </template>
                     </SchemaToHtml>
                 </Suspense>
@@ -87,10 +87,9 @@
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import {SchemaToHtml} from "@kestra-io/ui-libs";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/ui-design-system";
     import DocsLayout from "../docs/DocsLayout.vue";
     import PluginHome from "./PluginHome.vue";
-    import Markdown from "../layout/Markdown.vue";
     import Toc from "./Toc.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import GitHub from "vue-material-design-icons/Github.vue";

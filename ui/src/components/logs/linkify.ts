@@ -1,6 +1,26 @@
 // inspired from https://kerkour.com/vuejs-3-router-links-dynamic-vhtml
 import type {Router} from "vue-router";
 
+/**
+ * Converts [[link execution="..." flowId="..." namespace="..."]] patterns
+ * in a message string into <router-md> tags for later DOM linkification.
+ */
+export function processLinkTags(message: string): string {
+    return message.replace(/\[\[link\s+([^[\]]+)\]\]/g, (match, attrs) => {
+        const attrMap: Record<string, string> = {};
+        const attrRegex = /(\w+)="([^"]*)"/g;
+        let attrMatch;
+        while ((attrMatch = attrRegex.exec(attrs)) !== null) {
+            attrMap[attrMatch[1]] = attrMatch[2];
+        }
+        const {execution, flowId, namespace} = attrMap;
+        if (!execution || !flowId || !namespace) {
+            return match;
+        }
+        return `<router-md execution="${execution}" flowId="${flowId}" namespace="${namespace}"></router-md>`;
+    });
+}
+
 function gotoRoute(event: MouseEvent, route: any, router: Router) {
   const {altKey, ctrlKey, metaKey, shiftKey, button} = event;
   // ignore with control keys

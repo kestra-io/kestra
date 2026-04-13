@@ -48,9 +48,9 @@
                     popperClass="singleton-tooltip"
                 >
                     <template #content>
-                        <Markdown
+                        <KsMarkdown
                             class="markdown-tooltip"
-                            :source="helpText"
+                            :content="helpText"
                         />
                     </template>
                     <Help />
@@ -80,7 +80,7 @@
     import {INLINE_TASK_MODE_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
 
     import ClearButton from "./ClearButton.vue";
-    import Markdown from "../../../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
     import Help from "vue-material-design-icons/Information.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import TaskObjectListInline from "../../../plugins/plugin-default/TaskObjectListInline.vue";

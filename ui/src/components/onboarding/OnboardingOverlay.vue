@@ -14,10 +14,8 @@
             </div>
             <p class="description" v-html="stepDescription" />
             <div v-if="snippetMarkdown" class="snippet-wrap">
-                <Markdown
-                    :source="snippetMarkdown"
-                    font-size-var="font-size-xs"
-                    :showCopyButtons="snippetCopyEnabled"
+                <KsMarkdown
+                    :content="snippetMarkdown"
                 />
             </div>
             <ks-alert
@@ -71,12 +69,11 @@
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {KsMessageBox} from "@kestra-io/ui-design-system";
+    import {KsMarkdown, KsMessageBox} from "@kestra-io/ui-design-system";
     import {useFlowStore} from "../../stores/flow";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import {FIRST_FLOW_GUIDE_STEPS, FIRST_FLOW_STEP_IDS} from "./guides/firstFlowGuide";
     import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics";
-    import Markdown from "../layout/Markdown.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
 

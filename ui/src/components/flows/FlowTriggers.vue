@@ -253,7 +253,7 @@
             <code>{{ triggerId }}</code>
         </template>
 
-        <Markdown v-if="triggerDefinition && (triggerDefinition as any).description" :source="(triggerDefinition as any).description" />
+        <KsMarkdown v-if="triggerDefinition && (triggerDefinition as any).description" :content="(triggerDefinition as any).description" />
         <Vars :data="modalData" />
     </ks-drawer>
 </template>
@@ -279,7 +279,7 @@
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
     import Vars from "../executions/Vars.vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
     import Empty from "../layout/empty/Empty.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";

@@ -18,7 +18,7 @@
                 </h5>
                 <ks-date-ago className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
-            <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
+            <KsMarkdown class="markdown-tooltip postParagraph" :content="feed.description" />
 
             <div class="newsButtonBar">
                 <ks-button
@@ -53,7 +53,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 
-    import Markdown from "./Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
     import ContextInfoContent from "../ContextInfoContent.vue";
 
     import {useApiStore} from "../../stores/api";

@@ -16,7 +16,7 @@
                     {{ title }}
                 </h5>
                 <div class="desc">
-                    <Markdown :source="$t(`execution_guide.${category}.text`)" />
+                    <KsMarkdown :content="$t(`execution_guide.${category}.text`)" />
                 </div>
             </div>
         </div>
@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import Markdown from "../../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
 
     defineProps<{
         title: string;

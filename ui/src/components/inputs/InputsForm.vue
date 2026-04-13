@@ -10,7 +10,7 @@
             :inlineMessage="true"
         >
             <template #label>
-                <Markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+                <KsMarkdown :content="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
             <Editor
                 :fullHeight="false"
@@ -40,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
+                    <KsMarkdown :content="item" />
                 </ks-option>
             </ks-select>
             <ks-radio-group
@@ -76,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
+                    <KsMarkdown :content="item" />
                 </ks-option>
             </ks-select>
             <ks-input
@@ -231,7 +231,7 @@
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
-            <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
             <template v-for="err in input.errors ?? []" :key="err.message">
                 <ks-text type="warning">
                     {{ err.message }}
@@ -257,7 +257,7 @@
     import {useI18n} from "vue-i18n";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
     import {normalize, type InputType} from "../../utils/inputs";
 
     // @ts-expect-error no types for it yet

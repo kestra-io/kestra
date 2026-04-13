@@ -69,8 +69,8 @@
                 />
             </div>
             <div v-if="isShowDescriptionOpen">
-                <Markdown
-                    :source="selectedTask.description"
+                <KsMarkdown
+                    :content="selectedTask.description"
                 />
             </div>
             <div v-if="isShowConditionOpen">
@@ -101,11 +101,10 @@
     // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Collapse from "../layout/Collapse.vue";
-    import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 
     import {Topology} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "@kestra-io/ui-design-system";
+    import {SECTIONS, KsMarkdown} from "@kestra-io/ui-design-system";
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";

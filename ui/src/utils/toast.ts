@@ -1,8 +1,6 @@
-import {KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/ui-design-system"
+import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/ui-design-system"
 import {App, h} from "vue"
 import {useI18n} from "vue-i18n"
-
-import Markdown from "../components/layout/Markdown.vue"
 
 
 export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
@@ -23,11 +21,11 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ]
             )
         } else {
-            return h(Markdown, {source: message});
+            return h(KsMarkdown, {content: message});
         }
     },
     _MarkdownWrap: function(message:string) {
-        return h(Markdown, {source: message})
+        return h(KsMarkdown, {content: message})
     },
     confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
         return KsMessageBox

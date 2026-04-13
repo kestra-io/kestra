@@ -4,11 +4,11 @@
         <strong>{{ $t("warning") }}</strong>
     </div>
 
-    <Markdown :source="$t('trigger_check_warning')" />
+    <KsMarkdown :content="$t('trigger_check_warning')" />
 </template>
 
 <script setup lang="ts">
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/ui-design-system";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
 </script>
 

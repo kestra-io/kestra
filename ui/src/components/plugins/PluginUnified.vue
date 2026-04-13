@@ -10,8 +10,8 @@
                 />
                 {{ displayTitle }}
             </h1>
-            <Markdown :source="plugin.description" />
-            <Markdown :source="plugin.longDescription" />
+            <KsMarkdown :content="plugin.description" />
+            <KsMarkdown :content="plugin.longDescription" />
         </div>
 
         <div v-if="showElements" class="elements-view">
@@ -48,10 +48,9 @@
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue";
     import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/ui-design-system";
     import RowLink from "../misc/RowLink.vue";
     import {usePluginsStore} from "../../stores/plugins";
-    import Markdown from "../layout/Markdown.vue";
     import {getShortName, formatPluginTitle} from "../../utils/global";
 
     interface PluginElement {

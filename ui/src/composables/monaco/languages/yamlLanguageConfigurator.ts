@@ -28,6 +28,95 @@ import CompletionItem = languages.CompletionItem;
 
 type TaskLike = Record<string, unknown>;
 
+const PLUGIN_SUGGESTION_SEGMENT_SEPARATOR = /\.(?=\w)/;
+
+export function getPluginSuggestionSegments(label: string): string[] {
+    return label.toLowerCase().split(PLUGIN_SUGGESTION_SEGMENT_SEPARATOR).filter(Boolean);
+}
+
+export function pluginSuggestionRank(label: string, input: string): [number, number, number, number] {
+    const normalizedInput = input.toLowerCase();
+    if (!normalizedInput) {
+        return [9, 9, 999, label.length];
+    }
+
+    const normalizedLabel = label.toLowerCase();
+    const segments = getPluginSuggestionSegments(label);
+    const lastSegmentIndex = segments.length - 1;
+
+    let bestRank = Number.POSITIVE_INFINITY;
+    let bestDistanceFromEnd = Number.POSITIVE_INFINITY;
+    let bestPosition = Number.POSITIVE_INFINITY;
+
+    segments.forEach((segment, index) => {
+        const distanceFromEnd = lastSegmentIndex - index;
+        const exactMatch = segment === normalizedInput;
+        const startsWith = segment.startsWith(normalizedInput);
+        const includesAt = segment.indexOf(normalizedInput);
+
+        let rank = Number.POSITIVE_INFINITY;
+        let position = Number.POSITIVE_INFINITY;
+
+        if (exactMatch && distanceFromEnd === 0) {
+            rank = 0;
+            position = 0;
+        } else if (startsWith && distanceFromEnd === 0) {
+            rank = 1;
+            position = 0;
+        } else if (exactMatch) {
+            rank = 2;
+            position = 0;
+        } else if (startsWith) {
+            rank = 3;
+            position = 0;
+        } else if (includesAt >= 0 && distanceFromEnd === 0) {
+            rank = 4;
+            position = includesAt;
+        } else if (includesAt >= 0) {
+            rank = 5;
+            position = includesAt;
+        }
+
+        if (
+            rank < bestRank ||
+            (rank === bestRank && distanceFromEnd < bestDistanceFromEnd) ||
+            (rank === bestRank && distanceFromEnd === bestDistanceFromEnd && position < bestPosition)
+        ) {
+            bestRank = rank;
+            bestDistanceFromEnd = distanceFromEnd;
+            bestPosition = position;
+        }
+    });
+
+    if (bestRank !== Number.POSITIVE_INFINITY) {
+        return [bestRank, bestDistanceFromEnd, bestPosition, normalizedLabel.length];
+    }
+
+    const labelStartsWith = normalizedLabel.startsWith(normalizedInput);
+    const labelIncludesAt = normalizedLabel.indexOf(normalizedInput);
+
+    if (labelStartsWith) {
+        return [6, 9, 0, normalizedLabel.length];
+    }
+
+    if (labelIncludesAt >= 0) {
+        return [7, 9, labelIncludesAt, normalizedLabel.length];
+    }
+
+    return [8, 9, 999, normalizedLabel.length];
+}
+
+export function pluginSuggestionSortText(label: string, input: string): string {
+    const [rank, distanceFromEnd, position, length] = pluginSuggestionRank(label, input);
+    return [
+        rank.toString().padStart(2, "0"),
+        distanceFromEnd.toString().padStart(2, "0"),
+        position.toString().padStart(3, "0"),
+        length.toString().padStart(4, "0"),
+        label.toLowerCase(),
+    ].join("-");
+}
+
 function isTaskLike(value: unknown): value is TaskLike {
     return (
         typeof value === "object" &&
@@ -169,14 +258,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             const isTypeValueContext = /^\s*(?:-\s*)?type\s*:\s*$/i.test(
                 beforeWord,
             );
-            // Split plugin class names (`a.b.C`) into lowercase searchable segments.
-            const getLabelSegments = (label: string) =>
-                label.toLowerCase().split(/\.(?=\w)/).filter(Boolean);
             // Match typed input against any segment, while still preferring the last segment.
             const matchesTypeInput = (label: string, input: string) => {
                 if (!input) return true;
 
-                const segments = getLabelSegments(label);
+                const segments = getPluginSuggestionSegments(label);
                 if (segments.length === 0) return false;
 
                 const last = segments[segments.length - 1];
@@ -245,56 +331,16 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         ?.word?.toLowerCase();
 
                     if (wordAtPosition !== undefined) {
-                        const sortBumperText = "a1".repeat(10);
-
                         if (suggestion.label.includes(".")) {
-                            const dotSplit = getLabelSegments(suggestion.label);
-                            const lastSegment = dotSplit[dotSplit.length - 1];
-
-                            if (lastSegment.startsWith(wordAtPosition)) {
-                                suggestion.sortText =
-                                    sortBumperText.repeat(5) + suggestion.label;
-                            } else if (lastSegment.includes(wordAtPosition)) {
-                                suggestion.sortText =
-                                    sortBumperText.repeat(4) + suggestion.label;
-                            } else {
-                                suggestion.sortText =
-                                    dotSplit
-                                        .splice(dotSplit.length - 1, 1)
-                                        .reduceRight((prefix, part) => {
-                                            let sortBumperPrefixForPart:
-                                                | string
-                                                | undefined;
-
-                                            if (
-                                                part.startsWith(wordAtPosition)
-                                            ) {
-                                                sortBumperPrefixForPart =
-                                                    sortBumperText.repeat(3);
-                                            } else if (
-                                                part.includes(wordAtPosition)
-                                            ) {
-                                                sortBumperPrefixForPart =
-                                                    sortBumperText.repeat(2);
-                                            }
-
-                                            if (
-                                                sortBumperPrefixForPart ===
-                                                undefined ||
-                                                prefix.length >=
-                                                sortBumperPrefixForPart.length
-                                            ) {
-                                                return prefix;
-                                            }
-
-                                            return sortBumperPrefixForPart;
-                                        }, "") + suggestion.label;
-                            }
+                            suggestion.sortText = pluginSuggestionSortText(
+                                suggestion.label,
+                                wordAtPosition,
+                            );
 
                             // In `type:` value context, include all segments in filter text
                             // (e.g. `pub` matches both `Publish` and `pubsub`).
                             if (isTypeValueContext) {
-                                const segments = getLabelSegments(
+                                const segments = getPluginSuggestionSegments(
                                     suggestion.label,
                                 );
                                 suggestion.filterText = [
@@ -314,8 +360,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                             suggestion.sortText === undefined &&
                             suggestion.label.includes(wordAtPosition)
                         ) {
-                            suggestion.sortText =
-                                sortBumperText + suggestion.label;
+                            suggestion.sortText = `08-09-999-${suggestion.label.length.toString().padStart(4, "0")}-${suggestion.label.toLowerCase()}`;
                         }
                     }
 
@@ -335,7 +380,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 // ---- Ensure Monaco matches against any segment in `type:` context ----
                 .map((suggestion) => {
                     if (isTypeValueContext && suggestion.label.includes(".")) {
-                        const segments = getLabelSegments(suggestion.label);
+                        const segments = getPluginSuggestionSegments(suggestion.label);
                         suggestion.filterText = [
                             suggestion.label.toLowerCase(),
                             ...segments,

@@ -314,6 +314,20 @@ public class LoopCaseTest {
         }));
     }
 
+    public void loopExpressionContext(Execution execution) throws InternalException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+
+        // 3 loop sub-executions, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 2);
+        // each iteration must access the parent execution context from expressions
+        assertThat(subExecutions).allMatch(throwPredicate(sub -> "I'm before the loop".equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"))));
+        assertThat(subExecutions).allMatch(throwPredicate(sub -> execution.getId().equals(taskOutputService.getOutputs(sub.getTaskRunList().getLast()).get("value"))));
+    }
+
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
     private List<Execution> loopSubExecutions(Execution parentExecution) {
         // FIXME retrieving loop sub-executions for a given loop should be more easy

@@ -176,6 +176,10 @@ public class TaskOutputService {
                 result.put(taskId, taskOutputs);
             });
 
+        if (execution.getLoopRun() != null) {
+            result.putAll(computeOutputs(execution.getLoopRun().parent()));
+        }
+
         return result;
     }
 

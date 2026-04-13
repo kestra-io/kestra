@@ -1,15 +1,10 @@
 package io.kestra.core.queues;
 
-import java.io.IOException;
-import java.util.function.Consumer;
-
 import io.kestra.core.queues.event.Event;
 
-public interface GenericQueueInterface<T extends Event> extends AutoCloseable {
+import java.util.function.Consumer;
 
-    @Override
-    default void close() throws IOException {
-    }
+public interface GenericQueueInterface<T extends Event> extends AutoCloseable {
 
     /**
      * Add a listener to the queue.

@@ -18,6 +18,7 @@ import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InputOutputValidationException;
@@ -37,7 +38,6 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
@@ -68,10 +68,10 @@ public class FlowInputOutput {
     public FlowInputOutput(
         StorageInterface storageInterface,
         Provider<RunContextFactory> runContextFactory,
-        @Nullable @Value("${kestra.encryption.secret-key}") String secretKey) {
+        EncryptionConfig encryptionConfig) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
-        this.secretKey = Optional.ofNullable(secretKey);
+        this.secretKey = encryptionConfig.asOptional();
     }
 
     /**

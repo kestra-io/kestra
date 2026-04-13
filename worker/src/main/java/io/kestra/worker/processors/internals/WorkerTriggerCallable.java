@@ -3,12 +3,12 @@ package io.kestra.worker.processors.internals;
 import java.util.Optional;
 
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 
 import lombok.Getter;
 
@@ -20,7 +20,7 @@ public class WorkerTriggerCallable extends AbstractWorkerTriggerCallable {
     TriggerContext triggerContext;
 
     @Getter
-    Optional<Execution> evaluate;
+    Optional<TriggerEvaluationResult> evaluate;
 
     public WorkerTriggerCallable(RunContext runContext, ConditionContext conditionContext, TriggerContext triggerContext, WorkerTrigger workerTrigger, PollingTriggerInterface pollingTrigger) {
         super(runContext, pollingTrigger.getClass().getName(), workerTrigger);
@@ -31,7 +31,7 @@ public class WorkerTriggerCallable extends AbstractWorkerTriggerCallable {
 
     @Override
     public State.Type doCall() throws Exception {
-        this.evaluate = this.pollingTrigger.evaluate(
+        this.evaluate = this.pollingTrigger.eval(
             conditionContext.withRunContext(runContext),
             triggerContext
         );

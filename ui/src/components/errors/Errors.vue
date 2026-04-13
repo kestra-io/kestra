@@ -42,7 +42,7 @@
     };
 
     watch(
-        () => route,
+        () => route.fullPath,
         () => {
             coreStore.error = undefined;
         }

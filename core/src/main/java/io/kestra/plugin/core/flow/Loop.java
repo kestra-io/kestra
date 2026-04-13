@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -17,6 +18,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.MapUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,7 +28,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -189,6 +193,7 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
     public static final String ITERATION_COUNT_OUTPUT = "iterationCount";
     public static final String RUNNING_ITERATIONS_OUTPUT = "runningIterations";
     public static final String TERMINATED_ITERATIONS_OUTPUT = "terminatedIterations";
+    public static final String NEXT_OFFSET_OUTPUT = "nextOffset";
 
     @Valid
     protected List<Task> errors;
@@ -207,15 +212,15 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
     @NotEmpty(message = "The 'tasks' property cannot be empty")
     private List<Task> tasks;
 
-    // TODO support URI directly
     @NotNull
     @PluginProperty(dynamic = true)
     @Schema(
         title = "The list of values for which Kestra will execute a group of tasks",
         description = """
             Values can be defined as:
-            - A list of objects, individual objects will be coalesce to strings
-            - A string which will be deserialized as a JSON array""",
+            - A list of objects, individual objects will be coalesced to strings
+            - A string which will be deserialized as a JSON array
+            - An ION file URI, each line will be deserialized as an ION object then coalesced to a string""",
         oneOf = { String.class, Object[].class }
     )
     private Object values;
@@ -344,4 +349,42 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
         return execution.getKind() == ExecutionKind.LOOP &&
             execution.getLoopRun() != null && execution.getLoopRun().taskRunId().equals(parentTaskRun.getId());
     }
+
+    /**
+     * Computes initialization data for URI-backed Loop values (ION file mode).
+     * Reads the first batch of values and counts the total in a single file pass.
+     *
+     * @param runContext the run context
+     * @param valuesUri  the rendered URI pointing to the ION file
+     * @return a {@link UriInit} holding totalCount, active limit, first batch of values, and next byte offset
+     */
+    @VisibleForTesting
+    public UriInit initFromUri(RunContext runContext, String valuesUri) throws IOException, IllegalVariableEvaluationException {
+        int rawLimit = this.concurrencyLimit == 0 ? Integer.MAX_VALUE : this.concurrencyLimit;
+        var init = FlowableUtils.readAndCountLoopValuesFromUri(runContext, valuesUri, rawLimit);
+        int size = init.totalCount();
+        int limit = Math.min(this.concurrencyLimit == 0 ? size : this.concurrencyLimit, size);
+        return new UriInit(size, limit, init.values(), init.nextOffset());
+    }
+
+    /**
+     * Computes initialization data for in-memory Loop values (list or map mode).
+     * Resolves all values eagerly and applies the concurrency limit.
+     *
+     * @param runContext the run context
+     * @return a {@link ValuesInit} holding totalCount, active limit, and resolved values
+     */
+    @VisibleForTesting
+    public ValuesInit initFromValues(RunContext runContext) throws IllegalVariableEvaluationException {
+        var either = FlowableUtils.resolveValues(runContext, this.values);
+        int size = either.isLeft() ? either.getLeft().size() : either.getRight().size();
+        int limit = this.concurrencyLimit == 0 ? size : Math.min(this.concurrencyLimit, size);
+        return new ValuesInit(size, limit, either);
+    }
+
+    /** Holds initialization data computed from a URI-backed ION file. */
+    public record UriInit(int totalCount, int limit, List<String> values, long nextOffset) {}
+
+    /** Holds initialization data computed from in-memory (list or map) values. */
+    public record ValuesInit(int totalCount, int limit, Either<List<String>, List<Pair<String, String>>> values) {}
 }

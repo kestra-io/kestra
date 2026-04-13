@@ -24,7 +24,8 @@ export function useFilters(
     showSearchInput = true,
     legacyQuery = false,
     defaultScope?: boolean,
-    defaultTimeRange?: boolean
+    defaultTimeRange?: boolean,
+    defaultDuration?: string,
 ) {
     const router = useRouter();
     const route = useRoute();
@@ -98,9 +99,7 @@ export function useFilters(
         delete query["filters[q][EQUALS]"];
 
         if (trimmedQuery && showSearchInput) {
-            const searchKey = configuration.keys?.length > 0 && !legacyQuery
-                ? "filters[q][EQUALS]"
-                : "q";
+            const searchKey = legacyQuery ? "q" : "filters[q][EQUALS]";
             query[searchKey] = trimmedQuery;
         }
     };
@@ -423,10 +422,9 @@ export function useFilters(
 
     const initializeFromRoute = () => {
         if (showSearchInput) {
-            searchQuery.value =
-                (route.query?.["filters[q][EQUALS]"] as string) ??
-                (route.query?.q as string) ??
-                "";
+            searchQuery.value = legacyQuery
+                ? (route.query?.q as string) ?? ""
+                : (route.query?.["filters[q][EQUALS]"] as string) ?? "";
         }
 
         const parsedFilters = legacyQuery
@@ -495,6 +493,7 @@ export function useFilters(
         namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
+        defaultDuration,
     };
     useDefaultFilter(defaultFilterOptions);
 
@@ -556,4 +555,3 @@ export function useFilters(
         getPreApplied,
     };
 }
-

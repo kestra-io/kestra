@@ -26,7 +26,7 @@
             <template #content>
                 <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
-            <span class="versionNumber">{{ miscStore.configs?.version + " THIS INSTANCE IS NOT A POKEMON 🤐" }}</span>
+            <span class="versionNumber">{{ miscStore.configs?.version }}</span>
         </el-tooltip>
         <el-button class="theme-switcher" @click="onSwitchTheme">
             <WeatherNight v-if="themeIsDark" />

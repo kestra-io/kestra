@@ -125,24 +125,31 @@ public final class RunVariables {
      * Creates an immutable map representation of the given {@link LoopRun}.
      */
     static Map<String, Object> of(LoopRun loopRun) {
-        Map<String, Object> loopRunMap = new HashMap<>();
-        loopRunMap.put("value", loopRun.value());
+        Map<String, Object> loopRunMap = HashMap.newHashMap(3);
         loopRunMap.put("index", loopRun.index());
+        if (loopRun.key() != null) {
+            loopRunMap.put("key", loopRun.key());
+        }
+        loopRunMap.put("value", loopRun.value());
         if (loopRun.parents() != null) {
-            loopRunMap.put("parent", Map.of(
-                "value", loopRun.parents().getLast().value(),
-                "index", loopRun.parents().getLast().index())
-            );
+            loopRunMap.put("parent", of(loopRun.parents().getLast()));
             if (loopRun.parents().size() > 1) {
                 List<Map<String, Object>> parents = new ArrayList<>();
-                loopRun.parents().forEach(parent -> parents.add(Map.of(
-                    "value", parent.value(),
-                    "index", parent.index()
-                )));
+                loopRun.parents().forEach(parent -> parents.add(of(parent)));
                 loopRunMap.put("parents", parents);
             }
         }
         return loopRunMap;
+    }
+
+    private static Map<String, Object> of(LoopRun.Parent parent) {
+        Map<String, Object> parentMap = HashMap.newHashMap(3);
+        parentMap.put("index", parent.index());
+        if (parent.key() != null) {
+            parentMap.put("key", parent.key());
+        }
+        parentMap.put("value", parent.value());
+        return parentMap;
     }
 
     /**

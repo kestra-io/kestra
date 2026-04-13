@@ -47,6 +47,7 @@
         readOnly?: boolean;
         defaultScope?: boolean;
         defaultTimeRange?: boolean;
+        defaultDuration?: string;
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -58,6 +59,7 @@
         readOnly: false,
         defaultScope: undefined,
         defaultTimeRange: undefined,
+        defaultDuration: undefined,
     });
 
     const emits = defineEmits<{
@@ -83,6 +85,7 @@
         props.legacyQuery,
         props.defaultScope,
         props.defaultTimeRange,
+        props.defaultDuration,
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(

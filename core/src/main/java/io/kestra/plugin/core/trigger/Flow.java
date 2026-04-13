@@ -35,6 +35,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.validations.FlowTriggerValidation;
 import io.kestra.core.validations.PreconditionFilterValidation;
 
 import io.micronaut.core.annotation.Nullable;
@@ -45,6 +46,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -257,6 +259,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     }
 )
 @Slf4j
+@FlowTriggerValidation
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {
     private static final String TRIGGER_VAR = "trigger";
     private static final String OUTPUTS_VAR = "outputs";
@@ -311,6 +314,24 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     private Window window;
 
+    @Schema(
+        title = "Mode for evaluating dependsOn conditions",
+        description = """
+            Specifies how the dependsOn conditions should be evaluated: ALL, ANY, or AT_LEAST.
+            When using AT_LEAST, you must also set `minSatisfied` to the minimum number of conditions that must be satisfied within the window."""
+    )
+    @PluginProperty
+    @NotNull
+    @Builder.Default
+    private MultipleCondition.Mode mode = MultipleCondition.Mode.ALL;
+
+    @Schema(
+        title = "Minimum number of satisfied conditions for AT_LEAST mode",
+        description = "When mode is set to AT_LEAST, this specifies the minimum number of conditions that must be satisfied within the window."
+    )
+    @PluginProperty
+    @Positive
+    private Integer minSatisfied;
 
     public Optional<Execution> evaluate(Optional<MultipleConditionStateStore> multipleConditionStorage, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();
@@ -417,7 +438,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     }
 
     public MultipleCondition dependsOnAsMultipleCondition() {
-        return this.dependsOn == null ? null : new DependsOnMultipleCondition(this.dependsOn, this.getId(), this.window);
+        return this.dependsOn == null ? null : new DependsOnMultipleCondition(this.dependsOn, this.getId(), this.window, this.mode, this.minSatisfied);
     }
 
     @Hidden
@@ -465,11 +486,15 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         private final List<Dependency> dependencies;
         private final String id;
         private final Window window;
+        private final Mode mode;
+        private final Integer minSatisfied;
 
-        DependsOnMultipleCondition(List<Dependency> dependencies, String id, Window window) {
+        DependsOnMultipleCondition(List<Dependency> dependencies, String id, Window window, Mode mode, Integer minSatisfied) {
             this.dependencies = dependencies;
             this.id = id;
             this.window = window;
+            this.mode = mode;
+            this.minSatisfied = minSatisfied;
         }
 
 
@@ -504,6 +529,16 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Override
         public Logger logger() {
             return log;
+        }
+
+        @Override
+        public Mode getMode() {
+            return mode;
+        }
+
+        @Override
+        public Integer getMinSatisfied() {
+            return minSatisfied;
         }
     }
 
@@ -606,6 +641,18 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Override
         public Logger logger() {
             return log;
+        }
+
+        @Override
+        @JsonIgnore
+        public Mode getMode() {
+            return Mode.ALL;
+        }
+
+        @Override
+        @JsonIgnore
+        public Integer getMinSatisfied() {
+            return null;
         }
     }
 

@@ -191,8 +191,7 @@ public class FlowTriggerService {
                     )
                 )
                 .filter(
-                    e -> !Boolean.FALSE.equals(e.getKey().getResetOnSuccess()) &&
-                        e.getKey().getConditions().size() == Optional.ofNullable(e.getValue().getResults()).map(Map::size).orElse(0)
+                    e -> !Boolean.FALSE.equals(e.getKey().getResetOnSuccess()) && isConditionSatisfied(e.getKey(), e.getValue())
                 )
                 .map(Map.Entry::getValue),
             multipleConditionStorage.expired(execution.getTenantId()).stream()
@@ -236,6 +235,19 @@ public class FlowTriggerService {
             Optional.ofNullable(flowWithFlowTrigger.getTrigger().dependsOnAsMultipleCondition()).stream()
         );
 
+    }
+
+    /**
+     * Determines whether a multiple condition is satisfied based on its mode and the current results.
+     * Used to decide whether to purge the condition window after a successful evaluation.
+     */
+    private boolean isConditionSatisfied(MultipleCondition condition, MultipleConditionWindow window) {
+        int satisfiedCount = Optional.ofNullable(window.getResults()).map(Map::size).orElse(0);
+        return switch (condition.getMode()) {
+            case ALL -> condition.getConditions().size() == satisfiedCount;
+            case ANY -> satisfiedCount > 0;
+            case AT_LEAST -> satisfiedCount >= condition.getMinSatisfied();
+        };
     }
 
     @AllArgsConstructor

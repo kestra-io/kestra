@@ -332,6 +332,56 @@ public class MultipleConditionTriggerCaseTest {
         ));
     }
 
+    public void flowTriggerAnyMode() throws TimeoutException, QueueException {
+        // Run only flow-a — flow-b is not run
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.any.mode",
+            "flow-trigger-any-mode-flow-a"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // Trigger fires because mode is ANY and one condition (flow-a) is satisfied
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.any.mode", "flow-trigger-any-mode-flow-listen"
+        );
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void flowTriggerAtLeastMode() throws TimeoutException, QueueException {
+        // Run flow-a and flow-b (2 out of 3 conditions) — flow-c is not run
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode",
+            "flow-trigger-at-least-mode-flow-a"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // only one condition: trigger should not have been fired yet
+         assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode", "flow-trigger-at-least-mode-flow-listen",
+             Duration.ofMillis(500)
+        ));
+
+        execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode",
+            "flow-trigger-at-least-mode-flow-b"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // Trigger fires because mode is AT_LEAST with minSatisfied=2 and 2 conditions are satisfied
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode", "flow-trigger-at-least-mode-flow-listen"
+        );
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     public void flowTriggerMixedConditions() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT, "io.kestra.tests.trigger.mixed.conditions",

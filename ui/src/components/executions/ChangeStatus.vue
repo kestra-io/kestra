@@ -69,11 +69,8 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State, Status} from "@kestra-io/ui-libs"
-    import * as ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef, ref} from "vue";
     import {useAuthStore} from "override/stores/auth"
-    import {useAxios} from "../../utils/axios";
-    import {useRoute, useRouter} from "vue-router";
     import {useToast} from "../../utils/toast";
     import {useI18n} from "vue-i18n";
 
@@ -102,13 +99,11 @@
         emits: ["follow"],
         setup(props, {emit}) {
             const visible = ref(false);
+            const selectedStatus = ref(undefined);
 
             const {t} = useI18n();
 
             const executionsStore = useExecutionsStore();
-            const $http = useAxios();
-            const router = useRouter();
-            const route = useRoute();
             const toast = useToast();
 
             function changeStatus() {
@@ -118,31 +113,12 @@
                     .changeStatus({
                         executionId: props.execution.id,
                         taskRunId: props.taskRun.id,
-                        state: this.selectedStatus
+                        state: selectedStatus.value
                     })
-                    .then(response => {
-                        if (response.data.id === props.execution.id) {
-                            return ExecutionUtils.waitForState($http, response.data);
-                        } else {
-                            return response.data;
-                        }
-                    })
+                    .then(() => executionsStore.waitForStateChange(props.execution))
                     .then((execution) => {
                         executionsStore.execution = execution;
-                        if (execution.id === props.execution.id) {
-                            emit("follow")
-                        } else {
-                            router.push({
-                                name: "executions/update",
-                                params: {
-                                    namespace: execution.namespace,
-                                    flowId: execution.flowId,
-                                    id: execution.id,
-                                    tab: "gantt",
-                                    tenant: route.params.tenant
-                                }
-                            });
-                        }
+                        emit("follow")
 
                         toast.success(t("change state done"));
                     })
@@ -150,6 +126,7 @@
 
             return {
                 visible,
+                selectedStatus,
                 changeStatus
             }
         },
@@ -201,7 +178,6 @@
         },
         data() {
             return {
-                selectedStatus: undefined,
                 icon: {StateMachine: shallowRef(StateMachine)}
             };
         },

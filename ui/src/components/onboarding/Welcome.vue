@@ -156,9 +156,10 @@
 
     section#welcome {
         position: relative;
-        overflow: hidden;
+        overflow-x: hidden;
         background: url("./assets/background.svg") center top / cover no-repeat;
         min-height: calc(100vh - 60px);
+        padding-bottom: 2rem;
 
         .welcome-copilot-tags {
             display: flex;

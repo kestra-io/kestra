@@ -13,10 +13,19 @@ import org.jooq.TransactionalRunnable;
 import io.kestra.core.models.tasks.retrys.Random;
 import io.kestra.core.utils.RetryUtils;
 
+import io.micronaut.context.annotation.EachBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
-@Singleton
+/**
+ * Wraps a jOOQ {@link DSLContext} with deadlock-retrying transaction helpers.
+ *
+ * <p>Declared as {@code @EachBean(DataSource.class)} so that one instance is created per
+ * configured datasource. Micronaut's EachBean qualifier propagation ensures the correctly-named
+ * {@code DSLContext} (e.g. {@code "h2"}) is injected rather than an unqualified one, which
+ * avoids ambiguity when both {@code micronaut-jooq} and {@code micronaut-data-jdbc} are on the
+ * classpath (the latter creates an additional unqualified DSLContext for transaction management).
+ */
+@EachBean(DataSource.class)
 public class JooqDSLContextWrapper {
     private static final Random RETRY_POLICY = Random.builder()
         .minInterval(Duration.ofMillis(50))
@@ -30,9 +39,12 @@ public class JooqDSLContextWrapper {
     private final DSLContext dslContext;
 
     /**
-     * @param dataSource explicit dependency to ensure Micronaut destroys this bean before the DataSource.
-     *        Without it, the @EachBean-derived DSLContext/Configuration may be destroyed
-     *        together with the DataSource, leaving this wrapper with a stale DSLContext.
+     * @param dslContext the datasource-specific DSLContext; resolved by name through EachBean
+     *                   qualifier propagation to avoid ambiguity with other DSLContext beans.
+     * @param dataSource explicit dependency to ensure Micronaut destroys this bean before the
+     *                   DataSource. Without it, the @EachBean-derived DSLContext/Configuration
+     *                   may be destroyed together with the DataSource, leaving this wrapper with
+     *                   a stale DSLContext.
      */
     @Inject
     public JooqDSLContextWrapper(DSLContext dslContext, DataSource dataSource) {

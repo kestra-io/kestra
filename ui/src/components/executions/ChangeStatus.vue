@@ -102,6 +102,7 @@
         emits: ["follow"],
         setup(props, {emit}) {
             const visible = ref(false);
+            const selectedStatus = ref(undefined);
 
             const {t} = useI18n();
 
@@ -118,7 +119,7 @@
                     .changeStatus({
                         executionId: props.execution.id,
                         taskRunId: props.taskRun.id,
-                        state: this.selectedStatus
+                        state: selectedStatus.value
                     })
                     .then(response => {
                         if (response.data.id === props.execution.id) {
@@ -150,6 +151,7 @@
 
             return {
                 visible,
+                selectedStatus,
                 changeStatus
             }
         },
@@ -201,7 +203,6 @@
         },
         data() {
             return {
-                selectedStatus: undefined,
                 icon: {StateMachine: shallowRef(StateMachine)}
             };
         },

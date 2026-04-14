@@ -6,10 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Minimal task used in tests to verify that @PluginProperty(secret=true) fields with plain-text
- * values produce a warning (not a hard validation error).
- */
+/** Test task with a secret property, used to verify secret field warning behavior. */
 @SuperBuilder
 @NoArgsConstructor
 @Getter

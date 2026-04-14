@@ -1060,7 +1060,7 @@
     color: var(--ks-content-primary);
 }
 
-:deep(.executions-table) .el-table__row {
+:deep(.executions-table) .kel-table__row {
     cursor: pointer;
 }
 

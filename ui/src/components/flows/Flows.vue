@@ -710,7 +710,7 @@
     vertical-align: middle;
 }
 
-:deep(.flows-table) .el-table__row {
+:deep(.flows-table) .kel-table__row {
     cursor: pointer;
 }
 

@@ -100,7 +100,7 @@
                 padding: 0;
             }
 
-            .el-collapse-item__wrap {
+            .kel-collapse-item__wrap {
                 border-bottom: none;
             }
 
@@ -117,7 +117,7 @@
             padding: 0;
         }
 
-        :deep(.el-collapse-item__arrow) {
+        :deep(.kel-collapse-item__arrow) {
             margin: 0 8px;
         }
     }

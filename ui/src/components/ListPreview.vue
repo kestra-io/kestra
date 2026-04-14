@@ -135,7 +135,7 @@
         table-layout: fixed;
         width: 100%;
 
-        :deep(.el-table__body-wrapper) {
+        :deep(.kel-table__body-wrapper) {
             overflow-x: auto;
         }
     }

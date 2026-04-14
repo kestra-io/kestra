@@ -110,6 +110,16 @@
                     :lang="customActionMeta.lang"
                     class="mt-3"
                 />
+                <component
+                    v-if="TopologyDetailsRemotes[selectedTask?.type]"
+                    :is="TopologyDetailsRemotes[selectedTask?.type]"
+                    :task="selectedTask"
+                    :execution="executionsStore.execution"
+                    :namespace="props.namespace"
+                    :flowId="props.flowId"
+                    displayMode="full"
+                    class="mt-3"
+                />
             </div>
         </Drawer>
     </div>

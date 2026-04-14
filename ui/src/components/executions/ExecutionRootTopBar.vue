@@ -109,7 +109,7 @@
                 return this.execution && this.isAllowedTrigger && !this.primaryAction;
             },
             primaryAction() {
-                if (!this.execution) {
+                if (!this.execution?.state) {
                     return null;
                 }
 

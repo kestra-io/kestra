@@ -17,12 +17,11 @@ import io.kestra.core.utils.Slugify;
 
 import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 
-abstract class AbstractFileFunction implements Function {
+abstract class AbstractFileFunction implements KestraFunction {
     static final String SCHEME_NOT_SUPPORTED_ERROR = "Cannot process the URI %s: scheme not supported.";
     static final String KESTRA_SCHEME = "kestra:///";
     static final String TRIGGER = "trigger";
@@ -106,6 +105,14 @@ abstract class AbstractFileFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of(PATH, NAMESPACE);
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of(
+            PATH, "outputs.download.uri",
+            NAMESPACE, "flow.namespace"
+        );
     }
 
     protected abstract String getErrorMessage();

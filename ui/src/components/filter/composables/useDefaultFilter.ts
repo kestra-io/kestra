@@ -7,7 +7,11 @@ interface DefaultFilterOptions {
     namespace?: string | null;
     includeTimeRange?: boolean;
     includeScope?: boolean;
-    legacyQuery?: boolean;
+    /**
+     * Duration from dashboard's timeWindow.default (e.g. "P7D").
+     * Falls back to chartDefaultDuration from config endpoint -> then "PT24H".
+    **/
+    defaultDuration?: string;
 }
 
 const NAMESPACE_FILTER_PREFIX = "filters[namespace]";
@@ -23,29 +27,34 @@ export function applyDefaultFilters(
         namespace,
         includeTimeRange,
         includeScope,
-        legacyQuery,
+        defaultDuration,
     }: DefaultFilterOptions = {}): { query: LocationQuery, change: boolean } {
 
     const query = {...currentQuery};
     let change = false;
 
-
     if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
-        query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
+        query[`${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
         change = true;
     }
 
     if (includeScope && !hasFilterKey(query, SCOPE_FILTER_PREFIX)) {
-        query[legacyQuery ? "scope" : `${SCOPE_FILTER_PREFIX}[EQUALS]`] = "USER";
+        query[`${SCOPE_FILTER_PREFIX}[EQUALS]`] = "USER";
         change = true;
     }
 
     const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
 
-    if (includeTimeRange && !Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))) {
-        const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "PT24H";
-        query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
-        change = true;
+    if (includeTimeRange) {
+        const hasExisting = Object.keys(query).some(key => TIME_FILTER_KEYS.test(key));
+        if (!hasExisting || defaultDuration) {
+            if (hasExisting) {
+                Object.keys(query).forEach(key => { if (TIME_FILTER_KEYS.test(key)) delete query[key]; });
+            }
+            const duration = defaultDuration ?? useMiscStore().configs?.chartDefaultDuration ?? "PT24H";
+            query[`${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = duration;
+            change = true;
+        }
     }
 
     if (!includeScope) {

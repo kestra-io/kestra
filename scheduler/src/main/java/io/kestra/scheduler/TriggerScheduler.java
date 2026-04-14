@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,7 +282,8 @@ public class TriggerScheduler {
         try {
             List<Condition> conditions = trigger.getConditions() != null ? trigger.getConditions() : List.of();
 
-            if (!conditionService.areValid(conditions, context.conditionContext())) {
+            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen())) ||
+                !conditionService.areValid(conditions, context.conditionContext())) {
                 updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, context).ifPresent(triggerStateStore::save);
                 return;
             }
@@ -303,7 +305,7 @@ public class TriggerScheduler {
             // Save the final trigger state
             triggerState = triggerState
                 .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger))
-                .updateForExecutionState(clock, State.Type.FAILED)
+                .updateOnExecutionTerminated(clock, State.Type.FAILED)
                 .locked(clock, false);
             triggerStateStore.save(triggerState);
 
@@ -338,7 +340,7 @@ public class TriggerScheduler {
         if (maybeExecution.isPresent()) {
             log(clock, triggerContext, maybeExecution.get());
             triggerState = triggerState
-                .updateForExecution(clock, maybeExecution.get())
+                .updateOnExecutionCreated(clock, maybeExecution.get().getState().getCurrent())
                 .locked(clock, !((AbstractTrigger) trigger).isAllowConcurrent());
         }
         // Save the final trigger state
@@ -374,7 +376,9 @@ public class TriggerScheduler {
         {
             try {
                 this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext());
-                state = state.locked(clock, mustBeLocked);
+                state = state
+                    .lastTriggeredDate(clock)
+                    .locked(clock, mustBeLocked);
                 triggerStateStore.save(state);
             } catch (Exception e) {
                 Logs.logTrigger(

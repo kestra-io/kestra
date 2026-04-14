@@ -83,6 +83,7 @@
                         :active="active"
                         :sizeDependencies="[item.message]"
                         :data-index="item.index"
+                        :key="item.uid"
                     >
                         <LogLine
                             @click="logCursor = item.index.toString()"
@@ -204,7 +205,7 @@
                 return State
             },
             temporalLogs() {
-                const logResults = this.executionsStore.logs?.results ?? [];
+                const logResults = this.executionsStore.logs ?? [];
 
                 if (!logResults.length) {
                     return [];
@@ -406,3 +407,4 @@
         margin-bottom: 0.5rem !important;
     }
 </style>
+

@@ -47,11 +47,11 @@
     const getHumanizeLabel = (key: string): string => {
         const mappings: Record<string, string> = {
             "flowId": "flow",
-            "executionId": "current execution",
-            "nextExecutionDate": "next evaluation date",
-            "date": "last trigger date",
-            "updatedDate": "context updated date",
-            "evaluateRunningDate": "evaluation lock date",
+            "nextEvaluationDate": "next evaluation date",
+            "lastTriggeredDate": "last trigger date",
+            "updatedAt": "state updated date",
+            "evaluatedAt": "last evaluation date",
+            "locked": "locked",
             "states": "trigger_states",
         };
         const translationKey = mappings[key] ?? key;

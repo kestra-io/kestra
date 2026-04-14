@@ -1,7 +1,7 @@
 <template>
     <el-form labelPosition="top" class="w-100">
         <template v-if="sortedProperties">
-            <template v-for="[fieldKey, fieldSchema] in protectedRequiredProperties" :key="fieldKey">
+            <template v-for="[fieldKey, fieldSchema] in protectedMainProperties" :key="fieldKey">
                 <Wrapper :merge>
                     <template #tasks>
                         <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -9,9 +9,14 @@
                 </Wrapper>
             </template>
 
-            <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
-                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
-                    <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
+            <el-collapse v-model="activeNames" v-if="mainProperties.length && hasGroupedProperties" class="collapse">
+                <el-collapse-item
+                    v-for="section in groupSections"
+                    :key="section.key"
+                    :name="section.key"
+                    :title="groupTitle(section.key)"
+                >
+                    <template v-for="[fieldKey, fieldSchema] in section.properties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -19,25 +24,7 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
-                    <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="general" v-if="generalProperties?.length" :title="$t('no_code.sections.general')">
-                    <template v-for="[fieldKey, fieldSchema] in generalProperties" :key="fieldKey">
-                        <Wrapper>
-                            <template #tasks>
-                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                            </template>
-                        </Wrapper>
-                    </template>
-                </el-collapse-item>
-                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
+                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="groupTitle('deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -65,6 +52,7 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
+    import {useI18n} from "vue-i18n";
     import TaskDict from "./TaskDict.vue";
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
@@ -74,6 +62,8 @@
     defineOptions({
         inheritAttrs: false,
     });
+
+    const {t, te} = useI18n();
 
     type Model = Record<string, any> | undefined;
     type Schema = { required?: string[]; [k: string]: any } | undefined;
@@ -93,7 +83,19 @@
         (e: "update:modelValue", value: Model): void;
     }>();
 
-    const activeNames = ref<string[]>([]);
+    function groupTitle(key: string): string {
+        const i18nKey = `no_code.sections.${key}`;
+        if (te(i18nKey)) return t(i18nKey);
+        // Free-form group: title-case, replace _ and - with spaces
+        return key.replace(/[_-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    // Recommended group ordering — not exhaustive, unknown groups are appended alphabetically
+    const GROUP_ORDER = ["connection", "source", "processing", "execution", "destination", "reliability", "advanced"];
+    // Groups expanded by default
+    const GROUPS_EXPANDED_BY_DEFAULT = new Set(["connection", "source", "destination"]);
+
+    const activeNames = ref<string[]>([...GROUPS_EXPANDED_BY_DEFAULT, "optional"]);
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
 
@@ -144,6 +146,43 @@
         return value?.$group && groups.includes(value.$group);
     }
 
+    function getGroup(value: any): string | null {
+        if (value?.allOf) {
+            for (const item of value.allOf) {
+                const g = getGroup(item);
+                if (g) return g;
+            }
+        }
+        if (value?.anyOf) {
+            for (const item of value.anyOf) {
+                const g = getGroup(item);
+                if (g) return g;
+            }
+        }
+        return value?.$group ?? null;
+    }
+
+    function getIndex(value: any): number {
+        if (value?.allOf) {
+            for (const item of value.allOf) {
+                const i = getIndex(item);
+                if (i !== -1) return i;
+            }
+        }
+        return value?.$index ?? -1;
+    }
+
+    function sortByIndex(properties: Entry[]): Entry[] {
+        return properties.slice().sort((a, b) => {
+            const ai = getIndex(a[1]);
+            const bi = getIndex(b[1]);
+            if (ai !== -1 && bi !== -1) return ai - bi;
+            if (ai !== -1) return -1;
+            if (bi !== -1) return 1;
+            return 0;
+        });
+    }
+
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
         return propertiesProc
@@ -159,10 +198,12 @@
 
     const dataTypesMap = inject(DATA_TYPES_MAP_INJECTION_KEY, ref<Record<string, string[] | undefined>>({}));
 
-    const requiredProperties = computed<Entry[]>(() => {
-        const properties =  props.merge ? sortedProperties.value : sortedProperties.value.filter(([p, v]) => v && isRequired(p));
-        const dataTypes = dataTypesMap.value[props.root ?? ""]
-        if(dataTypes){
+    const mainProperties = computed<Entry[]>(() => {
+        const properties = props.merge
+            ? sortedProperties.value
+            : sortedProperties.value.filter(([p, v]) => v && (isRequired(p) || isPartOfGroup(v, ["main"])) && !isDeprecated(v));
+        const dataTypes = dataTypesMap.value[props.root ?? ""];
+        if (dataTypes) {
             properties.unshift(["type", {
                 type: "string",
                 enum: dataTypes,
@@ -172,25 +213,49 @@
         return properties;
     });
 
-    const protectedRequiredProperties = computed<Entry[]>(() => {
-        return requiredProperties.value.length ? requiredProperties.value : sortedProperties.value;
-    });
-    
-    const connectionProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && isPartOfGroup(v, ["connection"]));
+    const protectedMainProperties = computed<Entry[]>(() => {
+        return mainProperties.value.length ? mainProperties.value : sortedProperties.value;
     });
 
-    const optionalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && !isPartOfGroup(v, ["core","connection"]));
-    });
+    type GroupEntry = { key: string; properties: Entry[] };
 
-    const generalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["core"]));
+    // Dynamically build ordered group sections from whatever $group values are present.
+    // Known groups follow GROUP_ORDER; unknown groups are appended alphabetically.
+    // Ungrouped non-required properties (null group) land in an "optional" fallback section.
+    const groupSections = computed<GroupEntry[]>(() => {
+        if (props.merge) return [];
+
+        const buckets = new Map<string | null, Entry[]>();
+
+        for (const entry of sortedProperties.value) {
+            const [p, v] = entry;
+            if (!v || isRequired(p) || isPartOfGroup(v, ["main"]) || isDeprecated(v)) continue;
+
+            const group = getGroup(v);
+            if (group === "main") continue;
+
+            if (!buckets.has(group)) buckets.set(group, []);
+            buckets.get(group)!.push(entry);
+        }
+
+        const sorted = (g: string | null) => sortByIndex(buckets.get(g)!);
+        const known = GROUP_ORDER.filter(g => buckets.has(g)).map(g => ({key: g, properties: sorted(g)}));
+        const unknown = [...buckets.keys()]
+            .filter((g): g is string => g !== null && !GROUP_ORDER.includes(g))
+            .sort()
+            .map(g => ({key: g, properties: sorted(g)}));
+        const ungrouped = buckets.has(null) ? [{key: "optional", properties: sorted(null)}] : [];
+
+        return [...known, ...unknown, ...ungrouped];
     });
 
     const deprecatedProperties = computed<Entry[]>(() => {
         const obj = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>) : {};
         return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined);
+    });
+
+    const hasGroupedProperties = computed<boolean>(() => {
+        return groupSections.value.length > 0 || deprecatedProperties.value.length > 0;
     });
 
 

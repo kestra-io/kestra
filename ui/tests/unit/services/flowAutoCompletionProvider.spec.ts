@@ -1,5 +1,6 @@
-import {describe, expect, it, vi} from "vitest"
+import {describe, expect, it, vi, beforeAll} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
+import {fillExpressionCache, functionToSnippet} from "../../../src/services/autoCompletionProvider";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
 const defaultFlow = `inputs:
@@ -137,56 +138,45 @@ const namespacesStore = {
     })
 } as any
 
+const mockFunctions = [
+    {name: "kv", arguments: [{name: "key", defaultValue: "'my_key'"}, {name: "namespace", defaultValue: "flow.namespace"}, {name: "errorOnMissing", defaultValue: null}]},
+    {name: "now", arguments: [{name: "format", defaultValue: null}, {name: "timeZone", defaultValue: null}, {name: "existingFormat", defaultValue: null}, {name: "locale", defaultValue: null}]},
+    {name: "randomInt", arguments: [{name: "lower", defaultValue: "0"}, {name: "upper", defaultValue: "10"}]},
+    {name: "secret", arguments: [{name: "key", defaultValue: "'MY_SECRET'"}, {name: "namespace", defaultValue: "flow.namespace"}, {name: "subkey", defaultValue: null}]},
+    {name: "uuid", arguments: []},
+];
+
 const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
 const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse(flowWithOutputsAutocompleteInTask);
 
 describe("FlowAutoCompletionProvider", () => {
-    it("root autocompletions", async () => {
-        expect(await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
-            "outputs",
-            "inputs",
-            "vars",
-            "flow",
-            "execution",
-            "trigger",
-            "task",
-            "taskrun",
-            "labels",
-            "envs",
-            "globals",
-            "parent",
-            "parents",
-            "error",
-            "kestra",
-            "secret(namespace=${1:flow.namespace}, key='${2:MY_SECRET}')",
-            "kv(namespace=${1:flow.namespace}, key='${2:my_key}')",
-            "currentEachOutput(outputs=${1:outputs.forEach})",
-            "iterationOutput(taskId=${1:'myTaskId'}, iteration=${2:taskrun.iteration - 1})",
-            "decrypt(key=${1:secret('encryption_key')}, encrypted=${2:outputs.request.encryptedBody})",
-            "encrypt(key=${1:secret('encryption_key')}, plaintext=${2:'value_to_encrypt'})",
-            "errorLogs()",
-            "fetchContext()",
-            "isFileEmpty(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
-            "fileExists(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
-            "fileSize(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
-            "read(namespace=${1:flow.namespace}, path=${2:'a/namespace/file'})",
-            "render(toRender=${1:inputs.inputWithPebble}, recursive=${2:true})",
-            "renderOnce(toRender=${1:inputs.inputWithPebble})",
-            "fileURI(path=${1:'a/namespace/file'})",
-            "fromIon(ion=${1:read('ion/namespace/file')})",
-            "fromJson(json=${1:read('json/namespace/file')})",
-            "yaml(yaml=${1:inputs.yamlInput})",
-            "uuid()",
-            "id()",
-            "now()",
-            "randomInt(lower=${1:0}, upper=${2:10})",
-            "randomPort()",
-            "tasksWithState(state=${1:'FAILED'})",
-            "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
-            "ksuid()",
-            "parentOutput()"
-        ]);
+    beforeAll(() => {
+        fillExpressionCache([], mockFunctions);
+    });
+
+    it("root autocompletions include variables and function snippets", async () => {
+        const result = await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion();
+
+        // Variables come first
+        expect(result).toContain("outputs");
+        expect(result).toContain("inputs");
+        expect(result).toContain("kestra");
+
+        // Function snippets are generated from functionsWithDefaults
+        for (const fn of mockFunctions) {
+            expect(result).toContain(functionToSnippet(fn));
+        }
+    })
+
+    it("functionToSnippet generates correct named-argument snippets", () => {
+        expect(functionToSnippet({name: "uuid", arguments: []})).toBe("uuid()");
+        expect(functionToSnippet({name: "randomInt", arguments: [{name: "lower", defaultValue: "0"}, {name: "upper", defaultValue: "10"}]}))
+            .toBe("randomInt(lower=${1:0}, upper=${2:10})");
+        expect(functionToSnippet({name: "secret", arguments: [{name: "key", defaultValue: "'MY_SECRET'"}, {name: "namespace", defaultValue: "flow.namespace"}, {name: "subkey", defaultValue: null}]}))
+            .toBe("secret(key=${1:'MY_SECRET'}, namespace=${2:flow.namespace})");
+        expect(functionToSnippet({name: "now", arguments: [{name: "format", defaultValue: null}, {name: "timeZone", defaultValue: null}]}))
+            .toBe("now()");
     })
 
     it("nested field autocompletions", async () => {

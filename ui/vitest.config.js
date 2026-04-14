@@ -17,9 +17,7 @@ const dirname =
 export default defineConfig({
     plugins: [vue()],
     resolve: {
-        alias: {
-            ...viteConfig.resolve.alias,
-        },
+        alias: viteConfig.resolve.alias,
     },
     test: {
         projects: [

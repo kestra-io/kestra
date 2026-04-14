@@ -43,10 +43,10 @@
         prefix?: string;
         showSearchInput?: boolean;
         searchInputFullWidth?: boolean;
-        legacyQuery?: boolean;
         readOnly?: boolean;
         defaultScope?: boolean;
         defaultTimeRange?: boolean;
+        defaultDuration?: string;
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -54,10 +54,10 @@
         prefix: "",
         showSearchInput: true,
         searchInputFullWidth: false,
-        legacyQuery: false,
         readOnly: false,
         defaultScope: undefined,
         defaultTimeRange: undefined,
+        defaultDuration: undefined,
     });
 
     const emits = defineEmits<{
@@ -74,15 +74,15 @@
         addFilter,
         removeFilter,
         updateFilter,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied
     } = useFilters(
         props.configuration,
         props.showSearchInput,
-        props.legacyQuery,
         props.defaultScope,
         props.defaultTimeRange,
+        props.defaultDuration,
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
@@ -140,7 +140,7 @@
         toggleOptions,
         updateChart,
         refreshData,
-        resetToPreApplied,
+        resetToDefaults,
         hasPreApplied,
         getPreApplied,
         editSavedFilter: (filter: SavedFilter) => {

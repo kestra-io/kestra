@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -34,6 +33,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -296,10 +296,13 @@ class TriggerEventHandlerTest {
         triggerStateStore.save(triggerState);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         TriggerEvaluated event = new TriggerEvaluated(
-            triggerId, Execution.builder()
-                .id(IdUtils.create())
-                .state(new State())
-                .build()
+            triggerId, new TriggerEvaluationResult(
+                IdUtils.create(),
+                State.Type.CREATED,
+                null,
+                null,
+                null
+            )
         );
 
         // WHEN
@@ -310,11 +313,50 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldExecuteFailedTriggerGivenFlowAndFailedEvaluationWhenHandled() {
+        // GIVEN
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerEvaluated event = new TriggerEvaluated(
+            triggerId, new TriggerEvaluationResult(
+                IdUtils.create(),
+                State.Type.FAILED,
+                null,
+                null,
+                null
+            )
+        );
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldNotPublishExecutionGivenNullEvaluationWhenHandled() {
+        // GIVEN
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerEvaluated event = new TriggerEvaluated(triggerId, null);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
     void shouldBackfillTriggerGivenValidFlowAndTriggerWhenHandled() {
         // GIVEN
         triggerStateStore.save(triggerState);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
-        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(ZonedDateTime.now(), ZonedDateTime.now(), null, null));
+        ZonedDateTime backfillStart = ZonedDateTime.now(CLOCK).minusDays(1);
+        ZonedDateTime backfillEnd = ZonedDateTime.now(CLOCK).plusDays(1);
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(backfillStart, backfillEnd, null, null));
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -323,6 +365,31 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getBackfill()).isNotNull();
+        assertThat(updated.get().getBackfill().getStart()).isEqualTo(backfillStart);
+        assertThat(updated.get().getBackfill().getEnd()).isEqualTo(backfillEnd);
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(backfillStart.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldClearBackfillWhenBackfillRangeIsAlreadyComplete() {
+        // GIVEN
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        // Backfill with start == end == now: the next cron tick is after end, so backfill completes immediately
+        ZonedDateTime now = ZonedDateTime.now(CLOCK);
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(now, now, null, null));
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        // Backfill is cleared because the next evaluation date is after the backfill end
+        assertThat(updated.get().getBackfill()).isNull();
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
@@ -331,7 +398,7 @@ class TriggerEventHandlerTest {
         // GIVEN
         handler = newTriggerEventHandler(List.of());
         triggerStateStore.save(triggerState);
-        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(ZonedDateTime.now(), ZonedDateTime.now(), null, null));
+        CreateBackfillTrigger event = new CreateBackfillTrigger(triggerId, new CreateBackfillTrigger.Backfill(ZonedDateTime.now(CLOCK), ZonedDateTime.now(CLOCK), null, null));
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);

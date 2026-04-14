@@ -215,12 +215,21 @@ public class FlowService {
     private void recomputeTriggers(FlowWithSource flow) {
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
-        if (flow.isDeleted() || previous != null) {
-            List<AbstractTrigger> triggersDeleted = flow.isDeleted() ? ListUtils.emptyOnNull(flow.getTriggers()) : FlowService.findRemovedTrigger(flow, previous);
-
-            triggersDeleted.forEach(
+        if (flow.isDeleted()) {
+            ListUtils.emptyOnNull(flow.getTriggers()).forEach(
                 trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
             );
+            return;
+        }
+
+        if (previous != null) {
+            FlowService.findRemovedTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+            );
+
+            if (flow.isDeleted()) {
+                return;
+            }
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
@@ -231,6 +240,12 @@ public class FlowService {
                     trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
             FlowService.findNewTrigger(flow, previous)
+                .stream()
+                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
+                .forEach(
+                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+                );
+            FlowService.findUnchangedTrigger(flow, previous)
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
                 .forEach(
@@ -440,7 +455,7 @@ public class FlowService {
             .toList();
         flowTriggers.forEach(flowTrigger ->
         {
-            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
+            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null && (flowTrigger.getWhen() == null || "true".equals(flowTrigger.getWhen()))) {
                 warnings.add(
                     "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId()
                         + "'."
@@ -681,6 +696,17 @@ public class FlowService {
                 oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
                     .stream()
                     .noneMatch(trigger -> trigger.getId().equals(oldTrigger.getId()))
+            )
+            .toList();
+    }
+
+    public static List<AbstractTrigger> findUnchangedTrigger(Flow flow, Flow previous) {
+        return ListUtils.emptyOnNull(flow.getTriggers())
+            .stream()
+            .filter(
+                current -> ListUtils.emptyOnNull(previous.getTriggers())
+                    .stream()
+                    .anyMatch(prev -> prev.getId().equals(current.getId()) && EqualsBuilder.reflectionEquals(prev, current))
             )
             .toList();
     }

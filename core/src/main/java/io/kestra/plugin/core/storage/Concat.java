@@ -146,8 +146,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                     files: "{{ outputs.start_api_call | jq('.[].outputFiles.generated') }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.storages.Concat"
+    }
 )
 public class Concat extends Task implements RunnableTask<Concat.Output> {
     @Schema(

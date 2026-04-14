@@ -164,10 +164,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             .build();
     }
 
-    public record ConversationMetadata(String conversationId, String ip, String parentSpanId) {
+    public record ConversationMetadata(String conversationId, String ip, String parentSpanId, String uid) {
     }
 
-    public record GenerationContext(String conversationId, String ip, String parentSpanId) {
+    public record GenerationContext(String conversationId, String ip, String parentSpanId, String uid) {
     }
 
     @Override
@@ -177,24 +177,25 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             return null;
         }
         String parentSpanId = IdUtils.create();
+        String uid = userInfo.uid();
         this.postHogService.capture(
-            conversationId, "$ai_trace", Map.of(
+            uid, "$ai_trace", Map.of(
                 "$ai_trace_id", conversationId,
                 "$ai_span_name", spanName + "Session",
                 "$ai_input_state", inputState
             )
         );
         this.postHogService.capture(
-            conversationId, "$ai_span", Map.of(
+            uid, "$ai_span", Map.of(
                 "$ai_trace_id", conversationId,
                 "$ai_span_id", parentSpanId,
                 "$ai_span_name", spanName + "Attempt",
                 "$ai_input_state", inputState
             )
         );
-        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId));
+        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId, uid));
 
-        return new GenerationContext(conversationId, userInfo.ip(), parentSpanId);
+        return new GenerationContext(conversationId, userInfo.ip(), parentSpanId, uid);
     }
 
     @Override
@@ -206,7 +207,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         metadataByConversationId.remove(context.conversationId());
         Map<String, Object> aiOutput = (outputState == null || outputState.isEmpty()) ? Map.of(outputKey, result) : outputState;
         this.postHogService.capture(
-            context.conversationId(), "$ai_span", Map.of(
+            context.uid(), "$ai_span", Map.of(
                 "$ai_trace_id", context.conversationId(),
                 "$ai_span_id", IdUtils.create(),
                 "$ai_span_name", spanName,

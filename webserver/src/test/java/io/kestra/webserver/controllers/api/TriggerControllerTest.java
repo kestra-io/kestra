@@ -23,6 +23,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -90,19 +92,19 @@ class TriggerControllerTest {
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
                 TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"
-            ), Argument.of(PagedResults.class, TriggerController.Triggers.class)
+            ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
-                TriggerState::getTriggerId,
-                TriggerState::getNamespace,
-                TriggerState::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
                 tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
@@ -119,19 +121,19 @@ class TriggerControllerTest {
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
                 TRIGGER_PATH + "/search?filters[q][EQUALS]=%s".formatted(flow.getNamespace())
-            ), Argument.of(PagedResults.class, TriggerController.Triggers.class)
+            ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
         // THEN
         assertThat(triggers.getResults()).hasSize(2);
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
-                TriggerState::getTriggerId,
-                TriggerState::getNamespace,
-                TriggerState::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
                 tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
@@ -149,21 +151,21 @@ class TriggerControllerTest {
         states.forEach(jdbcTriggerRepository::save);
 
         // WHEN
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
                 TRIGGER_PATH
                     + "/search?filters[namespace][STARTS_WITH]=%s&sort=triggerId:asc".formatted(flow.getNamespace())
             ),
-            Argument.of(PagedResults.class, TriggerController.Triggers.class)
+            Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
         //THEN
         assertThat(triggers.getTotal()).isGreaterThanOrEqualTo(2L);
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
-                TriggerState::getTriggerId,
-                TriggerState::getNamespace,
-                TriggerState::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
                 tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
@@ -361,7 +363,7 @@ class TriggerControllerTest {
         // WHEN
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
-                TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null
+                TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null
             ), BulkResponse.class
         );
 
@@ -379,7 +381,7 @@ class TriggerControllerTest {
         // WHEN
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
-                TRIGGER_PATH + "/unlock/by-query?namespace=" + state.getNamespace(), null
+                TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null
             ), BulkResponse.class
         );
 
@@ -397,10 +399,18 @@ class TriggerControllerTest {
         flowService.create(GenericFlow.of(flow1));
         flowService.create(GenericFlow.of(flow2));
 
-        TriggerState triggerDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
-        TriggerState triggerNotDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
+        final TriggerState triggerDisabled = createTriggerFromFlow(flow1, true);
+        final TriggerState triggerNotDisabled = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerDisabled).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerNotDisabled).isPresent());
 
-        List<TriggerController.ApiTriggerId> triggers = Stream.of(triggerDisabled, triggerNotDisabled)
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(
+            jdbcTriggerRepository.save(triggerDisabled),
+                jdbcTriggerRepository.save(triggerNotDisabled)
+            )
             .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
@@ -430,12 +440,19 @@ class TriggerControllerTest {
         flowService.create(GenericFlow.of(flow1));
         flowService.create(GenericFlow.of(flow2));
 
-        TriggerState triggerDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
-        TriggerState triggerToDisable = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
+        final TriggerState triggerDisabled = createTriggerFromFlow(flow1, true);
+        final TriggerState triggerToDisable = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerDisabled).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerToDisable).isPresent());
 
         // WHEN
-        List<TriggerController.ApiTriggerId> triggers = Stream.of(triggerDisabled, triggerToDisable)
-            .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(
+            jdbcTriggerRepository.save(triggerDisabled),
+                jdbcTriggerRepository.save(triggerToDisable)
+            ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(
@@ -464,13 +481,20 @@ class TriggerControllerTest {
         flowService.create(GenericFlow.of(flow1));
         flowService.create(GenericFlow.of(flow2));
 
-        jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
-        TriggerState toDisable = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
+        TriggerState trigger1 = createTriggerFromFlow(flow1, true);
+        final TriggerState toDisable = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger1).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(toDisable).isPresent());
+        jdbcTriggerRepository.save(trigger1);
+        jdbcTriggerRepository.save(toDisable);
 
         // WHEN
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
-                TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=true".formatted(namespace), null
+                TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=true".formatted(namespace), null
             ), BulkResponse.class
         );
 

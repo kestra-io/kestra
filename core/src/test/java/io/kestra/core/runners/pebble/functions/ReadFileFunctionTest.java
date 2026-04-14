@@ -187,7 +187,8 @@ class ReadFileFunctionTest {
     void shouldFailProcessingUnsupportedScheme() {
         Map<String, Object> variables = getVariablesWithExecution("notme", "notme");
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('unsupported://path-to/file.txt') }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unsupported://path-to/file.txt') }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -203,7 +204,8 @@ class ReadFileFunctionTest {
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+       var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+       assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test
@@ -238,7 +240,8 @@ class ReadFileFunctionTest {
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test

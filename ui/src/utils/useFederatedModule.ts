@@ -1,4 +1,4 @@
-import {ref} from "vue";
+import {ref, reactive} from "vue";
 import {apiUrlWithoutTenants} from "override/utils/route";
 import {useAxios} from "./axios";
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime";
@@ -14,7 +14,7 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
 
 export function useFederatedModule(slotName: string) {
 
-    const RemoteComponents: Record<string, any> = {};
+    const RemoteComponents = reactive<Record<string, any>>({});
     const taskAdditionalInfoRemote = ref<Record<string, any>>({});
 
     const axios = useAxios();

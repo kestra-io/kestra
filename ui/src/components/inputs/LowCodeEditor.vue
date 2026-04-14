@@ -20,6 +20,7 @@
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :getNodeDimensions="getNodeDimensions"
+            :customActions="customActions"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -27,6 +28,7 @@
             @show-logs="showLogs"
             @show-description="showDescription"
             @show-condition="showCondition"
+            @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
             @swapped-task="onSwappedTask"
@@ -98,12 +100,23 @@
                     class="mt-3"
                 />
             </div>
+            <div v-if="isShowCustomActionOpen && customActionMeta">
+                <Editor
+                    :readOnly="true"
+                    :input="true"
+                    :fullHeight="false"
+                    :navbar="false"
+                    :modelValue="selectedTask[customActionMeta.taskProp]"
+                    :lang="customActionMeta.lang"
+                    class="mt-3"
+                />
+            </div>
         </Drawer>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, ref, inject, watch} from "vue";
+    import {nextTick, onMounted, ref, inject, watch, computed} from "vue";
 
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
@@ -146,6 +159,17 @@
 
 
     const {RemoteComponents:TopologyDetailsRemotes, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details");
+
+    const customActions = computed(() => {
+        const result: Record<string, { label: string; taskProp: string; lang: string }> = {};
+        for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
+            const ca = (info as any)?.customAction;
+            if (ca?.label && ca?.taskProp && ca?.lang) {
+                result[type] = ca;
+            }
+        }
+        return result;
+    });
 
     function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
         const taskType = node?.task?.type;
@@ -223,6 +247,8 @@
     const isDrawerOpen = ref(false);
     const isShowDescriptionOpen = ref(false);
     const isShowConditionOpen = ref(false);
+    const isShowCustomActionOpen = ref(false);
+    const customActionMeta = ref<{ label: string; taskProp: string; lang: string } | null>(null);
     const selectedTask = ref();
 
     onMounted(() => {
@@ -246,6 +272,9 @@
             if (!isDrawerOpen.value) {
                 isShowDescriptionOpen.value = false;
                 isShowLogsOpen.value = false;
+                isShowConditionOpen.value = false;
+                isShowCustomActionOpen.value = false;
+                customActionMeta.value = null;
                 selectedTask.value = null;
             }
         },
@@ -399,6 +428,20 @@
     const showCondition = (event: {task: string}) => {
         selectedTask.value = event.task;
         isShowConditionOpen.value = true;
+        isDrawerOpen.value = true;
+    };
+
+    const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
+        const flowParsed = YAML_UTILS.parse(props.source ?? "");
+        const allTasks = [
+            ...(flowParsed.tasks ?? []),
+            ...(flowParsed.errors ?? []),
+            ...(flowParsed.finally ?? []),
+        ];
+        const fullTask = allTasks.find((t: any) => t.id === event.task.id) ?? event.task;
+        selectedTask.value = fullTask;
+        customActionMeta.value = event.customAction;
+        isShowCustomActionOpen.value = true;
         isDrawerOpen.value = true;
     };
 

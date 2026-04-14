@@ -77,10 +77,8 @@ main {
     flex-direction: column;
     min-height: 100%;
 
-    &:has(section.full-container),
-    &:has(section#welcome) {
+    &:has(section.full-container) {
         max-height: 100%;
-        overflow: hidden;
     }
 
     > section.container {

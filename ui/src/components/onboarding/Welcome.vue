@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
+    import {computed, onMounted, onUnmounted, ref} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
     import TopNavBar from "../../components/layout/TopNavBar.vue";
@@ -102,6 +102,9 @@
     const router = useRouter();
 
     useRestoreUrl();
+
+    onMounted(() => document.querySelector("main")?.classList.add("welcome-page"));
+    onUnmounted(() => document.querySelector("main")?.classList.remove("welcome-page"));
 
     const routeInfo = computed(() => ({title: t("ai.flow.title")}));
     useRouteContext(routeInfo);
@@ -150,6 +153,13 @@
         void router.push({name: "flows/create", query: {onboardingPreset: "true"}, params: {tenant: route.params.tenant}});
     }
 </script>
+
+<style lang="scss">
+    main.welcome-page {
+        max-height: 100%;
+        overflow: hidden;
+    }
+</style>
 
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/_variables.scss";

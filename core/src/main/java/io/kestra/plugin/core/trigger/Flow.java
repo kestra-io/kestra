@@ -260,8 +260,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 """
         )
 
-    },
-    aliases = "io.kestra.core.models.triggers.types.Flow"
+    }
 )
 @Slf4j
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {

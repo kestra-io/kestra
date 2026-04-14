@@ -17,7 +17,7 @@ tasks.register('runStandalone', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = "io.kestra.cli.Kestra"
     environment 'MICRONAUT_ENVIRONMENTS', 'override'
-    args 'server', 'standalone', '--plugins', "${System.getProperty('user.home')}/dev/plugins"
+    args 'server', 'standalone', '--plugins', '../local/plugins'
 }
 
 dependencies {

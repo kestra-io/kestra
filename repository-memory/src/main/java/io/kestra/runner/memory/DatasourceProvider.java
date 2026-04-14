@@ -13,7 +13,7 @@ import jakarta.inject.Singleton;
 
 @SuppressWarnings("rawtypes")
 @Factory
-@Requires(missingProperty = "datasources", condition = DatasourceProvider.H2RepositoryOrQueue.class)
+@Requires(missingProperty = "datasources.h2.url", condition = DatasourceProvider.H2RepositoryOrQueue.class)
 public class DatasourceProvider {
     @Singleton
     @Named("h2")

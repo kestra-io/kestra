@@ -100,15 +100,16 @@
                     class="mt-3"
                 />
             </div>
-            <div v-if="isShowCustomActionOpen && customActionMeta" class="custom-action-body">
-                <pre class="custom-action-code">{{ customActionPreviewValue }}</pre>
-                <button
-                    v-if="customActionHasMore"
-                    class="custom-action-expand-btn"
-                    @click="isCustomActionExpanded = !isCustomActionExpanded"
-                >
-                    {{ isCustomActionExpanded ? 'Show less ↑' : `Show more (${customActionTotalLines} lines) ↓` }}
-                </button>
+            <div v-if="isShowCustomActionOpen && customActionMeta">
+                <Editor
+                    :readOnly="true"
+                    :input="true"
+                    :fullHeight="false"
+                    :navbar="false"
+                    :modelValue="selectedTask[customActionMeta.taskProp]"
+                    :lang="customActionMeta.lang"
+                    class="mt-3"
+                />
             </div>
         </Drawer>
     </div>
@@ -248,23 +249,7 @@
     const isShowConditionOpen = ref(false);
     const isShowCustomActionOpen = ref(false);
     const customActionMeta = ref<{ label: string; taskProp: string; lang: string } | null>(null);
-    const isCustomActionExpanded = ref(false);
     const selectedTask = ref();
-
-    const CUSTOM_ACTION_PREVIEW_LINES = 3;
-
-    const customActionRawValue = computed<string>(() =>
-        (selectedTask.value && customActionMeta.value)
-            ? (selectedTask.value[customActionMeta.value.taskProp] ?? "")
-            : ""
-    );
-    const customActionTotalLines = computed(() => customActionRawValue.value.split("\n").length);
-    const customActionHasMore = computed(() => customActionTotalLines.value > CUSTOM_ACTION_PREVIEW_LINES);
-    const customActionPreviewValue = computed(() => {
-        const val = customActionRawValue.value;
-        if (isCustomActionExpanded.value || !customActionHasMore.value) return val;
-        return val.split("\n").slice(0, CUSTOM_ACTION_PREVIEW_LINES).join("\n");
-    });
 
     onMounted(() => {
         // Regenerate graph on window resize
@@ -290,7 +275,6 @@
                 isShowConditionOpen.value = false;
                 isShowCustomActionOpen.value = false;
                 customActionMeta.value = null;
-                isCustomActionExpanded.value = false;
                 selectedTask.value = null;
             }
         },
@@ -504,35 +488,4 @@
     }
 }
 
-.custom-action-body {
-    padding-top: 0.75rem;
-}
-
-.custom-action-code {
-    background: var(--ks-background-card);
-    border: 1px solid var(--ks-border-primary);
-    border-radius: 4px;
-    padding: 0.75rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    white-space: pre;
-    overflow-x: auto;
-    margin: 0;
-    color: var(--ks-content-primary);
-}
-
-.custom-action-expand-btn {
-    display: block;
-    background: none;
-    border: none;
-    padding: 0.35rem 0;
-    font-size: 0.75rem;
-    color: var(--bs-primary);
-    cursor: pointer;
-
-    &:hover {
-        text-decoration: underline;
-    }
-}
 </style>

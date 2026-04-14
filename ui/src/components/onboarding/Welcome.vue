@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, onUnmounted, ref} from "vue";
+    import {computed, ref} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
     import TopNavBar from "../../components/layout/TopNavBar.vue";
@@ -102,9 +102,6 @@
     const router = useRouter();
 
     useRestoreUrl();
-
-    onMounted(() => document.querySelector("main")?.classList.add("welcome-page"));
-    onUnmounted(() => document.querySelector("main")?.classList.remove("welcome-page"));
 
     const routeInfo = computed(() => ({title: t("ai.flow.title")}));
     useRouteContext(routeInfo);
